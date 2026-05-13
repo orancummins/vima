@@ -1,0 +1,3053 @@
+(() => {
+  const APIS = window.__APIS__ || [];
+  const USE_CASES = window.__USE_CASES__ || [];
+
+  const $ = (id) => document.getElementById(id);
+
+  // -------------------------------------------------------------------
+  // API Calls Logger — polls /api-call-log for outbound Mastercard calls
+  // -------------------------------------------------------------------
+  let API_CALLS_VISIBLE = false;
+  const API_CALL_LOG = [];
+  let _lastSeq = 0;
+  let _pollTimer = null;
+  let _currentUcId = null;
+
+  function _startPolling() {
+    if (_pollTimer) return;
+    _pollTimer = setInterval(_pollApiLog, 1500);
+    _pollApiLog(); // immediate first fetch
+  }
+
+  function _stopPolling() {
+    if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+  }
+
+  function _pollApiLog() {
+    _nativeFetch(`/api-call-log?since=${_lastSeq}`)
+      .then(r => r.json())
+      .then(d => {
+        const newCalls = d.calls || [];
+        if (newCalls.length) {
+          newCalls.forEach(e => {
+            API_CALL_LOG.unshift(e);
+            if (e.seq > _lastSeq) _lastSeq = e.seq;
+          });
+          if (API_CALL_LOG.length > 50) API_CALL_LOG.length = 50;
+          apiCallsRefresh();
+        }
+      })
+      .catch(() => {});
+  }
+
+  // Keep native fetch reference for internal use
+  const _nativeFetch = window.fetch.bind(window);
+
+  function apiCallsRefresh() {
+    const badge = $('api-calls-fab-badge');
+    if (badge) {
+      badge.textContent = API_CALL_LOG.length;
+      badge.classList.toggle('hidden', API_CALL_LOG.length === 0);
+    }
+    const countEl = $('api-calls-count');
+    if (countEl) countEl.textContent = API_CALL_LOG.length || '';
+    if (!API_CALLS_VISIBLE) return;
+    const body = $('api-calls-body');
+    if (!body) return;
+    if (!API_CALL_LOG.length) {
+      body.innerHTML = `<p class="api-calls-empty">No API calls yet. Perform an action to see calls here.</p>`;
+      return;
+    }
+    body.innerHTML = API_CALL_LOG.map((e, idx) => apiCallEntryHtml(e, idx)).join('');
+    body.querySelectorAll('[data-expand-call]').forEach(el => {
+      el.addEventListener('click', () => el.closest('.api-calls-entry').classList.toggle('api-calls-entry--open'));
+    });
+    body.querySelectorAll('[data-copy-call]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const entry = API_CALL_LOG[+btn.dataset.copyCall];
+        if (!entry) return;
+        navigator.clipboard.writeText(JSON.stringify({
+          request: entry.requestBody, response: entry.responseBody,
+        }, null, 2));
+        btn.textContent = 'Copied';
+        setTimeout(() => btn.textContent = 'Copy', 900);
+      });
+    });
+  }
+
+  function apiCallEntryHtml(e, idx) {
+    // Show just the path+host portion nicely
+    let displayUrl = e.url || '';
+    try {
+      const u = new URL(displayUrl);
+      displayUrl = u.host + u.pathname + (u.search || '');
+    } catch(_) {}
+    const statusCls = e.status === null ? 'pending'
+      : e.status === 'ERR' ? 'err'
+      : e.status >= 200 && e.status < 300 ? 'ok' : 'bad';
+    const elapsed = e.elapsed_ms != null ? `${e.elapsed_ms}ms` : '';
+    const time = e.ts || '';
+    return `
+      <div class="api-calls-entry" data-seq="${e.seq}">
+        <div class="api-calls-entry-head" data-expand-call>
+          <span class="api-calls-method api-calls-method--${e.method.toLowerCase()}">${escapeHtml(e.method)}</span>
+          <span class="api-calls-url" title="${escapeHtml(e.url)}">${escapeHtml(displayUrl)}</span>
+          <span class="api-calls-status api-calls-status--${statusCls}">${e.status == null ? '…' : escapeHtml(String(e.status))}</span>
+          <span class="api-calls-time">${escapeHtml(elapsed || time)}</span>
+          <span class="api-calls-chevron">▾</span>
+        </div>
+        <div class="api-calls-entry-body">
+          ${e.requestBody != null ? `<div class="api-calls-section"><div class="api-calls-section-label">Request body</div><pre class="api-calls-pre">${escapeHtml(JSON.stringify(e.requestBody, null, 2))}</pre></div>` : ''}
+          <div class="api-calls-section">
+            <div class="api-calls-section-label">Response${e.status ? ' · ' + e.status : ''}</div>
+            ${e.responseBody !== null && e.responseBody !== undefined
+              ? `<pre class="api-calls-pre">${escapeHtml(JSON.stringify(e.responseBody, null, 2))}</pre>`
+              : `<p class="api-calls-pending">Waiting for response…</p>`}
+          </div>
+          <div class="api-calls-copy-row"><button class="api-calls-copy-btn" data-copy-call="${idx}">Copy</button></div>
+        </div>
+      </div>`;
+  }
+
+  function apiCallsOpen() {
+    API_CALLS_VISIBLE = true;
+    _startPolling();
+    const drawer = $('api-calls-drawer');
+    if (drawer) drawer.classList.remove('hidden');
+    const fab = $('api-calls-fab');
+    if (fab) {
+      fab.classList.add('api-calls-fab--active');
+      const lbl = fab.querySelector('.api-calls-fab-label');
+      if (lbl) lbl.textContent = 'Hide Calls';
+    }
+    apiCallsRefresh();
+  }
+
+  function apiCallsClose() {
+    API_CALLS_VISIBLE = false;
+    // Keep polling for badge updates even when drawer is closed
+    const drawer = $('api-calls-drawer');
+    if (drawer) drawer.classList.add('hidden');
+    const fab = $('api-calls-fab');
+    if (fab) {
+      fab.classList.remove('api-calls-fab--active');
+      const lbl = fab.querySelector('.api-calls-fab-label');
+      if (lbl) lbl.textContent = 'Show API Calls';
+    }
+  }
+
+  function updateUcSidebar(uc) {
+    const container = $('uc-sidebar-apis');
+    const list = $('uc-sidebar-apis-list');
+    if (!container || !list) return;
+    const ucApis = (uc && uc.apis) || [];
+    if (!ucApis.length) { container.classList.add('hidden'); return; }
+    list.innerHTML = ucApis.map(apiId => {
+      const apiManifest = APIS.find(a => a.id === apiId);
+      const configured = apiManifest ? apiManifest.configured : false;
+      const name = apiManifest ? apiManifest.name : apiId;
+      return `<div class="uc-sidebar-api-badge ${configured ? 'configured' : 'unconfigured'}"><span class="uc-sidebar-api-dot"></span>${escapeHtml(name)}</div>`;
+    }).join('');
+    container.classList.remove('hidden');
+  }
+
+  const HTTP_REASONS = {
+    100:"Continue",101:"Switching Protocols",200:"OK",201:"Created",202:"Accepted",
+    204:"No Content",206:"Partial Content",301:"Moved Permanently",302:"Found",
+    304:"Not Modified",400:"Bad Request",401:"Unauthorized",403:"Forbidden",
+    404:"Not Found",405:"Method Not Allowed",406:"Not Acceptable",
+    409:"Conflict",410:"Gone",422:"Unprocessable Entity",429:"Too Many Requests",
+    500:"Internal Server Error",501:"Not Implemented",502:"Bad Gateway",
+    503:"Service Unavailable",504:"Gateway Timeout",
+  };
+  function setStatus(code) {
+    const el = $("resp-status");
+    if (code == null) { el.textContent = ""; el.className = "status-pill"; el.title = ""; return; }
+    const s = String(code);
+    el.textContent = s;
+    el.className = "status-pill s" + s[0];
+    el.title = HTTP_REASONS[Number(code)] || "";
+  }
+
+  // ---------------------------------------------------------------------
+  // How To modal
+  // ---------------------------------------------------------------------
+  const modal = $("how-to-modal");
+  $("btn-how-to").addEventListener("click", () => {
+    const api = currentApi();
+    $("modal-title").textContent = api ? "How to Use: " + api.name : "How To Use These APIs";
+    $("modal-body").innerHTML = (api && api.how_to) || "<p>No guide available for this API.</p>";
+    modal.classList.remove("hidden");
+  });
+  $("modal-close").addEventListener("click", () => modal.classList.add("hidden"));
+  modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.add("hidden"); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") modal.classList.add("hidden"); });
+
+  // ---------------------------------------------------------------------
+  // Top tabs
+  // ---------------------------------------------------------------------
+  document.querySelectorAll(".top-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".top-tab").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const tab = btn.dataset.topTab;
+      $("panel-apis").classList.toggle("hidden", tab !== "apis");
+      $("panel-usecases").classList.toggle("hidden", tab !== "usecases");
+      const fab = $('api-calls-fab');
+      if (fab) fab.classList.toggle('hidden', tab !== 'usecases');
+      if (tab !== 'usecases') { apiCallsClose(); _stopPolling(); }
+      else _startPolling();
+    });
+  });
+
+  // ---------------------------------------------------------------------
+  // API state
+  // ---------------------------------------------------------------------
+  let currentApiId = APIS.length ? APIS[0].id : null;
+  let currentOpId = null;
+  let currentState = {};
+
+  // Cache of last request/response per (apiId, opId), plus last op per api.
+  const ioCache = {};            // ioCache[apiId][opId] = { request, response, statusCode, hint }
+  const lastOpByApi = {};        // lastOpByApi[apiId] = opId
+
+  function currentApi() {
+    return APIS.find((a) => a.id === currentApiId);
+  }
+  function currentOp() {
+    const a = currentApi();
+    if (!a) return null;
+    return a.operations.find((o) => o.id === currentOpId);
+  }
+
+  // ---------------------------------------------------------------------
+  // API list (sidebar)
+  // ---------------------------------------------------------------------
+  document.querySelectorAll("[data-api-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-api-id]").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentApiId = btn.dataset.apiId;
+      currentOpId = null;
+      renderApi();
+    });
+  });
+
+  // ---------------------------------------------------------------------
+  // Render API
+  // ---------------------------------------------------------------------
+  function renderApi() {
+    const api = currentApi();
+    if (!api) return;
+    $("api-title").textContent = api.name;
+    $("api-desc").textContent = api.description || "";
+    const docs = $("api-docs");
+    if (api.docs_url) {
+      docs.href = api.docs_url;
+      docs.style.display = "inline-flex";
+    } else {
+      docs.style.display = "none";
+    }
+
+    // Operations list grouped by category
+    const cats = {};
+    (api.categories || []).forEach((c) => (cats[c] = []));
+    (api.operations || []).forEach((op) => {
+      (cats[op.category] = cats[op.category] || []).push(op);
+    });
+    const opsEl = $("op-categories");
+    opsEl.innerHTML = "";
+    Object.entries(cats).forEach(([cat, ops]) => {
+      if (!ops.length) return;
+      const h = document.createElement("div");
+      h.className = "op-cat-name";
+      h.textContent = cat;
+      opsEl.appendChild(h);
+      ops.forEach((op) => {
+        const b = document.createElement("button");
+        b.className = "op-btn";
+        b.textContent = op.name;
+        b.dataset.opId = op.id;
+        if (op.description) b.title = op.description;
+        b.addEventListener("click", () => selectOp(op.id));
+        opsEl.appendChild(b);
+      });
+    });
+
+    // Clear panels (will be repopulated from cache if a prior op exists)
+    $("op-method").textContent = "—";
+    $("op-method").className = "op-method";
+    $("op-name").textContent = "Select an operation";
+    $("op-desc").textContent = "";
+    $("op-note").innerHTML = "";
+    $("op-params").innerHTML = "";
+    $("op-hint").innerHTML = "";
+    $("op-send").disabled = true;
+    $("req-body").textContent = "—";
+    $("resp-body").textContent = "—";
+    $("resp-status").textContent = "";
+    $("resp-status").className = "status-pill";    $('resp-status').title = "";
+    refreshState();
+
+    // Restore the last-used operation for this API, or fall back to the first.
+    const lastOp = lastOpByApi[api.id];
+    if (lastOp && api.operations.some((o) => o.id === lastOp)) {
+      selectOp(lastOp);
+    } else if (api.operations && api.operations.length > 0) {
+      selectOp(api.operations[0].id);
+    }
+  }
+
+  function refreshState() {
+    const api = currentApi();
+    if (!api) return;
+    fetch(`/explorer/${api.id}/state`)
+      .then((r) => r.json())
+      .then((d) => {
+        currentState = d.state || {};
+        renderStateStrip();
+        // refresh param defaults if an op is open
+        if (currentOpId) renderParams();
+      })
+      .catch(() => {});
+  }
+
+  function renderStateStrip() {
+    const api = currentApi();
+    const strip = $("state-strip");
+    strip.innerHTML = "";
+    const schema = api.state_schema || [];
+    if (!api.configured) {
+      const w = document.createElement("div");
+      w.className = "state-pill";
+      w.innerHTML = `<span class="k">⚠</span><span class="v">Not configured — check .env</span>`;
+      w.style.borderColor = "#eb001b";
+      w.style.color = "#a01010";
+      strip.appendChild(w);
+    }
+    schema.forEach((s) => {
+      const v = currentState[s.key];
+      const pill = document.createElement("div");
+      pill.className = "state-pill" + (v ? "" : " empty");
+      pill.innerHTML = `<span class="k">${s.label}:</span><span class="v">${v || "—"}</span>`;
+      strip.appendChild(pill);
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // Select operation
+  // ---------------------------------------------------------------------
+  function selectOp(opId) {
+    currentOpId = opId;
+    lastOpByApi[currentApiId] = opId;
+    document.querySelectorAll(".op-btn").forEach((b) => {
+      b.classList.toggle("active", b.dataset.opId === opId);
+    });
+    const op = currentOp();
+    if (!op) return;
+    $("op-method").textContent = op.method || "POST";
+    $("op-method").className = "op-method " + (op.method || "POST");
+    $("op-name").textContent = op.name;
+    $("op-desc").textContent = op.description || "";
+    $("op-note").innerHTML = op.note || "";
+    $("op-send").disabled = false;
+    $("op-hint").innerHTML = "";
+    renderParams();    restoreIo();
+  }
+
+  function restoreIo() {
+    const cached = (ioCache[currentApiId] || {})[currentOpId];
+    if (cached) {
+      $("req-body").textContent = fmt(cached.request);
+      $("resp-body").textContent = fmt(cached.response);
+      if (cached.statusCode != null) {
+        setStatus(cached.statusCode);
+      } else {
+        setStatus(null);
+      }
+      $('op-hint').innerHTML = cached.hintHtml || '';    } else {
+      $("req-body").textContent = "—";
+      $("resp-body").textContent = "—";
+      $("resp-status").textContent = "";
+      $("resp-status").className = "status-pill";      $('resp-status').title = "";      $("op-hint").innerHTML = "";
+      previewRequest();
+    }
+  }
+
+  function resolveDefault(def) {
+    if (typeof def !== "string") return def;
+    return def.replace("${timestamp}", String(Math.floor(Date.now() / 1000)));
+  }
+
+  function renderParams() {
+    const op = currentOp();
+    const wrap = $("op-params");
+    wrap.innerHTML = "";
+    (op.params || []).forEach((p) => {
+      const row = document.createElement("div");
+      row.className = "param-row";
+      const labelHtml = `<label>${p.label || p.name}
+        ${p.required ? '<span class="hint">required</span>' : ""}
+        ${p.warning ? `<span class="param-warning">&#9888; ${p.warning}</span>` : ""}
+      </label>`;
+      let value = "";
+      if (p.source && p.source.startsWith("state:")) {
+        const k = p.source.slice("state:".length);
+        value = currentState[k] || "";
+      }
+      if (!value && p.default != null) value = resolveDefault(p.default);
+
+      let input;
+      if (p.type === "select" && Array.isArray(p.options)) {
+        input = document.createElement("select");
+        p.options.forEach((opt) => {
+          const o = document.createElement("option");
+          const isObj = opt && typeof opt === "object";
+          o.value = isObj ? opt.value : opt;
+          o.textContent = isObj ? opt.label : opt;
+          if (o.value === String(value)) o.selected = true;
+          input.appendChild(o);
+        });
+      } else if (p.type === "account_select") {
+        input = document.createElement("select");
+        const accounts = currentState.accounts || [];
+        if (!accounts.length) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "— no accounts loaded — run Refresh Accounts first —";
+          opt.disabled = true;
+          opt.selected = true;
+          input.appendChild(opt);
+        } else {
+          accounts.forEach((a) => {
+            const opt = document.createElement("option");
+            opt.value = a.id;
+            const num = a.number ? `••${String(a.number).slice(-4)}` : a.id;
+            const type = a.type ? ` · ${a.type}` : "";
+            const name = a.name ? ` — ${a.name}` : "";
+            opt.textContent = `${num}${type}${name}`;
+            if (String(a.id) === String(value)) opt.selected = true;
+            input.appendChild(opt);
+          });
+        }
+      } else {
+        input = document.createElement("input");
+        input.type = p.type === "number" ? "number" : "text";
+        input.value = value;
+        input.placeholder = p.label || p.name;
+      }
+      input.dataset.name = p.name;
+      input.addEventListener("input", previewRequest);
+      input.addEventListener("change", previewRequest);
+      row.innerHTML = labelHtml;
+      row.appendChild(input);
+      wrap.appendChild(row);
+    });
+    previewRequest();
+  }
+
+  function collectParams() {
+    const params = {};
+    document.querySelectorAll("#op-params input, #op-params select").forEach((i) => {
+      if (i.value !== "") params[i.dataset.name] = i.value;
+    });
+    return params;
+  }
+
+  function previewRequest() {
+    // Only overwrite request panel if we don't have a real cached response for this op.
+    const cached = (ioCache[currentApiId] || {})[currentOpId];
+    if (cached) return;
+    const op = currentOp();
+    if (!op) return;
+    const preview = {
+      method: op.method || "POST",
+      operation: op.id,
+      params: collectParams(),
+      note: "Preview — click Send to execute. The actual upstream HTTP request will be shown here after sending.",
+    };
+    $("req-body").textContent = fmt(preview);
+  }
+
+  // ---------------------------------------------------------------------
+  // Send
+  // ---------------------------------------------------------------------
+  $("op-send").addEventListener("click", async () => {
+    const api = currentApi();
+    const op = currentOp();
+    if (!api || !op) return;
+    const params = collectParams();
+    $("op-send").disabled = true;
+    $("op-send").textContent = "Sending…";
+    $("req-body").textContent = "Sending…";
+    $("resp-body").textContent = "";
+    $("resp-status").textContent = "";    $('resp-status').className = "status-pill";
+    $('resp-status').title = "";    try {
+      const r = await fetch(`/explorer/${api.id}/execute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ operation: op.id, params }),
+      });
+      const data = await r.json();
+      $("req-body").textContent = fmt(data.request);
+      $("resp-body").textContent = fmt(data.response);
+      const s = data.response && data.response.status_code;
+      if (s != null) {
+        setStatus(s);
+      }
+      // Hints
+      $("op-hint").innerHTML = "";
+      if (data.hints && data.hints.note) {
+        const n = document.createElement("div");
+        n.className = "muted";
+        n.style.padding = "10px";
+        n.style.background = "#fff7ed";
+        n.style.border = "1px solid #fbd9a8";
+        n.style.borderRadius = "6px";
+        n.textContent = data.hints.note;
+        $("op-hint").appendChild(n);
+      }
+      if (data.hints && data.hints.open_link) {
+        const a = document.createElement("a");
+        a.href = data.hints.open_link;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.textContent = "Open Data Connect ↗";
+        const note = document.createElement("div");
+        note.className = "muted";
+        note.textContent = "Open in a new tab, complete the FinBank flow, then run Refresh Accounts.";
+        $("op-hint").appendChild(note);
+        $("op-hint").appendChild(a);
+      }      if (data.hints && data.hints.pdf_base64) {
+        const binary = atob(data.hints.pdf_base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const blob = new Blob([bytes], { type: "application/pdf" });
+        const blobUrl = URL.createObjectURL(blob);
+        const btn = document.createElement("a");
+        btn.href = blobUrl;
+        btn.target = "_blank";
+        btn.rel = "noopener";
+        btn.textContent = "View PDF Statement ↗";
+        btn.style.cssText = "display:inline-block;margin-top:8px;padding:7px 14px;background:#005b99;color:#fff;border-radius:5px;text-decoration:none;font-size:13px;font-weight:600;";
+        const dl = document.createElement("a");
+        dl.href = blobUrl;
+        dl.download = "statement.pdf";
+        dl.textContent = "Download PDF";
+        dl.style.cssText = "display:inline-block;margin-top:8px;margin-left:8px;padding:7px 14px;background:#f4f6fa;color:#005b99;border:1px solid #c5d0df;border-radius:5px;text-decoration:none;font-size:13px;font-weight:600;";
+        $('op-hint').appendChild(btn);
+        $('op-hint').appendChild(dl);
+      }      // Cache for restore on API/op switch.
+      const apiBucket = (ioCache[api.id] = ioCache[api.id] || {});
+      apiBucket[op.id] = {
+        request: data.request,
+        response: data.response,
+        statusCode: s,
+        hintHtml: $('op-hint').innerHTML,
+      };
+      // Update state
+      if (data.state) {
+        currentState = data.state;
+        renderStateStrip();
+      }
+    } catch (e) {
+      $("resp-body").textContent = String(e);
+    } finally {
+      $("op-send").disabled = false;
+      $("op-send").textContent = "Send";
+    }
+  });
+
+  function fmt(obj) {
+    if (obj == null) return "—";
+    try { return JSON.stringify(obj, null, 2); }
+    catch { return String(obj); }
+  }
+
+  // ---------------------------------------------------------------------
+  // Copy buttons
+  // ---------------------------------------------------------------------
+  document.querySelectorAll("[data-copy]").forEach((b) => {
+    b.addEventListener("click", () => {
+      const el = $(b.dataset.copy);
+      navigator.clipboard.writeText(el ? el.textContent : "");
+      const t = b.textContent;
+      b.textContent = "Copied";
+      setTimeout(() => (b.textContent = t), 900);
+    });
+  });
+
+  // ---------------------------------------------------------------------
+  // Use cases
+  // ---------------------------------------------------------------------
+  function renderUseCase(id) {
+    const uc = USE_CASES.find((u) => u.id === id) || USE_CASES[0];
+    if (!uc) return;
+    // Clear log and close drawer when switching use cases
+    if (uc.id !== _currentUcId) {
+      API_CALL_LOG.length = 0;
+      _lastSeq = 0;
+      apiCallsClose();
+    }
+    _currentUcId = uc.id;
+    updateUcSidebar(uc);
+    const title = $("uc-title"); if (title) title.textContent = uc.name;
+    const desc = $("uc-desc"); if (desc) desc.textContent = uc.description || "";
+    if (uc.render === "pfm") {
+      renderPfm();
+    } else if (uc.render === "enrichment") {
+      renderEnrichment();
+    } else if (uc.render === "recurring") {
+      renderRecurring();
+    } else if (uc.render === "psi") {
+      renderPsi();
+    } else if (uc.render === "binlookup") {
+      renderBinLookup();
+    } else {
+      $("uc-body").innerHTML = `<p class="muted">${(uc.apis && uc.apis.length)
+        ? "Composes: " + uc.apis.join(", ")
+        : "Use cases composed from the APIs above will appear here."}</p>`;
+    }
+  }
+
+  // ===================== Data Enrichment Use Case =====================
+  // Shows raw transaction strings transforming into structured enriched data.
+  // Each row has a "before" (raw) and "after" (enriched) state that the user
+  // can trigger one-by-one or all at once.
+
+  const ENRICH_CAT_COLORS = {
+    "Groceries & Dining": "#f97316",
+    "Coffee Shops":        "#f97316",
+    "Shopping":            "#ec4899",
+    "Shopping & Retail":   "#ec4899",
+    "Rental Car & Taxi":   "#0ea5e9",
+    "Transportation":      "#0ea5e9",
+    "Travel & Vacation":   "#3b82f6",
+    "Streaming Services":  "#f43f5e",
+    "Entertainment":       "#f43f5e",
+    "Groceries":           "#10b981",
+    "Bills & Utilities":   "#8b5cf6",
+    "Income":              "#0f7050",
+  };
+
+  function enrichCatColor(cat, group) {
+    return ENRICH_CAT_COLORS[cat] || ENRICH_CAT_COLORS[group] || "#94a3b8";
+  }
+
+  function enrichLogoHtml(e) {
+    if (e.logoUrl) {
+      return `<img src="${escapeHtml(e.logoUrl)}" alt="${escapeHtml(e.name)}" class="enrich-logo-img" loading="lazy">`;
+    }
+    const initials = (e.name || "?").slice(0, 2).toUpperCase();
+    const color = enrichCatColor(e.category, e.categoryGroup);
+    return `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="${color}"/><text x="20" y="26" text-anchor="middle" font-size="14" fill="white">${initials}</text></svg>`;
+  }
+
+  // State: which rows have been enriched
+  const ENRICH = { enriched: new Set(), data: [] };
+
+  function renderEnrichment() {
+    const body = $("uc-body");
+    if (!body) return;
+    body.innerHTML = `<div class="enrich-loading"><div class="enrich-spinner"></div><p>Loading transactions…</p></div>`;
+    fetch("/usecases/enrichment/data")
+      .then(r => r.json())
+      .then(d => {
+        ENRICH.data = d.transactions || [];
+        ENRICH.enriched.clear();
+        enrichRender();
+      })
+      .catch(() => {
+        body.innerHTML = `<p class="muted">Could not load enrichment data.</p>`;
+      });
+  }
+
+  function enrichRender() {
+    const body = $("uc-body");
+    if (!body || !ENRICH.data.length) return;
+    const allDone = ENRICH.enriched.size === ENRICH.data.length;
+    body.innerHTML = `
+      <div class="enrich-stage">
+        <div class="enrich-header">
+          <div class="enrich-header-text">
+            <h2>Transaction Enrichment</h2>
+            <p>Raw bank statement text is transformed into structured, human-readable merchant data — powering better UX, smarter categorisation, and richer insights.</p>
+          </div>
+          <div class="enrich-header-actions">
+            ${allDone
+              ? `<button class="enrich-btn-reset" id="enrich-reset">Reset demo</button>`
+              : `<button class="enrich-btn-all" id="enrich-all">Enrich all</button>`
+            }
+          </div>
+        </div>
+
+        <div class="enrich-pipeline-legend">
+          <div class="enrich-legend-item"><span class="enrich-legend-dot raw"></span>Raw input</div>
+          <div class="enrich-legend-arrow">→</div>
+          <div class="enrich-legend-item"><span class="enrich-legend-dot enriched"></span>Enriched output</div>
+        </div>
+
+        <div class="enrich-rows" id="enrich-rows">
+          ${ENRICH.data.map(enrichRowHtml).join("")}
+        </div>
+
+        <div class="enrich-footer">
+          <div class="enrich-stats">
+            <div class="enrich-stat">
+              <div class="enrich-stat-val">${ENRICH.enriched.size}</div>
+              <div class="enrich-stat-lbl">Enriched</div>
+            </div>
+            <div class="enrich-stat">
+              <div class="enrich-stat-val">${ENRICH.data.length - ENRICH.enriched.size}</div>
+              <div class="enrich-stat-lbl">Pending</div>
+            </div>
+            <div class="enrich-stat">
+              <div class="enrich-stat-val">${ENRICH.data.length > 0 ? Math.round(ENRICH.enriched.size / ENRICH.data.length * 100) : 0}%</div>
+              <div class="enrich-stat-lbl">Complete</div>
+            </div>
+          </div>
+          <div class="enrich-progress-bar">
+            <div class="enrich-progress-fill" style="width:${ENRICH.data.length > 0 ? Math.round(ENRICH.enriched.size / ENRICH.data.length * 100) : 0}%"></div>
+          </div>
+        </div>
+      </div>
+    `;
+    enrichWire();
+  }
+
+  function enrichRowHtml(txn) {
+    const done = ENRICH.enriched.has(txn.id);
+    const e = txn.enriched;
+    const amtCls = txn.amount < 0 ? "neg" : "pos";
+    const amtStr = (txn.amount < 0 ? "-" : "+") + "$" + Math.abs(txn.amount).toFixed(2);
+    const catColor = enrichCatColor(e.category, e.categoryGroup);
+    const logo = enrichLogoHtml(e);
+
+    if (done) {
+      const extraChips = [
+        e.isRecurring ? `<span class="enrich-chip enrich-chip--flag">Recurring</span>` : "",
+        e.isEcommerce ? `<span class="enrich-chip enrich-chip--flag">E-commerce</span>` : "",
+      ].join("");
+      const locationHtml = e.location ? `
+              <span class="enrich-meta-item">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 0 1 4 4c0 3-4 8-4 8S4 9 4 6a4 4 0 0 1 4-4z"/><circle cx="8" cy="6" r="1.5" fill="currentColor" stroke="none"/></svg>
+                ${escapeHtml(e.location)}
+              </span>` : "";
+      const websiteHost = e.website ? e.website.replace(/^https?:\/\//, "").replace(/\/$/, "") : null;
+      const websiteHtml = websiteHost ? `
+              <span class="enrich-meta-item">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 2c-2 2-2 8 0 12M8 2c2 2 2 8 0 12M2 8h12"/></svg>
+                <a class="enrich-meta-website" href="${escapeHtml(e.website)}" target="_blank" rel="noopener noreferrer">${escapeHtml(websiteHost)}</a>
+              </span>` : "";
+      const confidence = Math.round(e.confidence || e.categoryScore || 0);
+      return `
+        <div class="enrich-row enrich-row--done" data-txn-id="${escapeHtml(txn.id)}">
+          <div class="enrich-row-logo">${logo}</div>
+          <div class="enrich-row-body">
+            <div class="enrich-row-top">
+              <div class="enrich-row-name">${escapeHtml(e.name)}</div>
+              <div class="enrich-row-amount ${amtCls}">${amtStr}</div>
+            </div>
+            <div class="enrich-row-chips">
+              ${e.categoryGroup ? `<span class="enrich-chip enrich-chip--cat" style="--chip-color:${catColor}">${escapeHtml(e.categoryGroup)}</span>` : ""}
+              ${e.category ? `<span class="enrich-chip enrich-chip--sub">${escapeHtml(e.category)}</span>` : ""}
+              ${extraChips}
+            </div>
+            <div class="enrich-row-meta">
+              ${locationHtml}
+              ${websiteHtml}
+              <span class="enrich-meta-item enrich-meta-date">${escapeHtml(txn.date)}</span>
+            </div>
+            <div class="enrich-row-raw-label">
+              <span class="enrich-label-raw">RAW</span>
+              <code class="enrich-raw-text">${escapeHtml(txn.raw)}</code>
+            </div>
+            <div class="enrich-confidence">
+              <span class="enrich-confidence-label">Confidence</span>
+              <div class="enrich-confidence-bar"><div class="enrich-confidence-fill" style="width:${confidence}%"></div></div>
+              <span class="enrich-confidence-pct">${confidence}%</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Raw (un-enriched) state
+    return `
+      <div class="enrich-row enrich-row--raw" data-txn-id="${escapeHtml(txn.id)}">
+        <div class="enrich-row-logo enrich-row-logo--blank">
+          <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="20" fill="#e5e7eb"/><text x="20" y="26" text-anchor="middle" font-size="15" fill="#9ca3af">?</text></svg>
+        </div>
+        <div class="enrich-row-body">
+          <div class="enrich-row-top">
+            <code class="enrich-raw-big">${escapeHtml(txn.raw)}</code>
+            <div class="enrich-row-amount ${amtCls}">${amtStr}</div>
+          </div>
+          <div class="enrich-row-chips">
+            <span class="enrich-chip enrich-chip--unknown">Category unknown</span>
+            <span class="enrich-chip enrich-chip--unknown">Merchant unknown</span>
+          </div>
+          <div class="enrich-row-meta">
+            <span class="enrich-meta-item enrich-meta-date">${escapeHtml(txn.date)}</span>
+          </div>
+        </div>
+        <button class="enrich-btn-row" data-enrich-id="${escapeHtml(txn.id)}" title="Enrich this transaction">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 3v14M3 10h14"/></svg>
+          Enrich
+        </button>
+      </div>
+    `;
+  }
+
+  function enrichWire() {
+    const body = $("uc-body");
+    if (!body) return;
+
+    body.querySelectorAll("[data-enrich-id]").forEach(btn => {
+      btn.addEventListener("click", () => enrichOne(btn.dataset.enrichId));
+    });
+
+    const allBtn = document.getElementById("enrich-all");
+    if (allBtn) allBtn.addEventListener("click", () => enrichAll());
+
+    const resetBtn = document.getElementById("enrich-reset");
+    if (resetBtn) resetBtn.addEventListener("click", () => {
+      ENRICH.enriched.clear();
+      enrichRender();
+    });
+  }
+
+  function enrichOne(id) {
+    const row = document.querySelector(`[data-txn-id="${CSS.escape(id)}"]`);
+    if (!row || ENRICH.enriched.has(id)) return;
+
+    // Animate the row: shimmer → reveal
+    row.classList.add("enrich-row--loading");
+    const btn = row.querySelector("[data-enrich-id]");
+    if (btn) { btn.disabled = true; btn.textContent = "Enriching…"; }
+
+    setTimeout(() => {
+      ENRICH.enriched.add(id);
+      enrichRender();
+      // Scroll the newly enriched row into view
+      const enriched = document.querySelector(`[data-txn-id="${CSS.escape(id)}"]`);
+      if (enriched) enriched.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 700);
+  }
+
+  function enrichAll() {
+    const pending = ENRICH.data.filter(t => !ENRICH.enriched.has(t.id));
+    pending.forEach((t, i) => {
+      setTimeout(() => enrichOne(t.id), i * 250);
+    });
+  }
+
+  // ===================== Recurring Transactions Use Case =====================
+
+  const REC = {
+    cid: "9013023139",
+    accounts: [],
+    selectedAccount: "",
+    streams: [],
+    transactions: [],
+    loading: false,
+  };
+
+  const REC_FREQ_LABELS = {
+    WEEKLY: "Weekly", BIWEEKLY: "Bi-weekly", MONTHLY: "Monthly",
+    BIMONTHLY: "Bi-monthly", QUARTERLY: "Quarterly", ANNUAL: "Annual", UNKNOWN: "Irregular",
+  };
+
+  function recFreqClass(freq) {
+    return "rec-chip--freq-" + (freq || "unknown").toLowerCase();
+  }
+
+  function recLogoHtml(name) {
+    const initials = (name || "?").replace(/[^A-Za-z0-9 ]/g, "").trim().split(" ")
+      .slice(0, 2).map(w => w[0] || "").join("").toUpperCase() || "?";
+    const colors = ["#6366f1","#0ea5e9","#10b981","#f59e0b","#ec4899","#8b5cf6","#ef4444","#14b8a6"];
+    const idx = (name || "").split("").reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;
+    return `<svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="${colors[idx]}"/><text x="22" y="30" text-anchor="middle" font-size="16" font-weight="700" fill="white">${escapeHtml(initials)}</text></svg>`;
+  }
+
+  function recDaysBadgeHtml(dateStr) {
+    if (!dateStr) return "";
+    const parts = dateStr.split("-");
+    if (parts.length < 3) return "";
+    const next = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const diff = Math.round((next - today) / 86400000);
+    if (diff < 0) return `<span class="rec-days-badge rec-days-badge--past">${Math.abs(diff)}d ago</span>`;
+    if (diff === 0) return `<span class="rec-days-badge rec-days-badge--soon">Today</span>`;
+    if (diff <= 7) return `<span class="rec-days-badge rec-days-badge--soon">In ${diff}d</span>`;
+    return `<span class="rec-days-badge rec-days-badge--future">In ${diff}d</span>`;
+  }
+
+  function recFmtDate(dateStr) {
+    if (!dateStr) return "—";
+    const parts = dateStr.split("-");
+    if (parts.length < 3) return dateStr;
+    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function recFmtAmt(n) {
+    const abs = Math.abs(n);
+    return "$" + abs.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function renderRecurring() {
+    fetch("/explorer/ofin/state").then(r => r.json()).then(d => {
+      REC.cid = (d.state || {}).customer_id || REC.cid;
+      recRender();
+    }).catch(() => recRender());
+  }
+
+  function recRender() {
+    const body = $("uc-body");
+    if (!body) return;
+
+    const totalMonthly = REC.streams
+      .filter(s => s.type !== "CREDIT" && s.frequency === "MONTHLY")
+      .reduce((sum, s) => sum + Math.abs(s.amount), 0);
+    const totalCredits = REC.streams
+      .filter(s => s.type === "CREDIT")
+      .reduce((sum, s) => sum + Math.abs(s.amount), 0);
+    const totalStreams = REC.streams.length;
+
+    const summaryHtml = totalStreams > 0 ? `
+      <div class="rec-summary-strip">
+        <div class="rec-summary-card">
+          <label>Recurring Streams</label>
+          <span>${totalStreams}</span>
+        </div>
+        <div class="rec-summary-card">
+          <label>Monthly Outflows</label>
+          <span class="rec-amt-debit">${recFmtAmt(totalMonthly)}</span>
+        </div>
+        <div class="rec-summary-card">
+          <label>Recurring Credits</label>
+          <span class="rec-amt-credit">${recFmtAmt(totalCredits)}</span>
+        </div>
+      </div>
+    ` : "";
+
+    const debits  = REC.streams.filter(s => s.type !== "CREDIT");
+    const credits = REC.streams.filter(s => s.type === "CREDIT");
+
+    function sectionHtml(streams, kind) {
+      if (!streams.length) return "";
+      const badgeCls = kind === "credit" ? "rec-section-badge--credit" : "rec-section-badge--debit";
+      const title    = kind === "credit" ? "Incoming (Credits)" : "Outgoing (Debits)";
+      return `
+        <div>
+          <div class="rec-section-head">
+            <h3>${title}</h3>
+            <span class="rec-section-badge ${badgeCls}">${streams.length}</span>
+          </div>
+          <div class="rec-grid">
+            ${streams.map(recCardHtml).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    const resultsHtml = totalStreams > 0 ? `
+      ${summaryHtml}
+      ${sectionHtml(credits, "credit")}
+      ${sectionHtml(debits, "debit")}
+      ${recTxnListHtml(REC.transactions, REC.streams)}
+    ` : `
+      <div class="rec-hero">
+        <div class="rec-hero-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/>
+            <path d="M12 7v1m0 8v1M7 12h1m8 0h1"/>
+          </svg>
+        </div>
+        <h3>No streams detected yet</h3>
+        <p>Enter a Customer ID and click Load Accounts, then choose accounts and click Analyse Recurring to detect patterns.</p>
+        <div class="rec-hero-chips">
+          <span class="rec-hero-chip">Subscriptions</span>
+          <span class="rec-hero-chip">Bills &amp; Utilities</span>
+          <span class="rec-hero-chip">Salary &amp; Income</span>
+          <span class="rec-hero-chip">Loan Repayments</span>
+        </div>
+      </div>
+    `;
+
+    body.innerHTML = `
+      <div class="rec-stage">
+        <div class="rec-controlbar">
+          <div class="rec-controls-row">
+            <div class="rec-field">
+              <label>Customer ID</label>
+              <input id="rec-cid" type="text" value="${escapeHtml(REC.cid)}" placeholder="e.g. 9013023139" style="width:160px">
+            </div>
+            <button class="rec-btn rec-btn--secondary" id="rec-load-accts">Load Accounts</button>
+            <div class="rec-field rec-field--grow" id="rec-acct-wrap" style="display:none">
+              <label>Account (optional filter)</label>
+              <select id="rec-acct-select" style="min-width:220px">
+                <option value="">— all accounts —</option>
+              </select>
+            </div>
+            <button class="rec-btn rec-btn--primary" id="rec-go" ${REC.loading || !REC.selectedAccount ? "disabled" : ""}>
+              ${REC.loading ? `<span class="psi-spinner"></span>` : "Analyse Recurring"}
+            </button>
+          </div>
+          <p class="rec-hint">${!REC.accounts.length ? "Load accounts first, then select an account to analyse." : !REC.selectedAccount ? "Select an account from the dropdown to enable analysis." : "Identifies repeating debit and credit patterns — subscriptions, bills, salary, and more — across connected accounts."}</p>
+        </div>
+
+        ${REC.loading ? `
+          <div class="rec-loading-state">
+            <div class="rec-spinner"></div>
+            <span>Detecting recurring patterns…</span>
+          </div>
+        ` : resultsHtml}
+      </div>
+    `;
+
+    recWire();
+
+    // Restore account dropdown if we already have accounts
+    if (REC.accounts.length) recPopulateAccounts();
+  }
+
+  function recCardHtml(s) {
+    const isDebit   = s.type !== "CREDIT";
+    const amtCls    = isDebit ? "rec-card-amount--debit" : "rec-card-amount--credit";
+    const amtSign   = isDebit ? "-" : "+";
+    const freqLabel = REC_FREQ_LABELS[s.frequency] || s.frequency;
+    const freqCls   = recFreqClass(s.frequency);
+    const regLabel  = s.regularity === "REGULAR" ? "Regular" : s.regularity === "IRREGULAR" ? "Irregular" : null;
+    const regCls    = s.regularity === "REGULAR" ? "rec-chip--reg" : "rec-chip--irreg";
+
+    return `
+      <div class="rec-card">
+        <div class="rec-card-top">
+          <div class="rec-card-logo">${recLogoHtml(s.merchantName)}</div>
+          <div class="rec-card-meta">
+            <div class="rec-card-name">${escapeHtml(s.merchantName)}</div>
+            ${s.description && s.description !== s.merchantName
+              ? `<div class="rec-card-desc">${escapeHtml(s.description)}</div>` : ""}
+          </div>
+          <div class="rec-card-amount ${amtCls}">${amtSign}${recFmtAmt(s.amount)}</div>
+        </div>
+        <div class="rec-card-chips">
+          <span class="rec-chip ${freqCls}">${escapeHtml(freqLabel)}</span>
+          ${s.category ? `<span class="rec-chip rec-chip--cat">${escapeHtml(s.category)}</span>` : ""}
+          ${regLabel ? `<span class="rec-chip ${regCls}">${regLabel}</span>` : ""}
+        </div>
+        <div class="rec-card-footer">
+          <div class="rec-next-date">
+            <label>Next expected</label>
+            <span>${recFmtDate(s.nextExpectedDate)}</span>
+          </div>
+          ${s.count ? `<div class="rec-next-date"><label>Detected</label><span>${s.count} txn${s.count !== 1 ? "s" : ""}</span></div>` : ""}
+          ${recDaysBadgeHtml(s.nextExpectedDate)}
+        </div>
+      </div>
+    `;
+  }
+
+  function recPopulateAccounts() {
+    const sel = document.getElementById("rec-acct-select");
+    const wrap = document.getElementById("rec-acct-wrap");
+    if (!sel || !wrap) return;
+    sel.innerHTML = `<option value="">— select an account —</option>`;
+    REC.accounts.forEach(a => {
+      const opt = document.createElement("option");
+      opt.value = a.id;
+      const num = a.number ? `••${String(a.number).slice(-4)}` : a.id;
+      opt.textContent = `${num} · ${a.type} — ${a.name}`;
+      sel.appendChild(opt);
+    });
+    // Restore previously selected account after re-render
+    if (REC.selectedAccount) sel.value = REC.selectedAccount;
+    wrap.style.display = "";
+  }
+
+  function recWire() {
+    const cidInput = document.getElementById("rec-cid");
+    const loadBtn  = document.getElementById("rec-load-accts");
+    const goBtn    = document.getElementById("rec-go");
+
+    if (cidInput) cidInput.addEventListener("input", () => { REC.cid = cidInput.value.trim(); });
+
+    if (loadBtn) loadBtn.addEventListener("click", async () => {
+      const cid = (document.getElementById("rec-cid") || {}).value || REC.cid;
+      REC.cid = cid.trim();
+      if (!REC.cid) return;
+      loadBtn.disabled = true; loadBtn.textContent = "Loading…";
+      try {
+        const r = await fetch("/usecases/recurring/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_accounts", params: { customer_id: REC.cid } }),
+        });
+        const d = await r.json();
+        if (d.error) { alert("Error: " + d.error); return; }
+        REC.accounts = d.accounts || [];
+        REC.selectedAccount = "";
+        recRender();  // re-renders with account dropdown visible
+      } catch (e) {
+        alert("Failed to load accounts: " + e);
+      } finally {
+        loadBtn.disabled = false; loadBtn.textContent = "Load Accounts";
+      }
+    });
+
+    const acctSelEl = document.getElementById("rec-acct-select");
+    if (acctSelEl) acctSelEl.addEventListener("change", () => {
+      REC.selectedAccount = acctSelEl.value;
+      recRender();
+    });
+
+    if (goBtn) goBtn.addEventListener("click", async () => {
+      const cid = (document.getElementById("rec-cid") || {}).value || REC.cid;
+      REC.cid = cid.trim();
+      if (!REC.cid) { alert("Please enter a Customer ID"); return; }
+      if (!REC.selectedAccount) { alert("Select an account before analysing."); return; }
+      const acctId = REC.selectedAccount;
+      REC.loading = true;
+      REC.transactions = [];
+      recRender();
+      try {
+        const post = (action, params) => fetch("/usecases/recurring/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action, params }),
+        }).then(r => r.json());
+
+        const [recD, txnD] = await Promise.all([
+          post("get_recurring",    { customer_id: REC.cid, account_ids: acctId }),
+          post("get_transactions", { customer_id: REC.cid, account_id: acctId }),
+        ]);
+
+        REC.loading = false;
+        if (recD.error) { REC.streams = []; recRenderError(recD.error, recD.detail); return; }
+        REC.streams      = recD.streams || [];
+        REC.transactions = txnD.transactions || [];
+        recRender();
+      } catch (e) {
+        REC.loading = false;
+        recRenderError(String(e));
+      }
+    });
+  }
+
+  function recTxnListHtml(transactions, streams) {
+    if (!transactions.length) return "";
+
+    // Build a lowercase set of recurring merchant names for quick lookup
+    const recurringNames = new Set(
+      streams.map(s => (s.merchantName || "").toLowerCase().trim()).filter(Boolean)
+    );
+    const isRecurring = t => {
+      const payee = (t.normalizedPayee || "").toLowerCase().trim();
+      if (payee && recurringNames.has(payee)) return true;
+      const desc = (t.description || "").toLowerCase();
+      for (const n of recurringNames) { if (n && desc.includes(n)) return true; }
+      return false;
+    };
+    const getStream = t => {
+      const payee = (t.normalizedPayee || "").toLowerCase().trim();
+      const desc  = (t.description || "").toLowerCase();
+      return streams.find(s => {
+        const n = (s.merchantName || "").toLowerCase().trim();
+        return n && (payee === n || desc.includes(n));
+      });
+    };
+
+    let recurCount = 0;
+    const rows = transactions.map(t => {
+      const rec = isRecurring(t);
+      if (rec) recurCount++;
+      const stream  = rec ? getStream(t) : null;
+      const isCredit = t.amount > 0;
+      const rowCls  = rec ? (isCredit ? "rec-txn--credit-stream" : "rec-txn--debit-stream") : "";
+      const date    = t.date ? new Date(t.date * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—";
+      const amtStr  = (isCredit ? "+" : "") + recFmtAmt(t.amount);
+      const amtCls  = isCredit ? "rec-txn-amt--credit" : "rec-txn-amt--debit";
+      const freqLabel = stream ? (REC_FREQ_LABELS[stream.frequency] || stream.frequency) : "";
+      const freqBadge = freqLabel ? `<span class="rec-txn-freq">${escapeHtml(freqLabel)}</span>` : "";
+      const displayName = t.normalizedPayee || t.description;
+      return `
+        <div class="rec-txn-row ${rowCls}">
+          <div class="rec-txn-date">${date}</div>
+          <div class="rec-txn-info">
+            <div class="rec-txn-name">${escapeHtml(displayName)}</div>
+            ${t.category ? `<div class="rec-txn-cat">${escapeHtml(t.category)}</div>` : ""}
+          </div>
+          ${freqBadge}
+          <div class="rec-txn-amt ${amtCls}">${amtStr}</div>
+        </div>`;
+    }).join("");
+
+    return `
+      <div class="rec-section-head" style="margin-top:24px">
+        <h3>Transactions <span style="font-weight:400;color:#9a9a9a;font-size:14px">· last 90 days</span></h3>
+        <span class="rec-section-badge">${transactions.length}</span>
+      </div>
+      <div class="rec-txn-legend">
+        <span class="rec-txn-legend--recurring">&#8635; ${recurCount} recurring</span>
+        <span>${transactions.length - recurCount} one-off</span>
+      </div>
+      <div class="rec-txn-list">${rows}</div>`;
+  }
+
+  function recRenderError(msg, detail) {
+    const body = $("uc-body");
+    if (!body) return;
+    body.innerHTML = `
+      <div class="rec-stage">
+        <div class="rec-error">
+          <strong>Could not retrieve recurring transactions</strong><br>
+          ${escapeHtml(msg)}
+          ${detail ? `<pre style="margin:8px 0 0;font-size:11px;overflow:auto">${escapeHtml(JSON.stringify(detail, null, 2))}</pre>` : ""}
+        </div>
+        <button class="rec-btn rec-btn--secondary" id="rec-err-back" style="align-self:flex-start;margin-top:4px">← Back</button>
+      </div>`;
+    const backBtn = body.querySelector("#rec-err-back");
+    if (backBtn) backBtn.addEventListener("click", () => { REC.loading = false; recRender(); });
+  }
+
+  // ===================== Payment Success Indicator Use Case =====================
+
+  const PSI = {
+    cid: "9013023139",
+    accounts: [],
+    selectedAccountId: null,
+    amount: 500,
+    result: null,
+    loading: false,
+    selectedDay: 0,    // index into dailyResults for factor breakdown
+  };
+
+  const PSI_RISK_COLORS = { low: "#10b981", medium: "#f59e0b", high: "#ef4444" };
+  const PSI_RISK_BG    = { low: "#d1fae5", medium: "#fef3c7", high: "#fee2e2" };
+  const PSI_RISK_TEXT  = { low: "#065f46", medium: "#92400e", high: "#991b1b" };
+  const PSI_FACTOR_LABELS = {
+    recentBalance:     "Recent Balance",
+    balanceHistory:    "Balance History",
+    nsfHistory:        "NSF History",
+    recentNsfHistory:  "Recent NSF Activity",
+    recurringNsf:      "Recurring NSF",
+    spendHistory:      "Spend Trend",
+    depositHistory:    "Deposit Trend",
+    transactionAmount: "Transaction Size",
+  };
+
+  function renderPsi() {
+    fetch("/explorer/ofin/state").then(r => r.json()).then(d => {
+      PSI.cid = (d.state || {}).customer_id || PSI.cid;
+      psiRender();
+    }).catch(() => psiRender());
+  }
+
+  function psiShortDate(iso) {
+    if (!iso) return "";
+    const [, m, day] = iso.split("-");
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return months[parseInt(m,10)-1] + " " + parseInt(day,10);
+  }
+
+  function psiRender() {
+    const body = $("uc-body");
+    if (!body) return;
+    body.innerHTML = `
+      <div class="psi-stage">
+        <div class="psi-controlbar">
+          <div class="psi-controls-row">
+            <div class="psi-field psi-field--grow">
+              <label>Customer ID</label>
+              <input id="psi-cid" value="${escapeHtml(PSI.cid)}" placeholder="Enter customer ID" />
+            </div>
+            <button class="btn" id="psi-load-btn">Load Accounts</button>
+          </div>
+          ${PSI.accounts.length ? `
+          <div class="psi-controls-row">
+            <div class="psi-field psi-field--grow">
+              <label>Account</label>
+              <select id="psi-account-sel">
+                ${PSI.accounts.map(a => {
+                  const bal = a.balance != null
+                    ? ` · $${Number(a.balance).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`
+                    : "";
+                  return `<option value="${escapeHtml(a.id)}" ${PSI.selectedAccountId === a.id ? "selected" : ""}>${escapeHtml(a.name)} · ${escapeHtml(a.number)} · ${escapeHtml(a.type)}${bal}</option>`;
+                }).join("")}
+              </select>
+            </div>
+            <div class="psi-field">
+              <label>Amount (USD)</label>
+              <div class="psi-amount-wrap">
+                <span class="psi-amount-dollar">$</span>
+                <input id="psi-amount" type="number" min="1" step="0.01" value="${PSI.amount}" />
+              </div>
+            </div>
+            <button class="btn btn-primary" id="psi-run-btn" ${PSI.loading ? "disabled" : ""}>
+              ${PSI.loading
+                ? `<span class="psi-spinner"></span>Assessing…`
+                : `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;flex-shrink:0"><path d="M9 1v16M1 9h16"/></svg>Run Assessment`}
+            </button>
+          </div>
+          ` : `<p class="psi-hint">Enter a Customer ID and load their accounts to begin.</p>`}
+        </div>
+
+        <div id="psi-result-area">
+          ${PSI.loading ? `<div class="psi-loading-state"><div class="psi-spinner psi-spinner--lg"></div><p>Calling Payment Success Indicator API…</p></div>` : ""}
+          ${!PSI.loading && PSI.result ? psiResultHtml(PSI.result) : ""}
+          ${!PSI.loading && !PSI.result && !PSI.accounts.length ? psiHeroHtml() : ""}
+        </div>
+      </div>
+    `;
+    psiWire();
+  }
+
+  function psiHeroHtml() {
+    return `
+      <div class="psi-hero">
+        <div class="psi-hero-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="24" cy="24" r="20"/>
+            <path d="M24 14v10l6 4"/>
+          </svg>
+        </div>
+        <h3>Real-time Payment Risk Assessment</h3>
+        <p>PSI evaluates the likelihood of an ACH payment succeeding — before you send it. Load a customer's accounts above to get started.</p>
+        <div class="psi-hero-chips">
+          <span class="psi-hero-chip">Real-time balance check</span>
+          <span class="psi-hero-chip">10-day NSF risk forecast</span>
+          <span class="psi-hero-chip">Fraud signal detection</span>
+        </div>
+      </div>`;
+  }
+
+  function psiResultHtml(r) {
+    if (r.error) {
+      return `<div class="psi-error-card"><span class="psi-error-icon">⚠</span><div><strong>Assessment failed</strong><p>${escapeHtml(r.error)}</p></div></div>`;
+    }
+
+    const daily = r.dailyResults || [];
+    const selDay = daily[PSI.selectedDay] || daily[0] || {};
+    const hasNsf = daily.length > 0;
+    const unauth = r.unauthorizedReturnRisk;
+
+    // Best settlement day (lowest nsfScore)
+    let bestIdx = 0;
+    daily.forEach((d, i) => { if (d.nsfScore < daily[bestIdx].nsfScore) bestIdx = i; });
+
+    return `
+      <div class="psi-result">
+
+        <!-- Summary strip -->
+        <div class="psi-summary">
+          <div class="psi-summary-item">
+            <label>Transaction</label>
+            <span class="psi-summary-amount">$${Number(r.amount || 0).toLocaleString("en-US", {minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+          </div>
+          <div class="psi-summary-divider"></div>
+          ${r.availableBalance != null ? `
+          <div class="psi-summary-item">
+            <label>Available Balance</label>
+            <span class="psi-summary-balance">$${Number(r.availableBalance).toLocaleString("en-US", {minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+          </div>
+          <div class="psi-summary-divider"></div>` : ""}
+          <div class="psi-summary-item">
+            <label>Settle by</label>
+            <span>${escapeHtml(psiShortDate(r.settleByDate))}</span>
+          </div>
+          <div class="psi-summary-divider"></div>
+          <div class="psi-summary-item">
+            <label>Assessment date</label>
+            <span>${escapeHtml(r.requestDate || "")}</span>
+          </div>
+          ${daily.length ? `
+          <div class="psi-summary-divider"></div>
+          <div class="psi-summary-item">
+            <label>Best settlement day</label>
+            <span class="psi-best-day">${escapeHtml(psiShortDate(daily[bestIdx].date))}</span>
+          </div>` : ""}
+        </div>
+
+        ${hasNsf ? `
+        <!-- Timeline chart -->
+        <div class="psi-timeline">
+          <div class="psi-timeline-head">
+            <div>
+              <div class="psi-section-title">Settlement Confidence — ${daily.length}-Day Window</div>
+              <div class="psi-section-sub">Higher bars = greater confidence payment will clear without NSF. Click a day to inspect risk factors.</div>
+            </div>
+          </div>
+          <div class="psi-timeline-bars" id="psi-bars">
+            ${daily.map((d, i) => {
+              const conf = d.confidence;
+              const lvl  = d.riskLevel;
+              const isBest = i === bestIdx;
+              const isSel  = i === PSI.selectedDay;
+              return `<div class="psi-day ${isBest ? "psi-day--best" : ""} ${isSel ? "psi-day--selected" : ""}" data-day-idx="${i}" title="${escapeHtml(d.indicator)}">
+                ${isBest ? `<div class="psi-day-best-label">Best</div>` : ""}
+                <div class="psi-day-conf">${Math.round(conf)}%</div>
+                <div class="psi-day-bar-wrap">
+                  <div class="psi-day-bar psi-bar--${lvl}" style="height:${Math.max(4,Math.round(conf * 1.1))}px"></div>
+                </div>
+                <div class="psi-day-date">${escapeHtml(psiShortDate(d.date))}</div>
+                <div class="psi-day-badge psi-badge--${lvl}">${lvl === "low" ? "Low" : lvl === "medium" ? "Med" : "High"}</div>
+              </div>`;
+            }).join("")}
+          </div>
+        </div>
+        ` : r.nsfError ? `<div class="psi-error-card"><span class="psi-error-icon">⚠</span><div><strong>NSF score unavailable</strong><p>${escapeHtml((r.nsfError.message||r.nsfError.title||JSON.stringify(r.nsfError)))}</p></div></div>` : ""}
+
+        <!-- Score cards -->
+        <div class="psi-cards">
+          ${hasNsf ? `
+          <div class="psi-card">
+            <div class="psi-card-label">NSF Return Risk</div>
+            <div class="psi-card-row">
+              <div class="psi-card-score psi-score--${selDay.riskLevel}">${Math.round(selDay.nsfScore ?? 0)}</div>
+              <div class="psi-card-score-meta">
+                <span class="psi-indicator-badge psi-ibadge--${selDay.riskLevel}">${escapeHtml(selDay.indicator||"")}</span>
+                <span class="psi-card-sub">Settlement confidence: <strong>${Math.round(selDay.confidence ?? 0)}%</strong></span>
+                <span class="psi-card-sub">${escapeHtml(psiShortDate(selDay.date))}</span>
+              </div>
+            </div>
+            <p class="psi-card-desc">Probability that this payment will result in an Insufficient Funds return. Score 0–100; lower is better.</p>
+          </div>` : ""}
+
+          ${unauth ? `
+          <div class="psi-card">
+            <div class="psi-card-label">Unauthorized Return Risk</div>
+            <div class="psi-card-row">
+              <div class="psi-card-score psi-score--${unauth.riskLevel}">${Math.round(unauth.score ?? 0)}</div>
+              <div class="psi-card-score-meta">
+                <span class="psi-indicator-badge psi-ibadge--${unauth.riskLevel}">${escapeHtml(unauth.indicator||"")}</span>
+                <span class="psi-card-sub">Fraud signal score</span>
+              </div>
+            </div>
+            <p class="psi-card-desc">Likelihood the transaction will be disputed as unauthorized due to first- or third-party fraud. Score 0–100; lower is better.</p>
+          </div>` : ""}
+        </div>
+
+        ${selDay.reasons && Object.values(selDay.reasons).some(v => v > 0) ? `
+        <!-- Risk factor breakdown -->
+        <div class="psi-factors">
+          <div class="psi-section-title">Risk Factor Breakdown <span class="psi-factors-date">— ${escapeHtml(psiShortDate(selDay.date))}</span></div>
+          <div class="psi-section-sub" style="margin-bottom:16px">Component scores driving the NSF risk assessment. Each factor is weighted 0–100; higher = more risk.</div>
+          <div class="psi-factors-grid">
+            ${Object.entries(selDay.reasons).map(([key, val]) => `
+              <div class="psi-factor">
+                <div class="psi-factor-label">${escapeHtml(PSI_FACTOR_LABELS[key] || key)}</div>
+                <div class="psi-factor-row">
+                  <div class="psi-factor-track">
+                    <div class="psi-factor-fill" style="width:${val}%; background:${psiFactorColor(val)}"></div>
+                  </div>
+                  <span class="psi-factor-score" style="color:${psiFactorColor(val)}">${val}</span>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        </div>` : ""}
+
+      </div>
+    `;
+  }
+
+  function psiFactorColor(v) {
+    if (v >= 66) return "#ef4444";
+    if (v >= 33) return "#f59e0b";
+    return "#10b981";
+  }
+
+  function psiWire() {
+    const loadBtn = $("psi-load-btn");
+    const runBtn  = $("psi-run-btn");
+
+    if (loadBtn) {
+      loadBtn.addEventListener("click", () => {
+        PSI.cid = ($("psi-cid") || {}).value?.trim() || PSI.cid;
+        psiLoadAccounts();
+      });
+    }
+    const cidInput = $("psi-cid");
+    if (cidInput) {
+      cidInput.addEventListener("keydown", e => {
+        if (e.key === "Enter") { PSI.cid = cidInput.value.trim(); psiLoadAccounts(); }
+      });
+    }
+
+    const sel = $("psi-account-sel");
+    if (sel) {
+      sel.addEventListener("change", () => { PSI.selectedAccountId = sel.value; });
+      if (!PSI.selectedAccountId) PSI.selectedAccountId = sel.value;
+    }
+
+    if (runBtn) {
+      runBtn.addEventListener("click", () => {
+        const amtInput = $("psi-amount");
+        PSI.amount = parseFloat(amtInput?.value || "500") || 500;
+        PSI.selectedAccountId = $("psi-account-sel")?.value || PSI.selectedAccountId;
+        psiRunAssessment();
+      });
+    }
+
+    // Day click → update selected day for factor breakdown
+    const barsEl = $("psi-bars");
+    if (barsEl) {
+      barsEl.querySelectorAll("[data-day-idx]").forEach(el => {
+        el.addEventListener("click", () => {
+          PSI.selectedDay = parseInt(el.dataset.dayIdx, 10);
+          psiRender();
+        });
+      });
+    }
+  }
+
+  function psiLoadAccounts() {
+    const area = $("psi-result-area");
+    if (area) area.innerHTML = `<div class="psi-loading-state"><div class="psi-spinner psi-spinner--lg"></div><p>Loading accounts…</p></div>`;
+    fetch("/usecases/psi/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "get_accounts", params: { customer_id: PSI.cid } }),
+    }).then(r => r.json()).then(d => {
+      if (d.error) {
+        const area2 = $("psi-result-area");
+        if (area2) area2.innerHTML = `<div class="psi-error-card"><span class="psi-error-icon">⚠</span><div><strong>Could not load accounts</strong><p>${escapeHtml(d.error)}</p></div></div>`;
+        return;
+      }
+      PSI.accounts = d.accounts || [];
+      PSI.selectedAccountId = PSI.accounts[0]?.id || null;
+      PSI.result = null;
+      PSI.selectedDay = 0;
+      psiRender();
+    }).catch(() => {
+      const area2 = $("psi-result-area");
+      if (area2) area2.innerHTML = `<div class="psi-error-card"><span class="psi-error-icon">⚠</span><div><strong>Request failed</strong><p>Could not reach the server.</p></div></div>`;
+    });
+  }
+
+  function psiRunAssessment() {
+    PSI.loading = true;
+    PSI.result = null;
+    psiRender();
+    fetch("/usecases/psi/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "score",
+        params: { customer_id: PSI.cid, account_id: PSI.selectedAccountId, amount: PSI.amount },
+      }),
+    }).then(r => r.json()).then(d => {
+      PSI.loading = false;
+      PSI.selectedDay = 0;
+      PSI.result = d.result || (d.error ? { error: d.error } : { error: "No result returned" });
+      psiRender();
+    }).catch(() => {
+      PSI.loading = false;
+      PSI.result = { error: "Request failed — check network and try again." };
+      psiRender();
+    });
+  }
+
+  // ===================== BIN Lookup Use Case =====================
+  // Renders a beautifully animated payment card annotated with all the
+  // data returned by the Mastercard BIN Resource Lookup API.
+
+  const BIN = { bin: "543210", card: null, loading: false };
+
+  const BIN_PRESET_OPTIONS = [
+    { value: "543210", label: "543210 — Buckeye State Credit Union (US)" },
+    { value: "111102", label: "111102 — Arab Bank PLC (JO)" },
+    { value: "356600", label: "356600 — Credencial Argentina SA (AR)" },
+    { value: "520000", label: "520000 — Orange Bank (FR)" },
+    { value: "541111", label: "541111 — Entropay Limited (CH)" },
+  ];
+
+  function renderBinLookup() {
+    const body = $("uc-body");
+    if (!body) return;
+    body.innerHTML = `
+      <div class="bin-stage">
+        <div class="bin-form-row">
+          <div class="bin-field">
+            <label for="bin-select">BIN / Issuer</label>
+            <select id="bin-select">
+              ${BIN_PRESET_OPTIONS.map(o =>
+                `<option value="${escapeHtml(o.value)}"${o.value === BIN.bin ? " selected" : ""}>${escapeHtml(o.label)}</option>`
+              ).join("")}
+            </select>
+          </div>
+          <button class="bin-lookup-btn" id="bin-lookup-btn"${BIN.loading ? " disabled" : ""}>
+            ${BIN.loading
+              ? `<span class="psi-spinner"></span>Looking up…`
+              : `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>Look Up Card`}
+          </button>
+        </div>
+        <div class="bin-scene" id="bin-scene">
+          ${BIN.card ? binSceneHtml(BIN.card) : binEmptySceneHtml()}
+        </div>
+      </div>`;
+    binWire();
+  }
+
+  function binEmptySceneHtml() {
+    return `
+      <div class="bin-card-wrap" id="bin-card-wrap">
+        <div class="bin-card bin-card--empty">
+          <div class="bin-card-gloss"></div>
+          <div class="bin-card-inner">
+            <div class="bin-card-top-row">
+              <div class="bin-issuer-line">SELECT A BIN TO BEGIN</div>
+              ${_binContactlessSvg()}
+            </div>
+            <div class="bin-chip-row">${_binChipSvg()}</div>
+            <div class="bin-number-row"><span class="bin-num-placeholder">•••• •••• •••• ••••</span></div>
+            <div class="bin-card-footer-row">
+              <div><div class="bin-card-sublabel">CARD HOLDER</div><div class="bin-card-name">VALUED CUSTOMER</div></div>
+              <div><div class="bin-card-sublabel">EXPIRES</div><div class="bin-card-expiry">••/••</div></div>
+              <div class="bin-card-netlogo"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="bin-empty-hint">Choose a BIN above and click <strong>Look Up Card</strong>.</p>`;
+  }
+
+  function binSceneHtml(card) {
+    const grad = `linear-gradient(135deg, ${escapeHtml(card.color1)} 0%, ${escapeHtml(card.color2)} 100%)`;
+    const funding = (card.fundingSource || "").toLowerCase();
+    const fundingLabel = { credit: "Credit", debit: "Debit", prepaid: "Prepaid", none: "None" }[funding] || card.fundingSource || "—";
+    return `
+      <div class="bin-annotated-layout">
+        <!-- Left callouts: Issuer · Brand · ICA -->
+        <div class="bin-callouts bin-callouts--left">
+          ${_binCallout("Issuer",   escapeHtml(card.issuerName),  "left",  0)}
+          ${_binCallout("Brand",    escapeHtml(card.brandLabel),  "left",  1)}
+          ${card.ica ? _binCallout("ICA", escapeHtml(card.ica),  "left",  2) : ""}
+        </div>
+
+        <!-- Card -->
+        <div class="bin-card-wrap" id="bin-card-wrap">
+          <div class="bin-card" style="background:${grad}">
+            <div class="bin-card-gloss"></div>
+            <div class="bin-card-inner">
+              <div class="bin-card-top-row">
+                <div class="bin-issuer-line">${escapeHtml(card.displayName.toUpperCase())}</div>
+                ${_binContactlessSvg()}
+              </div>
+              <div class="bin-chip-row">${_binChipSvg()}</div>
+              <div class="bin-number-row" id="bin-number-row">${_binNumberHtml(card.binNum)}</div>
+              <div class="bin-card-footer-row">
+                <div class="bin-card-product-badge">${escapeHtml(card.product)}</div>
+                <div class="bin-card-country-tag">${card.flagEmoji ? card.flagEmoji + " " : ""}${escapeHtml(card.countryName)}</div>
+                <div class="bin-card-netlogo">${_binNetworkSvg(card.network)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right callouts: Country · Funding · Segment -->
+        <div class="bin-callouts bin-callouts--right">
+          ${_binCallout("Country",  (card.flagEmoji ? card.flagEmoji + " " : "") + escapeHtml(card.countryName), "right", 0)}
+          ${_binCallout("Funding",  fundingLabel, "right", 1, funding ? "bin-callout-value--" + funding : "")}
+          ${_binCallout("Segment",  escapeHtml(card.consumerLabel), "right", 2)}
+        </div>
+      </div>
+
+      <!-- Capabilities grid -->
+      <div class="bin-capability-grid" id="bin-cap-grid">
+        ${card.productCode ? _binCapChip("Product", card.productCode + " — " + card.product, "neutral") : _binCapChip("Product", card.product, "neutral")}
+        ${card.billingCurrency ? _binCapChip("Billing Currency", card.billingCurrency, "neutral") : ""}
+        ${_binCapChip("Local Use",   card.localUse        ? "Domestic Only"          : "International",  card.localUse        ? "warn" : "ok")}
+        ${_binCapChip("MoneySend",   card.moneySend       ? "Enabled"                : "Not Enabled",    card.moneySend       ? "ok"   : "dim")}
+        ${_binCapChip("Fast Fund",   card.fastFund        ? (card.fastFundDomesticOnly ? "Domestic Only" : "Full Support") : "Not Supported", card.fastFund ? "ok" : "dim")}
+        ${_binCapChip("DCC",         card.dccEnabled      ? "Supported"              : "Not Supported",  card.dccEnabled      ? "ok"   : "dim")}
+        ${_binCapChip("Auth Only",   card.authorizationOnly ? "Yes"                  : "No",             card.authorizationOnly ? "warn" : "")}
+        ${card.nonReloadable         ? _binCapChip("Non-Reloadable",  "Yes",          "warn") : ""}
+        ${card.governmentRange       ? _binCapChip("Government",      "Public Sector","info") : ""}
+        ${_binCapChip("Smart Data",  card.smartData       ? "Enrolled"               : "Not Enrolled",   card.smartData       ? "ok"   : "dim")}
+        ${card.isToken               ? _binCapChip("Token BIN",       "Network Token","info") : ""}
+      </div>
+
+      <!-- Mobile chip grid (shown only on narrow screens) -->
+      <div class="bin-chips-mobile">
+        ${_binChip("Issuer",    card.issuerName, 0)}
+        ${_binChip("Network",   card.network,    1)}
+        ${_binChip("Country",   (card.flagEmoji ? card.flagEmoji + " " : "") + card.countryName, 2)}
+        ${_binChip("Product",   card.product,    3)}
+        ${_binChip("Segment",   card.consumerLabel, 4)}
+        ${_binChip("Funding",   fundingLabel,    5)}
+        ${_binChip("BIN",       card.binNum,     6)}
+        ${card.productCode ? _binChip("Product Code", card.productCode, 7) : ""}
+      </div>
+
+      <details class="bin-raw-details">
+        <summary>Full API response</summary>
+        <pre class="bin-raw-pre">${escapeHtml(JSON.stringify(card.raw, null, 2))}</pre>
+      </details>`;
+  }
+
+  // ─── HTML helpers ────────────────────────────────────────────────────────
+
+  function _binCallout(label, value, side, idx, valueCls) {
+    return `
+      <div class="bin-callout bin-callout--${side}" data-co-idx="${idx}">
+        <div class="bin-callout-text">
+          <div class="bin-callout-label">${escapeHtml(label)}</div>
+          <div class="bin-callout-value${valueCls ? " " + valueCls : ""}">${value}</div>
+        </div>
+        <div class="bin-callout-line"></div>
+        <div class="bin-callout-dot"></div>
+      </div>`;
+  }
+
+  function _binChip(label, value, idx) {
+    return `
+      <div class="bin-chip" data-chip-idx="${idx}">
+        <div class="bin-chip-label">${escapeHtml(label)}</div>
+        <div class="bin-chip-value">${value}</div>
+      </div>`;
+  }
+
+  function _binCapChip(label, value, modifier) {
+    return `<div class="bin-cap-chip${modifier ? " bin-cap-chip--" + modifier : ""}" data-cap-idx>
+      <div class="bin-cap-label">${escapeHtml(label)}</div>
+      <div class="bin-cap-value">${escapeHtml(value)}</div>
+    </div>`;
+  }
+
+  function _binNumberHtml(bin) {
+    const padded = String(bin).padEnd(16, "x");
+    const groups = [padded.slice(0,4), padded.slice(4,8), padded.slice(8,12), padded.slice(12,16)];
+    return groups.map((grp, gi) => {
+      const chars = grp.split("").map((ch, ci) => {
+        const pos = gi * 4 + ci;
+        const real = pos < bin.length;
+        return `<span class="bin-digit ${real ? "bin-digit--real" : "bin-digit--masked"}" data-pos="${pos}">${real ? ch : "•"}</span>`;
+      }).join("");
+      return `<span class="bin-grp">${chars}</span>`;
+    }).join('<span class="bin-grp-space"> </span>');
+  }
+
+  function _binNetworkSvg(network) {
+    if (network === "Mastercard") return `
+      <svg viewBox="0 0 52 34" class="bin-net-svg" aria-label="Mastercard">
+        <circle cx="19" cy="17" r="13" fill="#eb001b" opacity="0.93"/>
+        <circle cx="33" cy="17" r="13" fill="#f79e1b" opacity="0.93"/>
+        <path d="M26 7a13 13 0 0 1 0 20A13 13 0 0 1 26 7z" fill="#ff5f00" opacity="0.86"/>
+      </svg>`;
+    if (network === "Visa") return `
+      <svg viewBox="0 0 72 24" class="bin-net-svg" aria-label="Visa">
+        <text x="1" y="20" font-family="Arial,sans-serif" font-size="22" font-style="italic" font-weight="900" fill="white" letter-spacing="-1">VISA</text>
+      </svg>`;
+    if (network === "Amex") return `
+      <svg viewBox="0 0 72 24" class="bin-net-svg" aria-label="American Express">
+        <text x="1" y="19" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="white" letter-spacing="1">AMEX</text>
+      </svg>`;
+    if (network === "Discover") return `
+      <svg viewBox="0 0 72 24" class="bin-net-svg" aria-label="Discover">
+        <text x="1" y="19" font-family="Arial,sans-serif" font-size="11" font-weight="700" fill="white">DISCOVER</text>
+      </svg>`;
+    return `<svg viewBox="0 0 72 24" class="bin-net-svg"><text x="1" y="19" font-family="Arial,sans-serif" font-size="11" fill="white">${escapeHtml(network)}</text></svg>`;
+  }
+
+  function _binChipSvg() {
+    return `<svg viewBox="0 0 44 34" class="bin-chip-svg" aria-hidden="true">
+      <rect width="44" height="34" rx="5" fill="#c8a830"/>
+      <rect x="3" y="3" width="38" height="28" rx="4" fill="#e2bb44" stroke="#a88820" stroke-width="0.6"/>
+      <line x1="3"  y1="12" x2="41" y2="12" stroke="#a88820" stroke-width="0.6"/>
+      <line x1="3"  y1="22" x2="41" y2="22" stroke="#a88820" stroke-width="0.6"/>
+      <line x1="15" y1="3"  x2="15" y2="31" stroke="#a88820" stroke-width="0.6"/>
+      <line x1="29" y1="3"  x2="29" y2="31" stroke="#a88820" stroke-width="0.6"/>
+      <rect x="15" y="12" width="14" height="10" rx="1.5" fill="#c8a420" stroke="#a88820" stroke-width="0.4"/>
+    </svg>`;
+  }
+
+  function _binContactlessSvg() {
+    return `<svg viewBox="0 0 24 24" class="bin-contactless-svg" fill="none" aria-hidden="true">
+      <path d="M12 5a7 7 0 0 1 0 14" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+      <path d="M12 8.5a3.5 3.5 0 0 1 0 7" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="12" cy="12" r="1.5" fill="rgba(255,255,255,0.45)"/>
+    </svg>`;
+  }
+
+  // ─── Animation ───────────────────────────────────────────────────────────
+
+  function binAnimateIn() {
+    // 1. Card swings into view
+    const wrap = document.getElementById("bin-card-wrap");
+    if (wrap) {
+      wrap.style.opacity = "0";
+      wrap.style.transform = "perspective(900px) rotateY(-28deg) translateY(10px) scale(0.93)";
+      wrap.style.transition = "none";
+      void wrap.offsetWidth; // force reflow
+      wrap.style.transition = "opacity 0.55s ease, transform 0.65s cubic-bezier(0.34,1.36,0.64,1)";
+      wrap.style.opacity = "1";
+      wrap.style.transform = "perspective(900px) rotateY(0deg) translateY(0) scale(1)";
+    }
+    // 2. BIN digits appear left-to-right
+    document.querySelectorAll("#bin-number-row .bin-digit--real").forEach((el, i) => {
+      el.style.opacity = "0";
+      el.style.transform = "translateY(7px)";
+      setTimeout(() => {
+        el.style.transition = "opacity 0.22s ease, transform 0.22s ease";
+        el.style.opacity = "1";
+        el.style.transform = "translateY(0)";
+      }, 280 + i * 60);
+    });
+    // 3. Side callouts slide in
+    document.querySelectorAll(".bin-callout").forEach(el => {
+      const idx = parseInt(el.dataset.coIdx || "0");
+      const left = el.classList.contains("bin-callout--left");
+      el.style.opacity = "0";
+      el.style.transform = `translateX(${left ? -22 : 22}px)`;
+      setTimeout(() => {
+        el.style.transition = "opacity 0.42s ease, transform 0.48s cubic-bezier(0.34,1.2,0.64,1)";
+        el.style.opacity = "1";
+        el.style.transform = "translateX(0)";
+      }, 500 + idx * 110);
+    });
+    // 4. Mobile chips
+    document.querySelectorAll(".bin-chip").forEach(el => {
+      const idx = parseInt(el.dataset.chipIdx || "0");
+      el.style.opacity = "0";
+      el.style.transform = "translateY(10px)";
+      setTimeout(() => {
+        el.style.transition = "opacity 0.35s ease, transform 0.35s ease";
+        el.style.opacity = "1";
+        el.style.transform = "translateY(0)";
+      }, 380 + idx * 75);
+    });
+    // 5. Capability chips cascade in
+    document.querySelectorAll(".bin-cap-chip").forEach((el, i) => {
+      el.style.opacity = "0";
+      el.style.transform = "translateY(12px) scale(0.95)";
+      setTimeout(() => {
+        el.style.transition = "opacity 0.30s ease, transform 0.35s cubic-bezier(0.34,1.1,0.64,1)";
+        el.style.opacity = "1";
+        el.style.transform = "translateY(0) scale(1)";
+      }, 700 + i * 55);
+    });
+  }
+
+  // ─── Wiring ──────────────────────────────────────────────────────────────
+
+  function binWire() {
+    const sel = document.getElementById("bin-select");
+    if (sel) sel.addEventListener("change", () => { BIN.bin = sel.value; });
+
+    const btn = document.getElementById("bin-lookup-btn");
+    if (!btn) return;
+
+    btn.addEventListener("click", async () => {
+      const selEl = document.getElementById("bin-select");
+      if (selEl) BIN.bin = selEl.value;
+      if (!BIN.bin) return;
+
+      BIN.loading = true;
+      BIN.card = null;
+      renderBinLookup();
+
+      try {
+        const r = await _nativeFetch("/usecases/binlookup/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "lookup", params: { account_range: BIN.bin } }),
+        });
+        const d = await r.json();
+        BIN.loading = false;
+        if (d.error) {
+          BIN.card = null;
+          renderBinLookup();
+          const scene = document.getElementById("bin-scene");
+          if (scene) scene.insertAdjacentHTML("beforeend", `<div class="bin-error-msg">${escapeHtml(String(d.error))}</div>`);
+        } else if (!d.found) {
+          BIN.card = null;
+          renderBinLookup();
+          const scene = document.getElementById("bin-scene");
+          if (scene) scene.insertAdjacentHTML("beforeend", `<div class="bin-notfound-msg">${escapeHtml(d.note || "No matching BIN found.")}</div>`);
+        } else {
+          BIN.card = d.card;
+          renderBinLookup();
+          requestAnimationFrame(() => setTimeout(binAnimateIn, 30));
+        }
+      } catch (e) {
+        BIN.loading = false;
+        BIN.card = null;
+        renderBinLookup();
+      }
+    });
+  }
+
+  // ---------------- Personal Finance Manager ----------------
+  // Refined palette — Stripe-inspired (muted, modern)
+  const PFM_CATEGORY_COLORS = {
+    "Food and Drink": "#f97316", "Restaurants": "#f97316", "Groceries": "#f59e0b",
+    "Shopping": "#ec4899", "Travel": "#3b82f6", "Transportation": "#0ea5e9",
+    "Bills & Utilities": "#8b5cf6", "Service": "#8b5cf6", "Health & Fitness": "#10b981",
+    "Entertainment": "#f43f5e", "Income": "#0f7050", "Transfer": "#64748b",
+    "Cash & ATM": "#475569", "Education": "#06b6d4", "Personal Care": "#d946ef",
+    "Home": "#14b8a6", "Other": "#94a3b8", "Deposit": "#0f7050",
+  };
+  function pfmColor(cat) { return PFM_CATEGORY_COLORS[cat] || "#94a3b8"; }
+
+  // Inline SVG icons (lucide-style)
+  const ICON = {
+    user:   `<svg class="pfm-i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>`,
+    bell:   `<svg class="pfm-i" viewBox="0 0 24 24"><path d="M6 9a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>`,
+    lock:   `<svg class="pfm-i" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>`,
+    bank:   `<svg class="pfm-i" viewBox="0 0 24 24"><path d="M3 10 12 4l9 6"/><path d="M5 10v9M9 10v9M15 10v9M19 10v9"/><path d="M3 21h18"/></svg>`,
+    download:`<svg class="pfm-i" viewBox="0 0 24 24"><path d="M12 4v12"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg>`,
+    info:   `<svg class="pfm-i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="8" r="0.5" fill="currentColor"/></svg>`,
+    home:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10"/></svg>`,
+    cards:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>`,
+    chart:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>`,
+    gear:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`,
+    arrowUp:  `<svg class="pfm-i" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>`,
+    arrowDown:`<svg class="pfm-i" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m5 12 7 7 7-7"/></svg>`,
+    plus:   `<svg class="pfm-i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>`,
+    more:   `<svg class="pfm-i" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="18" cy="12" r="1" fill="currentColor"/></svg>`,
+    search: `<svg class="pfm-i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>`,
+    chev:   `<svg class="pfm-i pfm-i-sm" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>`,
+    chevLeft:`<svg class="pfm-i" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg>`,
+    link:   `<svg class="pfm-i" viewBox="0 0 24 24"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>`,
+    sparkles:`<svg class="pfm-i" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.5 5.5l2.8 2.8M15.7 15.7l2.8 2.8M5.5 18.5l2.8-2.8M15.7 8.3l2.8-2.8"/></svg>`,
+    // Account-type icons
+    acctChecking: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/></svg>`,
+    acctSavings:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7c0-2-3-3-7-3S5 5 5 7v10c0 2 3 3 7 3s7-1 7-3z"/><path d="M5 12c0 2 3 3 7 3s7-1 7-3"/></svg>`,
+    acctCard:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M7 15h3"/></svg>`,
+    acctLoan:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17H3v-5l2-4h11l4 5v4h-2"/><path d="M9 17h6"/></svg>`,
+    acctMortgage: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>`,
+    acctInvest:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>`,
+    acctOther:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+    // Category icons (used in transaction rows & sheet)
+    catFood:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18l-1 9H4z"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+    catRest:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M5 3h4v6a2 2 0 0 1-4 0z"/><path d="M17 3v9a3 3 0 0 1-3 3v6"/></svg>`,
+    catGroc:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h2l2 12h12l2-8H6"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>`,
+    catShop:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l-1 13H7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>`,
+    catTravel:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16 21 8l-3 12-5-3-5 5z"/></svg>`,
+    catTrans:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M3 13h18v-3l-2-4H5l-2 4z"/></svg>`,
+    catBills:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>`,
+    catHealth:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12c0 5-8 9-8 9s-8-4-8-9a5 5 0 0 1 8-4 5 5 0 0 1 8 4z"/></svg>`,
+    catEnt:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M10 11l5 3-5 3z" fill="currentColor"/></svg>`,
+    catIncome:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m5 12 7 7 7-7"/></svg>`,
+    catTransfer:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h13M16 3l4 4-4 4"/><path d="M17 17H4M8 13l-4 4 4 4"/></svg>`,
+    catCash:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>`,
+    catEdu:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>`,
+    catCare:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M8 14h8l-1 7H9z"/></svg>`,
+    catHome:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10"/></svg>`,
+    catOther:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>`,
+  };
+
+  function pfmCatIcon(cat) {
+    const map = {
+      "Food and Drink": ICON.catFood, "Restaurants": ICON.catRest, "Groceries": ICON.catGroc,
+      "Shopping": ICON.catShop, "Travel": ICON.catTravel, "Transportation": ICON.catTrans,
+      "Bills & Utilities": ICON.catBills, "Service": ICON.catBills, "Health & Fitness": ICON.catHealth,
+      "Entertainment": ICON.catEnt, "Income": ICON.catIncome, "Transfer": ICON.catTransfer,
+      "Cash & ATM": ICON.catCash, "Education": ICON.catEdu, "Personal Care": ICON.catCare,
+      "Home": ICON.catHome, "Deposit": ICON.catIncome,
+    };
+    return map[cat] || ICON.catOther;
+  }
+  function pfmAcctIcon(type) {
+    const map = {
+      checking: ICON.acctChecking, savings: ICON.acctSavings, creditCard: ICON.acctCard,
+      loan: ICON.acctLoan, mortgage: ICON.acctMortgage, investment: ICON.acctInvest,
+    };
+    return map[type] || ICON.acctOther;
+  }
+
+  const ACCT_ICON = {
+    checking: true, savings: true, creditCard: true,
+    loan: true, mortgage: true, investment: true,
+  };
+
+  function fmtMoney(n) {
+    const sign = n < 0 ? "-" : "";
+    const v = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return `${sign}$${v}`;
+  }
+  function fmtMoneyShort(n) {
+    const abs = Math.abs(n);
+    const sign = n < 0 ? "-" : "";
+    if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(1)}k`;
+    return `${sign}$${abs.toFixed(0)}`;
+  }
+  function fmtDate(ts) {
+    if (!ts) return "";
+    const d = new Date(ts * 1000);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  const PFM_DEFAULT_CID = "9013023139";
+
+  function renderPfm() {
+    fetch("/explorer/ofin/state").then((r) => r.json()).then((d) => {
+      const cid = (d.state || {}).customer_id || PFM_DEFAULT_CID;
+      pfmRender(cid);
+    }).catch(() => pfmRender(PFM_DEFAULT_CID));
+  }
+
+  // PFM state
+  const PFM = {
+    cid: "",
+    data: null,
+    tab: "home",        // home | accounts | insights | settings
+    txnQuery: "",
+    selectedAcct: null, // when set, accounts tab shows detail
+    clockTimer: null,
+  };
+
+  function pfmRender(initialCustomerId) {
+    const body = $("uc-body");
+    body.innerHTML = `
+      <div class="pfm-stage">
+        <div class="pfm-controlbar">
+          <span class="label">Customer ID</span>
+          <input id="pfm-cid" placeholder="e.g. 9013023139" value="${initialCustomerId || ""}" />
+          <button class="btn btn-primary" id="pfm-load">Load</button>
+          <button class="btn" id="pfm-connect-btn">Connect new bank</button>
+        </div>
+
+        <div class="iphone">
+          <div class="iphone-screen">
+            <div class="iphone-notch" id="pfm-island">
+              <div class="pill-content">
+                <span class="pill-dot"></span>
+                <span id="pfm-island-text">Open Finance · Live</span>
+              </div>
+            </div>
+            <div class="iphone-status">
+              <span id="pfm-clock">9:41</span>
+              <span class="right">
+                <svg viewBox="0 0 18 12" width="17" height="12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5"/></svg>
+                <svg viewBox="0 0 18 12" width="17" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 5a11 11 0 0 1 16 0"/><path d="M4 8a7 7 0 0 1 10 0"/><circle cx="9" cy="10.5" r="1" fill="currentColor" stroke="none"/></svg>
+                <span class="battery"><span></span></span>
+              </span>
+            </div>
+            <div class="pfm-app" id="pfm-app"></div>
+            <div class="pfm-tabbar" id="pfm-tabbar">
+              <button data-tab="home">${ICON.home}<span>Home</span></button>
+              <button data-tab="accounts">${ICON.cards}<span>Accounts</span></button>
+              <button data-tab="insights">${ICON.chart}<span>Insights</span></button>
+              <button data-tab="settings">${ICON.gear}<span>Settings</span></button>
+            </div>
+            <div class="pfm-sheet-backdrop" id="pfm-sheet-backdrop"></div>
+            <div class="pfm-sheet" id="pfm-sheet"></div>
+            <div class="iphone-home-indicator"></div>
+          </div>
+        </div>
+      </div>
+    `;
+    $("pfm-load").addEventListener("click", () => pfmLoad($("pfm-cid").value.trim()));
+    $("pfm-cid").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") pfmLoad($("pfm-cid").value.trim());
+    });
+    $("pfm-connect-btn").addEventListener("click", () => pfmStartConnect());
+
+    // Wire tab bar
+    $("pfm-tabbar").querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        PFM.tab = btn.dataset.tab;
+        PFM.selectedAcct = null;
+        pfmDrawTabs();
+        pfmDrawScreen();
+      });
+    });
+    // Sheet dismiss
+    $("pfm-sheet-backdrop").addEventListener("click", pfmCloseSheet);
+
+    // Live clock
+    pfmStartClock();
+
+    pfmDrawTabs();
+    if (initialCustomerId) pfmLoad(initialCustomerId);
+    else pfmShowConnect("Enter a Customer ID above and tap Load.");
+  }
+
+  function pfmStartClock() {
+    if (PFM.clockTimer) clearInterval(PFM.clockTimer);
+    const tick = () => {
+      const el = document.getElementById("pfm-clock");
+      if (!el) { clearInterval(PFM.clockTimer); return; }
+      const d = new Date();
+      let h = d.getHours(), m = d.getMinutes();
+      el.textContent = `${h}:${String(m).padStart(2, "0")}`;
+    };
+    tick();
+    PFM.clockTimer = setInterval(tick, 15000);
+  }
+
+  function pfmDrawTabs() {
+    const bar = document.getElementById("pfm-tabbar");
+    if (!bar) return;
+    bar.querySelectorAll("button").forEach((b) => {
+      b.classList.toggle("active", b.dataset.tab === PFM.tab);
+    });
+  }
+
+  function pfmIslandFlash(text) {
+    const el = document.getElementById("pfm-island");
+    const tx = document.getElementById("pfm-island-text");
+    if (!el || !tx) return;
+    tx.textContent = text;
+    el.classList.add("expanded");
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove("expanded"), 2200);
+  }
+
+  function pfmShowConnect(msg) {
+    $("pfm-app").innerHTML = `
+      <div class="pfm-connect">
+        <div class="ic-wrap">${ICON.link}</div>
+        <h3>Connect a bank</h3>
+        <p>${escapeHtml(msg || "Link a customer's bank accounts via Open Finance to see balances, spending, and transactions here.")}</p>
+        <button class="btn btn-primary" id="pfm-inapp-connect">Connect new bank</button>
+      </div>
+    `;
+    const b = document.getElementById("pfm-inapp-connect");
+    if (b) b.addEventListener("click", () => pfmStartConnect());
+  }
+
+  function pfmLoad(cid) {
+    if (!cid) { pfmShowConnect("Enter a Customer ID."); return; }
+    PFM.cid = cid;
+    $("pfm-app").innerHTML = `<div class="pfm-connect"><div class="ic-wrap">${ICON.sparkles}</div><p>Loading accounts and transactions…</p></div>`;
+    pfmIslandFlash("Loading…");
+    fetch(`/usecases/pfm/data?customer_id=${encodeURIComponent(cid)}`)
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok || d.error) { pfmShowConnect(d.error || "Could not load data."); return; }
+        PFM.data = d;
+        PFM.data.recurring = null;
+        PFM.tab = "home";
+        PFM.selectedAcct = null;
+        pfmIslandFlash(`Loaded · ${d.accounts.length} accounts`);
+        pfmDrawTabs();
+        pfmDrawScreen();
+        pfmLazyLoad(cid, d.transactions || []);
+      })
+      .catch((e) => pfmShowConnect("Network error: " + e.message));
+  }
+
+  // Show a simple spinner message inside the iPhone screen (during post-Connect load)
+  function pfmShowConnectLoading(msg) {
+    const app = document.getElementById("pfm-app");
+    if (!app) return;
+    app.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;padding:24px">
+      <div class="spinner" style="width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:pfm-spin 0.8s linear infinite"></div>
+      <p style="font-size:13px;color:#6b7280;text-align:center;margin:0">${msg}</p>
+    </div>`;
+  }
+
+  // Load accounts for cid after Connect, retrying if accounts or transactions are missing.
+  // On the first attempt with accounts but no transactions, triggers a server-side refresh.
+  function pfmLoadWithRetry(cid, maxTries, _refreshed) {
+    if (!cid) { pfmShowConnect("No customer — please try again."); return; }
+    fetch(`/usecases/pfm/data?customer_id=${encodeURIComponent(cid)}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) { pfmShowConnect("Error loading accounts: " + d.error); return; }
+        const accs = d.accounts || [];
+        const txns = d.transactions || [];
+        // Retry if no accounts yet
+        if (accs.length === 0 && maxTries > 1) {
+          pfmShowConnectLoading("Waiting for accounts… (" + maxTries + " retries left)");
+          setTimeout(() => pfmLoadWithRetry(cid, maxTries - 1, _refreshed), 3000);
+          return;
+        }
+        // Accounts exist but no transactions — trigger a server-side refresh once, then retry
+        if (accs.length > 0 && txns.length === 0 && !_refreshed && maxTries > 1) {
+          pfmShowConnectLoading("Refreshing account data…");
+          fetch("/usecases/pfm/action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "refresh_accounts", params: { customer_id: cid } }),
+          }).finally(() => {
+            setTimeout(() => pfmLoadWithRetry(cid, maxTries - 1, true), 4000);
+          });
+          return;
+        }
+        // We have data (or exhausted retries) — render the home screen
+        PFM.cid = cid;
+        PFM.data = d;
+        PFM.data.recurring = null;
+        PFM.tab = "home";
+        PFM.selectedAcct = null;
+        pfmIslandFlash(`Loaded · ${accs.length} accounts · ${txns.length} transactions`);
+        pfmDrawTabs();
+        pfmDrawScreen();
+        pfmLazyLoad(cid, txns);
+      })
+      .catch(() => {
+        if (maxTries > 1) setTimeout(() => pfmLoadWithRetry(cid, maxTries - 1, _refreshed), 3000);
+        else pfmShowConnect("Could not load accounts — please try again.");
+      });
+  }
+
+  // ---------- Lazy enrichment + recurring (fires after initial load) ----------
+  function pfmLazyLoad(cid, txns) {
+    if (!cid || !PFM.data) return;
+    PFM.data.recurring = null; // null = loading, [] = loaded-empty
+
+    // 1. Enrich transactions in the background
+    const payload = (txns || []).slice(0, 50)
+      .map(t => ({ id: String(t.id), description: t.description || "", amount: t.amount, date: t.date, account_id: t.account_id || "" }))
+      .filter(t => t.description);
+    if (payload.length) {
+      fetch("/usecases/pfm/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "enrich_transactions", params: { transactions: payload } }),
+      })
+      .then(r => r.json())
+      .then(d => {
+        if (!d.enriched || !PFM.data) return;
+        let changed = false;
+        PFM.data.transactions.forEach(t => {
+          const e = d.enriched[String(t.id)];
+          if (!e) return;
+          if (e.name) { t.enrichedName = e.name; changed = true; }
+          if (e.logoUrl) t.logoUrl = e.logoUrl;
+          if (e.isRecurring) t.isRecurring = true;
+          if (e.category) t.enrichedCategory = e.category;
+        });
+        if (changed) pfmDrawScreen();
+      })
+      .catch(() => {});
+    }
+
+    // 2. Fetch recurring streams in the background
+    fetch("/usecases/pfm/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "get_recurring", params: { customer_id: cid } }),
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (!PFM.data) return;
+      PFM.data.recurring = d.streams || [];
+      pfmDrawScreen();
+    })
+    .catch(() => {
+      if (PFM.data) { PFM.data.recurring = []; pfmDrawScreen(); }
+    });
+  }
+
+  // ---------- In-app Connect Experience ----------
+  // Calls: create_customer → generate connect_url → open in popup (Finicity
+  // Connect refuses to run in an iframe — error 1412). The iPhone shows a
+  // waiting screen and polls for accounts; when they appear we load Home.
+  function pfmStartConnect() {
+    const app = document.getElementById("pfm-app");
+    if (!app) return;
+    const cidInput = $("pfm-cid");
+    const existing = cidInput && cidInput.value.trim();
+
+    pfmShowConnectWaiting("Preparing Connect…", null);
+    pfmIslandFlash("Open Finance · Connect");
+
+    // Always create a new customer for "Connect new bank" — this matches the
+    // original request (Create Customer → Connect URL) and avoids reloading
+    // the old user after the popup closes.
+    const ensureCustomer = fetch("/usecases/pfm/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "create_customer", params: {} }),
+    }).then((r) => r.json());
+
+    ensureCustomer
+      .then((res) => {
+        if (!res || res.error || !res.customer_id) {
+          throw new Error(res && res.error ? res.error : "Could not create customer");
+        }
+        PFM.cid = String(res.customer_id);
+        if (cidInput) cidInput.value = PFM.cid;
+        return fetch("/usecases/pfm/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "connect_url", params: { customer_id: PFM.cid } }),
+        }).then((r) => r.json());
+      })
+      .then((res) => {
+        if (!res || res.error || !res.connect_url) {
+          throw new Error(res && res.error ? res.error : "Could not generate Connect URL");
+        }
+        PFM._connectUrl = res.connect_url;
+        // Open Connect in a popup window (Finicity blocks iframe embedding).
+        pfmOpenConnectPopup(res.connect_url);
+        pfmShowConnectWaiting(`Customer ${PFM.cid}`, res.connect_url);
+        pfmPollForAccounts(PFM.cid);
+      })
+      .catch((e) => pfmShowConnect("Connect error: " + e.message));
+  }
+
+  function pfmOpenConnectPopup(url) {
+    try {
+      const w = 480, h = 760;
+      const left = Math.max(0, window.screenX + (window.outerWidth - w) / 2);
+      const top = Math.max(0, window.screenY + (window.outerHeight - h) / 2);
+      const features = [
+        "popup=yes",
+        `width=${w}`,
+        `height=${h}`,
+        `left=${left}`,
+        `top=${top}`,
+        "resizable=yes",
+        "scrollbars=yes",
+        "menubar=no",
+        "toolbar=no",
+        "location=no",
+        "status=no",
+        "noopener=no",
+      ].join(",");
+      const win = window.open(url, "vima-connect", features);
+      if (!win) return null;
+      try { win.focus(); } catch (_) {}
+      PFM._connectWin = win;
+      // When the popup closes, give Finicity a few seconds to process the
+      // newly-linked accounts before fetching, then retry if still empty.
+      const watchClose = setInterval(() => {
+        try {
+          if (win.closed) {
+            clearInterval(watchClose);
+            PFM._pollStop = true;
+            pfmShowConnectLoading("Linking accounts…");
+            setTimeout(() => pfmLoadWithRetry(PFM.cid, 8), 3000);
+          }
+        } catch (_) { clearInterval(watchClose); }
+      }, 800);
+      PFM._connectWatcher = watchClose;
+      return win;
+    } catch (_) { return null; }
+  }
+
+  function pfmShowConnectWaiting(title, url) {
+    const app = document.getElementById("pfm-app");
+    if (!app) return;
+    const hasUrl = !!url;
+    app.innerHTML = `
+      <div class="pfm-connect-frame">
+        <div class="topbar">
+          <button id="pfm-connect-cancel">${ICON.chevLeft} Cancel</button>
+          <h4>${escapeHtml(title)}</h4>
+          <span style="width:60px"></span>
+        </div>
+        <div class="loading">
+          <div class="spinner"></div>
+          <div style="text-align:center;max-width:220px;line-height:1.6;font-size:13px;color:#6a6a6a">
+            ${hasUrl
+              ? `Select your bank in the popup window, then come back here.`
+              : escapeHtml(title)}
+          </div>
+          ${hasUrl ? `
+            <button class="btn btn-primary" id="pfm-connect-done" style="margin-top:16px">Done — load my accounts</button>
+            <button class="btn" id="pfm-connect-reopen" style="margin-top:6px">Re-open Connect window</button>
+          ` : ""}
+        </div>
+      </div>
+    `;
+    const stopConnect = () => {
+      PFM._pollStop = true;
+      try { clearInterval(PFM._connectWatcher); } catch (_) {}
+      try { if (PFM._connectWin && !PFM._connectWin.closed) PFM._connectWin.close(); } catch (_) {}
+    };
+    const cancel = document.getElementById("pfm-connect-cancel");
+    if (cancel) cancel.addEventListener("click", () => {
+      stopConnect();
+      if (PFM.cid && PFM.data) pfmDrawScreen();
+      else if (PFM.cid) pfmLoad(PFM.cid);
+      else pfmShowConnect("Connect cancelled.");
+    });
+    const done = document.getElementById("pfm-connect-done");
+    if (done) done.addEventListener("click", () => {
+      stopConnect();
+      if (PFM.cid) pfmLoadWithRetry(PFM.cid, 8);
+      else pfmShowConnect("No customer — please try again.");
+    });
+    const reopen = document.getElementById("pfm-connect-reopen");
+    if (reopen) reopen.addEventListener("click", () => {
+      if (PFM._connectUrl) pfmOpenConnectPopup(PFM._connectUrl);
+    });
+  }
+
+
+  function pfmPollForAccounts(cid) {
+    PFM._pollStop = false;
+    const started = Date.now();
+    const tick = () => {
+      if (PFM._pollStop) return;
+      if (Date.now() - started > 5 * 60 * 1000) return; // 5 min cap
+      fetch(`/usecases/pfm/data?customer_id=${encodeURIComponent(cid)}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (PFM._pollStop) return;
+          if (d && Array.isArray(d.accounts) && d.accounts.length > 0) {
+            PFM.data = d;
+            PFM.tab = "home";
+            PFM.selectedAcct = null;
+            pfmIslandFlash(`Linked · ${d.accounts.length} accounts`);
+            pfmDrawTabs();
+            pfmDrawScreen();
+            return;
+          }
+          setTimeout(tick, 4000);
+        })
+        .catch(() => setTimeout(tick, 6000));
+    };
+    setTimeout(tick, 4000);
+  }
+
+  function pfmDrawScreen() {
+    const app = document.getElementById("pfm-app");
+    if (!app || !PFM.data) return;
+    let html = "";
+    if (PFM.tab === "home") html = pfmScreenHome();
+    else if (PFM.tab === "accounts") html = PFM.selectedAcct ? pfmScreenAcctDetail() : pfmScreenAccounts();
+    else if (PFM.tab === "insights") html = pfmScreenInsights();
+    else if (PFM.tab === "settings") html = pfmScreenSettings();
+    app.innerHTML = `<div class="pfm-screen">${html}</div>`;
+    app.scrollTop = 0;
+    pfmWireScreen();
+  }
+
+  // ---------- Home screen ----------
+  function pfmScreenHome() {
+    const d = PFM.data, s = d.summary || {};
+    const accounts = d.accounts || [];
+    const txns = d.transactions || [];
+    const cats = d.categories || [];
+    const heroBalance = s.assets || 0;
+    const net = s.monthly_income - s.monthly_spend;
+    const netPct = s.monthly_income > 0 ? Math.round((net / s.monthly_income) * 100) : 0;
+
+    // 7-day spend sparkline
+    const spark = pfmSparkline(txns, 7);
+
+    const acctList = accounts.slice(0, 4).map(pfmAcctRow).join("") || pfmEmptyLine("No accounts linked.");
+    const stackBar = pfmStackBar(cats);
+    const stackLegend = cats.slice(0, 5).map(pfmLegendRow).join("") || pfmEmptyLine("No spending this month.");
+    const txnList = pfmGroupedTxns(txns.slice(0, 12));
+
+    // Subscriptions section — null = still loading, [] = none found
+    const recurring = d.recurring;
+    const subs = recurring ? recurring.filter(s => s.type === "DEBIT") : null;
+    const incStreams = recurring ? recurring.filter(s => s.type === "CREDIT") : null;
+    let subsSection = "";
+    if (recurring === null) {
+      subsSection = `
+        <div class="pfm-section-title"><h4>Subscriptions</h4><span class="pfm-enriching-label">loading…</span></div>
+        <div class="pfm-sub-skeleton"></div>`;
+    } else if (subs.length) {
+      subsSection = `
+        <div class="pfm-section-title"><h4>Subscriptions</h4><span style="font-size:11px;color:#9a9a9a;font-weight:600">${subs.length}</span></div>
+        <div class="pfm-sub-scroll">${subs.slice(0, 8).map(pfmSubCard).join("")}</div>`;
+    }
+    let incSection = "";
+    if (incStreams && incStreams.length) {
+      incSection = `
+        <div class="pfm-section-title"><h4>Regular Income</h4><span style="font-size:11px;color:#9a9a9a;font-weight:600">${incStreams.length}</span></div>
+        <div class="pfm-sub-scroll">${incStreams.slice(0, 4).map(pfmSubCard).join("")}</div>`;
+    }
+
+    return `
+      <div class="pfm-greet">
+        <div>
+          <div class="hello">${pfmGreeting()}</div>
+          <h3>Welcome back</h3>
+        </div>
+        <div class="pfm-avatar" title="Profile">V</div>
+      </div>
+      <div class="pfm-hero" data-action="cycle-hero">
+        <div class="label">Total Balance</div>
+        <div class="amount">${fmtMoney(heroBalance)}</div>
+        <div class="trend ${net >= 0 ? "pos" : "neg"}">
+          ${net >= 0 ? ICON.arrowUp : ICON.arrowDown}
+          ${fmtMoney(Math.abs(net))} this month
+        </div>
+        <div class="spark">${spark}</div>
+      </div>
+      <div class="pfm-quick">
+        <button data-quick="send"><span class="ic">${ICON.arrowUp}</span>Send</button>
+        <button data-quick="request"><span class="ic">${ICON.arrowDown}</span>Request</button>
+        <button data-quick="pay"><span class="ic">${ICON.plus}</span>Pay</button>
+        <button data-quick="more"><span class="ic">${ICON.more}</span>More</button>
+      </div>
+      <div class="pfm-section-title"><h4>Accounts</h4>
+        <button class="link" data-goto="accounts">${accounts.length} linked ${ICON.chev}</button></div>
+      <div class="pfm-card">${acctList}</div>
+
+      <div class="pfm-section-title"><h4>This Month</h4>
+        <button class="link" data-goto="insights">Insights ${ICON.chev}</button></div>
+      <div class="pfm-card" style="padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <span style="font-size:12px;color:#6a6a6a;font-weight:500">Spent</span>
+          <span style="font-size:20px;font-weight:700;letter-spacing:-0.3px;font-feature-settings:tnum">${fmtMoney(s.monthly_spend)}</span>
+        </div>
+        ${stackBar}
+        <div class="pfm-legend">${stackLegend}</div>
+      </div>
+
+      ${subsSection}
+      ${incSection}
+
+      <div class="pfm-section-title"><h4>Recent</h4>
+        <button class="link" data-goto="accounts">All ${ICON.chev}</button></div>
+      ${txnList}
+    `;
+  }
+
+  function pfmSubCard(s) {
+    const freq = { WEEKLY: "/ wk", BIWEEKLY: "/ 2 wk", MONTHLY: "/ mo", QUARTERLY: "/ qtr", ANNUAL: "/ yr" };
+    const label = freq[s.frequency] || ("/ " + (s.frequency || "?").toLowerCase());
+    const color = pfmColor(s.category);
+    const initials = (s.merchantName || "?").slice(0, 2).toUpperCase();
+    const isIncome = s.type === "CREDIT";
+    return `
+      <div class="pfm-sub-card">
+        <div class="pfm-sub-avatar" style="background:${color}1a;color:${color}">${initials}</div>
+        <div class="pfm-sub-name">${escapeHtml(s.merchantName)}</div>
+        <div class="pfm-sub-freq">${escapeHtml(label)}</div>
+        <div class="pfm-sub-amt ${isIncome ? "pos" : ""}">${isIncome ? "+" : ""}${fmtMoney(Math.abs(s.amount))}</div>
+      </div>
+    `;
+  }
+
+  function pfmGreeting() {
+    const h = new Date().getHours();
+    if (h < 12) return "Good morning";
+    if (h < 18) return "Good afternoon";
+    return "Good evening";
+  }
+
+  // 7-day spending sparkline (SVG)
+  function pfmSparkline(txns, days) {
+    const now = Date.now() / 1000;
+    const dayMs = 24 * 3600;
+    const buckets = new Array(days).fill(0);
+    txns.forEach((t) => {
+      if (!t.date || t.amount >= 0) return;
+      const age = (now - t.date) / dayMs;
+      const idx = days - 1 - Math.floor(age);
+      if (idx >= 0 && idx < days) buckets[idx] += Math.abs(t.amount);
+    });
+    const max = Math.max(...buckets, 1);
+    const W = 280, H = 44, padX = 4;
+    const stepX = (W - padX * 2) / (days - 1 || 1);
+    const points = buckets.map((v, i) => `${padX + i * stepX},${H - 4 - (v / max) * (H - 12)}`).join(" ");
+    // Area path
+    const area = `M${padX},${H} L${points.replace(/ /g, " L")} L${W - padX},${H} Z`;
+    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:100%">
+      <defs><linearGradient id="pfm-spark-grad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#635bff" stop-opacity="0.25"/>
+        <stop offset="100%" stop-color="#635bff" stop-opacity="0"/>
+      </linearGradient></defs>
+      <path d="${area}" fill="url(#pfm-spark-grad)"/>
+      <polyline points="${points}" fill="none" stroke="#635bff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+  }
+
+  // Stacked horizontal category bar
+  function pfmStackBar(cats) {
+    if (!cats.length) return `<div class="pfm-stack"></div>`;
+    const segs = cats.slice(0, 8).map((c) =>
+      `<span style="width:${Math.max(c.pct, 1)}%;background:${pfmColor(c.category)}"></span>`
+    ).join("");
+    return `<div class="pfm-stack">${segs}</div>`;
+  }
+
+  function pfmLegendRow(c) {
+    return `
+      <div class="pfm-legend-row">
+        <div class="l">
+          <span class="cat-dot" style="background:${pfmColor(c.category)}"></span>
+          <span class="name">${escapeHtml(c.category)}</span>
+        </div>
+        <div class="r">
+          <span class="pct">${c.pct}%</span>
+          <span class="amt">${fmtMoney(c.amount)}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  // ---------- Accounts screen ----------
+  function pfmScreenAccounts() {
+    const d = PFM.data;
+    const accounts = d.accounts || [];
+    const txns = d.transactions || [];
+    const filtered = PFM.txnQuery
+      ? txns.filter((t) => (t.name || "").toLowerCase().includes(PFM.txnQuery.toLowerCase())
+                        || (t.category || "").toLowerCase().includes(PFM.txnQuery.toLowerCase()))
+      : txns;
+
+    return `
+      <div class="pfm-screen-title">Accounts</div>
+      <div class="pfm-card">${accounts.map(pfmAcctRow).join("") || pfmEmptyLine("No accounts linked.")}</div>
+      <div class="pfm-section-title"><h4>Transactions</h4>
+        <span style="font-size:11px;color:#9a9a9a;font-weight:600">${filtered.length}</span></div>
+      <div class="pfm-txn-search">
+        ${ICON.search}
+        <input id="pfm-search" type="text" placeholder="Search transactions" value="${escapeHtml(PFM.txnQuery)}" />
+      </div>
+      ${pfmGroupedTxns(filtered)}
+    `;
+  }
+
+  function pfmScreenAcctDetail() {
+    const a = PFM.selectedAcct;
+    const txns = (PFM.data.transactions || []).filter((t) => String(t.account_id) === String(a.id));
+    const iconCls = ACCT_ICON[a.type] ? a.type : "other";
+    return `
+      <button class="link" data-back style="background:none;border:none;color:#635bff;font-weight:600;padding:8px 0;cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-size:13px">${ICON.chevLeft} Accounts</button>
+      <div style="display:flex;align-items:center;gap:14px;margin:6px 0 16px">
+        <div class="pfm-acct-icon ${iconCls}" style="width:48px;height:48px;border-radius:14px">${pfmAcctIcon(a.type)}</div>
+        <div>
+          <div style="font-size:18px;font-weight:700;letter-spacing:-0.3px">${escapeHtml(a.name)}</div>
+          <div style="font-size:12px;color:#6a6a6a;text-transform:capitalize">${escapeHtml(a.type)} · ${escapeHtml(a.number)}</div>
+        </div>
+      </div>
+      <div class="pfm-hero" style="cursor:default">
+        <div class="label">Current Balance</div>
+        <div class="amount ${a.balance < 0 ? "" : ""}" style="${a.balance < 0 ? "color:#df1b41" : ""}">${fmtMoney(a.balance)}</div>
+        <div style="display:flex;gap:24px;margin-top:14px;font-size:12px">
+          <div><div style="color:#6a6a6a;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">Available</div><div style="font-weight:700;margin-top:2px;font-feature-settings:tnum">${fmtMoney(a.available_balance != null ? a.available_balance : a.balance)}</div></div>
+          <div><div style="color:#6a6a6a;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">Currency</div><div style="font-weight:700;margin-top:2px">${escapeHtml(a.currency || "USD")}</div></div>
+          <div><div style="color:#6a6a6a;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">Activity</div><div style="font-weight:700;margin-top:2px">${txns.length} txns</div></div>
+        </div>
+      </div>
+      <div class="pfm-section-title"><h4>Transactions</h4>
+        <span style="font-size:11px;color:#9a9a9a;font-weight:600">${txns.length}</span></div>
+      ${pfmGroupedTxns(txns)}
+    `;
+  }
+
+  // ---------- Insights screen ----------
+  function pfmScreenInsights() {
+    const d = PFM.data, s = d.summary || {};
+    const cats = d.categories || [];
+    const txns = d.transactions || [];
+    const total = cats.reduce((acc, c) => acc + (c.amount || 0), 0) || 0;
+
+    // Compute 4-week cashflow
+    const weeks = pfmWeekly(txns, 4);
+    // Compute day-of-week spending heatmap
+    const heat = pfmHeatmap(txns);
+    // Top merchants
+    const merchants = pfmTopMerchants(txns);
+
+    // Insight: most-spent category
+    const top = cats[0];
+    const avgPerDay = total / 30;
+
+    return `
+      <div class="pfm-screen-title">Insights</div>
+
+      <div class="pfm-kpi-grid">
+        <div class="pfm-kpi">
+          <div class="k">Spent · 30d</div>
+          <div class="v">${fmtMoney(total)}</div>
+          <div class="sub">${fmtMoney(avgPerDay)} / day avg</div>
+        </div>
+        <div class="pfm-kpi">
+          <div class="k">Income · 30d</div>
+          <div class="v pos">${fmtMoney(s.monthly_income)}</div>
+          <div class="sub ${s.monthly_income > s.monthly_spend ? "pos" : "neg"}">
+            ${s.monthly_income > s.monthly_spend ? "↑" : "↓"} ${fmtMoney(Math.abs(s.monthly_income - s.monthly_spend))} net
+          </div>
+        </div>
+      </div>
+
+      ${top ? `
+      <div class="pfm-tip">
+        <div class="ic">${ICON.sparkles}</div>
+        <div class="body">
+          You spent <strong>${fmtMoney(top.amount)}</strong> on <strong>${escapeHtml(top.category)}</strong> this month — ${top.pct}% of your total spend.
+        </div>
+      </div>` : ""}
+
+      <div class="pfm-isection">
+        <h5>Weekly cashflow</h5>
+        <p class="desc">Income vs. spend, last 4 weeks</p>
+        ${pfmCashflowChart(weeks)}
+        <div style="display:flex;gap:14px;margin-top:12px;font-size:11px;font-weight:600;color:#6a6a6a">
+          <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;background:#0f7050;border-radius:2px"></span>Income</span>
+          <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;background:#e5e5e5;border-radius:2px"></span>Spend</span>
+        </div>
+      </div>
+
+      <div class="pfm-isection">
+        <h5>Category breakdown</h5>
+        <p class="desc">${fmtMoney(total)} spent across ${cats.length} categories</p>
+        ${pfmStackBar(cats)}
+        <div class="pfm-legend">${cats.map(pfmLegendRow).join("") || pfmEmptyLine("No spending data.")}</div>
+      </div>
+
+      <div class="pfm-isection">
+        <h5>Spending by weekday</h5>
+        <p class="desc">When you spend the most</p>
+        ${pfmHeatmapHtml(heat)}
+      </div>
+
+      <div class="pfm-isection">
+        <h5>Top merchants</h5>
+        <p class="desc">Where your money goes</p>
+        ${merchants.length ? merchants.map((m, i) => `
+          <div class="pfm-merchant">
+            <div class="l">
+              <div class="rank">${i + 1}</div>
+              <div>
+                <div class="nm">${escapeHtml(m.name)}</div>
+                <div class="ct">${m.count} ${m.count === 1 ? "transaction" : "transactions"} · ${escapeHtml(m.category)}</div>
+              </div>
+            </div>
+            <div class="am">${fmtMoney(m.total)}</div>
+          </div>
+        `).join("") : pfmEmptyLine("No merchant data.")}
+      </div>
+    `;
+  }
+
+  // 4-week income/spend buckets
+  function pfmWeekly(txns, n) {
+    const now = Date.now() / 1000;
+    const week = 7 * 24 * 3600;
+    const buckets = [];
+    for (let i = n - 1; i >= 0; i--) {
+      const start = now - (i + 1) * week;
+      const end = now - i * week;
+      let income = 0, spend = 0;
+      txns.forEach((t) => {
+        if (t.date >= start && t.date < end) {
+          if (t.amount > 0) income += t.amount;
+          else spend += Math.abs(t.amount);
+        }
+      });
+      buckets.push({ income, spend, label: `W${n - i}` });
+    }
+    return buckets;
+  }
+
+  function pfmCashflowChart(weeks) {
+    const max = Math.max(1, ...weeks.flatMap((w) => [w.income, w.spend]));
+    return `<div class="pfm-cashflow">
+      ${weeks.map((w) => {
+        const hi = (w.income / max) * 100;
+        const hs = (w.spend / max) * 100;
+        return `<div class="pfm-cashflow-bar">
+          <div class="bars">
+            <span class="b income" style="height:${Math.max(hi, 2)}%" title="Income ${fmtMoney(w.income)}"></span>
+            <span class="b spend" style="height:${Math.max(hs, 2)}%" title="Spend ${fmtMoney(w.spend)}"></span>
+          </div>
+          <span class="lbl">${escapeHtml(w.label)}</span>
+        </div>`;
+      }).join("")}
+    </div>`;
+  }
+
+  // Day-of-week spending heatmap (intensity by total spend on that weekday in last 30d)
+  function pfmHeatmap(txns) {
+    const now = Date.now() / 1000;
+    const cutoff = now - 30 * 24 * 3600;
+    const totals = [0, 0, 0, 0, 0, 0, 0];
+    txns.forEach((t) => {
+      if (!t.date || t.amount >= 0 || t.date < cutoff) return;
+      const d = new Date(t.date * 1000);
+      totals[d.getDay()] += Math.abs(t.amount);
+    });
+    const max = Math.max(...totals, 1);
+    return totals.map((v) => ({ amt: v, pct: v / max }));
+  }
+  function pfmHeatmapHtml(heat) {
+    const dows = ["S", "M", "T", "W", "T", "F", "S"];
+    return `
+      <div class="pfm-heatmap">${dows.map((d) => `<div class="dow">${d}</div>`).join("")}</div>
+      <div class="pfm-heatmap" style="margin-top:2px">${heat.map((h) => {
+        const opacity = 0.08 + h.pct * 0.85;
+        return `<div class="day" style="background:rgba(99,91,255,${opacity.toFixed(2)})" title="${fmtMoney(h.amt)}">${h.amt > 0 ? fmtMoneyShort(h.amt) : ""}</div>`;
+      }).join("")}</div>
+    `;
+  }
+
+  function pfmTopMerchants(txns) {
+    const now = Date.now() / 1000;
+    const cutoff = now - 30 * 24 * 3600;
+    const map = {};
+    txns.forEach((t) => {
+      if (!t.date || t.amount >= 0 || t.date < cutoff) return;
+      const key = t.name || "Unknown";
+      if (!map[key]) map[key] = { name: key, total: 0, count: 0, category: t.category };
+      map[key].total += Math.abs(t.amount);
+      map[key].count += 1;
+    });
+    return Object.values(map).sort((a, b) => b.total - a.total).slice(0, 5);
+  }
+
+  // ---------- Settings screen ----------
+  function pfmScreenSettings() {
+    return `
+      <div class="pfm-screen-title">Settings</div>
+      <div class="pfm-settings-card">
+        <div class="pfm-setting-row" data-action="open-profile">
+          <div class="left"><div class="ic" style="background:#eff4ff;color:#2563eb">${ICON.user}</div>
+            <div><div class="label">Profile</div><div class="val" style="font-size:11px">Customer ${escapeHtml(PFM.cid)}</div></div></div>
+          <span class="val">${ICON.chev}</span>
+        </div>
+        <div class="pfm-setting-row" data-action="toggle-notif">
+          <div class="left"><div class="ic" style="background:#fff4e5;color:#c2410c">${ICON.bell}</div>
+            <div class="label">Notifications</div></div>
+          <div class="pfm-toggle" id="pfm-tog-notif"></div>
+        </div>
+        <div class="pfm-setting-row" data-action="toggle-bio">
+          <div class="left"><div class="ic" style="background:#ecfdf5;color:#0f7050">${ICON.lock}</div>
+            <div class="label">Face ID</div></div>
+          <div class="pfm-toggle" id="pfm-tog-bio"></div>
+        </div>
+      </div>
+      <div class="pfm-settings-card">
+        <div class="pfm-setting-row">
+          <div class="left"><div class="ic" style="background:#f3f0ff;color:#635bff">${ICON.bank}</div>
+            <div class="label">Linked accounts</div></div>
+          <span class="val">${(PFM.data.accounts || []).length}</span>
+        </div>
+        <div class="pfm-setting-row">
+          <div class="left"><div class="ic" style="background:#fef2f2;color:#df1b41">${ICON.download}</div>
+            <div class="label">Export data</div></div>
+          <span class="val">${ICON.chev}</span>
+        </div>
+        <div class="pfm-setting-row">
+          <div class="left"><div class="ic" style="background:#f4f4f5;color:#6a6a6a">${ICON.info}</div>
+            <div class="label">About</div></div>
+          <span class="val">v1.0.0</span>
+        </div>
+      </div>
+      <p style="text-align:center;font-size:11px;color:#9a9a9a;margin-top:14px;font-weight:500">Powered by Mastercard Open Finance</p>
+    `;
+  }
+
+  // ---------- Helpers (rows) ----------
+  function pfmAcctRow(a) {
+    const iconCls = ACCT_ICON[a.type] ? a.type : "other";
+    return `
+      <div class="pfm-acct" data-acct-id="${escapeHtml(String(a.id))}">
+        <div class="left">
+          <div class="pfm-acct-icon ${iconCls}">${pfmAcctIcon(a.type)}</div>
+          <div>
+            <div class="name">${escapeHtml(a.name)}</div>
+            <div class="meta">${escapeHtml(a.type)} · ${escapeHtml(a.number)}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="bal ${a.balance < 0 ? "neg" : ""}">${fmtMoney(a.balance)}</div>
+          <span class="chev">${ICON.chev}</span>
+        </div>
+      </div>
+    `;
+  }
+  function pfmCatRow(c) {
+    const color = pfmColor(c.category);
+    return `
+      <div class="pfm-cat-row">
+        <div class="top">
+          <span class="cat"><span class="cat-dot" style="background:${color}"></span>${escapeHtml(c.category)}</span>
+          <span class="amt">${fmtMoney(c.amount)} · ${c.pct}%</span>
+        </div>
+        <div class="bar"><span style="width:${Math.max(c.pct, 3)}%;background:${color}"></span></div>
+      </div>
+    `;
+  }
+  function pfmTxnRow(t) {
+    const isPos = t.amount > 0;
+    const cat = t.enrichedCategory || t.category;
+    const color = pfmColor(cat);
+    const displayName = t.enrichedName || t.name;
+    const iconHtml = t.logoUrl
+      ? `<img src="${escapeHtml(t.logoUrl)}" class="pfm-txn-logo-img" alt="" loading="lazy">`
+      : `<div class="pfm-txn-icon" style="background:${color}1a;color:${color}">${pfmCatIcon(cat)}</div>`;
+    const recurBadge = t.isRecurring ? `<span class="pfm-recurring-badge">↻</span>` : "";
+    return `
+      <div class="pfm-txn" data-txn-id="${escapeHtml(String(t.id || ""))}">
+        <div class="left">
+          ${iconHtml}
+          <div class="info">
+            <div class="name">${escapeHtml(displayName)}${recurBadge}</div>
+            <div class="meta">${escapeHtml(cat)}</div>
+          </div>
+        </div>
+        <div class="amt ${isPos ? "pos" : "neg"}">${isPos ? "+" : ""}${fmtMoney(t.amount)}</div>
+      </div>
+    `;
+  }
+  function pfmEmptyLine(msg) {
+    return `<p class="muted" style="font-size:12px;padding:8px;text-align:center">${escapeHtml(msg)}</p>`;
+  }
+
+  function pfmGroupedTxns(txns) {
+    if (!txns.length) return pfmEmptyLine("No transactions match.");
+    // Group by date label
+    const groups = {};
+    const order = [];
+    txns.forEach((t) => {
+      const k = fmtDate(t.date) || "—";
+      if (!groups[k]) { groups[k] = []; order.push(k); }
+      groups[k].push(t);
+    });
+    return order.map((k) => `
+      <div class="pfm-txn-group">
+        <div class="pfm-txn-group-date">${escapeHtml(k)}</div>
+        <div class="pfm-txn-list">${groups[k].map(pfmTxnRow).join("")}</div>
+      </div>
+    `).join("");
+  }
+
+  // ---------- Wire interactions for current screen ----------
+  function pfmWireScreen() {
+    const app = document.getElementById("pfm-app");
+    if (!app) return;
+
+    // Account row → drill in
+    app.querySelectorAll("[data-acct-id]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const a = (PFM.data.accounts || []).find((x) => String(x.id) === el.dataset.acctId);
+        if (!a) return;
+        PFM.selectedAcct = a;
+        PFM.tab = "accounts";
+        pfmIslandFlash(a.name);
+        pfmDrawTabs();
+        pfmDrawScreen();
+      });
+    });
+
+    // Txn row → open sheet
+    app.querySelectorAll("[data-txn-id]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const t = (PFM.data.transactions || []).find((x) => String(x.id) === el.dataset.txnId);
+        if (t) pfmOpenSheet(t);
+      });
+    });
+
+    // Section "Go to" buttons
+    app.querySelectorAll("[data-goto]").forEach((el) => {
+      el.addEventListener("click", () => {
+        PFM.tab = el.dataset.goto;
+        PFM.selectedAcct = null;
+        pfmDrawTabs();
+        pfmDrawScreen();
+      });
+    });
+
+    // Back from account detail
+    const back = app.querySelector("[data-back]");
+    if (back) back.addEventListener("click", () => {
+      PFM.selectedAcct = null;
+      pfmDrawScreen();
+    });
+
+    // Quick actions
+    app.querySelectorAll("[data-quick]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const labels = { send: "Send money", request: "Request", pay: "Pay bill", more: "More" };
+        pfmIslandFlash(labels[el.dataset.quick] || "Action");
+      });
+    });
+
+    // Search
+    const search = document.getElementById("pfm-search");
+    if (search) {
+      search.addEventListener("input", (e) => {
+        PFM.txnQuery = e.target.value;
+        // Re-render only the bottom group, keep focus
+        const cursor = search.selectionStart;
+        pfmDrawScreen();
+        const s2 = document.getElementById("pfm-search");
+        if (s2) { s2.focus(); s2.setSelectionRange(cursor, cursor); }
+      });
+    }
+
+    // Toggles
+    const t1 = document.getElementById("pfm-tog-notif");
+    if (t1) t1.addEventListener("click", () => t1.classList.toggle("off"));
+    const t2 = document.getElementById("pfm-tog-bio");
+    if (t2) { t2.classList.add("off"); t2.addEventListener("click", () => t2.classList.toggle("off")); }
+
+    // Hero tap → cycle island flash
+    const hero = app.querySelector('[data-action="cycle-hero"]');
+    if (hero) hero.addEventListener("click", () => {
+      const s = PFM.data.summary || {};
+      pfmIslandFlash(`Net Worth · ${fmtMoney(s.net_worth)}`);
+    });
+  }
+
+  function pfmOpenSheet(t) {
+    const isPos = t.amount > 0;
+    const cat = t.enrichedCategory || t.category;
+    const color = pfmColor(cat);
+    const displayName = t.enrichedName || t.name;
+    const acct = (PFM.data.accounts || []).find((a) => String(a.id) === String(t.account_id));
+    const sheet = document.getElementById("pfm-sheet");
+    const back = document.getElementById("pfm-sheet-backdrop");
+    if (!sheet || !back) return;
+    const logoHtml = t.logoUrl
+      ? `<img src="${escapeHtml(t.logoUrl)}" class="pfm-sheet-logo" alt="" loading="lazy">`
+      : `<div class="pfm-sheet-icon" style="background:${color}1a;color:${color}">${pfmCatIcon(cat)}</div>`;
+    const recurRow = t.isRecurring
+      ? `<div class="pfm-sheet-row"><span class="k">Recurring</span><span class="v" style="color:#635bff;font-weight:600">↻ Yes</span></div>`
+      : "";
+    sheet.innerHTML = `
+      <div class="pfm-sheet-handle"></div>
+      ${logoHtml}
+      <h3>${escapeHtml(displayName)}</h3>
+      <div class="sheet-amount ${isPos ? "pos" : ""}">${isPos ? "+" : ""}${fmtMoney(t.amount)}</div>
+      <div class="pfm-sheet-row"><span class="k">Category</span><span class="v">${escapeHtml(cat)}</span></div>
+      <div class="pfm-sheet-row"><span class="k">Date</span><span class="v">${fmtDate(t.date)}</span></div>
+      <div class="pfm-sheet-row"><span class="k">Status</span><span class="v">${escapeHtml(t.status || "Posted")}</span></div>
+      <div class="pfm-sheet-row"><span class="k">Account</span><span class="v">${escapeHtml(acct ? acct.name : t.account_id || "—")}</span></div>
+      ${recurRow}
+      ${t.description ? `<div class="pfm-sheet-row"><span class="k">Raw description</span><span class="v" style="max-width:60%;font-size:12px">${escapeHtml(t.description)}</span></div>` : ""}
+      <div class="pfm-sheet-row"><span class="k">Transaction ID</span><span class="v" style="font-family:var(--mono);font-size:11px">${escapeHtml(String(t.id || "—"))}</span></div>
+    `;
+    requestAnimationFrame(() => {
+      sheet.classList.add("visible");
+      back.classList.add("visible");
+    });
+  }
+  function pfmCloseSheet() {
+    const sheet = document.getElementById("pfm-sheet");
+    const back = document.getElementById("pfm-sheet-backdrop");
+    if (sheet) sheet.classList.remove("visible");
+    if (back) back.classList.remove("visible");
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  document.querySelectorAll("[data-uc-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-uc-id]").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderUseCase(btn.dataset.ucId);
+    });
+  });
+
+  // ---------------------------------------------------------------------
+  // Init
+  // ---------------------------------------------------------------------
+  // Wire API Calls FAB and drawer
+  const _fabBtn = $('api-calls-fab');
+  if (_fabBtn) _fabBtn.addEventListener('click', () => { if (API_CALLS_VISIBLE) apiCallsClose(); else apiCallsOpen(); });
+  const _acClose = $('api-calls-close');
+  if (_acClose) _acClose.addEventListener('click', apiCallsClose);
+  const _acClear = $('api-calls-clear');
+  if (_acClear) _acClear.addEventListener('click', () => { API_CALL_LOG.length = 0; _lastSeq = 0; apiCallsRefresh(); });
+
+  if (currentApiId) renderApi();
+  if (USE_CASES.length) {
+    renderUseCase(USE_CASES[0].id);
+    _startPolling(); // begin polling for badge updates immediately
+  }
+})();

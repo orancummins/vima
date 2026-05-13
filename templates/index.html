@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mastercard Solution Studio</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="header">
+    <div class="brand">
+      <div class="brand-marks">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title">Mastercard Solution Studio</div>
+        <div class="brand-sub">Exploring, Showcasing &amp; Innovating Across Mastercard Platforms</div>
+      </div>
+    </div>
+    <nav class="top-tabs">
+      <button class="top-tab active" data-top-tab="apis">APIs</button>
+      <button class="top-tab" data-top-tab="usecases">Use Cases</button>
+    </nav>
+  </header>
+
+  <!-- ====================== APIs ====================== -->
+  <main class="panel" id="panel-apis">
+    <aside class="sidebar">
+      <div class="sidebar-title">APIs</div>
+      <div class="api-list" id="api-list">
+        {% for api in apis %}
+        <button class="api-item {% if loop.first %}active{% endif %}" data-api-id="{{ api.id }}"
+                title="{{ api.description }}">
+          <span class="api-item-name">{{ api.name }}</span>
+          <span class="api-item-status {% if api.configured %}ok{% else %}off{% endif %}"
+                title="{% if api.configured %}Configured{% else %}Not configured{% endif %}">●</span>
+        </button>
+        {% endfor %}
+      </div>
+    </aside>
+
+    <section class="content">
+      <div class="content-sticky">
+        <div class="api-header">
+          <div>
+            <h1 id="api-title">—</h1>
+            <p class="api-desc" id="api-desc"></p>
+          </div>
+          <div class="api-meta">
+            <button class="btn btn-outline" id="btn-how-to">How To Use These APIs</button>
+            <a id="api-docs" href="#" target="_blank" class="btn btn-outline">Docs ↗</a>
+          </div>
+        </div>
+        <div class="state-strip" id="state-strip"></div>
+      </div>
+
+      <div class="workbench">
+        <div class="ops">
+          <div class="ops-title">Operations</div>
+          <div id="op-categories"></div>
+        </div>
+
+        <div class="op-panel">
+          <div class="op-panel-header">
+            <div>
+              <span class="op-method" id="op-method">—</span>
+              <span class="op-name" id="op-name">Select an operation</span>
+            </div>
+            <button id="op-send" class="btn btn-primary" disabled>Send</button>
+          </div>
+          <div class="op-panel-scroll">
+            <p class="op-desc" id="op-desc"></p>
+            <div class="op-note" id="op-note"></div>
+            <div class="op-params" id="op-params"></div>
+            <div class="op-hint" id="op-hint"></div>
+          </div>
+        </div>
+
+        <div class="io-panel">
+          <div class="io-col">
+            <div class="io-title">
+              <span>Request</span>
+              <button class="btn-mini" data-copy="req-body">Copy</button>
+            </div>
+            <pre class="io-body" id="req-body">—</pre>
+          </div>
+          <div class="io-col">
+            <div class="io-title">
+              <span>Response <span id="resp-status" class="status-pill"></span></span>
+              <button class="btn-mini" data-copy="resp-body">Copy</button>
+            </div>
+            <pre class="io-body" id="resp-body">—</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ====================== Use Cases ====================== -->
+  <main class="panel hidden" id="panel-usecases">
+    <aside class="sidebar">
+      <div class="sidebar-title">Use Cases</div>
+      <div class="api-list" id="usecase-list">
+        {% for uc in use_cases %}
+        <button class="api-item {% if loop.first %}active{% endif %}" data-uc-id="{{ uc.id }}">
+          <span class="api-item-name">{{ uc.name }}</span>
+        </button>
+        {% endfor %}
+      </div>
+      <div id="uc-sidebar-apis" class="uc-sidebar-apis hidden">
+        <div class="uc-sidebar-apis-title">APIs Used</div>
+        <div id="uc-sidebar-apis-list"></div>
+      </div>
+    </aside>
+    <section class="content">
+      <div class="content-sticky">
+        <div class="uc-header">
+          <h1 id="uc-title">—</h1>
+          <p class="uc-desc" id="uc-desc"></p>
+        </div>
+      </div>
+      <div class="usecase-body" id="uc-body">
+        <p class="muted">Select a use case to begin.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ====================== How To Modal ====================== -->
+  <div id="how-to-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">How To Use These APIs</h2>
+        <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+      </div>
+    </div>
+  </div>
+
+  <!-- API Calls FAB + drawer -->
+  <button id="api-calls-fab" class="api-calls-fab hidden" aria-label="Show API Calls">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 5h16M2 10h10M2 15h13"/>
+    </svg>
+    <span class="api-calls-fab-label">Show API Calls</span>
+    <span id="api-calls-fab-badge" class="api-calls-fab-badge hidden">0</span>
+  </button>
+
+  <div id="api-calls-drawer" class="api-calls-drawer hidden" role="dialog" aria-label="API Calls log">
+    <div class="api-calls-drawer-header">
+      <div class="api-calls-drawer-title">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0">
+          <path d="M2 5h16M2 10h10M2 15h13"/>
+        </svg>
+        API Calls
+        <span id="api-calls-count" class="api-calls-count"></span>
+      </div>
+      <div class="api-calls-drawer-actions">
+        <button id="api-calls-clear" class="api-calls-action-btn">Clear</button>
+        <button id="api-calls-close" class="api-calls-close" aria-label="Close">&times;</button>
+      </div>
+    </div>
+    <div class="api-calls-drawer-body" id="api-calls-body">
+      <p class="api-calls-empty">No API calls yet. Perform an action to see calls here.</p>
+    </div>
+  </div>
+
+  <script>
+    window.__APIS__ = {{ apis | tojson }};
+    window.__USE_CASES__ = {{ use_cases | tojson }};
+  </script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
