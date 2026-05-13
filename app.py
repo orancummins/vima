@@ -149,7 +149,10 @@ def explorer_execute(api_id: str):
     params = body.get("params") or {}
     if not op_id:
         return jsonify({"error": "'operation' is required"}), 400
-    result = mod.execute(op_id, params)
+    try:
+        result = mod.execute(op_id, params)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
     # Merge in latest state snapshot for the UI
     result["state"] = getattr(mod, "get_state", lambda: {})()
     return jsonify(result)
