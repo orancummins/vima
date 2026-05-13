@@ -661,6 +661,12 @@
       renderPsi();
     } else if (uc.render === "binlookup") {
       renderBinLookup();
+    } else if (uc.render === "clarity") {
+      renderClarity();
+    } else if (uc.render === "easysavings") {
+      renderEasySavings();
+    } else if (uc.render === "places") {
+      renderPlaces();
     } else {
       $("uc-body").innerHTML = `<p class="muted">${(uc.apis && uc.apis.length)
         ? "Composes: " + uc.apis.join(", ")
@@ -713,10 +719,14 @@
       .then(d => {
         ENRICH.data = d.transactions || [];
         ENRICH.enriched.clear();
+        if (!ENRICH.data.length) {
+          body.innerHTML = `<p class="muted">No transactions to enrich.</p>`;
+          return;
+        }
         enrichRender();
       })
-      .catch(() => {
-        body.innerHTML = `<p class="muted">Could not load enrichment data.</p>`;
+      .catch((e) => {
+        body.innerHTML = `<p class="muted">Could not load transactions: ${escapeHtml(String(e.message || e))}</p>`;
       });
   }
 
@@ -879,25 +889,111 @@
     const row = document.querySelector(`[data-txn-id="${CSS.escape(id)}"]`);
     if (!row || ENRICH.enriched.has(id)) return;
 
-    // Animate the row: shimmer → reveal
+    // Loading shimmer
     row.classList.add("enrich-row--loading");
     const btn = row.querySelector("[data-enrich-id]");
     if (btn) { btn.disabled = true; btn.textContent = "Enriching…"; }
 
-    setTimeout(() => {
-      ENRICH.enriched.add(id);
-      enrichRender();
-      // Scroll the newly enriched row into view
-      const enriched = document.querySelector(`[data-txn-id="${CSS.escape(id)}"]`);
-      if (enriched) enriched.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }, 700);
+    fetch("/usecases/enrichment/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "enrich", params: { ids: [id] } }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        const result = (d.transactions || []).find(t => t.id === id);
+        if (result && result.enriched) {
+          const idx = ENRICH.data.findIndex(t => t.id === id);
+          if (idx !== -1) ENRICH.data[idx] = result;
+          ENRICH.enriched.add(id);
+          enrichRender();
+          const enriched = document.querySelector(`[data-txn-id="${CSS.escape(id)}"]`);
+          if (enriched) enriched.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          return;
+        }
+        const errMsg = d.error
+          ? d.error + (d.detail ? " — " + (typeof d.detail === "string" ? d.detail : JSON.stringify(d.detail)) : "")
+          : "No enrichment returned";
+        throw new Error(errMsg);
+      })
+      .catch(err => {
+        row.classList.remove("enrich-row--loading");
+        if (btn) { btn.disabled = false; btn.textContent = "Enrich"; }
+        const existing = row.querySelector(".enrich-row-error");
+        if (existing) existing.remove();
+        const msg = document.createElement("div");
+        msg.className = "enrich-row-error";
+        msg.textContent = String(err.message || err);
+        row.appendChild(msg);
+      });
   }
 
   function enrichAll() {
     const pending = ENRICH.data.filter(t => !ENRICH.enriched.has(t.id));
-    pending.forEach((t, i) => {
-      setTimeout(() => enrichOne(t.id), i * 250);
+    if (!pending.length) return;
+
+    // Mark all pending rows as loading
+    pending.forEach(t => {
+      const row = document.querySelector(`[data-txn-id="${CSS.escape(t.id)}"]`);
+      if (row) {
+        row.classList.add("enrich-row--loading");
+        const btn = row.querySelector("[data-enrich-id]");
+        if (btn) { btn.disabled = true; btn.textContent = "Enriching…"; }
+      }
     });
+
+    fetch("/usecases/enrichment/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "enrich", params: { ids: pending.map(t => t.id) } }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        const byId = {};
+        (d.transactions || []).forEach(t => { byId[t.id] = t; });
+        const failedIds = new Set(d.failedIds || []);
+        const errMsg = d.error
+          ? d.error + (d.detail ? " — " + (typeof d.detail === "string" ? d.detail : JSON.stringify(d.detail)) : "")
+          : null;
+
+        pending.forEach((t, i) => {
+          const result = byId[t.id];
+          if (result && result.enriched) {
+            // Stagger reveal for visual delight
+            setTimeout(() => {
+              const idx = ENRICH.data.findIndex(x => x.id === t.id);
+              if (idx !== -1) ENRICH.data[idx] = result;
+              ENRICH.enriched.add(t.id);
+              enrichRender();
+            }, i * 150);
+            return;
+          }
+          // Row was not returned — surface the error inline
+          const row = document.querySelector(`[data-txn-id="${CSS.escape(t.id)}"]`);
+          if (!row) return;
+          row.classList.remove("enrich-row--loading");
+          const btn = row.querySelector("[data-enrich-id]");
+          if (btn) { btn.disabled = false; btn.textContent = "Enrich"; }
+          if (errMsg && (failedIds.size === 0 || failedIds.has(t.id))) {
+            const existing = row.querySelector(".enrich-row-error");
+            if (existing) existing.remove();
+            const msg = document.createElement("div");
+            msg.className = "enrich-row-error";
+            msg.textContent = errMsg;
+            row.appendChild(msg);
+          }
+        });
+      })
+      .catch(err => {
+        pending.forEach(t => {
+          const row = document.querySelector(`[data-txn-id="${CSS.escape(t.id)}"]`);
+          if (!row) return;
+          row.classList.remove("enrich-row--loading");
+          const btn = row.querySelector("[data-enrich-id]");
+          if (btn) { btn.disabled = false; btn.textContent = "Enrich"; }
+        });
+        alert("Enrichment failed: " + (err.message || err));
+      });
   }
 
   // ===================== Recurring Transactions Use Case =====================
@@ -1913,6 +2009,9 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "lookup", params: { account_range: BIN.bin } }),
         });
+        if (!r.ok) {
+          throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+        }
         const d = await r.json();
         BIN.loading = false;
         if (d.error) {
@@ -1931,9 +2030,275 @@
           requestAnimationFrame(() => setTimeout(binAnimateIn, 30));
         }
       } catch (e) {
+        console.error("BIN Lookup error:", e);
         BIN.loading = false;
         BIN.card = null;
         renderBinLookup();
+        const scene = document.getElementById("bin-scene");
+        if (scene) scene.insertAdjacentHTML("beforeend", `<div class="bin-error-msg">Error: ${escapeHtml(String(e.message))}</div>`);
+      }
+    });
+  }
+
+  // ===================== Consumer Clarity Use Case =====================
+  // Turns cryptic statement descriptors into rich merchant identities.
+  // Stripe-inspired before → after card.
+
+  const CLARITY = {
+    presetKey: null,
+    loading: false,
+    result: null,   // { found, raw, merchant, note }
+  };
+
+  function _clarityManifest() {
+    return USE_CASES.find(u => u.id === "clarity");
+  }
+  function _clarityPresets() {
+    const m = _clarityManifest();
+    return (m && m.presets) || [];
+  }
+  function _clarityPreset(key) {
+    return _clarityPresets().find(p => p.value === key);
+  }
+
+  function renderClarity() {
+    if (!CLARITY.presetKey) {
+      const presets = _clarityPresets();
+      CLARITY.presetKey = presets.length ? presets[0].value : null;
+    }
+    clarityRender();
+  }
+
+  function clarityRender() {
+    const body = $("uc-body");
+    if (!body) return;
+    const presets = _clarityPresets();
+    body.innerHTML = `
+      <div class="clarity-stage">
+        <div class="clarity-form-card">
+          <div class="clarity-form-header">
+            <div class="clarity-form-title">Statement descriptor lookup</div>
+            <div class="clarity-form-sub">Pick a sandbox transaction to enrich.</div>
+          </div>
+          <div class="clarity-form-row">
+            <div class="clarity-field">
+              <label for="clarity-select">Transaction</label>
+              <select id="clarity-select">
+                ${presets.map(p =>
+                  `<option value="${escapeHtml(p.value)}"${p.value === CLARITY.presetKey ? " selected" : ""}>${escapeHtml(p.label)}</option>`
+                ).join("")}
+              </select>
+            </div>
+            <button class="clarity-btn" id="clarity-btn"${CLARITY.loading ? " disabled" : ""}>
+              ${CLARITY.loading
+                ? `<span class="clarity-spinner"></span>Enriching…`
+                : `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>Enrich`}
+            </button>
+          </div>
+        </div>
+        <div class="clarity-result" id="clarity-result">
+          ${clarityResultHtml()}
+        </div>
+      </div>`;
+    clarityWire();
+  }
+
+  function clarityResultHtml() {
+    if (CLARITY.loading) {
+      return `<div class="clarity-loading"><div class="clarity-spinner clarity-spinner--lg"></div><p>Calling Consumer Clarity API…</p></div>`;
+    }
+    if (!CLARITY.result) {
+      return clarityHeroHtml();
+    }
+    if (CLARITY.result.error) {
+      return `<div class="clarity-error">${escapeHtml(String(CLARITY.result.error))}</div>`;
+    }
+
+    const raw = CLARITY.result.raw || {};
+    const rawText = (raw.cardAcceptorName || "—").toUpperCase();
+    const rawSub = [raw.cardAcceptorLocation, raw.cardAcceptorRegionCode, raw.cardAcceptorCountryCode]
+      .filter(Boolean).join(" · ");
+
+    if (!CLARITY.result.found) {
+      return `
+        <div class="clarity-grid">
+          ${clarityRawCardHtml(rawText, rawSub)}
+          <div class="clarity-arrow">${_clarityArrowSvg()}</div>
+          <div class="clarity-merchant-card clarity-merchant-card--empty">
+            <div class="clarity-empty-icon">
+              <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="14" cy="14" r="10"/><path d="M22 22l6 6" stroke-linecap="round"/></svg>
+            </div>
+            <div class="clarity-empty-title">No match</div>
+            <div class="clarity-empty-sub">${escapeHtml(CLARITY.result.note || "No matching merchant found.")}</div>
+          </div>
+        </div>`;
+    }
+
+    const m = CLARITY.result.merchant || {};
+    return `
+      <div class="clarity-grid">
+        ${clarityRawCardHtml(rawText, rawSub)}
+        <div class="clarity-arrow">${_clarityArrowSvg()}</div>
+        ${clarityMerchantCardHtml(m)}
+      </div>
+      ${clarityFieldsHtml(m)}`;
+  }
+
+  function clarityRawCardHtml(name, sub) {
+    return `
+      <div class="clarity-raw-card">
+        <div class="clarity-raw-label">Raw descriptor</div>
+        <div class="clarity-raw-name">${escapeHtml(name)}</div>
+        ${sub ? `<div class="clarity-raw-sub">${escapeHtml(sub)}</div>` : ""}
+        <div class="clarity-raw-tag">Card statement</div>
+      </div>`;
+  }
+
+  function clarityMerchantCardHtml(m) {
+    const initials = (m.name || "?").slice(0, 2).toUpperCase();
+    const logo = m.merchantLogo
+      ? `<img src="${escapeHtml(m.merchantLogo)}" alt="${escapeHtml(m.name)}" class="clarity-merchant-logo-img" loading="lazy" onerror="this.outerHTML='<div class=&quot;clarity-merchant-logo-fallback&quot;>${escapeHtml(initials)}</div>'">`
+      : `<div class="clarity-merchant-logo-fallback">${escapeHtml(initials)}</div>`;
+    const addr = (m.addressLines || []).map(l => `<div class="clarity-addr-line">${escapeHtml(l)}</div>`).join("");
+    const cat = m.categoryName
+      ? `<span class="clarity-chip clarity-chip--cat">${escapeHtml(m.categoryName)}${m.categoryCode ? ` · MCC ${escapeHtml(String(m.categoryCode))}` : ""}</span>`
+      : "";
+    const receipt = m.receiptStatus === "RECEIPT_FOUND" || m.receiptUrl
+      ? `<span class="clarity-chip clarity-chip--ok">Digital receipt available</span>` : "";
+    const website = m.websiteUrl
+      ? `<a class="clarity-link" href="${escapeHtml(m.websiteUrl)}" target="_blank" rel="noopener">Visit website ↗</a>`
+      : "";
+    return `
+      <div class="clarity-merchant-card">
+        <div class="clarity-merchant-head">
+          <div class="clarity-merchant-logo">${logo}</div>
+          <div class="clarity-merchant-name-block">
+            <div class="clarity-merchant-name">${escapeHtml(m.name)}</div>
+            <div class="clarity-merchant-tag">Enriched merchant</div>
+          </div>
+        </div>
+        ${addr ? `<div class="clarity-merchant-addr">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" style="width:14px;height:14px;flex-shrink:0;margin-top:2px;color:var(--muted)"><path d="M10 18s-6-5.5-6-10a6 6 0 0112 0c0 4.5-6 10-6 10z"/><circle cx="10" cy="8" r="2"/></svg>
+          <div>${addr}</div>
+        </div>` : ""}
+        <div class="clarity-merchant-chips">
+          ${cat}${receipt}
+        </div>
+        ${website ? `<div class="clarity-merchant-actions">${website}</div>` : ""}
+      </div>`;
+  }
+
+  function clarityFieldsHtml(m) {
+    const rows = [];
+    if (m.categoryCode) rows.push(["Category code (MCC)", String(m.categoryCode)]);
+    if (m.categoryName) rows.push(["Category", m.categoryName]);
+    if (m.lat != null && m.lng != null) rows.push(["Coordinates", `${m.lat}, ${m.lng}`]);
+    if (m.merchantStatus) rows.push(["Merchant status", m.merchantStatus]);
+    if (m.receiptStatus) rows.push(["Receipt status", m.receiptStatus]);
+
+    const hasMap = m.lat != null && m.lng != null;
+    const hasIndustryLogo = !!m.industryLogo;
+    const hasMedia = hasMap || hasIndustryLogo;
+
+    let mediaHtml = "";
+    if (hasMedia) {
+      const mapHtml = hasMap ? clarityMapHtml(m.lat, m.lng, m.name) : "";
+      const logoHtml = hasIndustryLogo ? `
+        <div class="clarity-media-card">
+          <div class="clarity-media-label">Industry logo</div>
+          <div class="clarity-industry-logo-box">
+            <img src="${escapeHtml(m.industryLogo)}" alt="Industry logo" class="clarity-industry-logo-img" loading="lazy">
+          </div>
+        </div>` : "";
+      mediaHtml = `<div class="clarity-media-grid${hasMap && hasIndustryLogo ? "" : " clarity-media-grid--single"}">${mapHtml}${logoHtml}</div>`;
+    }
+
+    const detailsHtml = rows.length ? `
+      <div class="clarity-details">
+        <div class="clarity-details-title">Details</div>
+        <div class="clarity-details-grid">
+          ${rows.map(([k, v]) => `
+            <div class="clarity-details-key">${escapeHtml(k)}</div>
+            <div class="clarity-details-val">${escapeHtml(v)}</div>
+          `).join("")}
+        </div>
+      </div>` : "";
+
+    return mediaHtml + detailsHtml;
+  }
+
+  function clarityMapHtml(lat, lng, name) {
+    const dLat = parseFloat(lat);
+    const dLng = parseFloat(lng);
+    if (!isFinite(dLat) || !isFinite(dLng)) return "";
+    const delta = 0.01;
+    const bbox = [dLng - delta, dLat - delta, dLng + delta, dLat + delta].join(",");
+    const src = `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${dLat},${dLng}`;
+    const link = `https://www.openstreetmap.org/?mlat=${dLat}&mlon=${dLng}#map=15/${dLat}/${dLng}`;
+    return `
+      <div class="clarity-media-card">
+        <div class="clarity-media-label">Location</div>
+        <div class="clarity-map-box">
+          <iframe class="clarity-map-frame" src="${escapeHtml(src)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="${escapeHtml(name || 'Merchant location')}"></iframe>
+        </div>
+        <a class="clarity-link clarity-map-link" href="${escapeHtml(link)}" target="_blank" rel="noopener">View larger map ↗</a>
+      </div>`;
+  }
+
+  function clarityHeroHtml() {
+    return `
+      <div class="clarity-hero">
+        <div class="clarity-hero-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="8" y="14" width="32" height="22" rx="3"/>
+            <path d="M8 22h32M14 30h6"/>
+          </svg>
+        </div>
+        <h3>Turn cryptic statements into clear merchant identities</h3>
+        <p>Pick a sandbox transaction above and click <strong>Enrich</strong> to see a raw descriptor transformed into a recognisable merchant — complete with logo, address, category, and receipt link.</p>
+        <div class="clarity-hero-chips">
+          <span class="clarity-hero-chip">Clean merchant name</span>
+          <span class="clarity-hero-chip">Logo &amp; category</span>
+          <span class="clarity-hero-chip">Address &amp; map</span>
+          <span class="clarity-hero-chip">Digital receipts</span>
+        </div>
+      </div>`;
+  }
+
+  function _clarityArrowSvg() {
+    return `<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16h20M20 10l6 6-6 6"/></svg>`;
+  }
+
+  function clarityWire() {
+    const sel = document.getElementById("clarity-select");
+    if (sel) {
+      sel.addEventListener("change", () => {
+        CLARITY.presetKey = sel.value;
+      });
+    }
+    const btn = document.getElementById("clarity-btn");
+    if (!btn) return;
+    btn.addEventListener("click", async () => {
+      if (!CLARITY.presetKey) return;
+      CLARITY.loading = true;
+      CLARITY.result = null;
+      clarityRender();
+      try {
+        const r = await _nativeFetch("/usecases/clarity/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "lookup", params: { preset: CLARITY.presetKey } }),
+        });
+        if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+        const d = await r.json();
+        CLARITY.loading = false;
+        CLARITY.result = d;
+        clarityRender();
+      } catch (e) {
+        console.error("Clarity lookup error:", e);
+        CLARITY.loading = false;
+        CLARITY.result = { error: e.message || String(e) };
+        clarityRender();
       }
     });
   }
@@ -3076,6 +3441,653 @@
     const back = document.getElementById("pfm-sheet-backdrop");
     if (sheet) sheet.classList.remove("visible");
     if (back) back.classList.remove("visible");
+  }
+
+  // ===================== Easy Savings Use Case =====================
+  // Browse SME merchant offers by BIN / country, then redeem a voucher.
+
+  const ES = {
+    bin: "52345678",
+    country: "IND",
+    language: "en-US",
+    offers: [],
+    total: 0,
+    loading: false,
+    redeeming: null,     // offer id currently being redeemed
+    redemption: null,    // last redemption result
+    error: null,
+  };
+
+  function _esManifest() { return USE_CASES.find(u => u.id === "easysavings"); }
+
+  function renderEasySavings() {
+    const m = _esManifest();
+    if (m && m.defaults) {
+      if (!ES._inited) {
+        ES.bin = m.defaults.bin || ES.bin;
+        ES.country = m.defaults.country || ES.country;
+        ES.language = m.defaults.language || ES.language;
+        ES._inited = true;
+      }
+    }
+    esRender();
+  }
+
+  function esRender() {
+    const body = $("uc-body");
+    if (!body) return;
+
+    body.innerHTML = `
+      <div class="es-stage">
+        <div class="es-form-card">
+          <div class="es-form-header">
+            <div class="es-form-title">Browse Merchant Offers</div>
+            <div class="es-form-sub">Enter a BIN and country to discover available SME savings.</div>
+          </div>
+          <div class="es-form-row">
+            <div class="es-field">
+              <label for="es-bin">BIN (8 digits)</label>
+              <input id="es-bin" type="text" value="${escapeHtml(ES.bin)}" placeholder="e.g. 52345678" maxlength="8">
+            </div>
+            <div class="es-field">
+              <label for="es-country">Country (ISO-3)</label>
+              <input id="es-country" type="text" value="${escapeHtml(ES.country)}" placeholder="e.g. IND" maxlength="3">
+            </div>
+            <div class="es-field">
+              <label for="es-lang">Language</label>
+              <input id="es-lang" type="text" value="${escapeHtml(ES.language)}" placeholder="e.g. en-US" maxlength="10">
+            </div>
+            <button class="es-btn es-btn--primary" id="es-browse-btn"${ES.loading ? " disabled" : ""}>
+              ${ES.loading
+                ? '<span class="es-spinner"></span>Searching…'
+                : '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>Browse'}
+            </button>
+          </div>
+        </div>
+        <div class="es-result" id="es-result">
+          ${esResultHtml()}
+        </div>
+      </div>`;
+    esWire();
+  }
+
+  function esResultHtml() {
+    if (ES.loading) {
+      return '<div class="es-loading"><div class="es-spinner es-spinner--lg"></div><p>Fetching offers…</p></div>';
+    }
+    if (ES.error) {
+      return '<div class="es-error">' + escapeHtml(String(ES.error)) + '</div>';
+    }
+    if (!ES.offers.length) {
+      return esHeroHtml();
+    }
+
+    // Redemption banner
+    let redemptionBanner = "";
+    if (ES.redemption) {
+      const r = ES.redemption;
+      redemptionBanner = `
+        <div class="es-redemption-banner">
+          <div class="es-redemption-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <div class="es-redemption-body">
+            <div class="es-redemption-title">Offer redeemed successfully</div>
+            ${r.orderId ? '<div class="es-redemption-detail"><span class="es-detail-label">Order ID</span> <code>' + escapeHtml(r.orderId) + '</code></div>' : ""}
+            ${r.voucherCode ? '<div class="es-redemption-detail"><span class="es-detail-label">Voucher</span> <code class="es-voucher-code">' + escapeHtml(r.voucherCode) + '</code></div>' : ""}
+            ${r.status ? '<div class="es-redemption-detail"><span class="es-detail-label">Status</span> ' + escapeHtml(r.status) + '</div>' : ""}
+            ${r.redemptionUrl ? '<a class="es-link" href="' + escapeHtml(r.redemptionUrl) + '" target="_blank" rel="noopener">Redeem at merchant ↗</a>' : ""}
+          </div>
+          <button class="es-banner-close" id="es-banner-close" title="Dismiss">✕</button>
+        </div>`;
+    }
+
+    return `
+      ${redemptionBanner}
+      <div class="es-summary-strip">
+        <div class="es-summary-item">
+          <label>Offers found</label>
+          <span>${ES.total}</span>
+        </div>
+        <div class="es-summary-item">
+          <label>BIN</label>
+          <span><code>${escapeHtml(ES.bin)}</code></span>
+        </div>
+        <div class="es-summary-item">
+          <label>Country</label>
+          <span>${escapeHtml(ES.country)}</span>
+        </div>
+      </div>
+      <div class="es-offer-grid">
+        ${ES.offers.map(esOfferCardHtml).join("")}
+      </div>`;
+  }
+
+  function esOfferCardHtml(offer) {
+    const isRedeeming = ES.redeeming === offer.id;
+    const initials = (offer.merchantName || "?").slice(0, 2).toUpperCase();
+    const logo = offer.merchantLogo
+      ? '<img src="' + escapeHtml(offer.merchantLogo) + '" alt="' + escapeHtml(offer.merchantName) + '" class="es-offer-logo-img" loading="lazy" onerror="this.outerHTML=\'<div class=&quot;es-offer-logo-fallback&quot;>' + escapeHtml(initials) + '</div>\'">'
+      : '<div class="es-offer-logo-fallback">' + escapeHtml(initials) + '</div>';
+
+    const discount = offer.discountValue
+      ? '<span class="es-offer-discount">' + escapeHtml(offer.discountValue) + (offer.discountType ? " " + escapeHtml(offer.discountType) : "") + '</span>'
+      : "";
+
+    const dates = [];
+    if (offer.startDate) dates.push("From " + escapeHtml(offer.startDate));
+    if (offer.endDate) dates.push("Until " + escapeHtml(offer.endDate));
+    const dateHtml = dates.length
+      ? '<div class="es-offer-dates">' + dates.join(" · ") + '</div>'
+      : "";
+
+    return `
+      <div class="es-offer-card" data-offer-id="${escapeHtml(offer.id)}">
+        <div class="es-offer-top">
+          <div class="es-offer-logo">${logo}</div>
+          <div class="es-offer-name-block">
+            <div class="es-offer-merchant">${escapeHtml(offer.merchantName)}</div>
+            ${offer.category ? '<div class="es-offer-cat">' + escapeHtml(offer.category) + '</div>' : ""}
+          </div>
+          ${discount}
+        </div>
+        <div class="es-offer-title">${escapeHtml(offer.title)}</div>
+        ${offer.description ? '<div class="es-offer-desc">' + escapeHtml(offer.description) + '</div>' : ""}
+        ${dateHtml}
+        <div class="es-offer-actions">
+          <button class="es-btn es-btn--redeem" data-redeem-id="${escapeHtml(offer.id)}"${isRedeeming ? " disabled" : ""}>
+            ${isRedeeming
+              ? '<span class="es-spinner"></span>Redeeming…'
+              : '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;flex-shrink:0"><path d="M5 10h10M10 5v10"/></svg>Redeem'}
+          </button>
+          ${offer.termsUrl ? '<a class="es-terms-link" href="' + escapeHtml(offer.termsUrl) + '" target="_blank" rel="noopener">Terms</a>' : ""}
+        </div>
+      </div>`;
+  }
+
+  function esHeroHtml() {
+    return `
+      <div class="es-hero">
+        <div class="es-hero-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="6" y="12" width="36" height="24" rx="4"/>
+            <path d="M6 20h36"/>
+            <circle cx="34" cy="30" r="3"/>
+          </svg>
+        </div>
+        <h3>Discover card-linked merchant savings</h3>
+        <p>Enter a BIN and country above, then click <strong>Browse</strong> to explore available SME offers — discounts, vouchers, and promotions that cardholders can redeem instantly.</p>
+        <div class="es-hero-chips">
+          <span class="es-hero-chip">Local SME offers</span>
+          <span class="es-hero-chip">Instant vouchers</span>
+          <span class="es-hero-chip">No cost to issuers</span>
+          <span class="es-hero-chip">Global coverage</span>
+        </div>
+      </div>`;
+  }
+
+  function esWire() {
+    const binInput = document.getElementById("es-bin");
+    const countryInput = document.getElementById("es-country");
+    const langInput = document.getElementById("es-lang");
+
+    if (binInput) binInput.addEventListener("input", () => { ES.bin = binInput.value.trim(); });
+    if (countryInput) countryInput.addEventListener("input", () => { ES.country = countryInput.value.trim(); });
+    if (langInput) langInput.addEventListener("input", () => { ES.language = langInput.value.trim(); });
+
+    const browseBtn = document.getElementById("es-browse-btn");
+    if (browseBtn) {
+      browseBtn.addEventListener("click", () => esBrowse());
+    }
+
+    // Redeem buttons
+    document.querySelectorAll("[data-redeem-id]").forEach(btn => {
+      btn.addEventListener("click", () => esRedeem(btn.dataset.redeemId));
+    });
+
+    // Dismiss redemption banner
+    const closeBtn = document.getElementById("es-banner-close");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => {
+        ES.redemption = null;
+        esRender();
+      });
+    }
+  }
+
+  function esBrowse() {
+    if (!ES.bin || !ES.country || !ES.language) return;
+    ES.loading = true;
+    ES.offers = [];
+    ES.error = null;
+    ES.redemption = null;
+    esRender();
+
+    fetch("/usecases/easysavings/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "browse", params: { bin: ES.bin, country: ES.country, language: ES.language } }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        ES.loading = false;
+        if (d.error) {
+          ES.error = typeof d.error === "string" ? d.error : JSON.stringify(d.error);
+        } else {
+          ES.offers = d.offers || [];
+          ES.total = d.total || ES.offers.length;
+        }
+        esRender();
+      })
+      .catch(err => {
+        ES.loading = false;
+        ES.error = err.message || String(err);
+        esRender();
+      });
+  }
+
+  function esRedeem(offerId) {
+    if (!offerId || ES.redeeming) return;
+    ES.redeeming = offerId;
+    ES.redemption = null;
+    esRender();
+
+    fetch("/usecases/easysavings/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "redeem", params: { bin: ES.bin, offer_id: offerId } }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        ES.redeeming = null;
+        if (d.error) {
+          ES.error = typeof d.error === "string" ? d.error : JSON.stringify(d.error);
+        } else {
+          ES.redemption = d.redemption || {};
+        }
+        esRender();
+      })
+      .catch(err => {
+        ES.redeeming = null;
+        ES.error = err.message || String(err);
+        esRender();
+      });
+  }
+
+  // ===================== Places Use Case =====================
+  // "Near Me" merchant discovery — search for nearby merchants on a map.
+
+  const PL = {
+    lat: "38.7468239",
+    lng: "-90.7460708",
+    distance: "15",
+    unit: "MILE",
+    countryCode: "US",
+    industry: "EAP",
+    cityName: "",
+    places: [],
+    total: 0,
+    loading: false,
+    error: null,
+    selected: null,     // locationId of place being viewed in detail panel
+    detailLoading: false,
+    detail: null,       // full detail from /places/{id}
+  };
+
+  function _plManifest() { return USE_CASES.find(u => u.id === "places"); }
+
+  function renderPlaces() {
+    const m = _plManifest();
+    if (m && m.defaults && !PL._inited) {
+      Object.assign(PL, m.defaults);
+      PL._inited = true;
+    }
+    plRender();
+  }
+
+  function plRender() {
+    const body = $("uc-body");
+    if (!body) return;
+
+    const m = _plManifest();
+    const presets = (m && m.industryPresets) || [];
+
+    body.innerHTML = `
+      <div class="pl-stage">
+        <div class="pl-form-card">
+          <div class="pl-form-header">
+            <div class="pl-form-title">Merchant Discovery</div>
+            <div class="pl-form-sub">Find merchants near a location that accept Mastercard.</div>
+          </div>
+          <div class="pl-form-row">
+            <div class="pl-field">
+              <label for="pl-lat">Latitude</label>
+              <input id="pl-lat" type="text" value="${escapeHtml(PL.lat)}" placeholder="e.g. 38.7468">
+            </div>
+            <div class="pl-field">
+              <label for="pl-lng">Longitude</label>
+              <input id="pl-lng" type="text" value="${escapeHtml(PL.lng)}" placeholder="e.g. -90.7461">
+            </div>
+            <div class="pl-field">
+              <label for="pl-distance">Distance</label>
+              <input id="pl-distance" type="text" value="${escapeHtml(PL.distance)}" placeholder="15" style="width:60px">
+            </div>
+            <div class="pl-field">
+              <label for="pl-unit">Unit</label>
+              <select id="pl-unit">
+                <option value="MILE"${PL.unit === "MILE" ? " selected" : ""}>Miles</option>
+                <option value="KM"${PL.unit === "KM" ? " selected" : ""}>Km</option>
+              </select>
+            </div>
+            <div class="pl-field">
+              <label for="pl-country">Country</label>
+              <input id="pl-country" type="text" value="${escapeHtml(PL.countryCode)}" placeholder="US" style="width:50px" maxlength="2">
+            </div>
+            <div class="pl-field">
+              <label for="pl-industry">Industry</label>
+              <select id="pl-industry">
+                ${presets.map(p =>
+                  '<option value="' + escapeHtml(p.value) + '"' + (PL.industry === p.value ? ' selected' : '') + '>' + escapeHtml(p.label) + '</option>'
+                ).join("")}
+              </select>
+            </div>
+            <button class="pl-btn pl-btn--primary" id="pl-search-btn"${PL.loading ? " disabled" : ""}>
+              ${PL.loading
+                ? '<span class="pl-spinner"></span>Searching…'
+                : '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>Search'}
+            </button>
+          </div>
+        </div>
+        <div class="pl-result" id="pl-result">
+          ${plResultHtml()}
+        </div>
+      </div>`;
+    plWire();
+  }
+
+  function plResultHtml() {
+    if (PL.loading) {
+      return '<div class="pl-loading"><div class="pl-spinner pl-spinner--lg"></div><p>Searching nearby merchants…</p></div>';
+    }
+    if (PL.error) {
+      return '<div class="pl-error">' + escapeHtml(String(PL.error)) + '</div>';
+    }
+    if (!PL.places.length) {
+      return plHeroHtml();
+    }
+
+    // Map + list layout
+    const center = plCenter();
+    const mapHtml = plMapHtml(center);
+
+    return `
+      <div class="pl-summary-strip">
+        <div class="pl-summary-item"><label>Merchants found</label><span>${PL.total}</span></div>
+        <div class="pl-summary-item"><label>Showing</label><span>${PL.places.length}</span></div>
+        <div class="pl-summary-item"><label>Radius</label><span>${escapeHtml(PL.distance)} ${PL.unit === "KM" ? "km" : "mi"}</span></div>
+      </div>
+      ${mapHtml}
+      <div class="pl-list" id="pl-list">
+        ${PL.places.map((p, i) => plCardHtml(p, i)).join("")}
+      </div>
+      ${PL.detail ? plDetailPanelHtml(PL.detail) : ""}`;
+  }
+
+  function plCenter() {
+    if (PL.places.length) {
+      const lats = PL.places.filter(p => p.lat != null).map(p => p.lat);
+      const lngs = PL.places.filter(p => p.lng != null).map(p => p.lng);
+      if (lats.length && lngs.length) {
+        return {
+          lat: lats.reduce((a, b) => a + b, 0) / lats.length,
+          lng: lngs.reduce((a, b) => a + b, 0) / lngs.length,
+        };
+      }
+    }
+    return { lat: parseFloat(PL.lat) || 38.7468, lng: parseFloat(PL.lng) || -90.7461 };
+  }
+
+  function plMapHtml(center) {
+    // Compute bounding box to fit all markers
+    const lats = PL.places.filter(p => p.lat != null).map(p => p.lat);
+    const lngs = PL.places.filter(p => p.lng != null).map(p => p.lng);
+    let bbox;
+    if (lats.length > 1 && lngs.length > 1) {
+      const pad = 0.01;
+      bbox = [Math.min(...lngs) - pad, Math.min(...lats) - pad, Math.max(...lngs) + pad, Math.max(...lats) + pad].join(",");
+    } else {
+      const delta = 0.05;
+      bbox = [center.lng - delta, center.lat - delta, center.lng + delta, center.lat + delta].join(",");
+    }
+    const src = "https://www.openstreetmap.org/export/embed.html?bbox=" + encodeURIComponent(bbox) + "&layer=mapnik&marker=" + center.lat + "," + center.lng;
+    return `
+      <div class="pl-map-wrap">
+        <iframe class="pl-map-frame" src="${escapeHtml(src)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Merchant locations"></iframe>
+        <div class="pl-map-count">${PL.places.length} merchant${PL.places.length !== 1 ? "s" : ""}</div>
+      </div>`;
+  }
+
+  function plCardHtml(place, idx) {
+    const initials = (place.name || "?").replace(/[^A-Za-z0-9 ]/g, "").trim().split(" ")
+      .slice(0, 2).map(w => (w[0] || "").toUpperCase()).join("") || "?";
+    const colors = ["#6366f1","#0ea5e9","#10b981","#f59e0b","#ec4899","#8b5cf6","#ef4444","#14b8a6","#f97316","#3b82f6"];
+    const color = colors[idx % colors.length];
+
+    const capBadges = (place.capabilities || []).slice(0, 5).map(c =>
+      '<span class="pl-cap-badge' + (c === "NFC / Contactless" ? ' pl-cap-badge--nfc' : '') + '">' + escapeHtml(c) + '</span>'
+    ).join("");
+
+    const statusCls = place.isInBusiness ? "pl-status--open" : "pl-status--closed";
+    const statusLabel = place.isInBusiness ? "Active" : "Inactive";
+
+    return `
+      <div class="pl-card" data-pl-idx="${idx}" data-pl-id="${escapeHtml(String(place.locationId || ''))}">
+        <div class="pl-card-left">
+          <div class="pl-card-avatar" style="background:${color}">
+            <span>${escapeHtml(initials)}</span>
+          </div>
+        </div>
+        <div class="pl-card-body">
+          <div class="pl-card-top">
+            <div class="pl-card-name">${escapeHtml(place.name)}</div>
+            <span class="pl-status ${statusCls}">${statusLabel}</span>
+            ${place.isNewBusiness ? '<span class="pl-new-badge">New</span>' : ""}
+          </div>
+          ${place.address ? '<div class="pl-card-addr">' + escapeHtml(place.address) + '</div>' : ""}
+          ${place.phone ? '<div class="pl-card-phone">' + escapeHtml(place.phone) + '</div>' : ""}
+          <div class="pl-card-meta">
+            ${place.mccCode ? '<span class="pl-meta-chip">MCC ' + escapeHtml(place.mccCode) + '</span>' : ""}
+            ${place.industry ? '<span class="pl-meta-chip">' + escapeHtml(place.industry) + '</span>' : ""}
+            ${place.geocodeQuality ? '<span class="pl-meta-chip">' + escapeHtml(place.geocodeQuality) + '</span>' : ""}
+            ${place.posTerminals ? '<span class="pl-meta-chip">' + place.posTerminals + ' POS</span>' : ""}
+          </div>
+          ${capBadges ? '<div class="pl-card-caps">' + capBadges + '</div>' : ""}
+          ${place.website ? '<a class="pl-card-link" href="' + escapeHtml(place.website) + '" target="_blank" rel="noopener">' + escapeHtml(place.website.replace(/^https?:\/\//, "").replace(/\/$/, "")) + ' ↗</a>' : ""}
+        </div>
+        <button class="pl-card-detail-btn" data-detail-id="${escapeHtml(String(place.locationId || ''))}" title="View details">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 4l6 6-6 6"/></svg>
+        </button>
+      </div>`;
+  }
+
+  function plDetailPanelHtml(d) {
+    const rows = [];
+    if (d.legalName)            rows.push(["Legal Name", d.legalName]);
+    if (d.aggregateMerchantName) rows.push(["Brand", d.aggregateMerchantName]);
+    if (d.parentMerchantName)   rows.push(["Parent", d.parentMerchantName]);
+    if (d.mccCode)              rows.push(["MCC", d.mccCode]);
+    if (d.industry)             rows.push(["Industry", d.industry]);
+    if (d.superIndustry)        rows.push(["Super-industry", d.superIndustry]);
+    if (d.geocodeQuality)       rows.push(["Geocode quality", d.geocodeQuality]);
+    if (d.channel)              rows.push(["Channel", d.channel === "b" ? "Brick & mortar" : d.channel === "e" ? "E-commerce" : d.channel]);
+    if (d.posTerminals)         rows.push(["POS terminals", String(d.posTerminals)]);
+    if (d.firstSeen)            rows.push(["First seen", d.firstSeen]);
+    if (d.lastSeen)             rows.push(["Last seen", d.lastSeen]);
+    if (d.phone)                rows.push(["Phone", d.phone]);
+    if (d.website)              rows.push(["Website", d.website]);
+
+    const caps = (d.capabilities || []).map(c =>
+      '<span class="pl-detail-cap">' + escapeHtml(c) + '</span>'
+    ).join("");
+
+    return `
+      <div class="pl-detail-backdrop" id="pl-detail-backdrop"></div>
+      <div class="pl-detail-panel" id="pl-detail-panel">
+        <div class="pl-detail-head">
+          <div>
+            <div class="pl-detail-name">${escapeHtml(d.name)}</div>
+            ${d.address ? '<div class="pl-detail-addr">' + escapeHtml(d.address) + '</div>' : ""}
+          </div>
+          <button class="pl-detail-close" id="pl-detail-close" title="Close">✕</button>
+        </div>
+        ${caps ? '<div class="pl-detail-caps">' + caps + '</div>' : ""}
+        <div class="pl-detail-grid">
+          ${rows.map(([k, v]) =>
+            '<div class="pl-detail-key">' + escapeHtml(k) + '</div><div class="pl-detail-val">' + escapeHtml(v) + '</div>'
+          ).join("")}
+        </div>
+        ${d.lat != null && d.lng != null ? plDetailMapHtml(d) : ""}
+      </div>`;
+  }
+
+  function plDetailMapHtml(d) {
+    const delta = 0.005;
+    const bbox = [d.lng - delta, d.lat - delta, d.lng + delta, d.lat + delta].join(",");
+    const src = "https://www.openstreetmap.org/export/embed.html?bbox=" + encodeURIComponent(bbox) + "&layer=mapnik&marker=" + d.lat + "," + d.lng;
+    return `
+      <div class="pl-detail-map">
+        <iframe class="pl-map-frame" src="${escapeHtml(src)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="${escapeHtml(d.name)}"></iframe>
+      </div>`;
+  }
+
+  function plHeroHtml() {
+    return `
+      <div class="pl-hero">
+        <div class="pl-hero-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M24 4C16.3 4 10 10.3 10 18c0 10 14 26 14 26s14-16 14-26c0-7.7-6.3-14-14-14z"/>
+            <circle cx="24" cy="18" r="6"/>
+          </svg>
+        </div>
+        <h3>Discover merchants near any location</h3>
+        <p>Enter coordinates or a city, choose an industry filter and search radius, then click <strong>Search</strong> to explore merchants accepting Mastercard — with NFC, EMV, and digital wallet capabilities.</p>
+        <div class="pl-hero-chips">
+          <span class="pl-hero-chip">Global coverage</span>
+          <span class="pl-hero-chip">NFC & EMV data</span>
+          <span class="pl-hero-chip">Business status</span>
+          <span class="pl-hero-chip">Payment capabilities</span>
+        </div>
+      </div>`;
+  }
+
+  function plWire() {
+    // Bind form inputs
+    const ids = { "pl-lat": "lat", "pl-lng": "lng", "pl-distance": "distance", "pl-country": "countryCode" };
+    for (const [elId, key] of Object.entries(ids)) {
+      const el = document.getElementById(elId);
+      if (el) el.addEventListener("input", () => { PL[key] = el.value.trim(); });
+    }
+    const unitSel = document.getElementById("pl-unit");
+    if (unitSel) unitSel.addEventListener("change", () => { PL.unit = unitSel.value; });
+    const indSel = document.getElementById("pl-industry");
+    if (indSel) indSel.addEventListener("change", () => { PL.industry = indSel.value; });
+
+    // Search button
+    const searchBtn = document.getElementById("pl-search-btn");
+    if (searchBtn) searchBtn.addEventListener("click", () => plSearch());
+
+    // Detail buttons
+    document.querySelectorAll("[data-detail-id]").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        plShowDetail(btn.dataset.detailId);
+      });
+    });
+
+    // Close detail panel
+    const closeBtn = document.getElementById("pl-detail-close");
+    const backdrop = document.getElementById("pl-detail-backdrop");
+    if (closeBtn) closeBtn.addEventListener("click", () => { PL.detail = null; PL.selected = null; plRender(); });
+    if (backdrop) backdrop.addEventListener("click", () => { PL.detail = null; PL.selected = null; plRender(); });
+
+    // Animate detail panel in
+    if (PL.detail) {
+      const panel = document.getElementById("pl-detail-panel");
+      const bg = document.getElementById("pl-detail-backdrop");
+      if (panel) requestAnimationFrame(() => panel.classList.add("visible"));
+      if (bg) requestAnimationFrame(() => bg.classList.add("visible"));
+    }
+  }
+
+  function plSearch() {
+    if (!PL.countryCode) return;
+    PL.loading = true;
+    PL.places = [];
+    PL.error = null;
+    PL.detail = null;
+    PL.selected = null;
+    plRender();
+
+    fetch("/usecases/places/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "search",
+        params: {
+          latitude: PL.lat,
+          longitude: PL.lng,
+          radiusSearch: !!(PL.lat && PL.lng),
+          distance: PL.distance,
+          unit: PL.unit,
+          countryCode: PL.countryCode,
+          industry: PL.industry,
+          cityName: PL.cityName,
+        },
+      }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        PL.loading = false;
+        if (d.error) {
+          PL.error = typeof d.error === "string" ? d.error : JSON.stringify(d.error);
+        } else {
+          PL.places = d.places || [];
+          PL.total = d.total || PL.places.length;
+        }
+        plRender();
+      })
+      .catch(err => {
+        PL.loading = false;
+        PL.error = err.message || String(err);
+        plRender();
+      });
+  }
+
+  function plShowDetail(locationId) {
+    if (!locationId || PL.detailLoading) return;
+    PL.selected = locationId;
+    PL.detailLoading = true;
+    // Eagerly show from cached search data
+    const cached = PL.places.find(p => String(p.locationId) === String(locationId));
+    if (cached) { PL.detail = cached; plRender(); }
+
+    fetch("/usecases/places/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "detail", params: { location_id: locationId } }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        PL.detailLoading = false;
+        if (d.error) {
+          // Keep the cached version if detail fetch fails
+          if (!PL.detail) { PL.error = typeof d.error === "string" ? d.error : JSON.stringify(d.error); }
+        } else if (d.place) {
+          PL.detail = d.place;
+        }
+        plRender();
+      })
+      .catch(() => { PL.detailLoading = false; });
   }
 
   function escapeHtml(s) {
