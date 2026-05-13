@@ -8,3 +8,6 @@ __pycache__/
 # Signing keys / certificates
 *.p12
 *.pkcs12
+
+# Local enrichment cache
+usecases/.enrichment_cache.json
