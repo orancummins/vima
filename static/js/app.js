@@ -287,6 +287,8 @@
     $("resp-body").textContent = "—";
     $("resp-status").textContent = "";
     $("resp-status").className = "status-pill";    $('resp-status').title = "";
+    lastIoData.request = null;
+    lastIoData.response = null;
     refreshState();
 
     // Restore the last-used operation for this API, or fall back to the first.
@@ -358,14 +360,25 @@
   function restoreIo() {
     const cached = (ioCache[currentApiId] || {})[currentOpId];
     if (cached) {
-      $("req-body").textContent = fmt(cached.request);
-      $("resp-body").textContent = fmt(cached.response);
+      // Restore header-visibility state for this cached result
+      if (cached.headersVisible) {
+        headersVisible.request = cached.headersVisible.request;
+        headersVisible.response = cached.headersVisible.response;
+        updateHeaderToggleBtn('request');
+        updateHeaderToggleBtn('response');
+      }
+      lastIoData.request = cached.request;
+      lastIoData.response = cached.response;
+      renderIoPanel('request', cached.request);
+      renderIoPanel('response', cached.response);
       if (cached.statusCode != null) {
         setStatus(cached.statusCode);
       } else {
         setStatus(null);
       }
       $('op-hint').innerHTML = cached.hintHtml || '';    } else {
+      lastIoData.request = null;
+      lastIoData.response = null;
       $("req-body").textContent = "—";
       $("resp-body").textContent = "—";
       $("resp-status").textContent = "";
@@ -489,8 +502,10 @@
         body: JSON.stringify({ operation: op.id, params }),
       });
       const data = await r.json();
-      $("req-body").textContent = fmt(data.request);
-      $("resp-body").textContent = fmt(data.response);
+      lastIoData.request = data.request;
+      lastIoData.response = data.response;
+      renderIoPanel('request', data.request);
+      renderIoPanel('response', data.response);
       const s = data.response && data.response.status_code;
       if (s != null) {
         setStatus(s);
@@ -544,6 +559,7 @@
         response: data.response,
         statusCode: s,
         hintHtml: $('op-hint').innerHTML,
+        headersVisible: { ...headersVisible },
       };
       // Update state
       if (data.state) {
@@ -563,6 +579,48 @@
     try { return JSON.stringify(obj, null, 2); }
     catch { return String(obj); }
   }
+
+  // -----------------------------------------------------------------------
+  // Headers toggle
+  // -----------------------------------------------------------------------
+  // Track whether headers are shown for each panel
+  const headersVisible = { request: false, response: false };
+  // Store the last raw request/response objects so we can re-render on toggle
+  let lastIoData = { request: null, response: null };
+
+  function fmtWithoutHeaders(obj) {
+    if (obj == null) return "—";
+    try {
+      const copy = { ...obj };
+      delete copy.headers;
+      return JSON.stringify(copy, null, 2);
+    } catch { return String(obj); }
+  }
+
+  function renderIoPanel(panel, obj) {
+    // panel = 'request' | 'response'
+    const elId = panel === 'request' ? 'req-body' : 'resp-body';
+    const el = $(elId);
+    if (!obj) { el.textContent = "—"; return; }
+    el.textContent = headersVisible[panel] ? fmt(obj) : fmtWithoutHeaders(obj);
+  }
+
+  function updateHeaderToggleBtn(panel) {
+    const btnId = panel === 'request' ? 'req-headers-toggle' : 'resp-headers-toggle';
+    const btn = $(btnId);
+    if (!btn) return;
+    btn.textContent = headersVisible[panel] ? 'Hide Headers' : 'Show Headers';
+    btn.classList.toggle('active', headersVisible[panel]);
+  }
+
+  document.querySelectorAll('.btn-toggle-headers').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const panel = btn.dataset.panel;
+      headersVisible[panel] = !headersVisible[panel];
+      updateHeaderToggleBtn(panel);
+      renderIoPanel(panel, lastIoData[panel]);
+    });
+  });
 
   // ---------------------------------------------------------------------
   // Copy buttons

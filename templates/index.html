@@ -82,14 +82,20 @@
           <div class="io-col">
             <div class="io-title">
               <span>Request</span>
-              <button class="btn-mini" data-copy="req-body">Copy</button>
+              <span class="io-title-actions">
+                <button class="btn-mini btn-toggle-headers" id="req-headers-toggle" data-target="req-body" data-panel="request">Show Headers</button>
+                <button class="btn-mini" data-copy="req-body">Copy</button>
+              </span>
             </div>
             <pre class="io-body" id="req-body">—</pre>
           </div>
           <div class="io-col">
             <div class="io-title">
               <span>Response <span id="resp-status" class="status-pill"></span></span>
-              <button class="btn-mini" data-copy="resp-body">Copy</button>
+              <span class="io-title-actions">
+                <button class="btn-mini btn-toggle-headers" id="resp-headers-toggle" data-target="resp-body" data-panel="response">Show Headers</button>
+                <button class="btn-mini" data-copy="resp-body">Copy</button>
+              </span>
             </div>
             <pre class="io-body" id="resp-body">—</pre>
           </div>
