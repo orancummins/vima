@@ -14,6 +14,8 @@ from .ofin import api as ofin_api
 from .binlookup import api as binlookup_api
 from .clarity import api as clarity_api
 from .priceless import api as priceless_api
+from .easysavings import api as easysavings_api
+from .places import api as places_api
 
 
 REGISTRY = {
@@ -21,10 +23,12 @@ REGISTRY = {
     "binlookup": binlookup_api,
     "clarity": clarity_api,
     "priceless": priceless_api,
+    "easysavings": easysavings_api,
+    "places": places_api,
 }
 
 # Display order for the API sub-tabs.
-ORDER: List[str] = ["ofin", "binlookup", "clarity", "priceless"]
+ORDER: List[str] = ["ofin", "binlookup", "clarity", "priceless", "easysavings", "places"]
 
 
 def manifests() -> List[Dict[str, Any]]:
