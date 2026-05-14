@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Globe Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/framer-motion@11/dist/framer-motion.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useEffect, useMemo, useRef, useState } = React;
+    const { motion } = Motion; // framer-motion UMD export
+
+    function MastercardGlobe({
+      services = [],
+      globeSize = 500,
+      rotationSpeed = 0.003,
+      glowIntensity = 1,
+    }) {
+      const canvasRef = useRef(null);
+      const animationRef = useRef(null);
+      const rotationRef = useRef(0);
+
+      const points = useMemo(() => {
+        const generated = [];
+        const total = 80; // total dots on sphere
+
+        for (let i = 0; i < total; i++) {
+          const phi = Math.acos(-1 + (2 * i) / total);
+          const theta = Math.sqrt(total * Math.PI) * phi;
+
+          const x = Math.cos(theta) * Math.sin(phi);
+          const y = Math.sin(theta) * Math.sin(phi);
+          const z = Math.cos(phi);
+
+          // Only the first N points (one per service) carry a label
+          generated.push({
+            x, y, z,
+            label: i < services.length ? services[i] : null,
+          });
+        }
+
+        return generated;
+      }, [services]);
+
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+        let lastTime = null;
+
+        const render = (timestamp) => {
+          const delta = lastTime ? Math.min((timestamp - lastTime) / 16.667, 2) : 1;
+          lastTime = timestamp;
+
+          const rotation = rotationRef.current;
+          ctx.clearRect(0, 0, globeSize, globeSize);
+
+          const radius = globeSize * 0.32;
+          const centerX = globeSize / 2;
+          const centerY = globeSize / 2;
+
+          // Glow background
+          const gradient = ctx.createRadialGradient(
+            centerX, centerY, radius * 0.2,
+            centerX, centerY, radius
+          );
+          gradient.addColorStop(0, "rgba(255,140,0,0.18)");
+          gradient.addColorStop(0.45, "rgba(255,94,0,0.10)");
+          gradient.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius * 1.35, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Grid lines — single opacity per line, back hemisphere clipped by visibility
+          const gridOpacity = 0.18 * glowIntensity;
+          ctx.lineWidth = 0.8;
+
+          for (let lat = -80; lat <= 80; lat += 20) {
+            const latRad = (lat * Math.PI) / 180;
+            // Draw front half only (lon where z > -0.1)
+            for (let seg = 0; seg < 360; seg += 4) {
+              const lon0 = ((seg * Math.PI) / 180) + rotation;
+              const lon1 = (((seg + 4) * Math.PI) / 180) + rotation;
+              const z0 = Math.cos(latRad) * Math.sin(lon0);
+              const z1 = Math.cos(latRad) * Math.sin(lon1);
+              const avgZ = (z0 + z1) / 2;
+              const alpha = gridOpacity * Math.max(0, Math.min(1, (avgZ + 0.4) / 0.8));
+              if (alpha < 0.005) continue;
+              ctx.strokeStyle = `rgba(255,120,0,${alpha})`;
+              ctx.beginPath();
+              const s0 = 1 / (1.8 - z0);
+              const px0 = centerX + Math.cos(latRad) * Math.cos(lon0) * radius * s0;
+              const py0 = centerY + Math.sin(latRad) * radius * s0;
+              const s1 = 1 / (1.8 - z1);
+              const px1 = centerX + Math.cos(latRad) * Math.cos(lon1) * radius * s1;
+              const py1 = centerY + Math.sin(latRad) * radius * s1;
+              ctx.moveTo(px0, py0);
+              ctx.lineTo(px1, py1);
+              ctx.stroke();
+            }
+          }
+
+          for (let lon = 0; lon < 360; lon += 20) {
+            for (let seg = -88; seg < 90; seg += 4) {
+              const lat0Rad = (seg * Math.PI) / 180;
+              const lat1Rad = ((seg + 4) * Math.PI) / 180;
+              const lonRad = ((lon * Math.PI) / 180) + rotation;
+              const z0 = Math.cos(lat0Rad) * Math.sin(lonRad);
+              const z1 = Math.cos(lat1Rad) * Math.sin(lonRad);
+              const avgZ = (z0 + z1) / 2;
+              const alpha = gridOpacity * Math.max(0, Math.min(1, (avgZ + 0.4) / 0.8));
+              if (alpha < 0.005) continue;
+              ctx.strokeStyle = `rgba(255,120,0,${alpha})`;
+              ctx.beginPath();
+              const s0 = 1 / (1.8 - z0);
+              const px0 = centerX + Math.cos(lat0Rad) * Math.cos(lonRad) * radius * s0;
+              const py0 = centerY + Math.sin(lat0Rad) * radius * s0;
+              const s1 = 1 / (1.8 - z1);
+              const px1 = centerX + Math.cos(lat1Rad) * Math.cos(lonRad) * radius * s1;
+              const py1 = centerY + Math.sin(lat1Rad) * radius * s1;
+              ctx.moveTo(px0, py0);
+              ctx.lineTo(px1, py1);
+              ctx.stroke();
+            }
+          }
+
+          // Compute rotated positions then sort back-to-front
+          const projected = points.map((point) => {
+            const rotatedX = point.x * Math.cos(rotation) - point.z * Math.sin(rotation);
+            const rotatedZ = point.x * Math.sin(rotation) + point.z * Math.cos(rotation);
+            const scale = 1 / (1.8 - rotatedZ);
+            const px = centerX + rotatedX * radius * scale;
+            const py = centerY + point.y * radius * scale;
+            // Smooth fade: full opacity when facing, fades from z=0.2 to z=-0.2
+            const fadeFactor = Math.max(0, Math.min(1, (rotatedZ + 0.2) / 0.4));
+            const baseOpacity = 0.15 + fadeFactor * 0.85;
+            return { ...point, px, py, rotatedZ, scale, baseOpacity, visible: rotatedZ > -0.18 };
+          });
+
+          projected
+            .filter(p => p.visible)
+            .sort((a, b) => a.rotatedZ - b.rotatedZ) // back to front
+            .forEach((p) => {
+              const { px, py, scale, baseOpacity } = p;
+              const dotR = 2.5 * scale;
+
+              // Dot with glow — no labels
+              ctx.save();
+              ctx.shadowColor = "rgba(255,140,0,0.95)";
+              ctx.shadowBlur = 8 * scale;
+              ctx.beginPath();
+              ctx.fillStyle = `rgba(255,160,40,${baseOpacity})`;
+              ctx.arc(px, py, dotR, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.restore();
+            });
+
+          rotationRef.current += rotationSpeed * delta;
+          animationRef.current = requestAnimationFrame(render);
+        };
+
+        animationRef.current = requestAnimationFrame(render);
+        return () => cancelAnimationFrame(animationRef.current);
+      }, [points, globeSize, rotationSpeed, glowIntensity]);
+
+      return (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.2 }}
+          style={{ position: "relative" }}
+        >
+          <div style={{
+            position: "absolute", inset: 0, borderRadius: "50%",
+            filter: "blur(48px)", opacity: 0.5,
+            background: "radial-gradient(circle, rgba(255,98,0,0.35) 0%, rgba(255,98,0,0) 70%)"
+          }} />
+          <canvas
+            ref={canvasRef}
+            width={globeSize}
+            height={globeSize}
+            style={{ position: "relative", zIndex: 10 }}
+          />
+        </motion.div>
+      );
+    }
+
+    function App() {
+      return (
+        <div style={{
+          minHeight: "100vh",
+          background: "linear-gradient(135deg, #0a0a0a 0%, #0f0a00 60%, #1a0f00 100%)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
+          padding: "40px 60px",
+          position: "relative",
+        }}>
+          {/* Subtle top gradient bar */}
+          <div style={{
+            position: "absolute", top: 0, left: 0, right: 0, height: 3,
+            background: "linear-gradient(90deg, transparent, #eb6200, transparent)",
+          }} />
+
+          {/* Banner layout: text left, globe right */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 0,
+            width: "100%",
+            maxWidth: 1000,
+          }}>
+            {/* Left: title block */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              style={{ flex: 1, minWidth: 0, paddingRight: 40 }}
+            >
+              {/* Mastercard circles logo mark */}
+              <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 28 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: "50%",
+                  background: "#eb001b", opacity: 0.92,
+                }} />
+                <div style={{
+                  width: 36, height: 36, borderRadius: "50%",
+                  background: "#f79e1b", opacity: 0.92,
+                  marginLeft: -14,
+                }} />
+              </div>
+
+              <div style={{
+                fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase",
+                color: "rgba(255,150,60,0.7)", marginBottom: 12, fontWeight: 500,
+              }}>
+                Mastercard
+              </div>
+
+              <h1 style={{
+                fontSize: "clamp(2rem, 4vw, 3rem)",
+                fontWeight: 700,
+                lineHeight: 1.1,
+                color: "#fff",
+                letterSpacing: "-0.02em",
+                marginBottom: 20,
+              }}>
+                Solution<br />
+                <span style={{
+                  background: "linear-gradient(90deg, #ff8c00, #ffb347)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}>Studio</span>
+              </h1>
+
+              <p style={{
+                fontSize: 14,
+                color: "rgba(255,255,255,0.4)",
+                lineHeight: 1.7,
+                maxWidth: 320,
+              }}>
+                A unified developer platform for building, testing,
+                and deploying Mastercard-connected applications.
+              </p>
+            </motion.div>
+
+            {/* Right: globe */}
+            <div style={{ flexShrink: 0 }}>
+              <MastercardGlobe
+                services={[]}
+                globeSize={440}
+                rotationSpeed={0.003}
+                glowIntensity={0.9}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
