@@ -59,6 +59,9 @@
       return;
     }
     body.innerHTML = API_CALL_LOG.map((e, idx) => apiCallEntryHtml(e, idx)).join('');
+    // Auto-expand the most recent (first) entry
+    const firstEntry = body.querySelector('.api-calls-entry');
+    if (firstEntry) firstEntry.classList.add('api-calls-entry--open');
     body.querySelectorAll('[data-expand-call]').forEach(el => {
       el.addEventListener('click', () => el.closest('.api-calls-entry').classList.toggle('api-calls-entry--open'));
     });
@@ -191,6 +194,10 @@
       document.querySelectorAll(".top-tab").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       const tab = btn.dataset.topTab;
+      document.body.style.overflow = tab === 'home' ? 'hidden' : '';
+      const hdr = document.querySelector('.header');
+      if (hdr) hdr.classList.toggle('header--home', tab === 'home');
+      $("panel-home").classList.toggle("hidden", tab !== "home");
       $("panel-apis").classList.toggle("hidden", tab !== "apis");
       $("panel-usecases").classList.toggle("hidden", tab !== "usecases");
       const fab = $('api-calls-fab');
@@ -199,6 +206,25 @@
       else _startPolling();
     });
   });
+
+  // Home panel CTA buttons — switch to APIs or Use Cases tab
+  document.querySelectorAll('.home-cta[data-switch-tab]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const tabBtn = document.querySelector('.top-tab[data-top-tab="' + btn.dataset.switchTab + '"]');
+      if (tabBtn) tabBtn.click();
+    });
+  });
+
+  // Honour ?tab=apis / ?tab=usecases from home page CTAs
+  const _urlTab = new URLSearchParams(location.search).get('tab');
+  if (_urlTab === 'usecases' || _urlTab === 'apis') {
+    const btn = document.querySelector(`.top-tab[data-top-tab="${_urlTab}"]`);
+    if (btn) btn.click();
+  } else {
+    document.body.style.overflow = 'hidden'; // home is the default tab
+    const hdr = document.querySelector('.header');
+    if (hdr) hdr.classList.add('header--home');
+  }
 
   // ---------------------------------------------------------------------
   // API state
@@ -667,6 +693,8 @@
       renderEasySavings();
     } else if (uc.render === "places") {
       renderPlaces();
+    } else if (uc.render === "findacard") {
+      renderFindACard();
     } else {
       $("uc-body").innerHTML = `<p class="muted">${(uc.apis && uc.apis.length)
         ? "Composes: " + uc.apis.join(", ")
@@ -788,10 +816,10 @@
     const e = txn.enriched;
     const amtCls = txn.amount < 0 ? "neg" : "pos";
     const amtStr = (txn.amount < 0 ? "-" : "+") + "$" + Math.abs(txn.amount).toFixed(2);
-    const catColor = enrichCatColor(e.category, e.categoryGroup);
-    const logo = enrichLogoHtml(e);
 
-    if (done) {
+    if (done && e) {
+      const catColor = enrichCatColor(e.category, e.categoryGroup);
+      const logo = enrichLogoHtml(e);
       const extraChips = [
         e.isRecurring ? `<span class="enrich-chip enrich-chip--flag">Recurring</span>` : "",
         e.isEcommerce ? `<span class="enrich-chip enrich-chip--flag">E-commerce</span>` : "",
@@ -1739,7 +1767,7 @@
           </button>
         </div>
         <div class="bin-scene" id="bin-scene">
-          ${BIN.card ? binSceneHtml(BIN.card) : binEmptySceneHtml()}
+          ${BIN.card ? binSceneHtml(BIN.card) : ""}
         </div>
       </div>`;
     binWire();
@@ -1772,6 +1800,7 @@
     const grad = `linear-gradient(135deg, ${escapeHtml(card.color1)} 0%, ${escapeHtml(card.color2)} 100%)`;
     const funding = (card.fundingSource || "").toLowerCase();
     const fundingLabel = { credit: "Credit", debit: "Debit", prepaid: "Prepaid", none: "None" }[funding] || card.fundingSource || "—";
+    const clipPath = _binCardClipPath(funding);
     return `
       <div class="bin-annotated-layout">
         <!-- Left callouts: Issuer · Brand · ICA -->
@@ -1782,8 +1811,8 @@
         </div>
 
         <!-- Card -->
-        <div class="bin-card-wrap" id="bin-card-wrap">
-          <div class="bin-card" style="background:${grad}">
+        <div class="bin-card-wrap" id="bin-card-wrap" style="opacity:0;transform:translateY(18px) scale(0.97)">
+          <div class="bin-card" style="background:${grad};${clipPath ? 'clip-path:' + clipPath : ''}">
             <div class="bin-card-gloss"></div>
             <div class="bin-card-inner">
               <div class="bin-card-top-row">
@@ -1846,7 +1875,7 @@
 
   function _binCallout(label, value, side, idx, valueCls) {
     return `
-      <div class="bin-callout bin-callout--${side}" data-co-idx="${idx}">
+      <div class="bin-callout bin-callout--${side}" data-co-idx="${idx}" style="opacity:0">
         <div class="bin-callout-text">
           <div class="bin-callout-label">${escapeHtml(label)}</div>
           <div class="bin-callout-value${valueCls ? " " + valueCls : ""}">${value}</div>
@@ -1858,14 +1887,14 @@
 
   function _binChip(label, value, idx) {
     return `
-      <div class="bin-chip" data-chip-idx="${idx}">
+      <div class="bin-chip" data-chip-idx="${idx}" style="opacity:0;transform:translateY(10px)">
         <div class="bin-chip-label">${escapeHtml(label)}</div>
         <div class="bin-chip-value">${value}</div>
       </div>`;
   }
 
   function _binCapChip(label, value, modifier) {
-    return `<div class="bin-cap-chip${modifier ? " bin-cap-chip--" + modifier : ""}" data-cap-idx>
+    return `<div class="bin-cap-chip${modifier ? " bin-cap-chip--" + modifier : ""}" data-cap-idx style="opacity:0;transform:translateY(12px) scale(0.95)">
       <div class="bin-cap-label">${escapeHtml(label)}</div>
       <div class="bin-cap-value">${escapeHtml(value)}</div>
     </div>`;
@@ -1873,12 +1902,19 @@
 
   function _binNumberHtml(bin) {
     const padded = String(bin).padEnd(16, "x");
+    const masked = 16 - bin.length;
+    let mIdx = 0;
     const groups = [padded.slice(0,4), padded.slice(4,8), padded.slice(8,12), padded.slice(12,16)];
     return groups.map((grp, gi) => {
       const chars = grp.split("").map((ch, ci) => {
         const pos = gi * 4 + ci;
         const real = pos < bin.length;
-        return `<span class="bin-digit ${real ? "bin-digit--real" : "bin-digit--masked"}" data-pos="${pos}">${real ? ch : "•"}</span>`;
+        if (real) {
+          return `<span class="bin-digit bin-digit--real" data-pos="${pos}">${ch}</span>`;
+        } else {
+          const n = (mIdx++ % 9) + 1;
+          return `<span class="bin-digit bin-digit--masked" data-pos="${pos}" data-n="${n}">${n}</span>`;
+        }
       }).join("");
       return `<span class="bin-grp">${chars}</span>`;
     }).join('<span class="bin-grp-space"> </span>');
@@ -1918,6 +1954,53 @@
     </svg>`;
   }
 
+  function _binCardClipPath(funding) {
+    // Card dimensions: 342×215, border-radius 17
+    // 6mm ≈ 23px, 3mm ≈ 11.5px
+    const W = 342, H = 215, R = 17;
+    const ny = H / 2;     // 107.5 — notch centre Y
+    const nh = 11.5;      // half-height of opening (3mm)
+    const nd = 11.5;      // depth into card (3mm)
+    const nr = 4;         // credit corner radius (1mm)
+    const yt = ny - nh;   // 96 — top of notch
+    const yb = ny + nh;   // 119 — bottom of notch
+    const nx = W - nd;    // 330.5 — inner wall X
+    const base = `M ${R} 0 L ${W-R} 0 Q ${W} 0 ${W} ${R} `;
+    const tail = ` L ${W} ${H-R} Q ${W} ${H} ${W-R} ${H} L ${R} ${H} Q 0 ${H} 0 ${H-R} L 0 ${R} Q 0 0 ${R} 0 Z`;
+    let notch = '';
+    if (funding === 'debit') {
+      // 1/5-circle arc: large radius (60px), 72° arc, positioned lower on card
+      // depth = R*(1-cos36°) ≈ 11.5px; half-height = R*sin36° ≈ 35.3px
+      // Circle centre sits outside the card (right); sweep=0 curves the arc left into card
+      const dR = 60, cy2 = 150;
+      const dyt = (cy2 - dR * 0.5878).toFixed(1);  // ≈ 114.7
+      const dyb = (cy2 + dR * 0.5878).toFixed(1);  // ≈ 185.3
+      notch = `L ${W} ${dyt} A ${dR} ${dR} 0 0 0 ${W} ${dyb}`;
+    } else if (funding === 'credit') {
+      // Trapezoid converging inward: wide at card edge, narrower at inner wall
+      // Edge 54.25px (77.5 × 0.7), inner wall 47px, depth 11.5px
+      const ccy = 150, cnd = 11.5, cs = 54.25;
+      const citx = W - cnd;                                        // 330.5 — inner wall x
+      const dyOff = cnd / Math.tan(72 * Math.PI / 180);           // ≈ 3.74 — taper per side
+      const eyT = ccy - cs / 2;                                    // 122.9 — edge top (wider)
+      const eyB = ccy + cs / 2;                                    // 177.1 — edge bottom
+      const iyT = eyT + dyOff;                                     // ≈ 126.6 — inner top (narrower)
+      const iyB = eyB - dyOff;                                     // ≈ 173.4 — inner bottom
+      notch = `L ${W} ${eyT.toFixed(1)} L ${citx} ${iyT.toFixed(1)} L ${citx} ${iyB.toFixed(1)} L ${W} ${eyB.toFixed(1)}`;
+    } else if (funding === 'prepaid') {
+      // Scalene triangle: bottom side 2× top side, depth 11.5px, centred at y=150
+      // Solve 3a²+2×70×a+(3×11.5²-70²)=0 → a=(-70+sqrt(4×70²-9×11.5²))/3 ≈ 21.9
+      const pcy = 150, pnd = 11.5, pOpen = 70;
+      const py1 = pcy - pOpen / 2;  // 115
+      const py2 = pcy + pOpen / 2;  // 185
+      const pA = (-pOpen + Math.sqrt(4*pOpen*pOpen - 9*pnd*pnd)) / 3; // ≈ 21.9
+      notch = `L ${W} ${py1.toFixed(1)} L ${(W-pnd).toFixed(1)} ${(py1+pA).toFixed(1)} L ${W} ${py2.toFixed(1)}`;
+    } else {
+      return '';
+    }
+    return `path('${base}${notch}${tail}')`;
+  }
+
   function _binContactlessSvg() {
     return `<svg viewBox="0 0 24 24" class="bin-contactless-svg" fill="none" aria-hidden="true">
       <path d="M12 5a7 7 0 0 1 0 14" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
@@ -1929,38 +2012,59 @@
   // ─── Animation ───────────────────────────────────────────────────────────
 
   function binAnimateIn() {
-    // 1. Card swings into view
+    // 1. Card glides smoothly into view — no spring overshoot
     const wrap = document.getElementById("bin-card-wrap");
     if (wrap) {
       wrap.style.opacity = "0";
-      wrap.style.transform = "perspective(900px) rotateY(-28deg) translateY(10px) scale(0.93)";
+      wrap.style.transform = "translateY(18px) scale(0.97)";
       wrap.style.transition = "none";
-      void wrap.offsetWidth; // force reflow
-      wrap.style.transition = "opacity 0.55s ease, transform 0.65s cubic-bezier(0.34,1.36,0.64,1)";
+      void wrap.offsetWidth;
+      wrap.style.transition = "opacity 0.5s ease, transform 0.5s cubic-bezier(0.22,1,0.36,1)";
       wrap.style.opacity = "1";
-      wrap.style.transform = "perspective(900px) rotateY(0deg) translateY(0) scale(1)";
+      wrap.style.transform = "translateY(0) scale(1)";
     }
-    // 2. BIN digits appear left-to-right
+    // 2. BIN digits appear left-to-right, smoothly
     document.querySelectorAll("#bin-number-row .bin-digit--real").forEach((el, i) => {
       el.style.opacity = "0";
-      el.style.transform = "translateY(7px)";
+      el.style.transform = "translateY(6px)";
       setTimeout(() => {
-        el.style.transition = "opacity 0.22s ease, transform 0.22s ease";
+        el.style.transition = "opacity 0.2s ease, transform 0.2s ease";
         el.style.opacity = "1";
         el.style.transform = "translateY(0)";
-      }, 280 + i * 60);
+      }, 220 + i * 45);
     });
-    // 3. Side callouts slide in
+    // 3. Masked digits cycle through numbers then settle
+    const maskedEls = document.querySelectorAll("#bin-number-row .bin-digit--masked");
+    maskedEls.forEach((el, i) => {
+      const finalN = parseInt(el.dataset.n, 10);
+      const delay = 280 + i * 40;
+      const cycles = 6;
+      let tick = 0;
+      el.style.opacity = "0";
+      setTimeout(() => {
+        el.style.transition = "opacity 0.15s ease";
+        el.style.opacity = "1";
+        const interval = setInterval(() => {
+          tick++;
+          el.textContent = ((tick % 9) + 1).toString();
+          if (tick >= cycles) {
+            clearInterval(interval);
+            el.textContent = finalN.toString();
+          }
+        }, 60);
+      }, delay);
+    });
+    // 4. Side callouts slide in
     document.querySelectorAll(".bin-callout").forEach(el => {
       const idx = parseInt(el.dataset.coIdx || "0");
       const left = el.classList.contains("bin-callout--left");
       el.style.opacity = "0";
-      el.style.transform = `translateX(${left ? -22 : 22}px)`;
+      el.style.transform = `translateX(${left ? -18 : 18}px)`;
       setTimeout(() => {
-        el.style.transition = "opacity 0.42s ease, transform 0.48s cubic-bezier(0.34,1.2,0.64,1)";
+        el.style.transition = "opacity 0.38s ease, transform 0.42s cubic-bezier(0.22,1,0.36,1)";
         el.style.opacity = "1";
         el.style.transform = "translateX(0)";
-      }, 500 + idx * 110);
+      }, 480 + idx * 90);
     });
     // 4. Mobile chips
     document.querySelectorAll(".bin-chip").forEach(el => {
@@ -2425,15 +2529,22 @@
 
   function pfmRender(initialCustomerId) {
     const body = $("uc-body");
+    const descEl = $("uc-desc");
+    const descText = descEl ? descEl.textContent : "";
+    if (descEl) descEl.textContent = "";
     body.innerHTML = `
       <div class="pfm-stage">
-        <div class="pfm-controlbar">
-          <span class="label">Customer ID</span>
-          <input id="pfm-cid" placeholder="e.g. 9013023139" value="${initialCustomerId || ""}" />
-          <button class="btn btn-primary" id="pfm-load">Load</button>
-          <button class="btn" id="pfm-connect-btn">Connect new bank</button>
+        <div class="pfm-info">
+          <p class="pfm-info-desc">${escapeHtml(descText)}</p>
+          <div class="pfm-controlbar">
+            <span class="label">Customer ID</span>
+            <input id="pfm-cid" placeholder="e.g. 9013023139" value="${initialCustomerId || ""}" />
+            <button class="btn btn-primary" id="pfm-load">Load</button>
+            <button class="btn" id="pfm-connect-btn">Connect new bank</button>
+          </div>
         </div>
 
+        <div class="pfm-phone-wrap">
         <div class="iphone">
           <div class="iphone-screen">
             <div class="iphone-notch" id="pfm-island">
@@ -2461,6 +2572,7 @@
             <div class="pfm-sheet" id="pfm-sheet"></div>
             <div class="iphone-home-indicator"></div>
           </div>
+        </div>
         </div>
       </div>
     `;
@@ -4090,6 +4202,57 @@
       .catch(() => { PL.detailLoading = false; });
   }
 
+  // ===================== Find A Card Use Case =====================
+
+  function renderFindACard() {
+    const body = $("uc-body");
+    if (!body) return;
+    body.innerHTML = `<div class="fac-loading"><div class="fac-spinner"></div><p>Checking service…</p></div>`;
+
+    _nativeFetch("/usecases/findacard/health")
+      .then(r => r.json())
+      .then(({ online }) => {
+        // Update the sidebar button with a coloured status dot
+        const sidebarBtn = document.querySelector('[data-uc-id="findacard"]');
+        if (sidebarBtn) {
+          let dot = sidebarBtn.querySelector('.api-item-status');
+          if (!dot) {
+            dot = document.createElement('span');
+            sidebarBtn.appendChild(dot);
+          }
+          dot.textContent = '●';
+          dot.className = `api-item-status ${online ? 'ok' : 'err'}`;
+          dot.title = online ? 'Running on port 5432' : 'Not running on port 5432';
+        }
+
+        if (online) {
+          body.innerHTML = `
+            <div class="fac-stage">
+              <iframe class="fac-frame" src="http://localhost:5432" title="Find A Card" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+            </div>`;
+        } else {
+          body.innerHTML = `
+            <div class="fac-offline">
+              <div class="fac-offline-icon">
+                <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="24" cy="24" r="18"/>
+                  <path d="M24 14v12M24 34v1" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <h3>Service not running</h3>
+              <p>Find A Card must be running locally on port 5432 for you to see this use case.</p>
+              <button class="fac-retry-btn" id="fac-retry">Try again</button>
+            </div>`;
+          const retryBtn = document.getElementById('fac-retry');
+          if (retryBtn) retryBtn.addEventListener('click', renderFindACard);
+        }
+      })
+      .catch(() => {
+        const body2 = $("uc-body");
+        if (body2) body2.innerHTML = `<div class="fac-offline"><p>Could not reach health check endpoint.</p></div>`;
+      });
+  }
+
   function escapeHtml(s) {
     return String(s == null ? "" : s)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -4120,4 +4283,285 @@
     renderUseCase(USE_CASES[0].id);
     _startPolling(); // begin polling for badge updates immediately
   }
+
+  // ===========================================================================
+  // Config Panel
+  // ===========================================================================
+  (function () {
+    const modal     = document.getElementById('cfg-modal');
+    const overlay   = document.getElementById('cfg-overlay');
+    const body      = document.getElementById('cfg-panel-body');
+    const footer    = document.getElementById('cfg-panel-footer');
+    const lockBtn   = document.getElementById('cfg-lock-btn');
+    const lockIcon  = document.getElementById('cfg-lock-icon');
+    const closeBtn  = document.getElementById('cfg-close-btn');
+    const cancelBtn = document.getElementById('cfg-cancel-btn');
+    const saveBtn   = document.getElementById('cfg-save-btn');
+    const triggerBtn = document.getElementById('cfg-trigger-btn');
+    const tooltip   = document.getElementById('cfg-tooltip');
+
+    let _groups = [];       // loaded config groups
+    let _unlocked = false;  // edit mode flag
+    let _pending = {};      // { KEY: newValue } for unsaved file uploads
+
+    // ── Open / close ────────────────────────────────────────────────────────
+    function cfgOpen() {
+      modal.classList.remove('cfg-hidden');
+      document.body.style.overflow = 'hidden';
+      cfgLoad();
+    }
+    function cfgClose() {
+      modal.classList.add('cfg-hidden');
+      document.body.style.overflow = '';
+      if (_unlocked) cfgSetLocked(true);
+      _pending = {};
+    }
+
+    triggerBtn && triggerBtn.addEventListener('click', cfgOpen);
+    closeBtn && closeBtn.addEventListener('click', cfgClose);
+    overlay && overlay.addEventListener('click', cfgClose);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !modal.classList.contains('cfg-hidden')) cfgClose();
+    });
+
+    // ── Lock / unlock ────────────────────────────────────────────────────────
+    function cfgSetLocked(locked) {
+      _unlocked = !locked;
+      lockBtn.classList.toggle('unlocked', !locked);
+      lockIcon.innerHTML = locked
+        ? '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>'
+        : '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path>';
+      lockBtn.title = locked ? 'Unlock to edit' : 'Lock (discard edits)';
+      footer.classList.toggle('cfg-hidden', locked);
+      if (_groups.length) cfgRender(_groups);
+      if (locked) _pending = {};
+    }
+
+    lockBtn && lockBtn.addEventListener('click', function () {
+      cfgSetLocked(_unlocked); // toggle
+    });
+
+    cancelBtn && cancelBtn.addEventListener('click', function () {
+      cfgSetLocked(true);
+      _pending = {};
+    });
+
+    // ── Load config from server ──────────────────────────────────────────────
+    function cfgLoad() {
+      body.innerHTML = '<div class="cfg-loading">Loading configuration\u2026</div>';
+      fetch('/config')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          _groups = data.groups || [];
+          cfgRender(_groups);
+        })
+        .catch(function (err) {
+          body.innerHTML = '<div class="cfg-loading" style="color:var(--err)">Failed to load config.</div>';
+        });
+    }
+
+    // ── Render ───────────────────────────────────────────────────────────────
+    function cfgRender(groups) {
+      body.innerHTML = '';
+      groups.forEach(function (g) {
+        const section = document.createElement('div');
+        section.className = 'cfg-group';
+        section.dataset.groupId = g.id;
+
+        const hdr = document.createElement('div');
+        hdr.className = 'cfg-group-header';
+        hdr.innerHTML =
+          '<div style="display:flex;align-items:baseline;gap:6px">' +
+            '<span class="cfg-group-title">' + escHtml(g.title) + '</span>' +
+            '<span class="cfg-group-subtitle">' + escHtml(g.subtitle) + '</span>' +
+          '</div>' +
+          '<a class="cfg-group-docs" href="' + escHtml(g.docs_url) + '" target="_blank" rel="noopener">' +
+            'Docs ↗' +
+          '</a>';
+        section.appendChild(hdr);
+
+        g.fields.forEach(function (f) {
+          section.appendChild(cfgFieldEl(f));
+        });
+
+        body.appendChild(section);
+      });
+    }
+
+    function cfgFieldEl(f) {
+      const row = document.createElement('div');
+      row.className = 'cfg-field';
+      row.dataset.key = f.key;
+
+      // Label
+      const lbl = document.createElement('div');
+      lbl.className = 'cfg-field-label';
+      lbl.textContent = f.label;
+      row.appendChild(lbl);
+
+      // Value / control
+      const mid = document.createElement('div');
+      mid.style.minWidth = '0';
+
+      if (f.type === 'file') {
+        mid.appendChild(cfgFileEl(f));
+      } else if (_unlocked) {
+        const inp = document.createElement('input');
+        inp.type = f.type === 'password' ? 'text' : 'text'; // always text in edit mode so value is visible
+        inp.className = 'cfg-input';
+        inp.value = _pending[f.key] !== undefined ? _pending[f.key] : f.value;
+        inp.placeholder = f.value ? '' : 'Not set';
+        inp.dataset.key = f.key;
+        mid.appendChild(inp);
+      } else {
+        const val = document.createElement('div');
+        if (!f.value) {
+          val.className = 'cfg-field-val empty';
+          val.textContent = 'Not configured';
+        } else if (f.type === 'password') {
+          val.className = 'cfg-field-val masked';
+          val.textContent = '\u2022'.repeat(12);
+          val.title = '(hidden) — unlock to view';
+        } else {
+          val.className = 'cfg-field-val';
+          val.textContent = f.value;
+        }
+        mid.appendChild(val);
+      }
+      row.appendChild(mid);
+
+      // Info icon
+      const info = document.createElement('button');
+      info.className = 'cfg-info-btn';
+      info.textContent = 'i';
+      info.setAttribute('aria-label', 'Info: ' + f.label);
+      info.addEventListener('mouseenter', function (e) { cfgTooltipShow(f.info, e); });
+      info.addEventListener('mouseleave', cfgTooltipHide);
+      info.addEventListener('click', function (e) {
+        e.stopPropagation();
+        cfgTooltipShow(f.info, e);
+      });
+      row.appendChild(info);
+
+      return row;
+    }
+
+    function cfgFileEl(f) {
+      const wrap = document.createElement('div');
+      wrap.className = 'cfg-file-row';
+
+      const nameEl = document.createElement('span');
+      const currentPath = _pending[f.key] !== undefined ? _pending[f.key] : f.value;
+      nameEl.className = 'cfg-file-name' + (currentPath ? ' set' : '');
+      nameEl.textContent = currentPath
+        ? currentPath.split('/').pop().split('\\').pop()
+        : 'No file set';
+      wrap.appendChild(nameEl);
+
+      if (_unlocked) {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.p12,.pkcs12';
+        fileInput.className = 'cfg-file-input';
+
+        const uploadBtn = document.createElement('button');
+        uploadBtn.className = 'cfg-upload-btn';
+        uploadBtn.textContent = currentPath ? 'Replace' : 'Upload .p12';
+        uploadBtn.addEventListener('click', function () { fileInput.click(); });
+
+        fileInput.addEventListener('change', function () {
+          const file = fileInput.files[0];
+          if (!file) return;
+          const fd = new FormData();
+          fd.append('file', file);
+          uploadBtn.textContent = 'Uploading…';
+          uploadBtn.disabled = true;
+          fetch('/config/upload-key', { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              if (data.error) {
+                alert('Upload failed: ' + data.error);
+              } else {
+                _pending[f.key] = data.path;
+                nameEl.textContent = data.filename;
+                nameEl.className = 'cfg-file-name set';
+              }
+            })
+            .catch(function () { alert('Upload failed.'); })
+            .finally(function () {
+              uploadBtn.textContent = 'Replace';
+              uploadBtn.disabled = false;
+            });
+        });
+
+        wrap.appendChild(fileInput);
+        wrap.appendChild(uploadBtn);
+      }
+
+      return wrap;
+    }
+
+    // ── Save ─────────────────────────────────────────────────────────────────
+    saveBtn && saveBtn.addEventListener('click', function () {
+      const updates = Object.assign({}, _pending);
+
+      // Collect text/password inputs
+      body.querySelectorAll('input.cfg-input[data-key]').forEach(function (inp) {
+        updates[inp.dataset.key] = inp.value;
+      });
+
+      if (!Object.keys(updates).length) { cfgSetLocked(true); return; }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving…';
+
+      fetch('/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates: updates }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.error) { alert('Save failed: ' + data.error); return; }
+          // Flash saved rows
+          (data.saved || []).forEach(function (key) {
+            const row = body.querySelector('.cfg-field[data-key="' + key + '"]');
+            if (row) { row.classList.remove('saved'); void row.offsetWidth; row.classList.add('saved'); }
+          });
+          _pending = {};
+          cfgSetLocked(true);
+          cfgLoad(); // reload to show updated values
+        })
+        .catch(function () { alert('Save failed.'); })
+        .finally(function () {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Changes';
+        });
+    });
+
+    // ── Tooltip ──────────────────────────────────────────────────────────────
+    function cfgTooltipShow(text, e) {
+      tooltip.textContent = text;
+      tooltip.classList.remove('cfg-hidden');
+      cfgTooltipPos(e);
+    }
+    function cfgTooltipPos(e) {
+      const tx = e.clientX + 14;
+      const ty = e.clientY + 14;
+      const tw = tooltip.offsetWidth;
+      const th = tooltip.offsetHeight;
+      tooltip.style.left = (tx + tw > window.innerWidth - 8 ? tx - tw - 28 : tx) + 'px';
+      tooltip.style.top  = (ty + th > window.innerHeight - 8 ? ty - th - 28 : ty) + 'px';
+    }
+    function cfgTooltipHide() { tooltip.classList.add('cfg-hidden'); }
+    document.addEventListener('mousemove', function (e) {
+      if (!tooltip.classList.contains('cfg-hidden')) cfgTooltipPos(e);
+    });
+    document.addEventListener('click', function () { cfgTooltipHide(); });
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+  }());
+
 })();

@@ -16,7 +16,7 @@ MANIFEST: Dict[str, Any] = {
         "issuing country, and over a dozen capability flags — enabling smarter checkout "
         "experiences, precision fraud detection, optimised payment routing, and personalised "
         "cardholder offers. This use case visualises every data point returned by the "
-        "Mastercard BIN Lookup API as a beautifully animated, annotated payment card."
+        "Mastercard BIN Lookup API."
     ),
     "apis": ["binlookup"],
     "render": "binlookup",
