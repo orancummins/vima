@@ -112,6 +112,11 @@ _requests.Session.send = _patched_send
 # ----------------------------------------------------------------------------
 
 @app.route("/")
+def home():
+    return render_template("home.html")
+
+
+@app.route("/app")
 def index():
     return render_template(
         "index.html",
@@ -234,6 +239,18 @@ def txpush_events():
     return jsonify({"events": list(_txpush_events)})
 
 
+@app.route("/usecases/findacard/health")
+def findacard_health():
+    """Check whether the Find A Card service is reachable on localhost:5432."""
+    import socket
+    try:
+        sock = socket.create_connection(("127.0.0.1", 5432), timeout=1)
+        sock.close()
+        return jsonify({"online": True})
+    except (socket.timeout, ConnectionRefusedError, OSError):
+        return jsonify({"online": False})
+
+
 @app.route("/api-call-log")
 def api_call_log():
     """Return the last outbound API calls captured by the request logger."""
@@ -241,6 +258,191 @@ def api_call_log():
     with _api_call_lock:
         entries = [e for e in _api_call_log if e.get("seq", 0) > since]
     return jsonify({"calls": list(reversed(entries))})
+
+
+# ----------------------------------------------------------------------------
+# Config management
+# ----------------------------------------------------------------------------
+
+_ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+
+_CONFIG_SCHEMA = [
+    {
+        "id": "open_banking",
+        "title": "Open Banking",
+        "subtitle": "Mastercard Open Banking (Finicity)",
+        "docs_url": "https://developer.mastercard.com/open-banking-us/documentation/",
+        "fields": [
+            {"key": "PARTNER_ID",     "label": "Partner ID",     "type": "text",     "info": "Your Finicity Partner ID. Sign up at developer.mastercard.com, create an Open Banking project, and copy the Partner ID from your project credentials."},
+            {"key": "PARTNER_SECRET", "label": "Partner Secret", "type": "password", "info": "Finicity Partner Secret, paired with your Partner ID. Available in your project credentials on Mastercard Developers. Keep this confidential."},
+            {"key": "APP_KEY",        "label": "App Key",        "type": "password", "info": "Application key for your Open Banking project. Found alongside your Partner ID in the Mastercard Developers portal."},
+            {"key": "API_BASE_URL",   "label": "API Base URL",   "type": "text",     "info": "Base URL for the Open Banking API. Use https://api.finicity.com for production or the sandbox URL for testing."},
+        ],
+    },
+    {
+        "id": "binlookup",
+        "title": "BIN Lookup",
+        "subtitle": "Mastercard BIN Lookup API",
+        "docs_url": "https://developer.mastercard.com/bin-lookup/documentation/",
+        "fields": [
+            {"key": "BINLOOKUP_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the BIN Lookup API, and copy the Consumer Key from the project overview page."},
+            {"key": "BINLOOKUP_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' and download the .p12 file."},
+            {"key": "BINLOOKUP_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file — usually the lowercase project name (e.g. 'binlookup'). Shown when generating keys on Mastercard Developers."},
+            {"key": "BINLOOKUP_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default for Mastercard Developer-generated keys is 'keystorepassword'."},
+        ],
+    },
+    {
+        "id": "consumerclarity",
+        "title": "Consumer Clarity",
+        "subtitle": "Mastercard Consumer Clarity API",
+        "docs_url": "https://developer.mastercard.com/consumer-clarity-us/documentation/",
+        "fields": [
+            {"key": "CONSUMERCLARITY_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Consumer Clarity API, and copy the Consumer Key."},
+            {"key": "CONSUMERCLARITY_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
+            {"key": "CONSUMERCLARITY_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file — usually the lowercase project name. Shown when generating keys on Mastercard Developers."},
+            {"key": "CONSUMERCLARITY_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default for Mastercard Developer-generated keys is 'keystorepassword'."},
+        ],
+    },
+    {
+        "id": "easysavings",
+        "title": "Easy Savings",
+        "subtitle": "Mastercard Easy Savings API",
+        "docs_url": "https://developer.mastercard.com/easy-savings/documentation/",
+        "fields": [
+            {"key": "EASYSAVINGS_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Easy Savings API, and copy the Consumer Key."},
+            {"key": "EASYSAVINGS_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
+            {"key": "EASYSAVINGS_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
+            {"key": "EASYSAVINGS_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+        ],
+    },
+    {
+        "id": "places",
+        "title": "Places",
+        "subtitle": "Mastercard Places API",
+        "docs_url": "https://developer.mastercard.com/places/documentation/",
+        "fields": [
+            {"key": "PLACES_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Places API, and copy the Consumer Key."},
+            {"key": "PLACES_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
+            {"key": "PLACES_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
+            {"key": "PLACES_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+        ],
+    },
+    {
+        "id": "priceless",
+        "title": "Priceless Cities",
+        "subtitle": "Mastercard Priceless Cities API",
+        "docs_url": "https://developer.mastercard.com/priceless-cities/documentation/",
+        "fields": [
+            {"key": "PRICELESS_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Priceless Cities API, and copy the Consumer Key."},
+            {"key": "PRICELESS_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
+            {"key": "PRICELESS_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
+            {"key": "PRICELESS_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+        ],
+    },
+]
+
+
+def _read_env_values() -> dict:
+    """Parse .env file, return {KEY: value} preserving raw values."""
+    result: dict = {}
+    try:
+        with open(_ENV_PATH, "r", encoding="utf-8") as fh:
+            for line in fh:
+                s = line.strip()
+                if s and not s.startswith("#") and "=" in s:
+                    key, _, val = s.partition("=")
+                    result[key.strip()] = val.strip()
+    except OSError:
+        pass
+    return result
+
+
+def _write_env_values(updates: dict) -> None:
+    """Write updated key=value pairs into .env, preserving comments and order."""
+    try:
+        with open(_ENV_PATH, "r", encoding="utf-8") as fh:
+            lines = fh.readlines()
+    except OSError:
+        lines = []
+
+    written: set = set()
+    new_lines = []
+    for line in lines:
+        s = line.strip()
+        if s and not s.startswith("#") and "=" in s:
+            key, _, _ = s.partition("=")
+            key = key.strip()
+            if key in updates:
+                new_lines.append(f"{key}={updates[key]}\n")
+                written.add(key)
+                continue
+        new_lines.append(line)
+
+    for key, val in updates.items():
+        if key not in written:
+            new_lines.append(f"{key}={val}\n")
+
+    with open(_ENV_PATH, "w", encoding="utf-8") as fh:
+        fh.writelines(new_lines)
+
+
+@app.route("/config", methods=["GET"])
+def config_get():
+    env = _read_env_values()
+    groups = []
+    for g in _CONFIG_SCHEMA:
+        fields = []
+        for f in g["fields"]:
+            fields.append({
+                "key":   f["key"],
+                "label": f["label"],
+                "type":  f["type"],
+                "info":  f["info"],
+                "value": env.get(f["key"], ""),
+            })
+        groups.append({
+            "id":       g["id"],
+            "title":    g["title"],
+            "subtitle": g["subtitle"],
+            "docs_url": g["docs_url"],
+            "fields":   fields,
+        })
+    return jsonify({"groups": groups})
+
+
+@app.route("/config", methods=["POST"])
+def config_save_route():
+    body = request.get_json(silent=True) or {}
+    updates = body.get("updates") or {}
+    if not isinstance(updates, dict):
+        return jsonify({"error": "updates must be an object"}), 400
+    # Whitelist: only keys declared in the schema are accepted
+    allowed = {f["key"] for g in _CONFIG_SCHEMA for f in g["fields"]}
+    filtered = {k: str(v) for k, v in updates.items() if k in allowed}
+    try:
+        _write_env_values(filtered)
+    except OSError as exc:
+        return jsonify({"error": str(exc)}), 500
+    load_dotenv(override=True)
+    return jsonify({"saved": list(filtered.keys())})
+
+
+@app.route("/config/upload-key", methods=["POST"])
+def config_upload_key():
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+    fobj = request.files["file"]
+    fname = (fobj.filename or "").strip()
+    if not fname:
+        return jsonify({"error": "Empty filename"}), 400
+    ext = os.path.splitext(fname)[1].lower()
+    if ext not in (".p12", ".pkcs12"):
+        return jsonify({"error": "Only .p12 or .pkcs12 files are accepted"}), 400
+    # Use only basename to prevent path traversal
+    safe_name = os.path.basename(fname)
+    save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), safe_name)
+    fobj.save(save_path)
+    return jsonify({"filename": safe_name, "path": safe_name})
 
 
 if __name__ == "__main__":

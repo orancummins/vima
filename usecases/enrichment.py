@@ -46,8 +46,26 @@ _RAW_TRANSACTIONS = [
 
 
 # ---------------------------------------------------------------------------
+# Bundled fallback — real API responses baked in so the demo works even when
+# the API quota is exhausted or the on-disk cache has been cleared.
+# ---------------------------------------------------------------------------
+_FALLBACK_DATA: Dict[str, Dict[str, Any]] = {
+    "t1": {"name": "Starbucks",          "category": "Coffee Shops",       "categoryGroup": "Groceries & Dining",          "confidence": 100.0, "categoryScore": 84.5,  "logoUrl": "https://institution-branding-assets-cf.openbanking.mastercard.com/merchants/MTc1ODA5NDU0MTYwNjM1OTA0MA==/logo.png",  "website": "https://www.starbucks.com",            "location": None,                 "isRecurring": False, "isEcommerce": False, "_cachedAt": 0},
+    "t2": {"name": "Amazon",             "category": "Shopping",           "categoryGroup": "Shopping & Retail",           "confidence": 100.0, "categoryScore": 100.0, "logoUrl": "https://institution-branding-assets-cf.openbanking.mastercard.com/merchants/MTc1ODA5MjMzNjI1Mzg5ODc1Mg==/logo.png",  "website": "https://www.amazon.com",               "location": None,                 "isRecurring": False, "isEcommerce": False, "_cachedAt": 0},
+    "t3": {"name": "Uber",               "category": "Rental Car & Taxi",  "categoryGroup": "Travel & Vacation",           "confidence": 100.0, "categoryScore": 100.0, "logoUrl": "https://institution-branding-assets-cf.openbanking.mastercard.com/merchants/MTc1ODA5NDg1MzUxOTk3MDMwNA==/logo.png",  "website": "https://www.uber.com",                 "location": None,                 "isRecurring": False, "isEcommerce": False, "_cachedAt": 0},
+    "t4": {"name": "Netflix",            "category": "Streaming Services", "categoryGroup": "Utilities and Service Charges","confidence": 100.0, "categoryScore": 100.0, "logoUrl": "https://institution-branding-assets-cf.openbanking.mastercard.com/merchants/MTc1ODA5MzkxMTEzMTE2NDY3Mg==/logo.png",  "website": "https://www.netflix.com",              "location": None,                 "isRecurring": False, "isEcommerce": False, "_cachedAt": 0},
+    "t5": {"name": "Whole Foods Market", "category": "Groceries",          "categoryGroup": "Groceries & Dining",          "confidence": 100.0, "categoryScore": 100.0, "logoUrl": "https://institution-branding-assets-cf.openbanking.mastercard.com/merchants/MTc1ODA5NTUzODE5Mzk2MDk2MA==/logo.png", "website": "https://www.wholefoodsmarket.com",      "location": None,                 "isRecurring": False, "isEcommerce": False, "_cachedAt": 0},
+    "t6": {"name": "Lyft",               "category": "Rental Car & Taxi",  "categoryGroup": "Travel & Vacation",           "confidence": 100.0, "categoryScore": 100.0, "logoUrl": "https://institution-branding-assets-cf.openbanking.mastercard.com/merchants/MTc1ODA5MzY5OTM2NDk1MDAxNg==/logo.png",  "website": "https://lyft.com/",                    "location": None,                 "isRecurring": False, "isEcommerce": False, "_cachedAt": 0},
+    "t7": {"name": "Apple",              "category": "Bills & Utilities",  "categoryGroup": "Utilities and Service Charges","confidence": 100.0, "categoryScore": 100.0, "logoUrl": "https://institution-branding-assets-cf.openbanking.mastercard.com/merchants/MTc1ODA5MjM4MDY1NDgwMDg5Ng==/logo.png",  "website": "https://www.apple.com",                "location": None,                 "isRecurring": False, "isEcommerce": False, "_cachedAt": 0},
+    "t8": {"name": "Target",             "category": "Shopping",           "categoryGroup": "Shopping & Retail",           "confidence": 100.0, "categoryScore": 100.0, "logoUrl": "https://institution-branding-assets-cf.openbanking.mastercard.com/merchants/MTc1ODA5NDYzMjgyNDA4MjQzMg==/logo.png",  "website": "https://www.target.com",               "location": "San Francisco, CA",  "isRecurring": False, "isEcommerce": False, "_cachedAt": 0},
+}
+
+# ---------------------------------------------------------------------------
 # Persistent cache: { txn_id: shaped_enriched_dict }
 # Stored next to this module so it survives restarts.
+# On load, the file cache takes priority over _FALLBACK_DATA; on first run
+# (or after deletion) the fallback seeds the cache automatically so the
+# demo never calls the API unnecessarily.
 # ---------------------------------------------------------------------------
 _CACHE_PATH = os.path.join(os.path.dirname(__file__), ".enrichment_cache.json")
 _cache: Dict[str, Dict[str, Any]] | None = None
@@ -62,6 +80,14 @@ def _load_cache() -> Dict[str, Dict[str, Any]]:
             _cache = json.load(fh) or {}
     except (FileNotFoundError, json.JSONDecodeError, OSError):
         _cache = {}
+    # Seed missing entries from fallback so we start fully covered
+    changed = False
+    for tid, data in _FALLBACK_DATA.items():
+        if tid not in _cache:
+            _cache[tid] = data
+            changed = True
+    if changed:
+        _save_cache()
     return _cache
 
 
@@ -78,6 +104,7 @@ def _save_cache() -> None:
 def _client():
     from apis.ofin import api as ofin_api
     return ofin_api._get_client()
+
 
 
 def _shape_row(raw: Dict[str, Any], enriched: Dict[str, Any]) -> Dict[str, Any]:
@@ -206,11 +233,21 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
         data, status = client.enrich_transactions(api_txns)
         if status >= 400 or not isinstance(data, dict):
-            api_error = {
-                "message": f"Enrichment API returned {status}",
-                "detail":  data,
-                "failedIds": [t["id"] for t in needs_api],
-            }
+            # API failed — use fallback for any transaction that has one
+            recovered, still_failed = [], []
+            for raw in needs_api:
+                fb = _FALLBACK_DATA.get(raw["id"])
+                if fb:
+                    results_by_id[raw["id"]] = _shape_row(raw, fb)
+                    recovered.append(raw["id"])
+                else:
+                    still_failed.append(raw["id"])
+            if still_failed:
+                api_error = {
+                    "message": f"Enrichment API returned {status} (fallback used for {len(recovered)} transaction(s))",
+                    "detail":  data,
+                    "failedIds": still_failed,
+                }
         else:
             api_by_id: Dict[str, Any] = {
                 t["externalTransactionId"]: t
