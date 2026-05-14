@@ -1,0 +1,20 @@
+"""Find A Card — local agent use case.
+
+Embeds the Fins A Card web service running on localhost:5432 into the
+explorer. The service must be running locally for this use case to work;
+if it is not reachable the UI shows an offline state.
+"""
+from __future__ import annotations
+from typing import Any, Dict
+
+MANIFEST: Dict[str, Any] = {
+    "id": "findacard",
+    "name": "Find A Card",
+    "description": (
+        "In the future, your agent will find the perfect card for you, "
+        "this is how Mastercard's Find A Card agent will help make that happen."
+    ),
+    "apis": [],
+    "render": "findacard",
+    "local_port": 5432,
+}
