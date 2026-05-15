@@ -163,6 +163,296 @@ def explorer_execute(api_id: str):
     return jsonify(result)
 
 
+@app.route("/explorer/consent/3ds-flow")
+def consent_3ds_flow():
+    """Unified 3DS browser flow page.
+
+    Runs the EMV 3DS protocol end-to-end inside the user's browser, matching
+    Mastercard's reference implementation:
+
+      1. Fingerprint (hidden iframe POSTs threeDSMethodData to the ACS URL).
+         The ACS returns JS that runs in that iframe, collects browser caps,
+         posts to /process_browser_attributes, which then posts to Mastercard's
+         server-to-server notification URL. When done it sends a postMessage
+         (threeds-method-notification) to this page. We also have a 10s timeout.
+
+      2. Start authentication — POST start-authentication with auth.params
+         containing fingerprintStatus + browser info (user agent, screen size,
+         timezone, etc). Response is one of:
+            AUTHENTICATED      — frictionless, done.
+            AUTH_IN_PROGRESS   — challenge required, params include acsUrl + encodedCReq.
+            AUTH_FAILED        — failure.
+
+      3. Challenge (only if AUTH_IN_PROGRESS) — visible iframe POSTs creq to acsUrl.
+         The ACS shows the OTP UI (sandbox OTP: 123456). When the user submits
+         and the challenge completes the ACS posts to a CRes notification URL
+         which sends a threeds-challenge-notification postMessage to this page.
+
+      4. Verify authentication — POST verify-authentication (empty params) to
+         finalise the consent.
+    """
+    card_ref    = request.args.get("card_ref", "")
+    method_url  = request.args.get("method_url", "")
+    method_data = request.args.get("method_data", "")
+    trans_id    = request.args.get("trans_id", "")
+    if not card_ref:
+        return "Missing card_ref", 400
+
+    import html as _html, json as _json
+    safe = {
+        "card_ref":    _html.escape(card_ref, quote=True),
+        "method_url":  _html.escape(method_url, quote=True),
+        "method_data": _html.escape(method_data, quote=True),
+        "trans_id":    _html.escape(trans_id, quote=True),
+    }
+    cfg_json = _json.dumps(safe)
+
+    page = """<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>3DS Authentication — Consent enrollment</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+           display: flex; flex-direction: column; align-items: center;
+           min-height: 100vh; margin: 0; background: #f4f6fa; color: #333; padding: 20px; }
+    .card { background: #fff; border-radius: 10px; padding: 32px 40px;
+            box-shadow: 0 2px 16px rgba(0,0,0,.1); text-align: center;
+            max-width: 560px; width: 100%; margin-top: 40px; }
+    h2 { margin: 0 0 8px; font-size: 20px; }
+    .step { color: #666; font-size: 13px; margin: 4px 0; }
+    .status { font-size: 14px; margin: 12px 0; min-height: 20px; }
+    .spinner { width: 32px; height: 32px; border: 3px solid #e0e0e0;
+               border-top-color: #005b99; border-radius: 50%;
+               animation: spin .8s linear infinite; margin: 16px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .ok   { color: #1a7f4b; font-weight: 600; }
+    .err  { color: #b00020; font-weight: 600; }
+    pre { text-align: left; background: #f5f5f5; padding: 12px; border-radius: 6px;
+          font-size: 12px; overflow: auto; max-height: 240px; }
+    #fp-frame  { display: none; }
+    #challenge-wrap { display: none; margin-top: 24px; }
+    #challenge-frame { width: 600px; max-width: 100%; height: 440px;
+                       border: 1px solid #ccc; border-radius: 6px; background: #fff; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>3DS Authentication</h2>
+    <div class="step" id="step-fp">1. Device fingerprint…</div>
+    <div class="step" id="step-sa">2. Start authentication…</div>
+    <div class="step" id="step-ch">3. Challenge (if needed)…</div>
+    <div class="step" id="step-vf">4. Verify authentication…</div>
+    <div class="spinner" id="spinner"></div>
+    <div class="status" id="status">Starting…</div>
+    <pre id="result" style="display:none"></pre>
+  </div>
+
+  <div id="challenge-wrap" class="card">
+    <h2>Please complete the challenge</h2>
+    <div class="step">Sandbox OTP: <strong>123456</strong></div>
+    <iframe id="challenge-frame" name="challenge-frame"></iframe>
+  </div>
+
+  <iframe id="fp-frame" name="fp-frame"></iframe>
+
+  <script>
+  (function() {
+    var CFG = __CFG__;
+    var statusEl = document.getElementById('status');
+    var resultEl = document.getElementById('result');
+    var spinnerEl = document.getElementById('spinner');
+
+    function setStatus(msg, cls) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status ' + (cls || '');
+    }
+    function markStep(id, mark) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = mark + ' ' + el.textContent.replace(/^[✓✗•]\\s*/, '');
+    }
+    function showJSON(obj) {
+      resultEl.style.display = 'block';
+      resultEl.textContent = JSON.stringify(obj, null, 2);
+    }
+    function hideSpinner() { spinnerEl.style.display = 'none'; }
+
+    function post(url, body) {
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }).then(function(r) { return r.json(); });
+    }
+
+    function browserInfo(fpStatus) {
+      return {
+        fingerprintStatus:   fpStatus,
+        challengeWindowSize: '04',
+        browserAcceptHeader: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        browserColorDepth:   String(window.screen.colorDepth),
+        browserJavaEnabled:  false,
+        browserLanguage:     navigator.language || 'en-US',
+        browserScreenHeight: String(window.screen.height),
+        browserScreenWidth:  String(window.screen.width),
+        browserTZ:           String(new Date().getTimezoneOffset()),
+        browserUserAgent:    window.navigator.userAgent,
+      };
+    }
+
+    // ---- step 1: fingerprint ----
+    function doFingerprint() {
+      return new Promise(function(resolve) {
+        if (!CFG.method_url || !CFG.method_data) {
+          markStep('step-fp', '•');
+          resolve('unavailable');
+          return;
+        }
+        var done = false;
+        function finish(status) {
+          if (done) return;
+          done = true;
+          window.removeEventListener('message', onMsg);
+          markStep('step-fp', status === 'complete' ? '✓' : '•');
+          resolve(status);
+        }
+        function onMsg(e) {
+          if (e && e.data && e.data.type === 'threeds-method-notification') {
+            finish('complete');
+          }
+        }
+        window.addEventListener('message', onMsg);
+
+        // The reference impl writes an HTML doc into the iframe that submits
+        // its own form to the ACS URL. We do the same so the iframe controls
+        // the navigation; the ACS will later navigate the iframe back to the
+        // notification page which posts the message to our window.
+        var html =
+          '<script>document.addEventListener("DOMContentLoaded",function(){'
+          + 'var f=document.createElement("form");f.method="POST";'
+          + 'f.action=' + JSON.stringify(CFG.method_url) + ';'
+          + 'var i=document.createElement("input");i.name="threeDSMethodData";'
+          + 'i.value=' + JSON.stringify(CFG.method_data) + ';'
+          + 'f.appendChild(i);document.body.appendChild(f);f.submit();'
+          + '});<\\/script>';
+        var iframe = document.getElementById('fp-frame');
+        var doc = iframe.contentWindow.document;
+        doc.open(); doc.write('<html><body>' + html + '</body></html>'); doc.close();
+
+        setTimeout(function() { finish('timeout'); }, 10000);
+      });
+    }
+
+    // ---- step 3: challenge (only if AUTH_IN_PROGRESS) ----
+    function doChallenge(acsUrl, creq) {
+      return new Promise(function(resolve) {
+        document.getElementById('challenge-wrap').style.display = 'block';
+        function onMsg(e) {
+          if (e && e.data && e.data.type === 'threeds-challenge-notification') {
+            window.removeEventListener('message', onMsg);
+            markStep('step-ch', '✓');
+            resolve();
+          }
+        }
+        window.addEventListener('message', onMsg);
+
+        var html =
+          '<script>document.addEventListener("DOMContentLoaded",function(){'
+          + 'var f=document.createElement("form");f.method="POST";'
+          + 'f.action=' + JSON.stringify(acsUrl) + ';'
+          + 'var i=document.createElement("input");i.name="creq";'
+          + 'i.value=' + JSON.stringify(creq) + ';'
+          + 'f.appendChild(i);document.body.appendChild(f);f.submit();'
+          + '});<\\/script>';
+        var iframe = document.getElementById('challenge-frame');
+        var doc = iframe.contentWindow.document;
+        doc.open(); doc.write('<html><body>' + html + '</body></html>'); doc.close();
+      });
+    }
+
+    // ---- main ----
+    function run() {
+      setStatus('Running 3DS Method (device fingerprint)…');
+      doFingerprint().then(function(fpStatus) {
+        setStatus('Calling start-authentication (' + fpStatus + ')…');
+        return post('/explorer/consent/execute', {
+          operation: 'start_authentication',
+          params: Object.assign(
+            { card_ref: CFG.card_ref, auth_type: 'THREEDS',
+              auth_params: JSON.stringify(browserInfo(fpStatus)) },
+            {}
+          ),
+        });
+      }).then(function(sa) {
+        if (!sa.success) {
+          markStep('step-sa', '✗');
+          hideSpinner();
+          setStatus('start-authentication failed', 'err');
+          showJSON(sa.error || sa);
+          return;
+        }
+        markStep('step-sa', '✓');
+        var auth   = (sa.data && sa.data.auth) || {};
+        var status = auth.status;
+        var params = auth.params || {};
+        if (status === 'AUTHENTICATED') {
+          hideSpinner();
+          markStep('step-ch', '•');
+          markStep('step-vf', '•');
+          setStatus('Frictionless authentication succeeded.', 'ok');
+          showJSON(sa.data);
+          return;
+        }
+        if (status === 'AUTH_FAILED') {
+          hideSpinner();
+          markStep('step-ch', '✗');
+          setStatus('Authentication failed.', 'err');
+          showJSON(sa.data);
+          return;
+        }
+        if (status !== 'AUTH_IN_PROGRESS') {
+          hideSpinner();
+          setStatus('Unexpected status: ' + status, 'err');
+          showJSON(sa.data);
+          return;
+        }
+        // challenge required
+        setStatus('Challenge required — please complete the OTP in the iframe below.');
+        var acsUrl = params.acsUrl || params.acsURL;
+        var creq   = params.encodedCReq || params.creq;
+        return doChallenge(acsUrl, creq).then(function() {
+          setStatus('Verifying authentication…');
+          return post('/explorer/consent/execute', {
+            operation: 'verify_authentication',
+            params: { card_ref: CFG.card_ref, auth_type: 'THREEDS', auth_params: '{}' },
+          });
+        }).then(function(vr) {
+          document.getElementById('challenge-wrap').style.display = 'none';
+          hideSpinner();
+          if (vr && vr.success) {
+            markStep('step-vf', '✓');
+            setStatus('Authentication complete.', 'ok');
+            showJSON(vr.data);
+          } else {
+            markStep('step-vf', '✗');
+            setStatus('verify-authentication failed', 'err');
+            showJSON((vr && vr.error) || vr);
+          }
+        });
+      }).catch(function(err) {
+        hideSpinner();
+        setStatus('Error: ' + (err && err.message ? err.message : err), 'err');
+      });
+    }
+    run();
+  })();
+  </script>
+</body>
+</html>"""
+    page = page.replace("__CFG__", cfg_json)
+    return page, 200, {"Content-Type": "text/html; charset=utf-8"}
+
+
 # ----------------------------------------------------------------------------
 # Use cases
 # ----------------------------------------------------------------------------
@@ -456,4 +746,4 @@ if __name__ == "__main__":
         print(f"  {flag} {a['name']:<20} ({len(a['operations'])} operations)")
     print(f"\nListening on http://0.0.0.0:{port}")
     print("=" * 60 + "\n")
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=True, use_reloader=False)
