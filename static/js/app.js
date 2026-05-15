@@ -435,6 +435,14 @@
         value = currentState[k] || "";
       }
       if (!value && p.default != null) value = resolveDefault(p.default);
+      // Cross-API prefill: auto-fill card_reference / card_ref from the most
+      // recently returned cardReference (e.g. Consent → Create Consent).
+      if (!value && (p.name === "card_reference" || p.name === "card_ref")) {
+        try {
+          const saved = localStorage.getItem("vima:cardReference");
+          if (saved) value = saved;
+        } catch (e) { /* ignore */ }
+      }
 
       let input;
       if (p.type === "select" && Array.isArray(p.options)) {
@@ -532,6 +540,12 @@
       lastIoData.response = data.response;
       renderIoPanel('request', data.request);
       renderIoPanel('response', data.response);
+      // Auto-capture cardReference from any response for cross-API prefill.
+      const capturedCardRef = _findKey(data.response && data.response.body, "cardReference")
+        || _findKey(data.data, "cardReference");
+      if (capturedCardRef) {
+        try { localStorage.setItem("vima:cardReference", capturedCardRef); } catch (e) {}
+      }
       const s = data.response && data.response.status_code;
       if (s != null) {
         setStatus(s);
@@ -559,7 +573,33 @@
         note.textContent = "Open in a new tab, complete the FinBank flow, then run Refresh Accounts.";
         $("op-hint").appendChild(note);
         $("op-hint").appendChild(a);
-      }      if (data.hints && data.hints.pdf_base64) {
+      }      // Browser-action button: shown when op.browser_action is true.
+      // Prefers hints.browser_launch_url; falls back to first URL found in response body.
+      if (op.browser_action) {
+        const launchUrl = (data.hints && data.hints.browser_launch_url)
+          ? data.hints.browser_launch_url
+          : _findFirstUrl(data.response && data.response.body);
+        const launchNote = (data.hints && data.hints.browser_launch_note)
+          || "Browser interaction required — complete the flow, then proceed to the next step.";
+        if (launchUrl) {
+          const wrap = document.createElement("div");
+          wrap.style.cssText = "margin-top:10px;padding:10px 12px;background:#f0f7ff;border:1px solid #b6d4f7;border-radius:6px;display:flex;align-items:center;gap:12px;";
+          const noteEl = document.createElement("span");
+          noteEl.className = "muted";
+          noteEl.style.fontSize = "13px";
+          noteEl.textContent = launchNote;
+          const btn = document.createElement("a");
+          btn.href = launchUrl;
+          btn.target = "_blank";
+          btn.rel = "noopener";
+          btn.textContent = "Launch 3DS Method ↗";
+          btn.style.cssText = "flex-shrink:0;padding:7px 14px;background:#005b99;color:#fff;border-radius:5px;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap;";
+          wrap.appendChild(noteEl);
+          wrap.appendChild(btn);
+          $("op-hint").appendChild(wrap);
+        }
+      }
+      if (data.hints && data.hints.pdf_base64) {
         const binary = atob(data.hints.pdf_base64);
         const bytes = new Uint8Array(binary.length);
         for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -599,6 +639,30 @@
       $("op-send").textContent = "Send";
     }
   });
+
+  // Recursively find the first https:// URL string in a JSON object/array.
+  function _findFirstUrl(obj) {
+    if (obj == null) return null;
+    if (typeof obj === "string" && /^https?:\/\//i.test(obj)) return obj;
+    if (Array.isArray(obj)) {
+      for (const v of obj) { const r = _findFirstUrl(v); if (r) return r; }
+    } else if (typeof obj === "object") {
+      for (const v of Object.values(obj)) { const r = _findFirstUrl(v); if (r) return r; }
+    }
+    return null;
+  }
+
+  // Recursively find the first value for `key` in a JSON object/array.
+  function _findKey(obj, key) {
+    if (obj == null) return null;
+    if (Array.isArray(obj)) {
+      for (const v of obj) { const r = _findKey(v, key); if (r) return r; }
+    } else if (typeof obj === "object") {
+      if (obj[key] != null && typeof obj[key] === "string" && obj[key]) return obj[key];
+      for (const v of Object.values(obj)) { const r = _findKey(v, key); if (r) return r; }
+    }
+    return null;
+  }
 
   function fmt(obj) {
     if (obj == null) return "—";
@@ -693,6 +757,8 @@
       renderEasySavings();
     } else if (uc.render === "places") {
       renderPlaces();
+    } else if (uc.render === "identity") {
+      renderIdentity();
     } else if (uc.render === "findacard") {
       renderFindACard();
     } else {
@@ -4200,6 +4266,468 @@
         plRender();
       })
       .catch(() => { PL.detailLoading = false; });
+  }
+
+  // ===================== Online Identity Verification Use Case =====================
+  // Simulated journey. No real API calls; toggle reveals what each provider
+  // would contribute behind the scenes.
+
+  const IDV = {
+    step: 0,            // 0..4
+    reveal: false,      // background view toggle
+    form: {
+      firstName: "Alex",
+      lastName: "Morgan",
+      email: "alex.morgan@gmail.com",
+      dob: "1988-04-12",
+      address: "1600 Pennsylvania Ave NW, Washington, DC 20500",
+      phone: "+1 (202) 555-0123",
+    },
+    selectedBank: null,
+    bankConnected: false,
+    bankConsentGiven: false,    // user clicked "I consent" in bank modal
+    bankModalOpen: false,
+    bankModalStage: "intro",    // intro | connecting | done
+    cardConsent: false,
+    cardAuthorizing: false,     // overlay while "authorize & verify" runs
+    // populated when we land on the result screen
+    result: null,
+  };
+
+  const IDV_STEPS = [
+    { key: "personal", label: "Personal info" },
+    { key: "bank",     label: "Connect bank" },
+    { key: "card",     label: "Authorize card" },
+    { key: "review",   label: "Verifying…" },
+    { key: "done",     label: "Verified" },
+  ];
+
+  const IDV_BANKS = [
+    { id: "chase",      name: "Chase",            color: "#117ACA" },
+    { id: "boa",        name: "Bank of America",  color: "#E31837" },
+    { id: "wells",      name: "Wells Fargo",      color: "#D71E28" },
+    { id: "citi",       name: "Citi",             color: "#003B70" },
+    { id: "usbank",     name: "U.S. Bank",        color: "#0C2074" },
+    { id: "capitalone", name: "Capital One",      color: "#004977" },
+  ];
+
+  // Behind-the-scenes "signals" surfaced per step
+  function idvSignals(step) {
+    if (step === 0) {
+      return {
+        title: "Step 1 — Ekata silently scores the visitor",
+        provider: "Ekata Identity Verification",
+        items: [
+          ["Device fingerprint",  "d8b2-fa17-3c91-aa05  (canvas+webGL+UA)"],
+          ["IP address",          "73.118.42.207 (US, residential, no proxy)"],
+          ["IP velocity",         "1 signup in last 24h — low"],
+          ["Email risk",          "alex.morgan@gmail.com — seen 4y, low risk"],
+          ["Phone-to-name match", "+1 (202) 555-0123 ↔ Alex Morgan — match"],
+          ["Address validity",    "1600 Pennsylvania Ave NW, Washington DC — USPS deliverable"],
+          ["Name ↔ DOB",          "consistent across public records"],
+        ],
+        callout: "POST identitycheck.api/v5/identity   →  confidenceScore: 612 / 1000",
+      };
+    }
+    if (step === 1) {
+      return {
+        title: "Step 2 — US Open Finance proves bank ownership",
+        provider: "US Open Finance (Connect)",
+        items: [
+          ["Connect URL",            "https://connect.openfinance.us/?ssn=…"],
+          ["Customer ID",            "cust_91421"],
+          ["Institution",            IDV.selectedBank ? IDV.selectedBank.name : "(awaiting)"],
+          ["OAuth scope",            "accounts.read  owner.read  transactions.read(30d)"],
+          ["Account-owner returned", "ALEX MORGAN — match to entered name"],
+          ["Account funded > 90d",   "true (KYC-passing)"],
+          ["AccountID stored",       "acct_4192xxxx7733"],
+        ],
+        callout: "POST openfinance/v2/customers/{id}/accounts/owner  →  accountOwner.name == applicant",
+      };
+    }
+    if (step === 2) {
+      return {
+        title: "Step 3 — Mastercard Consent confirms card holder",
+        provider: "Mastercard Consent + 3DS",
+        items: [
+          ["cardReference issued",  "4e07c1cd-34d9-46ce-9709-4397065be6ef"],
+          ["Issuer",                "JPMorgan Chase Bank, N.A."],
+          ["3DS Method status",     "Y — device collection succeeded"],
+          ["ACS flow",              "Frictionless (transStatus = Y)"],
+          ["Cardholder name match", "ALEX MORGAN ↔ applicant — match"],
+          ["Billing country",       "US ↔ residency"],
+          ["Consent reference",     "consent_13322909"],
+        ],
+        callout: "POST consents/v1/cards  →  POST consents/v1/cards/{ref}/authentications  →  transStatus: Y",
+      };
+    }
+    if (step === 3) {
+      return {
+        title: "Step 4 — Combining the signals",
+        provider: "Decision engine",
+        items: [
+          ["Ekata confidence",         "612 / 1000  (Tier B)"],
+          ["US Open Finance ownership", "Owner name match — strong"],
+          ["Mastercard 3DS",           "Authenticated — strong"],
+          ["Name agreement",           "3 / 3 sources"],
+          ["Address agreement",        "2 / 2 sources (Ekata, US Open Finance)"],
+          ["Document fallback",        "not required"],
+          ["Risk band",                "Low"],
+        ],
+        callout: "score = 0.4·ekata + 0.3·openfinance + 0.3·mastercard  →  0.88  (auto-approve)",
+      };
+    }
+    return {
+      title: "Step 5 — Identity established",
+      provider: "GovServices",
+      items: [
+        ["Identity assurance level", "IAL2 (NIST 800-63-3)"],
+        ["Government ID issued",     "GOV-US-2026-118-44219"],
+        ["Audit bundle stored",      "Ekata + US Open Finance owner.json + Mastercard 3DS receipt"],
+        ["PII never seen",           "PAN tokenized; raw bank credentials never left US Open Finance"],
+      ],
+      callout: "session.identityVerified = true  →  unlock government services",
+    };
+  }
+
+  function renderIdentity() {
+    const body = $("uc-body");
+    if (!body) return;
+    body.innerHTML = `
+      <div class="idv-wrap${IDV.reveal ? ' idv-reveal-on' : ''}">
+        <div class="idv-toolbar">
+          <div class="idv-stepper" id="idv-stepper"></div>
+          <label class="idv-toggle">
+            <input type="checkbox" id="idv-reveal-cb" ${IDV.reveal ? 'checked' : ''}>
+            <span class="idv-toggle-track"><span class="idv-toggle-thumb"></span></span>
+            <span class="idv-toggle-label">Reveal what's happening</span>
+          </label>
+        </div>
+        <div class="idv-split">
+          <div class="idv-browser">
+            <div class="idv-browser-chrome">
+              <span class="idv-dot r"></span><span class="idv-dot y"></span><span class="idv-dot g"></span>
+              <div class="idv-url">
+                <span class="idv-lock">🔒</span>
+                <span>govservices.gov/sign-up</span>
+              </div>
+            </div>
+            <div class="idv-page" id="idv-page"></div>
+          </div>
+          <aside class="idv-bts" id="idv-bts"></aside>
+        </div>
+      </div>
+    `;
+    idvRender();
+
+    document.getElementById("idv-reveal-cb").addEventListener("change", (e) => {
+      IDV.reveal = !!e.target.checked;
+      const wrap = body.querySelector(".idv-wrap");
+      if (wrap) wrap.classList.toggle("idv-reveal-on", IDV.reveal);
+    });
+  }
+
+  function idvRender() {
+    idvRenderStepper();
+    idvRenderPage();
+    idvRenderBts();
+  }
+
+  function idvRenderStepper() {
+    const el = document.getElementById("idv-stepper");
+    if (!el) return;
+    el.innerHTML = IDV_STEPS.map((s, i) => {
+      const state = i < IDV.step ? "done" : i === IDV.step ? "active" : "todo";
+      return `<div class="idv-step idv-step-${state}">
+        <span class="idv-step-num">${i < IDV.step ? "✓" : (i + 1)}</span>
+        <span class="idv-step-label">${escapeHtml(s.label)}</span>
+      </div>`;
+    }).join('<span class="idv-step-sep"></span>');
+  }
+
+  function idvPageStep0() {
+    const f = IDV.form;
+    return `
+      <div class="idv-screen">
+        <div class="idv-brand">
+          <div class="idv-crown">🇺🇸</div>
+          <div>
+            <h2>U.S. Government Services</h2>
+            <p class="muted">Verify your identity to unlock online federal services.</p>
+          </div>
+        </div>
+        <h3 class="idv-screen-title">Tell us about you</h3>
+        <div class="idv-grid">
+          <label>First name<input id="idv-f-first" value="${escapeHtml(f.firstName)}"></label>
+          <label>Last name<input id="idv-f-last" value="${escapeHtml(f.lastName)}"></label>
+          <label class="idv-col-2">Email<input id="idv-f-email" type="email" value="${escapeHtml(f.email)}"></label>
+          <label>Date of birth<input id="idv-f-dob" type="date" value="${escapeHtml(f.dob)}"></label>
+          <label>Phone<input id="idv-f-phone" value="${escapeHtml(f.phone)}"></label>
+          <label class="idv-col-2">Home address<input id="idv-f-addr" value="${escapeHtml(f.address)}"></label>
+        </div>
+        <div class="idv-actions">
+          <button class="btn btn-primary" id="idv-next-0">Continue</button>
+        </div>
+      </div>`;
+  }
+
+  function idvPageStep1() {
+    const sel = IDV.selectedBank;
+    return `
+      <div class="idv-screen">
+        <h3 class="idv-screen-title">Connect your bank</h3>
+        <p class="muted">We confirm you own the account in your name. Your password is never shared with us — <strong>US Open Finance</strong> handles the secure sign-in.</p>
+        <div class="idv-banks">
+          ${IDV_BANKS.map(b => `
+            <button class="idv-bank ${sel && sel.id === b.id ? 'idv-bank-sel' : ''}" data-bank="${b.id}">
+              <span class="idv-bank-mark" style="background:${b.color}">${escapeHtml(b.name.slice(0,1))}</span>
+              <span>${escapeHtml(b.name)}</span>
+            </button>`).join('')}
+        </div>
+        ${sel ? `
+          <div class="idv-bank-card">
+            <div class="idv-bank-card-head" style="background:${sel.color}">
+              <span>${escapeHtml(sel.name)} Online</span>
+              <span class="idv-bank-secure">🔒 openfinance.us</span>
+            </div>
+            <div class="idv-bank-card-body">
+              <label>Username<input value="alex.morgan" disabled></label>
+              <label>Password<input type="password" value="••••••••" disabled></label>
+              <button class="btn btn-primary" id="idv-connect-bank">Sign in &amp; share account ownership</button>
+            </div>
+          </div>` : `<p class="muted idv-hint">Pick your bank to continue.</p>`}
+        <div class="idv-actions">
+          <button class="btn btn-outline" id="idv-back-1">Back</button>
+        </div>
+        ${IDV.bankModalOpen ? idvBankModal() : ''}
+      </div>`;
+  }
+
+  function idvBankModal() {
+    const sel = IDV.selectedBank || { name: "your bank", color: "#1a3a8f" };
+    const stage = IDV.bankModalStage;
+    let body = '';
+    if (stage === 'intro') {
+      body = `
+        <div class="idv-modal-body">
+          <div class="idv-modal-icon" style="background:${sel.color}">🏛️</div>
+          <h4>Share account ownership with U.S. Government Services?</h4>
+          <p class="muted">${escapeHtml(sel.name)} will share, via US Open Finance, only the information needed to confirm your identity:</p>
+          <ul class="idv-modal-list">
+            <li><strong>Account holder name</strong> &mdash; to match against your application</li>
+            <li><strong>Account status &amp; age</strong> &mdash; to confirm the account is funded and active</li>
+            <li><strong>Last 4 of account number</strong> &mdash; for the audit record</li>
+          </ul>
+          <p class="muted idv-modal-fine">No transactions, balances or credentials will be shared. You can revoke this consent at any time.</p>
+          <div class="idv-modal-actions">
+            <button class="btn btn-outline" id="idv-modal-cancel">Cancel</button>
+            <button class="btn btn-primary" id="idv-modal-consent">I consent</button>
+          </div>
+        </div>`;
+    } else if (stage === 'connecting') {
+      body = `
+        <div class="idv-modal-body idv-modal-center">
+          <div class="idv-spinner-lg"></div>
+          <h4>Sharing account ownership…</h4>
+          <ul class="idv-verify-list">
+            <li class="idv-vli idv-vli-done">Signed in to ${escapeHtml(sel.name)}</li>
+            <li class="idv-vli idv-vli-done">Consent recorded with US Open Finance</li>
+            <li class="idv-vli idv-vli-active">Retrieving account owner…</li>
+          </ul>
+        </div>`;
+    }
+    return `
+      <div class="idv-modal-backdrop">
+        <div class="idv-modal">
+          <div class="idv-modal-head">
+            <span>US Open Finance</span>
+            <span class="idv-modal-secure">🔒 openfinance.us</span>
+          </div>
+          ${body}
+        </div>
+      </div>`;
+  }
+
+  function idvPageStep2() {
+    return `
+      <div class="idv-screen">
+        <h3 class="idv-screen-title">Authorize with your card</h3>
+        <p class="muted">We use Mastercard Consent so your bank confirms it's really you. You will not be charged.</p>
+        <div class="idv-card-visual">
+          <div class="idv-card-chip"></div>
+          <div class="idv-card-num">5204  ••••  ••••  9999</div>
+          <div class="idv-card-row">
+            <div><span class="muted">Cardholder</span><br>${escapeHtml(IDV.form.firstName + ' ' + IDV.form.lastName).toUpperCase()}</div>
+          </div>
+          <div class="idv-card-brand"><span class="r"></span><span class="y"></span></div>
+        </div>
+        <div class="idv-grid idv-card-form">
+          <label class="idv-col-2">Card number<input value="5204 7305 4100 9999" disabled></label>
+          <label class="idv-col-2">CVC<input value="•••" disabled></label>
+        </div>
+        <label class="idv-check">
+          <input type="checkbox" id="idv-consent-cb" ${IDV.cardConsent ? 'checked' : ''}>
+          <span>I authorize GovServices to confirm my identity with Mastercard using this card. No payment will be taken.</span>
+        </label>
+        <div class="idv-actions">
+          <button class="btn btn-outline" id="idv-back-2" ${IDV.cardAuthorizing ? 'disabled' : ''}>Back</button>
+          <button class="btn btn-primary" id="idv-next-2" ${(IDV.cardConsent && !IDV.cardAuthorizing) ? '' : 'disabled'}>
+            ${IDV.cardAuthorizing ? '<span class="idv-btn-spin"></span> Authorizing…' : 'Authorize &amp; verify'}
+          </button>
+        </div>
+        ${IDV.cardAuthorizing ? `
+        <div class="idv-card-progress">
+          <ul class="idv-verify-list">
+            <li class="idv-vli idv-vli-done">Mastercard consent created</li>
+            <li class="idv-vli idv-vli-done">3DS device data collected</li>
+            <li class="idv-vli idv-vli-active">Authenticating with issuer (frictionless)…</li>
+          </ul>
+        </div>` : ''}
+      </div>`;
+  }
+
+  function idvPageStep3() {
+    return `
+      <div class="idv-screen idv-screen-center">
+        <div class="idv-spinner-lg"></div>
+        <h3 class="idv-screen-title">Confirming who you are…</h3>
+        <p class="muted">Checking the signals from your bank, your card and the device you're using.</p>
+        <ul class="idv-verify-list">
+          <li class="idv-vli idv-vli-done">Bank ownership confirmed</li>
+          <li class="idv-vli idv-vli-done">Card authenticated (3DS)</li>
+          <li class="idv-vli idv-vli-active">Cross-checking device &amp; address…</li>
+        </ul>
+      </div>`;
+  }
+
+  function idvPageStep4() {
+    return `
+      <div class="idv-screen idv-screen-center">
+        <div class="idv-tick">✓</div>
+        <h3 class="idv-screen-title">You're verified</h3>
+        <p class="muted">Your identity has been established. You can now access government services online.</p>
+        <div class="idv-result-card">
+          <div class="idv-result-row"><span>Name</span><strong>${escapeHtml(IDV.form.firstName + ' ' + IDV.form.lastName)}</strong></div>
+          <div class="idv-result-row"><span>Assurance level</span><strong>IAL2 (NIST 800-63-3)</strong></div>
+          <div class="idv-result-row"><span>Risk band</span><strong class="idv-ok">Low</strong></div>
+          <div class="idv-result-row"><span>Reference</span><strong>GOV-US-2026-118-44219</strong></div>
+        </div>
+        <div class="idv-actions">
+          <button class="btn btn-primary" id="idv-restart">Start again</button>
+        </div>
+      </div>`;
+  }
+
+  function idvRenderPage() {
+    const page = document.getElementById("idv-page");
+    if (!page) return;
+    const renderers = [idvPageStep0, idvPageStep1, idvPageStep2, idvPageStep3, idvPageStep4];
+    page.innerHTML = renderers[IDV.step]();
+
+    // Wiring per step
+    if (IDV.step === 0) {
+      const nx = document.getElementById("idv-next-0");
+      nx.addEventListener("click", () => {
+        IDV.form.firstName = document.getElementById("idv-f-first").value || IDV.form.firstName;
+        IDV.form.lastName  = document.getElementById("idv-f-last").value  || IDV.form.lastName;
+        IDV.form.email     = document.getElementById("idv-f-email").value || IDV.form.email;
+        IDV.form.dob       = document.getElementById("idv-f-dob").value   || IDV.form.dob;
+        IDV.form.phone     = document.getElementById("idv-f-phone").value || IDV.form.phone;
+        IDV.form.address   = document.getElementById("idv-f-addr").value  || IDV.form.address;
+        IDV.step = 1;
+        idvRender();
+      });
+    } else if (IDV.step === 1) {
+      page.querySelectorAll(".idv-bank").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.dataset.bank;
+          IDV.selectedBank = IDV_BANKS.find(b => b.id === id) || null;
+          IDV.bankConnected = false;
+          idvRender();
+        });
+      });
+      const connectBtn = document.getElementById("idv-connect-bank");
+      if (connectBtn) connectBtn.addEventListener("click", () => {
+        IDV.bankModalOpen = true;
+        IDV.bankModalStage = "intro";
+        idvRender();
+      });
+      const back = document.getElementById("idv-back-1");
+      if (back) back.addEventListener("click", () => { IDV.step = 0; idvRender(); });
+
+      // Bank consent modal wiring
+      const cancelBtn = document.getElementById("idv-modal-cancel");
+      if (cancelBtn) cancelBtn.addEventListener("click", () => {
+        IDV.bankModalOpen = false;
+        idvRender();
+      });
+      const consentBtn = document.getElementById("idv-modal-consent");
+      if (consentBtn) consentBtn.addEventListener("click", () => {
+        IDV.bankModalStage = "connecting";
+        idvRender();
+        setTimeout(() => {
+          IDV.bankModalOpen = false;
+          IDV.bankConsentGiven = true;
+          IDV.bankConnected = true;
+          IDV.step = 2;
+          idvRender();
+        }, 1800);
+      });
+    } else if (IDV.step === 2) {
+      const cb = document.getElementById("idv-consent-cb");
+      if (cb) cb.addEventListener("change", () => {
+        IDV.cardConsent = cb.checked;
+        const nb = document.getElementById("idv-next-2");
+        if (nb) nb.disabled = !cb.checked || IDV.cardAuthorizing;
+      });
+      const backBtn = document.getElementById("idv-back-2");
+      if (backBtn) backBtn.addEventListener("click", () => { IDV.step = 1; idvRender(); });
+      const nextBtn = document.getElementById("idv-next-2");
+      if (nextBtn) nextBtn.addEventListener("click", () => {
+        if (IDV.cardAuthorizing) return;
+        IDV.cardAuthorizing = true;
+        idvRender();
+        setTimeout(() => {
+          IDV.cardAuthorizing = false;
+          IDV.step = 3;
+          idvRender();
+          setTimeout(() => { IDV.step = 4; idvRender(); }, 2200);
+        }, 1600);
+      });
+    } else if (IDV.step === 4) {
+      document.getElementById("idv-restart").addEventListener("click", () => {
+        IDV.step = 0;
+        IDV.selectedBank = null;
+        IDV.bankConnected = false;
+        IDV.bankConsentGiven = false;
+        IDV.bankModalOpen = false;
+        IDV.cardConsent = false;
+        IDV.cardAuthorizing = false;
+        idvRender();
+      });
+    }
+  }
+
+  function idvRenderBts() {
+    const el = document.getElementById("idv-bts");
+    if (!el) return;
+    const s = idvSignals(IDV.step);
+    el.innerHTML = `
+      <div class="idv-bts-inner">
+        <div class="idv-bts-head">
+          <span class="idv-bts-tag">BEHIND THE SCENES</span>
+          <h4>${escapeHtml(s.title)}</h4>
+          <div class="idv-bts-provider">${escapeHtml(s.provider)}</div>
+        </div>
+        <ul class="idv-bts-list">
+          ${s.items.map(([k, v]) => `
+            <li><span class="idv-bts-k">${escapeHtml(k)}</span><span class="idv-bts-v">${escapeHtml(v)}</span></li>
+          `).join('')}
+        </ul>
+        <div class="idv-bts-callout">${escapeHtml(s.callout)}</div>
+        <p class="idv-bts-foot muted">Simulated data for illustration — no live API calls yet.</p>
+      </div>
+    `;
   }
 
   // ===================== Find A Card Use Case =====================
