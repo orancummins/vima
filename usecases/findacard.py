@@ -12,9 +12,11 @@ MANIFEST: Dict[str, Any] = {
     "name": "Find A Card",
     "description": (
         "In the future, your agent will find the perfect card for you, "
-        "this is how Mastercard's Find A Card agent will help make that happen."
+        "this is how Mastercard's Find A Card agent will help make that happen. "
+        "This UI is built to illustrate how the agent would work, it will have the ability "
+        "to fully autonomously source and provision a card to your wallet."
     ),
-    "apis": [],
+    "apis": ["Open Finance", "MDES", "Offers", "Rewards"],
     "render": "findacard",
     "local_port": 5432,
 }
