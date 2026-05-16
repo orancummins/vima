@@ -283,19 +283,22 @@
     });
     const opsEl = $("op-categories");
     opsEl.innerHTML = "";
+    const deprecatedCats = new Set(api.deprecated_categories || []);
     Object.entries(cats).forEach(([cat, ops]) => {
       if (!ops.length) return;
+      const isDepr = deprecatedCats.has(cat);
       const h = document.createElement("div");
-      h.className = "op-cat-name";
-      h.textContent = cat;
+      h.className = "op-cat-name" + (isDepr ? " op-cat-deprecated" : "");
+      h.innerHTML = escapeHtml(cat) + (isDepr ? ' <span class="op-depr-badge">Deprecated</span>' : '');
       opsEl.appendChild(h);
       ops.forEach((op) => {
         const b = document.createElement("button");
-        b.className = "op-btn";
+        b.className = "op-btn" + (isDepr ? " op-btn-deprecated" : "");
         b.textContent = op.name;
         b.dataset.opId = op.id;
         if (op.description) b.title = op.description;
-        b.addEventListener("click", () => selectOp(op.id));
+        if (isDepr) b.disabled = true;
+        else b.addEventListener("click", () => selectOp(op.id));
         opsEl.appendChild(b);
       });
     });
@@ -759,8 +762,12 @@
       renderPlaces();
     } else if (uc.render === "identity") {
       renderIdentity();
+    } else if (uc.render === "specials") {
+      renderSpecials();
     } else if (uc.render === "findacard") {
       renderFindACard();
+    } else if (uc.render === "sonic") {
+      renderSonicBrand();
     } else {
       $("uc-body").innerHTML = `<p class="muted">${(uc.apis && uc.apis.length)
         ? "Composes: " + uc.apis.join(", ")
@@ -1912,8 +1919,8 @@
         ${_binCapChip("MoneySend",   card.moneySend       ? "Enabled"                : "Not Enabled",    card.moneySend       ? "ok"   : "dim")}
         ${_binCapChip("Fast Fund",   card.fastFund        ? (card.fastFundDomesticOnly ? "Domestic Only" : "Full Support") : "Not Supported", card.fastFund ? "ok" : "dim")}
         ${_binCapChip("DCC",         card.dccEnabled      ? "Supported"              : "Not Supported",  card.dccEnabled      ? "ok"   : "dim")}
-        ${_binCapChip("Auth Only",   card.authorizationOnly ? "Yes"                  : "No",             card.authorizationOnly ? "warn" : "")}
-        ${card.nonReloadable         ? _binCapChip("Non-Reloadable",  "Yes",          "warn") : ""}
+        ${card.authorizationOnly ? _binCapChip("Auth Only", "Yes", "warn") : _binCapChip("Auth Only", "No", "")}
+        ${funding === 'prepaid' ? _binCapChip("Reloadable", card.nonReloadable ? "No" : "Yes", card.nonReloadable ? "warn" : "ok") : (card.nonReloadable ? _binCapChip("Non-Reloadable", "Yes", "warn") : "")}
         ${card.governmentRange       ? _binCapChip("Government",      "Public Sector","info") : ""}
         ${_binCapChip("Smart Data",  card.smartData       ? "Enrolled"               : "Not Enrolled",   card.smartData       ? "ok"   : "dim")}
         ${card.isToken               ? _binCapChip("Token BIN",       "Network Token","info") : ""}
@@ -2026,40 +2033,38 @@
     const W = 342, H = 215, R = 17;
     const ny = H / 2;     // 107.5 — notch centre Y
     const nh = 11.5;      // half-height of opening (3mm)
-    const nd = 11.5;      // depth into card (3mm)
+    const nd = 5.75;      // depth into card (1.5mm — halved from 3mm)
     const nr = 4;         // credit corner radius (1mm)
     const yt = ny - nh;   // 96 — top of notch
     const yb = ny + nh;   // 119 — bottom of notch
-    const nx = W - nd;    // 330.5 — inner wall X
+    const nx = W - nd;    // inner wall X
     const base = `M ${R} 0 L ${W-R} 0 Q ${W} 0 ${W} ${R} `;
     const tail = ` L ${W} ${H-R} Q ${W} ${H} ${W-R} ${H} L ${R} ${H} Q 0 ${H} 0 ${H-R} L 0 ${R} Q 0 0 ${R} 0 Z`;
     let notch = '';
     if (funding === 'debit') {
-      // 1/5-circle arc: large radius (60px), 72° arc, positioned lower on card
-      // depth = R*(1-cos36°) ≈ 11.5px; half-height = R*sin36° ≈ 35.3px
-      // Circle centre sits outside the card (right); sweep=0 curves the arc left into card
-      const dR = 60, cy2 = 150;
-      const dyt = (cy2 - dR * 0.5878).toFixed(1);  // ≈ 114.7
-      const dyb = (cy2 + dR * 0.5878).toFixed(1);  // ≈ 185.3
-      notch = `L ${W} ${dyt} A ${dR} ${dR} 0 0 0 ${W} ${dyb}`;
+      // Circular arc — same half-height (35.3px) but depth halved to 5.75px.
+      // dR derived from: depth = dR - sqrt(dR²-h²)  →  dR = (h²+depth²)/(2*depth)
+      const cy2 = 150, dHalf = 35.3, dDepth = 5.75;
+      const dR = (dHalf*dHalf + dDepth*dDepth) / (2*dDepth); // ≈ 111.3
+      const dyt = (cy2 - dHalf).toFixed(1);
+      const dyb = (cy2 + dHalf).toFixed(1);
+      notch = `L ${W} ${dyt} A ${dR.toFixed(1)} ${dR.toFixed(1)} 0 0 0 ${W} ${dyb}`;
     } else if (funding === 'credit') {
-      // Trapezoid converging inward: wide at card edge, narrower at inner wall
-      // Edge 54.25px (77.5 × 0.7), inner wall 47px, depth 11.5px
-      const ccy = 150, cnd = 11.5, cs = 54.25;
-      const citx = W - cnd;                                        // 330.5 — inner wall x
-      const dyOff = cnd / Math.tan(72 * Math.PI / 180);           // ≈ 3.74 — taper per side
-      const eyT = ccy - cs / 2;                                    // 122.9 — edge top (wider)
-      const eyB = ccy + cs / 2;                                    // 177.1 — edge bottom
-      const iyT = eyT + dyOff;                                     // ≈ 126.6 — inner top (narrower)
-      const iyB = eyB - dyOff;                                     // ≈ 173.4 — inner bottom
+      // Trapezoid converging inward: depth halved to 5.75px
+      const ccy = 150, cnd = 5.75, cs = 54.25;
+      const citx = W - cnd;
+      const dyOff = cnd / Math.tan(72 * Math.PI / 180);
+      const eyT = ccy - cs / 2;
+      const eyB = ccy + cs / 2;
+      const iyT = eyT + dyOff;
+      const iyB = eyB - dyOff;
       notch = `L ${W} ${eyT.toFixed(1)} L ${citx} ${iyT.toFixed(1)} L ${citx} ${iyB.toFixed(1)} L ${W} ${eyB.toFixed(1)}`;
     } else if (funding === 'prepaid') {
-      // Scalene triangle: bottom side 2× top side, depth 11.5px, centred at y=150
-      // Solve 3a²+2×70×a+(3×11.5²-70²)=0 → a=(-70+sqrt(4×70²-9×11.5²))/3 ≈ 21.9
-      const pcy = 150, pnd = 11.5, pOpen = 70;
-      const py1 = pcy - pOpen / 2;  // 115
-      const py2 = pcy + pOpen / 2;  // 185
-      const pA = (-pOpen + Math.sqrt(4*pOpen*pOpen - 9*pnd*pnd)) / 3; // ≈ 21.9
+      // Scalene triangle: depth halved to 5.75px
+      const pcy = 150, pnd = 5.75, pOpen = 70;
+      const py1 = pcy - pOpen / 2;
+      const py2 = pcy + pOpen / 2;
+      const pA = (-pOpen + Math.sqrt(4*pOpen*pOpen - 9*pnd*pnd)) / 3;
       notch = `L ${W} ${py1.toFixed(1)} L ${(W-pnd).toFixed(1)} ${(py1+pA).toFixed(1)} L ${W} ${py2.toFixed(1)}`;
     } else {
       return '';
@@ -4026,21 +4031,10 @@
   }
 
   function plMapHtml(center) {
-    // Compute bounding box to fit all markers
-    const lats = PL.places.filter(p => p.lat != null).map(p => p.lat);
-    const lngs = PL.places.filter(p => p.lng != null).map(p => p.lng);
-    let bbox;
-    if (lats.length > 1 && lngs.length > 1) {
-      const pad = 0.01;
-      bbox = [Math.min(...lngs) - pad, Math.min(...lats) - pad, Math.max(...lngs) + pad, Math.max(...lats) + pad].join(",");
-    } else {
-      const delta = 0.05;
-      bbox = [center.lng - delta, center.lat - delta, center.lng + delta, center.lat + delta].join(",");
-    }
-    const src = "https://www.openstreetmap.org/export/embed.html?bbox=" + encodeURIComponent(bbox) + "&layer=mapnik&marker=" + center.lat + "," + center.lng;
+    // Leaflet container. Initialization happens after render in plInitMap().
     return `
       <div class="pl-map-wrap">
-        <iframe class="pl-map-frame" src="${escapeHtml(src)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Merchant locations"></iframe>
+        <div class="pl-map-frame" id="pl-leaflet-map" data-center-lat="${center.lat}" data-center-lng="${center.lng}"></div>
         <div class="pl-map-count">${PL.places.length} merchant${PL.places.length !== 1 ? "s" : ""}</div>
       </div>`;
   }
@@ -4129,12 +4123,9 @@
   }
 
   function plDetailMapHtml(d) {
-    const delta = 0.005;
-    const bbox = [d.lng - delta, d.lat - delta, d.lng + delta, d.lat + delta].join(",");
-    const src = "https://www.openstreetmap.org/export/embed.html?bbox=" + encodeURIComponent(bbox) + "&layer=mapnik&marker=" + d.lat + "," + d.lng;
     return `
       <div class="pl-detail-map">
-        <iframe class="pl-map-frame" src="${escapeHtml(src)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="${escapeHtml(d.name)}"></iframe>
+        <div class="pl-map-frame" id="pl-detail-leaflet-map" data-lat="${d.lat}" data-lng="${d.lng}" data-name="${escapeHtml(d.name || '')}"></div>
       </div>`;
   }
 
@@ -4195,6 +4186,92 @@
       if (panel) requestAnimationFrame(() => panel.classList.add("visible"));
       if (bg) requestAnimationFrame(() => bg.classList.add("visible"));
     }
+
+    // Initialize Leaflet maps (deferred until library is loaded)
+    plInitMaps();
+  }
+
+  function plInitMaps() {
+    if (typeof L === "undefined") {
+      // Leaflet not loaded yet — retry shortly
+      setTimeout(plInitMaps, 80);
+      return;
+    }
+
+    // --- Results map: all merchants ---
+    const mapEl = document.getElementById("pl-leaflet-map");
+    if (mapEl && !mapEl._plInited) {
+      mapEl._plInited = true;
+      const centerLat = parseFloat(mapEl.dataset.centerLat);
+      const centerLng = parseFloat(mapEl.dataset.centerLng);
+      const map = L.map(mapEl, { scrollWheelZoom: false }).setView([centerLat, centerLng], 12);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+      const markers = [];
+      PL.places.forEach((p, idx) => {
+        if (p.lat == null || p.lng == null) return;
+        const marker = L.marker([p.lat, p.lng]).addTo(map);
+        marker.bindPopup(plPopupHtml(p, idx), { maxWidth: 280 });
+        marker.on("popupopen", (ev) => {
+          const root = ev.popup.getElement();
+          if (!root) return;
+          const btn = root.querySelector("[data-popup-detail]");
+          if (btn) btn.addEventListener("click", () => plShowDetail(btn.dataset.popupDetail), { once: true });
+        });
+        markers.push(marker);
+      });
+
+      if (markers.length > 1) {
+        const group = L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.15));
+      } else if (markers.length === 1) {
+        map.setView(markers[0].getLatLng(), 14);
+      }
+
+      // Re-render on container resize (e.g. flex layout shift)
+      setTimeout(() => map.invalidateSize(), 200);
+    }
+
+    // --- Detail map: single merchant ---
+    const detailEl = document.getElementById("pl-detail-leaflet-map");
+    if (detailEl && !detailEl._plInited) {
+      detailEl._plInited = true;
+      const lat = parseFloat(detailEl.dataset.lat);
+      const lng = parseFloat(detailEl.dataset.lng);
+      const name = detailEl.dataset.name || "";
+      if (!isNaN(lat) && !isNaN(lng)) {
+        const map = L.map(detailEl, { scrollWheelZoom: false }).setView([lat, lng], 15);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        }).addTo(map);
+        L.marker([lat, lng]).addTo(map).bindPopup("<b>" + escapeHtml(name) + "</b>").openPopup();
+        setTimeout(() => map.invalidateSize(), 250);
+      }
+    }
+  }
+
+  function plPopupHtml(p, idx) {
+    const caps = (p.capabilities || []).slice(0, 4).map(c =>
+      '<span class="pl-popup-cap">' + escapeHtml(c) + '</span>'
+    ).join("");
+    return `
+      <div class="pl-popup">
+        <div class="pl-popup-name">${escapeHtml(p.name || "Merchant")}</div>
+        ${p.address ? '<div class="pl-popup-addr">' + escapeHtml(p.address) + '</div>' : ""}
+        <div class="pl-popup-meta">
+          ${p.mccCode ? '<span class="pl-popup-chip">MCC ' + escapeHtml(p.mccCode) + '</span>' : ""}
+          ${p.industry ? '<span class="pl-popup-chip">' + escapeHtml(p.industry) + '</span>' : ""}
+          ${p.isInBusiness ? '<span class="pl-popup-chip pl-popup-chip--ok">Active</span>' : '<span class="pl-popup-chip pl-popup-chip--off">Inactive</span>'}
+        </div>
+        ${caps ? '<div class="pl-popup-caps">' + caps + '</div>' : ""}
+        ${p.phone ? '<div class="pl-popup-row">📞 ' + escapeHtml(p.phone) + '</div>' : ""}
+        ${p.website ? '<div class="pl-popup-row">🔗 <a href="' + escapeHtml(p.website) + '" target="_blank" rel="noopener">' + escapeHtml(p.website.replace(/^https?:\/\//, "").replace(/\/$/, "")) + '</a></div>' : ""}
+        ${p.locationId ? '<button class="pl-popup-btn" data-popup-detail="' + escapeHtml(String(p.locationId)) + '">View full details →</button>' : ""}
+      </div>`;
   }
 
   function plSearch() {
@@ -4245,9 +4322,10 @@
     if (!locationId || PL.detailLoading) return;
     PL.selected = locationId;
     PL.detailLoading = true;
-    // Eagerly show from cached search data
+    // Eagerly show from cached search data — render once now
     const cached = PL.places.find(p => String(p.locationId) === String(locationId));
-    if (cached) { PL.detail = cached; plRender(); }
+    if (cached) { PL.detail = cached; }
+    plRender();
 
     fetch("/usecases/places/action", {
       method: "POST",
@@ -4259,11 +4337,13 @@
         PL.detailLoading = false;
         if (d.error) {
           // Keep the cached version if detail fetch fails
-          if (!PL.detail) { PL.error = typeof d.error === "string" ? d.error : JSON.stringify(d.error); }
+          if (!PL.detail) { PL.error = typeof d.error === "string" ? d.error : JSON.stringify(d.error); plRender(); }
         } else if (d.place) {
+          // Only re-render if the detail response adds new information
+          const hasNew = JSON.stringify(d.place) !== JSON.stringify(PL.detail);
           PL.detail = d.place;
+          if (hasNew) plRender();
         }
-        plRender();
       })
       .catch(() => { PL.detailLoading = false; });
   }
@@ -4273,8 +4353,12 @@
   // would contribute behind the scenes.
 
   const IDV = {
-    step: 0,            // 0..4
+    phase: 'home',      // home | login | verify | passkey | records
+    step: 0,            // 0..4 (only meaningful when phase==='verify')
     reveal: false,      // background view toggle
+    loginUser: '',
+    loginPass: '',
+    passkeyChoice: null, // 'enrolled' | 'skipped' | null
     form: {
       firstName: "Alex",
       lastName: "Morgan",
@@ -4290,16 +4374,57 @@
     bankModalStage: "intro",    // intro | connecting | done
     cardConsent: false,
     cardAuthorizing: false,     // overlay while "authorize & verify" runs
+    selectedCardId: null,       // auto-picked from bank's cards on step 2
+    visaLast8: "",              // user-entered last 8 when Visa is picked
     // populated when we land on the result screen
     result: null,
   };
 
+  // Cards "pulled from Open Banking" — what we know about each. Keyed by bankId.
+  const IDV_CARDS = [
+    // Chase
+    { id: "chase-mc",   bankId: "chase", brand: "Mastercard", network: "mc",
+      issuer: "Chase Sapphire Preferred", last4: "9999", knownPan: true,
+      display: "Mastercard •••• 9999" },
+    { id: "chase-visa", bankId: "chase", brand: "Visa", network: "visa",
+      issuer: "Chase Freedom Unlimited",  last4: "1042", knownPan: false, bin6: "414720",
+      display: "Visa •••• 1042" },
+    // Bank of America
+    { id: "boa-visa",   bankId: "boa", brand: "Visa", network: "visa",
+      issuer: "BoA Cash Rewards",        last4: "2207", knownPan: false, bin6: "424631",
+      display: "Visa •••• 2207" },
+    { id: "boa-mc",     bankId: "boa", brand: "Mastercard", network: "mc",
+      issuer: "BoA Premium Rewards",     last4: "6611", knownPan: true,
+      display: "Mastercard •••• 6611" },
+    // Wells Fargo
+    { id: "wells-visa", bankId: "wells", brand: "Visa", network: "visa",
+      issuer: "Wells Fargo Active Cash", last4: "3380", knownPan: false, bin6: "446542",
+      display: "Visa •••• 3380" },
+    // Citi
+    { id: "citi-mc",    bankId: "citi", brand: "Mastercard", network: "mc",
+      issuer: "Citi Double Cash",        last4: "4418", knownPan: true,
+      display: "Mastercard •••• 4418" },
+    { id: "citi-visa",  bankId: "citi", brand: "Visa", network: "visa",
+      issuer: "Citi Custom Cash",        last4: "7720", knownPan: false, bin6: "414709",
+      display: "Visa •••• 7720" },
+    // U.S. Bank
+    { id: "usbank-visa", bankId: "usbank", brand: "Visa", network: "visa",
+      issuer: "U.S. Bank Cash+",         last4: "8845", knownPan: false, bin6: "433228",
+      display: "Visa •••• 8845" },
+    // Capital One
+    { id: "cap1-mc",    bankId: "capitalone", brand: "Mastercard", network: "mc",
+      issuer: "Capital One Venture",     last4: "5031", knownPan: true,
+      display: "Mastercard •••• 5031" },
+    { id: "cap1-visa",  bankId: "capitalone", brand: "Visa", network: "visa",
+      issuer: "Capital One Quicksilver", last4: "9912", knownPan: false, bin6: "414740",
+      display: "Visa •••• 9912" },
+  ];
+
   const IDV_STEPS = [
-    { key: "personal", label: "Personal info" },
     { key: "bank",     label: "Connect bank" },
+    { key: "personal", label: "Personal info" },
     { key: "card",     label: "Authorize card" },
     { key: "review",   label: "Verifying…" },
-    { key: "done",     label: "Verified" },
   ];
 
   const IDV_BANKS = [
@@ -4315,50 +4440,62 @@
   function idvSignals(step) {
     if (step === 0) {
       return {
-        title: "Step 1 — Ekata silently scores the visitor",
+        title: "Step 1 — US Open Finance proves bank ownership",
+        provider: "US Open Finance (Connect)",
+        items: [
+          ["Connect URL",            "https://connect.openfinance.us/?session=…"],
+          ["Customer ID",            "cust_91421"],
+          ["Institution",            IDV.selectedBank ? IDV.selectedBank.name : "(awaiting selection)"],
+          ["OAuth scope",            "accounts.read  owner.read"],
+          ["Account-owner returned", IDV.bankConnected ? "ALEX MORGAN — used to pre-fill next step" : "(pending consent)"],
+          ["Account funded > 90d",   IDV.bankConnected ? "true (KYC-passing)" : "(pending)"],
+          ["AccountID stored",       IDV.bankConnected ? "acct_4192xxxx7733" : "(pending)"],
+        ],
+        callout: "POST openfinance/v2/customers/{id}/accounts/owner  →  accountOwner.name returned & cached",
+      };
+    }
+    if (step === 1) {
+      return {
+        title: "Step 2 — Ekata silently scores the applicant",
         provider: "Ekata Identity Verification",
         items: [
           ["Device fingerprint",  "d8b2-fa17-3c91-aa05  (canvas+webGL+UA)"],
           ["IP address",          "73.118.42.207 (US, residential, no proxy)"],
           ["IP velocity",         "1 signup in last 24h — low"],
-          ["Email risk",          "alex.morgan@gmail.com — seen 4y, low risk"],
-          ["Phone-to-name match", "+1 (202) 555-0123 ↔ Alex Morgan — match"],
-          ["Address validity",    "1600 Pennsylvania Ave NW, Washington DC — USPS deliverable"],
+          ["Email risk",          (IDV.form.email || "(empty)") + " — seen 4y, low risk"],
+          ["Phone-to-name match", (IDV.form.phone || "(empty)") + " ↔ " + (IDV.form.firstName + ' ' + IDV.form.lastName).trim() + " — match"],
+          ["Address validity",    (IDV.form.address || "(empty)") + " — USPS deliverable"],
           ["Name ↔ DOB",          "consistent across public records"],
+          ["Bank-owner agreement","applicant name == openfinance owner.name"],
         ],
-        callout: "POST identitycheck.api/v5/identity   →  confidenceScore: 612 / 1000",
-      };
-    }
-    if (step === 1) {
-      return {
-        title: "Step 2 — US Open Finance proves bank ownership",
-        provider: "US Open Finance (Connect)",
-        items: [
-          ["Connect URL",            "https://connect.openfinance.us/?ssn=…"],
-          ["Customer ID",            "cust_91421"],
-          ["Institution",            IDV.selectedBank ? IDV.selectedBank.name : "(awaiting)"],
-          ["OAuth scope",            "accounts.read  owner.read  transactions.read(30d)"],
-          ["Account-owner returned", "ALEX MORGAN — match to entered name"],
-          ["Account funded > 90d",   "true (KYC-passing)"],
-          ["AccountID stored",       "acct_4192xxxx7733"],
-        ],
-        callout: "POST openfinance/v2/customers/{id}/accounts/owner  →  accountOwner.name == applicant",
+        callout: "POST identitycheck.api/v5/identity  →  confidenceScore: 612 / 1000",
       };
     }
     if (step === 2) {
+      const card = IDV_CARDS.find(c => c.id === IDV.selectedCardId) || IDV_CARDS[0];
+      const isVisa = card.network === 'visa';
+      const visaOk = (IDV.visaLast8 || '').length === 8;
+      const items = [
+        ["Selected card",         `${card.brand} •••• ${card.last4} — ${card.issuer}`],
+        ["PAN source",            card.knownPan
+            ? "Open Banking (full PAN previously shared by issuer)"
+            : `Open Banking (BIN6 ${card.bin6} + last4 ${card.last4}; middle 8 collected from user)`],
+        ["Middle-8 challenge",    isVisa ? (visaOk ? "passed — proves possession of physical card" : "(awaiting 8 digits)") : "not required — full PAN known"],
+        ["Network",               isVisa ? "Visa (VbV / EMV 3DS)" : "Mastercard (Identity Check / EMV 3DS)"],
+        ["3DS Method status",     "Y — device collection succeeded"],
+        ["ACS flow",              "Frictionless (transStatus = Y)"],
+        ["Cardholder name match", `${(IDV.form.firstName + ' ' + IDV.form.lastName).toUpperCase()} ↔ issuer-on-file — match`],
+        ["AVS request",           `${IDV.form.address}`],
+        ["AVS response",          "Y — street & ZIP match"],
+        ["Auth type",             "$0 account-verification (no charge, no clearing)"],
+        ["Card storage",          "not stored — used for identity verification only"],
+        ["Consent reference",     "consent_13322909"],
+      ];
       return {
-        title: "Step 3 — Mastercard Consent confirms card holder",
-        provider: "Mastercard Consent + 3DS",
-        items: [
-          ["cardReference issued",  "4e07c1cd-34d9-46ce-9709-4397065be6ef"],
-          ["Issuer",                "JPMorgan Chase Bank, N.A."],
-          ["3DS Method status",     "Y — device collection succeeded"],
-          ["ACS flow",              "Frictionless (transStatus = Y)"],
-          ["Cardholder name match", "ALEX MORGAN ↔ applicant — match"],
-          ["Billing country",       "US ↔ residency"],
-          ["Consent reference",     "consent_13322909"],
-        ],
-        callout: "POST consents/v1/cards  →  POST consents/v1/cards/{ref}/authentications  →  transStatus: Y",
+        title: "Step 3 — Verify card ownership + AVS",
+        provider: isVisa ? "Visa VbV + AVS" : "Mastercard Identity Check + AVS",
+        items,
+        callout: "POST consents/v1/cards  →  POST authentications (3DS)  →  POST avs/check  →  transStatus: Y, avsResponse: Y",
       };
     }
     if (step === 3) {
@@ -4366,27 +4503,28 @@
         title: "Step 4 — Combining the signals",
         provider: "Decision engine",
         items: [
-          ["Ekata confidence",         "612 / 1000  (Tier B)"],
           ["US Open Finance ownership", "Owner name match — strong"],
-          ["Mastercard 3DS",           "Authenticated — strong"],
-          ["Name agreement",           "3 / 3 sources"],
-          ["Address agreement",        "2 / 2 sources (Ekata, US Open Finance)"],
+          ["Ekata confidence",         "612 / 1000  (Tier B)"],
+          ["Card 3DS",                 "Authenticated — strong"],
+          ["Card AVS",                 "Street & ZIP match — strong"],
+          ["Name agreement",           "3 / 3 sources (bank, applicant, card)"],
+          ["Address agreement",        "3 / 3 sources (Ekata, US Open Finance, AVS)"],
           ["Document fallback",        "not required"],
           ["Risk band",                "Low"],
         ],
-        callout: "score = 0.4·ekata + 0.3·openfinance + 0.3·mastercard  →  0.88  (auto-approve)",
+        callout: "score = 0.3·openfinance + 0.3·ekata + 0.2·3ds + 0.2·avs  →  0.91  (auto-approve)",
       };
     }
     return {
       title: "Step 5 — Identity established",
-      provider: "GovServices",
+      provider: "Medicare.gov",
       items: [
         ["Identity assurance level", "IAL2 (NIST 800-63-3)"],
-        ["Government ID issued",     "GOV-US-2026-118-44219"],
-        ["Audit bundle stored",      "Ekata + US Open Finance owner.json + Mastercard 3DS receipt"],
+        ["Medicare account linked",  "MED-US-2026-118-44219"],
+        ["Audit bundle stored",      "US Open Finance owner.json + Ekata score + Mastercard 3DS receipt"],
         ["PII never seen",           "PAN tokenized; raw bank credentials never left US Open Finance"],
       ],
-      callout: "session.identityVerified = true  →  unlock government services",
+      callout: "session.identityVerified = true  →  unlock Medicare account",
     };
   }
 
@@ -4409,7 +4547,7 @@
               <span class="idv-dot r"></span><span class="idv-dot y"></span><span class="idv-dot g"></span>
               <div class="idv-url">
                 <span class="idv-lock">🔒</span>
-                <span>govservices.gov/sign-up</span>
+                <span id="idv-url-text">www.medicare.gov</span>
               </div>
             </div>
             <div class="idv-page" id="idv-page"></div>
@@ -4428,9 +4566,31 @@
   }
 
   function idvRender() {
-    idvRenderStepper();
+    // URL bar reflects current phase
+    const urlEl = document.getElementById('idv-url-text');
+    if (urlEl) urlEl.textContent = idvCurrentUrl();
+    // Toolbar only meaningful during verify; stepper now lives INSIDE the page,
+    // so we hide the outer stepper at all times.
+    const toolbar = document.querySelector('.idv-toolbar');
+    if (toolbar) toolbar.style.display = (IDV.phase === 'verify') ? '' : 'none';
+    const outerStepper = document.getElementById('idv-stepper');
+    if (outerStepper) outerStepper.style.display = 'none';
+    // BTS aside only meaningful during verify
+    const wrap = document.querySelector('.idv-wrap');
+    if (wrap) wrap.classList.toggle('idv-no-bts', IDV.phase !== 'verify');
     idvRenderPage();
     idvRenderBts();
+  }
+
+  function idvCurrentUrl() {
+    switch (IDV.phase) {
+      case 'home':    return 'www.medicare.gov';
+      case 'login':   return 'www.medicare.gov/account/login';
+      case 'verify':  return 'www.medicare.gov/account/verify';
+      case 'passkey': return 'www.medicare.gov/account/passkey';
+      case 'records': return 'www.medicare.gov/account/my-record';
+      default:        return 'www.medicare.gov';
+    }
   }
 
   function idvRenderStepper() {
@@ -4445,18 +4605,19 @@
     }).join('<span class="idv-step-sep"></span>');
   }
 
-  function idvPageStep0() {
+  function idvPageStepPersonal() {
     const f = IDV.form;
+    const bankName = IDV.selectedBank ? IDV.selectedBank.name : 'your bank';
     return `
       <div class="idv-screen">
         <div class="idv-brand">
-          <div class="idv-crown">🇺🇸</div>
+          <div class="idv-crown idv-crown-med">M</div>
           <div>
-            <h2>U.S. Government Services</h2>
-            <p class="muted">Verify your identity to unlock online federal services.</p>
+            <h2>Confirm your information</h2>
+            <p class="muted">We pre-filled this from <strong>${escapeHtml(bankName)}</strong>. Review and continue \u2014 we only share what's needed with Medicare.gov.</p>
           </div>
         </div>
-        <h3 class="idv-screen-title">Tell us about you</h3>
+        <h3 class="idv-screen-title">Your details</h3>
         <div class="idv-grid">
           <label>First name<input id="idv-f-first" value="${escapeHtml(f.firstName)}"></label>
           <label>Last name<input id="idv-f-last" value="${escapeHtml(f.lastName)}"></label>
@@ -4466,17 +4627,18 @@
           <label class="idv-col-2">Home address<input id="idv-f-addr" value="${escapeHtml(f.address)}"></label>
         </div>
         <div class="idv-actions">
-          <button class="btn btn-primary" id="idv-next-0">Continue</button>
+          <button class="btn btn-outline" id="idv-back-personal">Back</button>
+          <button class="btn btn-primary" id="idv-next-personal">Continue</button>
         </div>
       </div>`;
   }
 
-  function idvPageStep1() {
+  function idvPageStepBank() {
     const sel = IDV.selectedBank;
     return `
       <div class="idv-screen">
         <h3 class="idv-screen-title">Connect your bank</h3>
-        <p class="muted">We confirm you own the account in your name. Your password is never shared with us — <strong>US Open Finance</strong> handles the secure sign-in.</p>
+        <p class="muted">We confirm you own the account in your name. Your password is never shared with us — <strong>US Open Finance</strong> handles the secure sign-in. We'll use the account holder details to pre-fill the next step.</p>
         <div class="idv-banks">
           ${IDV_BANKS.map(b => `
             <button class="idv-bank ${sel && sel.id === b.id ? 'idv-bank-sel' : ''}" data-bank="${b.id}">
@@ -4496,9 +4658,6 @@
               <button class="btn btn-primary" id="idv-connect-bank">Sign in &amp; share account ownership</button>
             </div>
           </div>` : `<p class="muted idv-hint">Pick your bank to continue.</p>`}
-        <div class="idv-actions">
-          <button class="btn btn-outline" id="idv-back-1">Back</button>
-        </div>
         ${IDV.bankModalOpen ? idvBankModal() : ''}
       </div>`;
   }
@@ -4511,11 +4670,11 @@
       body = `
         <div class="idv-modal-body">
           <div class="idv-modal-icon" style="background:${sel.color}">🏛️</div>
-          <h4>Share account ownership with U.S. Government Services?</h4>
+          <h4>Share account ownership with Medicare.gov?</h4>
           <p class="muted">${escapeHtml(sel.name)} will share, via US Open Finance, only the information needed to confirm your identity:</p>
           <ul class="idv-modal-list">
             <li><strong>Account holder name</strong> &mdash; to match against your application</li>
-            <li><strong>Account status &amp; age</strong> &mdash; to confirm the account is funded and active</li>
+            <li><strong>Account status &amp; age</strong> &mdash; confirm account is funded and active</li>
             <li><strong>Last 4 of account number</strong> &mdash; for the audit record</li>
           </ul>
           <p class="muted idv-modal-fine">No transactions, balances or credentials will be shared. You can revoke this consent at any time.</p>
@@ -4549,39 +4708,82 @@
   }
 
   function idvPageStep2() {
+    const bankId = IDV.selectedBank ? IDV.selectedBank.id : null;
+    const bankName = IDV.selectedBank ? IDV.selectedBank.name : 'your bank';
+    const bankCards = IDV_CARDS.filter(c => c.bankId === bankId);
+    // Auto-pick first card from bank if none selected (or current pick isn't from this bank)
+    if (!IDV.selectedCardId || !bankCards.find(c => c.id === IDV.selectedCardId)) {
+      IDV.selectedCardId = bankCards[0] ? bankCards[0].id : null;
+    }
+    const card = bankCards.find(c => c.id === IDV.selectedCardId) || bankCards[0];
+    const isVisa = card && card.network === 'visa';
+    const visaDigits = (IDV.visaLast8 || '').replace(/\D/g, '').slice(0, 8);
+    const visaComplete = !isVisa || visaDigits.length === 8;
+    const canContinue = !!card && IDV.cardConsent && visaComplete && !IDV.cardAuthorizing;
+    const displayedPan = card ? (isVisa
+      ? `${card.bin6.slice(0,4)} ${card.bin6.slice(4)}${(visaDigits.slice(0,2) || '••').padEnd(2,'•')}  ${(visaDigits.slice(2,6) || '••••').padEnd(4,'•')}  ${(visaDigits.slice(6,8) || '••').padEnd(2,'•')}${card.last4.slice(0,2)} ${card.last4.slice(2)}`
+      : `5204  ${card.last4.slice(0,2)}••  ••••  ${card.last4}`) : '';
     return `
       <div class="idv-screen">
-        <h3 class="idv-screen-title">Authorize with your card</h3>
-        <p class="muted">We use Mastercard Consent so your bank confirms it's really you. You will not be charged.</p>
-        <div class="idv-card-visual">
-          <div class="idv-card-chip"></div>
-          <div class="idv-card-num">5204  ••••  ••••  9999</div>
+        <h3 class="idv-screen-title">Verify card ownership</h3>
+        <p class="muted">We confirm you hold this card and that the billing address matches (AVS). <strong>Used for identity verification only — no payment will be taken and the card will not be stored.</strong></p>
+        <label class="idv-field">
+          <span class="muted">Card on file from ${escapeHtml(bankName)}</span>
+          <select id="idv-card-select" class="idv-select">
+            ${bankCards.map(c => `<option value="${c.id}" ${c.id === (card && card.id) ? 'selected' : ''}>${escapeHtml(c.display)} — ${escapeHtml(c.issuer)}</option>`).join('')}
+            <option value="__other__" disabled>— Choose other card (demo only) —</option>
+          </select>
+        </label>
+        ${card ? `
+        <div class="idv-card-visual idv-card-${card.network}">
+          <div class="idv-card-top">
+            <div class="idv-card-chip"></div>
+            <div class="idv-card-brand">${isVisa
+              ? '<span class="idv-visa-mark">VISA</span>'
+              : '<span class="r"></span><span class="y"></span>'}</div>
+          </div>
+          <div class="idv-card-num">${displayedPan}</div>
           <div class="idv-card-row">
             <div><span class="muted">Cardholder</span><br>${escapeHtml(IDV.form.firstName + ' ' + IDV.form.lastName).toUpperCase()}</div>
+            <div class="idv-card-issuer"><span class="muted">Issuer</span><br>${escapeHtml(card.issuer)}</div>
           </div>
-          <div class="idv-card-brand"><span class="r"></span><span class="y"></span></div>
-        </div>
-        <div class="idv-grid idv-card-form">
-          <label class="idv-col-2">Card number<input value="5204 7305 4100 9999" disabled></label>
-          <label class="idv-col-2">CVC<input value="•••" disabled></label>
+        </div>` : '<p class="muted">No cards on file for this bank.</p>'}
+        ${isVisa ? `
+          <div class="idv-visa-block">
+            <p class="muted idv-visa-note">Your bank only shared the first 6 and last 4 of this Visa card. Enter the middle <strong>8 digits</strong> to confirm you have the physical card.</p>
+            <label class="idv-field">
+              <span class="muted">Middle 8 digits</span>
+              <input id="idv-visa-8" inputmode="numeric" maxlength="8" placeholder="••••••••" value="${escapeHtml(visaDigits)}" autocomplete="off">
+            </label>
+          </div>` : (card ? `
+          <p class="muted idv-card-note">Your bank already shared this full card number with Open Banking, so no extra digits are required.</p>` : '')}
+        <div class="idv-avs">
+          <div class="idv-avs-head"><span class="idv-badge-avs">AVS</span> Address Verification</div>
+          <div class="idv-avs-body">We will send <strong>${escapeHtml(IDV.form.address)}</strong> to the card issuer and confirm it matches the billing address on file.</div>
         </div>
         <label class="idv-check">
           <input type="checkbox" id="idv-consent-cb" ${IDV.cardConsent ? 'checked' : ''}>
-          <span>I authorize GovServices to confirm my identity with Mastercard using this card. No payment will be taken.</span>
+          <span>I authorize Medicare to verify my identity by checking this card and billing address with my issuer. No payment will be taken; the card is not stored.</span>
         </label>
         <div class="idv-actions">
           <button class="btn btn-outline" id="idv-back-2" ${IDV.cardAuthorizing ? 'disabled' : ''}>Back</button>
-          <button class="btn btn-primary" id="idv-next-2" ${(IDV.cardConsent && !IDV.cardAuthorizing) ? '' : 'disabled'}>
-            ${IDV.cardAuthorizing ? '<span class="idv-btn-spin"></span> Authorizing…' : 'Authorize &amp; verify'}
+          <button class="btn btn-primary" id="idv-next-2" ${canContinue ? '' : 'disabled'}>
+            Verify card &amp; AVS
           </button>
         </div>
         ${IDV.cardAuthorizing ? `
-        <div class="idv-card-progress">
-          <ul class="idv-verify-list">
-            <li class="idv-vli idv-vli-done">Mastercard consent created</li>
-            <li class="idv-vli idv-vli-done">3DS device data collected</li>
-            <li class="idv-vli idv-vli-active">Authenticating with issuer (frictionless)…</li>
-          </ul>
+        <div class="idv-modal-backdrop">
+          <div class="idv-modal">
+            <div class="idv-modal-head">
+              <span>Mastercard Identity Check</span>
+              <span class="idv-modal-secure">🔒 3dsecure.mastercard.com</span>
+            </div>
+            <div class="idv-modal-body idv-modal-center">
+              <div class="idv-spinner-lg"></div>
+              <h4>Verifying card &amp; billing address…</h4>
+              <p class="muted">This usually takes a few seconds.</p>
+            </div>
+          </div>
         </div>` : ''}
       </div>`;
   }
@@ -4591,12 +4793,7 @@
       <div class="idv-screen idv-screen-center">
         <div class="idv-spinner-lg"></div>
         <h3 class="idv-screen-title">Confirming who you are…</h3>
-        <p class="muted">Checking the signals from your bank, your card and the device you're using.</p>
-        <ul class="idv-verify-list">
-          <li class="idv-vli idv-vli-done">Bank ownership confirmed</li>
-          <li class="idv-vli idv-vli-done">Card authenticated (3DS)</li>
-          <li class="idv-vli idv-vli-active">Cross-checking device &amp; address…</li>
-        </ul>
+        <p class="muted">Cross-checking your bank, card and device signals.</p>
       </div>`;
   }
 
@@ -4605,15 +4802,16 @@
       <div class="idv-screen idv-screen-center">
         <div class="idv-tick">✓</div>
         <h3 class="idv-screen-title">You're verified</h3>
-        <p class="muted">Your identity has been established. You can now access government services online.</p>
+        <p class="muted">Your identity has been established. You can now access your Medicare account.</p>
         <div class="idv-result-card">
           <div class="idv-result-row"><span>Name</span><strong>${escapeHtml(IDV.form.firstName + ' ' + IDV.form.lastName)}</strong></div>
           <div class="idv-result-row"><span>Assurance level</span><strong>IAL2 (NIST 800-63-3)</strong></div>
           <div class="idv-result-row"><span>Risk band</span><strong class="idv-ok">Low</strong></div>
-          <div class="idv-result-row"><span>Reference</span><strong>GOV-US-2026-118-44219</strong></div>
+          <div class="idv-result-row"><span>Reference</span><strong>MED-US-2026-118-44219</strong></div>
         </div>
-        <div class="idv-actions">
-          <button class="btn btn-primary" id="idv-restart">Start again</button>
+        <div class="idv-actions idv-actions-stack">
+          <button class="btn btn-primary" id="idv-passkey">Use a passkey next time</button>
+          <button class="btn btn-outline" id="idv-passkey-skip">Skip &mdash; access my records</button>
         </div>
       </div>`;
   }
@@ -4621,23 +4819,72 @@
   function idvRenderPage() {
     const page = document.getElementById("idv-page");
     if (!page) return;
-    const renderers = [idvPageStep0, idvPageStep1, idvPageStep2, idvPageStep3, idvPageStep4];
-    page.innerHTML = renderers[IDV.step]();
+
+    // Non-verify phases route here
+    if (IDV.phase === 'home')    { page.innerHTML = idvPageHome();    return idvWireHome(page); }
+    if (IDV.phase === 'login')   { page.innerHTML = idvPageLogin();   return idvWireLogin(page); }
+    if (IDV.phase === 'passkey') { page.innerHTML = idvPagePasskey(); return idvWirePasskey(page); }
+    if (IDV.phase === 'records') { page.innerHTML = idvPageRecords(); return idvWireRecords(page); }
+
+    const renderers = [idvPageStepBank, idvPageStepPersonal, idvPageStep2, idvPageStep3, idvPageStep4];
+    const bankName = IDV.selectedBank ? IDV.selectedBank.name : 'your bank';
+    const bankColor = IDV.selectedBank ? IDV.selectedBank.color : '#1B6EC2';
+    const bankInitial = IDV.selectedBank ? IDV.selectedBank.name.slice(0,1).toUpperCase() : '?';
+    page.innerHTML = `
+      <div class="med-page med-page-verify">
+        <div class="med-topbar med-topbar-slim">
+          <div class="med-topbar-inner">
+            <span class="med-logo">
+              <span class="med-logo-mark">M</span>
+              <span class="med-logo-text">Medicare<span class="med-logo-dot">.gov</span></span>
+            </span>
+            <span class="med-account-pill">Identity verification</span>
+          </div>
+        </div>
+        <div class="mcc-shell">
+          <header class="mcc-header">
+            <div class="mcc-brand">
+              <span class="mcc-logo" aria-hidden="true"><span class="r"></span><span class="y"></span></span>
+              <div class="mcc-brand-text">
+                <strong>Mastercard Connect</strong>
+                <span>Verifying you for <em>Medicare.gov</em> using your bank and card</span>
+              </div>
+            </div>
+            <div class="mcc-pair">
+              <span class="mcc-pair-pill">
+                <span class="mcc-pair-dot" style="background:${bankColor}">${escapeHtml(bankInitial)}</span>
+                ${escapeHtml(bankName)}
+              </span>
+              <span class="mcc-pair-link">↔</span>
+              <span class="mcc-pair-pill">
+                <span class="mcc-pair-card"><span class="r"></span><span class="y"></span></span>
+                Your Mastercard
+              </span>
+            </div>
+          </header>
+          <div class="mcc-stepper" role="list">
+            ${IDV_STEPS.map((s, i) => {
+              const state = i < IDV.step ? 'done' : i === IDV.step ? 'active' : 'todo';
+              return `<div class="mcc-step mcc-step-${state}" role="listitem">
+                <span class="mcc-step-num">${i < IDV.step ? '✓' : (i + 1)}</span>
+                <span class="mcc-step-label">${escapeHtml(s.label)}</span>
+              </div>`;
+            }).join('<span class="mcc-step-sep"></span>')}
+          </div>
+          <div class="mcc-body" id="idv-step-pane"></div>
+          <footer class="mcc-foot">
+            <span class="mcc-foot-lock">🔒</span>
+            Secured by Mastercard. Your bank credentials and card details are never shared with Medicare.gov.
+          </footer>
+        </div>
+      </div>
+    `;
+    const pane = document.getElementById('idv-step-pane');
+    pane.innerHTML = renderers[IDV.step]();
 
     // Wiring per step
     if (IDV.step === 0) {
-      const nx = document.getElementById("idv-next-0");
-      nx.addEventListener("click", () => {
-        IDV.form.firstName = document.getElementById("idv-f-first").value || IDV.form.firstName;
-        IDV.form.lastName  = document.getElementById("idv-f-last").value  || IDV.form.lastName;
-        IDV.form.email     = document.getElementById("idv-f-email").value || IDV.form.email;
-        IDV.form.dob       = document.getElementById("idv-f-dob").value   || IDV.form.dob;
-        IDV.form.phone     = document.getElementById("idv-f-phone").value || IDV.form.phone;
-        IDV.form.address   = document.getElementById("idv-f-addr").value  || IDV.form.address;
-        IDV.step = 1;
-        idvRender();
-      });
-    } else if (IDV.step === 1) {
+      // Step 0: Connect bank
       page.querySelectorAll(".idv-bank").forEach(btn => {
         btn.addEventListener("click", () => {
           const id = btn.dataset.bank;
@@ -4652,8 +4899,6 @@
         IDV.bankModalStage = "intro";
         idvRender();
       });
-      const back = document.getElementById("idv-back-1");
-      if (back) back.addEventListener("click", () => { IDV.step = 0; idvRender(); });
 
       // Bank consent modal wiring
       const cancelBtn = document.getElementById("idv-modal-cancel");
@@ -4669,16 +4914,59 @@
           IDV.bankModalOpen = false;
           IDV.bankConsentGiven = true;
           IDV.bankConnected = true;
-          IDV.step = 2;
+          // Pre-fill personal info from bank account owner record
+          IDV.form.firstName = IDV.form.firstName || "Alex";
+          IDV.form.lastName  = IDV.form.lastName  || "Morgan";
+          IDV.form.email     = IDV.form.email     || "alex.morgan@gmail.com";
+          IDV.form.dob       = IDV.form.dob       || "1958-04-12";
+          IDV.form.phone     = IDV.form.phone     || "+1 (202) 555-0123";
+          IDV.form.address   = IDV.form.address   || "1600 Pennsylvania Ave NW, Washington DC";
+          IDV.step = 1;
           idvRender();
         }, 1800);
       });
+    } else if (IDV.step === 1) {
+      // Step 1: Personal info (pre-filled from bank)
+      const nx = document.getElementById("idv-next-personal");
+      if (nx) nx.addEventListener("click", () => {
+        IDV.form.firstName = document.getElementById("idv-f-first").value || IDV.form.firstName;
+        IDV.form.lastName  = document.getElementById("idv-f-last").value  || IDV.form.lastName;
+        IDV.form.email     = document.getElementById("idv-f-email").value || IDV.form.email;
+        IDV.form.dob       = document.getElementById("idv-f-dob").value   || IDV.form.dob;
+        IDV.form.phone     = document.getElementById("idv-f-phone").value || IDV.form.phone;
+        IDV.form.address   = document.getElementById("idv-f-addr").value  || IDV.form.address;
+        IDV.step = 2;
+        idvRender();
+      });
+      const backP = document.getElementById("idv-back-personal");
+      if (backP) backP.addEventListener("click", () => { IDV.step = 0; idvRender(); });
     } else if (IDV.step === 2) {
+      const sel = document.getElementById("idv-card-select");
+      if (sel) sel.addEventListener("change", () => {
+        IDV.selectedCardId = sel.value;
+        IDV.visaLast8 = "";
+        idvRender();
+      });
+      const visaInput = document.getElementById("idv-visa-8");
+      if (visaInput) {
+        visaInput.addEventListener("input", () => {
+          const cleaned = visaInput.value.replace(/\D/g, '').slice(0, 8);
+          if (cleaned !== visaInput.value) visaInput.value = cleaned;
+          IDV.visaLast8 = cleaned;
+          // Update enabled state without re-render (preserve focus)
+          const card = IDV_CARDS.find(c => c.id === IDV.selectedCardId);
+          const visaComplete = !card || card.network !== 'visa' || cleaned.length === 8;
+          const nb = document.getElementById("idv-next-2");
+          if (nb) nb.disabled = !IDV.cardConsent || !visaComplete || IDV.cardAuthorizing;
+        });
+      }
       const cb = document.getElementById("idv-consent-cb");
       if (cb) cb.addEventListener("change", () => {
         IDV.cardConsent = cb.checked;
+        const card = IDV_CARDS.find(c => c.id === IDV.selectedCardId);
+        const visaComplete = !card || card.network !== 'visa' || (IDV.visaLast8 || '').length === 8;
         const nb = document.getElementById("idv-next-2");
-        if (nb) nb.disabled = !cb.checked || IDV.cardAuthorizing;
+        if (nb) nb.disabled = !cb.checked || !visaComplete || IDV.cardAuthorizing;
       });
       const backBtn = document.getElementById("idv-back-2");
       if (backBtn) backBtn.addEventListener("click", () => { IDV.step = 1; idvRender(); });
@@ -4689,23 +4977,325 @@
         idvRender();
         setTimeout(() => {
           IDV.cardAuthorizing = false;
-          IDV.step = 3;
+          IDV.step = 4;
           idvRender();
-          setTimeout(() => { IDV.step = 4; idvRender(); }, 2200);
-        }, 1600);
+          // Auto-scroll the verified screen into view
+          requestAnimationFrame(() => {
+            const screen = document.querySelector('#idv-page .idv-screen');
+            if (screen && typeof screen.scrollIntoView === 'function') {
+              screen.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            const browser = document.querySelector('.idv-browser');
+            if (browser) browser.scrollTo({ top: 0, behavior: 'smooth' });
+            const page = document.getElementById('idv-page');
+            if (page) page.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          });
+        }, 1400);
       });
     } else if (IDV.step === 4) {
-      document.getElementById("idv-restart").addEventListener("click", () => {
-        IDV.step = 0;
-        IDV.selectedBank = null;
-        IDV.bankConnected = false;
-        IDV.bankConsentGiven = false;
-        IDV.bankModalOpen = false;
-        IDV.cardConsent = false;
-        IDV.cardAuthorizing = false;
+      const pk = document.getElementById("idv-passkey");
+      if (pk) pk.addEventListener("click", () => {
+        IDV.phase = 'passkey';
+        idvRender();
+      });
+      const skip = document.getElementById("idv-passkey-skip");
+      if (skip) skip.addEventListener("click", () => {
+        IDV.passkeyChoice = 'skipped';
+        IDV.phase = 'records';
         idvRender();
       });
     }
+  }
+
+  // ============== Medicare.gov sample pages ==============
+  function idvPageHome() {
+    return `
+      <div class="med-page med-page-home">
+        <div class="med-topbar med-topbar-clean">
+          <div class="med-topbar-inner">
+            <a class="med-logo" href="#" onclick="return false">
+              <span class="med-logo-mark">M</span>
+              <span class="med-logo-text">Medicare<span class="med-logo-dot">.gov</span></span>
+            </a>
+            <button class="med-login-btn" id="med-login-go">Log in</button>
+          </div>
+        </div>
+        <section class="med-welcome">
+          <svg class="med-welcome-wave" viewBox="0 0 800 600" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M -20 120 C 160 60, 380 180, 460 80 S 740 60, 820 180 S 620 360, 460 320 S 200 380, 100 480 S -40 560, 60 620"
+                  fill="none" stroke="#2e7d6b" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round"/>
+          </svg>
+          <div class="med-welcome-portrait" aria-hidden="true">
+            <svg viewBox="0 0 220 240" width="100%" height="100%">
+              <defs>
+                <linearGradient id="medSkin" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#d2a279"/>
+                  <stop offset="100%" stop-color="#a87a55"/>
+                </linearGradient>
+                <linearGradient id="medShirt" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#3a5a7a"/>
+                  <stop offset="100%" stop-color="#5a7a8a"/>
+                </linearGradient>
+              </defs>
+              <!-- shirt -->
+              <path d="M 20 240 L 30 170 Q 60 150, 110 150 Q 160 150, 190 170 L 200 240 Z" fill="url(#medShirt)"/>
+              <!-- plaid lines -->
+              <g stroke="#2a3f55" stroke-width="2" opacity="0.5">
+                <line x1="50" y1="155" x2="55" y2="240"/>
+                <line x1="90" y1="152" x2="92" y2="240"/>
+                <line x1="130" y1="152" x2="132" y2="240"/>
+                <line x1="170" y1="155" x2="172" y2="240"/>
+                <line x1="25" y1="190" x2="200" y2="190"/>
+                <line x1="22" y1="215" x2="200" y2="215"/>
+              </g>
+              <g stroke="#c97a3e" stroke-width="1.5" opacity="0.55">
+                <line x1="70" y1="152" x2="73" y2="240"/>
+                <line x1="150" y1="152" x2="153" y2="240"/>
+                <line x1="25" y1="175" x2="200" y2="175"/>
+                <line x1="22" y1="230" x2="200" y2="230"/>
+              </g>
+              <!-- neck -->
+              <path d="M 90 145 Q 110 158, 130 145 L 130 160 Q 110 168, 90 160 Z" fill="url(#medSkin)"/>
+              <!-- head -->
+              <ellipse cx="110" cy="100" rx="55" ry="62" fill="url(#medSkin)"/>
+              <!-- hair (silver) -->
+              <path d="M 58 88 Q 60 50, 110 42 Q 160 50, 162 88 Q 158 70, 130 66 Q 110 72, 90 66 Q 62 70, 58 88 Z" fill="#c8c8c8"/>
+              <path d="M 60 92 Q 70 80, 85 84 M 135 84 Q 150 80, 160 92" stroke="#a8a8a8" stroke-width="1.5" fill="none"/>
+              <!-- eyes (smiling closed crescents) -->
+              <path d="M 82 102 Q 90 96, 98 102" stroke="#3a2a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <path d="M 122 102 Q 130 96, 138 102" stroke="#3a2a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <!-- eyebrows -->
+              <path d="M 78 92 Q 88 88, 100 92" stroke="#8a8a8a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <path d="M 120 92 Q 132 88, 142 92" stroke="#8a8a8a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <!-- cheeks (smile lines) -->
+              <path d="M 70 118 Q 76 124, 80 122" stroke="#8a5a3a" stroke-width="1.2" fill="none" opacity="0.5"/>
+              <path d="M 140 122 Q 144 124, 150 118" stroke="#8a5a3a" stroke-width="1.2" fill="none" opacity="0.5"/>
+              <!-- nose -->
+              <path d="M 110 110 Q 105 122, 108 130 Q 112 132, 116 130" stroke="#8a5a3a" stroke-width="1.5" fill="none" opacity="0.6"/>
+              <!-- smile -->
+              <path d="M 88 138 Q 110 152, 132 138" stroke="#5a2a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <path d="M 92 139 Q 110 148, 128 139 Q 110 144, 92 139 Z" fill="#fff"/>
+            </svg>
+          </div>
+          <div class="med-welcome-text">
+            <h1>Welcome to<br>Medicare</h1>
+            <button class="med-cta-green" id="med-cta-start">Get Started with Medicare</button>
+          </div>
+        </section>
+        <footer class="med-footer">
+          <div><strong>An official website of the U.S. Centers for Medicare &amp; Medicaid Services</strong></div>
+          <div class="med-footer-links">
+            <a href="#" onclick="return false">Privacy</a>
+            <a href="#" onclick="return false">Accessibility</a>
+            <a href="#" onclick="return false">No FEAR Act</a>
+            <a href="#" onclick="return false">FOIA</a>
+            <a href="#" onclick="return false">Plain writing</a>
+          </div>
+        </footer>
+      </div>`;
+  }
+  function idvWireHome(page) {
+    const go = () => { IDV.phase = 'login'; idvRender(); };
+    page.querySelector('#med-login-go').addEventListener('click', go);
+    const cta = page.querySelector('#med-cta-start');
+    if (cta) cta.addEventListener('click', go);
+  }
+
+  function idvPageLogin() {
+    return `
+      <div class="med-page med-page-narrow">
+        <div class="med-topbar med-topbar-slim">
+          <div class="med-topbar-inner">
+            <a class="med-logo" href="#" id="med-back-home">
+              <span class="med-logo-mark">M</span>
+              <span class="med-logo-text">Medicare<span class="med-logo-dot">.gov</span></span>
+            </a>
+          </div>
+        </div>
+        <div class="med-login">
+          <h2>Log in or create account</h2>
+          <p class="muted">You can use any of the methods below to access your Medicare account.</p>
+
+          <form class="med-login-form" onsubmit="return false">
+            <label>Username
+              <input type="text" id="med-user" placeholder="Enter your username" autocomplete="username">
+            </label>
+            <label>Password
+              <input type="password" id="med-pass" placeholder="Enter your password" autocomplete="current-password">
+            </label>
+            <div class="med-login-extras">
+              <label class="med-remember"><input type="checkbox"> Remember me</label>
+              <a href="#" onclick="return false">Forgot username or password?</a>
+            </div>
+            <button class="med-btn-primary" type="submit" disabled>Log in</button>
+          </form>
+
+          <div class="med-login-or"><span>or</span></div>
+
+          <button class="med-mc-connect" id="med-mc-connect">
+            <span class="med-mc-logo"><span class="r"></span><span class="y"></span></span>
+            <span class="med-mc-text">
+              <strong>Continue with Mastercard Connect</strong>
+              <span>Verify your identity instantly using your bank &amp; card &mdash; no password needed.</span>
+            </span>
+            <span class="med-mc-arrow">→</span>
+          </button>
+
+          <p class="med-login-fine">By logging in, you agree to the <a href="#" onclick="return false">Terms of use</a> and <a href="#" onclick="return false">Privacy policy</a>.</p>
+        </div>
+      </div>`;
+  }
+  function idvWireLogin(page) {
+    const back = page.querySelector('#med-back-home');
+    if (back) back.addEventListener('click', (e) => { e.preventDefault(); IDV.phase = 'home'; idvRender(); });
+    page.querySelector('#med-mc-connect').addEventListener('click', () => {
+      IDV.phase = 'verify';
+      IDV.step = 0;
+      idvRender();
+    });
+  }
+
+  function idvPagePasskey() {
+    return `
+      <div class="med-page med-page-narrow">
+        <div class="med-topbar med-topbar-slim">
+          <div class="med-topbar-inner">
+            <span class="med-logo">
+              <span class="med-logo-mark">M</span>
+              <span class="med-logo-text">Medicare<span class="med-logo-dot">.gov</span></span>
+            </span>
+            <span class="med-account-pill">${escapeHtml(IDV.form.firstName + ' ' + IDV.form.lastName)}</span>
+          </div>
+        </div>
+        <div class="med-passkey">
+          <div class="med-passkey-icon">🔑</div>
+          <h2>Use a passkey next time?</h2>
+          <p class="muted">Skip the bank &amp; card check the next time you log in. Your device will use Face ID, Touch ID, or your screen lock to prove it's you.</p>
+          <ul class="med-passkey-list">
+            <li><strong>Faster.</strong> Log in with a tap or a glance.</li>
+            <li><strong>Phishing-resistant.</strong> Passkeys can't be reused or stolen.</li>
+            <li><strong>Private.</strong> Stored only on your device.</li>
+          </ul>
+          <div class="med-passkey-actions">
+            <button class="med-btn-outline" id="med-passkey-skip">Not now</button>
+            <button class="med-btn-primary" id="med-passkey-go">Set up passkey</button>
+          </div>
+        </div>
+      </div>`;
+  }
+  function idvWirePasskey(page) {
+    page.querySelector('#med-passkey-skip').addEventListener('click', () => {
+      IDV.passkeyChoice = 'skipped';
+      IDV.phase = 'records';
+      idvRender();
+    });
+    page.querySelector('#med-passkey-go').addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="idv-btn-spin"></span> Setting up…';
+      setTimeout(() => {
+        IDV.passkeyChoice = 'enrolled';
+        IDV.phase = 'records';
+        idvRender();
+      }, 1100);
+    });
+  }
+
+  function idvPageRecords() {
+    const name = IDV.form.firstName + ' ' + IDV.form.lastName;
+    const passkeyBadge = IDV.passkeyChoice === 'enrolled'
+      ? '<span class="med-badge med-badge-ok">🔑 Passkey enabled</span>'
+      : '<span class="med-badge med-badge-dim">Passkey not set</span>';
+    return `
+      <div class="med-page">
+        <div class="med-topbar med-topbar-slim">
+          <div class="med-topbar-inner">
+            <span class="med-logo">
+              <span class="med-logo-mark">M</span>
+              <span class="med-logo-text">Medicare<span class="med-logo-dot">.gov</span></span>
+            </span>
+            <span class="med-account-pill">${escapeHtml(name)}</span>
+          </div>
+          <nav class="med-nav">
+            <a class="active" href="#" onclick="return false">My record</a>
+            <a href="#" onclick="return false">Plans</a>
+            <a href="#" onclick="return false">Claims</a>
+            <a href="#" onclick="return false">Messages</a>
+            <a href="#" onclick="return false">Account settings</a>
+          </nav>
+        </div>
+        <section class="med-record-head">
+          <div>
+            <h2>Welcome back, ${escapeHtml(IDV.form.firstName)}</h2>
+            <p class="muted">Medicare Beneficiary Identifier &middot; 1EG4-TE5-MK73 &middot; ${passkeyBadge}</p>
+          </div>
+          <button class="med-btn-outline" id="med-logout">Log out</button>
+        </section>
+        <section class="med-record-grid">
+          <div class="med-card">
+            <h3>Personal information</h3>
+            <dl class="med-dl">
+              <dt>Name</dt><dd>${escapeHtml(name)}</dd>
+              <dt>Date of birth</dt><dd>${escapeHtml(IDV.form.dob)}</dd>
+              <dt>Address</dt><dd>${escapeHtml(IDV.form.address)}</dd>
+              <dt>Phone</dt><dd>${escapeHtml(IDV.form.phone)}</dd>
+              <dt>Email</dt><dd>${escapeHtml(IDV.form.email)}</dd>
+            </dl>
+          </div>
+          <div class="med-card">
+            <h3>Coverage</h3>
+            <dl class="med-dl">
+              <dt>Part A — Hospital</dt><dd><span class="med-pill med-pill-ok">Active</span> since 04/01/2023</dd>
+              <dt>Part B — Medical</dt><dd><span class="med-pill med-pill-ok">Active</span> since 04/01/2023</dd>
+              <dt>Part D — Drugs</dt><dd>Aetna SilverScript SmartSaver</dd>
+              <dt>Medigap</dt><dd>Plan G — Mutual of Omaha</dd>
+            </dl>
+          </div>
+          <div class="med-card med-card-wide">
+            <h3>Recent claims</h3>
+            <table class="med-table">
+              <thead><tr><th>Date</th><th>Provider</th><th>Service</th><th>Billed</th><th>You may owe</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>05/02/2026</td><td>Sibley Memorial Hospital</td><td>Annual wellness visit</td><td>$284.00</td><td>$0.00</td><td><span class="med-pill med-pill-ok">Processed</span></td></tr>
+                <tr><td>04/18/2026</td><td>Quest Diagnostics</td><td>Comprehensive metabolic panel</td><td>$62.40</td><td>$0.00</td><td><span class="med-pill med-pill-ok">Processed</span></td></tr>
+                <tr><td>03/30/2026</td><td>Dr. Lina Park, MD</td><td>Cardiology follow-up</td><td>$310.00</td><td>$42.00</td><td><span class="med-pill med-pill-ok">Processed</span></td></tr>
+                <tr><td>03/12/2026</td><td>CVS Pharmacy #4421</td><td>Atorvastatin 20mg (90-day)</td><td>$18.00</td><td>$5.00</td><td><span class="med-pill med-pill-warn">Pending</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="med-card">
+            <h3>Prescriptions</h3>
+            <ul class="med-list">
+              <li><strong>Atorvastatin 20 mg</strong><span class="muted">Refill on 06/10/2026</span></li>
+              <li><strong>Lisinopril 10 mg</strong><span class="muted">Refill on 06/22/2026</span></li>
+              <li><strong>Metformin 500 mg</strong><span class="muted">Refill on 07/04/2026</span></li>
+            </ul>
+          </div>
+          <div class="med-card">
+            <h3>Upcoming appointments</h3>
+            <ul class="med-list">
+              <li><strong>Cardiology — Dr. Park</strong><span class="muted">06/04/2026 &middot; 10:30 AM</span></li>
+              <li><strong>Annual flu vaccine</strong><span class="muted">09/15/2026 &middot; Walk-in</span></li>
+            </ul>
+          </div>
+        </section>
+      </div>`;
+  }
+  function idvWireRecords(page) {
+    const lo = page.querySelector('#med-logout');
+    if (lo) lo.addEventListener('click', () => {
+      IDV.phase = 'home';
+      IDV.step = 0;
+      IDV.selectedBank = null;
+      IDV.bankConnected = false;
+      IDV.bankConsentGiven = false;
+      IDV.bankModalOpen = false;
+      IDV.cardConsent = false;
+      IDV.cardAuthorizing = false;
+      IDV.passkeyChoice = null;
+      idvRender();
+    });
   }
 
   function idvRenderBts() {
@@ -4730,7 +5320,635 @@
     `;
   }
 
+  // ===================== Priceless Concierge (Specials) Use Case =====================
+
+  const SPECIALS = {
+    eligible: "US",
+    destination: "JP",
+    product: "MWE",
+    category: "",
+    loading: false,
+    error: null,
+    data: null,        // { offers, benefits, programs, merchants, partial_errors }
+    activeTab: "offers",
+    _inited: false,
+  };
+
+  const SPECIALS_MARKETS = [
+    { v: "US", label: "United States", flag: "🇺🇸" },
+    { v: "GB", label: "United Kingdom", flag: "🇬🇧" },
+    { v: "JP", label: "Japan",          flag: "🇯🇵" },
+    { v: "SG", label: "Singapore",      flag: "🇸🇬" },
+    { v: "HK", label: "Hong Kong",      flag: "🇭🇰" },
+    { v: "AU", label: "Australia",      flag: "🇦🇺" },
+    { v: "DE", label: "Germany",        flag: "🇩🇪" },
+    { v: "FR", label: "France",         flag: "🇫🇷" },
+    { v: "BR", label: "Brazil",         flag: "🇧🇷" },
+    { v: "IN", label: "India",          flag: "🇮🇳" },
+  ];
+
+  const SPECIALS_PRODUCTS = [
+    { v: "MST", label: "Standard",     accent: "#64748b" },
+    { v: "MGD", label: "Gold",         accent: "#c8a24c" },
+    { v: "MPL", label: "Platinum",     accent: "#94a3b8" },
+    { v: "MWP", label: "World",        accent: "#1e293b" },
+    { v: "MWE", label: "World Elite",  accent: "#000000" },
+    { v: "MBC", label: "Business",     accent: "#0f766e" },
+  ];
+
+  const SPECIALS_CATEGORIES = [
+    { v: "",              label: "All categories", icon: "✨" },
+    { v: "Dining",        label: "Dining",        icon: "🍽️" },
+    { v: "Shopping",      label: "Shopping",      icon: "🛍️" },
+    { v: "Travel",        label: "Travel",        icon: "✈️" },
+    { v: "Entertainment", label: "Entertainment", icon: "🎭" },
+    { v: "Sports",        label: "Sports",        icon: "⚽" },
+    { v: "Wellness",      label: "Wellness",      icon: "🧘" },
+    { v: "Lifestyle",     label: "Lifestyle",     icon: "💎" },
+  ];
+
+  function specialsManifest() {
+    return (USE_CASES || []).find(u => u.id === "specials");
+  }
+
+  function renderSpecials() {
+    if (!SPECIALS._inited) {
+      const m = specialsManifest();
+      if (m && m.defaults) {
+        SPECIALS.eligible    = m.defaults.eligible_markets || SPECIALS.eligible;
+        SPECIALS.destination = m.defaults.destination_markets || SPECIALS.destination;
+        SPECIALS.product     = m.defaults.mastercard_product || SPECIALS.product;
+        SPECIALS.category    = m.defaults.category || "";
+      }
+      SPECIALS._inited = true;
+    }
+    specialsRender();
+  }
+
+  function specialsRender() {
+    const body = $("uc-body");
+    if (!body) return;
+    body.innerHTML = `
+      <div class="sp-wrap">
+        ${specialsControlBarHtml()}
+        <div class="sp-canvas">${specialsCanvasHtml()}</div>
+      </div>`;
+    specialsWire();
+  }
+
+  function specialsControlBarHtml() {
+    const elig = SPECIALS_MARKETS.find(m => m.v === SPECIALS.eligible) || SPECIALS_MARKETS[0];
+    const dest = SPECIALS_MARKETS.find(m => m.v === SPECIALS.destination) || SPECIALS_MARKETS[2];
+    const prod = SPECIALS_PRODUCTS.find(p => p.v === SPECIALS.product) || SPECIALS_PRODUCTS[4];
+
+    const marketOpts = (sel) => SPECIALS_MARKETS.map(m =>
+      `<option value="${m.v}" ${m.v === sel ? "selected" : ""}>${m.flag} ${m.label}</option>`
+    ).join("");
+
+    const productOpts = SPECIALS_PRODUCTS.map(p =>
+      `<option value="${p.v}" ${p.v === SPECIALS.product ? "selected" : ""}>${p.label}</option>`
+    ).join("");
+
+    return `
+      <div class="sp-control">
+        <div class="sp-control-left">
+          <div class="sp-card-chip" style="--accent:${prod.accent}">
+            <div class="sp-card-chip-brand">mastercard</div>
+            <div class="sp-card-chip-emv"></div>
+            <div class="sp-card-chip-tier">${escapeHtml(prod.label)}</div>
+            <div class="sp-card-chip-circles">
+              <span class="sp-cc sp-cc-red"></span>
+              <span class="sp-cc sp-cc-yellow"></span>
+            </div>
+          </div>
+        </div>
+        <div class="sp-control-fields">
+          <label class="sp-field">
+            <span class="sp-field-label">Card</span>
+            <select id="sp-product" class="sp-select">${productOpts}</select>
+          </label>
+          <label class="sp-field">
+            <span class="sp-field-label">Issued in</span>
+            <select id="sp-eligible" class="sp-select">${marketOpts(SPECIALS.eligible)}</select>
+          </label>
+          <div class="sp-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </div>
+          <label class="sp-field">
+            <span class="sp-field-label">Travelling to</span>
+            <select id="sp-destination" class="sp-select">${marketOpts(SPECIALS.destination)}</select>
+          </label>
+          <button id="sp-go" class="sp-btn sp-btn-primary"${SPECIALS.loading ? " disabled" : ""}>
+            ${SPECIALS.loading
+              ? '<span class="sp-spinner"></span>Searching'
+              : '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>Find perks'}
+          </button>
+        </div>
+      </div>
+      <div class="sp-catbar">
+        ${SPECIALS_CATEGORIES.map(c => `
+          <button class="sp-cat${SPECIALS.category === c.v ? " sp-cat-active" : ""}" data-cat="${escapeHtml(c.v)}">
+            <span class="sp-cat-icon">${c.icon}</span>${escapeHtml(c.label)}
+          </button>`).join("")}
+      </div>
+    `;
+  }
+
+  function specialsCanvasHtml() {
+    if (SPECIALS.loading) {
+      return `
+        <div class="sp-loading">
+          <div class="sp-loading-grid">
+            ${Array.from({length: 6}).map(() => '<div class="sp-skel"></div>').join("")}
+          </div>
+        </div>`;
+    }
+    if (SPECIALS.error) {
+      return `
+        <div class="sp-empty sp-empty-error">
+          <div class="sp-empty-icon">⚠️</div>
+          <h3>Couldn't reach Priceless Specials</h3>
+          <p>${escapeHtml(String(SPECIALS.error))}</p>
+        </div>`;
+    }
+    if (!SPECIALS.data) {
+      return specialsHeroHtml();
+    }
+    const d = SPECIALS.data;
+    const counts = {
+      offers:    (d.offers || []).length,
+      benefits:  (d.benefits || []).length,
+      programs:  (d.programs || []).length,
+      merchants: (d.merchants || []).length,
+    };
+    const total = counts.offers + counts.benefits + counts.programs + counts.merchants;
+    if (!total) {
+      return `
+        <div class="sp-empty">
+          <div class="sp-empty-icon">🧭</div>
+          <h3>No perks found for that combination</h3>
+          <p>Try a different destination, card tier or category.</p>
+        </div>`;
+    }
+    return `
+      ${specialsSummaryHtml(counts)}
+      ${specialsTabsHtml(counts)}
+      <div class="sp-pane">${specialsPaneHtml()}</div>
+    `;
+  }
+
+  function specialsSummaryHtml(counts) {
+    const dest = SPECIALS_MARKETS.find(m => m.v === SPECIALS.destination) || {};
+    return `
+      <div class="sp-summary">
+        <div class="sp-summary-head">
+          <div class="sp-summary-title">
+            <span class="sp-summary-flag">${dest.flag || ""}</span>
+            <div>
+              <div class="sp-summary-eyebrow">Perks waiting in</div>
+              <div class="sp-summary-place">${escapeHtml(dest.label || SPECIALS.destination)}</div>
+            </div>
+          </div>
+        </div>
+        <div class="sp-stats">
+          <div class="sp-stat">
+            <div class="sp-stat-value">${counts.offers}</div>
+            <div class="sp-stat-label">Offers</div>
+          </div>
+          <div class="sp-stat">
+            <div class="sp-stat-value">${counts.benefits}</div>
+            <div class="sp-stat-label">Card benefits</div>
+          </div>
+          <div class="sp-stat">
+            <div class="sp-stat-value">${counts.programs}</div>
+            <div class="sp-stat-label">Programs</div>
+          </div>
+          <div class="sp-stat">
+            <div class="sp-stat-value">${counts.merchants}</div>
+            <div class="sp-stat-label">Merchants</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function specialsTabsHtml(counts) {
+    const tabs = [
+      { id: "offers",    label: "Offers",     count: counts.offers },
+      { id: "benefits",  label: "Benefits",   count: counts.benefits },
+      { id: "programs",  label: "Programs",   count: counts.programs },
+      { id: "merchants", label: "Merchants",  count: counts.merchants },
+    ];
+    return `
+      <div class="sp-tabs">
+        ${tabs.map(t => `
+          <button class="sp-tab${SPECIALS.activeTab === t.id ? " sp-tab-active" : ""}" data-tab="${t.id}"${t.count ? "" : " disabled"}>
+            ${escapeHtml(t.label)}<span class="sp-tab-count">${t.count}</span>
+          </button>`).join("")}
+      </div>`;
+  }
+
+  function specialsPaneHtml() {
+    const d = SPECIALS.data || {};
+    if (SPECIALS.activeTab === "offers")    return specialsOffersHtml(d.offers || []);
+    if (SPECIALS.activeTab === "benefits")  return specialsBenefitsHtml(d.benefits || []);
+    if (SPECIALS.activeTab === "programs")  return specialsProgramsHtml(d.programs || []);
+    if (SPECIALS.activeTab === "merchants") return specialsMerchantsHtml(d.merchants || []);
+    return "";
+  }
+
+  function specialsOffersHtml(list) {
+    if (!list.length) return '<div class="sp-empty-mini">No offers in this slice.</div>';
+    return `<div class="sp-grid sp-grid-offers">${list.map(specialsOfferCard).join("")}</div>`;
+  }
+
+  function specialsOfferCard(o) {
+    const initials = (o.merchantName || "?").trim().slice(0, 2).toUpperCase();
+    const logo = o.merchantLogo
+      ? `<img src="${escapeHtml(o.merchantLogo)}" alt="" class="sp-logo-img" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'sp-logo-fb',textContent:'${escapeHtml(initials)}'}))">`
+      : `<div class="sp-logo-fb">${escapeHtml(initials)}</div>`;
+    const dates = [o.startDate && "From " + o.startDate, o.endDate && "Until " + o.endDate].filter(Boolean).join(" · ");
+    return `
+      <div class="sp-card sp-offer">
+        <div class="sp-offer-head">
+          <div class="sp-logo">${logo}</div>
+          <div class="sp-offer-meta">
+            <div class="sp-offer-merch">${escapeHtml(o.merchantName || "Merchant")}</div>
+            ${o.category ? `<div class="sp-offer-cat">${escapeHtml(o.category)}</div>` : ""}
+          </div>
+          ${o.discount ? `<div class="sp-offer-discount">${escapeHtml(o.discount)}</div>` : ""}
+        </div>
+        <div class="sp-offer-title">${escapeHtml(o.title)}</div>
+        ${o.description ? `<div class="sp-offer-desc">${escapeHtml(o.description)}</div>` : ""}
+        ${dates ? `<div class="sp-offer-dates">${escapeHtml(dates)}</div>` : ""}
+        <div class="sp-offer-foot">
+          ${o.redemptionUrl
+            ? `<a class="sp-btn sp-btn-primary sp-btn-sm" href="${escapeHtml(o.redemptionUrl)}" target="_blank" rel="noopener">Redeem<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:12px;height:12px"><path d="M7 13l6-6M9 7h4v4" stroke-linecap="round"/></svg></a>`
+            : `<span class="sp-pill">Auto-applied</span>`}
+          ${o.termsUrl ? `<a class="sp-link" href="${escapeHtml(o.termsUrl)}" target="_blank" rel="noopener">Terms</a>` : ""}
+        </div>
+      </div>`;
+  }
+
+  function specialsBenefitsHtml(list) {
+    if (!list.length) return '<div class="sp-empty-mini">No card benefits available for this combination.</div>';
+    return `<div class="sp-grid sp-grid-benefits">${list.map(specialsBenefitCard).join("")}</div>`;
+  }
+
+  function specialsBenefitCard(b) {
+    return `
+      <div class="sp-card sp-benefit">
+        <div class="sp-benefit-icon">${b.icon ? `<img src="${escapeHtml(b.icon)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'★'}))">` : "★"}</div>
+        <div class="sp-benefit-body">
+          <div class="sp-benefit-title">${escapeHtml(b.title)}</div>
+          ${b.category ? `<div class="sp-benefit-cat">${escapeHtml(b.category)}</div>` : ""}
+          ${b.description ? `<div class="sp-benefit-desc">${escapeHtml(b.description)}</div>` : ""}
+          ${b.endDate ? `<div class="sp-benefit-foot">Valid until ${escapeHtml(b.endDate)}</div>` : ""}
+        </div>
+        ${b.url ? `<a class="sp-link sp-benefit-link" href="${escapeHtml(b.url)}" target="_blank" rel="noopener">Details →</a>` : ""}
+      </div>`;
+  }
+
+  function specialsProgramsHtml(list) {
+    if (!list.length) return '<div class="sp-empty-mini">No programs running for this market.</div>';
+    return `<div class="sp-grid sp-grid-programs">${list.map(specialsProgramCard).join("")}</div>`;
+  }
+
+  function specialsProgramCard(p) {
+    const hero = p.image
+      ? `<div class="sp-program-hero" style="background-image:url('${encodeURI(p.image)}')"></div>`
+      : `<div class="sp-program-hero sp-program-hero-blank">${escapeHtml((p.title || "P").slice(0,1).toUpperCase())}</div>`;
+    return `
+      <div class="sp-card sp-program">
+        ${hero}
+        <div class="sp-program-body">
+          <div class="sp-program-title">${escapeHtml(p.title)}</div>
+          ${p.description ? `<div class="sp-program-desc">${escapeHtml(p.description)}</div>` : ""}
+          ${p.url ? `<a class="sp-link" href="${escapeHtml(p.url)}" target="_blank" rel="noopener">Explore →</a>` : ""}
+        </div>
+      </div>`;
+  }
+
+  function specialsMerchantsHtml(list) {
+    if (!list.length) return '<div class="sp-empty-mini">No participating merchants found.</div>';
+    return `<div class="sp-merch-grid">${list.map(specialsMerchantTile).join("")}</div>`;
+  }
+
+  function specialsMerchantTile(m) {
+    const initials = (m.name || "?").trim().slice(0, 2).toUpperCase();
+    const logo = m.logo
+      ? `<img src="${escapeHtml(m.logo)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'sp-merch-fb',textContent:'${escapeHtml(initials)}'}))">`
+      : `<div class="sp-merch-fb">${escapeHtml(initials)}</div>`;
+    return `
+      <div class="sp-merch-tile" title="${escapeHtml(m.name)}">
+        <div class="sp-merch-logo">${logo}</div>
+        <div class="sp-merch-name">${escapeHtml(m.name)}</div>
+        ${m.category ? `<div class="sp-merch-cat">${escapeHtml(m.category)}</div>` : ""}
+      </div>`;
+  }
+
+  function specialsHeroHtml() {
+    return `
+      <div class="sp-hero">
+        <div class="sp-hero-eyebrow">Priceless Specials</div>
+        <h2 class="sp-hero-title">Where will your card<br/><span class="sp-grad-text">take you next?</span></h2>
+        <p class="sp-hero-sub">Mastercard curates merchant offers, card-tier benefits and marketing programs for every market in its network. Pick your card and where you're heading — we'll surface the perks waiting at the other end.</p>
+        <div class="sp-hero-chips">
+          <span class="sp-hero-chip">🍽️ Dining</span>
+          <span class="sp-hero-chip">✈️ Travel</span>
+          <span class="sp-hero-chip">🛍️ Shopping</span>
+          <span class="sp-hero-chip">🎭 Entertainment</span>
+          <span class="sp-hero-chip">💎 Lifestyle</span>
+        </div>
+        <button id="sp-hero-go" class="sp-btn sp-btn-primary sp-btn-lg">
+          Show me perks
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M5 10h10M11 5l5 5-5 5" stroke-linecap="round"/></svg>
+        </button>
+      </div>`;
+  }
+
+  function specialsWire() {
+    const sel = (id) => document.getElementById(id);
+    const prod = sel("sp-product");      if (prod) prod.addEventListener("change", e => { SPECIALS.product = e.target.value; specialsRender(); });
+    const elig = sel("sp-eligible");     if (elig) elig.addEventListener("change", e => { SPECIALS.eligible = e.target.value; specialsRender(); });
+    const dest = sel("sp-destination");  if (dest) dest.addEventListener("change", e => { SPECIALS.destination = e.target.value; specialsRender(); });
+    const go   = sel("sp-go");           if (go)   go.addEventListener("click", specialsSearch);
+    const hgo  = sel("sp-hero-go");      if (hgo)  hgo.addEventListener("click", specialsSearch);
+
+    document.querySelectorAll(".sp-cat").forEach(btn => {
+      btn.addEventListener("click", () => {
+        SPECIALS.category = btn.dataset.cat || "";
+        if (SPECIALS.data) specialsSearch();
+        else specialsRender();
+      });
+    });
+    document.querySelectorAll(".sp-tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (btn.disabled) return;
+        SPECIALS.activeTab = btn.dataset.tab;
+        specialsRender();
+      });
+    });
+  }
+
+  function specialsSearch() {
+    if (SPECIALS.loading) return;
+    SPECIALS.loading = true;
+    SPECIALS.error = null;
+    SPECIALS.activeTab = "offers";
+    specialsRender();
+
+    fetch("/usecases/specials/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "search",
+        params: {
+          eligible_markets:    SPECIALS.eligible,
+          destination_markets: SPECIALS.destination,
+          mastercard_product:  SPECIALS.product,
+          category:            SPECIALS.category,
+          language:            "en-US",
+        },
+      }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        SPECIALS.loading = false;
+        if (d.error) {
+          SPECIALS.error = typeof d.error === "string" ? d.error : JSON.stringify(d.error);
+          SPECIALS.data = null;
+        } else {
+          SPECIALS.data = d;
+          // Pick the first non-empty tab.
+          const order = ["offers", "benefits", "programs", "merchants"];
+          SPECIALS.activeTab = order.find(t => (d[t] || []).length) || "offers";
+        }
+        specialsRender();
+      })
+      .catch(err => {
+        SPECIALS.loading = false;
+        SPECIALS.error = err.message || String(err);
+        specialsRender();
+      });
+  }
+
   // ===================== Find A Card Use Case =====================
+
+  // ===================== Sonic Branding Use Case =====================
+
+  // Load the real Mastercard Sonic Web SDK (once)
+  function _ensureMcSonicScript(cb) {
+    // If already defined and ready, fire immediately
+    if (customElements.get('mc-sonic')) { cb(); return; }
+    // If script tag exists but not yet defined, wait
+    if (document.querySelector('script[data-mc-sonic]')) {
+      customElements.whenDefined('mc-sonic').then(cb);
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = '/static/sonic-app-web/assets/js/mc-sonic.min.js';
+    s.setAttribute('data-mc-sonic', '1');
+    s.onload = () => customElements.whenDefined('mc-sonic').then(cb);
+    document.head.appendChild(s);
+  }
+
+  // Play mc-sonic reliably: element must already be in DOM, custom element must be defined
+  function _playWhenReady(el) {
+    customElements.whenDefined('mc-sonic').then(() => setTimeout(() => el.play(), 80));
+  }
+
+  // Launch the real mc-sonic component in a centred modal dialog
+  window._sonicLaunch = function(cue, type, bg) {
+    const modal = document.createElement('div');
+    modal.className = 'sonic-modal-backdrop';
+    modal.innerHTML =
+      '<div class="sonic-modal">' +
+        '<button class="sonic-modal-close" title="Dismiss">\u2715</button>' +
+        '<div class="sonic-modal-body"></div>' +
+      '</div>';
+    document.body.appendChild(modal);
+
+    const dismiss = () => { if (modal.parentNode) modal.remove(); };
+    modal.addEventListener('click', (e) => { if (e.target === modal) dismiss(); });
+    modal.querySelector('.sonic-modal-close').addEventListener('click', dismiss);
+
+    const body = modal.querySelector('.sonic-modal-body');
+
+    if (type === 'sound-only') {
+      // Sound-only: compact modal with a playing indicator
+      modal.querySelector('.sonic-modal').classList.add('sonic-modal--sound');
+      body.innerHTML = '<div class="sonic-modal-playing"><span class="sonic-modal-note">🔊</span><span>Playing Mastercard Sonic…</span></div>';
+      const audio = document.createElement('mc-sonic');
+      audio.setAttribute('type', 'sound-only');
+      audio.setAttribute('sonicCue', cue);
+      audio.style.cssText = 'position:fixed;opacity:0;pointer-events:none;width:1px;height:1px;top:-9999px;';
+      document.body.appendChild(audio);
+      _playWhenReady(audio);
+      const done = () => { audio.remove(); dismiss(); };
+      audio.addEventListener('sonicCompletion', done, { once: true });
+      setTimeout(done, 8000);
+      return;
+    }
+
+    // Animated: mc-sonic needs explicit pixel dimensions to render its shadow DOM
+    modal.querySelector('.sonic-modal').classList.add('sonic-modal--anim');
+    const el = document.createElement('mc-sonic');
+    el.setAttribute('type', type);
+    el.setAttribute('sonicCue', cue);
+    if (bg) el.setAttribute('sonicBackground', bg);
+    el.style.cssText = 'display:block;width:100%;height:100%;';
+    body.appendChild(el);
+    _playWhenReady(el);
+    el.addEventListener('sonicCompletion', dismiss, { once: true });
+    setTimeout(dismiss, 12000);
+  };
+
+  const SONIC_CUES = [
+    {
+      id: 'checkout',
+      label: 'Checkout',
+      icon: '🛒',
+      desc: 'Played at the moment a Mastercard payment is approved at checkout — online or in-store. This is the primary sonic signature.',
+      contexts: ['Online checkout', 'POS terminal', 'Mobile wallet', 'In-app purchase'],
+    },
+    {
+      id: 'securedby',
+      label: 'Secured by Mastercard',
+      icon: '🔒',
+      desc: 'Played to reassure the cardholder that their transaction or session is protected by Mastercard security (e.g. 3DS, Identity Check).',
+      contexts: ['3DS challenge', 'Identity verification', 'Fraud prevention', 'Passkey confirmation'],
+    },
+  ];
+
+  const SONIC_TYPES = [
+    { type: 'default', bg: 'black', label: 'Sound + Animation', sublabel: 'Dark background', icon: '🎵', btnClass: 'sonic-btn-dark' },
+    { type: 'default', bg: 'white', label: 'Sound + Animation', sublabel: 'Light background', icon: '🎵', btnClass: 'sonic-btn-light' },
+    { type: 'animation-only', bg: 'black', label: 'Animation Only', sublabel: 'Dark background', icon: '✨', btnClass: 'sonic-btn-dark' },
+    { type: 'animation-only', bg: 'white', label: 'Animation Only', sublabel: 'Light background', icon: '✨', btnClass: 'sonic-btn-light' },
+    { type: 'sound-only', bg: null, label: 'Sound Only', sublabel: 'No animation', icon: '🔊', btnClass: 'sonic-btn-sound' },
+  ];
+
+  const SONIC_RULES = [
+    {
+      heading: 'Always use',
+      mod: 'always',
+      items: [
+        'Payment approved / accepted at checkout',
+        'Mastercard Identity Check confirmation',
+        'Successful 3DS authentication',
+        'Any positive Mastercard-branded journey end-state',
+      ],
+    },
+    {
+      heading: 'Use carefully',
+      mod: 'careful',
+      items: [
+        'Partner or merchant apps (written Mastercard approval required)',
+        'Non-payment confirmations (consider Animation Only)',
+        'Ambient / IoT environments where audio may be disruptive',
+      ],
+    },
+    {
+      heading: 'Never use',
+      mod: 'never',
+      items: [
+        'Declined, failed, or error states',
+        'Loading or processing states',
+        'Competitor-branded or co-branded screens without approval',
+        'Modified, remixed, or re-recorded versions',
+      ],
+    },
+  ];
+
+  function renderSonicBrand() {
+    const body = $('uc-body');
+    if (!body) return;
+
+    body.innerHTML = `<div class="fac-loading"><div class="fac-spinner"></div><p>Loading Mastercard Sonic SDK…</p></div>`;
+
+    _ensureMcSonicScript(() => {
+      const cueCards = SONIC_CUES.map(cue => {
+        const variantBtns = SONIC_TYPES.map(t => {
+          const bgAttr = t.bg ? `, ${t.bg}` : '';
+          return `
+            <button class="sonic-variant-btn ${t.btnClass}"
+              onclick="window._sonicLaunch('${cue.id}','${t.type}',${t.bg ? `'${t.bg}'` : 'null'})">
+              <span class="sonic-vbtn-icon">${t.icon}</span>
+              <span class="sonic-vbtn-text">
+                <strong>${escapeHtml(t.label)}</strong>
+                <span>${escapeHtml(t.sublabel)}</span>
+              </span>
+              <span class="sonic-vbtn-play">▶</span>
+            </button>`;
+        }).join('');
+
+        return `
+          <div class="sonic-cue-card">
+            <div class="sonic-cue-header">
+              <span class="sonic-cue-icon">${cue.icon}</span>
+              <div>
+                <h4 class="sonic-cue-label">${escapeHtml(cue.label)}</h4>
+                <p class="sonic-cue-desc">${escapeHtml(cue.desc)}</p>
+              </div>
+            </div>
+            <div class="sonic-cue-contexts">
+              ${cue.contexts.map(c => `<span class="sonic-ctx-tag">${escapeHtml(c)}</span>`).join('')}
+            </div>
+            <div class="sonic-variants">${variantBtns}</div>
+          </div>`;
+      }).join('');
+
+      const rulesHtml = SONIC_RULES.map(r => `
+        <div class="sonic-rule sonic-rule--${r.mod}">
+          <h5 class="sonic-rule-head">${escapeHtml(r.heading)}</h5>
+          <ul class="sonic-rule-list">
+            ${r.items.map(i => `<li>${escapeHtml(i)}</li>`).join('')}
+          </ul>
+        </div>`).join('');
+
+      body.innerHTML = `
+        <div class="sonic-ui">
+          <div class="sonic-hero">
+            <div class="sonic-hero-visual">
+              <span class="sonic-hero-circles">
+                <span class="sonic-hero-ring r1"></span>
+                <span class="sonic-hero-ring r2"></span>
+                <span class="sonic-hero-ring r3"></span>
+                <span class="sonic-hero-mc"><span class="r"></span><span class="y"></span></span>
+              </span>
+            </div>
+            <div class="sonic-hero-text">
+              <p class="sonic-hero-eyebrow">Mastercard Web SDK</p>
+              <h2 class="sonic-hero-title">Sonic Branding</h2>
+              <p class="sonic-hero-sub">The real Mastercard sonic identity — two cues, three playback types, two backgrounds. Click any variant below to hear and see the authentic sound and animation.</p>
+            </div>
+          </div>
+
+          <section class="sonic-section">
+            <h3 class="sonic-section-title">Sound Cues &amp; Variants</h3>
+            <p class="muted sonic-section-sub">Each button launches the real <code>mc-sonic</code> web component from the Mastercard Sonic Web SDK.</p>
+            <div class="sonic-cue-grid">${cueCards}</div>
+          </section>
+
+          <section class="sonic-section">
+            <h3 class="sonic-section-title">Interactive Demo — KICKS Checkout</h3>
+            <p class="muted sonic-section-sub">The reference implementation. Select Mastercard (4444) as payment method and confirm the order to trigger the real acceptance sound and animation.</p>
+            <div class="sonic-iframe-wrap">
+              <iframe class="sonic-demo-frame" src="/static/sonic-app-web/index.html"
+                title="Mastercard Sonic Reference App"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation-by-user-activation">
+              </iframe>
+            </div>
+          </section>
+
+          <section class="sonic-section">
+            <h3 class="sonic-section-title">Brand Guidelines</h3>
+            <div class="sonic-rules">${rulesHtml}</div>
+          </section>
+        </div>
+      `;
+    });
+  }
 
   function renderFindACard() {
     const body = $("uc-body");

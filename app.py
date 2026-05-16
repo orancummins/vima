@@ -629,6 +629,30 @@ _CONFIG_SCHEMA = [
             {"key": "PRICELESS_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
         ],
     },
+    {
+        "id": "eligibility",
+        "title": "Benefits Eligibility",
+        "subtitle": "Mastercard Benefits Eligibility API",
+        "docs_url": "https://developer.mastercard.com/eligibility-api/documentation/",
+        "fields": [
+            {"key": "ELIGIBILITY_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Benefits Eligibility API, and copy the Consumer Key."},
+            {"key": "ELIGIBILITY_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
+            {"key": "ELIGIBILITY_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
+            {"key": "ELIGIBILITY_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+        ],
+    },
+    {
+        "id": "bces",
+        "title": "Benefits Content Eligibility",
+        "subtitle": "Mastercard Benefits Content Eligibility Service (BCES)",
+        "docs_url": "https://developer.mastercard.com/bces-service/documentation/",
+        "fields": [
+            {"key": "BCES_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Benefits Content Eligibility Service API, and copy the Consumer Key."},
+            {"key": "BCES_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
+            {"key": "BCES_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
+            {"key": "BCES_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+        ],
+    },
 ]
 
 

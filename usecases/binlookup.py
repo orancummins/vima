@@ -157,6 +157,8 @@ def _shape(item: Dict[str, Any]) -> Dict[str, Any]:
     # ── Issuer ────────────────────────────────────────────────────────────────
     issuer_name = (item.get("customerName") or "Unknown Issuer").strip()
     affiliate   = (item.get("affiliate") or "").strip()
+    if affiliate.upper() == "UNAVAILABLE":
+        affiliate = ""
     display_name = affiliate or issuer_name
 
     # ── Country (nested object: {code, alpha3, name}) ─────────────────────────
