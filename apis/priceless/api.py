@@ -216,6 +216,7 @@ MANIFEST: Dict[str, Any] = {
     "docs_url": "https://developer.mastercard.com/product/priceless-platform-api",
     "how_to": _HOW_TO,
     "categories": ["Priceless Platform", "Priceless Cities", "Priceless Specials"],
+    "deprecated_categories": ["Priceless Platform", "Priceless Cities"],
     "state_schema": [],
     "configured": _configured(),
     "operations": [

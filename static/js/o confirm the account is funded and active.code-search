@@ -1,0 +1,9 @@
+# Query: o confirm the account is funded and active
+# ContextLines: 1
+
+1 result - 1 file
+
+static/js/app.js:
+  4673              <li><strong>Account holder name</strong> &mdash; to match against your application</li>
+  4674:             <li><strong>Account status &amp; age</strong> &mdash; confirm account is funded and active</li>
+  4675              <li><strong>Last 4 of account number</strong> &mdash; for the audit record</li>
