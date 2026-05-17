@@ -89,6 +89,55 @@ body {
   text-transform: uppercase; font-size: 11px; font-weight: 700;
   color: var(--muted); letter-spacing: 1px; padding: 0 8px 10px;
 }
+.of-vpn-warning {
+  margin: 0 8px 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 141, 26, 0.35);
+  background: rgba(255, 141, 26, 0.08);
+  color: rgba(255, 190, 130, 0.95);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.of-vpn-warning-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.of-ip-light {
+  width: 9px;
+  height: 9px;
+  min-width: 9px;
+  min-height: 9px;
+  max-width: 9px;
+  max-height: 9px;
+  flex: 0 0 9px;
+  border-radius: 50%;
+  display: inline-block;
+  line-height: 0;
+  vertical-align: middle;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+.of-ip-light--green {
+  background: #2fd37a;
+  box-shadow: 0 0 8px rgba(47, 211, 122, 0.6);
+}
+.of-ip-light--red {
+  background: #ff5c5c;
+  box-shadow: 0 0 8px rgba(255, 92, 92, 0.6);
+}
+.of-ip-light--unknown {
+  background: #f2a349;
+  box-shadow: 0 0 8px rgba(242, 163, 73, 0.45);
+}
+.of-ip-text {
+  color: #ffd7ad;
+  font-weight: 600;
+}
+.of-vpn-warning-note {
+  color: rgba(255, 190, 130, 0.95);
+}
 .api-list { display: flex; flex-direction: column; gap: 2px; }
 .api-item {
   display: flex; align-items: center; justify-content: space-between;
