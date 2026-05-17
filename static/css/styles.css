@@ -4351,17 +4351,17 @@ body {
 .home-uc-card-name {
   font-size: 26px;
   font-weight: 800;
-  color: #ff5500;
+  color: #fff;
   letter-spacing: -0.01em;
   margin-bottom: 16px;
-  text-shadow: 0 0 32px rgba(255, 80, 0, 0.7), 0 0 10px rgba(255, 160, 0, 0.4);
+  text-shadow: 0 0 32px rgba(255,120,0,0.5);
   line-height: 1.2;
 }
 .home-uc-card-desc {
   font-size: 15px;
-  line-height: 1.65;
-  color: rgba(255, 130, 60, 0.8);
-  text-shadow: 0 0 14px rgba(255, 80, 0, 0.28);
+  line-height: 1.7;
+  color: rgba(255,200,140,0.7);
+  text-shadow: none;
 }
 
 /* API paths ticker — 3 rows, transparent overlay over globe glow */
