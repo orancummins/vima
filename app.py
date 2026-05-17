@@ -128,7 +128,12 @@ def _fetch_geo_payload(client_ip: str) -> dict:
 
     for url, provider in attempts:
         try:
-            resp = _requests.get(url, timeout=4.0)
+            # verify=False: VPN SSL-inspection injects a self-signed cert into the
+            # chain, causing standard cert verification to fail.  These requests
+            # carry no credentials so disabling verification here is safe.
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            resp = _requests.get(url, timeout=4.0, verify=False)
             resp.raise_for_status()
             raw = resp.text
             if provider == "cloudflare-trace":
