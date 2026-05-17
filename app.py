@@ -7,6 +7,7 @@ cases composed from them.
 import os
 import time
 import threading
+import json
 from collections import deque
 
 import requests as _requests
@@ -106,6 +107,66 @@ def _patched_send(self, prepared_request, **kwargs):
 
 _requests.Session.send = _patched_send
 
+# ---------------------------------------------------------------------------
+# Client geo/IP status cache (for Open Finance US VPN indicator)
+# ---------------------------------------------------------------------------
+_ip_status_cache = {
+    "ts": 0.0,
+    "payload": None,
+}
+
+
+def _fetch_geo_payload(client_ip: str) -> dict:
+    """Resolve country and public IP using external geo services."""
+    # Prefer a plain-text trace endpoint that exposes the egress country directly.
+    attempts = [
+        ("https://www.cloudflare.com/cdn-cgi/trace", "cloudflare-trace"),
+        ("https://ipapi.co/json/", "ipapi"),
+        ("https://ipwho.is/", "ipwhois"),
+        ("https://ipinfo.io/json", "ipinfo"),
+    ]
+
+    for url, provider in attempts:
+        try:
+            resp = _requests.get(url, timeout=4.0)
+            resp.raise_for_status()
+            raw = resp.text
+            if provider == "cloudflare-trace":
+                trace = {}
+                for line in raw.splitlines():
+                    if "=" in line:
+                        key, value = line.split("=", 1)
+                        trace[key.strip()] = value.strip()
+                country = (trace.get("loc") or "").upper()
+                detected_ip = trace.get("ip") or client_ip
+            else:
+                data = json.loads(raw)
+                if provider == "ipapi":
+                    country = (data.get("country_code") or data.get("country") or "").upper()
+                    detected_ip = data.get("ip") or client_ip
+                elif provider == "ipwhois":
+                    country = (data.get("country_code") or data.get("country") or "").upper()
+                    detected_ip = data.get("ip") or client_ip
+                else:
+                    country = (data.get("country") or "").upper()
+                    detected_ip = data.get("ip") or client_ip
+            if country:
+                return {
+                    "ok": True,
+                    "provider": provider,
+                    "country_code": country,
+                    "ip": str(detected_ip or ""),
+                }
+        except Exception:
+            continue
+
+    return {
+        "ok": False,
+        "provider": None,
+        "country_code": "",
+        "ip": str(client_ip or ""),
+    }
+
 
 # ----------------------------------------------------------------------------
 # Pages
@@ -135,6 +196,36 @@ def index():
 def explorer_apis():
     """Return the manifests for every registered API."""
     return jsonify({"apis": api_registry.manifests()})
+
+
+@app.route("/diagnostics/us-ip-status")
+def diagnostics_us_ip_status():
+    """Return whether the caller appears to be on a US IP address."""
+    now = time.time()
+    cached = _ip_status_cache.get("payload")
+    if cached and (now - float(_ip_status_cache.get("ts") or 0)) < 20:
+        resp = jsonify(cached)
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+
+    geo = _fetch_geo_payload((request.remote_addr or "").strip())
+    country = (geo.get("country_code") or "").upper()
+    is_us = country == "US"
+
+    payload = {
+        "success": bool(geo.get("ok")),
+        "is_us": is_us,
+        "country_code": country,
+        "ip": geo.get("ip") or client_ip,
+        "provider": geo.get("provider"),
+        "checked_at": int(now),
+    }
+    _ip_status_cache["ts"] = now
+    _ip_status_cache["payload"] = payload
+
+    resp = jsonify(payload)
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 @app.route("/explorer/<api_id>/state")
