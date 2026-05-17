@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Sonic Reference App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1976d2">
+    <meta name="Description" content="Sonic reference application is used to demonstrate sonic web sdk implimentation different stack holder and teams.">
+
+    <link id="style-path" rel="stylesheet" href="https://asset.mastercard.com/dxp-styles/3.4.2/css/dxp.min.css" type="text/css">
+    <link rel="stylesheet" href="https://asset.mastercard.com/dxp-styles/3.4.2/css/themes/dxp-theme-white/dxp-theme-white.min.css">
+
+    <link rel="stylesheet" href="https://asset.mastercard.com/dxp-styles/3.4.2/css/dxp-fonts.css">
+
+    <script type="module" src="https://asset.mastercard.com/dxp-ui/dxp-web@4.4.0/dxp-web/dxp-web.esm.js"></script>
+    <script nomodule src="https://asset.mastercard.com/dxp-ui/dxp-web@4.4.0/dxp-web/dxp-web.js"></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <link rel="stylesheet" href="./assets/css/style.css">
+    <script src="./assets/js/index.js"></script>
+    <script src="./assets/js/mc-sonic.min.js"></script>
+</head>
+
+<body class="dxp extra-scroll">
+    <noscript>Please enable JavaScript to continue using this application.</noscript>
+    <!-- title -->
+    <div class="title-container nav-position-fix">
+        <div class="title">KICKS</div>
+    </div>
+
+    <div class="dxp-container late-start full">
+        <div id="confirmOrderStep" class="bottom-margin">
+            <p class="top-padding title-confirm-order">Confirm Your Order</p>
+            <div class="dxp-row">
+                <div class="dxp-col-xl-7 dxp-col-lg-7 dxp-col-md-12 dxp-col-sm-12 dxp-col-12 bottom-margin">
+                    <div class="dxp-col-12">
+                        <p class="shipping-details-title top-padding">SHIPPING DETAILS</p>
+                        <div class="dashed-bottom-border"></div>
+                    </div>
+
+                    <div class="top-padding-sm dxp-col-12">
+                        <div class="dxp-flex">
+                            <p class="title-field-name">Ship To:</p>
+                            <p class="title-description left-padding">Lee Cardholder<br/>123 Main St.New York, NY 10</p>
+                        </div>
+
+                        <div class="dxp-flex top-padding">
+                            <p class="title-field-name">Email ID:</p>
+                            <p style="padding-left: 21px;" class="title-description left-padding">Iee.cardholder@mail.com</p>
+                        </div>
+                    </div>
+
+                    <div class="dxp-col-12">
+                        <div class="top-padding">
+                            <p class="shipping-details-title">PAYMENT DETAILS</p>
+                            <div class="dashed-bottom-border"></div>
+                            <div class="dxp-col-12 dxp-flex top-padding-sm no-padding-left">
+                                <p style="margin-top: 13px;" class="title-field-name">Pay With:</p>
+                                <div class="left-padding">
+                                    <div class="drop-down">
+                                        <select id="cardSelector" name="options">     
+                                            <option value="mastercard" style="background-image:url('./assets/img/mastercard.svg');">4444</option>
+                                            <option value="visa" style="background-image:url('./assets/img/visa.svg');">1881</option>    
+                                            <option value="amex" style="background-image:url('./assets/img/amex.svg');">0005</option>    
+                                            <option value="discover" style="background-image:url('./assets/img/discover.svg');">1117</option>    
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dxp-col-xl-5 dxp-col-lg-5 dxp-col-md-12 dxp-col-sm-12 dxp-col-12 bottom-margin">
+                    <div class="dxp-col-12 cart-summary">
+                        <p class="shipping-details-title top-padding">CART SUMMARY</p>
+                        <div class="dashed-bottom-border"></div>
+                        <div class="top-padding-sm dxp-col-12 cart-summary">
+                            <div class="dxp-flex">
+                                <p class="title-field-name">Items:</p>
+                                <p class="item-description underline">White Sneakers</p>
+                                <p class="item-description amount">$139.00</p>
+                            </div>
+
+                            <div class="dxp-flex top-padding">
+                                <img src="./assets/img/converse-shoe.png" alt="item" class="item-image">
+                                <p class="item-details left-padding">Qty:1 <br/>Size: M10.5 / W12.5<br/>Color: White </p>
+                            </div>
+                            <div class="dashed-bottom-border"></div>
+
+                            <div class="dxp-flex top-padding">
+                                <p class="subtotal">Subtotal:</p>
+                                <p class="item-description amount">$139.00</p>
+                            </div>
+
+                            <div class="dxp-flex">
+                                <p class="total">Total:</p>
+                                <p class="total amount">$139.00</p>
+                            </div>
+
+                            <button class="pay-button bottom-margin" onclick="pay()" disabled>Confirm Order</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="animationStep" class="hide full">
+           <mc-sonic id="mc-sonic"></mc-sonic>
+           <!-- <mc-sonic id="mc-sonic" type="default" sonicCue="securedby" sonicBackground="black"></mc-sonic> -->
+           <!-- <mc-sonic id="mc-sonic" type="default" sonicCue="securedby" sonicBackground="white"></mc-sonic> -->
+           <!-- <mc-sonic id="mc-sonic" type="animation-only" sonicCue="checkout" sonicBackground="black"></mc-sonic> -->
+           <!-- <mc-sonic id="mc-sonic" type="sound-only" sonicCue="checkout"></mc-sonic> -->
+           <!-- <mc-sonic id="mc-sonic" type="animation-only" sonicCue="securedby" sonicBackground="black"></mc-sonic> -->
+           <!-- <mc-sonic id="mc-sonic" type="sound-only" sonicCue="securedby"></mc-sonic> -->
+           <!-- <mc-sonic id="mc-sonic" type="animation-only" sonicCue="checkout" sonicBackground="white"></mc-sonic> -->
+           <!-- <mc-sonic id="mc-sonic" type="animation-only" sonicCue="securedby" sonicBackground="white"></mc-sonic> -->
+        </div>
+
+
+        <div id="replayDemoStep" class="replayDemoStep-3 hide">
+            <div class="dxp-row">
+                <div class="dxp-col-12">
+                    <img src="./assets/img/process complete.svg" alt="" class="img-right-logo">
+
+                    <div>
+                        <p class="thank-you top-padding">Thank you!</p>
+
+                        <div class="order-text">
+                            We have received your order. You can track your order <b>#1Z456789</b> by going to&nbsp;
+                            <span class="underline track-your-order">Track Your Order</span>.
+                        </div>
+                        <button class="start-over-button" onclick="replayDemo()">Replay Demo</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer title">
+        <div class="dashed-bottom-border"></div>
+        <div class="footer-text">
+            <div class="dxp-col-xl-5 dxp-col-lg-5 dxp-col-md-12 dxp-col-sm-12 dxp-flex footer-content-tandc-pp-alignment">
+                <p>Terms of Use</p>
+                <p class="left-padding-md">Privacy Policy</p>
+            </div>
+            <div class="dxp-col-xl-5 dxp-col-lg-5 dxp-col-md-12 dxp-col-sm-12">
+                <span class="copy-rights">&copy;2020 Kicks. All Rights Reserved</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="loaderContainer" class="loaderContainer full hide">
+        <div class="loaderProgress">
+            <div id="loader" class="loader"></div>
+        </div>
+        <div class="loaderText">
+            <p id="spinnerText"></p>
+        </div>
+    </div>
+
+</body>
+
+</html>
