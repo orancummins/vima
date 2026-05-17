@@ -6415,9 +6415,13 @@
       return;
     }
     const s = document.createElement('script');
-    s.src = '/static/sonic-app-web/assets/js/mc-sonic.min.js';
+    s.src = 'https://sonicsdk.mastercard.com/assets/js/latest/js/mc-sonic.min.js';
     s.setAttribute('data-mc-sonic', '1');
     s.onload = () => customElements.whenDefined('mc-sonic').then(cb);
+    s.onerror = () => {
+      const body = $('uc-body');
+      if (body) body.innerHTML = '<div class="pl-error">Failed to load Mastercard Sonic SDK. Check your network connection and try again.</div>';
+    };
     document.head.appendChild(s);
   }
 
@@ -6600,10 +6604,10 @@
             <h3 class="sonic-section-title">Interactive Demo — KICKS Checkout</h3>
             <p class="muted sonic-section-sub">The reference implementation. Select Mastercard (4444) as payment method and confirm the order to trigger the real acceptance sound and animation.</p>
             <div class="sonic-iframe-wrap">
-              <iframe class="sonic-demo-frame" src="/static/sonic-app-web/index.html"
-                title="Mastercard Sonic Reference App"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation-by-user-activation">
-              </iframe>
+              <div class="sonic-demo-unavailable">
+                <span>🎵</span>
+                <p>Use the Sound Cues above to hear and see the live <code>mc-sonic</code> component — powered by the Mastercard Sonic CDN SDK.</p>
+              </div>
             </div>
           </section>
 
