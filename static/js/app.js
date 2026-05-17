@@ -3184,6 +3184,15 @@
             <input id="pfm-cid" placeholder="e.g. 9013023139" value="${initialCustomerId || ""}" />
             <button class="btn btn-primary" id="pfm-load">Load</button>
             <button class="btn" id="pfm-connect-btn">Connect new bank</button>
+            <a
+              href="https://developer.mastercard.com/open-finance-us/documentation/integration-and-testing/test-the-apis/#test-personas"
+              target="_blank"
+              rel="noopener"
+              style="font-size:12px;color:#6b7280;text-decoration:none;white-space:nowrap"
+              title="Mastercard Developers Test Personas"
+            >
+              Test Personas ↗
+            </a>
           </div>
         </div>
 
@@ -3282,6 +3291,10 @@
         <div class="ic-wrap">${ICON.link}</div>
         <h3>Connect a bank</h3>
         <p>${escapeHtml(msg || "Link a customer's bank accounts via Open Finance to see balances, spending, and transactions here.")}</p>
+        <p style="margin-top:6px;font-size:12px;color:#6b7280;line-height:1.5">
+          For test details on connecting a new bank, use Mastercard Developers Test Personas:
+          <a href="https://developer.mastercard.com/open-finance-us/documentation/integration-and-testing/test-the-apis/#test-personas" target="_blank" rel="noopener">Test Personas ↗</a>
+        </p>
         <button class="btn btn-primary" id="pfm-inapp-connect">Connect new bank</button>
       </div>
     `;
@@ -6604,9 +6617,18 @@
             <h3 class="sonic-section-title">Interactive Demo — KICKS Checkout</h3>
             <p class="muted sonic-section-sub">The reference implementation. Select Mastercard (4444) as payment method and confirm the order to trigger the real acceptance sound and animation.</p>
             <div class="sonic-iframe-wrap">
-              <div class="sonic-demo-unavailable">
+              <iframe
+                class="sonic-demo-frame"
+                src="/static/sonic-app-web/index.html"
+                title="Sonic Branding KICKS Demo"
+                loading="lazy"
+              ></iframe>
+              <div class="sonic-demo-unavailable" style="display:none" id="sonic-demo-fallback">
                 <span>🎵</span>
-                <p>Use the Sound Cues above to hear and see the live <code>mc-sonic</code> component — powered by the Mastercard Sonic CDN SDK.</p>
+                <p>
+                  Unable to load the embedded KICKS demo.
+                  <a href="/static/sonic-app-web/index.html" target="_blank" rel="noopener">Open in a new tab ↗</a>
+                </p>
               </div>
             </div>
           </section>
@@ -6617,6 +6639,15 @@
           </section>
         </div>
       `;
+
+      const demoFrame = body.querySelector('.sonic-demo-frame');
+      const demoFallback = body.querySelector('#sonic-demo-fallback');
+      if (demoFrame && demoFallback) {
+        demoFrame.addEventListener('error', () => {
+          demoFrame.style.display = 'none';
+          demoFallback.style.display = 'flex';
+        });
+      }
     });
   }
 
