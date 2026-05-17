@@ -11,7 +11,7 @@ from collections import deque
 
 import requests as _requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, redirect
 
 load_dotenv()
 
@@ -113,7 +113,7 @@ _requests.Session.send = _patched_send
 
 @app.route("/")
 def home():
-    return render_template("home.html")
+    return redirect("/app")
 
 
 @app.route("/app")
@@ -122,6 +122,8 @@ def index():
         "index.html",
         apis=api_registry.manifests(),
         use_cases=usecase_registry.manifests(),
+        cache_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'js', 'app.js'))),
+        css_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'css', 'styles.css'))),
     )
 
 
@@ -529,6 +531,389 @@ def txpush_events():
     return jsonify({"events": list(_txpush_events)})
 
 
+# ----------------------------------------------------------------------------
+# BIN Lookup — server-side SQLite FTS5 BIN ranges cache
+# ----------------------------------------------------------------------------
+import sqlite3 as _sqlite3
+
+_BIN_CACHE = {"status": "idle", "count": 0, "loaded_at": None, "error": None, "persisted": False}
+_BIN_CACHE_LOCK = threading.Lock()
+_BIN_DB_CONN = None  # sqlite3 connection (disk-backed, persists across restarts)
+_BIN_DB_PATH = os.path.join(os.path.dirname(__file__), "data", "bin_ranges.db")
+_BIN_DB_TMP  = _BIN_DB_PATH + ".tmp"
+
+
+def _bin_try_load_from_disk():
+    """Called at startup: open the persisted disk DB if it exists."""
+    global _BIN_DB_CONN
+    if not os.path.exists(_BIN_DB_PATH):
+        return
+    try:
+        conn = _sqlite3.connect(_BIN_DB_PATH, check_same_thread=False)
+        conn.row_factory = _sqlite3.Row
+        meta = conn.execute("SELECT count, loaded_at FROM meta LIMIT 1").fetchone()
+        if not meta:
+            conn.close()
+            return
+        actual = conn.execute("SELECT COUNT(*) FROM bin_ranges").fetchone()[0]
+        if actual == 0:
+            conn.close()
+            return
+        with _BIN_CACHE_LOCK:
+            _BIN_DB_CONN = conn
+            _BIN_CACHE["count"] = actual
+            _BIN_CACHE["loaded_at"] = meta["loaded_at"]
+            _BIN_CACHE["status"] = "loaded"
+            _BIN_CACHE["persisted"] = True
+            _BIN_CACHE["error"] = None
+    except Exception:
+        pass  # corrupt / incompatible DB — user can reload via UI
+
+
+def _bin_build_sqlite(rows):
+    """Build a disk-backed SQLite database with FTS5 index and persist it."""
+    import shutil
+    os.makedirs(os.path.dirname(_BIN_DB_PATH), exist_ok=True)
+    # Write to a temp file first so a crash mid-build doesn't corrupt the live DB
+    if os.path.exists(_BIN_DB_TMP):
+        os.remove(_BIN_DB_TMP)
+    conn = _sqlite3.connect(_BIN_DB_TMP, check_same_thread=False)
+    conn.row_factory = _sqlite3.Row
+    conn.execute("""CREATE TABLE meta (count INTEGER, loaded_at INTEGER)""")
+    conn.execute("""
+        CREATE TABLE bin_ranges (
+            binNum TEXT, lowAccountRange TEXT, highAccountRange TEXT,
+            binLength TEXT, acceptanceBrand TEXT, ica TEXT, customerName TEXT,
+            smartDataEnabled TEXT, countryCode TEXT, countryAlpha3 TEXT, countryName TEXT,
+            localUse TEXT, authorizationOnly TEXT, productCode TEXT, productDescription TEXT,
+            governmentRange TEXT, nonReloadableIndicator TEXT, anonymousPrepaidIndicator TEXT,
+            cardholderCurrencyIndicator TEXT, billingCurrencyDefault TEXT,
+            comboCardIndicator TEXT, flexCardIndicator TEXT, fasterFundsIndicator TEXT,
+            moneySendIndicator TEXT, gamblingBlockEnabled TEXT, programName TEXT,
+            vertical TEXT, fundingSource TEXT, consumerType TEXT,
+            affiliate TEXT, paymentAccountType TEXT, mastercardOneParticipationIndicator TEXT
+        )
+    """)
+    conn.execute("CREATE INDEX idx_bin ON bin_ranges(binNum)")
+    conn.execute("CREATE INDEX idx_low ON bin_ranges(lowAccountRange)")
+    # FTS5 content table — fast full-text search on text columns
+    conn.execute("""
+        CREATE VIRTUAL TABLE bin_fts USING fts5(
+            customerName, productDescription, countryName, acceptanceBrand, programName, vertical,
+            content='bin_ranges', content_rowid='rowid', tokenize='unicode61'
+        )
+    """)
+
+    records = []
+    for row in rows:
+        c = row.get("country", {})
+        if isinstance(c, dict):
+            cc, ca3, cn = str(c.get("code", "")), str(c.get("alpha3", "")), str(c.get("name", ""))
+        else:
+            cc, ca3, cn = "", "", str(c)
+        records.append((
+            str(row.get("binNum", "")), str(row.get("lowAccountRange", "")),
+            str(row.get("highAccountRange", "")), str(row.get("binLength", "")),
+            str(row.get("acceptanceBrand", "")), str(row.get("ica", "")),
+            str(row.get("customerName", "")), str(row.get("smartDataEnabled", "")),
+            cc, ca3, cn,
+            str(row.get("localUse", "")), str(row.get("authorizationOnly", "")),
+            str(row.get("productCode", "")), str(row.get("productDescription", "")),
+            str(row.get("governmentRange", "")), str(row.get("nonReloadableIndicator", "")),
+            str(row.get("anonymousPrepaidIndicator", "")),
+            str(row.get("cardholderCurrencyIndicator", "")), str(row.get("billingCurrencyDefault", "")),
+            str(row.get("comboCardIndicator", "")), str(row.get("flexCardIndicator", "")),
+            str(row.get("fasterFundsIndicator", "")), str(row.get("moneySendIndicator", "")),
+            str(row.get("gamblingBlockEnabled", "")), str(row.get("programName", "")),
+            str(row.get("vertical", "")), str(row.get("fundingSource", "")),
+            str(row.get("consumerType", "")), str(row.get("affiliate", "")),
+            str(row.get("paymentAccountType", "")),
+            str(row.get("mastercardOneParticipationIndicator", "")),
+        ))
+
+    conn.executemany(
+        "INSERT INTO bin_ranges VALUES (" + ",".join(["?"] * 32) + ")",
+        records,
+    )
+    conn.execute("INSERT INTO bin_fts(bin_fts) VALUES('rebuild')")
+    conn.execute("INSERT INTO meta VALUES (?, ?)", (len(records), int(time.time())))
+    conn.commit()
+    conn.close()
+    # Atomically replace the live DB file
+    shutil.move(_BIN_DB_TMP, _BIN_DB_PATH)
+    # Re-open a persistent connection to the final path
+    final_conn = _sqlite3.connect(_BIN_DB_PATH, check_same_thread=False)
+    final_conn.row_factory = _sqlite3.Row
+    return final_conn
+
+
+def _bin_row_to_dict(r):
+    return {
+        "binNum": r["binNum"], "lowAccountRange": r["lowAccountRange"],
+        "highAccountRange": r["highAccountRange"], "binLength": r["binLength"],
+        "acceptanceBrand": r["acceptanceBrand"], "ica": r["ica"],
+        "customerName": r["customerName"], "smartDataEnabled": r["smartDataEnabled"],
+        "country": {"code": r["countryCode"], "alpha3": r["countryAlpha3"], "name": r["countryName"]},
+        "localUse": r["localUse"], "authorizationOnly": r["authorizationOnly"],
+        "productCode": r["productCode"], "productDescription": r["productDescription"],
+        "governmentRange": r["governmentRange"], "nonReloadableIndicator": r["nonReloadableIndicator"],
+        "anonymousPrepaidIndicator": r["anonymousPrepaidIndicator"],
+        "cardholderCurrencyIndicator": r["cardholderCurrencyIndicator"],
+        "billingCurrencyDefault": r["billingCurrencyDefault"],
+        "comboCardIndicator": r["comboCardIndicator"], "flexCardIndicator": r["flexCardIndicator"],
+        "fasterFundsIndicator": r["fasterFundsIndicator"], "moneySendIndicator": r["moneySendIndicator"],
+        "gamblingBlockEnabled": r["gamblingBlockEnabled"], "programName": r["programName"],
+        "vertical": r["vertical"], "fundingSource": r["fundingSource"],
+        "consumerType": r["consumerType"], "affiliate": r["affiliate"],
+        "paymentAccountType": r["paymentAccountType"],
+        "mastercardOneParticipationIndicator": r["mastercardOneParticipationIndicator"],
+    }
+
+
+def _bin_cache_do_load():
+    """Background thread: fetch all BIN range pages and load into SQLite."""
+    global _BIN_DB_CONN
+    import ast
+    import requests as _req
+    import oauth1.authenticationutils as authutils
+    from oauth1.oauth import OAuth
+
+    consumer_key = os.environ.get("BINLOOKUP_CONSUMER_KEY", "")
+    key_path = os.environ.get("BINLOOKUP_SIGNING_KEY_PATH", "")
+    key_password = os.environ.get("BINLOOKUP_SIGNING_KEY_PASSWORD", "keystorepassword")
+    env = os.environ.get("BINLOOKUP_ENV", "sandbox").lower()
+    base_url = (
+        "https://api.mastercard.com/bin-resources"
+        if env == "production"
+        else "https://sandbox.api.mastercard.com/bin-resources"
+    )
+
+    if not os.path.isabs(key_path):
+        key_path = os.path.join(os.path.dirname(__file__), key_path)
+
+    try:
+        signing_key = authutils.load_signing_key(key_path, key_password)
+    except Exception as e:
+        with _BIN_CACHE_LOCK:
+            _BIN_CACHE["status"] = "error"
+            _BIN_CACHE["error"] = f"Could not load signing key: {e}"
+        return
+
+    rows = []
+    page = 1
+    total_pages = None
+    try:
+        while total_pages is None or page <= total_pages:
+            url = f"{base_url}/bin-ranges?page={page}&size=10000"
+            body_str = "[]"
+            auth_header = OAuth.get_authorization_header(url, "POST", body_str, consumer_key, signing_key)
+            headers = {"Content-Type": "application/json", "Accept": "application/json", "Authorization": auth_header}
+            resp = _req.post(url, data=body_str, headers=headers, timeout=30)
+            resp.raise_for_status()
+            data = resp.json()
+            items = data.get("items", [])
+            total_pages = data.get("totalPages", 1)
+            for item in items:
+                c = item.get("country", "")
+                if isinstance(c, str) and c.startswith("{"):
+                    try:
+                        item["country"] = ast.literal_eval(c)
+                    except Exception:
+                        pass
+            rows.extend(items)
+            page += 1
+    except Exception as e:
+        with _BIN_CACHE_LOCK:
+            _BIN_CACHE["status"] = "error"
+            _BIN_CACHE["error"] = str(e)
+        return
+
+    try:
+        db_conn = _bin_build_sqlite(rows)
+    except Exception as e:
+        with _BIN_CACHE_LOCK:
+            _BIN_CACHE["status"] = "error"
+            _BIN_CACHE["error"] = f"SQLite build failed: {e}"
+        return
+
+    with _BIN_CACHE_LOCK:
+        old_conn = _BIN_DB_CONN
+        _BIN_DB_CONN = db_conn
+        _BIN_CACHE["count"] = len(rows)
+        _BIN_CACHE["status"] = "loaded"
+        _BIN_CACHE["loaded_at"] = int(time.time())
+        _BIN_CACHE["persisted"] = True
+        _BIN_CACHE["error"] = None
+    if old_conn is not None:
+        try:
+            old_conn.close()
+        except Exception:
+            pass
+
+
+@app.route("/usecases/binlookup/bin-ranges/status")
+def binlookup_bin_ranges_status():
+    with _BIN_CACHE_LOCK:
+        return jsonify({
+            "status": _BIN_CACHE["status"],
+            "count": _BIN_CACHE["count"],
+            "loaded_at": _BIN_CACHE["loaded_at"],
+            "error": _BIN_CACHE["error"],
+            "persisted": _BIN_CACHE["persisted"],
+        })
+
+
+@app.route("/usecases/binlookup/bin-ranges/load", methods=["POST"])
+def binlookup_bin_ranges_load():
+    with _BIN_CACHE_LOCK:
+        if _BIN_CACHE["status"] == "loading":
+            return jsonify({"ok": False, "message": "Already loading"})
+        _BIN_CACHE["status"] = "loading"
+        _BIN_CACHE["error"] = None
+    t = threading.Thread(target=_bin_cache_do_load, daemon=True)
+    t.start()
+    return jsonify({"ok": True, "message": "Loading started"})
+
+
+@app.route("/usecases/binlookup/bin-ranges/search")
+def binlookup_bin_ranges_search():
+    q = request.args.get("q", "").strip()
+    per_page = 50
+    page = max(1, int(request.args.get("page", 1)))
+    offset = (page - 1) * per_page
+
+    with _BIN_CACHE_LOCK:
+        status = _BIN_CACHE["status"]
+        conn = _BIN_DB_CONN
+
+    if status != "loaded" or conn is None:
+        return jsonify({"error": "BIN ranges not loaded", "results": [], "total": 0, "pages": 0, "page": 1})
+    if not q:
+        return jsonify({"results": [], "total": 0, "pages": 0, "page": 1})
+
+    # Detect quoted exact-issuer mode: query starts and ends with " or '
+    _exact_match = None
+    if (q.startswith('"') and q.endswith('"') and len(q) > 2) or \
+       (q.startswith("'") and q.endswith("'") and len(q) > 2):
+        _exact_match = q[1:-1].strip()
+
+    is_numeric = q.isdigit()
+    try:
+        if _exact_match is not None:
+            # Exact case-insensitive match on customerName (issuer)
+            total = conn.execute(
+                "SELECT COUNT(*) FROM bin_ranges WHERE customerName = ? COLLATE NOCASE",
+                (_exact_match,),
+            ).fetchone()[0]
+            cur = conn.execute(
+                "SELECT * FROM bin_ranges WHERE customerName = ? COLLATE NOCASE ORDER BY binNum LIMIT ? OFFSET ?",
+                (_exact_match, per_page, offset),
+            )
+        elif is_numeric:
+            total = conn.execute(
+                "SELECT COUNT(*) FROM bin_ranges WHERE binNum LIKE ? OR lowAccountRange LIKE ?",
+                (q + "%", q + "%"),
+            ).fetchone()[0]
+            cur = conn.execute(
+                "SELECT * FROM bin_ranges WHERE binNum LIKE ? OR lowAccountRange LIKE ? LIMIT ? OFFSET ?",
+                (q + "%", q + "%", per_page, offset),
+            )
+        else:
+            tokens = [t for t in q.replace('"', "").replace("'", "").replace("(", "").replace(")", "").split() if t]
+            if not tokens:
+                return jsonify({"results": [], "total": 0, "pages": 0, "page": 1})
+            fts_q = " ".join(f'"{t}"*' for t in tokens)
+            total = conn.execute(
+                "SELECT COUNT(*) FROM bin_fts WHERE bin_fts MATCH ?",
+                (fts_q,),
+            ).fetchone()[0]
+            cur = conn.execute(
+                """SELECT bin_ranges.* FROM bin_fts
+                   JOIN bin_ranges ON bin_fts.rowid = bin_ranges.rowid
+                   WHERE bin_fts MATCH ?
+                   ORDER BY rank LIMIT ? OFFSET ?""",
+                (fts_q, per_page, offset),
+            )
+        results = [_bin_row_to_dict(r) for r in cur.fetchall()]
+        import math
+        pages = math.ceil(total / per_page) if total else 0
+        return jsonify({"results": results, "total": total, "page": page, "pages": pages})
+    except Exception as e:
+        return jsonify({"error": str(e), "results": [], "total": 0, "pages": 0, "page": 1})
+
+
+# BIN Lookup — download all BIN ranges as CSV
+# ----------------------------------------------------------------------------
+
+@app.route("/usecases/binlookup/download-bins")
+def binlookup_download_bins():
+    """Stream all BIN ranges from the Mastercard BIN Resource API as a CSV."""
+    import csv
+    import io
+    import json as _json
+    import requests as _req
+    import oauth1.authenticationutils as authutils
+    from oauth1.oauth import OAuth
+    from flask import Response, stream_with_context
+
+    consumer_key = os.environ.get("BINLOOKUP_CONSUMER_KEY", "")
+    key_path = os.environ.get("BINLOOKUP_SIGNING_KEY_PATH", "")
+    key_password = os.environ.get("BINLOOKUP_SIGNING_KEY_PASSWORD", "keystorepassword")
+    env = os.environ.get("BINLOOKUP_ENV", "sandbox").lower()
+    base_url = "https://api.mastercard.com/bin-resources" if env == "production" else "https://sandbox.api.mastercard.com/bin-resources"
+
+    if not consumer_key or consumer_key == "your-consumer-key-here" or not key_path:
+        return jsonify({"error": "BIN Lookup is not configured."}), 400
+
+    if not os.path.isabs(key_path):
+        key_path = os.path.join(os.path.dirname(__file__), key_path)
+
+    try:
+        signing_key = authutils.load_signing_key(key_path, key_password)
+    except Exception as e:
+        return jsonify({"error": f"Could not load signing key: {e}"}), 500
+
+    def generate():
+        output = io.StringIO()
+        writer = None
+        page = 1
+        total_pages = None
+
+        while total_pages is None or page <= total_pages:
+            url = f"{base_url}/bin-ranges?page={page}&size=10000"
+            body_str = "[]"
+            try:
+                auth_header = OAuth.get_authorization_header(url, "POST", body_str, consumer_key, signing_key)
+                headers = {"Content-Type": "application/json", "Accept": "application/json", "Authorization": auth_header}
+                resp = _req.post(url, data=body_str, headers=headers, timeout=30)
+                resp.raise_for_status()
+                data = resp.json()
+            except Exception as e:
+                yield f"# Error on page {page}: {e}\n"
+                break
+
+            items = data.get("items", [])
+            total_pages = data.get("totalPages", 1)
+
+            for item in items:
+                if writer is None:
+                    writer = csv.DictWriter(output, fieldnames=list(item.keys()), extrasaction="ignore")
+                    writer.writeheader()
+                    yield output.getvalue()
+                    output.seek(0); output.truncate(0)
+                writer.writerow(item)
+                yield output.getvalue()
+                output.seek(0); output.truncate(0)
+
+            page += 1
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=bin_ranges.csv"},
+    )
+
+
 @app.route("/usecases/findacard/health")
 def findacard_health():
     """Check whether the Find A Card service is reachable on localhost:5432."""
@@ -760,6 +1145,7 @@ def config_upload_key():
 
 
 if __name__ == "__main__":
+    _bin_try_load_from_disk()
     port = int(os.environ.get("PORT", "9021"))
     apis = api_registry.manifests()
     print("\n" + "=" * 60)
