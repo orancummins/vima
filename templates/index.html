@@ -88,8 +88,12 @@
     <aside class="sidebar">
       <div class="sidebar-title">APIs</div>
       <div class="api-list" id="api-list">
+        <button class="api-item api-item--about active" id="api-about-btn">
+          <span class="api-item-name">About</span>
+          <span class="api-item-about-icon">✦</span>
+        </button>
         {% for api in apis %}
-        <button class="api-item {% if loop.first %}active{% endif %}" data-api-id="{{ api.id }}"
+        <button class="api-item" data-api-id="{{ api.id }}"
                 title="{{ api.description }}">
           <span class="api-item-name">{{ api.name }}</span>
           <span class="api-item-status {% if api.configured %}ok{% else %}off{% endif %}"
@@ -100,6 +104,53 @@
     </aside>
 
     <section class="content">
+      <!-- About panel (default) -->
+      <div id="api-about-panel" class="api-about-panel">
+        <div class="aap-inner">
+          <div class="aap-globe-wrap">
+            <div class="aap-globe-glow"></div>
+            <canvas id="aap-globe" width="820" height="820"></canvas>
+          </div>
+          <div class="aap-text">
+            <div class="aap-eyebrow">Mastercard Developer APIs</div>
+            <h2 class="aap-title">Explore. Test. Extend.</h2>
+            <p class="aap-body">Browse and test Mastercard APIs directly from this panel. Select any API from the list to explore its operations, configure parameters and send live requests — all without leaving your browser.</p>
+            <div class="aap-features">
+              <div class="aap-feature">
+                <span class="aap-feature-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </span>
+                <div>
+                  <strong>Live requests</strong>
+                  <span>Send real API calls and inspect responses, headers and status codes instantly.</span>
+                </div>
+              </div>
+              <div class="aap-feature">
+                <span class="aap-feature-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                </span>
+                <div>
+                  <strong>Full operation coverage</strong>
+                  <span>Every endpoint, parameter and schema — browsable in one place.</span>
+                </div>
+              </div>
+              <div class="aap-feature">
+                <span class="aap-feature-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                </span>
+                <div>
+                  <strong>API key configuration</strong>
+                  <span>Keys and credentials are managed in <button class="aap-keys-link" id="aap-open-keys">Keys &amp; Config</button> — configure them before sending requests.</span>
+                </div>
+              </div>
+            </div>
+            <p class="aap-footer-note">Register and manage your API projects, keys &amp; certs at <a href="https://developer.mastercard.com" target="_blank" rel="noopener">developer.mastercard.com ↗</a>.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Normal API workbench -->
+      <div id="api-workbench" class="api-workbench hidden">
       <div class="content-sticky">
         <div class="api-header">
           <div>
@@ -159,16 +210,19 @@
           </div>
         </div>
       </div>
+      </div><!-- /#api-workbench -->
     </section>
   </main>
-
-  <!-- ====================== Use Cases ====================== -->
   <main class="panel hidden" id="panel-usecases">
     <aside class="sidebar">
       <div class="sidebar-title">Use Cases</div>
       <div class="api-list" id="usecase-list">
+        <button class="api-item api-item--about active" id="uc-about-btn">
+          <span class="api-item-name">About</span>
+          <span class="api-item-about-icon">✦</span>
+        </button>
         {% for uc in use_cases %}
-        <button class="api-item {% if loop.first %}active{% endif %}" data-uc-id="{{ uc.id }}">
+        <button class="api-item" data-uc-id="{{ uc.id }}">
           <span class="api-item-name">{{ uc.name }}</span>
         </button>
         {% endfor %}
@@ -178,7 +232,53 @@
         <div id="uc-sidebar-apis-list"></div>
       </div>
     </aside>
-    <section class="content">
+    <section class="content" id="uc-content-section">
+      <!-- Use Case About panel (default) -->
+      <div id="uc-about-panel" class="api-about-panel">
+        <div class="aap-inner">
+          <div class="aap-globe-wrap">
+            <div class="aap-globe-glow"></div>
+            <canvas id="uc-globe" width="820" height="820"></canvas>
+          </div>
+          <div class="aap-text">
+            <div class="aap-eyebrow">Mastercard Solution Studio</div>
+            <h2 class="aap-title">Explore. Innovate. Integrate.</h2>
+            <p class="aap-body">Use cases are end-to-end scenarios that show Mastercard APIs working together. Explore pre-built flows, craft your own constructs, and see how capabilities combine into real-world solutions.</p>
+            <div class="aap-features">
+              <div class="aap-feature">
+                <span class="aap-feature-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                </span>
+                <div>
+                  <strong>Explore capabilities</strong>
+                  <span>Step through live flows that demonstrate what Mastercard APIs can do, end to end.</span>
+                </div>
+              </div>
+              <div class="aap-feature">
+                <span class="aap-feature-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                </span>
+                <div>
+                  <strong>Craft new constructs</strong>
+                  <span>Compose API calls into custom workflows and experiment with parameters in real time.</span>
+                </div>
+              </div>
+              <div class="aap-feature">
+                <span class="aap-feature-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                </span>
+                <div>
+                  <strong>Integrate with Mastercard APIs</strong>
+                  <span>See exactly which APIs power each scenario and jump straight to their documentation.</span>
+                </div>
+              </div>
+            </div>
+            <p class="aap-footer-note">Select a use case from the list to get started.</p>
+          </div>
+        </div>
+      </div>
+      <!-- Use Case workbench -->
+      <div id="uc-workbench" class="api-workbench hidden">
       <div class="content-sticky">
         <div class="uc-header">
           <div class="uc-header-top">
@@ -196,6 +296,7 @@
       <div class="usecase-body" id="uc-body">
         <p class="muted">Select a use case to begin.</p>
       </div>
+      </div><!-- /#uc-workbench -->
     </section>
   </main>
 

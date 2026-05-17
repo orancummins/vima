@@ -229,7 +229,7 @@
   // ---------------------------------------------------------------------
   // API state
   // ---------------------------------------------------------------------
-  let currentApiId = APIS.length ? APIS[0].id : null;
+  let currentApiId = null;  // null = About panel shown; set when user selects an API
   let currentOpId = null;
   let currentState = {};
 
@@ -247,6 +247,121 @@
   }
 
   // ---------------------------------------------------------------------
+  // API About panel & globe
+  // ---------------------------------------------------------------------
+  (function () {
+    const aboutBtn = document.getElementById('api-about-btn');
+    const aboutPanel = document.getElementById('api-about-panel');
+    const workbench = document.getElementById('api-workbench');
+
+    const apisPanel = document.getElementById('panel-apis');
+
+    function showAbout() {
+      document.querySelectorAll('[data-api-id]').forEach(b => b.classList.remove('active'));
+      if (aboutBtn) aboutBtn.classList.add('active');
+      if (aboutPanel) aboutPanel.classList.remove('hidden');
+      if (workbench) workbench.classList.add('hidden');
+      if (apisPanel) apisPanel.classList.add('panel--about');
+    }
+
+    function showWorkbench() {
+      if (aboutBtn) aboutBtn.classList.remove('active');
+      if (aboutPanel) aboutPanel.classList.add('hidden');
+      if (workbench) workbench.classList.remove('hidden');
+      if (apisPanel) apisPanel.classList.remove('panel--about');
+    }
+
+    if (aboutBtn) aboutBtn.addEventListener('click', showAbout);
+
+    // "Keys & Config" shortcut inside the about panel
+    const keysLink = document.getElementById('aap-open-keys');
+    if (keysLink) keysLink.addEventListener('click', () => {
+      const cfgBtn = document.getElementById('cfg-btn');
+      if (cfgBtn) cfgBtn.click();
+    });
+
+    // Expose for API item clicks
+    window._showApiWorkbench = showWorkbench;
+
+    // Grey globe animation
+    const canvas = document.getElementById('aap-globe');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      const SIZE = 820, RADIUS = SIZE * 0.32, CX = SIZE / 2, CY = SIZE / 2;
+      const SPEED = 0.003, TOTAL_DOTS = 90;
+      const pts = [];
+      for (let i = 0; i < TOTAL_DOTS; i++) {
+        const phi = Math.acos(-1 + (2 * i) / TOTAL_DOTS);
+        const theta = Math.sqrt(TOTAL_DOTS * Math.PI) * phi;
+        pts.push({ x: Math.cos(theta) * Math.sin(phi), y: Math.sin(theta) * Math.sin(phi), z: Math.cos(phi) });
+      }
+      let rot = 0, last = null;
+      function renderGlobe(ts) {
+        const delta = last ? Math.min((ts - last) / 16.667, 2) : 1;
+        last = ts;
+        ctx.clearRect(0, 0, SIZE, SIZE);
+        const gOpacity = 0.18;
+        ctx.lineWidth = 0.9;
+        for (let lat = -80; lat <= 80; lat += 20) {
+          const lR = (lat * Math.PI) / 180;
+          for (let seg = 0; seg < 360; seg += 5) {
+            const l0 = ((seg * Math.PI) / 180) + rot;
+            const l1 = (((seg + 5) * Math.PI) / 180) + rot;
+            const z0 = Math.cos(lR) * Math.sin(l0), z1 = Math.cos(lR) * Math.sin(l1);
+            const a = gOpacity * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
+            if (a < 0.005) continue;
+            const s0 = 1 / (1.8 - z0), s1 = 1 / (1.8 - z1);
+            ctx.strokeStyle = `rgba(255,110,20,${a})`;
+            ctx.beginPath();
+            ctx.moveTo(CX + Math.cos(lR) * Math.cos(l0) * RADIUS * s0, CY + Math.sin(lR) * RADIUS * s0);
+            ctx.lineTo(CX + Math.cos(lR) * Math.cos(l1) * RADIUS * s1, CY + Math.sin(lR) * RADIUS * s1);
+            ctx.stroke();
+          }
+        }
+        for (let lon = 0; lon < 360; lon += 20) {
+          for (let seg = -88; seg < 90; seg += 5) {
+            const l0 = (seg * Math.PI) / 180, l1 = ((seg + 5) * Math.PI) / 180;
+            const lR = ((lon * Math.PI) / 180) + rot;
+            const z0 = Math.cos(l0) * Math.sin(lR), z1 = Math.cos(l1) * Math.sin(lR);
+            const a = gOpacity * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
+            if (a < 0.005) continue;
+            const s0 = 1 / (1.8 - z0), s1 = 1 / (1.8 - z1);
+            ctx.strokeStyle = `rgba(255,110,20,${a})`;
+            ctx.beginPath();
+            ctx.moveTo(CX + Math.cos(l0) * Math.cos(lR) * RADIUS * s0, CY + Math.sin(l0) * RADIUS * s0);
+            ctx.lineTo(CX + Math.cos(l1) * Math.cos(lR) * RADIUS * s1, CY + Math.sin(l1) * RADIUS * s1);
+            ctx.stroke();
+          }
+        }
+        const projected = pts.map(p => {
+          const rx = p.x * Math.cos(rot) - p.z * Math.sin(rot);
+          const rz = p.x * Math.sin(rot) + p.z * Math.cos(rot);
+          const sc = 1 / (1.8 - rz);
+          const fade = Math.max(0, Math.min(1, (rz + 0.2) / 0.4));
+          return { px: CX + rx * RADIUS * sc, py: CY + p.y * RADIUS * sc, rz, sc, alpha: 0.15 + fade * 0.75 };
+        });
+        projected.filter(p => p.rz > -0.18).sort((a, b) => a.rz - b.rz).forEach(p => {
+          const r = Math.round(255);
+          const g = Math.round(110 + p.alpha * 40);
+          ctx.shadowColor = `rgba(255,80,0,${p.alpha * 0.8})`;
+          ctx.shadowBlur = 8 * p.sc;
+          ctx.fillStyle = `rgba(${r},${g},20,${p.alpha})`;
+          ctx.beginPath();
+          ctx.arc(p.px, p.py, 2.5 * p.sc, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.shadowBlur = 0;
+        rot += SPEED * delta;
+        requestAnimationFrame(renderGlobe);
+      }
+      requestAnimationFrame(renderGlobe);
+    }
+
+    // Set initial state
+    showAbout();
+  })();
+
+  // ---------------------------------------------------------------------
   // API list (sidebar)
   // ---------------------------------------------------------------------
   document.querySelectorAll("[data-api-id]").forEach((btn) => {
@@ -255,6 +370,7 @@
       btn.classList.add("active");
       currentApiId = btn.dataset.apiId;
       currentOpId = null;
+      if (window._showApiWorkbench) window._showApiWorkbench();
       renderApi();
     });
   });
@@ -6555,10 +6671,117 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
+  // ---------------------------------------------------------------------
+  // Use Case About panel & globe
+  // ---------------------------------------------------------------------
+  (function () {
+    const aboutBtn   = document.getElementById('uc-about-btn');
+    const aboutPanel = document.getElementById('uc-about-panel');
+    const workbench  = document.getElementById('uc-workbench');
+    const contentSec = document.getElementById('uc-content-section');
+
+    function ucShowAbout() {
+      document.querySelectorAll('[data-uc-id]').forEach(b => b.classList.remove('active'));
+      if (aboutBtn)   aboutBtn.classList.add('active');
+      if (aboutPanel) aboutPanel.classList.remove('hidden');
+      if (workbench)  workbench.classList.add('hidden');
+      if (contentSec) contentSec.classList.add('uc--about');
+      const sidebarApis = document.getElementById('uc-sidebar-apis');
+      if (sidebarApis) sidebarApis.classList.add('hidden');
+    }
+
+    function ucShowWorkbench() {
+      if (aboutBtn)   aboutBtn.classList.remove('active');
+      if (aboutPanel) aboutPanel.classList.add('hidden');
+      if (workbench)  workbench.classList.remove('hidden');
+      if (contentSec) contentSec.classList.remove('uc--about');
+    }
+
+    if (aboutBtn) aboutBtn.addEventListener('click', ucShowAbout);
+    window._showUcWorkbench = ucShowWorkbench;
+
+    // Globe animation
+    const canvas = document.getElementById('uc-globe');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      const SIZE = 820, RADIUS = SIZE * 0.32, CX = SIZE / 2, CY = SIZE / 2;
+      const SPEED = 0.003, TOTAL_DOTS = 90;
+      const pts = [];
+      for (let i = 0; i < TOTAL_DOTS; i++) {
+        const phi = Math.acos(-1 + (2 * i) / TOTAL_DOTS);
+        const theta = Math.sqrt(TOTAL_DOTS * Math.PI) * phi;
+        pts.push({ x: Math.cos(theta) * Math.sin(phi), y: Math.sin(theta) * Math.sin(phi), z: Math.cos(phi) });
+      }
+      let rot = 0, last = null;
+      function renderUcGlobe(ts) {
+        const delta = last ? Math.min((ts - last) / 16.667, 2) : 1;
+        last = ts;
+        ctx.clearRect(0, 0, SIZE, SIZE);
+        const gOpacity = 0.18;
+        ctx.lineWidth = 0.9;
+        for (let lat = -80; lat <= 80; lat += 20) {
+          const lR = (lat * Math.PI) / 180;
+          for (let seg = 0; seg < 360; seg += 5) {
+            const l0 = ((seg * Math.PI) / 180) + rot;
+            const l1 = (((seg + 5) * Math.PI) / 180) + rot;
+            const z0 = Math.cos(lR) * Math.sin(l0), z1 = Math.cos(lR) * Math.sin(l1);
+            const a = gOpacity * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
+            if (a < 0.005) continue;
+            const s0 = 1 / (1.8 - z0), s1 = 1 / (1.8 - z1);
+            ctx.strokeStyle = `rgba(255,110,20,${a})`;
+            ctx.beginPath();
+            ctx.moveTo(CX + Math.cos(lR) * Math.cos(l0) * RADIUS * s0, CY + Math.sin(lR) * RADIUS * s0);
+            ctx.lineTo(CX + Math.cos(lR) * Math.cos(l1) * RADIUS * s1, CY + Math.sin(lR) * RADIUS * s1);
+            ctx.stroke();
+          }
+        }
+        for (let lon = 0; lon < 360; lon += 20) {
+          for (let seg = -88; seg < 90; seg += 5) {
+            const l0 = (seg * Math.PI) / 180, l1 = ((seg + 5) * Math.PI) / 180;
+            const lR = ((lon * Math.PI) / 180) + rot;
+            const z0 = Math.cos(l0) * Math.sin(lR), z1 = Math.cos(l1) * Math.sin(lR);
+            const a = gOpacity * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
+            if (a < 0.005) continue;
+            const s0 = 1 / (1.8 - z0), s1 = 1 / (1.8 - z1);
+            ctx.strokeStyle = `rgba(255,110,20,${a})`;
+            ctx.beginPath();
+            ctx.moveTo(CX + Math.cos(l0) * Math.cos(lR) * RADIUS * s0, CY + Math.sin(l0) * RADIUS * s0);
+            ctx.lineTo(CX + Math.cos(l1) * Math.cos(lR) * RADIUS * s1, CY + Math.sin(l1) * RADIUS * s1);
+            ctx.stroke();
+          }
+        }
+        const projected = pts.map(p => {
+          const rx = p.x * Math.cos(rot) - p.z * Math.sin(rot);
+          const rz = p.x * Math.sin(rot) + p.z * Math.cos(rot);
+          const sc = 1 / (1.8 - rz);
+          const fade = Math.max(0, Math.min(1, (rz + 0.2) / 0.4));
+          return { px: CX + rx * RADIUS * sc, py: CY + p.y * RADIUS * sc, rz, sc, alpha: 0.15 + fade * 0.75 };
+        });
+        projected.filter(p => p.rz > -0.18).sort((a, b) => a.rz - b.rz).forEach(p => {
+          const g = Math.round(110 + p.alpha * 40);
+          ctx.shadowColor = `rgba(255,80,0,${p.alpha * 0.8})`;
+          ctx.shadowBlur = 8 * p.sc;
+          ctx.fillStyle = `rgba(255,${g},20,${p.alpha})`;
+          ctx.beginPath();
+          ctx.arc(p.px, p.py, 2.5 * p.sc, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.shadowBlur = 0;
+        rot += SPEED * delta;
+        requestAnimationFrame(renderUcGlobe);
+      }
+      requestAnimationFrame(renderUcGlobe);
+    }
+
+    // Set initial state
+    ucShowAbout();
+  })();
+
   document.querySelectorAll("[data-uc-id]").forEach((btn) => {
     btn.addEventListener("click", () => {
       // Close fullscreen overlay if open so #uc-body returns to normal position
       document.getElementById('uc-fullscreen-overlay')?.querySelector('.uc-fullscreen-reduce-btn')?.click();
+      if (window._showUcWorkbench) window._showUcWorkbench();
       document.querySelectorAll("[data-uc-id]").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       renderUseCase(btn.dataset.ucId);
@@ -6637,7 +6860,6 @@
 
   if (currentApiId) renderApi();
   if (USE_CASES.length) {
-    renderUseCase(USE_CASES[0].id);
     _startPolling(); // begin polling for badge updates immediately
   }
 
