@@ -737,7 +737,6 @@
     // Clear log and close drawer when switching use cases
     if (uc.id !== _currentUcId) {
       API_CALL_LOG.length = 0;
-      _lastSeq = 0;
       apiCallsClose();
     }
     _currentUcId = uc.id;
@@ -1549,6 +1548,11 @@
           ` : `<p class="psi-hint">Enter a Customer ID and load their accounts to begin.</p>`}
         </div>
 
+        <div class="psi-disclaimer">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" style="width:13px;height:13px;flex-shrink:0"><path d="M8 1.5L1 14h14L8 1.5z"/><path d="M8 6v4M8 11.5v.5"/></svg>
+          NOTE: THIS IS NOT RUNNING THE PRODUCTION PSI MODEL — TREAT RESULTS AS ILLUSTRATIVE
+        </div>
+
         <div id="psi-result-area">
           ${PSI.loading ? `<div class="psi-loading-state"><div class="psi-spinner psi-spinner--lg"></div><p>Calling Payment Success Indicator API…</p></div>` : ""}
           ${!PSI.loading && PSI.result ? psiResultHtml(PSI.result) : ""}
@@ -1578,126 +1582,179 @@
       </div>`;
   }
 
+  function psiGaugeSvg(score, level) {
+    const colors = { low: "#10b981", medium: "#f59e0b", high: "#ef4444" };
+    const fgColor = colors[level] || colors.medium;
+    const r = 54;
+    const total = Math.PI * r; // semicircle arc length ≈ 169.6
+    const filled = (score / 100) * total;
+    return `
+      <div class="psi-gauge">
+        <svg viewBox="0 0 144 80" class="psi-gauge-svg">
+          <path d="M18 72 A54 54 0 0 1 126 72"
+            fill="none" stroke="#f0f1f5" stroke-width="11" stroke-linecap="round"/>
+          <path d="M18 72 A54 54 0 0 1 126 72"
+            fill="none" stroke="${fgColor}" stroke-width="11" stroke-linecap="round"
+            stroke-dasharray="${filled.toFixed(1)} ${(total + 4).toFixed(1)}"/>
+          <text x="72" y="62" text-anchor="middle"
+            font-size="30" font-weight="900" fill="${fgColor}" font-family="inherit">${score}</text>
+          <text x="72" y="74" text-anchor="middle"
+            font-size="9" fill="#bbb" font-family="inherit">out of 100</text>
+        </svg>
+        <div class="psi-gauge-label psi-gauge-label--${level}">${
+          level === "low" ? "Low risk" : level === "medium" ? "Moderate risk" : "High risk"
+        }</div>
+      </div>`;
+  }
+
   function psiResultHtml(r) {
     if (r.error) {
       return `<div class="psi-error-card"><span class="psi-error-icon">⚠</span><div><strong>Assessment failed</strong><p>${escapeHtml(r.error)}</p></div></div>`;
     }
 
     const daily = r.dailyResults || [];
-    const selDay = daily[PSI.selectedDay] || daily[0] || {};
     const hasNsf = daily.length > 0;
+    const selDay = daily[PSI.selectedDay] || daily[0] || {};
     const unauth = r.unauthorizedReturnRisk;
 
     // Best settlement day (lowest nsfScore)
     let bestIdx = 0;
     daily.forEach((d, i) => { if (d.nsfScore < daily[bestIdx].nsfScore) bestIdx = i; });
 
+    // Verdict: based on today's (first day's) risk level
+    const verdictLevel = (daily[0] || {}).riskLevel || (unauth || {}).riskLevel || "low";
+    const VERDICT = {
+      low:    { icon: "✓", title: "Low Risk · Ready to Send",
+                sub: "Confidence is high that this payment will clear successfully." },
+      medium: { icon: "⚠", title: "Moderate Risk · Proceed with Caution",
+                sub: "Consider settling on the recommended date to reduce NSF return risk." },
+      high:   { icon: "✗", title: "High Return Risk · Consider Delaying",
+                sub: "This account shows elevated NSF risk today. Settling on the recommended date significantly lowers that risk." },
+    };
+    const verdict = VERDICT[verdictLevel] || VERDICT.medium;
+
+    const amtFmt = n => "$" + Number(n).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
+    const balance = r.availableBalance;
+    const amount  = r.amount || 0;
+    const covered = balance != null ? balance >= amount : null;
+
     return `
       <div class="psi-result">
 
-        <!-- Summary strip -->
-        <div class="psi-summary">
-          <div class="psi-summary-item">
-            <label>Transaction</label>
-            <span class="psi-summary-amount">$${Number(r.amount || 0).toLocaleString("en-US", {minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+        <!-- Verdict banner -->
+        <div class="psi-verdict psi-verdict--${verdictLevel}">
+          <div class="psi-verdict-icon">${verdict.icon}</div>
+          <div class="psi-verdict-body">
+            <div class="psi-verdict-title">${verdict.title}</div>
+            <div class="psi-verdict-sub">${verdict.sub}</div>
           </div>
-          <div class="psi-summary-divider"></div>
-          ${r.availableBalance != null ? `
-          <div class="psi-summary-item">
-            <label>Available Balance</label>
-            <span class="psi-summary-balance">$${Number(r.availableBalance).toLocaleString("en-US", {minimumFractionDigits:2,maximumFractionDigits:2})}</span>
-          </div>
-          <div class="psi-summary-divider"></div>` : ""}
-          <div class="psi-summary-item">
-            <label>Settle by</label>
-            <span>${escapeHtml(psiShortDate(r.settleByDate))}</span>
-          </div>
-          <div class="psi-summary-divider"></div>
-          <div class="psi-summary-item">
-            <label>Assessment date</label>
-            <span>${escapeHtml(r.requestDate || "")}</span>
-          </div>
-          ${daily.length ? `
-          <div class="psi-summary-divider"></div>
-          <div class="psi-summary-item">
-            <label>Best settlement day</label>
-            <span class="psi-best-day">${escapeHtml(psiShortDate(daily[bestIdx].date))}</span>
+          ${hasNsf ? `
+          <div class="psi-verdict-recommend">
+            <span class="psi-verdict-rec-label">Recommended settlement</span>
+            <span class="psi-verdict-rec-date">${escapeHtml(psiShortDate(daily[bestIdx].date))}</span>
           </div>` : ""}
         </div>
 
+        <!-- Main grid: gauge + details -->
+        <div class="psi-main-grid">
+
+          ${hasNsf ? `
+          <div class="psi-gauge-card">
+            <div class="psi-card-label">NSF Return Risk</div>
+            ${psiGaugeSvg(Math.round(selDay.nsfScore ?? 0), selDay.riskLevel || verdictLevel)}
+            <div class="psi-gauge-meta">
+              <span class="psi-indicator-badge psi-ibadge--${selDay.riskLevel}">${escapeHtml(selDay.indicator || "")}</span>
+              <span class="psi-card-sub">Settlement confidence: <strong>${Math.round(selDay.confidence ?? 0)}%</strong></span>
+            </div>
+            <p class="psi-card-desc">NSF return probability (0–100). Lower is better. Click a day in the timeline to compare dates.</p>
+          </div>` : ""}
+
+          <div class="psi-details-card">
+            <div class="psi-detail-row">
+              <span class="psi-detail-label">Transaction amount</span>
+              <span class="psi-detail-value">${amtFmt(amount)}</span>
+            </div>
+            ${balance != null ? `
+            <div class="psi-detail-row">
+              <span class="psi-detail-label">Available balance</span>
+              <span class="psi-detail-value psi-detail-value--balance">${amtFmt(balance)}</span>
+            </div>
+            <div class="psi-detail-row">
+              <span class="psi-detail-label">Coverage</span>
+              <span class="psi-detail-value ${covered ? "psi-detail-ok" : "psi-detail-warn"}">${covered ? "✓ Covered" : "✗ Insufficient"}</span>
+            </div>` : ""}
+            ${r.settleByDate ? `
+            <div class="psi-detail-row">
+              <span class="psi-detail-label">Settle by</span>
+              <span class="psi-detail-value">${escapeHtml(psiShortDate(r.settleByDate))}</span>
+            </div>` : ""}
+            ${r.requestDate ? `
+            <div class="psi-detail-row">
+              <span class="psi-detail-label">Assessment date</span>
+              <span class="psi-detail-value">${escapeHtml(r.requestDate)}</span>
+            </div>` : ""}
+
+            ${unauth ? `
+            <div class="psi-detail-divider"></div>
+            <div class="psi-card-label" style="padding:12px 0 8px">Unauthorized Return Risk</div>
+            <div class="psi-unauth-row">
+              <div class="psi-unauth-score psi-score--${unauth.riskLevel}">${Math.round(unauth.score ?? 0)}</div>
+              <div>
+                <span class="psi-indicator-badge psi-ibadge--${unauth.riskLevel}">${escapeHtml(unauth.indicator || "")}</span>
+                <div class="psi-card-sub" style="margin-top:5px">First/third-party fraud signal.<br>Score 0–100 — lower is better.</div>
+              </div>
+            </div>` : ""}
+          </div>
+        </div>
+
         ${hasNsf ? `
-        <!-- Timeline chart -->
+        <!-- Timeline: NSF risk by day (shorter = safer) -->
         <div class="psi-timeline">
           <div class="psi-timeline-head">
             <div>
-              <div class="psi-section-title">Settlement Confidence — ${daily.length}-Day Window</div>
-              <div class="psi-section-sub">Higher bars = greater confidence payment will clear without NSF. Click a day to inspect risk factors.</div>
+              <div class="psi-section-title">10-Day Settlement Window</div>
+              <div class="psi-section-sub">NSF risk by settlement date — shorter bars are safer. Click any day to inspect risk factors.</div>
             </div>
           </div>
           <div class="psi-timeline-bars" id="psi-bars">
             ${daily.map((d, i) => {
-              const conf = d.confidence;
-              const lvl  = d.riskLevel;
               const isBest = i === bestIdx;
               const isSel  = i === PSI.selectedDay;
-              return `<div class="psi-day ${isBest ? "psi-day--best" : ""} ${isSel ? "psi-day--selected" : ""}" data-day-idx="${i}" title="${escapeHtml(d.indicator)}">
+              const barH   = Math.max(4, Math.round(d.nsfScore * 1.6));
+              return `<div class="psi-day ${isBest ? "psi-day--best" : ""} ${isSel ? "psi-day--selected" : ""}" data-day-idx="${i}">
                 ${isBest ? `<div class="psi-day-best-label">Best</div>` : ""}
-                <div class="psi-day-conf">${Math.round(conf)}%</div>
+                <div class="psi-day-conf">${Math.round(d.nsfScore)}</div>
                 <div class="psi-day-bar-wrap">
-                  <div class="psi-day-bar psi-bar--${lvl}" style="height:${Math.max(4,Math.round(conf * 1.1))}px"></div>
+                  <div class="psi-day-bar psi-bar--${d.riskLevel}" style="height:${barH}px"></div>
                 </div>
                 <div class="psi-day-date">${escapeHtml(psiShortDate(d.date))}</div>
-                <div class="psi-day-badge psi-badge--${lvl}">${lvl === "low" ? "Low" : lvl === "medium" ? "Med" : "High"}</div>
+                <div class="psi-day-badge psi-badge--${d.riskLevel}">${d.riskLevel === "low" ? "Low" : d.riskLevel === "medium" ? "Med" : "High"}</div>
               </div>`;
             }).join("")}
           </div>
+          <div class="psi-timeline-legend">
+            <span class="psi-legend-item psi-legend--low">Low risk</span>
+            <span class="psi-legend-item psi-legend--medium">Moderate</span>
+            <span class="psi-legend-item psi-legend--high">High risk</span>
+            <span class="psi-legend-best">★ Best settlement day</span>
+          </div>
         </div>
-        ` : r.nsfError ? `<div class="psi-error-card"><span class="psi-error-icon">⚠</span><div><strong>NSF score unavailable</strong><p>${escapeHtml((r.nsfError.message||r.nsfError.title||JSON.stringify(r.nsfError)))}</p></div></div>` : ""}
-
-        <!-- Score cards -->
-        <div class="psi-cards">
-          ${hasNsf ? `
-          <div class="psi-card">
-            <div class="psi-card-label">NSF Return Risk</div>
-            <div class="psi-card-row">
-              <div class="psi-card-score psi-score--${selDay.riskLevel}">${Math.round(selDay.nsfScore ?? 0)}</div>
-              <div class="psi-card-score-meta">
-                <span class="psi-indicator-badge psi-ibadge--${selDay.riskLevel}">${escapeHtml(selDay.indicator||"")}</span>
-                <span class="psi-card-sub">Settlement confidence: <strong>${Math.round(selDay.confidence ?? 0)}%</strong></span>
-                <span class="psi-card-sub">${escapeHtml(psiShortDate(selDay.date))}</span>
-              </div>
-            </div>
-            <p class="psi-card-desc">Probability that this payment will result in an Insufficient Funds return. Score 0–100; lower is better.</p>
-          </div>` : ""}
-
-          ${unauth ? `
-          <div class="psi-card">
-            <div class="psi-card-label">Unauthorized Return Risk</div>
-            <div class="psi-card-row">
-              <div class="psi-card-score psi-score--${unauth.riskLevel}">${Math.round(unauth.score ?? 0)}</div>
-              <div class="psi-card-score-meta">
-                <span class="psi-indicator-badge psi-ibadge--${unauth.riskLevel}">${escapeHtml(unauth.indicator||"")}</span>
-                <span class="psi-card-sub">Fraud signal score</span>
-              </div>
-            </div>
-            <p class="psi-card-desc">Likelihood the transaction will be disputed as unauthorized due to first- or third-party fraud. Score 0–100; lower is better.</p>
-          </div>` : ""}
-        </div>
+        ` : r.nsfError ? `<div class="psi-error-card"><span class="psi-error-icon">⚠</span><div><strong>NSF score unavailable</strong><p>${escapeHtml((r.nsfError.message || r.nsfError.title || JSON.stringify(r.nsfError)))}</p></div></div>` : ""}
 
         ${selDay.reasons && Object.values(selDay.reasons).some(v => v > 0) ? `
         <!-- Risk factor breakdown -->
         <div class="psi-factors">
           <div class="psi-section-title">Risk Factor Breakdown <span class="psi-factors-date">— ${escapeHtml(psiShortDate(selDay.date))}</span></div>
-          <div class="psi-section-sub" style="margin-bottom:16px">Component scores driving the NSF risk assessment. Each factor is weighted 0–100; higher = more risk.</div>
+          <div class="psi-section-sub" style="margin-bottom:16px">Component scores driving the NSF risk assessment. Higher = more risk.</div>
           <div class="psi-factors-grid">
             ${Object.entries(selDay.reasons).map(([key, val]) => `
               <div class="psi-factor">
-                <div class="psi-factor-label">${escapeHtml(PSI_FACTOR_LABELS[key] || key)}</div>
-                <div class="psi-factor-row">
-                  <div class="psi-factor-track">
-                    <div class="psi-factor-fill" style="width:${val}%; background:${psiFactorColor(val)}"></div>
-                  </div>
+                <div class="psi-factor-header">
+                  <div class="psi-factor-label">${escapeHtml(PSI_FACTOR_LABELS[key] || key)}</div>
                   <span class="psi-factor-score" style="color:${psiFactorColor(val)}">${val}</span>
+                </div>
+                <div class="psi-factor-track">
+                  <div class="psi-factor-fill" style="width:${val}%; background:${psiFactorColor(val)}"></div>
                 </div>
               </div>
             `).join("")}
@@ -1810,6 +1867,8 @@
   // data returned by the Mastercard BIN Resource Lookup API.
 
   const BIN = { bin: "543210", card: null, loading: false };
+  const BIN_DB = { status: "idle", count: 0, loadedAt: null, error: null, searchQuery: "", results: [], searching: false, expandedIdx: null, page: 1, pages: 0, total: 0, persisted: false };
+  let BIN_TAB = "lookup"; // "lookup" | "batch"
 
   const BIN_PRESET_OPTIONS = [
     { value: "543210", label: "543210 — Buckeye State Credit Union (US)" },
@@ -1824,26 +1883,60 @@
     if (!body) return;
     body.innerHTML = `
       <div class="bin-stage">
-        <div class="bin-form-row">
-          <div class="bin-field">
-            <label for="bin-select">BIN / Issuer</label>
-            <select id="bin-select">
-              ${BIN_PRESET_OPTIONS.map(o =>
-                `<option value="${escapeHtml(o.value)}"${o.value === BIN.bin ? " selected" : ""}>${escapeHtml(o.label)}</option>`
-              ).join("")}
-            </select>
-          </div>
-          <button class="bin-lookup-btn" id="bin-lookup-btn"${BIN.loading ? " disabled" : ""}>
-            ${BIN.loading
-              ? `<span class="psi-spinner"></span>Looking up…`
-              : `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>Look Up Card`}
+        <nav class="bin-tabs" role="tablist">
+          <button class="bin-tab${BIN_TAB === "lookup" ? " bin-tab--active" : ""}" id="bin-tab-lookup" role="tab">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="16" height="12" rx="2"/><path d="M6 9h8M6 13h4" stroke-linecap="round"/></svg>
+            Single Lookup
           </button>
-        </div>
-        <div class="bin-scene" id="bin-scene">
-          ${BIN.card ? binSceneHtml(BIN.card) : ""}
+          <button class="bin-tab${BIN_TAB === "batch" ? " bin-tab--active" : ""}" id="bin-tab-batch" role="tab">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="10" cy="5" rx="7" ry="3"/><path d="M3 5v4c0 1.657 3.134 3 7 3s7-1.343 7-3V5"/><path d="M3 9v4c0 1.657 3.134 3 7 3s7-1.343 7-3V9"/></svg>
+            Batch Search
+            ${BIN_DB.status === "loaded" ? `<span class="bin-tab-badge">${BIN_DB.count.toLocaleString()}</span>` : ""}
+          </button>
+        </nav>
+        <div class="bin-tab-content">
+          ${BIN_TAB === "lookup" ? _binLookupPanelHtml() : binDbPanelHtml()}
         </div>
       </div>`;
-    binWire();
+    // Tab switching
+    document.getElementById("bin-tab-lookup")?.addEventListener("click", () => {
+      if (BIN_TAB === "lookup") return;
+      BIN_TAB = "lookup";
+      renderBinLookup();
+    });
+    document.getElementById("bin-tab-batch")?.addEventListener("click", () => {
+      if (BIN_TAB === "batch") return;
+      BIN_TAB = "batch";
+      renderBinLookup();
+      _binDbSyncStatus();
+    });
+    if (BIN_TAB === "lookup") {
+      binWire();
+    } else {
+      binDbWire();
+    }
+  }
+
+  function _binLookupPanelHtml() {
+    return `
+      <div class="bin-form-row">
+        <div class="bin-field">
+          <label for="bin-select">BIN / Issuer</label>
+          <select id="bin-select">
+            ${BIN_PRESET_OPTIONS.map(o =>
+              `<option value="${escapeHtml(o.value)}"${o.value === BIN.bin ? " selected" : ""}>${escapeHtml(o.label)}</option>`
+            ).join("")}
+          </select>
+        </div>
+        <button class="bin-lookup-btn" id="bin-lookup-btn"${BIN.loading ? " disabled" : ""}>
+          ${BIN.loading
+            ? `<span class="psi-spinner"></span>Looking up…`
+            : `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>Look Up Card`}
+        </button>
+      </div>
+      <div class="bin-scene" id="bin-scene">
+        ${BIN.card ? binSceneHtml(BIN.card) : ""}
+      </div>`;
   }
 
   function binEmptySceneHtml() {
@@ -2160,6 +2253,369 @@
     });
   }
 
+  // ─── BIN Ranges DB panel ─────────────────────────────────────────────────
+
+  function binDbStatusHtml() {
+    const s = BIN_DB.status;
+    if (s === "loaded") {
+      const ago = BIN_DB.loadedAt ? _binTimeAgo(BIN_DB.loadedAt) : "";
+      const diskNote = BIN_DB.persisted
+        ? ` <span class="bin-db-badge-disk" title="Restored from local database"><svg width="10" height="10" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="10" cy="6" rx="7" ry="3"/><path d="M3 6v4c0 1.657 3.134 3 7 3s7-1.343 7-3V6"/><path d="M3 10v4c0 1.657 3.134 3 7 3s7-1.343 7-3v-4"/></svg> Saved locally</span>`
+        : "";
+      return `<span class="bin-db-badge bin-db-badge--ok">
+        <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#1f9d55"/></svg>
+        ${BIN_DB.count.toLocaleString()} ranges loaded${ago ? " · " + ago : ""}
+      </span>${diskNote}`;
+    }
+    if (s === "loading") {
+      return `<span class="bin-db-badge bin-db-badge--loading">
+        <span class="psi-spinner" style="width:10px;height:10px;border-width:1.5px"></span> Loading…
+      </span>`;
+    }
+    if (s === "error") {
+      return `<span class="bin-db-badge bin-db-badge--err">
+        <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#eb001b"/></svg>
+        Error${BIN_DB.error ? ": " + escapeHtml(BIN_DB.error) : ""}
+      </span>`;
+    }
+    return `<span class="bin-db-badge bin-db-badge--idle">
+      <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#aaa"/></svg>
+      Not loaded
+    </span>`;
+  }
+
+  function _binDbPaginationHtml() {
+    if (BIN_DB.pages <= 1) return "";
+    const p = BIN_DB.page, pp = BIN_DB.pages;
+    // Build page number buttons — always show first, last, and a window around current
+    const btns = [];
+    const window = 2;
+    let prev = null;
+    for (let i = 1; i <= pp; i++) {
+      if (i === 1 || i === pp || (i >= p - window && i <= p + window)) {
+        if (prev !== null && i > prev + 1) btns.push(null); // ellipsis
+        btns.push(i);
+        prev = i;
+      }
+    }
+    const pageNums = btns.map(i =>
+      i === null
+        ? `<span class="bin-db-pg-ellipsis">…</span>`
+        : `<button class="bin-db-pg-btn${i === p ? " bin-db-pg-btn--active" : ""}" data-pg="${i}">${i}</button>`
+    ).join("");
+    return `
+      <div class="bin-db-pagination">
+        <button class="bin-db-pg-btn bin-db-pg-nav" data-pg="${p - 1}"${p <= 1 ? " disabled" : ""}>
+          <svg width="12" height="12" viewBox="0 0 12 12"><path d="M8 2L4 6l4 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        ${pageNums}
+        <button class="bin-db-pg-btn bin-db-pg-nav" data-pg="${p + 1}"${p >= pp ? " disabled" : ""}>
+          <svg width="12" height="12" viewBox="0 0 12 12"><path d="M4 2l4 4-4 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="bin-db-pg-info">${BIN_DB.total.toLocaleString()} result${BIN_DB.total === 1 ? "" : "s"}</span>
+      </div>`;
+  }
+
+  function binDbResultsHtml() {
+    if (BIN_DB.searching) {
+      return `<div class="bin-db-results-placeholder"><span class="psi-spinner"></span> Searching…</div>`;
+    }
+    if (!BIN_DB.searchQuery) return "";
+    if (!BIN_DB.results.length) {
+      return `<div class="bin-db-results-placeholder">No results for <strong>${escapeHtml(BIN_DB.searchQuery)}</strong></div>`;
+    }
+    const rows = BIN_DB.results.map((r, i) => {
+      const country = r.country && typeof r.country === "object" ? r.country.name : String(r.country || "—");
+      const expanded = BIN_DB.expandedIdx === i;
+      const low = r.lowAccountRange || "";
+      const high = r.highAccountRange || "";
+      const range = low === high ? low : `${low}–${high.slice(-6)}`;
+      return `
+        <tr class="bin-db-row${expanded ? " bin-db-row--open" : ""}" data-idx="${i}">
+          <td class="bin-db-cell bin-db-cell--bin">${escapeHtml(String(r.binNum || ""))}</td>
+          <td class="bin-db-cell">${escapeHtml(r.customerName || "—")}</td>
+          <td class="bin-db-cell">${escapeHtml(country)}</td>
+          <td class="bin-db-cell">${escapeHtml(r.acceptanceBrand || "—")}</td>
+          <td class="bin-db-cell">${escapeHtml(r.fundingSource || "—")}</td>
+          <td class="bin-db-cell bin-db-cell--expand">${expanded ? "▲" : "▼"}</td>
+        </tr>
+        ${expanded ? `<tr class="bin-db-expand-row">
+          <td colspan="6">
+            <div class="bin-db-expand-body">
+              <div class="bin-db-expand-grid">
+                ${_binDbDetailPair("Range", escapeHtml(range))}
+                ${_binDbDetailPair("BIN Length", escapeHtml(String(r.binLength || "—")))}
+                ${_binDbDetailPair("Product", escapeHtml(r.productDescription || "—"))}
+                ${_binDbDetailPair("Product Code", escapeHtml(r.productCode || "—"))}
+                ${_binDbDetailPair("ICA", escapeHtml(String(r.ica || "—")))}
+                ${_binDbDetailPair("Country Code", escapeHtml(r.country && r.country.alpha3 ? r.country.alpha3 : "—"))}
+                ${_binDbDetailPair("Funding", escapeHtml(r.fundingSource || "—"))}
+                ${_binDbDetailPair("Consumer Type", escapeHtml(r.consumerType || "—"))}
+                ${_binDbDetailPair("Prepaid", escapeHtml(r.anonymousPrepaidIndicator || "—"))}
+                ${_binDbDetailPair("Smart Data", escapeHtml(String(r.smartDataEnabled ?? "—")))}
+                ${_binDbDetailPair("Local Use", escapeHtml(String(r.localUse ?? "—")))}
+                ${_binDbDetailPair("Auth Only", escapeHtml(String(r.authorizationOnly ?? "—")))}
+                ${_binDbDetailPair("Govt Range", escapeHtml(String(r.governmentRange ?? "—")))}
+                ${_binDbDetailPair("Program", escapeHtml(r.programName || "—"))}
+                ${_binDbDetailPair("Vertical", escapeHtml(r.vertical || "—"))}
+              </div>
+            </div>
+          </td>
+        </tr>` : ""}
+      `;
+    }).join("");
+    const topPagination = _binDbPaginationHtml();
+    const bottomPagination = BIN_DB.pages > 1 ? `<div class="bin-db-results-footer">${_binDbPaginationHtml()}</div>` : "";
+    return `
+      ${topPagination}
+      <table class="bin-db-table">
+        <thead><tr>
+          <th>BIN</th><th>Issuer</th><th>Country</th><th>Brand</th><th>Funding</th><th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      ${bottomPagination}`;
+  }
+
+  function _binDbDetailPair(label, value) {
+    return `<div class="bin-db-detail-pair"><span class="bin-db-detail-label">${label}</span><span class="bin-db-detail-value">${value}</span></div>`;
+  }
+
+  function _binTimeAgo(ts) {
+    const sec = Math.floor(Date.now() / 1000) - ts;
+    if (sec < 60) return "just now";
+    if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
+    if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
+    return `${Math.floor(sec / 86400)}d ago`;
+  }
+
+  function binDbPanelHtml() {
+    const s = BIN_DB.status;
+    const loaded = s === "loaded";
+    const loading = s === "loading";
+    return `
+      <div class="bin-db-panel">
+        <div class="bin-db-panel-header">
+          <div class="bin-db-panel-title">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="10" cy="5" rx="7" ry="3"/><path d="M3 5v5c0 1.657 3.134 3 7 3s7-1.343 7-3V5"/><path d="M3 10v5c0 1.657 3.134 3 7 3s7-1.343 7-3v-5"/></svg>
+            BIN Ranges Database
+          </div>
+          <div class="bin-db-panel-actions">
+            <a class="bin-db-csv-btn" href="/usecases/binlookup/download-bins" download="bin_ranges.csv"
+               title="Download all BIN ranges as CSV${loaded ? " (" + BIN_DB.count.toLocaleString() + " rows)" : ""}">
+              <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 3v10M6 9l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 17h14" stroke-linecap="round"/></svg>
+              CSV
+            </a>
+            <button class="bin-db-load-btn" id="bin-db-load-btn"${loading ? " disabled" : ""}>
+              ${loading
+                ? `<span class="psi-spinner" style="width:12px;height:12px;border-width:1.5px"></span> Loading…`
+                : loaded
+                  ? `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/><path d="M4 10l-2-2 2-2"/></svg> Reload`
+                  : `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/><path d="M4 10l-2-2 2-2"/></svg> Load into Studio`}
+            </button>
+          </div>
+        </div>
+        <div class="bin-db-status-row" id="bin-db-status-row">${binDbStatusHtml()}</div>
+        ${loaded ? `
+        <div class="bin-db-search-row">
+          <div class="bin-db-search-wrap">
+            <svg class="bin-db-search-icon" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>
+            <input class="bin-db-search-input" id="bin-db-search-input" type="text"
+              placeholder='Search BIN, issuer, country… or "Exact Issuer Name"'
+              value="${escapeHtml(BIN_DB.searchQuery)}" autocomplete="off">
+            ${BIN_DB.searchQuery ? `<button class="bin-db-search-clear" id="bin-db-search-clear" title="Clear">✕</button>` : ""}
+          </div>
+        </div>
+        <div class="bin-db-results" id="bin-db-results">${binDbResultsHtml()}</div>
+        ` : ""}
+      </div>`;
+  }
+
+  let _binDbPollTimer = null;
+
+  function binDbWire() {
+    // Load button
+    const loadBtn = document.getElementById("bin-db-load-btn");
+    if (loadBtn) {
+      loadBtn.addEventListener("click", async () => {
+        const r = await _nativeFetch("/usecases/binlookup/bin-ranges/load", { method: "POST" });
+        const d = await r.json();
+        if (d.ok || d.message === "Already loading") {
+          BIN_DB.status = "loading";
+          _binDbRefreshStatus();
+          _binDbStartPoll();
+        }
+      });
+    }
+
+    // Search input
+    const inp = document.getElementById("bin-db-search-input");
+    if (inp) {
+      inp.addEventListener("input", _binDbOnSearch);
+      inp.addEventListener("keydown", e => { if (e.key === "Escape") { BIN_DB.searchQuery = ""; _binDbRefreshResults(); } });
+    }
+    const clearBtn = document.getElementById("bin-db-search-clear");
+    if (clearBtn) {
+      clearBtn.addEventListener("click", () => { BIN_DB.searchQuery = ""; BIN_DB.results = []; _binDbRefreshAll(); });
+    }
+
+    // Row expand
+    const tbody = document.querySelector(".bin-db-table tbody");
+    if (tbody) {
+      tbody.addEventListener("click", e => {
+        const row = e.target.closest("tr.bin-db-row");
+        if (!row) return;
+        const idx = parseInt(row.dataset.idx, 10);
+        BIN_DB.expandedIdx = BIN_DB.expandedIdx === idx ? null : idx;
+        _binDbRefreshResults();
+      });
+    }
+
+    // On mount: sync status from server
+    _binDbSyncStatus();
+  }
+
+  let _binDbSearchTimer = null;
+  function _binDbOnSearch(e) {
+    BIN_DB.searchQuery = e.target.value;
+    BIN_DB.page = 1; // reset to first page on new query
+    clearTimeout(_binDbSearchTimer);
+    if (!BIN_DB.searchQuery) {
+      BIN_DB.results = [];
+      BIN_DB.total = 0;
+      BIN_DB.pages = 0;
+      BIN_DB.expandedIdx = null;
+      _binDbRefreshAll();
+      return;
+    }
+    BIN_DB.searching = true;
+    _binDbRefreshResults();
+    _binDbSearchTimer = setTimeout(() => _binDbExecSearch(1), 250);
+  }
+
+  async function _binDbExecSearch(page) {
+    const q = BIN_DB.searchQuery;
+    if (!q) return;
+    const pg = page || BIN_DB.page || 1;
+    const r = await _nativeFetch(`/usecases/binlookup/bin-ranges/search?q=${encodeURIComponent(q)}&page=${pg}`);
+    const d = await r.json();
+    if (BIN_DB.searchQuery !== q) return; // stale
+    BIN_DB.searching = false;
+    BIN_DB.expandedIdx = null;
+    BIN_DB.results = d.results || [];
+    BIN_DB.total = d.total || 0;
+    BIN_DB.page = d.page || pg;
+    BIN_DB.pages = d.pages || 0;
+    _binDbRefreshResults();
+  }
+
+  function _binDbRefreshStatus() {
+    const el = document.getElementById("bin-db-status-row");
+    if (el) el.innerHTML = binDbStatusHtml();
+    const loadBtn = document.getElementById("bin-db-load-btn");
+    if (loadBtn) {
+      const loading = BIN_DB.status === "loading";
+      const loaded = BIN_DB.status === "loaded";
+      loadBtn.disabled = loading;
+      loadBtn.innerHTML = loading
+        ? `<span class="psi-spinner" style="width:12px;height:12px;border-width:1.5px"></span> Loading…`
+        : loaded
+          ? `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/><path d="M4 10l-2-2 2-2"/></svg> Reload`
+          : `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/><path d="M4 10l-2-2 2-2"/></svg> Load into VIMA`;
+    }
+  }
+
+  function _binDbRefreshResults() {
+    const el = document.getElementById("bin-db-results");
+    if (el) el.innerHTML = binDbResultsHtml();
+    // re-wire row expand
+    const tbody = el && el.querySelector(".bin-db-table tbody");
+    if (tbody) {
+      tbody.addEventListener("click", e => {
+        const row = e.target.closest("tr.bin-db-row");
+        if (!row) return;
+        const idx = parseInt(row.dataset.idx, 10);
+        BIN_DB.expandedIdx = BIN_DB.expandedIdx === idx ? null : idx;
+        _binDbRefreshResults();
+      });
+    }
+    // re-wire clear button
+    const clearBtn = document.getElementById("bin-db-search-clear");
+    if (clearBtn) {
+      clearBtn.addEventListener("click", () => { BIN_DB.searchQuery = ""; BIN_DB.results = []; BIN_DB.total = 0; BIN_DB.pages = 0; BIN_DB.page = 1; _binDbRefreshAll(); });
+    }
+    // re-wire pagination buttons
+    el && el.querySelectorAll(".bin-db-pg-btn[data-pg]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (btn.disabled) return;
+        const pg = parseInt(btn.dataset.pg, 10);
+        if (isNaN(pg) || pg < 1 || pg > BIN_DB.pages) return;
+        BIN_DB.page = pg;
+        BIN_DB.expandedIdx = null;
+        BIN_DB.searching = true;
+        _binDbRefreshResults();
+        await _binDbExecSearch(pg);
+        // Scroll results area into view
+        el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+    });
+  }
+
+  function _binDbRefreshAll() {
+    const tc = document.querySelector(".bin-tab-content");
+    if (!tc) { renderBinLookup(); return; }
+    tc.innerHTML = binDbPanelHtml();
+    binDbWire();
+  }
+
+  function _binDbStartPoll() {
+    clearInterval(_binDbPollTimer);
+    _binDbPollTimer = setInterval(_binDbSyncStatus, 2000);
+  }
+
+  async function _binDbSyncStatus() {
+    try {
+      const r = await _nativeFetch("/usecases/binlookup/bin-ranges/status");
+      const d = await r.json();
+      const prev = BIN_DB.status;
+      BIN_DB.status = d.status;
+      BIN_DB.count = d.count;
+      BIN_DB.loadedAt = d.loaded_at;
+      BIN_DB.error = d.error;
+      BIN_DB.persisted = d.persisted || false;
+      if (d.status !== "loading") {
+        clearInterval(_binDbPollTimer);
+        _binDbPollTimer = null;
+        if ((prev === "loading" || prev === "idle") && d.status === "loaded") {
+          // Update batch tab badge count and re-render tab content
+          const tabBatchBtn = document.getElementById("bin-tab-batch");
+          if (tabBatchBtn) {
+            const badge = tabBatchBtn.querySelector(".bin-tab-badge");
+            if (badge) badge.textContent = BIN_DB.count.toLocaleString();
+            else tabBatchBtn.insertAdjacentHTML("beforeend", `<span class="bin-tab-badge">${BIN_DB.count.toLocaleString()}</span>`);
+          }
+          if (BIN_TAB === "batch") {
+            const tc = document.querySelector(".bin-tab-content");
+            if (tc) { tc.innerHTML = binDbPanelHtml(); binDbWire(); return; }
+          }
+          renderBinLookup();
+          return;
+        }
+      }
+      _binDbRefreshStatus();
+    } catch (_) {}
+  }
+
+  // ─── Targeted refresh helpers ─────────────────────────────────────────────
+
+  function _binRefreshLookupPanel() {
+    // Refreshes only the tab content area without rebuilding the tabs
+    const tc = document.querySelector(".bin-tab-content");
+    if (!tc) { renderBinLookup(); return; }
+    tc.innerHTML = _binLookupPanelHtml();
+    binWire();
+  }
+
   // ─── Wiring ──────────────────────────────────────────────────────────────
 
   function binWire() {
@@ -2176,7 +2632,7 @@
 
       BIN.loading = true;
       BIN.card = null;
-      renderBinLookup();
+      _binRefreshLookupPanel();
 
       try {
         const r = await _nativeFetch("/usecases/binlookup/action", {
@@ -2191,24 +2647,24 @@
         BIN.loading = false;
         if (d.error) {
           BIN.card = null;
-          renderBinLookup();
+          _binRefreshLookupPanel();
           const scene = document.getElementById("bin-scene");
           if (scene) scene.insertAdjacentHTML("beforeend", `<div class="bin-error-msg">${escapeHtml(String(d.error))}</div>`);
         } else if (!d.found) {
           BIN.card = null;
-          renderBinLookup();
+          _binRefreshLookupPanel();
           const scene = document.getElementById("bin-scene");
           if (scene) scene.insertAdjacentHTML("beforeend", `<div class="bin-notfound-msg">${escapeHtml(d.note || "No matching BIN found.")}</div>`);
         } else {
           BIN.card = d.card;
-          renderBinLookup();
+          _binRefreshLookupPanel();
           requestAnimationFrame(() => setTimeout(binAnimateIn, 30));
         }
       } catch (e) {
         console.error("BIN Lookup error:", e);
         BIN.loading = false;
         BIN.card = null;
-        renderBinLookup();
+        _binRefreshLookupPanel();
         const scene = document.getElementById("bin-scene");
         if (scene) scene.insertAdjacentHTML("beforeend", `<div class="bin-error-msg">Error: ${escapeHtml(String(e.message))}</div>`);
       }
@@ -4423,7 +4879,7 @@
   const IDV_STEPS = [
     { key: "bank",     label: "Connect bank" },
     { key: "personal", label: "Personal info" },
-    { key: "card",     label: "Authorize card" },
+    { key: "card",     label: "Verify By Card" },
     { key: "review",   label: "Verifying…" },
   ];
 
@@ -4492,7 +4948,7 @@
         ["Consent reference",     "consent_13322909"],
       ];
       return {
-        title: "Step 3 — Verify card ownership + AVS",
+        title: "Step 3 — Verify By Card",
         provider: isVisa ? "Visa VbV + AVS" : "Mastercard Identity Check + AVS",
         items,
         callout: "POST consents/v1/cards  →  POST authentications (3DS)  →  POST avs/check  →  transStatus: Y, avsResponse: Y",
@@ -4535,11 +4991,13 @@
       <div class="idv-wrap${IDV.reveal ? ' idv-reveal-on' : ''}">
         <div class="idv-toolbar">
           <div class="idv-stepper" id="idv-stepper"></div>
-          <label class="idv-toggle">
-            <input type="checkbox" id="idv-reveal-cb" ${IDV.reveal ? 'checked' : ''}>
-            <span class="idv-toggle-track"><span class="idv-toggle-thumb"></span></span>
-            <span class="idv-toggle-label">Reveal what's happening</span>
-          </label>
+          <div class="idv-toolbar-right">
+            <label class="idv-toggle">
+              <input type="checkbox" id="idv-reveal-cb" ${IDV.reveal ? 'checked' : ''}>
+              <span class="idv-toggle-track"><span class="idv-toggle-thumb"></span></span>
+              <span class="idv-toggle-label">Reveal what's happening</span>
+            </label>
+          </div>
         </div>
         <div class="idv-split">
           <div class="idv-browser">
@@ -4562,22 +5020,95 @@
       IDV.reveal = !!e.target.checked;
       const wrap = body.querySelector(".idv-wrap");
       if (wrap) wrap.classList.toggle("idv-reveal-on", IDV.reveal);
+      // Sync reveal state inside modal if open
+      const mw = document.querySelector('.idv-modal-wrap');
+      if (mw) mw.classList.toggle('idv-reveal-on', IDV.reveal);
     });
   }
 
+  function idvOpenModal() {
+    if (document.getElementById('idv-fullscreen-modal')) return;
+    const modal = document.createElement('div');
+    modal.id = 'idv-fullscreen-modal';
+    modal.className = 'idv-fullscreen-modal';
+    // Clone the inner split content into the modal with its own wrap
+    modal.innerHTML = `
+      <div class="idv-modal-inner">
+        <div class="idv-modal-topbar">
+          <div class="idv-modal-title">Online Identity Verification</div>
+          <div class="idv-modal-controls">
+            <label class="idv-toggle idv-modal-toggle">
+              <input type="checkbox" id="idv-modal-reveal-cb" ${IDV.reveal ? 'checked' : ''}>
+              <span class="idv-toggle-track"><span class="idv-toggle-thumb"></span></span>
+              <span class="idv-toggle-label">Reveal what's happening</span>
+            </label>
+            <button class="idv-modal-reduce-btn" title="Exit full screen (Esc)">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M9.5 5.5l-4 4M5.5 5.5v4h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="1" y="1" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>
+              Reduce
+            </button>
+          </div>
+        </div>
+        <div class="idv-modal-wrap${IDV.reveal ? ' idv-reveal-on' : ''}" id="idv-modal-wrap">
+          <div class="idv-modal-toolbar" id="idv-modal-toolbar" style="display:none">
+            <div class="idv-stepper" id="idv-modal-stepper"></div>
+          </div>
+          <div class="idv-split" id="idv-modal-split">
+            <div class="idv-browser">
+              <div class="idv-browser-chrome">
+                <span class="idv-dot r"></span><span class="idv-dot y"></span><span class="idv-dot g"></span>
+                <div class="idv-url">
+                  <span class="idv-lock">🔒</span>
+                  <span id="idv-modal-url-text">www.medicare.gov</span>
+                </div>
+              </div>
+              <div class="idv-page" id="idv-modal-page"></div>
+            </div>
+            <aside class="idv-bts" id="idv-modal-bts"></aside>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Wire modal reveal toggle
+    document.getElementById('idv-modal-reveal-cb').addEventListener('change', (e) => {
+      IDV.reveal = !!e.target.checked;
+      document.getElementById('idv-modal-wrap').classList.toggle('idv-reveal-on', IDV.reveal);
+      // Sync embedded toggle
+      const cb = document.getElementById('idv-reveal-cb');
+      if (cb) cb.checked = IDV.reveal;
+      const embWrap = document.querySelector('.idv-wrap');
+      if (embWrap) embWrap.classList.toggle('idv-reveal-on', IDV.reveal);
+    });
+
+    // Reduce / close handlers
+    const dismiss = () => { modal.remove(); idvRender(); };
+    modal.querySelector('.idv-modal-reduce-btn').addEventListener('click', dismiss);
+    const onKey = (e) => { if (e.key === 'Escape') { dismiss(); document.removeEventListener('keydown', onKey); } };
+    document.addEventListener('keydown', onKey);
+
+    // Render into the modal
+    idvRender();
+  }
+
   function idvRender() {
-    // URL bar reflects current phase
-    const urlEl = document.getElementById('idv-url-text');
+    const inModal = !!document.getElementById('idv-fullscreen-modal');
+    const urlId   = inModal ? 'idv-modal-url-text' : 'idv-url-text';
+    const wrapSel = inModal ? '#idv-modal-wrap'    : '.idv-wrap';
+
+    // URL bar
+    const urlEl = document.getElementById(urlId);
     if (urlEl) urlEl.textContent = idvCurrentUrl();
-    // Toolbar only meaningful during verify; stepper now lives INSIDE the page,
-    // so we hide the outer stepper at all times.
-    const toolbar = document.querySelector('.idv-toolbar');
+
+    // Toolbar visibility
+    const toolbarSel = inModal ? '#idv-modal-toolbar' : '.idv-toolbar';
+    const toolbar = document.querySelector(toolbarSel);
     if (toolbar) toolbar.style.display = (IDV.phase === 'verify') ? '' : 'none';
-    const outerStepper = document.getElementById('idv-stepper');
-    if (outerStepper) outerStepper.style.display = 'none';
-    // BTS aside only meaningful during verify
-    const wrap = document.querySelector('.idv-wrap');
+
+    // BTS aside
+    const wrap = document.querySelector(wrapSel);
     if (wrap) wrap.classList.toggle('idv-no-bts', IDV.phase !== 'verify');
+
     idvRenderPage();
     idvRenderBts();
   }
@@ -4711,9 +5242,10 @@
     const bankId = IDV.selectedBank ? IDV.selectedBank.id : null;
     const bankName = IDV.selectedBank ? IDV.selectedBank.name : 'your bank';
     const bankCards = IDV_CARDS.filter(c => c.bankId === bankId);
-    // Auto-pick first card from bank if none selected (or current pick isn't from this bank)
+    // Auto-pick a Mastercard first; fall back to first available card
     if (!IDV.selectedCardId || !bankCards.find(c => c.id === IDV.selectedCardId)) {
-      IDV.selectedCardId = bankCards[0] ? bankCards[0].id : null;
+      const mcCard = bankCards.find(c => c.network === 'mc');
+      IDV.selectedCardId = (mcCard || bankCards[0]) ? (mcCard || bankCards[0]).id : null;
     }
     const card = bankCards.find(c => c.id === IDV.selectedCardId) || bankCards[0];
     const isVisa = card && card.network === 'visa';
@@ -4725,8 +5257,8 @@
       : `5204  ${card.last4.slice(0,2)}••  ••••  ${card.last4}`) : '';
     return `
       <div class="idv-screen">
-        <h3 class="idv-screen-title">Verify card ownership</h3>
-        <p class="muted">We confirm you hold this card and that the billing address matches (AVS). <strong>Used for identity verification only — no payment will be taken and the card will not be stored.</strong></p>
+        <h3 class="idv-screen-title">Verify By Card</h3>
+        <p class="muted">We confirm you hold this card: identity verification only — no payment will be taken.</p>
         <label class="idv-field">
           <span class="muted">Card on file from ${escapeHtml(bankName)}</span>
           <select id="idv-card-select" class="idv-select">
@@ -4757,34 +5289,16 @@
             </label>
           </div>` : (card ? `
           <p class="muted idv-card-note">Your bank already shared this full card number with Open Banking, so no extra digits are required.</p>` : '')}
-        <div class="idv-avs">
-          <div class="idv-avs-head"><span class="idv-badge-avs">AVS</span> Address Verification</div>
-          <div class="idv-avs-body">We will send <strong>${escapeHtml(IDV.form.address)}</strong> to the card issuer and confirm it matches the billing address on file.</div>
-        </div>
         <label class="idv-check">
           <input type="checkbox" id="idv-consent-cb" ${IDV.cardConsent ? 'checked' : ''}>
-          <span>I authorize Medicare to verify my identity by checking this card and billing address with my issuer. No payment will be taken; the card is not stored.</span>
+          <span>I authorize Medicare to verify my identity by checking this card with my issuer. No payment will be taken; the card is not stored.</span>
         </label>
         <div class="idv-actions">
           <button class="btn btn-outline" id="idv-back-2" ${IDV.cardAuthorizing ? 'disabled' : ''}>Back</button>
           <button class="btn btn-primary" id="idv-next-2" ${canContinue ? '' : 'disabled'}>
-            Verify card &amp; AVS
+            Verify By Card
           </button>
         </div>
-        ${IDV.cardAuthorizing ? `
-        <div class="idv-modal-backdrop">
-          <div class="idv-modal">
-            <div class="idv-modal-head">
-              <span>Mastercard Identity Check</span>
-              <span class="idv-modal-secure">🔒 3dsecure.mastercard.com</span>
-            </div>
-            <div class="idv-modal-body idv-modal-center">
-              <div class="idv-spinner-lg"></div>
-              <h4>Verifying card &amp; billing address…</h4>
-              <p class="muted">This usually takes a few seconds.</p>
-            </div>
-          </div>
-        </div>` : ''}
       </div>`;
   }
 
@@ -4817,7 +5331,8 @@
   }
 
   function idvRenderPage() {
-    const page = document.getElementById("idv-page");
+    const inModal = !!document.getElementById('idv-fullscreen-modal');
+    const page = document.getElementById(inModal ? 'idv-modal-page' : 'idv-page');
     if (!page) return;
 
     // Non-verify phases route here
@@ -4846,7 +5361,7 @@
             <div class="mcc-brand">
               <span class="mcc-logo" aria-hidden="true"><span class="r"></span><span class="y"></span></span>
               <div class="mcc-brand-text">
-                <strong>Mastercard Connect</strong>
+                <strong>Mastercard ID Connect</strong>
                 <span>Verifying you for <em>Medicare.gov</em> using your bank and card</span>
               </div>
             </div>
@@ -4974,20 +5489,22 @@
       if (nextBtn) nextBtn.addEventListener("click", () => {
         if (IDV.cardAuthorizing) return;
         IDV.cardAuthorizing = true;
-        idvRender();
+        _ensureMcSonicScript(() => _sonicLaunch('securedby', 'default', 'black'));
         setTimeout(() => {
           IDV.cardAuthorizing = false;
           IDV.step = 4;
           idvRender();
           // Auto-scroll the verified screen into view
           requestAnimationFrame(() => {
-            const screen = document.querySelector('#idv-page .idv-screen');
+            const inModalScroll = !!document.getElementById('idv-fullscreen-modal');
+            const screen = document.querySelector((inModalScroll ? '#idv-modal-page' : '#idv-page') + ' .idv-screen');
             if (screen && typeof screen.scrollIntoView === 'function') {
               screen.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
             const browser = document.querySelector('.idv-browser');
             if (browser) browser.scrollTo({ top: 0, behavior: 'smooth' });
-            const page = document.getElementById('idv-page');
+            const inModal2 = !!document.getElementById('idv-fullscreen-modal');
+            const page = document.getElementById(inModal2 ? 'idv-modal-page' : 'idv-page');
             if (page) page.scrollTo({ top: 0, behavior: 'smooth' });
             window.scrollTo({ top: 0, behavior: 'smooth' });
           });
@@ -5136,11 +5653,21 @@
           <button class="med-mc-connect" id="med-mc-connect">
             <span class="med-mc-logo"><span class="r"></span><span class="y"></span></span>
             <span class="med-mc-text">
-              <strong>Continue with Mastercard Connect</strong>
+              <strong>Continue with Mastercard ID Connect</strong>
               <span>Verify your identity instantly using your bank &amp; card &mdash; no password needed.</span>
             </span>
             <span class="med-mc-arrow">→</span>
           </button>
+
+          ${IDV.passkeyChoice === 'enrolled' ? `
+          <button class="med-mc-passkey" id="med-mc-passkey">
+            <span class="med-mc-logo"><span class="r"></span><span class="y"></span></span>
+            <span class="med-mc-text">
+              <strong>Mastercard ID Passkey</strong>
+              <span>Instant access — authenticate with Face ID, Touch ID or screen lock.</span>
+            </span>
+            <span class="med-mc-key">🔑</span>
+          </button>` : ''}
 
           <p class="med-login-fine">By logging in, you agree to the <a href="#" onclick="return false">Terms of use</a> and <a href="#" onclick="return false">Privacy policy</a>.</p>
         </div>
@@ -5154,11 +5681,21 @@
       IDV.step = 0;
       idvRender();
     });
+    const passkeyBtn = page.querySelector('#med-mc-passkey');
+    if (passkeyBtn) {
+      passkeyBtn.addEventListener('click', () => {
+        _ensureMcSonicScript(() => _sonicLaunch('securedby', 'default', 'black'));
+        setTimeout(() => {
+          IDV.phase = 'records';
+          idvRender();
+        }, 1800);
+      });
+    }
   }
 
   function idvPagePasskey() {
     return `
-      <div class="med-page med-page-narrow">
+      <div class="med-page med-page-verify">
         <div class="med-topbar med-topbar-slim">
           <div class="med-topbar-inner">
             <span class="med-logo">
@@ -5168,19 +5705,34 @@
             <span class="med-account-pill">${escapeHtml(IDV.form.firstName + ' ' + IDV.form.lastName)}</span>
           </div>
         </div>
-        <div class="med-passkey">
-          <div class="med-passkey-icon">🔑</div>
-          <h2>Use a passkey next time?</h2>
-          <p class="muted">Skip the bank &amp; card check the next time you log in. Your device will use Face ID, Touch ID, or your screen lock to prove it's you.</p>
-          <ul class="med-passkey-list">
-            <li><strong>Faster.</strong> Log in with a tap or a glance.</li>
-            <li><strong>Phishing-resistant.</strong> Passkeys can't be reused or stolen.</li>
-            <li><strong>Private.</strong> Stored only on your device.</li>
-          </ul>
-          <div class="med-passkey-actions">
-            <button class="med-btn-outline" id="med-passkey-skip">Not now</button>
-            <button class="med-btn-primary" id="med-passkey-go">Set up passkey</button>
+        <div class="mcc-shell">
+          <header class="mcc-header">
+            <div class="mcc-brand">
+              <span class="mcc-logo" aria-hidden="true"><span class="r"></span><span class="y"></span></span>
+              <div class="mcc-brand-text">
+                <strong>Mastercard ID Connect</strong>
+                <span>Identity verified for <em>Medicare.gov</em></span>
+              </div>
+            </div>
+          </header>
+          <div class="mcc-body mcc-passkey-body">
+            <div class="med-passkey-icon">🔑</div>
+            <h2>Use a passkey next time?</h2>
+            <p class="muted">Skip the bank &amp; card check the next time you log in. Your device will use Face ID, Touch ID, or your screen lock to prove it's you.</p>
+            <ul class="med-passkey-list">
+              <li><strong>Faster.</strong> Log in with a tap or a glance.</li>
+              <li><strong>Phishing-resistant.</strong> Passkeys can't be reused or stolen.</li>
+              <li><strong>Private.</strong> Stored only on your device.</li>
+            </ul>
+            <div class="med-passkey-actions">
+              <button class="med-btn-outline" id="med-passkey-skip">Not now</button>
+              <button class="med-btn-primary" id="med-passkey-go">Set up passkey</button>
+            </div>
           </div>
+          <footer class="mcc-foot">
+            <span class="mcc-foot-lock">🔒</span>
+            Secured by Mastercard. Your bank credentials and card details are never shared with Medicare.gov.
+          </footer>
         </div>
       </div>`;
   }
@@ -5293,13 +5845,14 @@
       IDV.bankModalOpen = false;
       IDV.cardConsent = false;
       IDV.cardAuthorizing = false;
-      IDV.passkeyChoice = null;
+      // passkeyChoice intentionally NOT reset on logout — passkeys persist on device
       idvRender();
     });
   }
 
   function idvRenderBts() {
-    const el = document.getElementById("idv-bts");
+    const inModal = !!document.getElementById('idv-fullscreen-modal');
+    const el = document.getElementById(inModal ? 'idv-modal-bts' : 'idv-bts');
     if (!el) return;
     const s = idvSignals(IDV.step);
     el.innerHTML = `
@@ -5763,14 +6316,11 @@
     modal.className = 'sonic-modal-backdrop';
     modal.innerHTML =
       '<div class="sonic-modal">' +
-        '<button class="sonic-modal-close" title="Dismiss">\u2715</button>' +
         '<div class="sonic-modal-body"></div>' +
       '</div>';
     document.body.appendChild(modal);
 
     const dismiss = () => { if (modal.parentNode) modal.remove(); };
-    modal.addEventListener('click', (e) => { if (e.target === modal) dismiss(); });
-    modal.querySelector('.sonic-modal-close').addEventListener('click', dismiss);
 
     const body = modal.querySelector('.sonic-modal-body');
 
@@ -5786,7 +6336,7 @@
       _playWhenReady(audio);
       const done = () => { audio.remove(); dismiss(); };
       audio.addEventListener('sonicCompletion', done, { once: true });
-      setTimeout(done, 8000);
+      setTimeout(done, 5000);
       return;
     }
 
@@ -5800,7 +6350,7 @@
     body.appendChild(el);
     _playWhenReady(el);
     el.addEventListener('sonicCompletion', dismiss, { once: true });
-    setTimeout(dismiss, 12000);
+    setTimeout(dismiss, 3500);
   };
 
   const SONIC_CUES = [
@@ -6007,11 +6557,72 @@
 
   document.querySelectorAll("[data-uc-id]").forEach((btn) => {
     btn.addEventListener("click", () => {
+      // Close fullscreen overlay if open so #uc-body returns to normal position
+      document.getElementById('uc-fullscreen-overlay')?.querySelector('.uc-fullscreen-reduce-btn')?.click();
       document.querySelectorAll("[data-uc-id]").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       renderUseCase(btn.dataset.ucId);
     });
   });
+
+  // -----------------------------------------------------------------------
+  // Generic use-case full-screen popout
+  // -----------------------------------------------------------------------
+  (function () {
+    const popoutBtn = document.getElementById('uc-popout-btn');
+    if (!popoutBtn) return;
+
+    let _onKey = null;
+    let _placeholder = null; // comment node that marks where uc-body lives
+
+    function ucOpenFullscreen() {
+      if (document.getElementById('uc-fullscreen-overlay')) return;
+      const ucBody = document.getElementById('uc-body');
+      if (!ucBody) return;
+
+      // Mark the original position
+      _placeholder = document.createComment('uc-body-placeholder');
+      ucBody.parentNode.insertBefore(_placeholder, ucBody);
+
+      // Build overlay
+      const overlay = document.createElement('div');
+      overlay.id = 'uc-fullscreen-overlay';
+      overlay.className = 'uc-fullscreen-overlay';
+      const titleText = (document.getElementById('uc-title') || {}).textContent || 'Use Case';
+      overlay.innerHTML = `
+        <div class="uc-fullscreen-topbar">
+          <span class="uc-fullscreen-title">${escapeHtml(titleText)}</span>
+          <button class="uc-fullscreen-reduce-btn">
+            <svg width="14" height="14" viewBox="0 0 15 15" fill="none"><path d="M5 10L1 14M1 14h4M1 14v-4M10 5l4-4M14 4V1M14 1h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Reduce
+          </button>
+        </div>
+        <div class="uc-fullscreen-body" id="uc-fullscreen-body"></div>
+      `;
+      document.body.appendChild(overlay);
+      overlay.querySelector('#uc-fullscreen-body').appendChild(ucBody);
+
+      // Dismiss handlers
+      const dismiss = ucCloseFullscreen;
+      overlay.querySelector('.uc-fullscreen-reduce-btn').addEventListener('click', dismiss);
+      _onKey = (e) => { if (e.key === 'Escape') dismiss(); };
+      document.addEventListener('keydown', _onKey);
+    }
+
+    function ucCloseFullscreen() {
+      const overlay = document.getElementById('uc-fullscreen-overlay');
+      if (!overlay) return;
+      const ucBody = document.getElementById('uc-body');
+      if (ucBody && _placeholder && _placeholder.parentNode) {
+        _placeholder.parentNode.insertBefore(ucBody, _placeholder);
+        _placeholder.parentNode.removeChild(_placeholder);
+      }
+      overlay.remove();
+      if (_onKey) { document.removeEventListener('keydown', _onKey); _onKey = null; }
+    }
+
+    popoutBtn.addEventListener('click', ucOpenFullscreen);
+  })();
 
   // ---------------------------------------------------------------------
   // Init
@@ -6022,7 +6633,7 @@
   const _acClose = $('api-calls-close');
   if (_acClose) _acClose.addEventListener('click', apiCallsClose);
   const _acClear = $('api-calls-clear');
-  if (_acClear) _acClear.addEventListener('click', () => { API_CALL_LOG.length = 0; _lastSeq = 0; apiCallsRefresh(); });
+  if (_acClear) _acClear.addEventListener('click', () => { API_CALL_LOG.length = 0; apiCallsRefresh(); });
 
   if (currentApiId) renderApi();
   if (USE_CASES.length) {
