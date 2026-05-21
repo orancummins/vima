@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Online Identity Verification — vima</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/identity/style.css">
+</head>
+<body>
+  <div id="uc-body"></div>
+<script>
+function $(id) { return document.getElementById(id); }
+function escapeHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function _ensureMcSonicScript(cb) {
+  if (customElements.get('mc-sonic')) { cb(); return; }
+  if (document.querySelector('script[data-mc-sonic]')) {
+    customElements.whenDefined('mc-sonic').then(cb);
+    return;
+  }
+  const s = document.createElement('script');
+  s.src = 'https://sonicsdk.mastercard.com/assets/js/latest/js/mc-sonic.min.js';
+  s.setAttribute('data-mc-sonic', '1');
+  s.onload = () => customElements.whenDefined('mc-sonic').then(cb);
+  s.onerror = () => {};   // silent — sonic is optional
+  document.head.appendChild(s);
+}
+
+function _sonicLaunch(cue, type, bg) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.72);';
+  document.body.appendChild(overlay);
+  const dismiss = () => { if (overlay.parentNode) overlay.remove(); };
+  overlay.addEventListener('click', dismiss);
+  if (type === 'sound-only') {
+    const audio = document.createElement('mc-sonic');
+    audio.setAttribute('type', 'sound-only');
+    audio.setAttribute('sonicCue', cue);
+    audio.style.cssText = 'position:fixed;opacity:0;pointer-events:none;width:1px;height:1px;top:-9999px;';
+    document.body.appendChild(audio);
+    overlay.remove();
+    customElements.whenDefined('mc-sonic').then(() => setTimeout(() => audio.play(), 80));
+    const done = () => audio.remove();
+    audio.addEventListener('sonicCompletion', done, { once: true });
+    setTimeout(done, 5000);
+    return;
+  }
+  const el = document.createElement('mc-sonic');
+  el.setAttribute('type', type);
+  el.setAttribute('sonicCue', cue);
+  if (bg) el.setAttribute('sonicBackground', bg);
+  el.style.cssText = 'display:block;width:360px;height:360px;border-radius:24px;overflow:hidden;';
+  overlay.appendChild(el);
+  customElements.whenDefined('mc-sonic').then(() => setTimeout(() => el.play(), 80));
+  el.addEventListener('sonicCompletion', dismiss, { once: true });
+  setTimeout(dismiss, 3500);
+}
+
+const IDV = {
+  phase: 'home',      // home | login | verify | passkey | records
+  step: 0,            // 0..4 (only meaningful when phase==='verify')
+  reveal: false,      // background view toggle
+  loginUser: '',
+  loginPass: '',
+  passkeyChoice: null, // 'enrolled' | 'skipped' | null
+  form: {
+    firstName: "Alex",
+    lastName: "Morgan",
+    email: "alex.morgan@gmail.com",
+    dob: "1988-04-12",
+    address: "1600 Pennsylvania Ave NW, Washington, DC 20500",
+    phone: "+1 (202) 555-0123",
+  },
+  selectedBank: null,
+  bankConnected: false,
+  bankConsentGiven: false,    // user clicked "I consent" in bank modal
+  bankModalOpen: false,
+  bankModalStage: "intro",    // intro | connecting | done
+  cardConsent: false,
+  cardAuthorizing: false,     // overlay while "authorize & verify" runs
+  selectedCardId: null,       // auto-picked from bank's cards on step 2
+  visaLast8: "",              // user-entered last 8 when Visa is picked
+  // populated when we land on the result screen
+  result: null,
+};
+
+// Cards "pulled from Open Banking" — what we know about each. Keyed by bankId.
+const IDV_CARDS = [
+  // Chase
+  { id: "chase-mc",   bankId: "chase", brand: "Mastercard", network: "mc",
+    issuer: "Chase Sapphire Preferred", last4: "9999", knownPan: true,
+    display: "Mastercard •••• 9999" },
+  { id: "chase-visa", bankId: "chase", brand: "Visa", network: "visa",
+    issuer: "Chase Freedom Unlimited",  last4: "1042", knownPan: false, bin6: "414720",
+    display: "Visa •••• 1042" },
+  // Bank of America
+  { id: "boa-visa",   bankId: "boa", brand: "Visa", network: "visa",
+    issuer: "BoA Cash Rewards",        last4: "2207", knownPan: false, bin6: "424631",
+    display: "Visa •••• 2207" },
+  { id: "boa-mc",     bankId: "boa", brand: "Mastercard", network: "mc",
+    issuer: "BoA Premium Rewards",     last4: "6611", knownPan: true,
+    display: "Mastercard •••• 6611" },
+  // Wells Fargo
+  { id: "wells-visa", bankId: "wells", brand: "Visa", network: "visa",
+    issuer: "Wells Fargo Active Cash", last4: "3380", knownPan: false, bin6: "446542",
+    display: "Visa •••• 3380" },
+  // Citi
+  { id: "citi-mc",    bankId: "citi", brand: "Mastercard", network: "mc",
+    issuer: "Citi Double Cash",        last4: "4418", knownPan: true,
+    display: "Mastercard •••• 4418" },
+  { id: "citi-visa",  bankId: "citi", brand: "Visa", network: "visa",
+    issuer: "Citi Custom Cash",        last4: "7720", knownPan: false, bin6: "414709",
+    display: "Visa •••• 7720" },
+  // U.S. Bank
+  { id: "usbank-visa", bankId: "usbank", brand: "Visa", network: "visa",
+    issuer: "U.S. Bank Cash+",         last4: "8845", knownPan: false, bin6: "433228",
+    display: "Visa •••• 8845" },
+  // Capital One
+  { id: "cap1-mc",    bankId: "capitalone", brand: "Mastercard", network: "mc",
+    issuer: "Capital One Venture",     last4: "5031", knownPan: true,
+    display: "Mastercard •••• 5031" },
+  { id: "cap1-visa",  bankId: "capitalone", brand: "Visa", network: "visa",
+    issuer: "Capital One Quicksilver", last4: "9912", knownPan: false, bin6: "414740",
+    display: "Visa •••• 9912" },
+];
+
+const IDV_STEPS = [
+  { key: "bank",     label: "Connect bank" },
+  { key: "personal", label: "Personal info" },
+  { key: "card",     label: "Verify By Card" },
+  { key: "review",   label: "Verifying…" },
+];
+
+const IDV_BANKS = [
+  { id: "chase",      name: "Chase",            color: "#117ACA" },
+  { id: "boa",        name: "Bank of America",  color: "#E31837" },
+  { id: "wells",      name: "Wells Fargo",      color: "#D71E28" },
+  { id: "citi",       name: "Citi",             color: "#003B70" },
+  { id: "usbank",     name: "U.S. Bank",        color: "#0C2074" },
+  { id: "capitalone", name: "Capital One",      color: "#004977" },
+];
+
+// Behind-the-scenes "signals" surfaced per step
+function idvSignals(step) {
+  if (step === 0) {
+    return {
+      title: "Step 1 — US Open Finance proves bank ownership",
+      provider: "US Open Finance (Connect)",
+      items: [
+        ["Connect URL",            "https://connect.openfinance.us/?session=…"],
+        ["Customer ID",            "cust_91421"],
+        ["Institution",            IDV.selectedBank ? IDV.selectedBank.name : "(awaiting selection)"],
+        ["OAuth scope",            "accounts.read  owner.read"],
+        ["Account-owner returned", IDV.bankConnected ? "ALEX MORGAN — used to pre-fill next step" : "(pending consent)"],
+        ["Account funded > 90d",   IDV.bankConnected ? "true (KYC-passing)" : "(pending)"],
+        ["AccountID stored",       IDV.bankConnected ? "acct_4192xxxx7733" : "(pending)"],
+      ],
+      callout: "POST openfinance/v2/customers/{id}/accounts/owner  →  accountOwner.name returned & cached",
+    };
+  }
+  if (step === 1) {
+    return {
+      title: "Step 2 — Ekata silently scores the applicant",
+      provider: "Ekata Identity Verification",
+      items: [
+        ["Device fingerprint",  "d8b2-fa17-3c91-aa05  (canvas+webGL+UA)"],
+        ["IP address",          "73.118.42.207 (US, residential, no proxy)"],
+        ["IP velocity",         "1 signup in last 24h — low"],
+        ["Email risk",          (IDV.form.email || "(empty)") + " — seen 4y, low risk"],
+        ["Phone-to-name match", (IDV.form.phone || "(empty)") + " ↔ " + (IDV.form.firstName + ' ' + IDV.form.lastName).trim() + " — match"],
+        ["Address validity",    (IDV.form.address || "(empty)") + " — USPS deliverable"],
+        ["Name ↔ DOB",          "consistent across public records"],
+        ["Bank-owner agreement","applicant name == openfinance owner.name"],
+      ],
+      callout: "POST identitycheck.api/v5/identity  →  confidenceScore: 612 / 1000",
+    };
+  }
+  if (step === 2) {
+    const card = IDV_CARDS.find(c => c.id === IDV.selectedCardId) || IDV_CARDS[0];
+    const isVisa = card.network === 'visa';
+    const visaOk = (IDV.visaLast8 || '').length === 8;
+    const items = [
+      ["Selected card",         `${card.brand} •••• ${card.last4} — ${card.issuer}`],
+      ["PAN source",            card.knownPan
+          ? "Open Banking (full PAN previously shared by issuer)"
+          : `Open Banking (BIN6 ${card.bin6} + last4 ${card.last4}; middle 8 collected from user)`],
+      ["Middle-8 challenge",    isVisa ? (visaOk ? "passed — proves possession of physical card" : "(awaiting 8 digits)") : "not required — full PAN known"],
+      ["Network",               isVisa ? "Visa (VbV / EMV 3DS)" : "Mastercard (Identity Check / EMV 3DS)"],
+      ["3DS Method status",     "Y — device collection succeeded"],
+      ["ACS flow",              "Frictionless (transStatus = Y)"],
+      ["Cardholder name match", `${(IDV.form.firstName + ' ' + IDV.form.lastName).toUpperCase()} ↔ issuer-on-file — match`],
+      ["AVS request",           `${IDV.form.address}`],
+      ["AVS response",          "Y — street & ZIP match"],
+      ["Auth type",             "$0 account-verification (no charge, no clearing)"],
+      ["Card storage",          "not stored — used for identity verification only"],
+      ["Consent reference",     "consent_13322909"],
+    ];
+    return {
+      title: "Step 3 — Verify By Card",
+      provider: isVisa ? "Visa VbV + AVS" : "Mastercard Identity Check + AVS",
+      items,
+      callout: "POST consents/v1/cards  →  POST authentications (3DS)  →  POST avs/check  →  transStatus: Y, avsResponse: Y",
+    };
+  }
+  if (step === 3) {
+    return {
+      title: "Step 4 — Combining the signals",
+      provider: "Decision engine",
+      items: [
+        ["US Open Finance ownership", "Owner name match — strong"],
+        ["Ekata confidence",         "612 / 1000  (Tier B)"],
+        ["Card 3DS",                 "Authenticated — strong"],
+        ["Card AVS",                 "Street & ZIP match — strong"],
+        ["Name agreement",           "3 / 3 sources (bank, applicant, card)"],
+        ["Address agreement",        "3 / 3 sources (Ekata, US Open Finance, AVS)"],
+        ["Document fallback",        "not required"],
+        ["Risk band",                "Low"],
+      ],
+      callout: "score = 0.3·openfinance + 0.3·ekata + 0.2·3ds + 0.2·avs  →  0.91  (auto-approve)",
+    };
+  }
+  return {
+    title: "Step 5 — Identity established",
+    provider: "Medicare.gov",
+    items: [
+      ["Identity assurance level", "IAL2 (NIST 800-63-3)"],
+      ["Medicare account linked",  "MED-US-2026-118-44219"],
+      ["Audit bundle stored",      "US Open Finance owner.json + Ekata score + Mastercard 3DS receipt"],
+      ["PII never seen",           "PAN tokenized; raw bank credentials never left US Open Finance"],
+    ],
+    callout: "session.identityVerified = true  →  unlock Medicare account",
+  };
+}
+
+function renderIdentity() {
+  const body = $("uc-body");
+  if (!body) return;
+  body.innerHTML = `
+    <div class="idv-wrap${IDV.reveal ? ' idv-reveal-on' : ''}">
+      <div class="idv-toolbar">
+        <div class="idv-stepper" id="idv-stepper"></div>
+        <div class="idv-toolbar-right">
+          <label class="idv-toggle">
+            <input type="checkbox" id="idv-reveal-cb" ${IDV.reveal ? 'checked' : ''}>
+            <span class="idv-toggle-track"><span class="idv-toggle-thumb"></span></span>
+            <span class="idv-toggle-label">Reveal what's happening</span>
+          </label>
+        </div>
+      </div>
+      <div class="idv-split">
+        <div class="idv-browser">
+          <div class="idv-browser-chrome">
+            <span class="idv-dot r"></span><span class="idv-dot y"></span><span class="idv-dot g"></span>
+            <div class="idv-url">
+              <span class="idv-lock">🔒</span>
+              <span id="idv-url-text">www.medicare.gov</span>
+            </div>
+          </div>
+          <div class="idv-page" id="idv-page"></div>
+        </div>
+        <aside class="idv-bts" id="idv-bts"></aside>
+      </div>
+    </div>
+  `;
+  idvRender();
+
+  document.getElementById("idv-reveal-cb").addEventListener("change", (e) => {
+    IDV.reveal = !!e.target.checked;
+    const wrap = body.querySelector(".idv-wrap");
+    if (wrap) wrap.classList.toggle("idv-reveal-on", IDV.reveal);
+    // Sync reveal state inside modal if open
+    const mw = document.querySelector('.idv-modal-wrap');
+    if (mw) mw.classList.toggle('idv-reveal-on', IDV.reveal);
+  });
+}
+
+function idvOpenModal() {
+  if (document.getElementById('idv-fullscreen-modal')) return;
+  const modal = document.createElement('div');
+  modal.id = 'idv-fullscreen-modal';
+  modal.className = 'idv-fullscreen-modal';
+  // Clone the inner split content into the modal with its own wrap
+  modal.innerHTML = `
+    <div class="idv-modal-inner">
+      <div class="idv-modal-topbar">
+        <div class="idv-modal-title">Online Identity Verification</div>
+        <div class="idv-modal-controls">
+          <label class="idv-toggle idv-modal-toggle">
+            <input type="checkbox" id="idv-modal-reveal-cb" ${IDV.reveal ? 'checked' : ''}>
+            <span class="idv-toggle-track"><span class="idv-toggle-thumb"></span></span>
+            <span class="idv-toggle-label">Reveal what's happening</span>
+          </label>
+          <button class="idv-modal-reduce-btn" title="Exit full screen (Esc)">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M9.5 5.5l-4 4M5.5 5.5v4h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="1" y="1" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>
+            Reduce
+          </button>
+        </div>
+      </div>
+      <div class="idv-modal-wrap${IDV.reveal ? ' idv-reveal-on' : ''}" id="idv-modal-wrap">
+        <div class="idv-modal-toolbar" id="idv-modal-toolbar" style="display:none">
+          <div class="idv-stepper" id="idv-modal-stepper"></div>
+        </div>
+        <div class="idv-split" id="idv-modal-split">
+          <div class="idv-browser">
+            <div class="idv-browser-chrome">
+              <span class="idv-dot r"></span><span class="idv-dot y"></span><span class="idv-dot g"></span>
+              <div class="idv-url">
+                <span class="idv-lock">🔒</span>
+                <span id="idv-modal-url-text">www.medicare.gov</span>
+              </div>
+            </div>
+            <div class="idv-page" id="idv-modal-page"></div>
+          </div>
+          <aside class="idv-bts" id="idv-modal-bts"></aside>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Wire modal reveal toggle
+  document.getElementById('idv-modal-reveal-cb').addEventListener('change', (e) => {
+    IDV.reveal = !!e.target.checked;
+    document.getElementById('idv-modal-wrap').classList.toggle('idv-reveal-on', IDV.reveal);
+    // Sync embedded toggle
+    const cb = document.getElementById('idv-reveal-cb');
+    if (cb) cb.checked = IDV.reveal;
+    const embWrap = document.querySelector('.idv-wrap');
+    if (embWrap) embWrap.classList.toggle('idv-reveal-on', IDV.reveal);
+  });
+
+  // Reduce / close handlers
+  const dismiss = () => { modal.remove(); idvRender(); };
+  modal.querySelector('.idv-modal-reduce-btn').addEventListener('click', dismiss);
+  const onKey = (e) => { if (e.key === 'Escape') { dismiss(); document.removeEventListener('keydown', onKey); } };
+  document.addEventListener('keydown', onKey);
+
+  // Render into the modal
+  idvRender();
+}
+
+function idvRender() {
+  const inModal = !!document.getElementById('idv-fullscreen-modal');
+  const urlId   = inModal ? 'idv-modal-url-text' : 'idv-url-text';
+  const wrapSel = inModal ? '#idv-modal-wrap'    : '.idv-wrap';
+
+  // URL bar
+  const urlEl = document.getElementById(urlId);
+  if (urlEl) urlEl.textContent = idvCurrentUrl();
+
+  // Toolbar visibility
+  const toolbarSel = inModal ? '#idv-modal-toolbar' : '.idv-toolbar';
+  const toolbar = document.querySelector(toolbarSel);
+  if (toolbar) toolbar.style.display = (IDV.phase === 'verify') ? '' : 'none';
+
+  // BTS aside
+  const wrap = document.querySelector(wrapSel);
+  if (wrap) wrap.classList.toggle('idv-no-bts', IDV.phase !== 'verify');
+
+  idvRenderPage();
+  idvRenderBts();
+}
+
+function idvCurrentUrl() {
+  switch (IDV.phase) {
+    case 'home':    return 'www.medicare.gov';
+    case 'login':   return 'www.medicare.gov/account/login';
+    case 'verify':  return 'www.medicare.gov/account/verify';
+    case 'passkey': return 'www.medicare.gov/account/passkey';
+    case 'records': return 'www.medicare.gov/account/my-record';
+    default:        return 'www.medicare.gov';
+  }
+}
+
+function idvRenderStepper() {
+  const el = document.getElementById("idv-stepper");
+  if (!el) return;
+  el.innerHTML = IDV_STEPS.map((s, i) => {
+    const state = i < IDV.step ? "done" : i === IDV.step ? "active" : "todo";
+    return `<div class="idv-step idv-step-${state}">
+      <span class="idv-step-num">${i < IDV.step ? "✓" : (i + 1)}</span>
+      <span class="idv-step-label">${escapeHtml(s.label)}</span>
+    </div>`;
+  }).join('<span class="idv-step-sep"></span>');
+}
+
+function idvPageStepPersonal() {
+  const f = IDV.form;
+  const bankName = IDV.selectedBank ? IDV.selectedBank.name : 'your bank';
+  return `
+    <div class="idv-screen">
+      <div class="idv-brand">
+        <div class="idv-crown idv-crown-med">M</div>
+        <div>
+          <h2>Confirm your information</h2>
+          <p class="muted">We pre-filled this from <strong>${escapeHtml(bankName)}</strong>. Review and continue \u2014 we only share what's needed with Medicare.gov.</p>
+        </div>
+      </div>
+      <h3 class="idv-screen-title">Your details</h3>
+      <div class="idv-grid">
+        <label>First name<input id="idv-f-first" value="${escapeHtml(f.firstName)}"></label>
+        <label>Last name<input id="idv-f-last" value="${escapeHtml(f.lastName)}"></label>
+        <label class="idv-col-2">Email<input id="idv-f-email" type="email" value="${escapeHtml(f.email)}"></label>
+        <label>Date of birth<input id="idv-f-dob" type="date" value="${escapeHtml(f.dob)}"></label>
+        <label>Phone<input id="idv-f-phone" value="${escapeHtml(f.phone)}"></label>
+        <label class="idv-col-2">Home address<input id="idv-f-addr" value="${escapeHtml(f.address)}"></label>
+      </div>
+      <div class="idv-actions">
+        <button class="btn btn-outline" id="idv-back-personal">Back</button>
+        <button class="btn btn-primary" id="idv-next-personal">Continue</button>
+      </div>
+    </div>`;
+}
+
+function idvPageStepBank() {
+  const sel = IDV.selectedBank;
+  return `
+    <div class="idv-screen">
+      <h3 class="idv-screen-title">Connect your bank</h3>
+      <p class="muted">We confirm you own the account in your name. Your password is never shared with us — <strong>US Open Finance</strong> handles the secure sign-in. We'll use the account holder details to pre-fill the next step.</p>
+      <div class="idv-banks">
+        ${IDV_BANKS.map(b => `
+          <button class="idv-bank ${sel && sel.id === b.id ? 'idv-bank-sel' : ''}" data-bank="${b.id}">
+            <span class="idv-bank-mark" style="background:${b.color}">${escapeHtml(b.name.slice(0,1))}</span>
+            <span>${escapeHtml(b.name)}</span>
+          </button>`).join('')}
+      </div>
+      ${sel ? `
+        <div class="idv-bank-card">
+          <div class="idv-bank-card-head" style="background:${sel.color}">
+            <span>${escapeHtml(sel.name)} Online</span>
+            <span class="idv-bank-secure">🔒 openfinance.us</span>
+          </div>
+          <div class="idv-bank-card-body">
+            <label>Username<input value="alex.morgan" disabled></label>
+            <label>Password<input type="password" value="••••••••" disabled></label>
+            <button class="btn btn-primary" id="idv-connect-bank">Sign in &amp; share account ownership</button>
+          </div>
+        </div>` : `<p class="muted idv-hint">Pick your bank to continue.</p>`}
+      ${IDV.bankModalOpen ? idvBankModal() : ''}
+    </div>`;
+}
+
+function idvBankModal() {
+  const sel = IDV.selectedBank || { name: "your bank", color: "#1a3a8f" };
+  const stage = IDV.bankModalStage;
+  let body = '';
+  if (stage === 'intro') {
+    body = `
+      <div class="idv-modal-body">
+        <div class="idv-modal-icon" style="background:${sel.color}">🏛️</div>
+        <h4>Share account ownership with Medicare.gov?</h4>
+        <p class="muted">${escapeHtml(sel.name)} will share, via US Open Finance, only the information needed to confirm your identity:</p>
+        <ul class="idv-modal-list">
+          <li><strong>Account holder name</strong> &mdash; to match against your application</li>
+          <li><strong>Account status &amp; age</strong> &mdash; confirm account is funded and active</li>
+          <li><strong>Last 4 of account number</strong> &mdash; for the audit record</li>
+        </ul>
+        <p class="muted idv-modal-fine">No transactions, balances or credentials will be shared. You can revoke this consent at any time.</p>
+        <div class="idv-modal-actions">
+          <button class="btn btn-outline" id="idv-modal-cancel">Cancel</button>
+          <button class="btn btn-primary" id="idv-modal-consent">I consent</button>
+        </div>
+      </div>`;
+  } else if (stage === 'connecting') {
+    body = `
+      <div class="idv-modal-body idv-modal-center">
+        <div class="idv-spinner-lg"></div>
+        <h4>Sharing account ownership…</h4>
+        <ul class="idv-verify-list">
+          <li class="idv-vli idv-vli-done">Signed in to ${escapeHtml(sel.name)}</li>
+          <li class="idv-vli idv-vli-done">Consent recorded with US Open Finance</li>
+          <li class="idv-vli idv-vli-active">Retrieving account owner…</li>
+        </ul>
+      </div>`;
+  }
+  return `
+    <div class="idv-modal-backdrop">
+      <div class="idv-modal">
+        <div class="idv-modal-head">
+          <span>US Open Finance</span>
+          <span class="idv-modal-secure">🔒 openfinance.us</span>
+        </div>
+        ${body}
+      </div>
+    </div>`;
+}
+
+function idvPageStep2() {
+  const bankId = IDV.selectedBank ? IDV.selectedBank.id : null;
+  const bankName = IDV.selectedBank ? IDV.selectedBank.name : 'your bank';
+  const bankCards = IDV_CARDS.filter(c => c.bankId === bankId);
+  // Auto-pick a Mastercard first; fall back to first available card
+  if (!IDV.selectedCardId || !bankCards.find(c => c.id === IDV.selectedCardId)) {
+    const mcCard = bankCards.find(c => c.network === 'mc');
+    IDV.selectedCardId = (mcCard || bankCards[0]) ? (mcCard || bankCards[0]).id : null;
+  }
+  const card = bankCards.find(c => c.id === IDV.selectedCardId) || bankCards[0];
+  const isVisa = card && card.network === 'visa';
+  const visaDigits = (IDV.visaLast8 || '').replace(/\D/g, '').slice(0, 8);
+  const visaComplete = !isVisa || visaDigits.length === 8;
+  const canContinue = !!card && IDV.cardConsent && visaComplete && !IDV.cardAuthorizing;
+  const displayedPan = card ? (isVisa
+    ? `${card.bin6.slice(0,4)} ${card.bin6.slice(4)}${(visaDigits.slice(0,2) || '••').padEnd(2,'•')}  ${(visaDigits.slice(2,6) || '••••').padEnd(4,'•')}  ${(visaDigits.slice(6,8) || '••').padEnd(2,'•')}${card.last4.slice(0,2)} ${card.last4.slice(2)}`
+    : `5204  ${card.last4.slice(0,2)}••  ••••  ${card.last4}`) : '';
+  return `
+    <div class="idv-screen">
+      <h3 class="idv-screen-title">Verify By Card</h3>
+      <p class="muted">We confirm you hold this card: identity verification only — no payment will be taken.</p>
+      <label class="idv-field">
+        <span class="muted">Card on file from ${escapeHtml(bankName)}</span>
+        <select id="idv-card-select" class="idv-select">
+          ${bankCards.map(c => `<option value="${c.id}" ${c.id === (card && card.id) ? 'selected' : ''}>${escapeHtml(c.display)} — ${escapeHtml(c.issuer)}</option>`).join('')}
+          <option value="__other__" disabled>— Choose other card (demo only) —</option>
+        </select>
+      </label>
+      ${card ? `
+      <div class="idv-card-visual idv-card-${card.network}">
+        <div class="idv-card-top">
+          <div class="idv-card-chip"></div>
+          <div class="idv-card-brand">${isVisa
+            ? '<span class="idv-visa-mark">VISA</span>'
+            : '<span class="r"></span><span class="y"></span>'}</div>
+        </div>
+        <div class="idv-card-num">${displayedPan}</div>
+        <div class="idv-card-row">
+          <div><span class="muted">Cardholder</span><br>${escapeHtml(IDV.form.firstName + ' ' + IDV.form.lastName).toUpperCase()}</div>
+          <div class="idv-card-issuer"><span class="muted">Issuer</span><br>${escapeHtml(card.issuer)}</div>
+        </div>
+      </div>` : '<p class="muted">No cards on file for this bank.</p>'}
+      ${isVisa ? `
+        <div class="idv-visa-block">
+          <p class="muted idv-visa-note">Your bank only shared the first 6 and last 4 of this Visa card. Enter the middle <strong>8 digits</strong> to confirm you have the physical card.</p>
+          <label class="idv-field">
+            <span class="muted">Middle 8 digits</span>
+            <input id="idv-visa-8" inputmode="numeric" maxlength="8" placeholder="••••••••" value="${escapeHtml(visaDigits)}" autocomplete="off">
+          </label>
+        </div>` : (card ? `
+        <p class="muted idv-card-note">Your bank already shared this full card number with Open Banking, so no extra digits are required.</p>` : '')}
+      <label class="idv-check">
+        <input type="checkbox" id="idv-consent-cb" ${IDV.cardConsent ? 'checked' : ''}>
+        <span>I authorize Medicare to verify my identity by checking this card with my issuer. No payment will be taken; the card is not stored.</span>
+      </label>
+      <div class="idv-actions">
+        <button class="btn btn-outline" id="idv-back-2" ${IDV.cardAuthorizing ? 'disabled' : ''}>Back</button>
+        <button class="btn btn-primary" id="idv-next-2" ${canContinue ? '' : 'disabled'}>
+          Verify By Card
+        </button>
+      </div>
+    </div>`;
+}
+
+function idvPageStep3() {
+  return `
+    <div class="idv-screen idv-screen-center">
+      <div class="idv-spinner-lg"></div>
+      <h3 class="idv-screen-title">Confirming who you are…</h3>
+      <p class="muted">Cross-checking your bank, card and device signals.</p>
+    </div>`;
+}
+
+function idvPageStep4() {
+  return `
+    <div class="idv-screen idv-screen-center">
+      <div class="idv-tick">✓</div>
+      <h3 class="idv-screen-title">You're verified</h3>
+      <p class="muted">Your identity has been established. You can now access your Medicare account.</p>
+      <div class="idv-result-card">
+        <div class="idv-result-row"><span>Name</span><strong>${escapeHtml(IDV.form.firstName + ' ' + IDV.form.lastName)}</strong></div>
+        <div class="idv-result-row"><span>Assurance level</span><strong>IAL2 (NIST 800-63-3)</strong></div>
+        <div class="idv-result-row"><span>Risk band</span><strong class="idv-ok">Low</strong></div>
+        <div class="idv-result-row"><span>Reference</span><strong>MED-US-2026-118-44219</strong></div>
+      </div>
+      <div class="idv-actions idv-actions-stack">
+        <button class="btn btn-primary" id="idv-passkey">Use a passkey next time</button>
+        <button class="btn btn-outline" id="idv-passkey-skip">Skip &mdash; access my records</button>
+      </div>
+    </div>`;
+}
+
+function idvRenderPage() {
+  const inModal = !!document.getElementById('idv-fullscreen-modal');
+  const page = document.getElementById(inModal ? 'idv-modal-page' : 'idv-page');
+  if (!page) return;
+
+  // Non-verify phases route here
+  if (IDV.phase === 'home')    { page.innerHTML = idvPageHome();    return idvWireHome(page); }
+  if (IDV.phase === 'login')   { page.innerHTML = idvPageLogin();   return idvWireLogin(page); }
+  if (IDV.phase === 'passkey') { page.innerHTML = idvPagePasskey(); return idvWirePasskey(page); }
+  if (IDV.phase === 'records') { page.innerHTML = idvPageRecords(); return idvWireRecords(page); }
+
+  const renderers = [idvPageStepBank, idvPageStepPersonal, idvPageStep2, idvPageStep3, idvPageStep4];
+  const bankName = IDV.selectedBank ? IDV.selectedBank.name : 'your bank';
+  const bankColor = IDV.selectedBank ? IDV.selectedBank.color : '#1B6EC2';
+  const bankInitial = IDV.selectedBank ? IDV.selectedBank.name.slice(0,1).toUpperCase() : '?';
+  page.innerHTML = `
+    <div class="med-page med-page-verify">
+      <div class="med-topbar med-topbar-slim">
+        <div class="med-topbar-inner">
+          <span class="med-logo">
+            <span class="med-logo-mark">M</span>
+            <span class="med-logo-text">Medicare<span class="med-logo-dot">.gov</span></span>
+          </span>
+          <span class="med-account-pill">Identity verification</span>
+        </div>
+      </div>
+      <div class="mcc-shell">
+        <header class="mcc-header">
+          <div class="mcc-brand">
+            <span class="mcc-logo" aria-hidden="true"><span class="r"></span><span class="y"></span></span>
+            <div class="mcc-brand-text">
+              <strong>Mastercard ID Connect</strong>
+              <span>Verifying you for <em>Medicare.gov</em> using your bank and card</span>
+            </div>
+          </div>
+          <div class="mcc-pair">
+            <span class="mcc-pair-pill">
+              <span class="mcc-pair-dot" style="background:${bankColor}">${escapeHtml(bankInitial)}</span>
+              ${escapeHtml(bankName)}
+            </span>
+            <span class="mcc-pair-link">↔</span>
+            <span class="mcc-pair-pill">
+              <span class="mcc-pair-card"><span class="r"></span><span class="y"></span></span>
+              Your Mastercard
+            </span>
+          </div>
+        </header>
+        <div class="mcc-stepper" role="list">
+          ${IDV_STEPS.map((s, i) => {
+            const state = i < IDV.step ? 'done' : i === IDV.step ? 'active' : 'todo';
+            return `<div class="mcc-step mcc-step-${state}" role="listitem">
+              <span class="mcc-step-num">${i < IDV.step ? '✓' : (i + 1)}</span>
+              <span class="mcc-step-label">${escapeHtml(s.label)}</span>
+            </div>`;
+          }).join('<span class="mcc-step-sep"></span>')}
+        </div>
+        <div class="mcc-body" id="idv-step-pane"></div>
+        <footer class="mcc-foot">
+          <span class="mcc-foot-lock">🔒</span>
+          Secured by Mastercard. Your bank credentials and card details are never shared with Medicare.gov.
+        </footer>
+      </div>
+    </div>
+  `;
+  const pane = document.getElementById('idv-step-pane');
+  pane.innerHTML = renderers[IDV.step]();
+
+  // Wiring per step
+  if (IDV.step === 0) {
+    // Step 0: Connect bank
+    page.querySelectorAll(".idv-bank").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.bank;
+        IDV.selectedBank = IDV_BANKS.find(b => b.id === id) || null;
+        IDV.bankConnected = false;
+        idvRender();
+      });
+    });
+    const connectBtn = document.getElementById("idv-connect-bank");
+    if (connectBtn) connectBtn.addEventListener("click", () => {
+      IDV.bankModalOpen = true;
+      IDV.bankModalStage = "intro";
+      idvRender();
+    });
+
+    // Bank consent modal wiring
+    const cancelBtn = document.getElementById("idv-modal-cancel");
+    if (cancelBtn) cancelBtn.addEventListener("click", () => {
+      IDV.bankModalOpen = false;
+      idvRender();
+    });
+    const consentBtn = document.getElementById("idv-modal-consent");
+    if (consentBtn) consentBtn.addEventListener("click", () => {
+      IDV.bankModalStage = "connecting";
+      idvRender();
+      setTimeout(() => {
+        IDV.bankModalOpen = false;
+        IDV.bankConsentGiven = true;
+        IDV.bankConnected = true;
+        // Pre-fill personal info from bank account owner record
+        IDV.form.firstName = IDV.form.firstName || "Alex";
+        IDV.form.lastName  = IDV.form.lastName  || "Morgan";
+        IDV.form.email     = IDV.form.email     || "alex.morgan@gmail.com";
+        IDV.form.dob       = IDV.form.dob       || "1958-04-12";
+        IDV.form.phone     = IDV.form.phone     || "+1 (202) 555-0123";
+        IDV.form.address   = IDV.form.address   || "1600 Pennsylvania Ave NW, Washington DC";
+        IDV.step = 1;
+        idvRender();
+      }, 1800);
+    });
+  } else if (IDV.step === 1) {
+    // Step 1: Personal info (pre-filled from bank)
+    const nx = document.getElementById("idv-next-personal");
+    if (nx) nx.addEventListener("click", () => {
+      IDV.form.firstName = document.getElementById("idv-f-first").value || IDV.form.firstName;
+      IDV.form.lastName  = document.getElementById("idv-f-last").value  || IDV.form.lastName;
+      IDV.form.email     = document.getElementById("idv-f-email").value || IDV.form.email;
+      IDV.form.dob       = document.getElementById("idv-f-dob").value   || IDV.form.dob;
+      IDV.form.phone     = document.getElementById("idv-f-phone").value || IDV.form.phone;
+      IDV.form.address   = document.getElementById("idv-f-addr").value  || IDV.form.address;
+      IDV.step = 2;
+      idvRender();
+    });
+    const backP = document.getElementById("idv-back-personal");
+    if (backP) backP.addEventListener("click", () => { IDV.step = 0; idvRender(); });
+  } else if (IDV.step === 2) {
+    const sel = document.getElementById("idv-card-select");
+    if (sel) sel.addEventListener("change", () => {
+      IDV.selectedCardId = sel.value;
+      IDV.visaLast8 = "";
+      idvRender();
+    });
+    const visaInput = document.getElementById("idv-visa-8");
+    if (visaInput) {
+      visaInput.addEventListener("input", () => {
+        const cleaned = visaInput.value.replace(/\D/g, '').slice(0, 8);
+        if (cleaned !== visaInput.value) visaInput.value = cleaned;
+        IDV.visaLast8 = cleaned;
+        // Update enabled state without re-render (preserve focus)
+        const card = IDV_CARDS.find(c => c.id === IDV.selectedCardId);
+        const visaComplete = !card || card.network !== 'visa' || cleaned.length === 8;
+        const nb = document.getElementById("idv-next-2");
+        if (nb) nb.disabled = !IDV.cardConsent || !visaComplete || IDV.cardAuthorizing;
+      });
+    }
+    const cb = document.getElementById("idv-consent-cb");
+    if (cb) cb.addEventListener("change", () => {
+      IDV.cardConsent = cb.checked;
+      const card = IDV_CARDS.find(c => c.id === IDV.selectedCardId);
+      const visaComplete = !card || card.network !== 'visa' || (IDV.visaLast8 || '').length === 8;
+      const nb = document.getElementById("idv-next-2");
+      if (nb) nb.disabled = !cb.checked || !visaComplete || IDV.cardAuthorizing;
+    });
+    const backBtn = document.getElementById("idv-back-2");
+    if (backBtn) backBtn.addEventListener("click", () => { IDV.step = 1; idvRender(); });
+    const nextBtn = document.getElementById("idv-next-2");
+    if (nextBtn) nextBtn.addEventListener("click", () => {
+      if (IDV.cardAuthorizing) return;
+      IDV.cardAuthorizing = true;
+      IDV.step = 3;
+      idvRender();
+      _ensureMcSonicScript(() => _sonicLaunch('securedby', 'default', 'black'));
+      setTimeout(() => {
+        IDV.cardAuthorizing = false;
+        IDV.step = 4;
+        idvRender();
+        // Auto-scroll the verified screen into view
+        requestAnimationFrame(() => {
+          const inModalScroll = !!document.getElementById('idv-fullscreen-modal');
+          const screen = document.querySelector((inModalScroll ? '#idv-modal-page' : '#idv-page') + ' .idv-screen');
+          if (screen && typeof screen.scrollIntoView === 'function') {
+            screen.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+          const browser = document.querySelector('.idv-browser');
+          if (browser) browser.scrollTo({ top: 0, behavior: 'smooth' });
+          const inModal2 = !!document.getElementById('idv-fullscreen-modal');
+          const page = document.getElementById(inModal2 ? 'idv-modal-page' : 'idv-page');
+          if (page) page.scrollTo({ top: 0, behavior: 'smooth' });
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }, 1400);
+    });
+  } else if (IDV.step === 4) {
+    const pk = document.getElementById("idv-passkey");
+    if (pk) pk.addEventListener("click", () => {
+      IDV.phase = 'passkey';
+      idvRender();
+    });
+    const skip = document.getElementById("idv-passkey-skip");
+    if (skip) skip.addEventListener("click", () => {
+      IDV.passkeyChoice = 'skipped';
+      IDV.phase = 'records';
+      idvRender();
+    });
+  }
+}
+
+// ============== Medicare.gov sample pages ==============
+function idvPageHome() {
+  return `
+    <div class="med-page med-page-home">
+      <div class="med-topbar med-topbar-clean">
+        <div class="med-topbar-inner">
+          <a class="med-logo" href="#" onclick="return false">
+            <span class="med-logo-mark">M</span>
+            <span class="med-logo-text">Medicare<span class="med-logo-dot">.gov</span></span>
+          </a>
+          <button class="med-login-btn" id="med-login-go">Log in</button>
+        </div>
+      </div>
+      <section class="med-welcome">
+        <svg class="med-welcome-wave" viewBox="0 0 800 600" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M -20 120 C 160 60, 380 180, 460 80 S 740 60, 820 180 S 620 360, 460 320 S 200 380, 100 480 S -40 560, 60 620"
+                fill="none" stroke="#2e7d6b" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round"/>
+        </svg>
+        <div class="med-welcome-portrait" aria-hidden="true">
+          <svg viewBox="0 0 220 240" width="100%" height="100%">
+            <defs>
+              <linearGradient id="medSkin" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#d2a279"/>
+                <stop offset="100%" stop-color="#a87a55"/>
+              </linearGradient>
+              <linearGradient id="medShirt" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#3a5a7a"/>
+                <stop offset="100%" stop-color="#5a7a8a"/>
+              </linearGradient>
+            </defs>
+            <!-- shirt -->
+            <path d="M 20 240 L 30 170 Q 60 150, 110 150 Q 160 150, 190 170 L 200 240 Z" fill="url(#medShirt)"/>
+            <!-- plaid lines -->
+            <g stroke="#2a3f55" stroke-width="2" opacity="0.5">
+              <line x1="50" y1="155" x2="55" y2="240"/>
+              <line x1="90" y1="152" x2="92" y2="240"/>
+              <line x1="130" y1="152" x2="132" y2="240"/>
+              <line x1="170" y1="155" x2="172" y2="240"/>
+              <line x1="25" y1="190" x2="200" y2="190"/>
+              <line x1="22" y1="215" x2="200" y2="215"/>
+            </g>
+            <g stroke="#c97a3e" stroke-width="1.5" opacity="0.55">
+              <line x1="70" y1="152" x2="73" y2="240"/>
+              <line x1="150" y1="152" x2="153" y2="240"/>
+              <line x1="25" y1="175" x2="200" y2="175"/>
+              <line x1="22" y1="230" x2="200" y2="230"/>
+            </g>
+            <!-- neck -->
+            <path d="M 90 145 Q 110 158, 130 145 L 130 160 Q 110 168, 90 160 Z" fill="url(#medSkin)"/>
+            <!-- head -->
+            <ellipse cx="110" cy="100" rx="55" ry="62" fill="url(#medSkin)"/>
+            <!-- hair (silver) -->
+            <path d="M 58 88 Q 60 50, 110 42 Q 160 50, 162 88 Q 158 70, 130 66 Q 110 72, 90 66 Q 62 70, 58 88 Z" fill="#c8c8c8"/>
+            <path d="M 60 92 Q 70 80, 85 84 M 135 84 Q 150 80, 160 92" stroke="#a8a8a8" stroke-width="1.5" fill="none"/>
+            <!-- eyes (smiling closed crescents) -->
+            <path d="M 82 102 Q 90 96, 98 102" stroke="#3a2a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <path d="M 122 102 Q 130 96, 138 102" stroke="#3a2a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <!-- eyebrows -->
+            <path d="M 78 92 Q 88 88, 100 92" stroke="#8a8a8a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <path d="M 120 92 Q 132 88, 142 92" stroke="#8a8a8a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <!-- cheeks (smile lines) -->
+            <path d="M 70 118 Q 76 124, 80 122" stroke="#8a5a3a" stroke-width="1.2" fill="none" opacity="0.5"/>
+            <path d="M 140 122 Q 144 124, 150 118" stroke="#8a5a3a" stroke-width="1.2" fill="none" opacity="0.5"/>
+            <!-- nose -->
+            <path d="M 110 110 Q 105 122, 108 130 Q 112 132, 116 130" stroke="#8a5a3a" stroke-width="1.5" fill="none" opacity="0.6"/>
+            <!-- smile -->
+            <path d="M 88 138 Q 110 152, 132 138" stroke="#5a2a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <path d="M 92 139 Q 110 148, 128 139 Q 110 144, 92 139 Z" fill="#fff"/>
+          </svg>
+        </div>
+        <div class="med-welcome-text">
+          <h1>Welcome to<br>Medicare</h1>
+          <button class="med-cta-green" id="med-cta-start">Get Started with Medicare</button>
+        </div>
+      </section>
+      <footer class="med-footer">
+        <div><strong>An official website of the U.S. Centers for Medicare &amp; Medicaid Services</strong></div>
+        <div class="med-footer-links">
+          <a href="#" onclick="return false">Privacy</a>
+          <a href="#" onclick="return false">Accessibility</a>
+          <a href="#" onclick="return false">No FEAR Act</a>
+          <a href="#" onclick="return false">FOIA</a>
+          <a href="#" onclick="return false">Plain writing</a>
+        </div>
+      </footer>
+    </div>`;
+}
+function idvWireHome(page) {
+  const go = () => { IDV.phase = 'login'; idvRender(); };
+  page.querySelector('#med-login-go').addEventListener('click', go);
+  const cta = page.querySelector('#med-cta-start');
+  if (cta) cta.addEventListener('click', go);
+}
+
+function idvPageLogin() {
+  return `
+    <div class="med-page med-page-narrow">
+      <div class="med-topbar med-topbar-slim">
+        <div class="med-topbar-inner">
+          <a class="med-logo" href="#" id="med-back-home">
+            <span class="med-logo-mark">M</span>
+            <span class="med-logo-text">Medicare<span class="med-logo-dot">.gov</span></span>
+          </a>
+        </div>
+      </div>
+      <div class="med-login">
+        <h2>Log in or create account</h2>
+        <p class="muted">You can use any of the methods below to access your Medicare account.</p>
+
+        <form class="med-login-form" onsubmit="return false">
+          <label>Username
+            <input type="text" id="med-user" placeholder="Enter your username" autocomplete="username">
+          </label>
+          <label>Password
+            <input type="password" id="med-pass" placeholder="Enter your password" autocomplete="current-password">
+          </label>
+          <div class="med-login-extras">
+            <label class="med-remember"><input type="checkbox"> Remember me</label>
+            <a href="#" onclick="return false">Forgot username or password?</a>
+          </div>
+          <button class="med-btn-primary" type="submit" disabled>Log in</button>
+        </form>
+
+        <div class="med-login-or"><span>or</span></div>
+
+        <button class="med-mc-connect" id="med-mc-connect">
+          <span class="med-mc-logo"><span class="r"></span><span class="y"></span></span>
+          <span class="med-mc-text">
+            <strong>Continue with Mastercard ID Connect</strong>
+            <span>Verify your identity instantly using your bank &amp; card &mdash; no password needed.</span>
+          </span>
+          <span class="med-mc-arrow">→</span>
+        </button>
+
+        ${IDV.passkeyChoice === 'enrolled' ? `
+        <button class="med-mc-passkey" id="med-mc-passkey">
+          <span class="med-mc-logo"><span class="r"></span><span class="y"></span></span>
+          <span class="med-mc-text">
+            <strong>Mastercard ID Passkey</strong>
+            <span>Instant access — authenticate with Face ID, Touch ID or screen lock.</span>
+          </span>
+          <span class="med-mc-key">🔑</span>
+        </button>` : ''}
+
+        <p class="med-login-fine">By logging in, you agree to the <a href="#" onclick="return false">Terms of use</a> and <a href="#" onclick="return false">Privacy policy</a>.</p>
+      </div>
+    </div>`;
+}
+function idvWireLogin(page) {
+  const back = page.querySelector('#med-back-home');
+  if (back) back.addEventListener('click', (e) => { e.preventDefault(); IDV.phase = 'home'; idvRender(); });
+  page.querySelector('#med-mc-connect').addEventListener('click', () => {
+    IDV.phase = 'verify';
+    IDV.step = 0;
+    idvRender();
+  });
+  const passkeyBtn = page.querySelector('#med-mc-passkey');
+  if (passkeyBtn) {
+    passkeyBtn.addEventListener('click', () => {
+      _ensureMcSonicScript(() => _sonicLaunch('securedby', 'default', 'black'));
+      setTimeout(() => {
+        IDV.phase = 'records';
+        idvRender();
+      }, 1800);
+    });
+  }
+}
+
+function idvPagePasskey() {
+  return `
+    <div class="med-page med-page-verify">
+      <div class="med-topbar med-topbar-slim">
+        <div class="med-topbar-inner">
+          <span class="med-logo">
+            <span class="med-logo-mark">M</span>
+            <span class="med-logo-text">Medicare<span class="med-logo-dot">.gov</span></span>
+          </span>
+          <span class="med-account-pill">${escapeHtml(IDV.form.firstName + ' ' + IDV.form.lastName)}</span>
+        </div>
+      </div>
+      <div class="mcc-shell">
+        <header class="mcc-header">
+          <div class="mcc-brand">
+            <span class="mcc-logo" aria-hidden="true"><span class="r"></span><span class="y"></span></span>
+            <div class="mcc-brand-text">
+              <strong>Mastercard ID Connect</strong>
+              <span>Identity verified for <em>Medicare.gov</em></span>
+            </div>
+          </div>
+        </header>
+        <div class="mcc-body mcc-passkey-body">
+          <div class="med-passkey-icon">🔑</div>
+          <h2>Use a passkey next time?</h2>
+          <p class="muted">Skip the bank &amp; card check the next time you log in. Your device will use Face ID, Touch ID, or your screen lock to prove it's you.</p>
+          <ul class="med-passkey-list">
+            <li><strong>Faster.</strong> Log in with a tap or a glance.</li>
+            <li><strong>Phishing-resistant.</strong> Passkeys can't be reused or stolen.</li>
+            <li><strong>Private.</strong> Stored only on your device.</li>
+          </ul>
+          <div class="med-passkey-actions">
+            <button class="med-btn-outline" id="med-passkey-skip">Not now</button>
+            <button class="med-btn-primary" id="med-passkey-go">Set up passkey</button>
+          </div>
+        </div>
+        <footer class="mcc-foot">
+          <span class="mcc-foot-lock">🔒</span>
+          Secured by Mastercard. Your bank credentials and card details are never shared with Medicare.gov.
+        </footer>
+      </div>
+    </div>`;
+}
+function idvWirePasskey(page) {
+  page.querySelector('#med-passkey-skip').addEventListener('click', () => {
+    IDV.passkeyChoice = 'skipped';
+    IDV.phase = 'records';
+    idvRender();
+  });
+  page.querySelector('#med-passkey-go').addEventListener('click', (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="idv-btn-spin"></span> Setting up…';
+    setTimeout(() => {
+      IDV.passkeyChoice = 'enrolled';
+      IDV.phase = 'records';
+      idvRender();
+    }, 1100);
+  });
+}
+
+function idvPageRecords() {
+  const name = IDV.form.firstName + ' ' + IDV.form.lastName;
+  const passkeyBadge = IDV.passkeyChoice === 'enrolled'
+    ? '<span class="med-badge med-badge-ok">🔑 Passkey enabled</span>'
+    : '<span class="med-badge med-badge-dim">Passkey not set</span>';
+  return `
+    <div class="med-page">
+      <div class="med-topbar med-topbar-slim">
+        <div class="med-topbar-inner">
+          <span class="med-logo">
+            <span class="med-logo-mark">M</span>
+            <span class="med-logo-text">Medicare<span class="med-logo-dot">.gov</span></span>
+          </span>
+          <span class="med-account-pill">${escapeHtml(name)}</span>
+        </div>
+        <nav class="med-nav">
+          <a class="active" href="#" onclick="return false">My record</a>
+          <a href="#" onclick="return false">Plans</a>
+          <a href="#" onclick="return false">Claims</a>
+          <a href="#" onclick="return false">Messages</a>
+          <a href="#" onclick="return false">Account settings</a>
+        </nav>
+      </div>
+      <section class="med-record-head">
+        <div>
+          <h2>Welcome back, ${escapeHtml(IDV.form.firstName)}</h2>
+          <p class="muted">Medicare Beneficiary Identifier &middot; 1EG4-TE5-MK73 &middot; ${passkeyBadge}</p>
+        </div>
+        <button class="med-btn-outline" id="med-logout">Log out</button>
+      </section>
+      <section class="med-record-grid">
+        <div class="med-card">
+          <h3>Personal information</h3>
+          <dl class="med-dl">
+            <dt>Name</dt><dd>${escapeHtml(name)}</dd>
+            <dt>Date of birth</dt><dd>${escapeHtml(IDV.form.dob)}</dd>
+            <dt>Address</dt><dd>${escapeHtml(IDV.form.address)}</dd>
+            <dt>Phone</dt><dd>${escapeHtml(IDV.form.phone)}</dd>
+            <dt>Email</dt><dd>${escapeHtml(IDV.form.email)}</dd>
+          </dl>
+        </div>
+        <div class="med-card">
+          <h3>Coverage</h3>
+          <dl class="med-dl">
+            <dt>Part A — Hospital</dt><dd><span class="med-pill med-pill-ok">Active</span> since 04/01/2023</dd>
+            <dt>Part B — Medical</dt><dd><span class="med-pill med-pill-ok">Active</span> since 04/01/2023</dd>
+            <dt>Part D — Drugs</dt><dd>Aetna SilverScript SmartSaver</dd>
+            <dt>Medigap</dt><dd>Plan G — Mutual of Omaha</dd>
+          </dl>
+        </div>
+        <div class="med-card med-card-wide">
+          <h3>Recent claims</h3>
+          <table class="med-table">
+            <thead><tr><th>Date</th><th>Provider</th><th>Service</th><th>Billed</th><th>You may owe</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>05/02/2026</td><td>Sibley Memorial Hospital</td><td>Annual wellness visit</td><td>$284.00</td><td>$0.00</td><td><span class="med-pill med-pill-ok">Processed</span></td></tr>
+              <tr><td>04/18/2026</td><td>Quest Diagnostics</td><td>Comprehensive metabolic panel</td><td>$62.40</td><td>$0.00</td><td><span class="med-pill med-pill-ok">Processed</span></td></tr>
+              <tr><td>03/30/2026</td><td>Dr. Lina Park, MD</td><td>Cardiology follow-up</td><td>$310.00</td><td>$42.00</td><td><span class="med-pill med-pill-ok">Processed</span></td></tr>
+              <tr><td>03/12/2026</td><td>CVS Pharmacy #4421</td><td>Atorvastatin 20mg (90-day)</td><td>$18.00</td><td>$5.00</td><td><span class="med-pill med-pill-warn">Pending</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="med-card">
+          <h3>Prescriptions</h3>
+          <ul class="med-list">
+            <li><strong>Atorvastatin 20 mg</strong><span class="muted">Refill on 06/10/2026</span></li>
+            <li><strong>Lisinopril 10 mg</strong><span class="muted">Refill on 06/22/2026</span></li>
+            <li><strong>Metformin 500 mg</strong><span class="muted">Refill on 07/04/2026</span></li>
+          </ul>
+        </div>
+        <div class="med-card">
+          <h3>Upcoming appointments</h3>
+          <ul class="med-list">
+            <li><strong>Cardiology — Dr. Park</strong><span class="muted">06/04/2026 &middot; 10:30 AM</span></li>
+            <li><strong>Annual flu vaccine</strong><span class="muted">09/15/2026 &middot; Walk-in</span></li>
+          </ul>
+        </div>
+      </section>
+    </div>`;
+}
+function idvWireRecords(page) {
+  const lo = page.querySelector('#med-logout');
+  if (lo) lo.addEventListener('click', () => {
+    IDV.phase = 'home';
+    IDV.step = 0;
+    IDV.selectedBank = null;
+    IDV.bankConnected = false;
+    IDV.bankConsentGiven = false;
+    IDV.bankModalOpen = false;
+    IDV.cardConsent = false;
+    IDV.cardAuthorizing = false;
+    // passkeyChoice intentionally NOT reset on logout — passkeys persist on device
+    idvRender();
+  });
+}
+
+function idvRenderBts() {
+  const inModal = !!document.getElementById('idv-fullscreen-modal');
+  const el = document.getElementById(inModal ? 'idv-modal-bts' : 'idv-bts');
+  if (!el) return;
+  const s = idvSignals(IDV.step);
+  el.innerHTML = `
+    <div class="idv-bts-inner">
+      <div class="idv-bts-head">
+        <span class="idv-bts-tag">BEHIND THE SCENES</span>
+        <h4>${escapeHtml(s.title)}</h4>
+        <div class="idv-bts-provider">${escapeHtml(s.provider)}</div>
+      </div>
+      <ul class="idv-bts-list">
+        ${s.items.map(([k, v]) => `
+          <li><span class="idv-bts-k">${escapeHtml(k)}</span><span class="idv-bts-v">${escapeHtml(v)}</span></li>
+        `).join('')}
+      </ul>
+      <div class="idv-bts-callout">${escapeHtml(s.callout)}</div>
+      <p class="idv-bts-foot muted">Simulated data for illustration — no live API calls yet.</p>
+    </div>
+  `;
+}
+
+document.addEventListener('DOMContentLoaded', renderIdentity);
+</script>
+</body>
+</html>
