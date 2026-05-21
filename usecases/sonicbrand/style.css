@@ -1,0 +1,209 @@
+/* ==========================================================================
+   Sonic Branding — standalone page styles
+   Edit this file to change the sonic use-case UI without touching app styles.
+   ========================================================================== */
+
+:root {
+  --mc-red:    #eb001b;
+  --mc-orange: #ff5f00;
+  --mc-yellow: #f79e1b;
+  --ink:       #141414;
+  --ink-2:     #2a2a2a;
+  --muted:     #6b6b6b;
+  --line:      #e5e5e5;
+  --bg:        #f7f7f8;
+  --surface:   #ffffff;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.5;
+}
+
+.muted { color: var(--muted); }
+
+/* Page wrapper */
+.sonic-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* Hero banner */
+.sonic-hero {
+  display: flex; align-items: center; gap: 32px;
+  background: linear-gradient(135deg, #0d0d0d 0%, #1a0a0a 100%);
+  border-radius: 16px; padding: 32px 36px; color: #fff;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.sonic-hero-visual { flex-shrink: 0; }
+.sonic-hero-circles { display: block; position: relative; width: 90px; height: 90px; }
+.sonic-hero-ring {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.12);
+  animation: sonic-pulse 3s ease-in-out infinite;
+}
+.sonic-hero-ring.r2 { animation-name: sonic-pulse-2; }
+.sonic-hero-ring.r3 { animation-name: sonic-pulse-3; }
+@keyframes sonic-pulse {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50%       { opacity: 0.5;  transform: scale(1.08); }
+}
+@keyframes sonic-pulse-2 {
+  0%, 100% { opacity: 0.15; transform: scale(0.75); }
+  50%       { opacity: 0.5;  transform: scale(0.82); }
+}
+@keyframes sonic-pulse-3 {
+  0%, 100% { opacity: 0.15; transform: scale(0.5); }
+  50%       { opacity: 0.5;  transform: scale(0.56); }
+}
+.sonic-hero-mc {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  display: flex; align-items: center;
+}
+.sonic-hero-mc .r { width: 28px; height: 28px; border-radius: 50%; background: var(--mc-red); }
+.sonic-hero-mc .y { width: 28px; height: 28px; border-radius: 50%; background: var(--mc-yellow); margin-left: -10px; mix-blend-mode: screen; }
+.sonic-hero-eyebrow { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--mc-orange); margin: 0 0 4px; }
+.sonic-hero-title { font-size: 28px; font-weight: 800; margin: 0 0 10px; color: #fff; }
+.sonic-hero-sub { font-size: 14px; color: rgba(255,255,255,0.65); margin: 0; line-height: 1.6; }
+
+/* Section */
+.sonic-section { display: flex; flex-direction: column; gap: 0; }
+.sonic-section-title { font-size: 16px; font-weight: 700; margin: 0 0 6px; }
+.sonic-section-sub { margin: 0 0 16px; font-size: 13px; color: var(--muted); }
+.sonic-section-sub code {
+  background: #f0f0f2; border-radius: 3px;
+  padding: 1px 5px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+
+/* Cue grid */
+.sonic-cue-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 640px) { .sonic-cue-grid { grid-template-columns: 1fr; } }
+
+.sonic-cue-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 20px; display: flex; flex-direction: column; gap: 14px;
+}
+.sonic-cue-header { display: flex; gap: 12px; align-items: flex-start; }
+.sonic-cue-icon { font-size: 28px; flex-shrink: 0; line-height: 1; }
+.sonic-cue-label { font-size: 15px; font-weight: 700; margin: 0 0 4px; }
+.sonic-cue-desc { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.55; }
+.sonic-cue-contexts { display: flex; flex-wrap: wrap; gap: 5px; }
+.sonic-ctx-tag {
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  background: var(--bg); border: 1px solid var(--line); color: var(--ink-2);
+  padding: 2px 8px; border-radius: 99px;
+}
+
+/* Variant buttons */
+.sonic-variants { display: flex; flex-direction: column; gap: 6px; }
+.sonic-variant-btn {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 10px 14px;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); cursor: pointer; font-family: inherit;
+  text-align: left; transition: background 0.12s, border-color 0.12s;
+}
+.sonic-variant-btn:hover { border-color: var(--mc-orange); background: #fff8f3; }
+.sonic-vbtn-icon { font-size: 18px; flex-shrink: 0; }
+.sonic-vbtn-text { flex: 1; }
+.sonic-vbtn-text strong { display: block; font-size: 13px; font-weight: 700; color: var(--ink); }
+.sonic-vbtn-text span { font-size: 11px; color: var(--muted); }
+.sonic-vbtn-play {
+  font-size: 12px; background: var(--mc-orange); color: #fff;
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.sonic-btn-dark { border-left: 3px solid #111; }
+.sonic-btn-light { border-left: 3px solid #bbb; }
+.sonic-btn-sound { border-left: 3px solid var(--mc-orange); }
+
+/* Modal dialog */
+.sonic-modal-backdrop {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.72);
+  display: flex; align-items: center; justify-content: center;
+}
+.sonic-modal {
+  background: #111; border-radius: 16px; position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.55); overflow: hidden;
+}
+.sonic-modal--anim { width: 420px; height: 420px; padding: 0; border-radius: 12px; }
+.sonic-modal--anim .sonic-modal-body { width: 100%; height: 100%; display: block; }
+.sonic-modal--sound { padding: 24px 28px; }
+.sonic-modal-close {
+  position: absolute; top: 12px; right: 12px;
+  background: rgba(255,255,255,0.12); color: #fff;
+  border: 1px solid rgba(255,255,255,0.2); border-radius: 50%;
+  width: 32px; height: 32px; font-size: 14px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.sonic-modal-close:hover { background: rgba(255,255,255,0.28); }
+.sonic-modal-body { display: flex; align-items: center; justify-content: center; }
+.sonic-modal-playing {
+  display: flex; align-items: center; gap: 12px;
+  color: #fff; font-size: 15px; font-weight: 600;
+}
+.sonic-modal-note { font-size: 28px; }
+
+/* KICKS iframe */
+.sonic-iframe-wrap {
+  border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+.sonic-demo-frame { display: block; width: 100%; height: 680px; border: none; }
+.sonic-demo-unavailable {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; height: 180px;
+  background: #f9f9fb; border: 1px dashed var(--line); border-radius: 10px;
+  color: var(--muted); font-size: 14px; text-align: center; padding: 24px;
+}
+.sonic-demo-unavailable span { font-size: 32px; }
+.sonic-demo-unavailable p { margin: 0; max-width: 420px; line-height: 1.5; }
+
+/* Rules */
+.sonic-rules { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.sonic-rule { border-radius: 10px; padding: 16px 18px; border-left: 4px solid; }
+.sonic-rule--always  { background: #f0fdf4; border-color: #16a34a; }
+.sonic-rule--careful { background: #fff7ed; border-color: #f97316; }
+.sonic-rule--never   { background: #fef2f2; border-color: #dc2626; }
+.sonic-rule-head { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px; }
+.sonic-rule--always  .sonic-rule-head { color: #16a34a; }
+.sonic-rule--careful .sonic-rule-head { color: #f97316; }
+.sonic-rule--never   .sonic-rule-head { color: #dc2626; }
+.sonic-rule-list { margin: 0; padding: 0 0 0 16px; display: flex; flex-direction: column; gap: 5px; }
+.sonic-rule-list li { font-size: 12px; color: var(--ink-2); line-height: 1.5; }
+
+/* Loading state */
+.sonic-loading {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; padding: 64px 0; color: var(--muted);
+}
+.sonic-spinner {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 3px solid var(--line);
+  border-top-color: var(--mc-orange);
+  animation: sonic-spin 0.8s linear infinite;
+}
+@keyframes sonic-spin { to { transform: rotate(360deg); } }
+.sonic-error {
+  background: #fef2f2; border: 1px solid #fca5a5; border-radius: 10px;
+  padding: 16px 20px; color: #991b1b; font-size: 13px;
+}

@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Globe</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, #1a0a1a 0%, #1a0a14 60%, #2a0a1a 100%);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    }
+    canvas { display: block; }
+    
+    /* Settings Panel */
+    .settings-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(20, 20, 30, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      width: 320px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      color: #fff;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+    }
+    
+    .settings-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(20, 20, 30, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 10px 16px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      z-index: 100;
+    }
+    
+    .settings-toggle:hover {
+      background: rgba(30, 30, 40, 0.95);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+    
+    .settings-panel.hidden {
+      display: none;
+    }
+    
+    .settings-header {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .close-btn {
+      cursor: pointer;
+      font-size: 24px;
+      line-height: 1;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    
+    .close-btn:hover {
+      opacity: 1;
+    }
+    
+    .setting-group {
+      margin-bottom: 20px;
+    }
+    
+    .setting-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      opacity: 0.9;
+    }
+    
+    .setting-value {
+      font-size: 12px;
+      opacity: 0.6;
+      margin-left: 8px;
+    }
+    
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+      -webkit-appearance: none;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    input[type="color"] {
+      width: 100%;
+      height: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+    }
+    
+    select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      outline: none;
+    }
+    
+    select option {
+      background: #1a1a2a;
+      color: #fff;
+    }
+    
+    .checkbox-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    
+    .reset-btn {
+      width: 100%;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .reset-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="globe"></canvas>
+  
+  <div class="settings-toggle" id="settingsToggle">⚙️ Settings</div>
+  
+  <div class="settings-panel hidden" id="settingsPanel">
+    <div class="settings-header">
+      <span>Globe Settings</span>
+      <span class="close-btn" id="closeSettings">×</span>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Globe Color
+      </label>
+      <input type="color" id="globeColor" value="#ffffff">
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Background Style
+      </label>
+      <select id="bgStyle">
+        <option value="purple">Purple Gradient</option>
+        <option value="blue">Blue Gradient</option>
+        <option value="dark">Dark</option>
+        <option value="cosmic">Cosmic</option>
+        <option value="aurora">Aurora</option>
+      </select>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Spin Rate <span class="setting-value" id="spinValue">1.0x</span>
+      </label>
+      <input type="range" id="spinRate" min="0" max="5" step="0.1" value="1">
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Globe Size <span class="setting-value" id="sizeValue">110%</span>
+      </label>
+      <input type="range" id="globeSize" min="50" max="200" step="5" value="110">
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Glow Intensity <span class="setting-value" id="glowValue">90%</span>
+      </label>
+      <input type="range" id="glowIntensity" min="0" max="200" step="10" value="90">
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Grid Opacity <span class="setting-value" id="gridValue">18%</span>
+      </label>
+      <input type="range" id="gridOpacity" min="0" max="100" step="5" value="18">
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Grid Density
+      </label>
+      <select id="gridDensity">
+        <option value="10">Very Dense</option>
+        <option value="15">Dense</option>
+        <option value="20" selected>Normal</option>
+        <option value="30">Sparse</option>
+        <option value="45">Very Sparse</option>
+      </select>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Point Count <span class="setting-value" id="pointValue">80</span>
+      </label>
+      <input type="range" id="pointCount" min="20" max="200" step="10" value="80">
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Point Size <span class="setting-value" id="pointSizeValue">2.5</span>
+      </label>
+      <input type="range" id="pointSize" min="0.5" max="8" step="0.5" value="2.5">
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Grid Line Width <span class="setting-value" id="lineWidthValue">0.8</span>
+      </label>
+      <input type="range" id="lineWidth" min="0.2" max="3" step="0.2" value="0.8">
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Rotation Axis
+      </label>
+      <select id="rotationAxis">
+        <option value="y" selected>Y-Axis (Vertical)</option>
+        <option value="x">X-Axis (Horizontal)</option>
+        <option value="z">Z-Axis (Forward)</option>
+        <option value="xy">XY Diagonal</option>
+        <option value="xyz">All Axes</option>
+      </select>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="autoRotate" checked>
+          <span>Auto Rotate</span>
+        </div>
+      </label>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="showPoints" checked>
+          <span>Show Points</span>
+        </div>
+      </label>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="showGrid" checked>
+          <span>Show Grid</span>
+        </div>
+      </label>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="showGlow" checked>
+          <span>Show Glow</span>
+        </div>
+      </label>
+    </div>
+    
+    <div class="setting-group">
+      <button class="reset-btn" id="resetBtn">Reset to Defaults</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('globe');
+      const ctx = canvas.getContext('2d');
+      
+      // Settings state
+      const settings = {
+        speed: 0.003,
+        glow: 0.9,
+        size: 1.1,
+        color: '#ffffff',
+        bgStyle: 'purple',
+        gridOpacity: 0.18,
+        gridDensity: 20,
+        pointCount: 80,
+        pointSize: 2.5,
+        lineWidth: 0.8,
+        rotationAxis: 'y',
+        autoRotate: true,
+        showPoints: true,
+        showGrid: true,
+        showGlow: true
+      };
+      
+      const defaults = { ...settings };
+      
+      // Settings panel controls
+      const settingsToggle = document.getElementById('settingsToggle');
+      const settingsPanel = document.getElementById('settingsPanel');
+      const closeSettings = document.getElementById('closeSettings');
+      
+      settingsToggle.addEventListener('click', () => {
+        settingsPanel.classList.remove('hidden');
+        settingsToggle.style.display = 'none';
+      });
+      
+      closeSettings.addEventListener('click', () => {
+        settingsPanel.classList.add('hidden');
+        settingsToggle.style.display = 'block';
+      });
+      
+      // Setting controls
+      const globeColorInput = document.getElementById('globeColor');
+      const bgStyleInput = document.getElementById('bgStyle');
+      const spinRateInput = document.getElementById('spinRate');
+      const globeSizeInput = document.getElementById('globeSize');
+      const glowIntensityInput = document.getElementById('glowIntensity');
+      const gridOpacityInput = document.getElementById('gridOpacity');
+      const gridDensityInput = document.getElementById('gridDensity');
+      const pointCountInput = document.getElementById('pointCount');
+      const pointSizeInput = document.getElementById('pointSize');
+      const lineWidthInput = document.getElementById('lineWidth');
+      const rotationAxisInput = document.getElementById('rotationAxis');
+      const autoRotateInput = document.getElementById('autoRotate');
+      const showPointsInput = document.getElementById('showPoints');
+      const showGridInput = document.getElementById('showGrid');
+      const showGlowInput = document.getElementById('showGlow');
+      const resetBtn = document.getElementById('resetBtn');
+      
+      // Value displays
+      const spinValue = document.getElementById('spinValue');
+      const sizeValue = document.getElementById('sizeValue');
+      const glowValue = document.getElementById('glowValue');
+      const gridValue = document.getElementById('gridValue');
+      const pointValue = document.getElementById('pointValue');
+      const pointSizeValue = document.getElementById('pointSizeValue');
+      const lineWidthValue = document.getElementById('lineWidthValue');
+      
+      // Event listeners
+      globeColorInput.addEventListener('input', (e) => {
+        settings.color = e.target.value;
+      });
+      
+      bgStyleInput.addEventListener('change', (e) => {
+        settings.bgStyle = e.target.value;
+        updateBackground();
+      });
+      
+      spinRateInput.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        settings.speed = 0.003 * value;
+        spinValue.textContent = value.toFixed(1) + 'x';
+      });
+      
+      globeSizeInput.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        settings.size = value / 100;
+        sizeValue.textContent = value + '%';
+      });
+      
+      glowIntensityInput.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        settings.glow = value / 100;
+        glowValue.textContent = value + '%';
+      });
+      
+      gridOpacityInput.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        settings.gridOpacity = value / 100;
+        gridValue.textContent = value + '%';
+      });
+      
+      gridDensityInput.addEventListener('change', (e) => {
+        settings.gridDensity = parseInt(e.target.value);
+      });
+      
+      pointCountInput.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        settings.pointCount = value;
+        pointValue.textContent = value;
+        generatePoints();
+      });
+      
+      pointSizeInput.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        settings.pointSize = value;
+        pointSizeValue.textContent = value.toFixed(1);
+      });
+      
+      lineWidthInput.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        settings.lineWidth = value;
+        lineWidthValue.textContent = value.toFixed(1);
+      });
+      
+      rotationAxisInput.addEventListener('change', (e) => {
+        settings.rotationAxis = e.target.value;
+      });
+      
+      autoRotateInput.addEventListener('change', (e) => {
+        settings.autoRotate = e.target.checked;
+      });
+      
+      showPointsInput.addEventListener('change', (e) => {
+        settings.showPoints = e.target.checked;
+      });
+      
+      showGridInput.addEventListener('change', (e) => {
+        settings.showGrid = e.target.checked;
+      });
+      
+      showGlowInput.addEventListener('change', (e) => {
+        settings.showGlow = e.target.checked;
+      });
+      
+      resetBtn.addEventListener('click', () => {
+        Object.assign(settings, defaults);
+        
+        // Reset UI
+        globeColorInput.value = defaults.color;
+        bgStyleInput.value = defaults.bgStyle;
+        spinRateInput.value = 1;
+        globeSizeInput.value = 110;
+        glowIntensityInput.value = 90;
+        gridOpacityInput.value = 18;
+        gridDensityInput.value = 20;
+        pointCountInput.value = 80;
+        pointSizeInput.value = 2.5;
+        lineWidthInput.value = 0.8;
+        rotationAxisInput.value = 'y';
+        autoRotateInput.checked = true;
+        showPointsInput.checked = true;
+        showGridInput.checked = true;
+        showGlowInput.checked = true;
+        
+        spinValue.textContent = '1.0x';
+        sizeValue.textContent = '110%';
+        glowValue.textContent = '90%';
+        gridValue.textContent = '18%';
+        pointValue.textContent = '80';
+        pointSizeValue.textContent = '2.5';
+        lineWidthValue.textContent = '0.8';
+        
+        updateBackground();
+        generatePoints();
+      });
+      
+      function updateBackground() {
+        const gradients = {
+          purple: 'linear-gradient(135deg, #1a0a1a 0%, #1a0a14 60%, #2a0a1a 100%)',
+          blue: 'linear-gradient(135deg, #0a0a1a 0%, #0a141a 60%, #0a1a2a 100%)',
+          dark: 'linear-gradient(135deg, #000000 0%, #0a0a0a 60%, #1a1a1a 100%)',
+          cosmic: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)',
+          aurora: 'linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #0f3460 100%)'
+        };
+        document.body.style.background = gradients[settings.bgStyle] || gradients.purple;
+      }
+
+      function resize() {
+        const s = Math.min(window.innerWidth, window.innerHeight) * settings.size;
+        canvas.width  = s;
+        canvas.height = s;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      // Fibonacci lattice points
+      let pts = [];
+      
+      function generatePoints() {
+        pts = [];
+        const TOTAL = settings.pointCount;
+        for (let i = 0; i < TOTAL; i++) {
+          const phi   = Math.acos(-1 + (2 * i) / TOTAL);
+          const theta = Math.sqrt(TOTAL * Math.PI) * phi;
+          pts.push({
+            x: Math.cos(theta) * Math.sin(phi),
+            y: Math.sin(theta) * Math.sin(phi),
+            z: Math.cos(phi),
+          });
+        }
+      }
+      
+      generatePoints();
+
+      let rotX = 0, rotY = 0, rotZ = 0, lastT = null;
+
+      function frame(ts) {
+        const delta = lastT ? Math.min((ts - lastT) / 16.667, 2) : 1;
+        lastT = ts;
+
+        const SIZE = canvas.width;
+        const R  = SIZE * 0.5;
+        const cx = SIZE / 2, cy = SIZE / 2;
+
+        ctx.clearRect(0, 0, SIZE, SIZE);
+
+        // Radial glow
+        if (settings.showGlow) {
+          const g = ctx.createRadialGradient(cx, cy, R * 0.2, cx, cy, R);
+          const rgb = hexToRgb(settings.color);
+          g.addColorStop(0,    `rgba(${rgb.r},${rgb.g},${rgb.b},${0.18 * settings.glow})`);
+          g.addColorStop(0.45, `rgba(${rgb.r},${rgb.g},${rgb.b},${0.10 * settings.glow})`);
+          g.addColorStop(1,    'rgba(0,0,0,0)');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(cx, cy, R * 1.35, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Grid
+        if (settings.showGrid) {
+          const ga = settings.gridOpacity * settings.glow;
+          ctx.lineWidth = settings.lineWidth;
+          const density = settings.gridDensity;
+
+          for (let lat = -80; lat <= 80; lat += density) {
+            const lr = lat * Math.PI / 180;
+            for (let seg = 0; seg < 360; seg += 4) {
+              const l0 = seg       * Math.PI / 180 + rotY;
+              const l1 = (seg + 4) * Math.PI / 180 + rotY;
+              
+              let p0 = rotatePoint(Math.cos(lr) * Math.cos(l0), Math.sin(lr), Math.cos(lr) * Math.sin(l0));
+              let p1 = rotatePoint(Math.cos(lr) * Math.cos(l1), Math.sin(lr), Math.cos(lr) * Math.sin(l1));
+              
+              const z0 = p0.z;
+              const z1 = p1.z;
+              const a  = ga * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
+              if (a < 0.005) continue;
+              const s0 = 1 / (1.8 - z0), s1 = 1 / (1.8 - z1);
+              const rgb = hexToRgb(settings.color);
+              ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${a})`;
+              ctx.beginPath();
+              ctx.moveTo(cx + p0.x * R * s0, cy + p0.y * R * s0);
+              ctx.lineTo(cx + p1.x * R * s1, cy + p1.y * R * s1);
+              ctx.stroke();
+            }
+          }
+
+          for (let lon = 0; lon < 360; lon += density) {
+            for (let seg = -88; seg < 90; seg += 4) {
+              const la0 = seg       * Math.PI / 180;
+              const la1 = (seg + 4) * Math.PI / 180;
+              const lr  = lon * Math.PI / 180 + rotY;
+              
+              let p0 = rotatePoint(Math.cos(la0) * Math.cos(lr), Math.sin(la0), Math.cos(la0) * Math.sin(lr));
+              let p1 = rotatePoint(Math.cos(la1) * Math.cos(lr), Math.sin(la1), Math.cos(la1) * Math.sin(lr));
+              
+              const z0 = p0.z;
+              const z1 = p1.z;
+              const a   = ga * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
+              if (a < 0.005) continue;
+              const s0 = 1 / (1.8 - z0), s1 = 1 / (1.8 - z1);
+              const rgb = hexToRgb(settings.color);
+              ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${a})`;
+              ctx.beginPath();
+              ctx.moveTo(cx + p0.x * R * s0, cy + p0.y * R * s0);
+              ctx.lineTo(cx + p1.x * R * s1, cy + p1.y * R * s1);
+              ctx.stroke();
+            }
+          }
+        }
+
+        // Dots
+        if (settings.showPoints) {
+          const rgb = hexToRgb(settings.color);
+          pts.map(p => {
+            const rotated = rotatePoint(p.x, p.y, p.z);
+            const sc = 1 / (1.8 - rotated.z);
+            const op = 0.15 + Math.max(0, Math.min(1, (rotated.z + 0.2) / 0.4)) * 0.85;
+            return { 
+              px: cx + rotated.x * R * sc, 
+              py: cy + rotated.y * R * sc, 
+              rz: rotated.z, 
+              sc, 
+              op, 
+              v: rotated.z > -0.18 
+            };
+          }).filter(p => p.v).sort((a, b) => a.rz - b.rz).forEach(p => {
+            ctx.save();
+            ctx.shadowColor = `rgba(${rgb.r},${rgb.g},${rgb.b},0.95)`;
+            ctx.shadowBlur  = 8 * p.sc;
+            ctx.fillStyle   = `rgba(${rgb.r},${rgb.g},${rgb.b},${p.op})`;
+            ctx.beginPath();
+            ctx.arc(p.px, p.py, settings.pointSize * p.sc, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          });
+        }
+
+        if (settings.autoRotate) {
+          if (settings.rotationAxis === 'y') {
+            rotY += settings.speed * delta;
+          } else if (settings.rotationAxis === 'x') {
+            rotX += settings.speed * delta;
+          } else if (settings.rotationAxis === 'z') {
+            rotZ += settings.speed * delta;
+          } else if (settings.rotationAxis === 'xy') {
+            rotX += settings.speed * delta * 0.5;
+            rotY += settings.speed * delta;
+          } else if (settings.rotationAxis === 'xyz') {
+            rotX += settings.speed * delta * 0.3;
+            rotY += settings.speed * delta;
+            rotZ += settings.speed * delta * 0.2;
+          }
+        }
+        
+        requestAnimationFrame(frame);
+      }
+      
+      function rotatePoint(x, y, z) {
+        // Rotate around Y axis
+        let x1 = x * Math.cos(rotY) - z * Math.sin(rotY);
+        let z1 = x * Math.sin(rotY) + z * Math.cos(rotY);
+        
+        // Rotate around X axis
+        let y1 = y * Math.cos(rotX) - z1 * Math.sin(rotX);
+        let z2 = y * Math.sin(rotX) + z1 * Math.cos(rotX);
+        
+        // Rotate around Z axis
+        let x2 = x1 * Math.cos(rotZ) - y1 * Math.sin(rotZ);
+        let y2 = x1 * Math.sin(rotZ) + y1 * Math.cos(rotZ);
+        
+        return { x: x2, y: y2, z: z2 };
+      }
+      
+      function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16)
+        } : { r: 255, g: 255, b: 255 };
+      }
+
+      requestAnimationFrame(frame);
+    }());
+  </script>
+</body>
+</html>

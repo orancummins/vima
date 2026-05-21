@@ -921,6 +921,17 @@
       API_CALL_LOG.length = 0;
       apiCallsClose();
     }
+    // Stop any running Test Chat globe animation when switching use cases
+    if (uc.render !== "testchat" && _testChatAnimRef) {
+      cancelAnimationFrame(_testChatAnimRef);
+      _testChatAnimRef = null;
+    }
+    // Restore Full Screen button (hidden when a webview use case is active)
+    const _wvRefresh = document.getElementById('uc-webview-refresh-btn');
+    if (_wvRefresh) _wvRefresh.remove();
+    const _popoutBtn = document.getElementById('uc-popout-btn');
+    if (_popoutBtn) _popoutBtn.hidden = false;
+
     _currentUcId = uc.id;
     updateUcSidebar(uc);
     const title = $("uc-title"); if (title) title.textContent = uc.name;
@@ -949,6 +960,8 @@
       renderFindACard();
     } else if (uc.render === "sonic") {
       renderSonicBrand();
+    } else if (uc.render === "testchat") {
+      renderTestChat();
     } else {
       $("uc-body").innerHTML = `<p class="muted">${(uc.apis && uc.apis.length)
         ? "Composes: " + uc.apis.join(", ")
@@ -995,21 +1008,8 @@
   function renderEnrichment() {
     const body = $("uc-body");
     if (!body) return;
-    body.innerHTML = `<div class="enrich-loading"><div class="enrich-spinner"></div><p>Loading transactions…</p></div>`;
-    fetch("/usecases/enrichment/data")
-      .then(r => r.json())
-      .then(d => {
-        ENRICH.data = d.transactions || [];
-        ENRICH.enriched.clear();
-        if (!ENRICH.data.length) {
-          body.innerHTML = `<p class="muted">No transactions to enrich.</p>`;
-          return;
-        }
-        enrichRender();
-      })
-      .catch((e) => {
-        body.innerHTML = `<p class="muted">Could not load transactions: ${escapeHtml(String(e.message || e))}</p>`;
-      });
+    body.innerHTML = `<iframe id="enrichment-webview-frame" class="sonic-webview-frame" src="/enrichment/index.html" title="Data Enrichment"></iframe>`;
+    _attachWebviewRefresh('enrichment-webview-frame');
   }
 
   function enrichRender() {
@@ -1354,7 +1354,13 @@
     const summaryHtml = totalStreams > 0 ? `
       <div class="rec-summary-strip">
         <div class="rec-summary-card">
-          <label>Recurring Streams</label>
+          <label>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+              <path d="M14 2v3.3h-3.3"/>
+            </svg>
+            Recurring Streams
+          </label>
           <span>${totalStreams}</span>
         </div>
         <div class="rec-summary-card">
@@ -1374,12 +1380,22 @@
     function sectionHtml(streams, kind) {
       if (!streams.length) return "";
       const badgeCls = kind === "credit" ? "rec-section-badge--credit" : "rec-section-badge--debit";
-      const title    = kind === "credit" ? "Incoming (Credits)" : "Outgoing (Debits)";
+      const title    = kind === "credit" ? "Recurring Income" : "Recurring Expenses";
+      const subtitle = kind === "credit" ? "Regular incoming payments" : "Repeating outgoing payments";
       return `
         <div>
           <div class="rec-section-head">
-            <h3>${title}</h3>
-            <span class="rec-section-badge ${badgeCls}">${streams.length}</span>
+            <div class="rec-section-title">
+              <h3>${title}</h3>
+              <span class="rec-section-subtitle">${subtitle}</span>
+            </div>
+            <span class="rec-section-badge ${badgeCls}">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+                <path d="M14 2v3.3h-3.3"/>
+              </svg>
+              ${streams.length}
+            </span>
           </div>
           <div class="rec-grid">
             ${streams.map(recCardHtml).join("")}
@@ -1396,18 +1412,39 @@
     ` : `
       <div class="rec-hero">
         <div class="rec-hero-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/>
-            <path d="M12 7v1m0 8v1M7 12h1m8 0h1"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <circle cx="12" cy="12" r="2" fill="currentColor"/>
           </svg>
         </div>
-        <h3>No streams detected yet</h3>
-        <p>Enter a Customer ID and click Load Accounts, then choose accounts and click Analyse Recurring to detect patterns.</p>
+        <h3>Detect Recurring Payment Patterns</h3>
+        <p>Automatically identify repeating transactions like subscriptions, bills, salary deposits, and loan payments. See frequency, amounts, and next expected dates.</p>
         <div class="rec-hero-chips">
-          <span class="rec-hero-chip">Subscriptions</span>
-          <span class="rec-hero-chip">Bills &amp; Utilities</span>
-          <span class="rec-hero-chip">Salary &amp; Income</span>
-          <span class="rec-hero-chip">Loan Repayments</span>
+          <span class="rec-hero-chip">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+            </svg>
+            Subscriptions
+          </span>
+          <span class="rec-hero-chip">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+            </svg>
+            Bills &amp; Utilities
+          </span>
+          <span class="rec-hero-chip">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+            </svg>
+            Salary &amp; Income
+          </span>
+          <span class="rec-hero-chip">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+            </svg>
+            Loan Repayments
+          </span>
         </div>
       </div>
     `;
@@ -1436,8 +1473,14 @@
 
         ${REC.loading ? `
           <div class="rec-loading-state">
-            <div class="rec-spinner"></div>
-            <span>Detecting recurring patterns…</span>
+            <div class="rec-spinner">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+              </svg>
+            </div>
+            <span>Analyzing transaction patterns...</span>
+            <p style="font-size:12px;color:var(--muted);margin-top:4px;">Identifying subscriptions, bills, salary deposits, and other recurring payments</p>
           </div>
         ` : resultsHtml}
       </div>
@@ -1458,19 +1501,35 @@
     const regLabel  = s.regularity === "REGULAR" ? "Regular" : s.regularity === "IRREGULAR" ? "Irregular" : null;
     const regCls    = s.regularity === "REGULAR" ? "rec-chip--reg" : "rec-chip--irreg";
 
+    // Recurring cycle icon
+    const recurringIcon = `
+      <svg class="rec-card-recurring-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+        <path d="M21 3v5h-5"/>
+      </svg>
+    `;
+
     return `
       <div class="rec-card">
+        ${recurringIcon}
         <div class="rec-card-top">
           <div class="rec-card-logo">${recLogoHtml(s.merchantName)}</div>
           <div class="rec-card-meta">
-            <div class="rec-card-name">${escapeHtml(s.merchantName)}</div>
+            <div class="rec-card-name">
+              ${escapeHtml(s.merchantName)}
+            </div>
             ${s.description && s.description !== s.merchantName
               ? `<div class="rec-card-desc">${escapeHtml(s.description)}</div>` : ""}
           </div>
           <div class="rec-card-amount ${amtCls}">${amtSign}${recFmtAmt(s.amount)}</div>
         </div>
         <div class="rec-card-chips">
-          <span class="rec-chip ${freqCls}">${escapeHtml(freqLabel)}</span>
+          <span class="rec-chip rec-chip--freq ${freqCls}">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 8h10M8 3v10"/>
+            </svg>
+            ${escapeHtml(freqLabel)}
+          </span>
           ${s.category ? `<span class="rec-chip rec-chip--cat">${escapeHtml(s.category)}</span>` : ""}
           ${regLabel ? `<span class="rec-chip ${regCls}">${regLabel}</span>` : ""}
         </div>
@@ -1606,7 +1665,13 @@
       const amtStr  = (isCredit ? "+" : "") + recFmtAmt(t.amount);
       const amtCls  = isCredit ? "rec-txn-amt--credit" : "rec-txn-amt--debit";
       const freqLabel = stream ? (REC_FREQ_LABELS[stream.frequency] || stream.frequency) : "";
-      const freqBadge = freqLabel ? `<span class="rec-txn-freq">${escapeHtml(freqLabel)}</span>` : "";
+      const freqBadge = freqLabel ? `<span class="rec-txn-freq">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+          <path d="M14 2v3.3h-3.3"/>
+        </svg>
+        ${escapeHtml(freqLabel)}
+      </span>` : "";
       const displayName = t.normalizedPayee || t.description;
       return `
         <div class="rec-txn-row ${rowCls}">
@@ -1626,7 +1691,13 @@
         <span class="rec-section-badge">${transactions.length}</span>
       </div>
       <div class="rec-txn-legend">
-        <span class="rec-txn-legend--recurring">&#8635; ${recurCount} recurring</span>
+        <span class="rec-txn-legend--recurring">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+            <path d="M14 2v3.3h-3.3"/>
+          </svg>
+          ${recurCount} recurring
+        </span>
         <span>${transactions.length - recurCount} one-off</span>
       </div>
       <div class="rec-txn-list">${rows}</div>`;
@@ -1811,7 +1882,7 @@
       medium: { icon: "⚠", title: "Moderate Risk · Proceed with Caution",
                 sub: "Consider settling on the recommended date to reduce NSF return risk." },
       high:   { icon: "✗", title: "High Return Risk · Consider Delaying",
-                sub: "This account shows elevated NSF risk today. Settling on the recommended date significantly lowers that risk." },
+                sub: "This account shows elevated NSF risk. Consider alternative payment methods or wait for improved account conditions." },
     };
     const verdict = VERDICT[verdictLevel] || VERDICT.medium;
 
@@ -1830,7 +1901,7 @@
             <div class="psi-verdict-title">${verdict.title}</div>
             <div class="psi-verdict-sub">${verdict.sub}</div>
           </div>
-          ${hasNsf ? `
+          ${hasNsf && verdictLevel !== 'high' ? `
           <div class="psi-verdict-recommend">
             <span class="psi-verdict-rec-label">Recommended settlement</span>
             <span class="psi-verdict-rec-date">${escapeHtml(psiShortDate(daily[bestIdx].date))}</span>
@@ -1846,9 +1917,9 @@
             ${psiGaugeSvg(Math.round(selDay.nsfScore ?? 0), selDay.riskLevel || verdictLevel)}
             <div class="psi-gauge-meta">
               <span class="psi-indicator-badge psi-ibadge--${selDay.riskLevel}">${escapeHtml(selDay.indicator || "")}</span>
-              <span class="psi-card-sub">Settlement confidence: <strong>${Math.round(selDay.confidence ?? 0)}%</strong></span>
+              <span class="psi-card-sub">${selDay.riskLevel === 'high' ? `Return probability: <strong>${Math.round(selDay.nsfScore ?? 0)}%</strong>` : `Success confidence: <strong>${Math.round(selDay.confidence ?? 0)}%</strong>`}</span>
             </div>
-            <p class="psi-card-desc">NSF return probability (0–100). Lower is better. Click a day in the timeline to compare dates.</p>
+            <p class="psi-card-desc">Return probability (0–100). Lower score = higher confidence. Click a day in the timeline to compare dates.</p>
           </div>` : ""}
 
           <div class="psi-details-card">
@@ -2063,40 +2134,8 @@
   function renderBinLookup() {
     const body = $("uc-body");
     if (!body) return;
-    body.innerHTML = `
-      <div class="bin-stage">
-        <nav class="bin-tabs" role="tablist">
-          <button class="bin-tab${BIN_TAB === "lookup" ? " bin-tab--active" : ""}" id="bin-tab-lookup" role="tab">
-            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="16" height="12" rx="2"/><path d="M6 9h8M6 13h4" stroke-linecap="round"/></svg>
-            Single Lookup
-          </button>
-          <button class="bin-tab${BIN_TAB === "batch" ? " bin-tab--active" : ""}" id="bin-tab-batch" role="tab">
-            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="10" cy="5" rx="7" ry="3"/><path d="M3 5v4c0 1.657 3.134 3 7 3s7-1.343 7-3V5"/><path d="M3 9v4c0 1.657 3.134 3 7 3s7-1.343 7-3V9"/></svg>
-            Batch Search
-            ${BIN_DB.status === "loaded" ? `<span class="bin-tab-badge">${BIN_DB.count.toLocaleString()}</span>` : ""}
-          </button>
-        </nav>
-        <div class="bin-tab-content">
-          ${BIN_TAB === "lookup" ? _binLookupPanelHtml() : binDbPanelHtml()}
-        </div>
-      </div>`;
-    // Tab switching
-    document.getElementById("bin-tab-lookup")?.addEventListener("click", () => {
-      if (BIN_TAB === "lookup") return;
-      BIN_TAB = "lookup";
-      renderBinLookup();
-    });
-    document.getElementById("bin-tab-batch")?.addEventListener("click", () => {
-      if (BIN_TAB === "batch") return;
-      BIN_TAB = "batch";
-      renderBinLookup();
-      _binDbSyncStatus();
-    });
-    if (BIN_TAB === "lookup") {
-      binWire();
-    } else {
-      binDbWire();
-    }
+    body.innerHTML = `<iframe id="binlookup-webview-frame" class="sonic-webview-frame" src="/binlookup/index.html" title="BIN Lookup"></iframe>`;
+    _attachWebviewRefresh('binlookup-webview-frame');
   }
 
   function _binLookupPanelHtml() {
@@ -2213,10 +2252,7 @@
         ${card.productCode ? _binChip("Product Code", card.productCode, 7) : ""}
       </div>
 
-      <details class="bin-raw-details">
-        <summary>Full API response</summary>
-        <pre class="bin-raw-pre">${escapeHtml(JSON.stringify(card.raw, null, 2))}</pre>
-      </details>`;
+    `;
   }
 
   // ─── HTML helpers ────────────────────────────────────────────────────────
@@ -2541,6 +2577,12 @@
                 ${_binDbDetailPair("Program", escapeHtml(r.programName || "—"))}
                 ${_binDbDetailPair("Vertical", escapeHtml(r.vertical || "—"))}
               </div>
+              <div class="bin-db-expand-actions">
+                <button class="bin-db-visualize-btn" data-visualize-bin="${escapeHtml(String(r.binNum || ""))}" data-visualize-label="${escapeHtml((r.binNum ? String(r.binNum) : "") + (r.customerName ? " — " + r.customerName : "") + (r.country && r.country.alpha3 ? " (" + r.country.alpha3 + ")" : ""))}">
+                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0"><rect x="2" y="5" width="16" height="11" rx="2"/><path d="M2 9h16" stroke-linecap="round"/><circle cx="6" cy="13" r="1" fill="currentColor" stroke="none"/></svg>
+                  Visualize as Card
+                </button>
+              </div>
             </div>
           </td>
         </tr>` : ""}
@@ -2645,6 +2687,15 @@
     const tbody = document.querySelector(".bin-db-table tbody");
     if (tbody) {
       tbody.addEventListener("click", e => {
+        // Visualize-as-card button (inside the expand row)
+        const vbtn = e.target.closest("[data-visualize-bin]");
+        if (vbtn) {
+          e.stopPropagation();
+          const bn = vbtn.getAttribute("data-visualize-bin");
+          const lbl = vbtn.getAttribute("data-visualize-label") || bn;
+          if (bn) _binVisualizeFromBatch(bn, lbl);
+          return;
+        }
         const row = e.target.closest("tr.bin-db-row");
         if (!row) return;
         const idx = parseInt(row.dataset.idx, 10);
@@ -2710,10 +2761,18 @@
   function _binDbRefreshResults() {
     const el = document.getElementById("bin-db-results");
     if (el) el.innerHTML = binDbResultsHtml();
-    // re-wire row expand
+    // re-wire row expand + visualize button
     const tbody = el && el.querySelector(".bin-db-table tbody");
     if (tbody) {
       tbody.addEventListener("click", e => {
+        const vbtn = e.target.closest("[data-visualize-bin]");
+        if (vbtn) {
+          e.stopPropagation();
+          const bn = vbtn.getAttribute("data-visualize-bin");
+          const lbl = vbtn.getAttribute("data-visualize-label") || bn;
+          if (bn) _binVisualizeFromBatch(bn, lbl);
+          return;
+        }
         const row = e.target.closest("tr.bin-db-row");
         if (!row) return;
         const idx = parseInt(row.dataset.idx, 10);
@@ -2798,6 +2857,52 @@
     binWire();
   }
 
+  // Visualize a batch row as the animated card — switches to the Lookup tab
+  // and reuses the existing card visualization code path.
+  async function _binVisualizeFromBatch(binNum, label) {
+    // Ensure the BIN appears in the select dropdown so the user can see what's loaded
+    if (!BIN_PRESET_OPTIONS.some(o => o.value === binNum)) {
+      BIN_PRESET_OPTIONS.unshift({ value: binNum, label: label || binNum });
+    }
+    BIN_TAB = "lookup";
+    BIN.bin = binNum;
+    BIN.loading = true;
+    BIN.card = null;
+    renderBinLookup();
+    try {
+      const r = await _nativeFetch("/usecases/binlookup/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "lookup", params: { account_range: binNum } }),
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+      const d = await r.json();
+      BIN.loading = false;
+      if (d.error) {
+        BIN.card = null;
+        _binRefreshLookupPanel();
+        const scene = document.getElementById("bin-scene");
+        if (scene) scene.insertAdjacentHTML("beforeend", `<div class="bin-error-msg">${escapeHtml(String(d.error))}</div>`);
+      } else if (!d.found) {
+        BIN.card = null;
+        _binRefreshLookupPanel();
+        const scene = document.getElementById("bin-scene");
+        if (scene) scene.insertAdjacentHTML("beforeend", `<div class="bin-notfound-msg">${escapeHtml(d.note || "No matching BIN found.")}</div>`);
+      } else {
+        BIN.card = d.card;
+        _binRefreshLookupPanel();
+        requestAnimationFrame(() => setTimeout(binAnimateIn, 30));
+      }
+    } catch (e) {
+      console.error("BIN visualize error:", e);
+      BIN.loading = false;
+      BIN.card = null;
+      _binRefreshLookupPanel();
+      const scene = document.getElementById("bin-scene");
+      if (scene) scene.insertAdjacentHTML("beforeend", `<div class="bin-error-msg">Error: ${escapeHtml(String(e.message))}</div>`);
+    }
+  }
+
   // ─── Wiring ──────────────────────────────────────────────────────────────
 
   function binWire() {
@@ -2875,11 +2980,10 @@
   }
 
   function renderClarity() {
-    if (!CLARITY.presetKey) {
-      const presets = _clarityPresets();
-      CLARITY.presetKey = presets.length ? presets[0].value : null;
-    }
-    clarityRender();
+    const body = $("uc-body");
+    if (!body) return;
+    body.innerHTML = `<iframe id="clarity-webview-frame" class="sonic-webview-frame" src="/clarity/index.html" title="Consumer Clarity"></iframe>`;
+    _attachWebviewRefresh('clarity-webview-frame');
   }
 
   function clarityRender() {
@@ -3116,1165 +3220,37 @@
     });
   }
 
-  // ---------------- Personal Finance Manager ----------------
-  // Refined palette — Stripe-inspired (muted, modern)
-  const PFM_CATEGORY_COLORS = {
-    "Food and Drink": "#f97316", "Restaurants": "#f97316", "Groceries": "#f59e0b",
-    "Shopping": "#ec4899", "Travel": "#3b82f6", "Transportation": "#0ea5e9",
-    "Bills & Utilities": "#8b5cf6", "Service": "#8b5cf6", "Health & Fitness": "#10b981",
-    "Entertainment": "#f43f5e", "Income": "#0f7050", "Transfer": "#64748b",
-    "Cash & ATM": "#475569", "Education": "#06b6d4", "Personal Care": "#d946ef",
-    "Home": "#14b8a6", "Other": "#94a3b8", "Deposit": "#0f7050",
-  };
-  function pfmColor(cat) { return PFM_CATEGORY_COLORS[cat] || "#94a3b8"; }
+  // ===================== Personal Finance Manager Use Case =====================
+  // Rendered as a sandboxed iframe pointing to /pfm/index.html.
+  // All PFM UI lives in usecases/pfm/ — edit there to change the look.
 
-  // Inline SVG icons (lucide-style)
-  const ICON = {
-    user:   `<svg class="pfm-i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>`,
-    bell:   `<svg class="pfm-i" viewBox="0 0 24 24"><path d="M6 9a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>`,
-    lock:   `<svg class="pfm-i" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>`,
-    bank:   `<svg class="pfm-i" viewBox="0 0 24 24"><path d="M3 10 12 4l9 6"/><path d="M5 10v9M9 10v9M15 10v9M19 10v9"/><path d="M3 21h18"/></svg>`,
-    download:`<svg class="pfm-i" viewBox="0 0 24 24"><path d="M12 4v12"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg>`,
-    info:   `<svg class="pfm-i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="8" r="0.5" fill="currentColor"/></svg>`,
-    home:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10"/></svg>`,
-    cards:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>`,
-    chart:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>`,
-    gear:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`,
-    arrowUp:  `<svg class="pfm-i" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>`,
-    arrowDown:`<svg class="pfm-i" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m5 12 7 7 7-7"/></svg>`,
-    plus:   `<svg class="pfm-i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>`,
-    more:   `<svg class="pfm-i" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="18" cy="12" r="1" fill="currentColor"/></svg>`,
-    search: `<svg class="pfm-i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>`,
-    chev:   `<svg class="pfm-i pfm-i-sm" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>`,
-    chevLeft:`<svg class="pfm-i" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg>`,
-    link:   `<svg class="pfm-i" viewBox="0 0 24 24"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>`,
-    sparkles:`<svg class="pfm-i" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.5 5.5l2.8 2.8M15.7 15.7l2.8 2.8M5.5 18.5l2.8-2.8M15.7 8.3l2.8-2.8"/></svg>`,
-    // Account-type icons
-    acctChecking: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/></svg>`,
-    acctSavings:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7c0-2-3-3-7-3S5 5 5 7v10c0 2 3 3 7 3s7-1 7-3z"/><path d="M5 12c0 2 3 3 7 3s7-1 7-3"/></svg>`,
-    acctCard:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M7 15h3"/></svg>`,
-    acctLoan:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17H3v-5l2-4h11l4 5v4h-2"/><path d="M9 17h6"/></svg>`,
-    acctMortgage: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>`,
-    acctInvest:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>`,
-    acctOther:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
-    // Category icons (used in transaction rows & sheet)
-    catFood:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18l-1 9H4z"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
-    catRest:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M5 3h4v6a2 2 0 0 1-4 0z"/><path d="M17 3v9a3 3 0 0 1-3 3v6"/></svg>`,
-    catGroc:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h2l2 12h12l2-8H6"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>`,
-    catShop:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l-1 13H7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>`,
-    catTravel:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16 21 8l-3 12-5-3-5 5z"/></svg>`,
-    catTrans:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M3 13h18v-3l-2-4H5l-2 4z"/></svg>`,
-    catBills:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>`,
-    catHealth:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12c0 5-8 9-8 9s-8-4-8-9a5 5 0 0 1 8-4 5 5 0 0 1 8 4z"/></svg>`,
-    catEnt:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M10 11l5 3-5 3z" fill="currentColor"/></svg>`,
-    catIncome:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m5 12 7 7 7-7"/></svg>`,
-    catTransfer:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h13M16 3l4 4-4 4"/><path d="M17 17H4M8 13l-4 4 4 4"/></svg>`,
-    catCash:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>`,
-    catEdu:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>`,
-    catCare:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M8 14h8l-1 7H9z"/></svg>`,
-    catHome:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10"/></svg>`,
-    catOther:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>`,
-  };
-
-  function pfmCatIcon(cat) {
-    const map = {
-      "Food and Drink": ICON.catFood, "Restaurants": ICON.catRest, "Groceries": ICON.catGroc,
-      "Shopping": ICON.catShop, "Travel": ICON.catTravel, "Transportation": ICON.catTrans,
-      "Bills & Utilities": ICON.catBills, "Service": ICON.catBills, "Health & Fitness": ICON.catHealth,
-      "Entertainment": ICON.catEnt, "Income": ICON.catIncome, "Transfer": ICON.catTransfer,
-      "Cash & ATM": ICON.catCash, "Education": ICON.catEdu, "Personal Care": ICON.catCare,
-      "Home": ICON.catHome, "Deposit": ICON.catIncome,
-    };
-    return map[cat] || ICON.catOther;
+  // Shared helper: hides the Full Screen button and injects a Refresh button
+  // in its place in the uc-header. Call after setting uc-body innerHTML.
+  function _attachWebviewRefresh(frameId) {
+    const popout = document.getElementById('uc-popout-btn');
+    if (!popout || document.getElementById('uc-webview-refresh-btn')) return;
+    popout.hidden = true;
+    const btn = document.createElement('button');
+    btn.id = 'uc-webview-refresh-btn';
+    btn.className = 'uc-popout-btn';
+    btn.title = 'Refresh';
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 15 15" fill="none" aria-hidden="true"><path d="M1.5 7.5a6 6 0 1 0 1.2-3.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 2.5v2.5H4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Refresh`;
+    popout.insertAdjacentElement('afterend', btn);
+    const frame = document.getElementById(frameId);
+    if (frame) {
+      btn.addEventListener('click', () => {
+        btn.classList.add('sonic-refresh--spinning');
+        frame.src = frame.src;
+        frame.addEventListener('load', () => btn.classList.remove('sonic-refresh--spinning'), { once: true });
+      });
+    }
   }
-  function pfmAcctIcon(type) {
-    const map = {
-      checking: ICON.acctChecking, savings: ICON.acctSavings, creditCard: ICON.acctCard,
-      loan: ICON.acctLoan, mortgage: ICON.acctMortgage, investment: ICON.acctInvest,
-    };
-    return map[type] || ICON.acctOther;
-  }
-
-  const ACCT_ICON = {
-    checking: true, savings: true, creditCard: true,
-    loan: true, mortgage: true, investment: true,
-  };
-
-  function fmtMoney(n) {
-    const sign = n < 0 ? "-" : "";
-    const v = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return `${sign}$${v}`;
-  }
-  function fmtMoneyShort(n) {
-    const abs = Math.abs(n);
-    const sign = n < 0 ? "-" : "";
-    if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(1)}k`;
-    return `${sign}$${abs.toFixed(0)}`;
-  }
-  function fmtDate(ts) {
-    if (!ts) return "";
-    const d = new Date(ts * 1000);
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  }
-
-  const PFM_DEFAULT_CID = "9013023139";
 
   function renderPfm() {
-    fetch("/explorer/ofin/state").then((r) => r.json()).then((d) => {
-      const cid = (d.state || {}).customer_id || PFM_DEFAULT_CID;
-      pfmRender(cid);
-    }).catch(() => pfmRender(PFM_DEFAULT_CID));
-  }
-
-  // PFM state
-  const PFM = {
-    cid: "",
-    data: null,
-    tab: "home",        // home | accounts | insights | settings
-    txnQuery: "",
-    selectedAcct: null, // when set, accounts tab shows detail
-    clockTimer: null,
-  };
-
-  function pfmRender(initialCustomerId) {
     const body = $("uc-body");
-    const descEl = $("uc-desc");
-    const descText = descEl ? descEl.textContent : "";
-    if (descEl) descEl.textContent = "";
-    body.innerHTML = `
-      <div class="pfm-stage">
-        <div class="pfm-info">
-          <p class="pfm-info-desc">${escapeHtml(descText)}</p>
-          <div class="pfm-controlbar">
-            <span class="label">Customer ID</span>
-            <input id="pfm-cid" placeholder="e.g. 9013023139" value="${initialCustomerId || ""}" />
-            <button class="btn btn-primary" id="pfm-load">Load</button>
-            <button class="btn" id="pfm-connect-btn">Connect new bank</button>
-            <a
-              href="https://developer.mastercard.com/open-finance-us/documentation/integration-and-testing/test-the-apis/#test-personas"
-              target="_blank"
-              rel="noopener"
-              style="font-size:12px;color:#6b7280;text-decoration:none;white-space:nowrap"
-              title="Mastercard Developers Test Personas"
-            >
-              Test Personas ↗
-            </a>
-          </div>
-        </div>
-
-        <div class="pfm-phone-wrap">
-        <div class="iphone">
-          <div class="iphone-screen">
-            <div class="iphone-notch" id="pfm-island">
-              <div class="pill-content">
-                <span class="pill-dot"></span>
-                <span id="pfm-island-text">Open Finance · Live</span>
-              </div>
-            </div>
-            <div class="iphone-status">
-              <span id="pfm-clock">9:41</span>
-              <span class="right">
-                <svg viewBox="0 0 18 12" width="17" height="12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5"/></svg>
-                <svg viewBox="0 0 18 12" width="17" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 5a11 11 0 0 1 16 0"/><path d="M4 8a7 7 0 0 1 10 0"/><circle cx="9" cy="10.5" r="1" fill="currentColor" stroke="none"/></svg>
-                <span class="battery"><span></span></span>
-              </span>
-            </div>
-            <div class="pfm-app" id="pfm-app"></div>
-            <div class="pfm-tabbar" id="pfm-tabbar">
-              <button data-tab="home">${ICON.home}<span>Home</span></button>
-              <button data-tab="accounts">${ICON.cards}<span>Accounts</span></button>
-              <button data-tab="insights">${ICON.chart}<span>Insights</span></button>
-              <button data-tab="settings">${ICON.gear}<span>Settings</span></button>
-            </div>
-            <div class="pfm-sheet-backdrop" id="pfm-sheet-backdrop"></div>
-            <div class="pfm-sheet" id="pfm-sheet"></div>
-            <div class="iphone-home-indicator"></div>
-          </div>
-        </div>
-        </div>
-      </div>
-    `;
-    $("pfm-load").addEventListener("click", () => pfmLoad($("pfm-cid").value.trim()));
-    $("pfm-cid").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") pfmLoad($("pfm-cid").value.trim());
-    });
-    $("pfm-connect-btn").addEventListener("click", () => pfmStartConnect());
-
-    // Wire tab bar
-    $("pfm-tabbar").querySelectorAll("button").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        PFM.tab = btn.dataset.tab;
-        PFM.selectedAcct = null;
-        pfmDrawTabs();
-        pfmDrawScreen();
-      });
-    });
-    // Sheet dismiss
-    $("pfm-sheet-backdrop").addEventListener("click", pfmCloseSheet);
-
-    // Live clock
-    pfmStartClock();
-
-    pfmDrawTabs();
-    if (initialCustomerId) pfmLoad(initialCustomerId);
-    else pfmShowConnect("Enter a Customer ID above and tap Load.");
-  }
-
-  function pfmStartClock() {
-    if (PFM.clockTimer) clearInterval(PFM.clockTimer);
-    const tick = () => {
-      const el = document.getElementById("pfm-clock");
-      if (!el) { clearInterval(PFM.clockTimer); return; }
-      const d = new Date();
-      let h = d.getHours(), m = d.getMinutes();
-      el.textContent = `${h}:${String(m).padStart(2, "0")}`;
-    };
-    tick();
-    PFM.clockTimer = setInterval(tick, 15000);
-  }
-
-  function pfmDrawTabs() {
-    const bar = document.getElementById("pfm-tabbar");
-    if (!bar) return;
-    bar.querySelectorAll("button").forEach((b) => {
-      b.classList.toggle("active", b.dataset.tab === PFM.tab);
-    });
-  }
-
-  function pfmIslandFlash(text) {
-    const el = document.getElementById("pfm-island");
-    const tx = document.getElementById("pfm-island-text");
-    if (!el || !tx) return;
-    tx.textContent = text;
-    el.classList.add("expanded");
-    clearTimeout(el._t);
-    el._t = setTimeout(() => el.classList.remove("expanded"), 2200);
-  }
-
-  function pfmShowConnect(msg) {
-    $("pfm-app").innerHTML = `
-      <div class="pfm-connect">
-        <div class="ic-wrap">${ICON.link}</div>
-        <h3>Connect a bank</h3>
-        <p>${escapeHtml(msg || "Link a customer's bank accounts via Open Finance to see balances, spending, and transactions here.")}</p>
-        <p style="margin-top:6px;font-size:12px;color:#6b7280;line-height:1.5">
-          For test details on connecting a new bank, use Mastercard Developers Test Personas:
-          <a href="https://developer.mastercard.com/open-finance-us/documentation/integration-and-testing/test-the-apis/#test-personas" target="_blank" rel="noopener">Test Personas ↗</a>
-        </p>
-        <button class="btn btn-primary" id="pfm-inapp-connect">Connect new bank</button>
-      </div>
-    `;
-    const b = document.getElementById("pfm-inapp-connect");
-    if (b) b.addEventListener("click", () => pfmStartConnect());
-  }
-
-  function pfmLoad(cid) {
-    if (!cid) { pfmShowConnect("Enter a Customer ID."); return; }
-    PFM.cid = cid;
-    $("pfm-app").innerHTML = `<div class="pfm-connect"><div class="ic-wrap">${ICON.sparkles}</div><p>Loading accounts and transactions…</p></div>`;
-    pfmIslandFlash("Loading…");
-    fetch(`/usecases/pfm/data?customer_id=${encodeURIComponent(cid)}`)
-      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
-      .then(({ ok, d }) => {
-        if (!ok || d.error) { pfmShowConnect(d.error || "Could not load data."); return; }
-        PFM.data = d;
-        PFM.data.recurring = null;
-        PFM.tab = "home";
-        PFM.selectedAcct = null;
-        pfmIslandFlash(`Loaded · ${d.accounts.length} accounts`);
-        pfmDrawTabs();
-        pfmDrawScreen();
-        pfmLazyLoad(cid, d.transactions || []);
-      })
-      .catch((e) => pfmShowConnect("Network error: " + e.message));
-  }
-
-  // Show a simple spinner message inside the iPhone screen (during post-Connect load)
-  function pfmShowConnectLoading(msg) {
-    const app = document.getElementById("pfm-app");
-    if (!app) return;
-    app.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;padding:24px">
-      <div class="spinner" style="width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:pfm-spin 0.8s linear infinite"></div>
-      <p style="font-size:13px;color:#6b7280;text-align:center;margin:0">${msg}</p>
-    </div>`;
-  }
-
-  // Load accounts for cid after Connect, retrying if accounts or transactions are missing.
-  // On the first attempt with accounts but no transactions, triggers a server-side refresh.
-  function pfmLoadWithRetry(cid, maxTries, _refreshed) {
-    if (!cid) { pfmShowConnect("No customer — please try again."); return; }
-    fetch(`/usecases/pfm/data?customer_id=${encodeURIComponent(cid)}`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.error) { pfmShowConnect("Error loading accounts: " + d.error); return; }
-        const accs = d.accounts || [];
-        const txns = d.transactions || [];
-        // Retry if no accounts yet
-        if (accs.length === 0 && maxTries > 1) {
-          pfmShowConnectLoading("Waiting for accounts… (" + maxTries + " retries left)");
-          setTimeout(() => pfmLoadWithRetry(cid, maxTries - 1, _refreshed), 3000);
-          return;
-        }
-        // Accounts exist but no transactions — trigger a server-side refresh once, then retry
-        if (accs.length > 0 && txns.length === 0 && !_refreshed && maxTries > 1) {
-          pfmShowConnectLoading("Refreshing account data…");
-          fetch("/usecases/pfm/action", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "refresh_accounts", params: { customer_id: cid } }),
-          }).finally(() => {
-            setTimeout(() => pfmLoadWithRetry(cid, maxTries - 1, true), 4000);
-          });
-          return;
-        }
-        // We have data (or exhausted retries) — render the home screen
-        PFM.cid = cid;
-        PFM.data = d;
-        PFM.data.recurring = null;
-        PFM.tab = "home";
-        PFM.selectedAcct = null;
-        pfmIslandFlash(`Loaded · ${accs.length} accounts · ${txns.length} transactions`);
-        pfmDrawTabs();
-        pfmDrawScreen();
-        pfmLazyLoad(cid, txns);
-      })
-      .catch(() => {
-        if (maxTries > 1) setTimeout(() => pfmLoadWithRetry(cid, maxTries - 1, _refreshed), 3000);
-        else pfmShowConnect("Could not load accounts — please try again.");
-      });
-  }
-
-  // ---------- Lazy enrichment + recurring (fires after initial load) ----------
-  function pfmLazyLoad(cid, txns) {
-    if (!cid || !PFM.data) return;
-    PFM.data.recurring = null; // null = loading, [] = loaded-empty
-
-    // 1. Enrich transactions in the background
-    const payload = (txns || []).slice(0, 50)
-      .map(t => ({ id: String(t.id), description: t.description || "", amount: t.amount, date: t.date, account_id: t.account_id || "" }))
-      .filter(t => t.description);
-    if (payload.length) {
-      fetch("/usecases/pfm/action", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "enrich_transactions", params: { transactions: payload } }),
-      })
-      .then(r => r.json())
-      .then(d => {
-        if (!d.enriched || !PFM.data) return;
-        let changed = false;
-        PFM.data.transactions.forEach(t => {
-          const e = d.enriched[String(t.id)];
-          if (!e) return;
-          if (e.name) { t.enrichedName = e.name; changed = true; }
-          if (e.logoUrl) t.logoUrl = e.logoUrl;
-          if (e.isRecurring) t.isRecurring = true;
-          if (e.category) t.enrichedCategory = e.category;
-        });
-        if (changed) pfmDrawScreen();
-      })
-      .catch(() => {});
-    }
-
-    // 2. Fetch recurring streams in the background
-    fetch("/usecases/pfm/action", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "get_recurring", params: { customer_id: cid } }),
-    })
-    .then(r => r.json())
-    .then(d => {
-      if (!PFM.data) return;
-      PFM.data.recurring = d.streams || [];
-      pfmDrawScreen();
-    })
-    .catch(() => {
-      if (PFM.data) { PFM.data.recurring = []; pfmDrawScreen(); }
-    });
-  }
-
-  // ---------- In-app Connect Experience ----------
-  // Calls: create_customer → generate connect_url → open in popup (Finicity
-  // Connect refuses to run in an iframe — error 1412). The iPhone shows a
-  // waiting screen and polls for accounts; when they appear we load Home.
-  function pfmStartConnect() {
-    const app = document.getElementById("pfm-app");
-    if (!app) return;
-    const cidInput = $("pfm-cid");
-    const existing = cidInput && cidInput.value.trim();
-
-    pfmShowConnectWaiting("Preparing Connect…", null);
-    pfmIslandFlash("Open Finance · Connect");
-
-    // Always create a new customer for "Connect new bank" — this matches the
-    // original request (Create Customer → Connect URL) and avoids reloading
-    // the old user after the popup closes.
-    const ensureCustomer = fetch("/usecases/pfm/action", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "create_customer", params: {} }),
-    }).then((r) => r.json());
-
-    ensureCustomer
-      .then((res) => {
-        if (!res || res.error || !res.customer_id) {
-          throw new Error(res && res.error ? res.error : "Could not create customer");
-        }
-        PFM.cid = String(res.customer_id);
-        if (cidInput) cidInput.value = PFM.cid;
-        return fetch("/usecases/pfm/action", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "connect_url", params: { customer_id: PFM.cid } }),
-        }).then((r) => r.json());
-      })
-      .then((res) => {
-        if (!res || res.error || !res.connect_url) {
-          throw new Error(res && res.error ? res.error : "Could not generate Connect URL");
-        }
-        PFM._connectUrl = res.connect_url;
-        // Open Connect in a popup window (Finicity blocks iframe embedding).
-        pfmOpenConnectPopup(res.connect_url);
-        pfmShowConnectWaiting(`Customer ${PFM.cid}`, res.connect_url);
-        pfmPollForAccounts(PFM.cid);
-      })
-      .catch((e) => pfmShowConnect("Connect error: " + e.message));
-  }
-
-  function pfmOpenConnectPopup(url) {
-    try {
-      const w = 480, h = 760;
-      const left = Math.max(0, window.screenX + (window.outerWidth - w) / 2);
-      const top = Math.max(0, window.screenY + (window.outerHeight - h) / 2);
-      const features = [
-        "popup=yes",
-        `width=${w}`,
-        `height=${h}`,
-        `left=${left}`,
-        `top=${top}`,
-        "resizable=yes",
-        "scrollbars=yes",
-        "menubar=no",
-        "toolbar=no",
-        "location=no",
-        "status=no",
-        "noopener=no",
-      ].join(",");
-      const win = window.open(url, "vima-connect", features);
-      if (!win) return null;
-      try { win.focus(); } catch (_) {}
-      PFM._connectWin = win;
-      // When the popup closes, give Finicity a few seconds to process the
-      // newly-linked accounts before fetching, then retry if still empty.
-      const watchClose = setInterval(() => {
-        try {
-          if (win.closed) {
-            clearInterval(watchClose);
-            PFM._pollStop = true;
-            pfmShowConnectLoading("Linking accounts…");
-            setTimeout(() => pfmLoadWithRetry(PFM.cid, 8), 3000);
-          }
-        } catch (_) { clearInterval(watchClose); }
-      }, 800);
-      PFM._connectWatcher = watchClose;
-      return win;
-    } catch (_) { return null; }
-  }
-
-  function pfmShowConnectWaiting(title, url) {
-    const app = document.getElementById("pfm-app");
-    if (!app) return;
-    const hasUrl = !!url;
-    app.innerHTML = `
-      <div class="pfm-connect-frame">
-        <div class="topbar">
-          <button id="pfm-connect-cancel">${ICON.chevLeft} Cancel</button>
-          <h4>${escapeHtml(title)}</h4>
-          <span style="width:60px"></span>
-        </div>
-        <div class="loading">
-          <div class="spinner"></div>
-          <div style="text-align:center;max-width:220px;line-height:1.6;font-size:13px;color:#6a6a6a">
-            ${hasUrl
-              ? `Select your bank in the popup window, then come back here.`
-              : escapeHtml(title)}
-          </div>
-          ${hasUrl ? `
-            <button class="btn btn-primary" id="pfm-connect-done" style="margin-top:16px">Done — load my accounts</button>
-            <button class="btn" id="pfm-connect-reopen" style="margin-top:6px">Re-open Connect window</button>
-          ` : ""}
-        </div>
-      </div>
-    `;
-    const stopConnect = () => {
-      PFM._pollStop = true;
-      try { clearInterval(PFM._connectWatcher); } catch (_) {}
-      try { if (PFM._connectWin && !PFM._connectWin.closed) PFM._connectWin.close(); } catch (_) {}
-    };
-    const cancel = document.getElementById("pfm-connect-cancel");
-    if (cancel) cancel.addEventListener("click", () => {
-      stopConnect();
-      if (PFM.cid && PFM.data) pfmDrawScreen();
-      else if (PFM.cid) pfmLoad(PFM.cid);
-      else pfmShowConnect("Connect cancelled.");
-    });
-    const done = document.getElementById("pfm-connect-done");
-    if (done) done.addEventListener("click", () => {
-      stopConnect();
-      if (PFM.cid) pfmLoadWithRetry(PFM.cid, 8);
-      else pfmShowConnect("No customer — please try again.");
-    });
-    const reopen = document.getElementById("pfm-connect-reopen");
-    if (reopen) reopen.addEventListener("click", () => {
-      if (PFM._connectUrl) pfmOpenConnectPopup(PFM._connectUrl);
-    });
-  }
-
-
-  function pfmPollForAccounts(cid) {
-    PFM._pollStop = false;
-    const started = Date.now();
-    const tick = () => {
-      if (PFM._pollStop) return;
-      if (Date.now() - started > 5 * 60 * 1000) return; // 5 min cap
-      fetch(`/usecases/pfm/data?customer_id=${encodeURIComponent(cid)}`)
-        .then((r) => r.json())
-        .then((d) => {
-          if (PFM._pollStop) return;
-          if (d && Array.isArray(d.accounts) && d.accounts.length > 0) {
-            PFM.data = d;
-            PFM.tab = "home";
-            PFM.selectedAcct = null;
-            pfmIslandFlash(`Linked · ${d.accounts.length} accounts`);
-            pfmDrawTabs();
-            pfmDrawScreen();
-            return;
-          }
-          setTimeout(tick, 4000);
-        })
-        .catch(() => setTimeout(tick, 6000));
-    };
-    setTimeout(tick, 4000);
-  }
-
-  function pfmDrawScreen() {
-    const app = document.getElementById("pfm-app");
-    if (!app || !PFM.data) return;
-    let html = "";
-    if (PFM.tab === "home") html = pfmScreenHome();
-    else if (PFM.tab === "accounts") html = PFM.selectedAcct ? pfmScreenAcctDetail() : pfmScreenAccounts();
-    else if (PFM.tab === "insights") html = pfmScreenInsights();
-    else if (PFM.tab === "settings") html = pfmScreenSettings();
-    app.innerHTML = `<div class="pfm-screen">${html}</div>`;
-    app.scrollTop = 0;
-    pfmWireScreen();
-  }
-
-  // ---------- Home screen ----------
-  function pfmScreenHome() {
-    const d = PFM.data, s = d.summary || {};
-    const accounts = d.accounts || [];
-    const txns = d.transactions || [];
-    const cats = d.categories || [];
-    const heroBalance = s.assets || 0;
-    const net = s.monthly_income - s.monthly_spend;
-    const netPct = s.monthly_income > 0 ? Math.round((net / s.monthly_income) * 100) : 0;
-
-    // 7-day spend sparkline
-    const spark = pfmSparkline(txns, 7);
-
-    const acctList = accounts.slice(0, 4).map(pfmAcctRow).join("") || pfmEmptyLine("No accounts linked.");
-    const stackBar = pfmStackBar(cats);
-    const stackLegend = cats.slice(0, 5).map(pfmLegendRow).join("") || pfmEmptyLine("No spending this month.");
-    const txnList = pfmGroupedTxns(txns.slice(0, 12));
-
-    // Subscriptions section — null = still loading, [] = none found
-    const recurring = d.recurring;
-    const subs = recurring ? recurring.filter(s => s.type === "DEBIT") : null;
-    const incStreams = recurring ? recurring.filter(s => s.type === "CREDIT") : null;
-    let subsSection = "";
-    if (recurring === null) {
-      subsSection = `
-        <div class="pfm-section-title"><h4>Subscriptions</h4><span class="pfm-enriching-label">loading…</span></div>
-        <div class="pfm-sub-skeleton"></div>`;
-    } else if (subs.length) {
-      subsSection = `
-        <div class="pfm-section-title"><h4>Subscriptions</h4><span style="font-size:11px;color:#9a9a9a;font-weight:600">${subs.length}</span></div>
-        <div class="pfm-sub-scroll">${subs.slice(0, 8).map(pfmSubCard).join("")}</div>`;
-    }
-    let incSection = "";
-    if (incStreams && incStreams.length) {
-      incSection = `
-        <div class="pfm-section-title"><h4>Regular Income</h4><span style="font-size:11px;color:#9a9a9a;font-weight:600">${incStreams.length}</span></div>
-        <div class="pfm-sub-scroll">${incStreams.slice(0, 4).map(pfmSubCard).join("")}</div>`;
-    }
-
-    return `
-      <div class="pfm-greet">
-        <div>
-          <div class="hello">${pfmGreeting()}</div>
-          <h3>Welcome back</h3>
-        </div>
-        <div class="pfm-avatar" title="Profile">V</div>
-      </div>
-      <div class="pfm-hero" data-action="cycle-hero">
-        <div class="label">Total Balance</div>
-        <div class="amount">${fmtMoney(heroBalance)}</div>
-        <div class="trend ${net >= 0 ? "pos" : "neg"}">
-          ${net >= 0 ? ICON.arrowUp : ICON.arrowDown}
-          ${fmtMoney(Math.abs(net))} this month
-        </div>
-        <div class="spark">${spark}</div>
-      </div>
-      <div class="pfm-quick">
-        <button data-quick="send"><span class="ic">${ICON.arrowUp}</span>Send</button>
-        <button data-quick="request"><span class="ic">${ICON.arrowDown}</span>Request</button>
-        <button data-quick="pay"><span class="ic">${ICON.plus}</span>Pay</button>
-        <button data-quick="more"><span class="ic">${ICON.more}</span>More</button>
-      </div>
-      <div class="pfm-section-title"><h4>Accounts</h4>
-        <button class="link" data-goto="accounts">${accounts.length} linked ${ICON.chev}</button></div>
-      <div class="pfm-card">${acctList}</div>
-
-      <div class="pfm-section-title"><h4>This Month</h4>
-        <button class="link" data-goto="insights">Insights ${ICON.chev}</button></div>
-      <div class="pfm-card" style="padding:14px">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
-          <span style="font-size:12px;color:#6a6a6a;font-weight:500">Spent</span>
-          <span style="font-size:20px;font-weight:700;letter-spacing:-0.3px;font-feature-settings:tnum">${fmtMoney(s.monthly_spend)}</span>
-        </div>
-        ${stackBar}
-        <div class="pfm-legend">${stackLegend}</div>
-      </div>
-
-      ${subsSection}
-      ${incSection}
-
-      <div class="pfm-section-title"><h4>Recent</h4>
-        <button class="link" data-goto="accounts">All ${ICON.chev}</button></div>
-      ${txnList}
-    `;
-  }
-
-  function pfmSubCard(s) {
-    const freq = { WEEKLY: "/ wk", BIWEEKLY: "/ 2 wk", MONTHLY: "/ mo", QUARTERLY: "/ qtr", ANNUAL: "/ yr" };
-    const label = freq[s.frequency] || ("/ " + (s.frequency || "?").toLowerCase());
-    const color = pfmColor(s.category);
-    const initials = (s.merchantName || "?").slice(0, 2).toUpperCase();
-    const isIncome = s.type === "CREDIT";
-    return `
-      <div class="pfm-sub-card">
-        <div class="pfm-sub-avatar" style="background:${color}1a;color:${color}">${initials}</div>
-        <div class="pfm-sub-name">${escapeHtml(s.merchantName)}</div>
-        <div class="pfm-sub-freq">${escapeHtml(label)}</div>
-        <div class="pfm-sub-amt ${isIncome ? "pos" : ""}">${isIncome ? "+" : ""}${fmtMoney(Math.abs(s.amount))}</div>
-      </div>
-    `;
-  }
-
-  function pfmGreeting() {
-    const h = new Date().getHours();
-    if (h < 12) return "Good morning";
-    if (h < 18) return "Good afternoon";
-    return "Good evening";
-  }
-
-  // 7-day spending sparkline (SVG)
-  function pfmSparkline(txns, days) {
-    const now = Date.now() / 1000;
-    const dayMs = 24 * 3600;
-    const buckets = new Array(days).fill(0);
-    txns.forEach((t) => {
-      if (!t.date || t.amount >= 0) return;
-      const age = (now - t.date) / dayMs;
-      const idx = days - 1 - Math.floor(age);
-      if (idx >= 0 && idx < days) buckets[idx] += Math.abs(t.amount);
-    });
-    const max = Math.max(...buckets, 1);
-    const W = 280, H = 44, padX = 4;
-    const stepX = (W - padX * 2) / (days - 1 || 1);
-    const points = buckets.map((v, i) => `${padX + i * stepX},${H - 4 - (v / max) * (H - 12)}`).join(" ");
-    // Area path
-    const area = `M${padX},${H} L${points.replace(/ /g, " L")} L${W - padX},${H} Z`;
-    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:100%">
-      <defs><linearGradient id="pfm-spark-grad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#635bff" stop-opacity="0.25"/>
-        <stop offset="100%" stop-color="#635bff" stop-opacity="0"/>
-      </linearGradient></defs>
-      <path d="${area}" fill="url(#pfm-spark-grad)"/>
-      <polyline points="${points}" fill="none" stroke="#635bff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>`;
-  }
-
-  // Stacked horizontal category bar
-  function pfmStackBar(cats) {
-    if (!cats.length) return `<div class="pfm-stack"></div>`;
-    const segs = cats.slice(0, 8).map((c) =>
-      `<span style="width:${Math.max(c.pct, 1)}%;background:${pfmColor(c.category)}"></span>`
-    ).join("");
-    return `<div class="pfm-stack">${segs}</div>`;
-  }
-
-  function pfmLegendRow(c) {
-    return `
-      <div class="pfm-legend-row">
-        <div class="l">
-          <span class="cat-dot" style="background:${pfmColor(c.category)}"></span>
-          <span class="name">${escapeHtml(c.category)}</span>
-        </div>
-        <div class="r">
-          <span class="pct">${c.pct}%</span>
-          <span class="amt">${fmtMoney(c.amount)}</span>
-        </div>
-      </div>
-    `;
-  }
-
-  // ---------- Accounts screen ----------
-  function pfmScreenAccounts() {
-    const d = PFM.data;
-    const accounts = d.accounts || [];
-    const txns = d.transactions || [];
-    const filtered = PFM.txnQuery
-      ? txns.filter((t) => (t.name || "").toLowerCase().includes(PFM.txnQuery.toLowerCase())
-                        || (t.category || "").toLowerCase().includes(PFM.txnQuery.toLowerCase()))
-      : txns;
-
-    return `
-      <div class="pfm-screen-title">Accounts</div>
-      <div class="pfm-card">${accounts.map(pfmAcctRow).join("") || pfmEmptyLine("No accounts linked.")}</div>
-      <div class="pfm-section-title"><h4>Transactions</h4>
-        <span style="font-size:11px;color:#9a9a9a;font-weight:600">${filtered.length}</span></div>
-      <div class="pfm-txn-search">
-        ${ICON.search}
-        <input id="pfm-search" type="text" placeholder="Search transactions" value="${escapeHtml(PFM.txnQuery)}" />
-      </div>
-      ${pfmGroupedTxns(filtered)}
-    `;
-  }
-
-  function pfmScreenAcctDetail() {
-    const a = PFM.selectedAcct;
-    const txns = (PFM.data.transactions || []).filter((t) => String(t.account_id) === String(a.id));
-    const iconCls = ACCT_ICON[a.type] ? a.type : "other";
-    return `
-      <button class="link" data-back style="background:none;border:none;color:#635bff;font-weight:600;padding:8px 0;cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-size:13px">${ICON.chevLeft} Accounts</button>
-      <div style="display:flex;align-items:center;gap:14px;margin:6px 0 16px">
-        <div class="pfm-acct-icon ${iconCls}" style="width:48px;height:48px;border-radius:14px">${pfmAcctIcon(a.type)}</div>
-        <div>
-          <div style="font-size:18px;font-weight:700;letter-spacing:-0.3px">${escapeHtml(a.name)}</div>
-          <div style="font-size:12px;color:#6a6a6a;text-transform:capitalize">${escapeHtml(a.type)} · ${escapeHtml(a.number)}</div>
-        </div>
-      </div>
-      <div class="pfm-hero" style="cursor:default">
-        <div class="label">Current Balance</div>
-        <div class="amount ${a.balance < 0 ? "" : ""}" style="${a.balance < 0 ? "color:#df1b41" : ""}">${fmtMoney(a.balance)}</div>
-        <div style="display:flex;gap:24px;margin-top:14px;font-size:12px">
-          <div><div style="color:#6a6a6a;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">Available</div><div style="font-weight:700;margin-top:2px;font-feature-settings:tnum">${fmtMoney(a.available_balance != null ? a.available_balance : a.balance)}</div></div>
-          <div><div style="color:#6a6a6a;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">Currency</div><div style="font-weight:700;margin-top:2px">${escapeHtml(a.currency || "USD")}</div></div>
-          <div><div style="color:#6a6a6a;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">Activity</div><div style="font-weight:700;margin-top:2px">${txns.length} txns</div></div>
-        </div>
-      </div>
-      <div class="pfm-section-title"><h4>Transactions</h4>
-        <span style="font-size:11px;color:#9a9a9a;font-weight:600">${txns.length}</span></div>
-      ${pfmGroupedTxns(txns)}
-    `;
-  }
-
-  // ---------- Insights screen ----------
-  function pfmScreenInsights() {
-    const d = PFM.data, s = d.summary || {};
-    const cats = d.categories || [];
-    const txns = d.transactions || [];
-    const total = cats.reduce((acc, c) => acc + (c.amount || 0), 0) || 0;
-
-    // Compute 4-week cashflow
-    const weeks = pfmWeekly(txns, 4);
-    // Compute day-of-week spending heatmap
-    const heat = pfmHeatmap(txns);
-    // Top merchants
-    const merchants = pfmTopMerchants(txns);
-
-    // Insight: most-spent category
-    const top = cats[0];
-    const avgPerDay = total / 30;
-
-    return `
-      <div class="pfm-screen-title">Insights</div>
-
-      <div class="pfm-kpi-grid">
-        <div class="pfm-kpi">
-          <div class="k">Spent · 30d</div>
-          <div class="v">${fmtMoney(total)}</div>
-          <div class="sub">${fmtMoney(avgPerDay)} / day avg</div>
-        </div>
-        <div class="pfm-kpi">
-          <div class="k">Income · 30d</div>
-          <div class="v pos">${fmtMoney(s.monthly_income)}</div>
-          <div class="sub ${s.monthly_income > s.monthly_spend ? "pos" : "neg"}">
-            ${s.monthly_income > s.monthly_spend ? "↑" : "↓"} ${fmtMoney(Math.abs(s.monthly_income - s.monthly_spend))} net
-          </div>
-        </div>
-      </div>
-
-      ${top ? `
-      <div class="pfm-tip">
-        <div class="ic">${ICON.sparkles}</div>
-        <div class="body">
-          You spent <strong>${fmtMoney(top.amount)}</strong> on <strong>${escapeHtml(top.category)}</strong> this month — ${top.pct}% of your total spend.
-        </div>
-      </div>` : ""}
-
-      <div class="pfm-isection">
-        <h5>Weekly cashflow</h5>
-        <p class="desc">Income vs. spend, last 4 weeks</p>
-        ${pfmCashflowChart(weeks)}
-        <div style="display:flex;gap:14px;margin-top:12px;font-size:11px;font-weight:600;color:#6a6a6a">
-          <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;background:#0f7050;border-radius:2px"></span>Income</span>
-          <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;background:#e5e5e5;border-radius:2px"></span>Spend</span>
-        </div>
-      </div>
-
-      <div class="pfm-isection">
-        <h5>Category breakdown</h5>
-        <p class="desc">${fmtMoney(total)} spent across ${cats.length} categories</p>
-        ${pfmStackBar(cats)}
-        <div class="pfm-legend">${cats.map(pfmLegendRow).join("") || pfmEmptyLine("No spending data.")}</div>
-      </div>
-
-      <div class="pfm-isection">
-        <h5>Spending by weekday</h5>
-        <p class="desc">When you spend the most</p>
-        ${pfmHeatmapHtml(heat)}
-      </div>
-
-      <div class="pfm-isection">
-        <h5>Top merchants</h5>
-        <p class="desc">Where your money goes</p>
-        ${merchants.length ? merchants.map((m, i) => `
-          <div class="pfm-merchant">
-            <div class="l">
-              <div class="rank">${i + 1}</div>
-              <div>
-                <div class="nm">${escapeHtml(m.name)}</div>
-                <div class="ct">${m.count} ${m.count === 1 ? "transaction" : "transactions"} · ${escapeHtml(m.category)}</div>
-              </div>
-            </div>
-            <div class="am">${fmtMoney(m.total)}</div>
-          </div>
-        `).join("") : pfmEmptyLine("No merchant data.")}
-      </div>
-    `;
-  }
-
-  // 4-week income/spend buckets
-  function pfmWeekly(txns, n) {
-    const now = Date.now() / 1000;
-    const week = 7 * 24 * 3600;
-    const buckets = [];
-    for (let i = n - 1; i >= 0; i--) {
-      const start = now - (i + 1) * week;
-      const end = now - i * week;
-      let income = 0, spend = 0;
-      txns.forEach((t) => {
-        if (t.date >= start && t.date < end) {
-          if (t.amount > 0) income += t.amount;
-          else spend += Math.abs(t.amount);
-        }
-      });
-      buckets.push({ income, spend, label: `W${n - i}` });
-    }
-    return buckets;
-  }
-
-  function pfmCashflowChart(weeks) {
-    const max = Math.max(1, ...weeks.flatMap((w) => [w.income, w.spend]));
-    return `<div class="pfm-cashflow">
-      ${weeks.map((w) => {
-        const hi = (w.income / max) * 100;
-        const hs = (w.spend / max) * 100;
-        return `<div class="pfm-cashflow-bar">
-          <div class="bars">
-            <span class="b income" style="height:${Math.max(hi, 2)}%" title="Income ${fmtMoney(w.income)}"></span>
-            <span class="b spend" style="height:${Math.max(hs, 2)}%" title="Spend ${fmtMoney(w.spend)}"></span>
-          </div>
-          <span class="lbl">${escapeHtml(w.label)}</span>
-        </div>`;
-      }).join("")}
-    </div>`;
-  }
-
-  // Day-of-week spending heatmap (intensity by total spend on that weekday in last 30d)
-  function pfmHeatmap(txns) {
-    const now = Date.now() / 1000;
-    const cutoff = now - 30 * 24 * 3600;
-    const totals = [0, 0, 0, 0, 0, 0, 0];
-    txns.forEach((t) => {
-      if (!t.date || t.amount >= 0 || t.date < cutoff) return;
-      const d = new Date(t.date * 1000);
-      totals[d.getDay()] += Math.abs(t.amount);
-    });
-    const max = Math.max(...totals, 1);
-    return totals.map((v) => ({ amt: v, pct: v / max }));
-  }
-  function pfmHeatmapHtml(heat) {
-    const dows = ["S", "M", "T", "W", "T", "F", "S"];
-    return `
-      <div class="pfm-heatmap">${dows.map((d) => `<div class="dow">${d}</div>`).join("")}</div>
-      <div class="pfm-heatmap" style="margin-top:2px">${heat.map((h) => {
-        const opacity = 0.08 + h.pct * 0.85;
-        return `<div class="day" style="background:rgba(99,91,255,${opacity.toFixed(2)})" title="${fmtMoney(h.amt)}">${h.amt > 0 ? fmtMoneyShort(h.amt) : ""}</div>`;
-      }).join("")}</div>
-    `;
-  }
-
-  function pfmTopMerchants(txns) {
-    const now = Date.now() / 1000;
-    const cutoff = now - 30 * 24 * 3600;
-    const map = {};
-    txns.forEach((t) => {
-      if (!t.date || t.amount >= 0 || t.date < cutoff) return;
-      const key = t.name || "Unknown";
-      if (!map[key]) map[key] = { name: key, total: 0, count: 0, category: t.category };
-      map[key].total += Math.abs(t.amount);
-      map[key].count += 1;
-    });
-    return Object.values(map).sort((a, b) => b.total - a.total).slice(0, 5);
-  }
-
-  // ---------- Settings screen ----------
-  function pfmScreenSettings() {
-    return `
-      <div class="pfm-screen-title">Settings</div>
-      <div class="pfm-settings-card">
-        <div class="pfm-setting-row" data-action="open-profile">
-          <div class="left"><div class="ic" style="background:#eff4ff;color:#2563eb">${ICON.user}</div>
-            <div><div class="label">Profile</div><div class="val" style="font-size:11px">Customer ${escapeHtml(PFM.cid)}</div></div></div>
-          <span class="val">${ICON.chev}</span>
-        </div>
-        <div class="pfm-setting-row" data-action="toggle-notif">
-          <div class="left"><div class="ic" style="background:#fff4e5;color:#c2410c">${ICON.bell}</div>
-            <div class="label">Notifications</div></div>
-          <div class="pfm-toggle" id="pfm-tog-notif"></div>
-        </div>
-        <div class="pfm-setting-row" data-action="toggle-bio">
-          <div class="left"><div class="ic" style="background:#ecfdf5;color:#0f7050">${ICON.lock}</div>
-            <div class="label">Face ID</div></div>
-          <div class="pfm-toggle" id="pfm-tog-bio"></div>
-        </div>
-      </div>
-      <div class="pfm-settings-card">
-        <div class="pfm-setting-row">
-          <div class="left"><div class="ic" style="background:#f3f0ff;color:#635bff">${ICON.bank}</div>
-            <div class="label">Linked accounts</div></div>
-          <span class="val">${(PFM.data.accounts || []).length}</span>
-        </div>
-        <div class="pfm-setting-row">
-          <div class="left"><div class="ic" style="background:#fef2f2;color:#df1b41">${ICON.download}</div>
-            <div class="label">Export data</div></div>
-          <span class="val">${ICON.chev}</span>
-        </div>
-        <div class="pfm-setting-row">
-          <div class="left"><div class="ic" style="background:#f4f4f5;color:#6a6a6a">${ICON.info}</div>
-            <div class="label">About</div></div>
-          <span class="val">v1.0.0</span>
-        </div>
-      </div>
-      <p style="text-align:center;font-size:11px;color:#9a9a9a;margin-top:14px;font-weight:500">Powered by Mastercard Open Finance</p>
-    `;
-  }
-
-  // ---------- Helpers (rows) ----------
-  function pfmAcctRow(a) {
-    const iconCls = ACCT_ICON[a.type] ? a.type : "other";
-    return `
-      <div class="pfm-acct" data-acct-id="${escapeHtml(String(a.id))}">
-        <div class="left">
-          <div class="pfm-acct-icon ${iconCls}">${pfmAcctIcon(a.type)}</div>
-          <div>
-            <div class="name">${escapeHtml(a.name)}</div>
-            <div class="meta">${escapeHtml(a.type)} · ${escapeHtml(a.number)}</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <div class="bal ${a.balance < 0 ? "neg" : ""}">${fmtMoney(a.balance)}</div>
-          <span class="chev">${ICON.chev}</span>
-        </div>
-      </div>
-    `;
-  }
-  function pfmCatRow(c) {
-    const color = pfmColor(c.category);
-    return `
-      <div class="pfm-cat-row">
-        <div class="top">
-          <span class="cat"><span class="cat-dot" style="background:${color}"></span>${escapeHtml(c.category)}</span>
-          <span class="amt">${fmtMoney(c.amount)} · ${c.pct}%</span>
-        </div>
-        <div class="bar"><span style="width:${Math.max(c.pct, 3)}%;background:${color}"></span></div>
-      </div>
-    `;
-  }
-  function pfmTxnRow(t) {
-    const isPos = t.amount > 0;
-    const cat = t.enrichedCategory || t.category;
-    const color = pfmColor(cat);
-    const displayName = t.enrichedName || t.name;
-    const iconHtml = t.logoUrl
-      ? `<img src="${escapeHtml(t.logoUrl)}" class="pfm-txn-logo-img" alt="" loading="lazy">`
-      : `<div class="pfm-txn-icon" style="background:${color}1a;color:${color}">${pfmCatIcon(cat)}</div>`;
-    const recurBadge = t.isRecurring ? `<span class="pfm-recurring-badge">↻</span>` : "";
-    return `
-      <div class="pfm-txn" data-txn-id="${escapeHtml(String(t.id || ""))}">
-        <div class="left">
-          ${iconHtml}
-          <div class="info">
-            <div class="name">${escapeHtml(displayName)}${recurBadge}</div>
-            <div class="meta">${escapeHtml(cat)}</div>
-          </div>
-        </div>
-        <div class="amt ${isPos ? "pos" : "neg"}">${isPos ? "+" : ""}${fmtMoney(t.amount)}</div>
-      </div>
-    `;
-  }
-  function pfmEmptyLine(msg) {
-    return `<p class="muted" style="font-size:12px;padding:8px;text-align:center">${escapeHtml(msg)}</p>`;
-  }
-
-  function pfmGroupedTxns(txns) {
-    if (!txns.length) return pfmEmptyLine("No transactions match.");
-    // Group by date label
-    const groups = {};
-    const order = [];
-    txns.forEach((t) => {
-      const k = fmtDate(t.date) || "—";
-      if (!groups[k]) { groups[k] = []; order.push(k); }
-      groups[k].push(t);
-    });
-    return order.map((k) => `
-      <div class="pfm-txn-group">
-        <div class="pfm-txn-group-date">${escapeHtml(k)}</div>
-        <div class="pfm-txn-list">${groups[k].map(pfmTxnRow).join("")}</div>
-      </div>
-    `).join("");
-  }
-
-  // ---------- Wire interactions for current screen ----------
-  function pfmWireScreen() {
-    const app = document.getElementById("pfm-app");
-    if (!app) return;
-
-    // Account row → drill in
-    app.querySelectorAll("[data-acct-id]").forEach((el) => {
-      el.addEventListener("click", () => {
-        const a = (PFM.data.accounts || []).find((x) => String(x.id) === el.dataset.acctId);
-        if (!a) return;
-        PFM.selectedAcct = a;
-        PFM.tab = "accounts";
-        pfmIslandFlash(a.name);
-        pfmDrawTabs();
-        pfmDrawScreen();
-      });
-    });
-
-    // Txn row → open sheet
-    app.querySelectorAll("[data-txn-id]").forEach((el) => {
-      el.addEventListener("click", () => {
-        const t = (PFM.data.transactions || []).find((x) => String(x.id) === el.dataset.txnId);
-        if (t) pfmOpenSheet(t);
-      });
-    });
-
-    // Section "Go to" buttons
-    app.querySelectorAll("[data-goto]").forEach((el) => {
-      el.addEventListener("click", () => {
-        PFM.tab = el.dataset.goto;
-        PFM.selectedAcct = null;
-        pfmDrawTabs();
-        pfmDrawScreen();
-      });
-    });
-
-    // Back from account detail
-    const back = app.querySelector("[data-back]");
-    if (back) back.addEventListener("click", () => {
-      PFM.selectedAcct = null;
-      pfmDrawScreen();
-    });
-
-    // Quick actions
-    app.querySelectorAll("[data-quick]").forEach((el) => {
-      el.addEventListener("click", () => {
-        const labels = { send: "Send money", request: "Request", pay: "Pay bill", more: "More" };
-        pfmIslandFlash(labels[el.dataset.quick] || "Action");
-      });
-    });
-
-    // Search
-    const search = document.getElementById("pfm-search");
-    if (search) {
-      search.addEventListener("input", (e) => {
-        PFM.txnQuery = e.target.value;
-        // Re-render only the bottom group, keep focus
-        const cursor = search.selectionStart;
-        pfmDrawScreen();
-        const s2 = document.getElementById("pfm-search");
-        if (s2) { s2.focus(); s2.setSelectionRange(cursor, cursor); }
-      });
-    }
-
-    // Toggles
-    const t1 = document.getElementById("pfm-tog-notif");
-    if (t1) t1.addEventListener("click", () => t1.classList.toggle("off"));
-    const t2 = document.getElementById("pfm-tog-bio");
-    if (t2) { t2.classList.add("off"); t2.addEventListener("click", () => t2.classList.toggle("off")); }
-
-    // Hero tap → cycle island flash
-    const hero = app.querySelector('[data-action="cycle-hero"]');
-    if (hero) hero.addEventListener("click", () => {
-      const s = PFM.data.summary || {};
-      pfmIslandFlash(`Net Worth · ${fmtMoney(s.net_worth)}`);
-    });
-  }
-
-  function pfmOpenSheet(t) {
-    const isPos = t.amount > 0;
-    const cat = t.enrichedCategory || t.category;
-    const color = pfmColor(cat);
-    const displayName = t.enrichedName || t.name;
-    const acct = (PFM.data.accounts || []).find((a) => String(a.id) === String(t.account_id));
-    const sheet = document.getElementById("pfm-sheet");
-    const back = document.getElementById("pfm-sheet-backdrop");
-    if (!sheet || !back) return;
-    const logoHtml = t.logoUrl
-      ? `<img src="${escapeHtml(t.logoUrl)}" class="pfm-sheet-logo" alt="" loading="lazy">`
-      : `<div class="pfm-sheet-icon" style="background:${color}1a;color:${color}">${pfmCatIcon(cat)}</div>`;
-    const recurRow = t.isRecurring
-      ? `<div class="pfm-sheet-row"><span class="k">Recurring</span><span class="v" style="color:#635bff;font-weight:600">↻ Yes</span></div>`
-      : "";
-    sheet.innerHTML = `
-      <div class="pfm-sheet-handle"></div>
-      ${logoHtml}
-      <h3>${escapeHtml(displayName)}</h3>
-      <div class="sheet-amount ${isPos ? "pos" : ""}">${isPos ? "+" : ""}${fmtMoney(t.amount)}</div>
-      <div class="pfm-sheet-row"><span class="k">Category</span><span class="v">${escapeHtml(cat)}</span></div>
-      <div class="pfm-sheet-row"><span class="k">Date</span><span class="v">${fmtDate(t.date)}</span></div>
-      <div class="pfm-sheet-row"><span class="k">Status</span><span class="v">${escapeHtml(t.status || "Posted")}</span></div>
-      <div class="pfm-sheet-row"><span class="k">Account</span><span class="v">${escapeHtml(acct ? acct.name : t.account_id || "—")}</span></div>
-      ${recurRow}
-      ${t.description ? `<div class="pfm-sheet-row"><span class="k">Raw description</span><span class="v" style="max-width:60%;font-size:12px">${escapeHtml(t.description)}</span></div>` : ""}
-      <div class="pfm-sheet-row"><span class="k">Transaction ID</span><span class="v" style="font-family:var(--mono);font-size:11px">${escapeHtml(String(t.id || "—"))}</span></div>
-    `;
-    requestAnimationFrame(() => {
-      sheet.classList.add("visible");
-      back.classList.add("visible");
-    });
-  }
-  function pfmCloseSheet() {
-    const sheet = document.getElementById("pfm-sheet");
-    const back = document.getElementById("pfm-sheet-backdrop");
-    if (sheet) sheet.classList.remove("visible");
-    if (back) back.classList.remove("visible");
+    if (!body) return;
+    body.innerHTML = `<iframe id="pfm-webview-frame" class="sonic-webview-frame" src="/pfm/index.html" title="Personal Finance Manager"></iframe>`;
+    _attachWebviewRefresh('pfm-webview-frame');
   }
 
   // ===================== Easy Savings Use Case =====================
@@ -4295,16 +3271,10 @@
   function _esManifest() { return USE_CASES.find(u => u.id === "easysavings"); }
 
   function renderEasySavings() {
-    const m = _esManifest();
-    if (m && m.defaults) {
-      if (!ES._inited) {
-        ES.bin = m.defaults.bin || ES.bin;
-        ES.country = m.defaults.country || ES.country;
-        ES.language = m.defaults.language || ES.language;
-        ES._inited = true;
-      }
-    }
-    esRender();
+    const body = $("uc-body");
+    if (!body) return;
+    body.innerHTML = `<iframe id="easysavings-webview-frame" class="sonic-webview-frame" src="/easysavings/index.html" title="Easy Savings"></iframe>`;
+    _attachWebviewRefresh('easysavings-webview-frame');
   }
 
   function esRender() {
@@ -4862,9 +3832,17 @@
       }).addTo(map);
 
       const markers = [];
+      const orangeIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
       PL.places.forEach((p, idx) => {
         if (p.lat == null || p.lng == null) return;
-        const marker = L.marker([p.lat, p.lng]).addTo(map);
+        const marker = L.marker([p.lat, p.lng], { icon: orangeIcon }).addTo(map);
         marker.bindPopup(plPopupHtml(p, idx), { maxWidth: 280 });
         marker.on("popupopen", (ev) => {
           const root = ev.popup.getElement();
@@ -4899,7 +3877,15 @@
           maxZoom: 19,
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         }).addTo(map);
-        L.marker([lat, lng]).addTo(map).bindPopup("<b>" + escapeHtml(name) + "</b>").openPopup();
+        const orangeIcon = L.icon({
+          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        });
+        L.marker([lat, lng], { icon: orangeIcon }).addTo(map).bindPopup("<b>" + escapeHtml(name) + "</b>").openPopup();
         setTimeout(() => map.invalidateSize(), 250);
       }
     }
@@ -5002,6 +3988,51 @@
   // ===================== Online Identity Verification Use Case =====================
   // Simulated journey. No real API calls; toggle reveals what each provider
   // would contribute behind the scenes.
+
+  // Shared Mastercard Sonic helpers (used by IDV confirmation steps).
+  function _ensureMcSonicScript(cb) {
+    if (customElements.get('mc-sonic')) { cb(); return; }
+    if (document.querySelector('script[data-mc-sonic]')) {
+      customElements.whenDefined('mc-sonic').then(cb);
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = 'https://sonicsdk.mastercard.com/assets/js/latest/js/mc-sonic.min.js';
+    s.setAttribute('data-mc-sonic', '1');
+    s.onload = () => customElements.whenDefined('mc-sonic').then(cb);
+    s.onerror = () => {};   // silent — sonic is optional
+    document.head.appendChild(s);
+  }
+
+  function _sonicLaunch(cue, type, bg) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.72);';
+    document.body.appendChild(overlay);
+    const dismiss = () => { if (overlay.parentNode) overlay.remove(); };
+    overlay.addEventListener('click', dismiss);
+    if (type === 'sound-only') {
+      const audio = document.createElement('mc-sonic');
+      audio.setAttribute('type', 'sound-only');
+      audio.setAttribute('sonicCue', cue);
+      audio.style.cssText = 'position:fixed;opacity:0;pointer-events:none;width:1px;height:1px;top:-9999px;';
+      document.body.appendChild(audio);
+      overlay.remove();
+      customElements.whenDefined('mc-sonic').then(() => setTimeout(() => audio.play(), 80));
+      const done = () => audio.remove();
+      audio.addEventListener('sonicCompletion', done, { once: true });
+      setTimeout(done, 5000);
+      return;
+    }
+    const el = document.createElement('mc-sonic');
+    el.setAttribute('type', type);
+    el.setAttribute('sonicCue', cue);
+    if (bg) el.setAttribute('sonicBackground', bg);
+    el.style.cssText = 'display:block;width:360px;height:360px;';
+    overlay.appendChild(el);
+    customElements.whenDefined('mc-sonic').then(() => setTimeout(() => el.play(), 80));
+    el.addEventListener('sonicCompletion', dismiss, { once: true });
+    setTimeout(dismiss, 3500);
+  }
 
   const IDV = {
     phase: 'home',      // home | login | verify | passkey | records
@@ -5182,43 +4213,8 @@
   function renderIdentity() {
     const body = $("uc-body");
     if (!body) return;
-    body.innerHTML = `
-      <div class="idv-wrap${IDV.reveal ? ' idv-reveal-on' : ''}">
-        <div class="idv-toolbar">
-          <div class="idv-stepper" id="idv-stepper"></div>
-          <div class="idv-toolbar-right">
-            <label class="idv-toggle">
-              <input type="checkbox" id="idv-reveal-cb" ${IDV.reveal ? 'checked' : ''}>
-              <span class="idv-toggle-track"><span class="idv-toggle-thumb"></span></span>
-              <span class="idv-toggle-label">Reveal what's happening</span>
-            </label>
-          </div>
-        </div>
-        <div class="idv-split">
-          <div class="idv-browser">
-            <div class="idv-browser-chrome">
-              <span class="idv-dot r"></span><span class="idv-dot y"></span><span class="idv-dot g"></span>
-              <div class="idv-url">
-                <span class="idv-lock">🔒</span>
-                <span id="idv-url-text">www.medicare.gov</span>
-              </div>
-            </div>
-            <div class="idv-page" id="idv-page"></div>
-          </div>
-          <aside class="idv-bts" id="idv-bts"></aside>
-        </div>
-      </div>
-    `;
-    idvRender();
-
-    document.getElementById("idv-reveal-cb").addEventListener("change", (e) => {
-      IDV.reveal = !!e.target.checked;
-      const wrap = body.querySelector(".idv-wrap");
-      if (wrap) wrap.classList.toggle("idv-reveal-on", IDV.reveal);
-      // Sync reveal state inside modal if open
-      const mw = document.querySelector('.idv-modal-wrap');
-      if (mw) mw.classList.toggle('idv-reveal-on', IDV.reveal);
-    });
+    body.innerHTML = `<iframe id="identity-webview-frame" class="sonic-webview-frame" src="/identity/index.html" title="Online Identity Verification"></iframe>`;
+    _attachWebviewRefresh('identity-webview-frame');
   }
 
   function idvOpenModal() {
@@ -5684,6 +4680,8 @@
       if (nextBtn) nextBtn.addEventListener("click", () => {
         if (IDV.cardAuthorizing) return;
         IDV.cardAuthorizing = true;
+        IDV.step = 3;
+        idvRender();
         _ensureMcSonicScript(() => _sonicLaunch('securedby', 'default', 'black'));
         setTimeout(() => {
           IDV.cardAuthorizing = false;
@@ -6239,10 +5237,23 @@
         </div>`;
     }
     return `
+      ${d.demo_mode ? specialsDemoNoticeHtml(d.demo_reason) : ""}
       ${specialsSummaryHtml(counts)}
       ${specialsTabsHtml(counts)}
       <div class="sp-pane">${specialsPaneHtml()}</div>
     `;
+  }
+
+  function specialsDemoNoticeHtml(reason) {
+    const msg = reason || "Showing curated demo perks.";
+    return `
+      <div class="sp-demo-banner" role="status">
+        <span class="sp-demo-dot" aria-hidden="true"></span>
+        <div class="sp-demo-text">
+          <strong>Demo data</strong>
+          <span>${escapeHtml(msg)}</span>
+        </div>
+      </div>`;
   }
 
   function specialsSummaryHtml(counts) {
@@ -6483,238 +5494,14 @@
   // ===================== Find A Card Use Case =====================
 
   // ===================== Sonic Branding Use Case =====================
-
-  // Load the real Mastercard Sonic Web SDK (once)
-  function _ensureMcSonicScript(cb) {
-    // If already defined and ready, fire immediately
-    if (customElements.get('mc-sonic')) { cb(); return; }
-    // If script tag exists but not yet defined, wait
-    if (document.querySelector('script[data-mc-sonic]')) {
-      customElements.whenDefined('mc-sonic').then(cb);
-      return;
-    }
-    const s = document.createElement('script');
-    s.src = 'https://sonicsdk.mastercard.com/assets/js/latest/js/mc-sonic.min.js';
-    s.setAttribute('data-mc-sonic', '1');
-    s.onload = () => customElements.whenDefined('mc-sonic').then(cb);
-    s.onerror = () => {
-      const body = $('uc-body');
-      if (body) body.innerHTML = '<div class="pl-error">Failed to load Mastercard Sonic SDK. Check your network connection and try again.</div>';
-    };
-    document.head.appendChild(s);
-  }
-
-  // Play mc-sonic reliably: element must already be in DOM, custom element must be defined
-  function _playWhenReady(el) {
-    customElements.whenDefined('mc-sonic').then(() => setTimeout(() => el.play(), 80));
-  }
-
-  // Launch the real mc-sonic component in a centred modal dialog
-  window._sonicLaunch = function(cue, type, bg) {
-    const modal = document.createElement('div');
-    modal.className = 'sonic-modal-backdrop';
-    modal.innerHTML =
-      '<div class="sonic-modal">' +
-        '<div class="sonic-modal-body"></div>' +
-      '</div>';
-    document.body.appendChild(modal);
-
-    const dismiss = () => { if (modal.parentNode) modal.remove(); };
-
-    const body = modal.querySelector('.sonic-modal-body');
-
-    if (type === 'sound-only') {
-      // Sound-only: compact modal with a playing indicator
-      modal.querySelector('.sonic-modal').classList.add('sonic-modal--sound');
-      body.innerHTML = '<div class="sonic-modal-playing"><span class="sonic-modal-note">🔊</span><span>Playing Mastercard Sonic…</span></div>';
-      const audio = document.createElement('mc-sonic');
-      audio.setAttribute('type', 'sound-only');
-      audio.setAttribute('sonicCue', cue);
-      audio.style.cssText = 'position:fixed;opacity:0;pointer-events:none;width:1px;height:1px;top:-9999px;';
-      document.body.appendChild(audio);
-      _playWhenReady(audio);
-      const done = () => { audio.remove(); dismiss(); };
-      audio.addEventListener('sonicCompletion', done, { once: true });
-      setTimeout(done, 5000);
-      return;
-    }
-
-    // Animated: mc-sonic needs explicit pixel dimensions to render its shadow DOM
-    modal.querySelector('.sonic-modal').classList.add('sonic-modal--anim');
-    const el = document.createElement('mc-sonic');
-    el.setAttribute('type', type);
-    el.setAttribute('sonicCue', cue);
-    if (bg) el.setAttribute('sonicBackground', bg);
-    el.style.cssText = 'display:block;width:100%;height:100%;';
-    body.appendChild(el);
-    _playWhenReady(el);
-    el.addEventListener('sonicCompletion', dismiss, { once: true });
-    setTimeout(dismiss, 3500);
-  };
-
-  const SONIC_CUES = [
-    {
-      id: 'checkout',
-      label: 'Checkout',
-      icon: '🛒',
-      desc: 'Played at the moment a Mastercard payment is approved at checkout — online or in-store. This is the primary sonic signature.',
-      contexts: ['Online checkout', 'POS terminal', 'Mobile wallet', 'In-app purchase'],
-    },
-    {
-      id: 'securedby',
-      label: 'Secured by Mastercard',
-      icon: '🔒',
-      desc: 'Played to reassure the cardholder that their transaction or session is protected by Mastercard security (e.g. 3DS, Identity Check).',
-      contexts: ['3DS challenge', 'Identity verification', 'Fraud prevention', 'Passkey confirmation'],
-    },
-  ];
-
-  const SONIC_TYPES = [
-    { type: 'default', bg: 'black', label: 'Sound + Animation', sublabel: 'Dark background', icon: '🎵', btnClass: 'sonic-btn-dark' },
-    { type: 'default', bg: 'white', label: 'Sound + Animation', sublabel: 'Light background', icon: '🎵', btnClass: 'sonic-btn-light' },
-    { type: 'animation-only', bg: 'black', label: 'Animation Only', sublabel: 'Dark background', icon: '✨', btnClass: 'sonic-btn-dark' },
-    { type: 'animation-only', bg: 'white', label: 'Animation Only', sublabel: 'Light background', icon: '✨', btnClass: 'sonic-btn-light' },
-    { type: 'sound-only', bg: null, label: 'Sound Only', sublabel: 'No animation', icon: '🔊', btnClass: 'sonic-btn-sound' },
-  ];
-
-  const SONIC_RULES = [
-    {
-      heading: 'Always use',
-      mod: 'always',
-      items: [
-        'Payment approved / accepted at checkout',
-        'Mastercard Identity Check confirmation',
-        'Successful 3DS authentication',
-        'Any positive Mastercard-branded journey end-state',
-      ],
-    },
-    {
-      heading: 'Use carefully',
-      mod: 'careful',
-      items: [
-        'Partner or merchant apps (written Mastercard approval required)',
-        'Non-payment confirmations (consider Animation Only)',
-        'Ambient / IoT environments where audio may be disruptive',
-      ],
-    },
-    {
-      heading: 'Never use',
-      mod: 'never',
-      items: [
-        'Declined, failed, or error states',
-        'Loading or processing states',
-        'Competitor-branded or co-branded screens without approval',
-        'Modified, remixed, or re-recorded versions',
-      ],
-    },
-  ];
+  // Rendered as a sandboxed iframe pointing to /sonicbrand/index.html.
+  // All sonic UI lives in usecases/sonicbrand/ — edit there to change the look.
 
   function renderSonicBrand() {
     const body = $('uc-body');
     if (!body) return;
-
-    body.innerHTML = `<div class="fac-loading"><div class="fac-spinner"></div><p>Loading Mastercard Sonic SDK…</p></div>`;
-
-    _ensureMcSonicScript(() => {
-      const cueCards = SONIC_CUES.map(cue => {
-        const variantBtns = SONIC_TYPES.map(t => {
-          const bgAttr = t.bg ? `, ${t.bg}` : '';
-          return `
-            <button class="sonic-variant-btn ${t.btnClass}"
-              onclick="window._sonicLaunch('${cue.id}','${t.type}',${t.bg ? `'${t.bg}'` : 'null'})">
-              <span class="sonic-vbtn-icon">${t.icon}</span>
-              <span class="sonic-vbtn-text">
-                <strong>${escapeHtml(t.label)}</strong>
-                <span>${escapeHtml(t.sublabel)}</span>
-              </span>
-              <span class="sonic-vbtn-play">▶</span>
-            </button>`;
-        }).join('');
-
-        return `
-          <div class="sonic-cue-card">
-            <div class="sonic-cue-header">
-              <span class="sonic-cue-icon">${cue.icon}</span>
-              <div>
-                <h4 class="sonic-cue-label">${escapeHtml(cue.label)}</h4>
-                <p class="sonic-cue-desc">${escapeHtml(cue.desc)}</p>
-              </div>
-            </div>
-            <div class="sonic-cue-contexts">
-              ${cue.contexts.map(c => `<span class="sonic-ctx-tag">${escapeHtml(c)}</span>`).join('')}
-            </div>
-            <div class="sonic-variants">${variantBtns}</div>
-          </div>`;
-      }).join('');
-
-      const rulesHtml = SONIC_RULES.map(r => `
-        <div class="sonic-rule sonic-rule--${r.mod}">
-          <h5 class="sonic-rule-head">${escapeHtml(r.heading)}</h5>
-          <ul class="sonic-rule-list">
-            ${r.items.map(i => `<li>${escapeHtml(i)}</li>`).join('')}
-          </ul>
-        </div>`).join('');
-
-      body.innerHTML = `
-        <div class="sonic-ui">
-          <div class="sonic-hero">
-            <div class="sonic-hero-visual">
-              <span class="sonic-hero-circles">
-                <span class="sonic-hero-ring r1"></span>
-                <span class="sonic-hero-ring r2"></span>
-                <span class="sonic-hero-ring r3"></span>
-                <span class="sonic-hero-mc"><span class="r"></span><span class="y"></span></span>
-              </span>
-            </div>
-            <div class="sonic-hero-text">
-              <p class="sonic-hero-eyebrow">Mastercard Web SDK</p>
-              <h2 class="sonic-hero-title">Sonic Branding</h2>
-              <p class="sonic-hero-sub">The real Mastercard sonic identity — two cues, three playback types, two backgrounds. Click any variant below to hear and see the authentic sound and animation.</p>
-            </div>
-          </div>
-
-          <section class="sonic-section">
-            <h3 class="sonic-section-title">Sound Cues &amp; Variants</h3>
-            <p class="muted sonic-section-sub">Each button launches the real <code>mc-sonic</code> web component from the Mastercard Sonic Web SDK.</p>
-            <div class="sonic-cue-grid">${cueCards}</div>
-          </section>
-
-          <section class="sonic-section">
-            <h3 class="sonic-section-title">Interactive Demo — KICKS Checkout</h3>
-            <p class="muted sonic-section-sub">The reference implementation. Select Mastercard (4444) as payment method and confirm the order to trigger the real acceptance sound and animation.</p>
-            <div class="sonic-iframe-wrap">
-              <iframe
-                class="sonic-demo-frame"
-                src="/static/sonic-app-web/index.html"
-                title="Sonic Branding KICKS Demo"
-                loading="lazy"
-              ></iframe>
-              <div class="sonic-demo-unavailable" style="display:none" id="sonic-demo-fallback">
-                <span>🎵</span>
-                <p>
-                  Unable to load the embedded KICKS demo.
-                  <a href="/static/sonic-app-web/index.html" target="_blank" rel="noopener">Open in a new tab ↗</a>
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section class="sonic-section">
-            <h3 class="sonic-section-title">Brand Guidelines</h3>
-            <div class="sonic-rules">${rulesHtml}</div>
-          </section>
-        </div>
-      `;
-
-      const demoFrame = body.querySelector('.sonic-demo-frame');
-      const demoFallback = body.querySelector('#sonic-demo-fallback');
-      if (demoFrame && demoFallback) {
-        demoFrame.addEventListener('error', () => {
-          demoFrame.style.display = 'none';
-          demoFallback.style.display = 'flex';
-        });
-      }
-    });
+    body.innerHTML = `<iframe id="sonic-webview-frame" class="sonic-webview-frame" src="/sonicbrand/index.html" title="Sonic Branding"></iframe>`;
+    _attachWebviewRefresh('sonic-webview-frame');
   }
 
   function renderFindACard() {
@@ -7000,6 +5787,57 @@
     triggerBtn && triggerBtn.addEventListener('click', cfgOpen);
     closeBtn && closeBtn.addEventListener('click', cfgClose);
     overlay && overlay.addEventListener('click', cfgClose);
+
+    // ── Global Vima Chat edit modal ──────────────────────────────────────────
+    (function () {
+      const editBtn   = document.getElementById('global-edit-btn');
+      const editModal = document.getElementById('global-edit-modal');
+      const editClose = document.getElementById('global-edit-modal-close');
+      const editIframe = document.getElementById('global-edit-modal-iframe');
+
+      function openGlobalEdit() {
+        if (!editModal || !editIframe) return;
+
+        // Build URL based on what is currently selected in the explorer
+        let url = 'http://localhost:3333/simple';
+        const activeTab = document.querySelector('.top-tab.active')?.dataset?.topTab;
+        if (activeTab === 'usecases' && _currentUcId) {
+          const uc = USE_CASES.find(u => u.id === _currentUcId);
+          if (uc) {
+            url += '?type=usecases&item=' + encodeURIComponent(uc.name);
+            if (uc.directory) url += '&cwd=' + encodeURIComponent(uc.directory);
+          }
+        } else if (activeTab === 'apis' && currentApiId) {
+          const api = APIS.find(a => a.id === currentApiId);
+          if (api) {
+            url += '?type=apis&item=' + encodeURIComponent(api.name);
+            if (api.directory) url += '&cwd=' + encodeURIComponent(api.directory);
+          }
+        }
+
+        editIframe.src = url;
+        editModal.style.display = 'flex';
+        requestAnimationFrame(() => editModal.classList.add('tc-modal-backdrop--open'));
+      }
+
+      function closeGlobalEdit() {
+        if (!editModal) return;
+        editModal.classList.remove('tc-modal-backdrop--open');
+        editModal.addEventListener('transitionend', () => {
+          editModal.style.display = 'none';
+          if (editIframe) editIframe.src = '';
+        }, { once: true });
+      }
+
+      editBtn   && editBtn.addEventListener('click', openGlobalEdit);
+      editClose && editClose.addEventListener('click', closeGlobalEdit);
+      editModal && editModal.addEventListener('click', e => {
+        if (e.target === editModal) closeGlobalEdit();
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && editModal && editModal.style.display !== 'none') closeGlobalEdit();
+      });
+    })();
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && !modal.classList.contains('cfg-hidden')) cfgClose();
     });
@@ -7243,5 +6081,171 @@
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
   }());
+
+  // ===================== Test Chat Use Case =====================
+  // Clean chat interface with a revolving Mastercard globe.
+  // Globe rendering is ported from globe_preview.html as pure vanilla canvas.
+
+  let _testChatAnimRef = null;
+
+  function renderTestChat() {
+    if (_testChatAnimRef) {
+      cancelAnimationFrame(_testChatAnimRef);
+      _testChatAnimRef = null;
+    }
+    const body = $('uc-body');
+    if (!body) return;
+
+    body.innerHTML = `
+      <div class="tc-shell">
+        <div class="tc-btn-group">
+          <button class="tc-edit-btn" id="tc-refresh-btn" title="Refresh">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0">
+              <path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/>
+              <path d="M4 10l-2-2 2-2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Refresh
+          </button>
+          <button class="tc-edit-btn" id="tc-edit-btn" title="Edit">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0">
+              <path d="M14.5 2.5a2.121 2.121 0 0 1 3 3L6 17l-4 1 1-4L14.5 2.5z" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Edit
+          </button>
+        </div>
+        <iframe class="tc-view" id="tc-view" src="/testchat/globe.html" title="Test Chat"></iframe>
+      </div>
+
+      <!-- Edit modal -->
+      <div class="tc-modal-backdrop" id="tc-modal" style="display:none" role="dialog" aria-modal="true" aria-label="Edit">
+        <div class="tc-modal">
+          <div class="tc-modal-header">
+            <span class="tc-modal-title">Edit</span>
+            <button class="tc-modal-close" id="tc-modal-close" title="Close">
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l12 12M16 4L4 16" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+          <iframe class="tc-modal-iframe" id="tc-modal-iframe" src="" title="Edit"></iframe>
+        </div>
+      </div>`;
+
+    document.getElementById('tc-refresh-btn')?.addEventListener('click', () => {
+      const iframe = document.getElementById('tc-view');
+      if (iframe) iframe.src = iframe.src;
+    });
+    document.getElementById('tc-edit-btn')?.addEventListener('click', () => _tcOpenEditModal());
+    document.getElementById('tc-modal-close')?.addEventListener('click', () => _tcCloseEditModal());
+    document.getElementById('tc-modal')?.addEventListener('click', e => {
+      if (e.target === document.getElementById('tc-modal')) _tcCloseEditModal();
+    });
+  }
+
+  function _tcOpenEditModal() {
+    const modal = document.getElementById('tc-modal');
+    const iframe = document.getElementById('tc-modal-iframe');
+    if (!modal || !iframe) return;
+    iframe.src = 'http://localhost:3333/simple';
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => modal.classList.add('tc-modal-backdrop--open'));
+  }
+
+  function _tcCloseEditModal() {
+    const modal = document.getElementById('tc-modal');
+    if (!modal) return;
+    modal.classList.remove('tc-modal-backdrop--open');
+    modal.addEventListener('transitionend', () => {
+      modal.style.display = 'none';
+      const iframe = document.getElementById('tc-modal-iframe');
+      if (iframe) iframe.src = '';
+      renderTestChat();
+    }, { once: true });
+  }
+
+  function _testChatStartGlobe() {
+    const canvas = document.getElementById('tc-globe');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const SIZE = 420, SPEED = 0.003, GLOW = 0.9;
+
+    // Fibonacci lattice sphere points
+    const TOTAL = 80;
+    const pts = [];
+    for (let i = 0; i < TOTAL; i++) {
+      const phi = Math.acos(-1 + (2 * i) / TOTAL);
+      const theta = Math.sqrt(TOTAL * Math.PI) * phi;
+      pts.push({ x: Math.cos(theta) * Math.sin(phi), y: Math.sin(theta) * Math.sin(phi), z: Math.cos(phi) });
+    }
+
+    let rot = 0, lastT = null;
+
+    function frame(ts) {
+      const delta = lastT ? Math.min((ts - lastT) / 16.667, 2) : 1;
+      lastT = ts;
+
+      const R = SIZE * 0.32, cx = SIZE / 2, cy = SIZE / 2;
+      ctx.clearRect(0, 0, SIZE, SIZE);
+
+      // Radial glow
+      const g = ctx.createRadialGradient(cx, cy, R * 0.2, cx, cy, R);
+      g.addColorStop(0,    'rgba(255,140,0,0.18)');
+      g.addColorStop(0.45, 'rgba(255,94,0,0.10)');
+      g.addColorStop(1,    'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(cx, cy, R * 1.35, 0, Math.PI * 2); ctx.fill();
+
+      // Latitude grid lines
+      const ga = 0.18 * GLOW;
+      ctx.lineWidth = 0.8;
+      for (let lat = -80; lat <= 80; lat += 20) {
+        const lr = lat * Math.PI / 180;
+        for (let seg = 0; seg < 360; seg += 4) {
+          const l0 = seg * Math.PI / 180 + rot, l1 = (seg + 4) * Math.PI / 180 + rot;
+          const z0 = Math.cos(lr) * Math.sin(l0), z1 = Math.cos(lr) * Math.sin(l1);
+          const a = ga * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
+          if (a < 0.005) continue;
+          const s0 = 1 / (1.8 - z0), s1 = 1 / (1.8 - z1);
+          ctx.strokeStyle = `rgba(255,120,0,${a})`; ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(lr) * Math.cos(l0) * R * s0, cy + Math.sin(lr) * R * s0);
+          ctx.lineTo(cx + Math.cos(lr) * Math.cos(l1) * R * s1, cy + Math.sin(lr) * R * s1);
+          ctx.stroke();
+        }
+      }
+      // Longitude grid lines
+      for (let lon = 0; lon < 360; lon += 20) {
+        for (let seg = -88; seg < 90; seg += 4) {
+          const la0 = seg * Math.PI / 180, la1 = (seg + 4) * Math.PI / 180;
+          const lr = lon * Math.PI / 180 + rot;
+          const z0 = Math.cos(la0) * Math.sin(lr), z1 = Math.cos(la1) * Math.sin(lr);
+          const a = ga * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
+          if (a < 0.005) continue;
+          const s0 = 1 / (1.8 - z0), s1 = 1 / (1.8 - z1);
+          ctx.strokeStyle = `rgba(255,120,0,${a})`; ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(la0) * Math.cos(lr) * R * s0, cy + Math.sin(la0) * R * s0);
+          ctx.lineTo(cx + Math.cos(la1) * Math.cos(lr) * R * s1, cy + Math.sin(la1) * R * s1);
+          ctx.stroke();
+        }
+      }
+
+      // Dots — back-to-front sorted
+      pts.map(p => {
+        const rx = p.x * Math.cos(rot) - p.z * Math.sin(rot);
+        const rz = p.x * Math.sin(rot) + p.z * Math.cos(rot);
+        const sc = 1 / (1.8 - rz);
+        const op = 0.15 + Math.max(0, Math.min(1, (rz + 0.2) / 0.4)) * 0.85;
+        return { px: cx + rx * R * sc, py: cy + p.y * R * sc, rz, sc, op, v: rz > -0.18 };
+      }).filter(p => p.v).sort((a, b) => a.rz - b.rz).forEach(p => {
+        ctx.save();
+        ctx.shadowColor = 'rgba(255,140,0,0.95)'; ctx.shadowBlur = 8 * p.sc;
+        ctx.fillStyle = `rgba(255,160,40,${p.op})`;
+        ctx.beginPath(); ctx.arc(p.px, p.py, 2.5 * p.sc, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      });
+
+      rot += SPEED * delta;
+      _testChatAnimRef = requestAnimationFrame(frame);
+    }
+
+    _testChatAnimRef = requestAnimationFrame(frame);
+  }
 
 })();
