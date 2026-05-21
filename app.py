@@ -12,7 +12,7 @@ from collections import deque
 
 import requests as _requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template, request, redirect
+from flask import Flask, jsonify, render_template, request, redirect, send_from_directory
 
 load_dotenv()
 
@@ -34,7 +34,7 @@ _api_call_seq = 0
 _api_call_lock = threading.Lock()
 
 # URLs containing these substrings are considered "internal" and are skipped
-_INTERNAL_HOSTS = ("localhost", "127.0.0.1", "0.0.0.0", "::1")
+_INTERNAL_HOSTS = ("localhost", "127.0.0.1", "0.0.0.0", "::1", "cloudflare.com")
 
 _orig_send = _requests.Session.send  # keep reference before patching
 
@@ -554,6 +554,95 @@ def consent_3ds_flow():
 # ----------------------------------------------------------------------------
 # Use cases
 # ----------------------------------------------------------------------------
+
+@app.route("/testchat/<path:filename>")
+def testchat_files(filename: str):
+    """Serve files from the self-contained testchat use-case directory."""
+    directory = os.path.join(os.path.dirname(__file__), "usecases", "testchat")
+    return send_from_directory(directory, filename)
+
+
+@app.route("/sonicbrand/<path:filename>")
+def sonicbrand_files(filename: str):
+    """Serve files from the self-contained sonicbrand use-case directory."""
+    directory = os.path.join(os.path.dirname(__file__), "usecases", "sonicbrand")
+    return send_from_directory(directory, filename)
+
+
+@app.route("/pfm/<path:filename>")
+def pfm_files(filename: str):
+    """Serve files from the self-contained pfm use-case directory."""
+    directory = os.path.join(os.path.dirname(__file__), "usecases", "pfm")
+    return send_from_directory(directory, filename)
+
+
+@app.route("/enrichment/<path:filename>")
+def enrichment_files(filename: str):
+    """Serve files from the self-contained enrichment use-case directory."""
+    directory = os.path.join(os.path.dirname(__file__), "usecases", "enrichment")
+    return send_from_directory(directory, filename)
+
+
+@app.route("/binlookup/<path:filename>")
+def binlookup_files(filename: str):
+    """Serve files from the self-contained binlookup use-case directory."""
+    directory = os.path.join(os.path.dirname(__file__), "usecases", "binlookup")
+    return send_from_directory(directory, filename)
+
+
+@app.route("/clarity/<path:filename>")
+def clarity_files(filename: str):
+    """Serve files from the self-contained clarity use-case directory."""
+    directory = os.path.join(os.path.dirname(__file__), "usecases", "clarity")
+    return send_from_directory(directory, filename)
+
+
+@app.route("/easysavings/<path:filename>")
+def easysavings_files(filename: str):
+    """Serve files from the self-contained easysavings use-case directory."""
+    directory = os.path.join(os.path.dirname(__file__), "usecases", "easysavings")
+    return send_from_directory(directory, filename)
+
+
+@app.route("/identity/<path:filename>")
+def identity_files(filename: str):
+    """Serve files from the self-contained identity use-case directory."""
+    directory = os.path.join(os.path.dirname(__file__), "usecases", "identity")
+    return send_from_directory(directory, filename)
+
+
+@app.route("/catalog")
+def catalog():
+    """Unified catalog of all registered APIs and Use Cases."""
+    apis = api_registry.manifests()
+    use_cases = usecase_registry.manifests()
+    return jsonify({
+        "apis": [
+            {
+                "id": a["id"],
+                "name": a["name"],
+                "configured": a.get("configured", False),
+                "categories": a.get("categories", []),
+                "operations": [op["id"] for op in a.get("operations", [])],
+            }
+            for a in apis
+        ],
+        "use_cases": [
+            {
+                "id": u["id"],
+                "name": u["name"],
+                "apis": u.get("apis", []),
+                "render": u.get("render", ""),
+            }
+            for u in use_cases
+        ],
+        "summary": {
+            "total_apis": len(apis),
+            "configured_apis": sum(1 for a in apis if a.get("configured")),
+            "total_use_cases": len(use_cases),
+        },
+    })
+
 
 @app.route("/usecases")
 def usecases_list():

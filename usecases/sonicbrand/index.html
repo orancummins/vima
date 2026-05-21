@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mastercard Sonic Branding</title>
+  <link rel="stylesheet" href="/sonicbrand/style.css" />
+</head>
+<body>
+
+<div id="sonic-root">
+  <div class="sonic-loading" id="sonic-loading">
+    <div class="sonic-spinner"></div>
+    <p>Loading Mastercard Sonic SDK…</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ------------------------------------------------------------------ */
+  /*  Data                                                               */
+  /* ------------------------------------------------------------------ */
+
+  const SONIC_CUES = [
+    {
+      id: 'checkout',
+      label: 'Checkout',
+      icon: '🛒',
+      desc: 'Played at the moment a Mastercard payment is approved at checkout — online or in-store. This is the primary sonic signature.',
+      contexts: ['Online checkout', 'POS terminal', 'Mobile wallet', 'In-app purchase'],
+    },
+    {
+      id: 'securedby',
+      label: 'Secured by Mastercard',
+      icon: '🔒',
+      desc: 'Played to reassure the cardholder that their transaction or session is protected by Mastercard security (e.g. 3DS, Identity Check).',
+      contexts: ['3DS challenge', 'Identity verification', 'Fraud prevention', 'Passkey confirmation'],
+    },
+  ];
+
+  const SONIC_TYPES = [
+    { type: 'default',        bg: 'black', label: 'Sound + Animation', sublabel: 'Dark background',  icon: '🎵', btnClass: 'sonic-btn-dark'  },
+    { type: 'default',        bg: 'white', label: 'Sound + Animation', sublabel: 'Light background', icon: '🎵', btnClass: 'sonic-btn-light' },
+    { type: 'animation-only', bg: 'black', label: 'Animation Only',    sublabel: 'Dark background',  icon: '✨', btnClass: 'sonic-btn-dark'  },
+    { type: 'animation-only', bg: 'white', label: 'Animation Only',    sublabel: 'Light background', icon: '✨', btnClass: 'sonic-btn-light' },
+    { type: 'sound-only',     bg: null,    label: 'Sound Only',        sublabel: 'No animation',     icon: '🔊', btnClass: 'sonic-btn-sound' },
+  ];
+
+  const SONIC_RULES = [
+    {
+      heading: 'Always use',
+      mod: 'always',
+      items: [
+        'Payment approved / accepted at checkout',
+        'Mastercard Identity Check confirmation',
+        'Successful 3DS authentication',
+        'Any positive Mastercard-branded journey end-state',
+      ],
+    },
+    {
+      heading: 'Use carefully',
+      mod: 'careful',
+      items: [
+        'Partner or merchant apps (written Mastercard approval required)',
+        'Non-payment confirmations (consider Animation Only)',
+        'Ambient / IoT environments where audio may be disruptive',
+      ],
+    },
+    {
+      heading: 'Never use',
+      mod: 'never',
+      items: [
+        'Declined, failed, or error states',
+        'Loading or processing states',
+        'Competitor-branded or co-branded screens without approval',
+        'Modified, remixed, or re-recorded versions',
+      ],
+    },
+  ];
+
+  /* ------------------------------------------------------------------ */
+  /*  Helpers                                                            */
+  /* ------------------------------------------------------------------ */
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  mc-sonic SDK loading                                               */
+  /* ------------------------------------------------------------------ */
+
+  function loadSonicSdk(cb) {
+    if (customElements.get('mc-sonic')) { cb(); return; }
+    if (document.querySelector('script[data-mc-sonic]')) {
+      customElements.whenDefined('mc-sonic').then(cb);
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = 'https://sonicsdk.mastercard.com/assets/js/latest/js/mc-sonic.min.js';
+    s.setAttribute('data-mc-sonic', '1');
+    s.onload = () => customElements.whenDefined('mc-sonic').then(cb);
+    s.onerror = () => showError('Failed to load Mastercard Sonic SDK. Check your network connection and try again.');
+    document.head.appendChild(s);
+  }
+
+  function playWhenReady(el) {
+    customElements.whenDefined('mc-sonic').then(() => setTimeout(() => el.play(), 80));
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Modal                                                              */
+  /* ------------------------------------------------------------------ */
+
+  function sonicLaunch(cue, type, bg) {
+    const modal = document.createElement('div');
+    modal.className = 'sonic-modal-backdrop';
+    modal.innerHTML =
+      '<div class="sonic-modal">' +
+        '<button class="sonic-modal-close" aria-label="Close">✕</button>' +
+        '<div class="sonic-modal-body"></div>' +
+      '</div>';
+    document.body.appendChild(modal);
+
+    const dismiss = () => { if (modal.parentNode) modal.remove(); };
+    modal.querySelector('.sonic-modal-close').addEventListener('click', dismiss);
+    modal.addEventListener('click', e => { if (e.target === modal) dismiss(); });
+    document.addEventListener('keydown', function onKey(e) {
+      if (e.key === 'Escape') { dismiss(); document.removeEventListener('keydown', onKey); }
+    });
+
+    const body = modal.querySelector('.sonic-modal-body');
+
+    if (type === 'sound-only') {
+      modal.querySelector('.sonic-modal').classList.add('sonic-modal--sound');
+      body.innerHTML = '<div class="sonic-modal-playing"><span class="sonic-modal-note">🔊</span><span>Playing Mastercard Sonic…</span></div>';
+      const audio = document.createElement('mc-sonic');
+      audio.setAttribute('type', 'sound-only');
+      audio.setAttribute('sonicCue', cue);
+      audio.style.cssText = 'position:fixed;opacity:0;pointer-events:none;width:1px;height:1px;top:-9999px;';
+      document.body.appendChild(audio);
+      playWhenReady(audio);
+      const done = () => { audio.remove(); dismiss(); };
+      audio.addEventListener('sonicCompletion', done, { once: true });
+      setTimeout(done, 5000);
+      return;
+    }
+
+    modal.querySelector('.sonic-modal').classList.add('sonic-modal--anim');
+    const el = document.createElement('mc-sonic');
+    el.setAttribute('type', type);
+    el.setAttribute('sonicCue', cue);
+    if (bg) el.setAttribute('sonicBackground', bg);
+    el.style.cssText = 'display:block;width:100%;height:100%;';
+    body.appendChild(el);
+    playWhenReady(el);
+    el.addEventListener('sonicCompletion', dismiss, { once: true });
+    setTimeout(dismiss, 3500);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Render                                                             */
+  /* ------------------------------------------------------------------ */
+
+  function showError(msg) {
+    document.getElementById('sonic-root').innerHTML =
+      '<div class="sonic-page"><div class="sonic-error">' + esc(msg) + '</div></div>';
+  }
+
+  function render() {
+    const cueCards = SONIC_CUES.map(cue => {
+      const variantBtns = SONIC_TYPES.map(t => `
+        <button class="sonic-variant-btn ${esc(t.btnClass)}"
+          data-cue="${esc(cue.id)}" data-type="${esc(t.type)}" data-bg="${t.bg ? esc(t.bg) : ''}">
+          <span class="sonic-vbtn-icon">${t.icon}</span>
+          <span class="sonic-vbtn-text">
+            <strong>${esc(t.label)}</strong>
+            <span>${esc(t.sublabel)}</span>
+          </span>
+          <span class="sonic-vbtn-play">▶</span>
+        </button>`).join('');
+
+      return `
+        <div class="sonic-cue-card">
+          <div class="sonic-cue-header">
+            <span class="sonic-cue-icon">${cue.icon}</span>
+            <div>
+              <h4 class="sonic-cue-label">${esc(cue.label)}</h4>
+              <p class="sonic-cue-desc">${esc(cue.desc)}</p>
+            </div>
+          </div>
+          <div class="sonic-cue-contexts">
+            ${cue.contexts.map(c => `<span class="sonic-ctx-tag">${esc(c)}</span>`).join('')}
+          </div>
+          <div class="sonic-variants">${variantBtns}</div>
+        </div>`;
+    }).join('');
+
+    const rulesHtml = SONIC_RULES.map(r => `
+      <div class="sonic-rule sonic-rule--${r.mod}">
+        <h5 class="sonic-rule-head">${esc(r.heading)}</h5>
+        <ul class="sonic-rule-list">
+          ${r.items.map(i => `<li>${esc(i)}</li>`).join('')}
+        </ul>
+      </div>`).join('');
+
+    document.getElementById('sonic-root').innerHTML = `
+      <div class="sonic-page">
+
+        <div class="sonic-hero">
+          <div class="sonic-hero-visual">
+            <span class="sonic-hero-circles">
+              <span class="sonic-hero-ring r1"></span>
+              <span class="sonic-hero-ring r2"></span>
+              <span class="sonic-hero-ring r3"></span>
+              <span class="sonic-hero-mc"><span class="r"></span><span class="y"></span></span>
+            </span>
+          </div>
+          <div class="sonic-hero-text">
+            <p class="sonic-hero-eyebrow">Mastercard Web SDK</p>
+            <h2 class="sonic-hero-title">Sonic Branding</h2>
+            <p class="sonic-hero-sub">The real Mastercard sonic identity — two cues, three playback types, two backgrounds. Click any variant below to hear and see the authentic sound and animation.</p>
+          </div>
+        </div>
+
+        <section class="sonic-section">
+          <h3 class="sonic-section-title">Sound Cues &amp; Variants</h3>
+          <p class="sonic-section-sub">Each button launches the real <code>mc-sonic</code> web component from the Mastercard Sonic Web SDK.</p>
+          <div class="sonic-cue-grid">${cueCards}</div>
+        </section>
+
+        <section class="sonic-section">
+          <h3 class="sonic-section-title">Interactive Demo — KICKS Checkout</h3>
+          <p class="sonic-section-sub">The reference implementation. Select Mastercard (4444) as payment method and confirm the order to trigger the real acceptance sound and animation.</p>
+          <div class="sonic-iframe-wrap">
+            <iframe
+              class="sonic-demo-frame"
+              src="/sonicbrand/kicks/index.html"
+              title="Sonic Branding KICKS Demo"
+              loading="lazy"
+            ></iframe>
+            <div class="sonic-demo-unavailable" id="sonic-demo-fallback" style="display:none">
+              <span>🎵</span>
+              <p>
+                Unable to load the embedded KICKS demo.
+                <a href="/sonicbrand/kicks/index.html" target="_blank" rel="noopener">Open in a new tab ↗</a>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="sonic-section">
+          <h3 class="sonic-section-title">Brand Guidelines</h3>
+          <div class="sonic-rules">${rulesHtml}</div>
+        </section>
+
+      </div>`;
+
+    /* Wire variant buttons (event delegation avoids inline onclick) */
+    document.getElementById('sonic-root').addEventListener('click', e => {
+      const btn = e.target.closest('.sonic-variant-btn');
+      if (!btn) return;
+      sonicLaunch(btn.dataset.cue, btn.dataset.type, btn.dataset.bg || null);
+    });
+
+    /* KICKS iframe fallback */
+    const demoFrame = document.querySelector('.sonic-demo-frame');
+    const demoFallback = document.getElementById('sonic-demo-fallback');
+    if (demoFrame && demoFallback) {
+      demoFrame.addEventListener('error', () => {
+        demoFrame.style.display = 'none';
+        demoFallback.style.display = 'flex';
+      });
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Boot                                                               */
+  /* ------------------------------------------------------------------ */
+
+  loadSonicSdk(render);
+
+})();
+</script>
+
+</body>
+</html>

@@ -239,6 +239,4 @@ def _shape(item: Dict[str, Any]) -> Dict[str, Any]:
         "dccEnabled":        dcc_indicator == "D",
         "isToken":           payment_acct_type == "T",
         "ica":               ica,
-        # Raw API response
-        "raw": item,
     }
