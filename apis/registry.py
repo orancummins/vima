@@ -8,6 +8,7 @@ Each API module must expose:
 """
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, List
 
 from .ofin import api as ofin_api
@@ -49,6 +50,7 @@ def manifests() -> List[Dict[str, Any]]:
         mod = REGISTRY[key]
         m = dict(mod.MANIFEST)
         m["configured"] = bool(getattr(mod, "is_configured", lambda: True)())
+        m["directory"] = os.path.dirname(os.path.abspath(mod.__file__))
         out.append(m)
     return out
 

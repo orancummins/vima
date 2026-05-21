@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Personal Finance Manager — vima</title>
+  <link rel="stylesheet" href="/pfm/style.css">
+</head>
+<body>
+  <!-- Description text — pfmRender() reads this, then clears it -->
+  <p id="uc-desc" style="display:none">Transform raw transaction data into a rich,
+    real-time money management experience. By connecting a customer's accounts through
+    the Open Finance API, this use case delivers live balances, intelligent spend
+    categorisation across dozens of merchant types, and a full scrollable transaction
+    history — the complete building blocks of a world-class personal finance app,
+    powered by a single Mastercard integration.</p>
+
+  <!-- pfmRender() fills this container -->
+  <div id="uc-body"></div>
+
+<script>
+// ─── Minimal helpers ──────────────────────────────────────────────────────────
+function $(id) { return document.getElementById(id); }
+
+function escapeHtml(s) {
+  if (s == null) return "";
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// ─── PFM colour palette ───────────────────────────────────────────────────────
+const PFM_CATEGORY_COLORS = {
+  "Food and Drink": "#f97316", "Restaurants": "#f97316", "Groceries": "#f59e0b",
+  "Shopping": "#ec4899", "Travel": "#3b82f6", "Transportation": "#0ea5e9",
+  "Bills & Utilities": "#8b5cf6", "Service": "#8b5cf6", "Health & Fitness": "#10b981",
+  "Entertainment": "#f43f5e", "Income": "#0f7050", "Transfer": "#64748b",
+  "Cash & ATM": "#475569", "Education": "#06b6d4", "Personal Care": "#d946ef",
+  "Home": "#14b8a6", "Other": "#94a3b8", "Deposit": "#0f7050",
+};
+function pfmColor(cat) { return PFM_CATEGORY_COLORS[cat] || "#94a3b8"; }
+
+// ─── Inline SVG icons (lucide-style) ─────────────────────────────────────────
+const ICON = {
+  user:   `<svg class="pfm-i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>`,
+  bell:   `<svg class="pfm-i" viewBox="0 0 24 24"><path d="M6 9a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>`,
+  lock:   `<svg class="pfm-i" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>`,
+  bank:   `<svg class="pfm-i" viewBox="0 0 24 24"><path d="M3 10 12 4l9 6"/><path d="M5 10v9M9 10v9M15 10v9M19 10v9"/><path d="M3 21h18"/></svg>`,
+  download:`<svg class="pfm-i" viewBox="0 0 24 24"><path d="M12 4v12"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg>`,
+  info:   `<svg class="pfm-i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="8" r="0.5" fill="currentColor"/></svg>`,
+  home:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10"/></svg>`,
+  cards:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>`,
+  chart:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>`,
+  gear:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`,
+  arrowUp:  `<svg class="pfm-i" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>`,
+  arrowDown:`<svg class="pfm-i" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m5 12 7 7 7-7"/></svg>`,
+  plus:   `<svg class="pfm-i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>`,
+  more:   `<svg class="pfm-i" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="18" cy="12" r="1" fill="currentColor"/></svg>`,
+  search: `<svg class="pfm-i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>`,
+  chev:   `<svg class="pfm-i pfm-i-sm" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>`,
+  chevLeft:`<svg class="pfm-i" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg>`,
+  link:   `<svg class="pfm-i" viewBox="0 0 24 24"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>`,
+  sparkles:`<svg class="pfm-i" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.5 5.5l2.8 2.8M15.7 15.7l2.8 2.8M5.5 18.5l2.8-2.8M15.7 8.3l2.8-2.8"/></svg>`,
+  // Account-type icons
+  acctChecking: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/></svg>`,
+  acctSavings:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7c0-2-3-3-7-3S5 5 5 7v10c0 2 3 3 7 3s7-1 7-3z"/><path d="M5 12c0 2 3 3 7 3s7-1 7-3"/></svg>`,
+  acctCard:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M7 15h3"/></svg>`,
+  acctLoan:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17H3v-5l2-4h11l4 5v4h-2"/><path d="M9 17h6"/></svg>`,
+  acctMortgage: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>`,
+  acctInvest:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>`,
+  acctOther:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+  // Category icons
+  catFood:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18l-1 9H4z"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+  catRest:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M5 3h4v6a2 2 0 0 1-4 0z"/><path d="M17 3v9a3 3 0 0 1-3 3v6"/></svg>`,
+  catGroc:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h2l2 12h12l2-8H6"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>`,
+  catShop:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l-1 13H7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>`,
+  catTravel:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16 21 8l-3 12-5-3-5 5z"/></svg>`,
+  catTrans:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M3 13h18v-3l-2-4H5l-2 4z"/></svg>`,
+  catBills:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>`,
+  catHealth:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12c0 5-8 9-8 9s-8-4-8-9a5 5 0 0 1 8-4 5 5 0 0 1 8 4z"/></svg>`,
+  catEnt:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M10 11l5 3-5 3z" fill="currentColor"/></svg>`,
+  catIncome:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m5 12 7 7 7-7"/></svg>`,
+  catTransfer:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h13M16 3l4 4-4 4"/><path d="M17 17H4M8 13l-4 4 4 4"/></svg>`,
+  catCash:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>`,
+  catEdu:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>`,
+  catCare:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M8 14h8l-1 7H9z"/></svg>`,
+  catHome:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10"/></svg>`,
+  catOther:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>`,
+};
+
+function pfmCatIcon(cat) {
+  const map = {
+    "Food and Drink": ICON.catFood, "Restaurants": ICON.catRest, "Groceries": ICON.catGroc,
+    "Shopping": ICON.catShop, "Travel": ICON.catTravel, "Transportation": ICON.catTrans,
+    "Bills & Utilities": ICON.catBills, "Service": ICON.catBills, "Health & Fitness": ICON.catHealth,
+    "Entertainment": ICON.catEnt, "Income": ICON.catIncome, "Transfer": ICON.catTransfer,
+    "Cash & ATM": ICON.catCash, "Education": ICON.catEdu, "Personal Care": ICON.catCare,
+    "Home": ICON.catHome, "Deposit": ICON.catIncome,
+  };
+  return map[cat] || ICON.catOther;
+}
+function pfmAcctIcon(type) {
+  const map = {
+    checking: ICON.acctChecking, savings: ICON.acctSavings, creditCard: ICON.acctCard,
+    loan: ICON.acctLoan, mortgage: ICON.acctMortgage, investment: ICON.acctInvest,
+  };
+  return map[type] || ICON.acctOther;
+}
+
+const ACCT_ICON = {
+  checking: true, savings: true, creditCard: true,
+  loan: true, mortgage: true, investment: true,
+};
+
+// ─── Formatters ───────────────────────────────────────────────────────────────
+function fmtMoney(n) {
+  const sign = n < 0 ? "-" : "";
+  const v = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `${sign}$${v}`;
+}
+function fmtMoneyShort(n) {
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "-" : "";
+  if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(1)}k`;
+  return `${sign}$${abs.toFixed(0)}`;
+}
+function fmtDate(ts) {
+  if (!ts) return "";
+  const d = new Date(ts * 1000);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+// ─── PFM state ────────────────────────────────────────────────────────────────
+const PFM_DEFAULT_CID = "9013023139";
+
+const PFM = {
+  cid: "",
+  data: null,
+  tab: "home",
+  txnQuery: "",
+  selectedAcct: null,
+  clockTimer: null,
+};
+
+// ─── Entry point ──────────────────────────────────────────────────────────────
+function pfmRender(initialCustomerId) {
+  const body = $("uc-body");
+  const descEl = $("uc-desc");
+  const descText = descEl ? descEl.textContent.trim() : "";
+  if (descEl) descEl.textContent = "";
+  body.innerHTML = `
+    <div class="pfm-stage">
+      <div class="pfm-info">
+        <div>
+          <h1 style="font-size: 22px; font-weight: 700; margin: 0 0 10px; color: #18181b; letter-spacing: -0.02em;">Personal Finance Manager</h1>
+          <p class="pfm-info-desc">${escapeHtml(descText)}</p>
+        </div>
+        <div class="pfm-controlbar">
+          <div>
+            <div class="label">Customer ID</div>
+            <input id="pfm-cid" placeholder="e.g. 9013023139" value="${escapeHtml(initialCustomerId || "")}" />
+          </div>
+          <button class="btn btn-primary" id="pfm-load">Load Customer Data</button>
+          <div style="position: relative; margin: 8px 0;">
+            <div style="position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line);"></div>
+            <div style="position: relative; text-align: center;">
+              <span style="background: white; padding: 0 12px; font-size: 12px; color: var(--muted); font-weight: 500;">OR</span>
+            </div>
+          </div>
+          <button class="btn" id="pfm-connect-btn">Connect New Bank Account</button>
+          <a
+            href="https://developer.mastercard.com/open-finance-us/documentation/integration-and-testing/test-the-apis/#test-personas"
+            target="_blank"
+            rel="noopener"
+            style="font-size:12px;color:#71717a;text-decoration:none;text-align:center;margin-top:4px;display:block;font-weight:500;"
+            title="Mastercard Developers Test Personas"
+          >
+            View Test Personas &#8599;
+          </a>
+        </div>
+      </div>
+
+      <div class="pfm-phone-wrap">
+      <div class="iphone">
+        <div class="iphone-screen">
+          <div class="iphone-notch" id="pfm-island">
+            <div class="pill-content">
+              <span class="pill-dot"></span>
+              <span id="pfm-island-text">Open Finance &middot; Live</span>
+            </div>
+          </div>
+          <div class="iphone-status">
+            <span id="pfm-clock">9:41</span>
+            <span class="right">
+              <svg viewBox="0 0 18 12" width="17" height="12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5"/></svg>
+              <svg viewBox="0 0 18 12" width="17" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 5a11 11 0 0 1 16 0"/><path d="M4 8a7 7 0 0 1 10 0"/><circle cx="9" cy="10.5" r="1" fill="currentColor" stroke="none"/></svg>
+              <span class="battery"><span></span></span>
+            </span>
+          </div>
+          <div class="pfm-app" id="pfm-app"></div>
+          <div class="pfm-tabbar" id="pfm-tabbar">
+            <button data-tab="home">${ICON.home}<span>Home</span></button>
+            <button data-tab="accounts">${ICON.cards}<span>Accounts</span></button>
+            <button data-tab="insights">${ICON.chart}<span>Insights</span></button>
+            <button data-tab="settings">${ICON.gear}<span>Settings</span></button>
+          </div>
+          <div class="pfm-sheet-backdrop" id="pfm-sheet-backdrop"></div>
+          <div class="pfm-sheet" id="pfm-sheet"></div>
+          <div class="iphone-home-indicator"></div>
+        </div>
+      </div>
+      </div>
+    </div>
+  `;
+  $("pfm-load").addEventListener("click", () => pfmLoad($("pfm-cid").value.trim()));
+  $("pfm-cid").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") pfmLoad($("pfm-cid").value.trim());
+  });
+  $("pfm-connect-btn").addEventListener("click", () => pfmStartConnect());
+
+  $("pfm-tabbar").querySelectorAll("button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      PFM.tab = btn.dataset.tab;
+      PFM.selectedAcct = null;
+      pfmDrawTabs();
+      pfmDrawScreen();
+    });
+  });
+  $("pfm-sheet-backdrop").addEventListener("click", pfmCloseSheet);
+
+  pfmStartClock();
+  pfmDrawTabs();
+  if (initialCustomerId) pfmLoad(initialCustomerId);
+  else pfmShowConnect("Enter a Customer ID above and tap Load.");
+}
+
+function pfmStartClock() {
+  if (PFM.clockTimer) clearInterval(PFM.clockTimer);
+  const tick = () => {
+    const el = document.getElementById("pfm-clock");
+    if (!el) { clearInterval(PFM.clockTimer); return; }
+    const d = new Date();
+    let h = d.getHours(), m = d.getMinutes();
+    el.textContent = `${h}:${String(m).padStart(2, "0")}`;
+  };
+  tick();
+  PFM.clockTimer = setInterval(tick, 15000);
+}
+
+function pfmDrawTabs() {
+  const bar = document.getElementById("pfm-tabbar");
+  if (!bar) return;
+  bar.querySelectorAll("button").forEach((b) => {
+    b.classList.toggle("active", b.dataset.tab === PFM.tab);
+  });
+}
+
+function pfmIslandFlash(text) {
+  const el = document.getElementById("pfm-island");
+  const tx = document.getElementById("pfm-island-text");
+  if (!el || !tx) return;
+  tx.textContent = text;
+  el.classList.add("expanded");
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove("expanded"), 2200);
+}
+
+function pfmShowConnect(msg) {
+  const app = document.getElementById("pfm-app");
+  if (!app) return;
+  app.innerHTML = `
+    <div class="pfm-connect">
+      <div class="ic-wrap">${ICON.link}</div>
+      <h3>Connect a bank</h3>
+      <p>${escapeHtml(msg || "Link a customer's bank accounts via Open Finance to see balances, spending, and transactions here.")}</p>
+      <p style="margin-top:6px;font-size:12px;color:#6b7280;line-height:1.5">
+        For test details on connecting a new bank, use Mastercard Developers Test Personas:
+        <a href="https://developer.mastercard.com/open-finance-us/documentation/integration-and-testing/test-the-apis/#test-personas" target="_blank" rel="noopener">Test Personas &#8599;</a>
+      </p>
+      <button class="btn btn-primary" id="pfm-inapp-connect">Connect new bank</button>
+    </div>
+  `;
+  const b = document.getElementById("pfm-inapp-connect");
+  if (b) b.addEventListener("click", () => pfmStartConnect());
+}
+
+function pfmLoad(cid) {
+  if (!cid) { pfmShowConnect("Enter a Customer ID."); return; }
+  PFM.cid = cid;
+  const app = document.getElementById("pfm-app");
+  if (app) app.innerHTML = `<div class="pfm-connect"><div class="ic-wrap">${ICON.sparkles}</div><p>Loading accounts and transactions&hellip;</p></div>`;
+  pfmIslandFlash("Loading\u2026");
+  fetch(`/usecases/pfm/data?customer_id=${encodeURIComponent(cid)}`)
+    .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+    .then(({ ok, d }) => {
+      if (!ok || d.error) { pfmShowConnect(d.error || "Could not load data."); return; }
+      PFM.data = d;
+      PFM.data.recurring = null;
+      PFM.tab = "home";
+      PFM.selectedAcct = null;
+      pfmIslandFlash(`Loaded \u00b7 ${d.accounts.length} accounts`);
+      pfmDrawTabs();
+      pfmDrawScreen();
+      pfmLazyLoad(cid, d.transactions || []);
+    })
+    .catch((e) => pfmShowConnect("Network error: " + e.message));
+}
+
+function pfmShowConnectLoading(msg) {
+  const app = document.getElementById("pfm-app");
+  if (!app) return;
+  app.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;padding:24px">
+    <div class="spinner" style="width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:pfm-spin 0.8s linear infinite"></div>
+    <p style="font-size:13px;color:#6b7280;text-align:center;margin:0">${escapeHtml(msg)}</p>
+  </div>`;
+}
+
+function pfmLoadWithRetry(cid, maxTries, _refreshed) {
+  if (!cid) { pfmShowConnect("No customer — please try again."); return; }
+  fetch(`/usecases/pfm/data?customer_id=${encodeURIComponent(cid)}`)
+    .then(r => r.json())
+    .then(d => {
+      if (d.error) { pfmShowConnect("Error loading accounts: " + d.error); return; }
+      const accs = d.accounts || [];
+      const txns = d.transactions || [];
+      if (accs.length === 0 && maxTries > 1) {
+        pfmShowConnectLoading("Waiting for accounts\u2026 (" + maxTries + " retries left)");
+        setTimeout(() => pfmLoadWithRetry(cid, maxTries - 1, _refreshed), 3000);
+        return;
+      }
+      if (accs.length > 0 && txns.length === 0 && !_refreshed && maxTries > 1) {
+        pfmShowConnectLoading("Refreshing account data\u2026");
+        fetch("/usecases/pfm/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "refresh_accounts", params: { customer_id: cid } }),
+        }).finally(() => {
+          setTimeout(() => pfmLoadWithRetry(cid, maxTries - 1, true), 4000);
+        });
+        return;
+      }
+      PFM.cid = cid;
+      PFM.data = d;
+      PFM.data.recurring = null;
+      PFM.tab = "home";
+      PFM.selectedAcct = null;
+      pfmIslandFlash(`Loaded \u00b7 ${accs.length} accounts \u00b7 ${txns.length} transactions`);
+      pfmDrawTabs();
+      pfmDrawScreen();
+      pfmLazyLoad(cid, txns);
+    })
+    .catch(() => {
+      if (maxTries > 1) setTimeout(() => pfmLoadWithRetry(cid, maxTries - 1, _refreshed), 3000);
+      else pfmShowConnect("Could not load accounts — please try again.");
+    });
+}
+
+function pfmLazyLoad(cid, txns) {
+  if (!cid || !PFM.data) return;
+  PFM.data.recurring = null;
+
+  const payload = (txns || []).slice(0, 50)
+    .map(t => ({ id: String(t.id), description: t.description || "", amount: t.amount, date: t.date, account_id: t.account_id || "" }))
+    .filter(t => t.description);
+  if (payload.length) {
+    fetch("/usecases/pfm/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "enrich_transactions", params: { transactions: payload } }),
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (!d.enriched || !PFM.data) return;
+      let changed = false;
+      PFM.data.transactions.forEach(t => {
+        const e = d.enriched[String(t.id)];
+        if (!e) return;
+        if (e.name) { t.enrichedName = e.name; changed = true; }
+        if (e.logoUrl) t.logoUrl = e.logoUrl;
+        if (e.isRecurring) t.isRecurring = true;
+        if (e.category) t.enrichedCategory = e.category;
+      });
+      if (changed) pfmDrawScreen();
+    })
+    .catch(() => {});
+  }
+
+  fetch("/usecases/pfm/action", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "get_recurring", params: { customer_id: cid } }),
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (!PFM.data) return;
+    PFM.data.recurring = d.streams || [];
+    pfmDrawScreen();
+  })
+  .catch(() => {
+    if (PFM.data) { PFM.data.recurring = []; pfmDrawScreen(); }
+  });
+}
+
+function pfmStartConnect() {
+  const app = document.getElementById("pfm-app");
+  if (!app) return;
+  const cidInput = $("pfm-cid");
+
+  pfmShowConnectWaiting("Preparing Connect\u2026", null);
+  pfmIslandFlash("Open Finance \u00b7 Connect");
+
+  const ensureCustomer = fetch("/usecases/pfm/action", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "create_customer", params: {} }),
+  }).then((r) => r.json());
+
+  ensureCustomer
+    .then((res) => {
+      if (!res || res.error || !res.customer_id) {
+        throw new Error(res && res.error ? res.error : "Could not create customer");
+      }
+      PFM.cid = String(res.customer_id);
+      if (cidInput) cidInput.value = PFM.cid;
+      return fetch("/usecases/pfm/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "connect_url", params: { customer_id: PFM.cid } }),
+      }).then((r) => r.json());
+    })
+    .then((res) => {
+      if (!res || res.error || !res.connect_url) {
+        throw new Error(res && res.error ? res.error : "Could not generate Connect URL");
+      }
+      PFM._connectUrl = res.connect_url;
+      pfmOpenConnectPopup(res.connect_url);
+      pfmShowConnectWaiting(`Customer ${PFM.cid}`, res.connect_url);
+      pfmPollForAccounts(PFM.cid);
+    })
+    .catch((e) => pfmShowConnect("Connect error: " + e.message));
+}
+
+function pfmOpenConnectPopup(url) {
+  try {
+    const w = 480, h = 760;
+    const left = Math.max(0, window.screenX + (window.outerWidth - w) / 2);
+    const top = Math.max(0, window.screenY + (window.outerHeight - h) / 2);
+    const features = [
+      "popup=yes", `width=${w}`, `height=${h}`, `left=${left}`, `top=${top}`,
+      "resizable=yes", "scrollbars=yes", "menubar=no", "toolbar=no",
+      "location=no", "status=no", "noopener=no",
+    ].join(",");
+    const win = window.open(url, "vima-connect", features);
+    if (!win) return null;
+    try { win.focus(); } catch (_) {}
+    PFM._connectWin = win;
+    const watchClose = setInterval(() => {
+      try {
+        if (win.closed) {
+          clearInterval(watchClose);
+          PFM._pollStop = true;
+          pfmShowConnectLoading("Linking accounts\u2026");
+          setTimeout(() => pfmLoadWithRetry(PFM.cid, 8), 3000);
+        }
+      } catch (_) { clearInterval(watchClose); }
+    }, 800);
+    PFM._connectWatcher = watchClose;
+    return win;
+  } catch (_) { return null; }
+}
+
+function pfmShowConnectWaiting(title, url) {
+  const app = document.getElementById("pfm-app");
+  if (!app) return;
+  const hasUrl = !!url;
+  app.innerHTML = `
+    <div class="pfm-connect-frame">
+      <div class="topbar">
+        <button id="pfm-connect-cancel">${ICON.chevLeft} Cancel</button>
+        <h4>${escapeHtml(title)}</h4>
+        <span style="width:60px"></span>
+      </div>
+      <div class="loading">
+        <div class="spinner"></div>
+        <div style="text-align:center;max-width:220px;line-height:1.6;font-size:13px;color:#6a6a6a">
+          ${hasUrl
+            ? `Select your bank in the popup window, then come back here.`
+            : escapeHtml(title)}
+        </div>
+        ${hasUrl ? `
+          <button class="btn btn-primary" id="pfm-connect-done" style="margin-top:16px">Done &mdash; load my accounts</button>
+          <button class="btn" id="pfm-connect-reopen" style="margin-top:6px">Re-open Connect window</button>
+        ` : ""}
+      </div>
+    </div>
+  `;
+  const stopConnect = () => {
+    PFM._pollStop = true;
+    try { clearInterval(PFM._connectWatcher); } catch (_) {}
+    try { if (PFM._connectWin && !PFM._connectWin.closed) PFM._connectWin.close(); } catch (_) {}
+  };
+  const cancel = document.getElementById("pfm-connect-cancel");
+  if (cancel) cancel.addEventListener("click", () => {
+    stopConnect();
+    if (PFM.cid && PFM.data) pfmDrawScreen();
+    else if (PFM.cid) pfmLoad(PFM.cid);
+    else pfmShowConnect("Connect cancelled.");
+  });
+  const done = document.getElementById("pfm-connect-done");
+  if (done) done.addEventListener("click", () => {
+    stopConnect();
+    if (PFM.cid) pfmLoadWithRetry(PFM.cid, 8);
+    else pfmShowConnect("No customer — please try again.");
+  });
+  const reopen = document.getElementById("pfm-connect-reopen");
+  if (reopen) reopen.addEventListener("click", () => {
+    if (PFM._connectUrl) pfmOpenConnectPopup(PFM._connectUrl);
+  });
+}
+
+function pfmPollForAccounts(cid) {
+  PFM._pollStop = false;
+  const started = Date.now();
+  const tick = () => {
+    if (PFM._pollStop) return;
+    if (Date.now() - started > 5 * 60 * 1000) return;
+    fetch(`/usecases/pfm/data?customer_id=${encodeURIComponent(cid)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (PFM._pollStop) return;
+        if (d && Array.isArray(d.accounts) && d.accounts.length > 0) {
+          PFM.data = d;
+          PFM.tab = "home";
+          PFM.selectedAcct = null;
+          pfmIslandFlash(`Linked \u00b7 ${d.accounts.length} accounts`);
+          pfmDrawTabs();
+          pfmDrawScreen();
+          return;
+        }
+        setTimeout(tick, 4000);
+      })
+      .catch(() => setTimeout(tick, 6000));
+  };
+  setTimeout(tick, 4000);
+}
+
+function pfmDrawScreen() {
+  const app = document.getElementById("pfm-app");
+  if (!app || !PFM.data) return;
+  let html = "";
+  if (PFM.tab === "home") html = pfmScreenHome();
+  else if (PFM.tab === "accounts") html = PFM.selectedAcct ? pfmScreenAcctDetail() : pfmScreenAccounts();
+  else if (PFM.tab === "insights") html = pfmScreenInsights();
+  else if (PFM.tab === "settings") html = pfmScreenSettings();
+  app.innerHTML = `<div class="pfm-screen">${html}</div>`;
+  app.scrollTop = 0;
+  pfmWireScreen();
+}
+
+// ─── Home screen ──────────────────────────────────────────────────────────────
+function pfmScreenHome() {
+  const d = PFM.data, s = d.summary || {};
+  const accounts = d.accounts || [];
+  const txns = d.transactions || [];
+  const cats = d.categories || [];
+  const heroBalance = s.assets || 0;
+  const net = s.monthly_income - s.monthly_spend;
+
+  const spark = pfmSparkline(txns, 7);
+  const acctList = accounts.slice(0, 4).map(pfmAcctRow).join("") || pfmEmptyLine("No accounts linked.");
+  const stackBar = pfmStackBar(cats);
+  const stackLegend = cats.slice(0, 5).map(pfmLegendRow).join("") || pfmEmptyLine("No spending this month.");
+  const txnList = pfmGroupedTxns(txns.slice(0, 12));
+
+  const recurring = d.recurring;
+  const subs = recurring ? recurring.filter(s => s.type === "DEBIT") : null;
+  const incStreams = recurring ? recurring.filter(s => s.type === "CREDIT") : null;
+  let subsSection = "";
+  if (recurring === null) {
+    subsSection = `
+      <div class="pfm-section-title"><h4>Subscriptions</h4><span class="pfm-enriching-label">loading&hellip;</span></div>
+      <div class="pfm-sub-skeleton"></div>`;
+  } else if (subs.length) {
+    subsSection = `
+      <div class="pfm-section-title"><h4>Subscriptions</h4><span style="font-size:11px;color:#9a9a9a;font-weight:600">${subs.length}</span></div>
+      <div class="pfm-sub-scroll">${subs.slice(0, 8).map(pfmSubCard).join("")}</div>`;
+  }
+  let incSection = "";
+  if (incStreams && incStreams.length) {
+    incSection = `
+      <div class="pfm-section-title"><h4>Regular Income</h4><span style="font-size:11px;color:#9a9a9a;font-weight:600">${incStreams.length}</span></div>
+      <div class="pfm-sub-scroll">${incStreams.slice(0, 4).map(pfmSubCard).join("")}</div>`;
+  }
+
+  return `
+    <div class="pfm-greet">
+      <div>
+        <div class="hello">${pfmGreeting()}</div>
+        <h3>Welcome back</h3>
+      </div>
+      <div class="pfm-avatar" title="Profile">V</div>
+    </div>
+    <div class="pfm-hero" data-action="cycle-hero">
+      <div class="label">Total Balance</div>
+      <div class="amount">${fmtMoney(heroBalance)}</div>
+      <div class="trend ${net >= 0 ? "pos" : "neg"}">
+        ${net >= 0 ? ICON.arrowUp : ICON.arrowDown}
+        ${fmtMoney(Math.abs(net))} this month
+      </div>
+      <div class="spark">${spark}</div>
+    </div>
+    <div class="pfm-quick">
+      <button data-quick="send"><span class="ic">${ICON.arrowUp}</span>Send</button>
+      <button data-quick="request"><span class="ic">${ICON.arrowDown}</span>Request</button>
+      <button data-quick="pay"><span class="ic">${ICON.plus}</span>Pay</button>
+      <button data-quick="more"><span class="ic">${ICON.more}</span>More</button>
+    </div>
+    <div class="pfm-section-title"><h4>Accounts</h4>
+      <button class="link" data-goto="accounts">${accounts.length} linked ${ICON.chev}</button></div>
+    <div class="pfm-card">${acctList}</div>
+
+    <div class="pfm-section-title"><h4>This Month</h4>
+      <button class="link" data-goto="insights">Insights ${ICON.chev}</button></div>
+    <div class="pfm-card" style="padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+        <span style="font-size:12px;color:#6a6a6a;font-weight:500">Spent</span>
+        <span style="font-size:20px;font-weight:700;letter-spacing:-0.3px;font-feature-settings:tnum">${fmtMoney(s.monthly_spend)}</span>
+      </div>
+      ${stackBar}
+      <div class="pfm-legend">${stackLegend}</div>
+    </div>
+
+    ${subsSection}
+    ${incSection}
+
+    <div class="pfm-section-title"><h4>Recent</h4>
+      <button class="link" data-goto="accounts">All ${ICON.chev}</button></div>
+    ${txnList}
+  `;
+}
+
+function pfmSubCard(s) {
+  const freq = { WEEKLY: "/ wk", BIWEEKLY: "/ 2 wk", MONTHLY: "/ mo", QUARTERLY: "/ qtr", ANNUAL: "/ yr" };
+  const label = freq[s.frequency] || ("/ " + (s.frequency || "?").toLowerCase());
+  const color = pfmColor(s.category);
+  const initials = (s.merchantName || "?").slice(0, 2).toUpperCase();
+  const isIncome = s.type === "CREDIT";
+  return `
+    <div class="pfm-sub-card">
+      <div class="pfm-sub-avatar" style="background:${color}1a;color:${color}">${initials}</div>
+      <div class="pfm-sub-name">${escapeHtml(s.merchantName)}</div>
+      <div class="pfm-sub-freq">${escapeHtml(label)}</div>
+      <div class="pfm-sub-amt ${isIncome ? "pos" : ""}">${isIncome ? "+" : ""}${fmtMoney(Math.abs(s.amount))}</div>
+    </div>
+  `;
+}
+
+function pfmGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+function pfmSparkline(txns, days) {
+  const now = Date.now() / 1000;
+  const dayMs = 24 * 3600;
+  const buckets = new Array(days).fill(0);
+  txns.forEach((t) => {
+    if (!t.date || t.amount >= 0) return;
+    const age = (now - t.date) / dayMs;
+    const idx = days - 1 - Math.floor(age);
+    if (idx >= 0 && idx < days) buckets[idx] += Math.abs(t.amount);
+  });
+  const max = Math.max(...buckets, 1);
+  const W = 280, H = 44, padX = 4;
+  const stepX = (W - padX * 2) / (days - 1 || 1);
+  const points = buckets.map((v, i) => `${padX + i * stepX},${H - 4 - (v / max) * (H - 12)}`).join(" ");
+  const area = `M${padX},${H} L${points.replace(/ /g, " L")} L${W - padX},${H} Z`;
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:100%">
+    <defs><linearGradient id="pfm-spark-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#635bff" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#635bff" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="${area}" fill="url(#pfm-spark-grad)"/>
+    <polyline points="${points}" fill="none" stroke="#635bff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function pfmStackBar(cats) {
+  if (!cats.length) return `<div class="pfm-stack"></div>`;
+  const segs = cats.slice(0, 8).map((c) =>
+    `<span style="width:${Math.max(c.pct, 1)}%;background:${pfmColor(c.category)}"></span>`
+  ).join("");
+  return `<div class="pfm-stack">${segs}</div>`;
+}
+
+function pfmLegendRow(c) {
+  return `
+    <div class="pfm-legend-row">
+      <div class="l">
+        <span class="cat-dot" style="background:${pfmColor(c.category)}"></span>
+        <span class="name">${escapeHtml(c.category)}</span>
+      </div>
+      <div class="r">
+        <span class="pct">${c.pct}%</span>
+        <span class="amt">${fmtMoney(c.amount)}</span>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Accounts screen ──────────────────────────────────────────────────────────
+function pfmScreenAccounts() {
+  const d = PFM.data;
+  const accounts = d.accounts || [];
+  const txns = d.transactions || [];
+  const filtered = PFM.txnQuery
+    ? txns.filter((t) => (t.name || "").toLowerCase().includes(PFM.txnQuery.toLowerCase())
+                      || (t.category || "").toLowerCase().includes(PFM.txnQuery.toLowerCase()))
+    : txns;
+
+  return `
+    <div class="pfm-screen-title">Accounts</div>
+    <div class="pfm-card">${accounts.map(pfmAcctRow).join("") || pfmEmptyLine("No accounts linked.")}</div>
+    <div class="pfm-section-title"><h4>Transactions</h4>
+      <span style="font-size:11px;color:#9a9a9a;font-weight:600">${filtered.length}</span></div>
+    <div class="pfm-txn-search">
+      ${ICON.search}
+      <input id="pfm-search" type="text" placeholder="Search transactions" value="${escapeHtml(PFM.txnQuery)}" />
+    </div>
+    ${pfmGroupedTxns(filtered)}
+  `;
+}
+
+function pfmScreenAcctDetail() {
+  const a = PFM.selectedAcct;
+  const txns = (PFM.data.transactions || []).filter((t) => String(t.account_id) === String(a.id));
+  const iconCls = ACCT_ICON[a.type] ? a.type : "other";
+  return `
+    <button class="link" data-back style="background:none;border:none;color:#635bff;font-weight:600;padding:8px 0;cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-size:13px">${ICON.chevLeft} Accounts</button>
+    <div style="display:flex;align-items:center;gap:14px;margin:6px 0 16px">
+      <div class="pfm-acct-icon ${iconCls}" style="width:48px;height:48px;border-radius:14px">${pfmAcctIcon(a.type)}</div>
+      <div>
+        <div style="font-size:18px;font-weight:700;letter-spacing:-0.3px">${escapeHtml(a.name)}</div>
+        <div style="font-size:12px;color:#6a6a6a;text-transform:capitalize">${escapeHtml(a.type)} &middot; ${escapeHtml(a.number)}</div>
+      </div>
+    </div>
+    <div class="pfm-hero" style="cursor:default">
+      <div class="label">Current Balance</div>
+      <div class="amount" style="${a.balance < 0 ? "color:#df1b41" : ""}">${fmtMoney(a.balance)}</div>
+      <div style="display:flex;gap:24px;margin-top:14px;font-size:12px">
+        <div><div style="color:#6a6a6a;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">Available</div><div style="font-weight:700;margin-top:2px;font-feature-settings:tnum">${fmtMoney(a.available_balance != null ? a.available_balance : a.balance)}</div></div>
+        <div><div style="color:#6a6a6a;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">Currency</div><div style="font-weight:700;margin-top:2px">${escapeHtml(a.currency || "USD")}</div></div>
+        <div><div style="color:#6a6a6a;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;font-weight:600">Activity</div><div style="font-weight:700;margin-top:2px">${txns.length} txns</div></div>
+      </div>
+    </div>
+    <div class="pfm-section-title"><h4>Transactions</h4>
+      <span style="font-size:11px;color:#9a9a9a;font-weight:600">${txns.length}</span></div>
+    ${pfmGroupedTxns(txns)}
+  `;
+}
+
+// ─── Insights screen ──────────────────────────────────────────────────────────
+function pfmScreenInsights() {
+  const d = PFM.data, s = d.summary || {};
+  const cats = d.categories || [];
+  const txns = d.transactions || [];
+  const total = cats.reduce((acc, c) => acc + (c.amount || 0), 0) || 0;
+
+  const weeks = pfmWeekly(txns, 4);
+  const heat = pfmHeatmap(txns);
+  const merchants = pfmTopMerchants(txns);
+  const top = cats[0];
+  const avgPerDay = total / 30;
+
+  return `
+    <div class="pfm-screen-title">Insights</div>
+
+    <div class="pfm-kpi-grid">
+      <div class="pfm-kpi">
+        <div class="k">Spent &middot; 30d</div>
+        <div class="v">${fmtMoney(total)}</div>
+        <div class="sub">${fmtMoney(avgPerDay)} / day avg</div>
+      </div>
+      <div class="pfm-kpi">
+        <div class="k">Income &middot; 30d</div>
+        <div class="v pos">${fmtMoney(s.monthly_income)}</div>
+        <div class="sub ${s.monthly_income > s.monthly_spend ? "pos" : "neg"}">
+          ${s.monthly_income > s.monthly_spend ? "\u2191" : "\u2193"} ${fmtMoney(Math.abs(s.monthly_income - s.monthly_spend))} net
+        </div>
+      </div>
+    </div>
+
+    ${top ? `
+    <div class="pfm-tip">
+      <div class="ic">${ICON.sparkles}</div>
+      <div class="body">
+        You spent <strong>${fmtMoney(top.amount)}</strong> on <strong>${escapeHtml(top.category)}</strong> this month &mdash; ${top.pct}% of your total spend.
+      </div>
+    </div>` : ""}
+
+    <div class="pfm-isection">
+      <h5>Weekly cashflow</h5>
+      <p class="desc">Income vs. spend, last 4 weeks</p>
+      ${pfmCashflowChart(weeks)}
+      <div style="display:flex;gap:14px;margin-top:12px;font-size:11px;font-weight:600;color:#6a6a6a">
+        <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;background:#0f7050;border-radius:2px"></span>Income</span>
+        <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;background:#e5e5e5;border-radius:2px"></span>Spend</span>
+      </div>
+    </div>
+
+    <div class="pfm-isection">
+      <h5>Category breakdown</h5>
+      <p class="desc">${fmtMoney(total)} spent across ${cats.length} categories</p>
+      ${pfmStackBar(cats)}
+      <div class="pfm-legend">${cats.map(pfmLegendRow).join("") || pfmEmptyLine("No spending data.")}</div>
+    </div>
+
+    <div class="pfm-isection">
+      <h5>Spending by weekday</h5>
+      <p class="desc">When you spend the most</p>
+      ${pfmHeatmapHtml(heat)}
+    </div>
+
+    <div class="pfm-isection">
+      <h5>Top merchants</h5>
+      <p class="desc">Where your money goes</p>
+      ${merchants.length ? merchants.map((m, i) => `
+        <div class="pfm-merchant">
+          <div class="l">
+            <div class="rank">${i + 1}</div>
+            <div>
+              <div class="nm">${escapeHtml(m.name)}</div>
+              <div class="ct">${m.count} ${m.count === 1 ? "transaction" : "transactions"} &middot; ${escapeHtml(m.category)}</div>
+            </div>
+          </div>
+          <div class="am">${fmtMoney(m.total)}</div>
+        </div>
+      `).join("") : pfmEmptyLine("No merchant data.")}
+    </div>
+  `;
+}
+
+function pfmWeekly(txns, n) {
+  const now = Date.now() / 1000;
+  const week = 7 * 24 * 3600;
+  const buckets = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const start = now - (i + 1) * week;
+    const end = now - i * week;
+    let income = 0, spend = 0;
+    txns.forEach((t) => {
+      if (t.date >= start && t.date < end) {
+        if (t.amount > 0) income += t.amount;
+        else spend += Math.abs(t.amount);
+      }
+    });
+    buckets.push({ income, spend, label: `W${n - i}` });
+  }
+  return buckets;
+}
+
+function pfmCashflowChart(weeks) {
+  const max = Math.max(1, ...weeks.flatMap((w) => [w.income, w.spend]));
+  return `<div class="pfm-cashflow">
+    ${weeks.map((w) => {
+      const hi = (w.income / max) * 100;
+      const hs = (w.spend / max) * 100;
+      return `<div class="pfm-cashflow-bar">
+        <div class="bars">
+          <span class="b income" style="height:${Math.max(hi, 2)}%" title="Income ${fmtMoney(w.income)}"></span>
+          <span class="b spend" style="height:${Math.max(hs, 2)}%" title="Spend ${fmtMoney(w.spend)}"></span>
+        </div>
+        <span class="lbl">${escapeHtml(w.label)}</span>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+function pfmHeatmap(txns) {
+  const now = Date.now() / 1000;
+  const cutoff = now - 30 * 24 * 3600;
+  const totals = [0, 0, 0, 0, 0, 0, 0];
+  txns.forEach((t) => {
+    if (!t.date || t.amount >= 0 || t.date < cutoff) return;
+    const d = new Date(t.date * 1000);
+    totals[d.getDay()] += Math.abs(t.amount);
+  });
+  const max = Math.max(...totals, 1);
+  return totals.map((v) => ({ amt: v, pct: v / max }));
+}
+
+function pfmHeatmapHtml(heat) {
+  const dows = ["S", "M", "T", "W", "T", "F", "S"];
+  return `
+    <div class="pfm-heatmap">${dows.map((d) => `<div class="dow">${d}</div>`).join("")}</div>
+    <div class="pfm-heatmap" style="margin-top:2px">${heat.map((h) => {
+      const opacity = 0.08 + h.pct * 0.85;
+      return `<div class="day" style="background:rgba(99,91,255,${opacity.toFixed(2)})" title="${fmtMoney(h.amt)}">${h.amt > 0 ? fmtMoneyShort(h.amt) : ""}</div>`;
+    }).join("")}</div>
+  `;
+}
+
+function pfmTopMerchants(txns) {
+  const now = Date.now() / 1000;
+  const cutoff = now - 30 * 24 * 3600;
+  const map = {};
+  txns.forEach((t) => {
+    if (!t.date || t.amount >= 0 || t.date < cutoff) return;
+    const key = t.name || "Unknown";
+    if (!map[key]) map[key] = { name: key, total: 0, count: 0, category: t.category };
+    map[key].total += Math.abs(t.amount);
+    map[key].count += 1;
+  });
+  return Object.values(map).sort((a, b) => b.total - a.total).slice(0, 5);
+}
+
+// ─── Settings screen ──────────────────────────────────────────────────────────
+function pfmScreenSettings() {
+  return `
+    <div class="pfm-screen-title">Settings</div>
+    <div class="pfm-settings-card">
+      <div class="pfm-setting-row" data-action="open-profile">
+        <div class="left"><div class="ic" style="background:#eff4ff;color:#2563eb">${ICON.user}</div>
+          <div><div class="label">Profile</div><div class="val" style="font-size:11px">Customer ${escapeHtml(PFM.cid)}</div></div></div>
+        <span class="val">${ICON.chev}</span>
+      </div>
+      <div class="pfm-setting-row" data-action="toggle-notif">
+        <div class="left"><div class="ic" style="background:#fff4e5;color:#c2410c">${ICON.bell}</div>
+          <div class="label">Notifications</div></div>
+        <div class="pfm-toggle" id="pfm-tog-notif"></div>
+      </div>
+      <div class="pfm-setting-row" data-action="toggle-bio">
+        <div class="left"><div class="ic" style="background:#ecfdf5;color:#0f7050">${ICON.lock}</div>
+          <div class="label">Face ID</div></div>
+        <div class="pfm-toggle" id="pfm-tog-bio"></div>
+      </div>
+    </div>
+    <div class="pfm-settings-card">
+      <div class="pfm-setting-row">
+        <div class="left"><div class="ic" style="background:#f3f0ff;color:#635bff">${ICON.bank}</div>
+          <div class="label">Linked accounts</div></div>
+        <span class="val">${(PFM.data.accounts || []).length}</span>
+      </div>
+      <div class="pfm-setting-row">
+        <div class="left"><div class="ic" style="background:#fef2f2;color:#df1b41">${ICON.download}</div>
+          <div class="label">Export data</div></div>
+        <span class="val">${ICON.chev}</span>
+      </div>
+      <div class="pfm-setting-row">
+        <div class="left"><div class="ic" style="background:#f4f4f5;color:#6a6a6a">${ICON.info}</div>
+          <div class="label">About</div></div>
+        <span class="val">v1.0.0</span>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:11px;color:#9a9a9a;margin-top:14px;font-weight:500">Powered by Mastercard Open Finance</p>
+  `;
+}
+
+// ─── Helper rows ──────────────────────────────────────────────────────────────
+function pfmAcctRow(a) {
+  const iconCls = ACCT_ICON[a.type] ? a.type : "other";
+  return `
+    <div class="pfm-acct" data-acct-id="${escapeHtml(String(a.id))}">
+      <div class="left">
+        <div class="pfm-acct-icon ${iconCls}">${pfmAcctIcon(a.type)}</div>
+        <div>
+          <div class="name">${escapeHtml(a.name)}</div>
+          <div class="meta">${escapeHtml(a.type)} &middot; ${escapeHtml(a.number)}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="bal ${a.balance < 0 ? "neg" : ""}">${fmtMoney(a.balance)}</div>
+        <span class="chev">${ICON.chev}</span>
+      </div>
+    </div>
+  `;
+}
+
+function pfmTxnRow(t) {
+  const isPos = t.amount > 0;
+  const cat = t.enrichedCategory || t.category;
+  const color = pfmColor(cat);
+  const displayName = t.enrichedName || t.name;
+  const iconHtml = t.logoUrl
+    ? `<img src="${escapeHtml(t.logoUrl)}" class="pfm-txn-logo-img" alt="" loading="lazy">`
+    : `<div class="pfm-txn-icon" style="background:${color}1a;color:${color}">${pfmCatIcon(cat)}</div>`;
+  const recurBadge = t.isRecurring ? `<span class="pfm-recurring-badge">&#8635;</span>` : "";
+  return `
+    <div class="pfm-txn" data-txn-id="${escapeHtml(String(t.id || ""))}">
+      <div class="left">
+        ${iconHtml}
+        <div class="info">
+          <div class="name">${escapeHtml(displayName)}${recurBadge}</div>
+          <div class="meta">${escapeHtml(cat)}</div>
+        </div>
+      </div>
+      <div class="amt ${isPos ? "pos" : "neg"}">${isPos ? "+" : ""}${fmtMoney(t.amount)}</div>
+    </div>
+  `;
+}
+
+function pfmEmptyLine(msg) {
+  return `<p class="muted" style="font-size:12px;padding:8px;text-align:center">${escapeHtml(msg)}</p>`;
+}
+
+function pfmGroupedTxns(txns) {
+  if (!txns.length) return pfmEmptyLine("No transactions match.");
+  const groups = {};
+  const order = [];
+  txns.forEach((t) => {
+    const k = fmtDate(t.date) || "\u2014";
+    if (!groups[k]) { groups[k] = []; order.push(k); }
+    groups[k].push(t);
+  });
+  return order.map((k) => `
+    <div class="pfm-txn-group">
+      <div class="pfm-txn-group-date">${escapeHtml(k)}</div>
+      <div class="pfm-txn-list">${groups[k].map(pfmTxnRow).join("")}</div>
+    </div>
+  `).join("");
+}
+
+// ─── Wire interactions ────────────────────────────────────────────────────────
+function pfmWireScreen() {
+  const app = document.getElementById("pfm-app");
+  if (!app) return;
+
+  app.querySelectorAll("[data-acct-id]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const a = (PFM.data.accounts || []).find((x) => String(x.id) === el.dataset.acctId);
+      if (!a) return;
+      PFM.selectedAcct = a;
+      PFM.tab = "accounts";
+      pfmIslandFlash(a.name);
+      pfmDrawTabs();
+      pfmDrawScreen();
+    });
+  });
+
+  app.querySelectorAll("[data-txn-id]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const t = (PFM.data.transactions || []).find((x) => String(x.id) === el.dataset.txnId);
+      if (t) pfmOpenSheet(t);
+    });
+  });
+
+  app.querySelectorAll("[data-goto]").forEach((el) => {
+    el.addEventListener("click", () => {
+      PFM.tab = el.dataset.goto;
+      PFM.selectedAcct = null;
+      pfmDrawTabs();
+      pfmDrawScreen();
+    });
+  });
+
+  const back = app.querySelector("[data-back]");
+  if (back) back.addEventListener("click", () => {
+    PFM.selectedAcct = null;
+    pfmDrawScreen();
+  });
+
+  app.querySelectorAll("[data-quick]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const labels = { send: "Send money", request: "Request", pay: "Pay bill", more: "More" };
+      pfmIslandFlash(labels[el.dataset.quick] || "Action");
+    });
+  });
+
+  const search = document.getElementById("pfm-search");
+  if (search) {
+    search.addEventListener("input", (e) => {
+      PFM.txnQuery = e.target.value;
+      const cursor = search.selectionStart;
+      pfmDrawScreen();
+      const s2 = document.getElementById("pfm-search");
+      if (s2) { s2.focus(); s2.setSelectionRange(cursor, cursor); }
+    });
+  }
+
+  const t1 = document.getElementById("pfm-tog-notif");
+  if (t1) t1.addEventListener("click", () => t1.classList.toggle("off"));
+  const t2 = document.getElementById("pfm-tog-bio");
+  if (t2) { t2.classList.add("off"); t2.addEventListener("click", () => t2.classList.toggle("off")); }
+
+  const hero = app.querySelector('[data-action="cycle-hero"]');
+  if (hero) hero.addEventListener("click", () => {
+    const s = PFM.data.summary || {};
+    pfmIslandFlash(`Net Worth \u00b7 ${fmtMoney(s.net_worth)}`);
+  });
+}
+
+function pfmOpenSheet(t) {
+  const isPos = t.amount > 0;
+  const cat = t.enrichedCategory || t.category;
+  const color = pfmColor(cat);
+  const displayName = t.enrichedName || t.name;
+  const acct = (PFM.data.accounts || []).find((a) => String(a.id) === String(t.account_id));
+  const sheet = document.getElementById("pfm-sheet");
+  const back = document.getElementById("pfm-sheet-backdrop");
+  if (!sheet || !back) return;
+  const logoHtml = t.logoUrl
+    ? `<img src="${escapeHtml(t.logoUrl)}" class="pfm-sheet-logo" alt="" loading="lazy">`
+    : `<div class="pfm-sheet-icon" style="background:${color}1a;color:${color}">${pfmCatIcon(cat)}</div>`;
+  const recurRow = t.isRecurring
+    ? `<div class="pfm-sheet-row"><span class="k">Recurring</span><span class="v" style="color:#635bff;font-weight:600">&#8635; Yes</span></div>`
+    : "";
+  sheet.innerHTML = `
+    <div class="pfm-sheet-handle"></div>
+    ${logoHtml}
+    <h3>${escapeHtml(displayName)}</h3>
+    <div class="sheet-amount ${isPos ? "pos" : ""}">${isPos ? "+" : ""}${fmtMoney(t.amount)}</div>
+    <div class="pfm-sheet-row"><span class="k">Category</span><span class="v">${escapeHtml(cat)}</span></div>
+    <div class="pfm-sheet-row"><span class="k">Date</span><span class="v">${fmtDate(t.date)}</span></div>
+    <div class="pfm-sheet-row"><span class="k">Status</span><span class="v">${escapeHtml(t.status || "Posted")}</span></div>
+    <div class="pfm-sheet-row"><span class="k">Account</span><span class="v">${escapeHtml(acct ? acct.name : t.account_id || "\u2014")}</span></div>
+    ${recurRow}
+    ${t.description ? `<div class="pfm-sheet-row"><span class="k">Raw description</span><span class="v" style="max-width:60%;font-size:12px">${escapeHtml(t.description)}</span></div>` : ""}
+    <div class="pfm-sheet-row"><span class="k">Transaction ID</span><span class="v" style="font-family:monospace;font-size:11px">${escapeHtml(String(t.id || "\u2014"))}</span></div>
+  `;
+  requestAnimationFrame(() => {
+    sheet.classList.add("visible");
+    back.classList.add("visible");
+  });
+}
+
+function pfmCloseSheet() {
+  const sheet = document.getElementById("pfm-sheet");
+  const back = document.getElementById("pfm-sheet-backdrop");
+  if (sheet) sheet.classList.remove("visible");
+  if (back) back.classList.remove("visible");
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  fetch("/explorer/ofin/state")
+    .then(r => r.json())
+    .then(d => {
+      const cid = (d.state || {}).customer_id || PFM_DEFAULT_CID;
+      pfmRender(cid);
+    })
+    .catch(() => pfmRender(PFM_DEFAULT_CID));
+});
+</script>
+</body>
+</html>
