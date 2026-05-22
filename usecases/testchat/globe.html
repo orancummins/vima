@@ -201,11 +201,115 @@
     ::-webkit-scrollbar-thumb:hover {
       background: rgba(255, 255, 255, 0.3);
     }
+
+    canvas { cursor: pointer; }
+
+    /* Mastercard Sonic Overlay */
+    .sonic-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      cursor: pointer;
+      flex-direction: column;
+      gap: 36px;
+    }
+    .sonic-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .sonic-logo {
+      position: relative;
+      width: 320px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sonic-circle {
+      position: absolute;
+      border-radius: 50%;
+      width: 180px;
+      height: 180px;
+      background: #fff;
+      mix-blend-mode: screen;
+      animation: sonicPulse 1.8s ease-in-out infinite;
+    }
+    .sonic-circle.left  { transform: translateX(-45px); }
+    .sonic-circle.right { transform: translateX( 45px); animation-delay: 0.3s; }
+
+    .sonic-waves {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sonic-wave {
+      position: absolute;
+      border: 2px solid rgba(255,255,255,0.7);
+      border-radius: 50%;
+      width: 240px;
+      height: 240px;
+      animation: sonicWave 2.2s ease-out infinite;
+    }
+    .sonic-wave:nth-child(2) { animation-delay: 0.55s; }
+    .sonic-wave:nth-child(3) { animation-delay: 1.10s; }
+    .sonic-wave:nth-child(4) { animation-delay: 1.65s; }
+
+    .sonic-label {
+      color: #fff;
+      font-size: 13px;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      opacity: 0.85;
+      font-weight: 300;
+    }
+    .sonic-hint {
+      color: rgba(255,255,255,0.45);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    @keyframes sonicPulse {
+      0%, 100% { transform: var(--tx, translateX(0)) scale(1);   opacity: 0.95; }
+      50%      { transform: var(--tx, translateX(0)) scale(1.06); opacity: 1; }
+    }
+    .sonic-circle.left  { --tx: translateX(-45px); }
+    .sonic-circle.right { --tx: translateX( 45px); }
+
+    @keyframes sonicWave {
+      0%   { transform: scale(0.4); opacity: 0.9; }
+      100% { transform: scale(2.2); opacity: 0;   }
+    }
   </style>
 </head>
 <body>
   <canvas id="globe"></canvas>
-  
+
+  <!-- Mastercard Sonic Brand Overlay (white) -->
+  <div class="sonic-overlay" id="sonicOverlay">
+    <div class="sonic-logo">
+      <div class="sonic-waves">
+        <div class="sonic-wave"></div>
+        <div class="sonic-wave"></div>
+        <div class="sonic-wave"></div>
+        <div class="sonic-wave"></div>
+      </div>
+      <div class="sonic-circle left"></div>
+      <div class="sonic-circle right"></div>
+    </div>
+    <div class="sonic-label">Mastercard Sonic</div>
+    <div class="sonic-hint">Click anywhere to close</div>
+  </div>
+
   <div class="settings-toggle" id="settingsToggle">⚙️ Settings</div>
   
   <div class="settings-panel hidden" id="settingsPanel">
@@ -218,7 +322,18 @@
       <label class="setting-label">
         Globe Color
       </label>
-      <input type="color" id="globeColor" value="#ffffff">
+      <input type="color" id="globeColor" value="#3b82f6">
+    </div>
+
+    <div class="setting-group">
+      <label class="setting-label">Quick Presets</label>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">
+        <button class="preset-swatch" data-color="#3b82f6" style="height:32px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:#3b82f6;cursor:pointer;"></button>
+        <button class="preset-swatch" data-color="#06b6d4" style="height:32px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:#06b6d4;cursor:pointer;"></button>
+        <button class="preset-swatch" data-color="#a855f7" style="height:32px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:#a855f7;cursor:pointer;"></button>
+        <button class="preset-swatch" data-color="#10b981" style="height:32px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:#10b981;cursor:pointer;"></button>
+        <button class="preset-swatch" data-color="#f59e0b" style="height:32px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:#f59e0b;cursor:pointer;"></button>
+      </div>
     </div>
     
     <div class="setting-group">
@@ -243,9 +358,9 @@
     
     <div class="setting-group">
       <label class="setting-label">
-        Globe Size <span class="setting-value" id="sizeValue">110%</span>
+        Globe Size <span class="setting-value" id="sizeValue">70%</span>
       </label>
-      <input type="range" id="globeSize" min="50" max="200" step="5" value="110">
+      <input type="range" id="globeSize" min="30" max="200" step="5" value="70">
     </div>
     
     <div class="setting-group">
@@ -345,6 +460,49 @@
       </label>
     </div>
     
+    <div class="settings-header" style="font-size:14px;margin-top:10px;">
+      <span>✨ Fun Effects</span>
+    </div>
+
+    <div class="setting-group">
+      <label class="setting-label">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="pulseMode">
+          <span>Pulse Mode (heartbeat)</span>
+        </div>
+      </label>
+    </div>
+
+    <div class="setting-group">
+      <label class="setting-label">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="wobbleMode">
+          <span>Wobble (floaty drift)</span>
+        </div>
+      </label>
+    </div>
+
+    <div class="setting-group">
+      <label class="setting-label">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="rainbowMode">
+          <span>Rainbow Color Shift</span>
+        </div>
+      </label>
+    </div>
+
+    <div class="setting-group">
+      <label class="setting-label">
+        Rainbow Speed <span class="setting-value" id="rainbowValue">1.0x</span>
+      </label>
+      <input type="range" id="rainbowSpeed" min="0.1" max="5" step="0.1" value="1">
+    </div>
+
+    <div class="setting-group" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button class="reset-btn" id="reverseBtn">⟲ Reverse Spin</button>
+      <button class="reset-btn" id="sonicBtn">🔊 Sonic</button>
+    </div>
+
     <div class="setting-group">
       <button class="reset-btn" id="resetBtn">Reset to Defaults</button>
     </div>
@@ -359,8 +517,8 @@
       const settings = {
         speed: 0.003,
         glow: 0.9,
-        size: 1.1,
-        color: '#ffffff',
+        size: 0.7,
+        color: '#3b82f6',
         bgStyle: 'purple',
         gridOpacity: 0.18,
         gridDensity: 20,
@@ -371,7 +529,12 @@
         autoRotate: true,
         showPoints: true,
         showGrid: true,
-        showGlow: true
+        showGlow: true,
+        pulseMode: false,
+        wobbleMode: false,
+        rainbowMode: false,
+        rainbowSpeed: 1,
+        spinDir: 1
       };
       
       const defaults = { ...settings };
@@ -408,6 +571,15 @@
       const showGridInput = document.getElementById('showGrid');
       const showGlowInput = document.getElementById('showGlow');
       const resetBtn = document.getElementById('resetBtn');
+      const pulseModeInput = document.getElementById('pulseMode');
+      const wobbleModeInput = document.getElementById('wobbleMode');
+      const rainbowModeInput = document.getElementById('rainbowMode');
+      const rainbowSpeedInput = document.getElementById('rainbowSpeed');
+      const rainbowValue = document.getElementById('rainbowValue');
+      const reverseBtn = document.getElementById('reverseBtn');
+      const sonicBtn = document.getElementById('sonicBtn');
+      const sonicOverlay = document.getElementById('sonicOverlay');
+      const presetSwatches = document.querySelectorAll('.preset-swatch');
       
       // Value displays
       const spinValue = document.getElementById('spinValue');
@@ -495,6 +667,59 @@
         settings.showGlow = e.target.checked;
       });
       
+      // New creative controls
+      pulseModeInput.addEventListener('change', (e) => {
+        settings.pulseMode = e.target.checked;
+      });
+      wobbleModeInput.addEventListener('change', (e) => {
+        settings.wobbleMode = e.target.checked;
+      });
+      rainbowModeInput.addEventListener('change', (e) => {
+        settings.rainbowMode = e.target.checked;
+      });
+      rainbowSpeedInput.addEventListener('input', (e) => {
+        const v = parseFloat(e.target.value);
+        settings.rainbowSpeed = v;
+        rainbowValue.textContent = v.toFixed(1) + 'x';
+      });
+      reverseBtn.addEventListener('click', () => {
+        settings.spinDir *= -1;
+      });
+      presetSwatches.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const c = btn.dataset.color;
+          settings.color = c;
+          globeColorInput.value = c;
+          // Turn off rainbow if user picks manual color
+          settings.rainbowMode = false;
+          rainbowModeInput.checked = false;
+        });
+      });
+
+      // --- Mastercard Sonic overlay ---
+      function showSonic() {
+        sonicOverlay.classList.add('active');
+      }
+      function hideSonic() {
+        sonicOverlay.classList.remove('active');
+      }
+      sonicOverlay.addEventListener('click', hideSonic);
+      sonicBtn.addEventListener('click', showSonic);
+
+      // Click on ball detection
+      canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        const r  = Math.min(rect.width, rect.height) * 0.5;
+        const dx = x - cx, dy = y - cy;
+        if (dx * dx + dy * dy <= r * r) {
+          showSonic();
+        }
+      });
+
       resetBtn.addEventListener('click', () => {
         Object.assign(settings, defaults);
         
@@ -502,7 +727,7 @@
         globeColorInput.value = defaults.color;
         bgStyleInput.value = defaults.bgStyle;
         spinRateInput.value = 1;
-        globeSizeInput.value = 110;
+        globeSizeInput.value = 70;
         glowIntensityInput.value = 90;
         gridOpacityInput.value = 18;
         gridDensityInput.value = 20;
@@ -514,9 +739,14 @@
         showPointsInput.checked = true;
         showGridInput.checked = true;
         showGlowInput.checked = true;
-        
+        pulseModeInput.checked = false;
+        wobbleModeInput.checked = false;
+        rainbowModeInput.checked = false;
+        rainbowSpeedInput.value = 1;
+        rainbowValue.textContent = '1.0x';
+
         spinValue.textContent = '1.0x';
-        sizeValue.textContent = '110%';
+        sizeValue.textContent = '70%';
         glowValue.textContent = '90%';
         gridValue.textContent = '18%';
         pointValue.textContent = '80';
@@ -571,9 +801,23 @@
         const delta = lastT ? Math.min((ts - lastT) / 16.667, 2) : 1;
         lastT = ts;
 
+        // Rainbow color shift
+        if (settings.rainbowMode) {
+          const hue = (ts * 0.05 * settings.rainbowSpeed) % 360;
+          settings.color = hslToHex(hue, 80, 60);
+        }
+
         const SIZE = canvas.width;
-        const R  = SIZE * 0.5;
-        const cx = SIZE / 2, cy = SIZE / 2;
+        // Pulse scale modifier (visual radius oscillation)
+        const pulse = settings.pulseMode
+          ? 1 + 0.08 * Math.sin(ts * 0.006) + 0.04 * Math.sin(ts * 0.018)
+          : 1;
+        const R  = SIZE * 0.5 * pulse;
+        // Wobble drift offset
+        const wob = settings.wobbleMode
+          ? { x: Math.sin(ts * 0.0011) * SIZE * 0.04, y: Math.cos(ts * 0.0009) * SIZE * 0.03 }
+          : { x: 0, y: 0 };
+        const cx = SIZE / 2 + wob.x, cy = SIZE / 2 + wob.y;
 
         ctx.clearRect(0, 0, SIZE, SIZE);
 
@@ -671,19 +915,20 @@
         }
 
         if (settings.autoRotate) {
+          const s = settings.speed * delta * settings.spinDir;
           if (settings.rotationAxis === 'y') {
-            rotY += settings.speed * delta;
+            rotY += s;
           } else if (settings.rotationAxis === 'x') {
-            rotX += settings.speed * delta;
+            rotX += s;
           } else if (settings.rotationAxis === 'z') {
-            rotZ += settings.speed * delta;
+            rotZ += s;
           } else if (settings.rotationAxis === 'xy') {
-            rotX += settings.speed * delta * 0.5;
-            rotY += settings.speed * delta;
+            rotX += s * 0.5;
+            rotY += s;
           } else if (settings.rotationAxis === 'xyz') {
-            rotX += settings.speed * delta * 0.3;
-            rotY += settings.speed * delta;
-            rotZ += settings.speed * delta * 0.2;
+            rotX += s * 0.3;
+            rotY += s;
+            rotZ += s * 0.2;
           }
         }
         
@@ -706,6 +951,17 @@
         return { x: x2, y: y2, z: z2 };
       }
       
+      function hslToHex(h, s, l) {
+        s /= 100; l /= 100;
+        const k = n => (n + h / 30) % 12;
+        const a = s * Math.min(l, 1 - l);
+        const f = n => {
+          const c = l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+          return Math.round(c * 255).toString(16).padStart(2, '0');
+        };
+        return `#${f(0)}${f(8)}${f(4)}`;
+      }
+
       function hexToRgb(hex) {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return result ? {

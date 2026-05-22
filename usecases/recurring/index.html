@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recurring Transactions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/recurring/style.css">
+</head>
+<body>
+  <div id="uc-body"></div>
+
+  <script>
+  (function () {
+    "use strict";
+
+    function $(id) { return document.getElementById(id); }
+    function escapeHtml(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    const REC = {
+      cid: "9013023139",
+      accounts: [],
+      selectedAccount: "",
+      streams: [],
+      transactions: [],
+      loading: false,
+    };
+
+    const REC_FREQ_LABELS = {
+      WEEKLY: "Weekly", BIWEEKLY: "Bi-weekly", MONTHLY: "Monthly",
+      BIMONTHLY: "Bi-monthly", QUARTERLY: "Quarterly", ANNUAL: "Annual", UNKNOWN: "Irregular",
+    };
+
+    function recFreqClass(freq) {
+      return "rec-chip--freq-" + (freq || "unknown").toLowerCase();
+    }
+
+    function recLogoHtml(name) {
+      const initials = (name || "?").replace(/[^A-Za-z0-9 ]/g, "").trim().split(" ")
+        .slice(0, 2).map(w => w[0] || "").join("").toUpperCase() || "?";
+      const colors = ["#6366f1","#0ea5e9","#10b981","#f59e0b","#ec4899","#8b5cf6","#ef4444","#14b8a6"];
+      const idx = (name || "").split("").reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;
+      return `<svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="${colors[idx]}"/><text x="22" y="30" text-anchor="middle" font-size="16" font-weight="700" fill="white">${escapeHtml(initials)}</text></svg>`;
+    }
+
+    function recDaysBadgeHtml(dateStr) {
+      if (!dateStr) return "";
+      const parts = dateStr.split("-");
+      if (parts.length < 3) return "";
+      const next = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const diff = Math.round((next - today) / 86400000);
+      if (diff < 0) return `<span class="rec-days-badge rec-days-badge--past">${Math.abs(diff)}d ago</span>`;
+      if (diff === 0) return `<span class="rec-days-badge rec-days-badge--soon">Today</span>`;
+      if (diff <= 7) return `<span class="rec-days-badge rec-days-badge--soon">In ${diff}d</span>`;
+      return `<span class="rec-days-badge rec-days-badge--future">In ${diff}d</span>`;
+    }
+
+    function recFmtDate(dateStr) {
+      if (!dateStr) return "—";
+      const parts = dateStr.split("-");
+      if (parts.length < 3) return dateStr;
+      const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    }
+
+    function recFmtAmt(n) {
+      const abs = Math.abs(n);
+      return "$" + abs.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function renderRecurring() {
+      fetch("/explorer/ofin/state").then(r => r.json()).then(d => {
+        REC.cid = (d.state || {}).customer_id || REC.cid;
+        recRender();
+      }).catch(() => recRender());
+    }
+
+    function recRender() {
+      const body = $("uc-body");
+      if (!body) return;
+
+      const totalMonthly = REC.streams
+        .filter(s => s.type !== "CREDIT" && s.frequency === "MONTHLY")
+        .reduce((sum, s) => sum + Math.abs(s.amount), 0);
+      const totalCredits = REC.streams
+        .filter(s => s.type === "CREDIT")
+        .reduce((sum, s) => sum + Math.abs(s.amount), 0);
+      const totalStreams = REC.streams.length;
+
+      const summaryHtml = totalStreams > 0 ? `
+        <div class="rec-summary-strip">
+          <div class="rec-summary-card">
+            <label>
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+                <path d="M14 2v3.3h-3.3"/>
+              </svg>
+              Recurring Streams
+            </label>
+            <span>${totalStreams}</span>
+          </div>
+          <div class="rec-summary-card">
+            <label>Monthly Outflows</label>
+            <span class="rec-amt-debit">${recFmtAmt(totalMonthly)}</span>
+          </div>
+          <div class="rec-summary-card">
+            <label>Recurring Credits</label>
+            <span class="rec-amt-credit">${recFmtAmt(totalCredits)}</span>
+          </div>
+        </div>
+      ` : "";
+
+      const debits  = REC.streams.filter(s => s.type !== "CREDIT");
+      const credits = REC.streams.filter(s => s.type === "CREDIT");
+
+      function sectionHtml(streams, kind) {
+        if (!streams.length) return "";
+        const badgeCls = kind === "credit" ? "rec-section-badge--credit" : "rec-section-badge--debit";
+        const title    = kind === "credit" ? "Recurring Income" : "Recurring Expenses";
+        const subtitle = kind === "credit" ? "Regular incoming payments" : "Repeating outgoing payments";
+        return `
+          <div>
+            <div class="rec-section-head">
+              <div class="rec-section-title">
+                <h3>${title}</h3>
+                <span class="rec-section-subtitle">${subtitle}</span>
+              </div>
+              <span class="rec-section-badge ${badgeCls}">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+                  <path d="M14 2v3.3h-3.3"/>
+                </svg>
+                ${streams.length}
+              </span>
+            </div>
+            <div class="rec-grid">
+              ${streams.map(recCardHtml).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      const resultsHtml = totalStreams > 0 ? `
+        ${summaryHtml}
+        ${sectionHtml(credits, "credit")}
+        ${sectionHtml(debits, "debit")}
+        ${recTxnListHtml(REC.transactions, REC.streams)}
+      ` : `
+        <div class="rec-hero">
+          <div class="rec-hero-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+              <path d="M21 3v5h-5"/>
+              <circle cx="12" cy="12" r="2" fill="currentColor"/>
+            </svg>
+          </div>
+          <h3>Detect Recurring Payment Patterns</h3>
+          <p>Automatically identify repeating transactions like subscriptions, bills, salary deposits, and loan payments. See frequency, amounts, and next expected dates.</p>
+          <div class="rec-hero-chips">
+            <span class="rec-hero-chip">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+              </svg>
+              Subscriptions
+            </span>
+            <span class="rec-hero-chip">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+              </svg>
+              Bills &amp; Utilities
+            </span>
+            <span class="rec-hero-chip">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+              </svg>
+              Salary &amp; Income
+            </span>
+            <span class="rec-hero-chip">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+              </svg>
+              Loan Repayments
+            </span>
+          </div>
+        </div>
+      `;
+
+      body.innerHTML = `
+        <div class="rec-stage">
+          <div class="rec-controlbar">
+            <div class="rec-controls-row">
+              <div class="rec-field">
+                <label>Customer ID</label>
+                <input id="rec-cid" type="text" value="${escapeHtml(REC.cid)}" placeholder="e.g. 9013023139" style="width:160px">
+              </div>
+              <button class="rec-btn rec-btn--secondary" id="rec-load-accts">Load Accounts</button>
+              <div class="rec-field rec-field--grow" id="rec-acct-wrap" style="display:none">
+                <label>Account (optional filter)</label>
+                <select id="rec-acct-select" style="min-width:220px">
+                  <option value="">— all accounts —</option>
+                </select>
+              </div>
+              <button class="rec-btn rec-btn--primary" id="rec-go" ${REC.loading || !REC.selectedAccount ? "disabled" : ""}>
+                ${REC.loading ? `<span class="psi-spinner"></span>` : "Analyse Recurring"}
+              </button>
+            </div>
+            <p class="rec-hint">${!REC.accounts.length ? "Load accounts first, then select an account to analyse." : !REC.selectedAccount ? "Select an account from the dropdown to enable analysis." : "Identifies repeating debit and credit patterns — subscriptions, bills, salary, and more — across connected accounts."}</p>
+          </div>
+
+          ${REC.loading ? `
+            <div class="rec-loading-state">
+              <div class="rec-spinner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+                  <path d="M21 3v5h-5"/>
+                </svg>
+              </div>
+              <span>Analyzing transaction patterns...</span>
+              <p style="font-size:12px;color:var(--muted);margin-top:4px;">Identifying subscriptions, bills, salary deposits, and other recurring payments</p>
+            </div>
+          ` : resultsHtml}
+        </div>
+      `;
+
+      recWire();
+
+      if (REC.accounts.length) recPopulateAccounts();
+    }
+
+    function recCardHtml(s) {
+      const isDebit   = s.type !== "CREDIT";
+      const amtCls    = isDebit ? "rec-card-amount--debit" : "rec-card-amount--credit";
+      const amtSign   = isDebit ? "-" : "+";
+      const freqLabel = REC_FREQ_LABELS[s.frequency] || s.frequency;
+      const freqCls   = recFreqClass(s.frequency);
+      const regLabel  = s.regularity === "REGULAR" ? "Regular" : s.regularity === "IRREGULAR" ? "Irregular" : null;
+      const regCls    = s.regularity === "REGULAR" ? "rec-chip--reg" : "rec-chip--irreg";
+
+      const recurringIcon = `
+        <svg class="rec-card-recurring-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+        </svg>
+      `;
+
+      return `
+        <div class="rec-card">
+          ${recurringIcon}
+          <div class="rec-card-top">
+            <div class="rec-card-logo">${recLogoHtml(s.merchantName)}</div>
+            <div class="rec-card-meta">
+              <div class="rec-card-name">
+                ${escapeHtml(s.merchantName)}
+              </div>
+              ${s.description && s.description !== s.merchantName
+                ? `<div class="rec-card-desc">${escapeHtml(s.description)}</div>` : ""}
+            </div>
+            <div class="rec-card-amount ${amtCls}">${amtSign}${recFmtAmt(s.amount)}</div>
+          </div>
+          <div class="rec-card-chips">
+            <span class="rec-chip rec-chip--freq ${freqCls}">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 8h10M8 3v10"/>
+              </svg>
+              ${escapeHtml(freqLabel)}
+            </span>
+            ${s.category ? `<span class="rec-chip rec-chip--cat">${escapeHtml(s.category)}</span>` : ""}
+            ${regLabel ? `<span class="rec-chip ${regCls}">${regLabel}</span>` : ""}
+          </div>
+          <div class="rec-card-footer">
+            <div class="rec-next-date">
+              <label>Next expected</label>
+              <span>${recFmtDate(s.nextExpectedDate)}</span>
+            </div>
+            ${s.count ? `<div class="rec-next-date"><label>Detected</label><span>${s.count} txn${s.count !== 1 ? "s" : ""}</span></div>` : ""}
+            ${recDaysBadgeHtml(s.nextExpectedDate)}
+          </div>
+        </div>
+      `;
+    }
+
+    function recPopulateAccounts() {
+      const sel = document.getElementById("rec-acct-select");
+      const wrap = document.getElementById("rec-acct-wrap");
+      if (!sel || !wrap) return;
+      sel.innerHTML = `<option value="">— select an account —</option>`;
+      REC.accounts.forEach(a => {
+        const opt = document.createElement("option");
+        opt.value = a.id;
+        const num = a.number ? `••${String(a.number).slice(-4)}` : a.id;
+        opt.textContent = `${num} · ${a.type} — ${a.name}`;
+        sel.appendChild(opt);
+      });
+      if (REC.selectedAccount) sel.value = REC.selectedAccount;
+      wrap.style.display = "";
+    }
+
+    function recWire() {
+      const cidInput = document.getElementById("rec-cid");
+      const loadBtn  = document.getElementById("rec-load-accts");
+      const goBtn    = document.getElementById("rec-go");
+
+      if (cidInput) cidInput.addEventListener("input", () => { REC.cid = cidInput.value.trim(); });
+
+      if (loadBtn) loadBtn.addEventListener("click", async () => {
+        const cid = (document.getElementById("rec-cid") || {}).value || REC.cid;
+        REC.cid = cid.trim();
+        if (!REC.cid) return;
+        loadBtn.disabled = true; loadBtn.textContent = "Loading…";
+        try {
+          const r = await fetch("/usecases/recurring/action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "get_accounts", params: { customer_id: REC.cid } }),
+          });
+          const d = await r.json();
+          if (d.error) { alert("Error: " + d.error); return; }
+          REC.accounts = d.accounts || [];
+          REC.selectedAccount = "";
+          recRender();
+        } catch (e) {
+          alert("Failed to load accounts: " + e);
+        } finally {
+          loadBtn.disabled = false; loadBtn.textContent = "Load Accounts";
+        }
+      });
+
+      const acctSelEl = document.getElementById("rec-acct-select");
+      if (acctSelEl) acctSelEl.addEventListener("change", () => {
+        REC.selectedAccount = acctSelEl.value;
+        recRender();
+      });
+
+      if (goBtn) goBtn.addEventListener("click", async () => {
+        const cid = (document.getElementById("rec-cid") || {}).value || REC.cid;
+        REC.cid = cid.trim();
+        if (!REC.cid) { alert("Please enter a Customer ID"); return; }
+        if (!REC.selectedAccount) { alert("Select an account before analysing."); return; }
+        const acctId = REC.selectedAccount;
+        REC.loading = true;
+        REC.transactions = [];
+        recRender();
+        try {
+          const post = (action, params) => fetch("/usecases/recurring/action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action, params }),
+          }).then(r => r.json());
+
+          const [recD, txnD] = await Promise.all([
+            post("get_recurring",    { customer_id: REC.cid, account_ids: acctId }),
+            post("get_transactions", { customer_id: REC.cid, account_id: acctId }),
+          ]);
+
+          REC.loading = false;
+          if (recD.error) { REC.streams = []; recRenderError(recD.error, recD.detail); return; }
+          REC.streams      = recD.streams || [];
+          REC.transactions = txnD.transactions || [];
+          recRender();
+        } catch (e) {
+          REC.loading = false;
+          recRenderError(String(e));
+        }
+      });
+    }
+
+    function recTxnListHtml(transactions, streams) {
+      if (!transactions.length) return "";
+
+      const recurringNames = new Set(
+        streams.map(s => (s.merchantName || "").toLowerCase().trim()).filter(Boolean)
+      );
+      const isRecurring = t => {
+        const payee = (t.normalizedPayee || "").toLowerCase().trim();
+        if (payee && recurringNames.has(payee)) return true;
+        const desc = (t.description || "").toLowerCase();
+        for (const n of recurringNames) { if (n && desc.includes(n)) return true; }
+        return false;
+      };
+      const getStream = t => {
+        const payee = (t.normalizedPayee || "").toLowerCase().trim();
+        const desc  = (t.description || "").toLowerCase();
+        return streams.find(s => {
+          const n = (s.merchantName || "").toLowerCase().trim();
+          return n && (payee === n || desc.includes(n));
+        });
+      };
+
+      let recurCount = 0;
+      const rows = transactions.map(t => {
+        const rec = isRecurring(t);
+        if (rec) recurCount++;
+        const stream  = rec ? getStream(t) : null;
+        const isCredit = t.amount > 0;
+        const rowCls  = rec ? (isCredit ? "rec-txn--credit-stream" : "rec-txn--debit-stream") : "";
+        const date    = t.date ? new Date(t.date * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—";
+        const amtStr  = (isCredit ? "+" : "") + recFmtAmt(t.amount);
+        const amtCls  = isCredit ? "rec-txn-amt--credit" : "rec-txn-amt--debit";
+        const freqLabel = stream ? (REC_FREQ_LABELS[stream.frequency] || stream.frequency) : "";
+        const freqBadge = freqLabel ? `<span class="rec-txn-freq">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+            <path d="M14 2v3.3h-3.3"/>
+          </svg>
+          ${escapeHtml(freqLabel)}
+        </span>` : "";
+        const displayName = t.normalizedPayee || t.description;
+        return `
+          <div class="rec-txn-row ${rowCls}">
+            <div class="rec-txn-date">${date}</div>
+            <div class="rec-txn-info">
+              <div class="rec-txn-name">${escapeHtml(displayName)}</div>
+              ${t.category ? `<div class="rec-txn-cat">${escapeHtml(t.category)}</div>` : ""}
+            </div>
+            ${freqBadge}
+            <div class="rec-txn-amt ${amtCls}">${amtStr}</div>
+          </div>`;
+      }).join("");
+
+      return `
+        <div class="rec-section-head" style="margin-top:24px">
+          <h3>Transactions <span style="font-weight:400;color:#9a9a9a;font-size:14px">· last 90 days</span></h3>
+          <span class="rec-section-badge">${transactions.length}</span>
+        </div>
+        <div class="rec-txn-legend">
+          <span class="rec-txn-legend--recurring">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 8a6 6 0 1 1-6-6c1.7 0 3.3 0.7 4.5 1.8L14 5.3"/>
+              <path d="M14 2v3.3h-3.3"/>
+            </svg>
+            ${recurCount} recurring
+          </span>
+          <span>${transactions.length - recurCount} one-off</span>
+        </div>
+        <div class="rec-txn-list">${rows}</div>`;
+    }
+
+    function recRenderError(msg, detail) {
+      const body = $("uc-body");
+      if (!body) return;
+      body.innerHTML = `
+        <div class="rec-stage">
+          <div class="rec-error">
+            <strong>Could not retrieve recurring transactions</strong><br>
+            ${escapeHtml(msg)}
+            ${detail ? `<pre style="margin:8px 0 0;font-size:11px;overflow:auto">${escapeHtml(JSON.stringify(detail, null, 2))}</pre>` : ""}
+          </div>
+          <button class="rec-btn rec-btn--secondary" id="rec-err-back" style="align-self:flex-start;margin-top:4px">← Back</button>
+        </div>`;
+      const backBtn = body.querySelector("#rec-err-back");
+      if (backBtn) backBtn.addEventListener("click", () => { REC.loading = false; recRender(); });
+    }
+
+    document.addEventListener("DOMContentLoaded", renderRecurring);
+  })();
+  </script>
+</body>
+</html>

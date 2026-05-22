@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Places — Near Me Merchant Discovery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link rel="stylesheet" href="/places/style.css">
+</head>
+<body>
+  <div id="uc-body"></div>
+
+  <script>
+  (function () {
+    "use strict";
+
+    function $(id) { return document.getElementById(id); }
+    function escapeHtml(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    const PLACES_INDUSTRY_PRESETS = [
+      { value: "EAP", label: "Eating Places & Restaurants" },
+      { value: "SHS", label: "Shoe Stores" },
+      { value: "GRS", label: "Grocery Stores & Supermarkets" },
+      { value: "GSS", label: "Gas & Service Stations" },
+      { value: "DRS", label: "Drug Stores & Pharmacies" },
+      { value: "",    label: "All industries" },
+    ];
+
+    const PL = {
+      lat: "38.7468239",
+      lng: "-90.7460708",
+      distance: "15",
+      unit: "MILE",
+      countryCode: "US",
+      industry: "EAP",
+      cityName: "",
+      places: [],
+      total: 0,
+      loading: false,
+      error: null,
+      selected: null,
+      detailLoading: false,
+      detail: null,
+    };
+
+    function renderPlaces() {
+      plRender();
+    }
+
+    function plRender() {
+      const body = $("uc-body");
+      if (!body) return;
+
+      const presets = PLACES_INDUSTRY_PRESETS;
+
+      body.innerHTML = `
+        <div class="pl-stage">
+          <div class="pl-form-card">
+            <div class="pl-form-header">
+              <div class="pl-form-title">Merchant Discovery</div>
+              <div class="pl-form-sub">Find merchants near a location that accept Mastercard.</div>
+            </div>
+            <div class="pl-form-row">
+              <div class="pl-field">
+                <label for="pl-lat">Latitude</label>
+                <input id="pl-lat" type="text" value="${escapeHtml(PL.lat)}" placeholder="e.g. 38.7468">
+              </div>
+              <div class="pl-field">
+                <label for="pl-lng">Longitude</label>
+                <input id="pl-lng" type="text" value="${escapeHtml(PL.lng)}" placeholder="e.g. -90.7461">
+              </div>
+              <div class="pl-field">
+                <label for="pl-distance">Distance</label>
+                <input id="pl-distance" type="text" value="${escapeHtml(PL.distance)}" placeholder="15" style="width:60px">
+              </div>
+              <div class="pl-field">
+                <label for="pl-unit">Unit</label>
+                <select id="pl-unit">
+                  <option value="MILE"${PL.unit === "MILE" ? " selected" : ""}>Miles</option>
+                  <option value="KM"${PL.unit === "KM" ? " selected" : ""}>Km</option>
+                </select>
+              </div>
+              <div class="pl-field">
+                <label for="pl-country">Country</label>
+                <input id="pl-country" type="text" value="${escapeHtml(PL.countryCode)}" placeholder="US" style="width:50px" maxlength="2">
+              </div>
+              <div class="pl-field">
+                <label for="pl-industry">Industry</label>
+                <select id="pl-industry">
+                  ${presets.map(p =>
+                    '<option value="' + escapeHtml(p.value) + '"' + (PL.industry === p.value ? ' selected' : '') + '>' + escapeHtml(p.label) + '</option>'
+                  ).join("")}
+                </select>
+              </div>
+              <button class="pl-btn pl-btn--primary" id="pl-search-btn"${PL.loading ? " disabled" : ""}>
+                ${PL.loading
+                  ? '<span class="pl-spinner"></span>Searching…'
+                  : '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>Search'}
+              </button>
+            </div>
+          </div>
+          <div class="pl-result" id="pl-result">
+            ${plResultHtml()}
+          </div>
+        </div>`;
+      plWire();
+    }
+
+    function plResultHtml() {
+      if (PL.loading) {
+        return '<div class="pl-loading"><div class="pl-spinner pl-spinner--lg"></div><p>Searching nearby merchants…</p></div>';
+      }
+      if (PL.error) {
+        return '<div class="pl-error">' + escapeHtml(String(PL.error)) + '</div>';
+      }
+      if (!PL.places.length) {
+        return plHeroHtml();
+      }
+
+      const center = plCenter();
+      const mapHtml = plMapHtml(center);
+
+      return `
+        <div class="pl-summary-strip">
+          <div class="pl-summary-item"><label>Merchants found</label><span>${PL.total}</span></div>
+          <div class="pl-summary-item"><label>Showing</label><span>${PL.places.length}</span></div>
+          <div class="pl-summary-item"><label>Radius</label><span>${escapeHtml(PL.distance)} ${PL.unit === "KM" ? "km" : "mi"}</span></div>
+        </div>
+        ${mapHtml}
+        <div class="pl-list" id="pl-list">
+          ${PL.places.map((p, i) => plCardHtml(p, i)).join("")}
+        </div>
+        ${PL.detail ? plDetailPanelHtml(PL.detail) : ""}`;
+    }
+
+    function plCenter() {
+      if (PL.places.length) {
+        const lats = PL.places.filter(p => p.lat != null).map(p => p.lat);
+        const lngs = PL.places.filter(p => p.lng != null).map(p => p.lng);
+        if (lats.length && lngs.length) {
+          return {
+            lat: lats.reduce((a, b) => a + b, 0) / lats.length,
+            lng: lngs.reduce((a, b) => a + b, 0) / lngs.length,
+          };
+        }
+      }
+      return { lat: parseFloat(PL.lat) || 38.7468, lng: parseFloat(PL.lng) || -90.7461 };
+    }
+
+    function plMapHtml(center) {
+      return `
+        <div class="pl-map-wrap">
+          <div class="pl-map-frame" id="pl-leaflet-map" data-center-lat="${center.lat}" data-center-lng="${center.lng}"></div>
+          <div class="pl-map-count">${PL.places.length} merchant${PL.places.length !== 1 ? "s" : ""}</div>
+        </div>`;
+    }
+
+    function plCardHtml(place, idx) {
+      const initials = (place.name || "?").replace(/[^A-Za-z0-9 ]/g, "").trim().split(" ")
+        .slice(0, 2).map(w => (w[0] || "").toUpperCase()).join("") || "?";
+      const colors = ["#6366f1","#0ea5e9","#10b981","#f59e0b","#ec4899","#8b5cf6","#ef4444","#14b8a6","#f97316","#3b82f6"];
+      const color = colors[idx % colors.length];
+
+      const capBadges = (place.capabilities || []).slice(0, 5).map(c =>
+        '<span class="pl-cap-badge' + (c === "NFC / Contactless" ? ' pl-cap-badge--nfc' : '') + '">' + escapeHtml(c) + '</span>'
+      ).join("");
+
+      const statusCls = place.isInBusiness ? "pl-status--open" : "pl-status--closed";
+      const statusLabel = place.isInBusiness ? "Active" : "Inactive";
+
+      return `
+        <div class="pl-card" data-pl-idx="${idx}" data-pl-id="${escapeHtml(String(place.locationId || ''))}">
+          <div class="pl-card-left">
+            <div class="pl-card-avatar" style="background:${color}">
+              <span>${escapeHtml(initials)}</span>
+            </div>
+          </div>
+          <div class="pl-card-body">
+            <div class="pl-card-top">
+              <div class="pl-card-name">${escapeHtml(place.name)}</div>
+              <span class="pl-status ${statusCls}">${statusLabel}</span>
+              ${place.isNewBusiness ? '<span class="pl-new-badge">New</span>' : ""}
+            </div>
+            ${place.address ? '<div class="pl-card-addr">' + escapeHtml(place.address) + '</div>' : ""}
+            ${place.phone ? '<div class="pl-card-phone">' + escapeHtml(place.phone) + '</div>' : ""}
+            <div class="pl-card-meta">
+              ${place.mccCode ? '<span class="pl-meta-chip">MCC ' + escapeHtml(place.mccCode) + '</span>' : ""}
+              ${place.industry ? '<span class="pl-meta-chip">' + escapeHtml(place.industry) + '</span>' : ""}
+              ${place.geocodeQuality ? '<span class="pl-meta-chip">' + escapeHtml(place.geocodeQuality) + '</span>' : ""}
+              ${place.posTerminals ? '<span class="pl-meta-chip">' + place.posTerminals + ' POS</span>' : ""}
+            </div>
+            ${capBadges ? '<div class="pl-card-caps">' + capBadges + '</div>' : ""}
+            ${place.website ? '<a class="pl-card-link" href="' + escapeHtml(place.website) + '" target="_blank" rel="noopener">' + escapeHtml(place.website.replace(/^https?:\/\//, "").replace(/\/$/, "")) + ' ↗</a>' : ""}
+          </div>
+          <button class="pl-card-detail-btn" data-detail-id="${escapeHtml(String(place.locationId || ''))}" title="View details">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 4l6 6-6 6"/></svg>
+          </button>
+        </div>`;
+    }
+
+    function plDetailPanelHtml(d) {
+      const rows = [];
+      if (d.legalName)            rows.push(["Legal Name", d.legalName]);
+      if (d.aggregateMerchantName) rows.push(["Brand", d.aggregateMerchantName]);
+      if (d.parentMerchantName)   rows.push(["Parent", d.parentMerchantName]);
+      if (d.mccCode)              rows.push(["MCC", d.mccCode]);
+      if (d.industry)             rows.push(["Industry", d.industry]);
+      if (d.superIndustry)        rows.push(["Super-industry", d.superIndustry]);
+      if (d.geocodeQuality)       rows.push(["Geocode quality", d.geocodeQuality]);
+      if (d.channel)              rows.push(["Channel", d.channel === "b" ? "Brick & mortar" : d.channel === "e" ? "E-commerce" : d.channel]);
+      if (d.posTerminals)         rows.push(["POS terminals", String(d.posTerminals)]);
+      if (d.firstSeen)            rows.push(["First seen", d.firstSeen]);
+      if (d.lastSeen)             rows.push(["Last seen", d.lastSeen]);
+      if (d.phone)                rows.push(["Phone", d.phone]);
+      if (d.website)              rows.push(["Website", d.website]);
+
+      const caps = (d.capabilities || []).map(c =>
+        '<span class="pl-detail-cap">' + escapeHtml(c) + '</span>'
+      ).join("");
+
+      return `
+        <div class="pl-detail-backdrop" id="pl-detail-backdrop"></div>
+        <div class="pl-detail-panel" id="pl-detail-panel">
+          <div class="pl-detail-head">
+            <div>
+              <div class="pl-detail-name">${escapeHtml(d.name)}</div>
+              ${d.address ? '<div class="pl-detail-addr">' + escapeHtml(d.address) + '</div>' : ""}
+            </div>
+            <button class="pl-detail-close" id="pl-detail-close" title="Close">✕</button>
+          </div>
+          ${caps ? '<div class="pl-detail-caps">' + caps + '</div>' : ""}
+          <div class="pl-detail-grid">
+            ${rows.map(([k, v]) =>
+              '<div class="pl-detail-key">' + escapeHtml(k) + '</div><div class="pl-detail-val">' + escapeHtml(v) + '</div>'
+            ).join("")}
+          </div>
+          ${d.lat != null && d.lng != null ? plDetailMapHtml(d) : ""}
+        </div>`;
+    }
+
+    function plDetailMapHtml(d) {
+      return `
+        <div class="pl-detail-map">
+          <div class="pl-map-frame" id="pl-detail-leaflet-map" data-lat="${d.lat}" data-lng="${d.lng}" data-name="${escapeHtml(d.name || '')}"></div>
+        </div>`;
+    }
+
+    function plHeroHtml() {
+      return `
+        <div class="pl-hero">
+          <div class="pl-hero-icon">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M24 4C16.3 4 10 10.3 10 18c0 10 14 26 14 26s14-16 14-26c0-7.7-6.3-14-14-14z"/>
+              <circle cx="24" cy="18" r="6"/>
+            </svg>
+          </div>
+          <h3>Discover merchants near any location</h3>
+          <p>Enter coordinates or a city, choose an industry filter and search radius, then click <strong>Search</strong> to explore merchants accepting Mastercard — with NFC, EMV, and digital wallet capabilities.</p>
+          <div class="pl-hero-chips">
+            <span class="pl-hero-chip">Global coverage</span>
+            <span class="pl-hero-chip">NFC & EMV data</span>
+            <span class="pl-hero-chip">Business status</span>
+            <span class="pl-hero-chip">Payment capabilities</span>
+          </div>
+        </div>`;
+    }
+
+    function plWire() {
+      const ids = { "pl-lat": "lat", "pl-lng": "lng", "pl-distance": "distance", "pl-country": "countryCode" };
+      for (const [elId, key] of Object.entries(ids)) {
+        const el = document.getElementById(elId);
+        if (el) el.addEventListener("input", () => { PL[key] = el.value.trim(); });
+      }
+      const unitSel = document.getElementById("pl-unit");
+      if (unitSel) unitSel.addEventListener("change", () => { PL.unit = unitSel.value; });
+      const indSel = document.getElementById("pl-industry");
+      if (indSel) indSel.addEventListener("change", () => { PL.industry = indSel.value; });
+
+      const searchBtn = document.getElementById("pl-search-btn");
+      if (searchBtn) searchBtn.addEventListener("click", () => plSearch());
+
+      document.querySelectorAll("[data-detail-id]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          plShowDetail(btn.dataset.detailId);
+        });
+      });
+
+      const closeBtn = document.getElementById("pl-detail-close");
+      const backdrop = document.getElementById("pl-detail-backdrop");
+      if (closeBtn) closeBtn.addEventListener("click", () => { PL.detail = null; PL.selected = null; plRender(); });
+      if (backdrop) backdrop.addEventListener("click", () => { PL.detail = null; PL.selected = null; plRender(); });
+
+      if (PL.detail) {
+        const panel = document.getElementById("pl-detail-panel");
+        const bg = document.getElementById("pl-detail-backdrop");
+        if (panel) requestAnimationFrame(() => panel.classList.add("visible"));
+        if (bg) requestAnimationFrame(() => bg.classList.add("visible"));
+      }
+
+      plInitMaps();
+    }
+
+    function plInitMaps() {
+      if (typeof L === "undefined") {
+        setTimeout(plInitMaps, 80);
+        return;
+      }
+
+      const mapEl = document.getElementById("pl-leaflet-map");
+      if (mapEl && !mapEl._plInited) {
+        mapEl._plInited = true;
+        const centerLat = parseFloat(mapEl.dataset.centerLat);
+        const centerLng = parseFloat(mapEl.dataset.centerLng);
+        const map = L.map(mapEl, { scrollWheelZoom: false }).setView([centerLat, centerLng], 12);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+
+        const markers = [];
+        const orangeIcon = L.icon({
+          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        });
+        PL.places.forEach((p, idx) => {
+          if (p.lat == null || p.lng == null) return;
+          const marker = L.marker([p.lat, p.lng], { icon: orangeIcon }).addTo(map);
+          marker.bindPopup(plPopupHtml(p, idx), { maxWidth: 280 });
+          marker.on("popupopen", (ev) => {
+            const root = ev.popup.getElement();
+            if (!root) return;
+            const btn = root.querySelector("[data-popup-detail]");
+            if (btn) btn.addEventListener("click", () => plShowDetail(btn.dataset.popupDetail), { once: true });
+          });
+          markers.push(marker);
+        });
+
+        if (markers.length > 1) {
+          const group = L.featureGroup(markers);
+          map.fitBounds(group.getBounds().pad(0.15));
+        } else if (markers.length === 1) {
+          map.setView(markers[0].getLatLng(), 14);
+        }
+
+        setTimeout(() => map.invalidateSize(), 200);
+      }
+
+      const detailEl = document.getElementById("pl-detail-leaflet-map");
+      if (detailEl && !detailEl._plInited) {
+        detailEl._plInited = true;
+        const lat = parseFloat(detailEl.dataset.lat);
+        const lng = parseFloat(detailEl.dataset.lng);
+        const name = detailEl.dataset.name || "";
+        if (!isNaN(lat) && !isNaN(lng)) {
+          const map = L.map(detailEl, { scrollWheelZoom: false }).setView([lat, lng], 15);
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          }).addTo(map);
+          const orangeIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+          });
+          L.marker([lat, lng], { icon: orangeIcon }).addTo(map).bindPopup("<b>" + escapeHtml(name) + "</b>").openPopup();
+          setTimeout(() => map.invalidateSize(), 250);
+        }
+      }
+    }
+
+    function plPopupHtml(p, idx) {
+      const caps = (p.capabilities || []).slice(0, 4).map(c =>
+        '<span class="pl-popup-cap">' + escapeHtml(c) + '</span>'
+      ).join("");
+      return `
+        <div class="pl-popup">
+          <div class="pl-popup-name">${escapeHtml(p.name || "Merchant")}</div>
+          ${p.address ? '<div class="pl-popup-addr">' + escapeHtml(p.address) + '</div>' : ""}
+          <div class="pl-popup-meta">
+            ${p.mccCode ? '<span class="pl-popup-chip">MCC ' + escapeHtml(p.mccCode) + '</span>' : ""}
+            ${p.industry ? '<span class="pl-popup-chip">' + escapeHtml(p.industry) + '</span>' : ""}
+            ${p.isInBusiness ? '<span class="pl-popup-chip pl-popup-chip--ok">Active</span>' : '<span class="pl-popup-chip pl-popup-chip--off">Inactive</span>'}
+          </div>
+          ${caps ? '<div class="pl-popup-caps">' + caps + '</div>' : ""}
+          ${p.phone ? '<div class="pl-popup-row">📞 ' + escapeHtml(p.phone) + '</div>' : ""}
+          ${p.website ? '<div class="pl-popup-row">🔗 <a href="' + escapeHtml(p.website) + '" target="_blank" rel="noopener">' + escapeHtml(p.website.replace(/^https?:\/\//, "").replace(/\/$/, "")) + '</a></div>' : ""}
+          ${p.locationId ? '<button class="pl-popup-btn" data-popup-detail="' + escapeHtml(String(p.locationId)) + '">View full details →</button>' : ""}
+        </div>`;
+    }
+
+    function plSearch() {
+      if (!PL.countryCode) return;
+      PL.loading = true;
+      PL.places = [];
+      PL.error = null;
+      PL.detail = null;
+      PL.selected = null;
+      plRender();
+
+      fetch("/usecases/places/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "search",
+          params: {
+            latitude: PL.lat,
+            longitude: PL.lng,
+            radiusSearch: !!(PL.lat && PL.lng),
+            distance: PL.distance,
+            unit: PL.unit,
+            countryCode: PL.countryCode,
+            industry: PL.industry,
+            cityName: PL.cityName,
+          },
+        }),
+      })
+        .then(r => r.json())
+        .then(d => {
+          PL.loading = false;
+          if (d.error) {
+            PL.error = typeof d.error === "string" ? d.error : JSON.stringify(d.error);
+          } else {
+            PL.places = d.places || [];
+            PL.total = d.total || PL.places.length;
+          }
+          plRender();
+        })
+        .catch(err => {
+          PL.loading = false;
+          PL.error = err.message || String(err);
+          plRender();
+        });
+    }
+
+    function plShowDetail(locationId) {
+      if (!locationId || PL.detailLoading) return;
+      PL.selected = locationId;
+      PL.detailLoading = true;
+      const cached = PL.places.find(p => String(p.locationId) === String(locationId));
+      if (cached) { PL.detail = cached; }
+      plRender();
+
+      fetch("/usecases/places/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "detail", params: { location_id: locationId } }),
+      })
+        .then(r => r.json())
+        .then(d => {
+          PL.detailLoading = false;
+          if (d.error) {
+            if (!PL.detail) { PL.error = typeof d.error === "string" ? d.error : JSON.stringify(d.error); plRender(); }
+          } else if (d.place) {
+            const hasNew = JSON.stringify(d.place) !== JSON.stringify(PL.detail);
+            PL.detail = d.place;
+            if (hasNew) plRender();
+          }
+        })
+        .catch(() => { PL.detailLoading = false; });
+    }
+
+    document.addEventListener("DOMContentLoaded", renderPlaces);
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payment Success Indicator — vima</title>
+  <link rel="stylesheet" href="/psi/style.css">
+</head>
+<body>
+  <div id="uc-body"></div>
+
+<script>
+// ─── Minimal helpers ──────────────────────────────────────────────────────────
+function $(id) { return document.getElementById(id); }
+
+function escapeHtml(s) {
+  if (s == null) return "";
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// ─── PSI state ────────────────────────────────────────────────────────────────
+const PSI = {
+  cid: "9013023139",
+  accounts: [],
+  selectedAccountId: null,
+  amount: 500,
+  result: null,
+  loading: false,
+  selectedDay: 0,
+};
+
+const PSI_FACTOR_LABELS = {
+  recentBalance:     "Recent Balance",
+  balanceHistory:    "Balance History",
+  nsfHistory:        "NSF History",
+  recentNsfHistory:  "Recent NSF Activity",
+  recurringNsf:      "Recurring NSF",
+  spendHistory:      "Spend Trend",
+  depositHistory:    "Deposit Trend",
+  transactionAmount: "Transaction Size",
+};
+
+function renderPsi() {
+  fetch("/explorer/ofin/state").then(r => r.json()).then(d => {
+    PSI.cid = (d.state || {}).customer_id || PSI.cid;
+    psiRender();
+  }).catch(() => psiRender());
+}
+
+function psiShortDate(iso) {
+  if (!iso) return "";
+  const [, m, day] = iso.split("-");
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return months[parseInt(m,10)-1] + " " + parseInt(day,10);
+}
+
+function psiRender() {
+  const body = $("uc-body");
+  if (!body) return;
+  body.innerHTML = `
+    <div class="psi-stage">
+      <div class="psi-controlbar">
+        <div class="psi-controls-row">
+          <div class="psi-field psi-field--grow">
+            <label>Customer ID</label>
+            <input id="psi-cid" value="${escapeHtml(PSI.cid)}" placeholder="Enter customer ID" />
+          </div>
+          <button class="btn" id="psi-load-btn">Load Accounts</button>
+        </div>
+        ${PSI.accounts.length ? `
+        <div class="psi-controls-row">
+          <div class="psi-field psi-field--grow">
+            <label>Account</label>
+            <select id="psi-account-sel">
+              ${PSI.accounts.map(a => {
+                const bal = a.balance != null
+                  ? ` · $${Number(a.balance).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`
+                  : "";
+                return `<option value="${escapeHtml(a.id)}" ${PSI.selectedAccountId === a.id ? "selected" : ""}>${escapeHtml(a.name)} · ${escapeHtml(a.number)} · ${escapeHtml(a.type)}${bal}</option>`;
+              }).join("")}
+            </select>
+          </div>
+          <div class="psi-field">
+            <label>Amount (USD)</label>
+            <div class="psi-amount-wrap">
+              <span class="psi-amount-dollar">$</span>
+              <input id="psi-amount" type="number" min="1" step="0.01" value="${PSI.amount}" />
+            </div>
+          </div>
+          <button class="btn btn-primary" id="psi-run-btn" ${PSI.loading ? "disabled" : ""}>
+            ${PSI.loading
+              ? `<span class="psi-spinner"></span>Assessing…`
+              : `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;flex-shrink:0"><path d="M9 1v16M1 9h16"/></svg>Run Assessment`}
+          </button>
+        </div>
+        ` : `<p class="psi-hint">Enter a Customer ID and load their accounts to begin.</p>`}
+      </div>
+
+      <div class="psi-disclaimer">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" style="width:13px;height:13px;flex-shrink:0"><path d="M8 1.5L1 14h14L8 1.5z"/><path d="M8 6v4M8 11.5v.5"/></svg>
+        NOTE: THIS IS NOT RUNNING THE PRODUCTION PSI MODEL — TREAT RESULTS AS ILLUSTRATIVE
+      </div>
+
+      <div id="psi-result-area">
+        ${PSI.loading ? `<div class="psi-loading-state"><div class="psi-spinner psi-spinner--lg"></div><p>Calling Payment Success Indicator API…</p></div>` : ""}
+        ${!PSI.loading && PSI.result ? psiResultHtml(PSI.result) : ""}
+        ${!PSI.loading && !PSI.result && !PSI.accounts.length ? psiHeroHtml() : ""}
+      </div>
+
+    </div>
+  `;
+  psiWire();
+}
+
+function psiHeroHtml() {
+  return `
+    <div class="psi-hero">
+      <div class="psi-hero-icon">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="24" cy="24" r="20"/>
+          <path d="M24 14v10l6 4"/>
+        </svg>
+      </div>
+      <h3>Real-time Payment Risk Assessment</h3>
+      <p>PSI evaluates the likelihood of an ACH payment succeeding — before you send it. Load a customer's accounts above to get started.</p>
+      <div class="psi-hero-chips">
+        <span class="psi-hero-chip">Real-time balance check</span>
+        <span class="psi-hero-chip">10-day NSF risk forecast</span>
+        <span class="psi-hero-chip">Fraud signal detection</span>
+      </div>
+    </div>`;
+}
+
+function psiGaugeSvg(score, level) {
+  const colors = { low: "#10b981", medium: "#f59e0b", high: "#ef4444" };
+  const fgColor = colors[level] || colors.medium;
+  const r = 54;
+  const total = Math.PI * r;
+  const filled = (score / 100) * total;
+  return `
+    <div class="psi-gauge">
+      <svg viewBox="0 0 144 80" class="psi-gauge-svg">
+        <path d="M18 72 A54 54 0 0 1 126 72"
+          fill="none" stroke="#f0f1f5" stroke-width="11" stroke-linecap="round"/>
+        <path d="M18 72 A54 54 0 0 1 126 72"
+          fill="none" stroke="${fgColor}" stroke-width="11" stroke-linecap="round"
+          stroke-dasharray="${filled.toFixed(1)} ${(total + 4).toFixed(1)}"/>
+        <text x="72" y="62" text-anchor="middle"
+          font-size="30" font-weight="900" fill="${fgColor}" font-family="inherit">${score}</text>
+        <text x="72" y="74" text-anchor="middle"
+          font-size="9" fill="#bbb" font-family="inherit">out of 100</text>
+      </svg>
+      <div class="psi-gauge-label psi-gauge-label--${level}">${
+        level === "low" ? "Low risk" : level === "medium" ? "Moderate risk" : "High risk"
+      }</div>
+    </div>`;
+}
+
+function psiResultHtml(r) {
+  if (r.error) {
+    return `<div class="psi-error-card"><span class="psi-error-icon">⚠</span><div><strong>Assessment failed</strong><p>${escapeHtml(r.error)}</p></div></div>`;
+  }
+
+  const daily = r.dailyResults || [];
+  const hasNsf = daily.length > 0;
+  const selDay = daily[PSI.selectedDay] || daily[0] || {};
+  const unauth = r.unauthorizedReturnRisk;
+
+  let bestIdx = 0;
+  daily.forEach((d, i) => { if (d.nsfScore < daily[bestIdx].nsfScore) bestIdx = i; });
+
+  const verdictLevel = (daily[0] || {}).riskLevel || (unauth || {}).riskLevel || "low";
+  const VERDICT = {
+    low:    { icon: "✓", title: "Low Risk · Ready to Send",
+              sub: "Confidence is high that this payment will clear successfully." },
+    medium: { icon: "⚠", title: "Moderate Risk · Proceed with Caution",
+              sub: "Consider settling on the recommended date to reduce NSF return risk." },
+    high:   { icon: "✗", title: "High Return Risk · Consider Delaying",
+              sub: "This account shows elevated NSF risk. Consider alternative payment methods or wait for improved account conditions." },
+  };
+  const verdict = VERDICT[verdictLevel] || VERDICT.medium;
+
+  const amtFmt = n => "$" + Number(n).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
+  const balance = r.availableBalance;
+  const amount  = r.amount || 0;
+  const covered = balance != null ? balance >= amount : null;
+
+  return `
+    <div class="psi-result">
+
+      <div class="psi-verdict psi-verdict--${verdictLevel}">
+        <div class="psi-verdict-icon">${verdict.icon}</div>
+        <div class="psi-verdict-body">
+          <div class="psi-verdict-title">${verdict.title}</div>
+          <div class="psi-verdict-sub">${verdict.sub}</div>
+        </div>
+        ${hasNsf && verdictLevel !== 'high' ? `
+        <div class="psi-verdict-recommend">
+          <span class="psi-verdict-rec-label">Recommended settlement</span>
+          <span class="psi-verdict-rec-date">${escapeHtml(psiShortDate(daily[bestIdx].date))}</span>
+        </div>` : ""}
+      </div>
+
+      <div class="psi-main-grid">
+
+        ${hasNsf ? `
+        <div class="psi-gauge-card">
+          <div class="psi-card-label">NSF Return Risk</div>
+          ${psiGaugeSvg(Math.round(selDay.nsfScore ?? 0), selDay.riskLevel || verdictLevel)}
+          <div class="psi-gauge-meta">
+            <span class="psi-indicator-badge psi-ibadge--${selDay.riskLevel}">${escapeHtml(selDay.indicator || "")}</span>
+            <span class="psi-card-sub">${selDay.riskLevel === 'high' ? `Return probability: <strong>${Math.round(selDay.nsfScore ?? 0)}%</strong>` : `Success confidence: <strong>${Math.round(selDay.confidence ?? 0)}%</strong>`}</span>
+          </div>
+          <p class="psi-card-desc">Return probability (0–100). Lower score = higher confidence. Click a day in the timeline to compare dates.</p>
+        </div>` : ""}
+
+        <div class="psi-details-card">
+          <div class="psi-detail-row">
+            <span class="psi-detail-label">Transaction amount</span>
+            <span class="psi-detail-value">${amtFmt(amount)}</span>
+          </div>
+          ${balance != null ? `
+          <div class="psi-detail-row">
+            <span class="psi-detail-label">Available balance</span>
+            <span class="psi-detail-value psi-detail-value--balance">${amtFmt(balance)}</span>
+          </div>
+          <div class="psi-detail-row">
+            <span class="psi-detail-label">Coverage</span>
+            <span class="psi-detail-value ${covered ? "psi-detail-ok" : "psi-detail-warn"}">${covered ? "✓ Covered" : "✗ Insufficient"}</span>
+          </div>` : ""}
+          ${r.settleByDate ? `
+          <div class="psi-detail-row">
+            <span class="psi-detail-label">Settle by</span>
+            <span class="psi-detail-value">${escapeHtml(psiShortDate(r.settleByDate))}</span>
+          </div>` : ""}
+          ${r.requestDate ? `
+          <div class="psi-detail-row">
+            <span class="psi-detail-label">Assessment date</span>
+            <span class="psi-detail-value">${escapeHtml(r.requestDate)}</span>
+          </div>` : ""}
+
+          ${unauth ? `
+          <div class="psi-detail-divider"></div>
+          <div class="psi-card-label" style="padding:12px 0 8px">Unauthorized Return Risk</div>
+          <div class="psi-unauth-row">
+            <div class="psi-unauth-score psi-score--${unauth.riskLevel}">${Math.round(unauth.score ?? 0)}</div>
+            <div>
+              <span class="psi-indicator-badge psi-ibadge--${unauth.riskLevel}">${escapeHtml(unauth.indicator || "")}</span>
+              <div class="psi-card-sub" style="margin-top:5px">First/third-party fraud signal.<br>Score 0–100 — lower is better.</div>
+            </div>
+          </div>` : ""}
+        </div>
+      </div>
+
+      ${hasNsf ? `
+      <div class="psi-timeline">
+        <div class="psi-timeline-head">
+          <div>
+            <div class="psi-section-title">${daily.length}-Day Settlement Window</div>
+            <div class="psi-section-sub">NSF risk by settlement date — shorter bars are safer. Click any day to inspect risk factors.</div>
+          </div>
+        </div>
+        <div class="psi-timeline-bars" id="psi-bars">
+          ${(() => {
+            const maxScore = Math.max(...daily.map(d => d.nsfScore), 1);
+            return daily.map((d, i) => {
+              const isBest = i === bestIdx;
+              const isSel  = i === PSI.selectedDay;
+              const barPct = Math.max(2, Math.round((d.nsfScore / maxScore) * 100));
+              return `<div class="psi-day ${isBest ? "psi-day--best" : ""} ${isSel ? "psi-day--selected" : ""}" data-day-idx="${i}">
+              ${isBest ? `<div class="psi-day-best-label">Best</div>` : ""}
+              <div class="psi-day-conf">${Math.round(d.nsfScore)}</div>
+              <div class="psi-day-bar-wrap">
+                <div class="psi-day-bar psi-bar--${d.riskLevel}" style="height:${barPct}%"></div>
+              </div>
+              <div class="psi-day-date">${escapeHtml(psiShortDate(d.date))}</div>
+              <div class="psi-day-badge psi-badge--${d.riskLevel}">${d.riskLevel === "low" ? "Low" : d.riskLevel === "medium" ? "Med" : "High"}</div>
+            </div>`;
+            }).join("");
+          })()}
+        </div>
+        <div class="psi-timeline-legend">
+          <span class="psi-legend-item psi-legend--low">Low risk</span>
+          <span class="psi-legend-item psi-legend--medium">Moderate</span>
+          <span class="psi-legend-item psi-legend--high">High risk</span>
+          <span class="psi-legend-best">★ Best settlement day</span>
+        </div>
+      </div>
+      ` : r.nsfError ? `<div class="psi-error-card"><span class="psi-error-icon">⚠</span><div><strong>NSF score unavailable</strong><p>${escapeHtml((r.nsfError.message || r.nsfError.title || JSON.stringify(r.nsfError)))}</p></div></div>` : ""}
+
+      ${selDay.reasons && Object.values(selDay.reasons).some(v => v > 0) ? `
+      <div class="psi-factors">
+        <div class="psi-section-title">Risk Factor Breakdown <span class="psi-factors-date">— ${escapeHtml(psiShortDate(selDay.date))}</span></div>
+        <div class="psi-section-sub" style="margin-bottom:16px">Component scores driving the NSF risk assessment. Higher = more risk.</div>
+        <div class="psi-factors-grid">
+          ${Object.entries(selDay.reasons).map(([key, val]) => `
+            <div class="psi-factor">
+              <div class="psi-factor-header">
+                <div class="psi-factor-label">${escapeHtml(PSI_FACTOR_LABELS[key] || key)}</div>
+                <span class="psi-factor-score" style="color:${psiFactorColor(val)}">${val}</span>
+              </div>
+              <div class="psi-factor-track">
+                <div class="psi-factor-fill" style="width:${val}%; background:${psiFactorColor(val)}"></div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>` : ""}
+
+    </div>
+  `;
+}
+
+function psiFactorColor(v) {
+  if (v >= 66) return "#ef4444";
+  if (v >= 33) return "#f59e0b";
+  return "#10b981";
+}
+
+function psiWire() {
+  const loadBtn = $("psi-load-btn");
+  const runBtn  = $("psi-run-btn");
+
+  if (loadBtn) {
+    loadBtn.addEventListener("click", () => {
+      PSI.cid = ($("psi-cid") || {}).value?.trim() || PSI.cid;
+      psiLoadAccounts();
+    });
+  }
+  const cidInput = $("psi-cid");
+  if (cidInput) {
+    cidInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") { PSI.cid = cidInput.value.trim(); psiLoadAccounts(); }
+    });
+  }
+
+  const sel = $("psi-account-sel");
+  if (sel) {
+    sel.addEventListener("change", () => { PSI.selectedAccountId = sel.value; });
+    if (!PSI.selectedAccountId) PSI.selectedAccountId = sel.value;
+  }
+
+  if (runBtn) {
+    runBtn.addEventListener("click", () => {
+      const amtInput = $("psi-amount");
+      PSI.amount = parseFloat(amtInput?.value || "500") || 500;
+      PSI.selectedAccountId = $("psi-account-sel")?.value || PSI.selectedAccountId;
+      psiRunAssessment();
+    });
+  }
+
+  // Day-bar clicks
+  const barsEl = $("psi-bars");
+  if (barsEl) {
+    barsEl.querySelectorAll("[data-day-idx]").forEach(el => {
+      el.addEventListener("click", () => {
+        PSI.selectedDay = parseInt(el.dataset.dayIdx, 10);
+        psiRender();
+      });
+    });
+  }
+}
+
+function psiLoadAccounts() {
+  const area = $("psi-result-area");
+  if (area) area.innerHTML = `<div class="psi-loading-state"><div class="psi-spinner psi-spinner--lg"></div><p>Loading accounts…</p></div>`;
+
+  const reqBody = { action: "get_accounts", params: { customer_id: PSI.cid } };
+
+  fetch("/usecases/psi/action", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(reqBody),
+  }).then(r => r.json()).then(d => {
+    if (d.error) {
+      const area2 = $("psi-result-area");
+      if (area2) area2.innerHTML = `<div class="psi-error-card"><span class="psi-error-icon">⚠</span><div><strong>Could not load accounts</strong><p>${escapeHtml(d.error)}</p></div></div>`;
+      psiRender();
+      return;
+    }
+    PSI.accounts = d.accounts || [];
+    PSI.selectedAccountId = PSI.accounts[0]?.id || null;
+    PSI.result = null;
+    PSI.selectedDay = 0;
+    psiRender();
+  }).catch(err => {
+    const area2 = $("psi-result-area");
+    if (area2) area2.innerHTML = `<div class="psi-error-card"><span class="psi-error-icon">⚠</span><div><strong>Request failed</strong><p>Could not reach the server.</p></div></div>`;
+    psiRender();
+  });
+}
+
+function psiRunAssessment() {
+  PSI.loading = true;
+  PSI.result = null;
+
+  const reqBody = {
+    action: "score",
+    params: { customer_id: PSI.cid, account_id: PSI.selectedAccountId, amount: PSI.amount },
+  };
+  psiRender();
+
+  fetch("/usecases/psi/action", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(reqBody),
+  }).then(r => r.json()).then(d => {
+    PSI.loading = false;
+    PSI.selectedDay = 0;
+    PSI.result = d.result || (d.error ? { error: d.error } : { error: "No result returned" });
+    psiRender();
+  }).catch(err => {
+    PSI.loading = false;
+    PSI.result = { error: "Request failed — check network and try again." };
+    psiRender();
+  });
+}
+
+document.addEventListener("DOMContentLoaded", renderPsi);
+</script>
+</body>
+</html>

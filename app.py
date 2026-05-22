@@ -562,10 +562,10 @@ def testchat_files(filename: str):
     return send_from_directory(directory, filename)
 
 
-@app.route("/sonicbrand/<path:filename>")
-def sonicbrand_files(filename: str):
-    """Serve files from the self-contained sonicbrand use-case directory."""
-    directory = os.path.join(os.path.dirname(__file__), "usecases", "sonicbrand")
+@app.route("/sonic/<path:filename>")
+def sonic_files(filename: str):
+    """Serve files from the self-contained sonic use-case directory."""
+    directory = os.path.join(os.path.dirname(__file__), "usecases", "sonic")
     return send_from_directory(directory, filename)
 
 
@@ -608,6 +608,48 @@ def easysavings_files(filename: str):
 def identity_files(filename: str):
     """Serve files from the self-contained identity use-case directory."""
     directory = os.path.join(os.path.dirname(__file__), "usecases", "identity")
+    return send_from_directory(directory, filename)
+
+
+@app.route("/psi/<path:filename>")
+def psi_files(filename: str):
+    """Serve files from the self-contained psi use-case directory."""
+    directory = os.path.join(os.path.dirname(__file__), "usecases", "psi")
+    return send_from_directory(directory, filename)
+
+
+@app.route("/places/<path:filename>")
+def places_files(filename: str):
+    """Serve files from the self-contained places use-case directory."""
+    directory = os.path.join(os.path.dirname(__file__), "usecases", "places")
+    return send_from_directory(directory, filename)
+
+
+@app.route("/recurring/<path:filename>")
+def recurring_files(filename: str):
+    """Serve files from the self-contained recurring use-case directory."""
+    directory = os.path.join(os.path.dirname(__file__), "usecases", "recurring")
+    return send_from_directory(directory, filename)
+
+
+@app.route("/specials/<path:filename>")
+def specials_files(filename: str):
+    """Serve files from the self-contained specials use-case directory."""
+    directory = os.path.join(os.path.dirname(__file__), "usecases", "specials")
+    return send_from_directory(directory, filename)
+
+
+@app.route("/findacard/<path:filename>")
+def findacard_files(filename: str):
+    """Serve files from the self-contained findacard use-case directory."""
+    directory = os.path.join(os.path.dirname(__file__), "usecases", "findacard")
+    return send_from_directory(directory, filename)
+
+
+@app.route("/financeincolour/<path:filename>")
+def financeincolour_files(filename: str):
+    """Serve files from the self-contained financeincolour use-case directory."""
+    directory = os.path.join(os.path.dirname(__file__), "usecases", "financeincolour")
     return send_from_directory(directory, filename)
 
 
