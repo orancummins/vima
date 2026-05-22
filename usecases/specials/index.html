@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priceless Concierge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/specials/style.css">
+</head>
+<body>
+  <div id="uc-body"></div>
+
+  <script>
+  (function () {
+    "use strict";
+
+    function $(id) { return document.getElementById(id); }
+    function escapeHtml(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    const SPECIALS = {
+      eligible: "US",
+      destination: "JP",
+      product: "MWE",
+      category: "",
+      loading: false,
+      error: null,
+      data: null,
+      activeTab: "offers",
+    };
+
+    const SPECIALS_MARKETS = [
+      { v: "US", label: "United States", flag: "🇺🇸" },
+      { v: "GB", label: "United Kingdom", flag: "🇬🇧" },
+      { v: "JP", label: "Japan",          flag: "🇯🇵" },
+      { v: "SG", label: "Singapore",      flag: "🇸🇬" },
+      { v: "HK", label: "Hong Kong",      flag: "🇭🇰" },
+      { v: "AU", label: "Australia",      flag: "🇦🇺" },
+      { v: "DE", label: "Germany",        flag: "🇩🇪" },
+      { v: "FR", label: "France",         flag: "🇫🇷" },
+      { v: "BR", label: "Brazil",         flag: "🇧🇷" },
+      { v: "IN", label: "India",          flag: "🇮🇳" },
+    ];
+
+    const SPECIALS_PRODUCTS = [
+      { v: "MST", label: "Standard",     accent: "#64748b" },
+      { v: "MGD", label: "Gold",         accent: "#c8a24c" },
+      { v: "MPL", label: "Platinum",     accent: "#94a3b8" },
+      { v: "MWP", label: "World",        accent: "#1e293b" },
+      { v: "MWE", label: "World Elite",  accent: "#000000" },
+      { v: "MBC", label: "Business",     accent: "#0f766e" },
+    ];
+
+    const SPECIALS_CATEGORIES = [
+      { v: "",              label: "All categories", icon: "✨" },
+      { v: "Dining",        label: "Dining",        icon: "🍽️" },
+      { v: "Shopping",      label: "Shopping",      icon: "🛍️" },
+      { v: "Travel",        label: "Travel",        icon: "✈️" },
+      { v: "Entertainment", label: "Entertainment", icon: "🎭" },
+      { v: "Sports",        label: "Sports",        icon: "⚽" },
+      { v: "Wellness",      label: "Wellness",      icon: "🧘" },
+      { v: "Lifestyle",     label: "Lifestyle",     icon: "💎" },
+    ];
+
+    function renderSpecials() {
+      specialsRender();
+    }
+
+    function specialsRender() {
+      const body = $("uc-body");
+      if (!body) return;
+      body.innerHTML = `
+        <div class="sp-wrap">
+          ${specialsControlBarHtml()}
+          <div class="sp-canvas">${specialsCanvasHtml()}</div>
+        </div>`;
+      specialsWire();
+    }
+
+    function specialsControlBarHtml() {
+      const prod = SPECIALS_PRODUCTS.find(p => p.v === SPECIALS.product) || SPECIALS_PRODUCTS[4];
+
+      const marketOpts = (sel) => SPECIALS_MARKETS.map(m =>
+        `<option value="${m.v}" ${m.v === sel ? "selected" : ""}>${m.flag} ${m.label}</option>`
+      ).join("");
+
+      const productOpts = SPECIALS_PRODUCTS.map(p =>
+        `<option value="${p.v}" ${p.v === SPECIALS.product ? "selected" : ""}>${p.label}</option>`
+      ).join("");
+
+      return `
+        <div class="sp-control">
+          <div class="sp-control-left">
+            <div class="sp-card-chip" style="--accent:${prod.accent}">
+              <div class="sp-card-chip-brand">mastercard</div>
+              <div class="sp-card-chip-emv"></div>
+              <div class="sp-card-chip-tier">${escapeHtml(prod.label)}</div>
+              <div class="sp-card-chip-circles">
+                <span class="sp-cc sp-cc-red"></span>
+                <span class="sp-cc sp-cc-yellow"></span>
+              </div>
+            </div>
+          </div>
+          <div class="sp-control-fields">
+            <label class="sp-field">
+              <span class="sp-field-label">Card</span>
+              <select id="sp-product" class="sp-select">${productOpts}</select>
+            </label>
+            <label class="sp-field">
+              <span class="sp-field-label">Issued in</span>
+              <select id="sp-eligible" class="sp-select">${marketOpts(SPECIALS.eligible)}</select>
+            </label>
+            <div class="sp-arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </div>
+            <label class="sp-field">
+              <span class="sp-field-label">Travelling to</span>
+              <select id="sp-destination" class="sp-select">${marketOpts(SPECIALS.destination)}</select>
+            </label>
+            <button id="sp-go" class="sp-btn sp-btn-primary"${SPECIALS.loading ? " disabled" : ""}>
+              ${SPECIALS.loading
+                ? '<span class="sp-spinner"></span>Searching'
+                : '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>Find perks'}
+            </button>
+          </div>
+        </div>
+        <div class="sp-catbar">
+          ${SPECIALS_CATEGORIES.map(c => `
+            <button class="sp-cat${SPECIALS.category === c.v ? " sp-cat-active" : ""}" data-cat="${escapeHtml(c.v)}">
+              <span class="sp-cat-icon">${c.icon}</span>${escapeHtml(c.label)}
+            </button>`).join("")}
+        </div>
+      `;
+    }
+
+    function specialsCanvasHtml() {
+      if (SPECIALS.loading) {
+        return `
+          <div class="sp-loading">
+            <div class="sp-loading-grid">
+              ${Array.from({length: 6}).map(() => '<div class="sp-skel"></div>').join("")}
+            </div>
+          </div>`;
+      }
+      if (SPECIALS.error) {
+        return `
+          <div class="sp-empty sp-empty-error">
+            <div class="sp-empty-icon">⚠️</div>
+            <h3>Couldn't reach Priceless Specials</h3>
+            <p>${escapeHtml(String(SPECIALS.error))}</p>
+          </div>`;
+      }
+      if (!SPECIALS.data) {
+        return specialsHeroHtml();
+      }
+      const d = SPECIALS.data;
+      const counts = {
+        offers:    (d.offers || []).length,
+        benefits:  (d.benefits || []).length,
+        programs:  (d.programs || []).length,
+        merchants: (d.merchants || []).length,
+      };
+      const total = counts.offers + counts.benefits + counts.programs + counts.merchants;
+      if (!total) {
+        return `
+          <div class="sp-empty">
+            <div class="sp-empty-icon">🧭</div>
+            <h3>No perks found for that combination</h3>
+            <p>Try a different destination, card tier or category.</p>
+          </div>`;
+      }
+      return `
+        ${d.demo_mode ? specialsDemoNoticeHtml(d.demo_reason) : ""}
+        ${specialsSummaryHtml(counts)}
+        ${specialsTabsHtml(counts)}
+        <div class="sp-pane">${specialsPaneHtml()}</div>
+      `;
+    }
+
+    function specialsDemoNoticeHtml(reason) {
+      const msg = reason || "Showing curated demo perks.";
+      return `
+        <div class="sp-demo-banner" role="status">
+          <span class="sp-demo-dot" aria-hidden="true"></span>
+          <div class="sp-demo-text">
+            <strong>Demo data</strong>
+            <span>${escapeHtml(msg)}</span>
+          </div>
+        </div>`;
+    }
+
+    function specialsSummaryHtml(counts) {
+      const dest = SPECIALS_MARKETS.find(m => m.v === SPECIALS.destination) || {};
+      return `
+        <div class="sp-summary">
+          <div class="sp-summary-head">
+            <div class="sp-summary-title">
+              <span class="sp-summary-flag">${dest.flag || ""}</span>
+              <div>
+                <div class="sp-summary-eyebrow">Perks waiting in</div>
+                <div class="sp-summary-place">${escapeHtml(dest.label || SPECIALS.destination)}</div>
+              </div>
+            </div>
+          </div>
+          <div class="sp-stats">
+            <div class="sp-stat">
+              <div class="sp-stat-value">${counts.offers}</div>
+              <div class="sp-stat-label">Offers</div>
+            </div>
+            <div class="sp-stat">
+              <div class="sp-stat-value">${counts.benefits}</div>
+              <div class="sp-stat-label">Card benefits</div>
+            </div>
+            <div class="sp-stat">
+              <div class="sp-stat-value">${counts.programs}</div>
+              <div class="sp-stat-label">Programs</div>
+            </div>
+            <div class="sp-stat">
+              <div class="sp-stat-value">${counts.merchants}</div>
+              <div class="sp-stat-label">Merchants</div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function specialsTabsHtml(counts) {
+      const tabs = [
+        { id: "offers",    label: "Offers",     count: counts.offers },
+        { id: "benefits",  label: "Benefits",   count: counts.benefits },
+        { id: "programs",  label: "Programs",   count: counts.programs },
+        { id: "merchants", label: "Merchants",  count: counts.merchants },
+      ];
+      return `
+        <div class="sp-tabs">
+          ${tabs.map(t => `
+            <button class="sp-tab${SPECIALS.activeTab === t.id ? " sp-tab-active" : ""}" data-tab="${t.id}"${t.count ? "" : " disabled"}>
+              ${escapeHtml(t.label)}<span class="sp-tab-count">${t.count}</span>
+            </button>`).join("")}
+        </div>`;
+    }
+
+    function specialsPaneHtml() {
+      const d = SPECIALS.data || {};
+      if (SPECIALS.activeTab === "offers")    return specialsOffersHtml(d.offers || []);
+      if (SPECIALS.activeTab === "benefits")  return specialsBenefitsHtml(d.benefits || []);
+      if (SPECIALS.activeTab === "programs")  return specialsProgramsHtml(d.programs || []);
+      if (SPECIALS.activeTab === "merchants") return specialsMerchantsHtml(d.merchants || []);
+      return "";
+    }
+
+    function specialsOffersHtml(list) {
+      if (!list.length) return '<div class="sp-empty-mini">No offers in this slice.</div>';
+      return `<div class="sp-grid sp-grid-offers">${list.map(specialsOfferCard).join("")}</div>`;
+    }
+
+    function specialsOfferCard(o) {
+      const initials = (o.merchantName || "?").trim().slice(0, 2).toUpperCase();
+      const logo = o.merchantLogo
+        ? `<img src="${escapeHtml(o.merchantLogo)}" alt="" class="sp-logo-img" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'sp-logo-fb',textContent:'${escapeHtml(initials)}'}))">`
+        : `<div class="sp-logo-fb">${escapeHtml(initials)}</div>`;
+      const dates = [o.startDate && "From " + o.startDate, o.endDate && "Until " + o.endDate].filter(Boolean).join(" · ");
+      return `
+        <div class="sp-card sp-offer">
+          <div class="sp-offer-head">
+            <div class="sp-logo">${logo}</div>
+            <div class="sp-offer-meta">
+              <div class="sp-offer-merch">${escapeHtml(o.merchantName || "Merchant")}</div>
+              ${o.category ? `<div class="sp-offer-cat">${escapeHtml(o.category)}</div>` : ""}
+            </div>
+            ${o.discount ? `<div class="sp-offer-discount">${escapeHtml(o.discount)}</div>` : ""}
+          </div>
+          <div class="sp-offer-title">${escapeHtml(o.title)}</div>
+          ${o.description ? `<div class="sp-offer-desc">${escapeHtml(o.description)}</div>` : ""}
+          ${dates ? `<div class="sp-offer-dates">${escapeHtml(dates)}</div>` : ""}
+          <div class="sp-offer-foot">
+            ${o.redemptionUrl
+              ? `<a class="sp-btn sp-btn-primary sp-btn-sm" href="${escapeHtml(o.redemptionUrl)}" target="_blank" rel="noopener">Redeem<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:12px;height:12px"><path d="M7 13l6-6M9 7h4v4" stroke-linecap="round"/></svg></a>`
+              : `<span class="sp-pill">Auto-applied</span>`}
+            ${o.termsUrl ? `<a class="sp-link" href="${escapeHtml(o.termsUrl)}" target="_blank" rel="noopener">Terms</a>` : ""}
+          </div>
+        </div>`;
+    }
+
+    function specialsBenefitsHtml(list) {
+      if (!list.length) return '<div class="sp-empty-mini">No card benefits available for this combination.</div>';
+      return `<div class="sp-grid sp-grid-benefits">${list.map(specialsBenefitCard).join("")}</div>`;
+    }
+
+    function specialsBenefitCard(b) {
+      return `
+        <div class="sp-card sp-benefit">
+          <div class="sp-benefit-icon">${b.icon ? `<img src="${escapeHtml(b.icon)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'★'}))">` : "★"}</div>
+          <div class="sp-benefit-body">
+            <div class="sp-benefit-title">${escapeHtml(b.title)}</div>
+            ${b.category ? `<div class="sp-benefit-cat">${escapeHtml(b.category)}</div>` : ""}
+            ${b.description ? `<div class="sp-benefit-desc">${escapeHtml(b.description)}</div>` : ""}
+            ${b.endDate ? `<div class="sp-benefit-foot">Valid until ${escapeHtml(b.endDate)}</div>` : ""}
+          </div>
+          ${b.url ? `<a class="sp-link sp-benefit-link" href="${escapeHtml(b.url)}" target="_blank" rel="noopener">Details →</a>` : ""}
+        </div>`;
+    }
+
+    function specialsProgramsHtml(list) {
+      if (!list.length) return '<div class="sp-empty-mini">No programs running for this market.</div>';
+      return `<div class="sp-grid sp-grid-programs">${list.map(specialsProgramCard).join("")}</div>`;
+    }
+
+    function specialsProgramCard(p) {
+      const hero = p.image
+        ? `<div class="sp-program-hero" style="background-image:url('${encodeURI(p.image)}')"></div>`
+        : `<div class="sp-program-hero sp-program-hero-blank">${escapeHtml((p.title || "P").slice(0,1).toUpperCase())}</div>`;
+      return `
+        <div class="sp-card sp-program">
+          ${hero}
+          <div class="sp-program-body">
+            <div class="sp-program-title">${escapeHtml(p.title)}</div>
+            ${p.description ? `<div class="sp-program-desc">${escapeHtml(p.description)}</div>` : ""}
+            ${p.url ? `<a class="sp-link" href="${escapeHtml(p.url)}" target="_blank" rel="noopener">Explore →</a>` : ""}
+          </div>
+        </div>`;
+    }
+
+    function specialsMerchantsHtml(list) {
+      if (!list.length) return '<div class="sp-empty-mini">No participating merchants found.</div>';
+      return `<div class="sp-merch-grid">${list.map(specialsMerchantTile).join("")}</div>`;
+    }
+
+    function specialsMerchantTile(m) {
+      const initials = (m.name || "?").trim().slice(0, 2).toUpperCase();
+      const logo = m.logo
+        ? `<img src="${escapeHtml(m.logo)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'sp-merch-fb',textContent:'${escapeHtml(initials)}'}))">`
+        : `<div class="sp-merch-fb">${escapeHtml(initials)}</div>`;
+      return `
+        <div class="sp-merch-tile" title="${escapeHtml(m.name)}">
+          <div class="sp-merch-logo">${logo}</div>
+          <div class="sp-merch-name">${escapeHtml(m.name)}</div>
+          ${m.category ? `<div class="sp-merch-cat">${escapeHtml(m.category)}</div>` : ""}
+        </div>`;
+    }
+
+    function specialsHeroHtml() {
+      return `
+        <div class="sp-hero">
+          <div class="sp-hero-eyebrow">Priceless Specials</div>
+          <h2 class="sp-hero-title">Where will your card<br/><span class="sp-grad-text">take you next?</span></h2>
+          <p class="sp-hero-sub">Mastercard curates merchant offers, card-tier benefits and marketing programs for every market in its network. Pick your card and where you're heading — we'll surface the perks waiting at the other end.</p>
+          <div class="sp-hero-chips">
+            <span class="sp-hero-chip">🍽️ Dining</span>
+            <span class="sp-hero-chip">✈️ Travel</span>
+            <span class="sp-hero-chip">🛍️ Shopping</span>
+            <span class="sp-hero-chip">🎭 Entertainment</span>
+            <span class="sp-hero-chip">💎 Lifestyle</span>
+          </div>
+          <button id="sp-hero-go" class="sp-btn sp-btn-primary sp-btn-lg">
+            Show me perks
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M5 10h10M11 5l5 5-5 5" stroke-linecap="round"/></svg>
+          </button>
+        </div>`;
+    }
+
+    function specialsWire() {
+      const sel = (id) => document.getElementById(id);
+      const prod = sel("sp-product");      if (prod) prod.addEventListener("change", e => { SPECIALS.product = e.target.value; specialsRender(); });
+      const elig = sel("sp-eligible");     if (elig) elig.addEventListener("change", e => { SPECIALS.eligible = e.target.value; specialsRender(); });
+      const dest = sel("sp-destination");  if (dest) dest.addEventListener("change", e => { SPECIALS.destination = e.target.value; specialsRender(); });
+      const go   = sel("sp-go");           if (go)   go.addEventListener("click", specialsSearch);
+      const hgo  = sel("sp-hero-go");      if (hgo)  hgo.addEventListener("click", specialsSearch);
+
+      document.querySelectorAll(".sp-cat").forEach(btn => {
+        btn.addEventListener("click", () => {
+          SPECIALS.category = btn.dataset.cat || "";
+          if (SPECIALS.data) specialsSearch();
+          else specialsRender();
+        });
+      });
+      document.querySelectorAll(".sp-tab").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (btn.disabled) return;
+          SPECIALS.activeTab = btn.dataset.tab;
+          specialsRender();
+        });
+      });
+    }
+
+    function specialsSearch() {
+      if (SPECIALS.loading) return;
+      SPECIALS.loading = true;
+      SPECIALS.error = null;
+      SPECIALS.activeTab = "offers";
+      specialsRender();
+
+      fetch("/usecases/specials/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "search",
+          params: {
+            eligible_markets:    SPECIALS.eligible,
+            destination_markets: SPECIALS.destination,
+            mastercard_product:  SPECIALS.product,
+            category:            SPECIALS.category,
+            language:            "en-US",
+          },
+        }),
+      })
+        .then(r => r.json())
+        .then(d => {
+          SPECIALS.loading = false;
+          if (d.error) {
+            SPECIALS.error = typeof d.error === "string" ? d.error : JSON.stringify(d.error);
+            SPECIALS.data = null;
+          } else {
+            SPECIALS.data = d;
+            const order = ["offers", "benefits", "programs", "merchants"];
+            SPECIALS.activeTab = order.find(t => (d[t] || []).length) || "offers";
+          }
+          specialsRender();
+        })
+        .catch(err => {
+          SPECIALS.loading = false;
+          SPECIALS.error = err.message || String(err);
+          specialsRender();
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", renderSpecials);
+  })();
+  </script>
+</body>
+</html>
