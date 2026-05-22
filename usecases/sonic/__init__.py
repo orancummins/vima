@@ -8,9 +8,8 @@ integrated across different payment touchpoints:
   - App UI Sounds      (micro-interactions inside digital products)
   - Regional Variants  (culturally adapted versions of the core melody)
 
-This use case is front-end only. All sounds are synthesised in the browser
-using the Web Audio API to approximate Mastercard's sonic DNA — the actual
-licensed assets must be obtained from Mastercard Brand Centre.
+This use case is front-end only — the entire UI lives in
+``usecases/sonic/index.html`` and is served from ``/sonic/`` by Flask.
 """
 from __future__ import annotations
 from typing import Any, Dict

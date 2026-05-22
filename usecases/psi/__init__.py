@@ -1,9 +1,9 @@
 """Payment Success Indicator — use case.
 
 Calls the Open Finance PSI API to evaluate the likelihood of a chosen ACH
-transaction succeeding or returning as NSF/unauthorized over a 10-day
-settlement window.  Results are shaped for a day-by-day settlement
-confidence timeline in the UI.
+transaction succeeding or returning as NSF/unauthorized over an n-day
+settlement window (n = the number of dailyResults the API returns).
+Results are shaped for a day-by-day settlement confidence timeline in the UI.
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ MANIFEST: Dict[str, Any] = {
     "description": (
         "Every ACH payment carries settlement risk — but it doesn't have to be a gamble. "
         "Payment Success Indicator applies machine learning to consumer-permissioned bank data "
-        "to deliver a real-time per-day probability score across the full 10-day settlement window, "
+        "to deliver a real-time per-day probability score across the full settlement window, "
         "alongside a dedicated unauthorised-return fraud signal. Lenders and payment processors "
         "can move confidently, approve more good payments, and dramatically cut costly return rates "
         "— all from a single, low-friction API call before a transaction is ever submitted."
@@ -141,6 +141,7 @@ def _shape_result(raw: Dict[str, Any]) -> Dict[str, Any]:
         "amount":           (raw.get("transaction") or {}).get("amount"),
         "availableBalance": nsf_res.get("availableBalance"),
         "dailyResults":     daily,
+        "windowDays":       len(daily),   # actual n — not assumed to be 10
         "nsfError":         nsf.get("error"),
         "unauthorizedReturnRisk": {
             "score":     unauth_score,
