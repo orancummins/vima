@@ -1,0 +1,127 @@
+:root{
+  --mc-red:#eb001b; --mc-orange:#ff5f00; --mc-yellow:#f79e1b;
+  --ink:#141414; --muted:#6b6b6b; --line:#e5e5e5; --bg:#f7f7f8;
+  --in:#22c55e; --out:#ef4444;
+}
+* { box-sizing: border-box; }
+html,body{margin:0;padding:0;height:100%;}
+body{
+  font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  color:var(--ink);
+  background:var(--bg);
+  padding:20px;
+  -webkit-font-smoothing:antialiased;
+}
+
+.fic-shell{display:flex;flex-direction:column;gap:16px;max-width:1280px;margin:0 auto;}
+
+.fic-header{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+}
+.fic-title{margin:0;font-size:22px;font-weight:700;letter-spacing:-0.01em;}
+.fic-sub{margin:2px 0 0;font-size:13px;color:var(--muted);}
+
+.fic-error{
+  background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;
+  text-align:center;color:var(--muted);
+}
+.fic-error strong{display:block;color:var(--ink);font-size:15px;margin-bottom:6px;}
+
+.fic-loading{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:40px;color:var(--muted);font-size:14px;
+}
+.fic-spinner{
+  width:18px;height:18px;border-radius:50%;
+  border:2px solid var(--line);border-top-color:var(--mc-orange);
+  animation:fic-spin .9s linear infinite;
+}
+@keyframes fic-spin{to{transform:rotate(360deg);}}
+
+/* ── Summary strip ──────────────────────────────────────────────── */
+.fic-strip{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;
+}
+.fic-card{
+  background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.fic-card label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;}
+.fic-card .fic-value{font-size:22px;font-weight:700;letter-spacing:-0.01em;}
+.fic-card.in   .fic-value{color:var(--in);}
+.fic-card.out  .fic-value{color:var(--out);}
+.fic-card.net  .fic-value{color:var(--ink);}
+.fic-card .fic-sub2{font-size:12px;color:var(--muted);}
+
+/* ── Sections ───────────────────────────────────────────────────── */
+.fic-section{
+  background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;
+}
+.fic-section h2{
+  margin:0 0 12px;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  display:flex;align-items:center;gap:10px;
+}
+.fic-section h2 .fic-tag{
+  font-size:11px;font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0;
+}
+.fic-grid-2{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;}
+@media (max-width:900px){.fic-grid-2{grid-template-columns:1fr;}}
+
+/* ── Daily flow chart ───────────────────────────────────────────── */
+.fic-chart{position:relative;width:100%;height:220px;}
+.fic-chart svg{width:100%;height:100%;display:block;}
+.fic-legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px;}
+.fic-legend .dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle;}
+.fic-legend .dot.in{background:var(--in);}
+.fic-legend .dot.out{background:var(--out);}
+
+/* ── Category bars ──────────────────────────────────────────────── */
+.fic-cats{display:flex;flex-direction:column;gap:10px;}
+.fic-cat{display:grid;grid-template-columns:130px 1fr 80px;align-items:center;gap:10px;font-size:13px;}
+.fic-cat-name{color:var(--ink);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fic-cat-bar{position:relative;height:10px;border-radius:6px;background:#f1f1f3;overflow:hidden;}
+.fic-cat-bar-fill{position:absolute;inset:0;width:0;border-radius:6px;}
+.fic-cat-amt{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px;}
+
+/* ── Trend gauge ────────────────────────────────────────────────── */
+.fic-trend{display:flex;align-items:center;gap:16px;}
+.fic-trend-badge{
+  font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+  padding:6px 10px;border-radius:999px;
+}
+.fic-trend-badge.rising  {background:#fee2e2;color:#991b1b;}
+.fic-trend-badge.cooling {background:#dcfce7;color:#166534;}
+.fic-trend-badge.steady  {background:#e0e7ff;color:#3730a3;}
+.fic-trend-stats{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;}
+.fic-trend-stat{display:flex;flex-direction:column;}
+.fic-trend-stat label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;}
+.fic-trend-stat span{font-weight:600;}
+.fic-pos{color:var(--in);}
+.fic-neg{color:var(--out);}
+
+/* ── Fingerprint ────────────────────────────────────────────────── */
+.fic-fp{display:grid;grid-template-columns:240px 1fr;gap:20px;align-items:center;}
+@media (max-width:760px){.fic-fp{grid-template-columns:1fr;}}
+.fic-fp-canvas{
+  width:240px;height:240px;border-radius:24px;background:#0b0b10;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  box-shadow:0 8px 24px rgba(0,0,0,.18);
+}
+.fic-fp-canvas svg{width:100%;height:100%;}
+.fic-fp-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 18px;}
+.fic-fp-meta .item label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;display:block;margin-bottom:2px;}
+.fic-fp-meta .item span{font-size:15px;font-weight:600;}
+
+/* ── Transactions list ──────────────────────────────────────────── */
+.fic-txns{display:flex;flex-direction:column;gap:6px;max-height:360px;overflow:auto;}
+.fic-txn{
+  display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
+  padding:8px 4px;border-bottom:1px solid var(--line);font-size:13px;
+}
+.fic-txn:last-child{border-bottom:none;}
+.fic-txn-name{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fic-txn-cat{font-size:11px;color:var(--muted);}
+.fic-txn-amt{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;}
+.fic-txn-amt.in{color:var(--in);}
+.fic-txn-amt.out{color:var(--out);}
+.fic-txn-date{font-size:11px;color:var(--muted);min-width:64px;text-align:right;}

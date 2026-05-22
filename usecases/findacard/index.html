@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find A Card</title>
+  <link rel="stylesheet" href="/findacard/style.css">
+</head>
+<body>
+  <div id="uc-body">
+    <div class="fac-loading">
+      <div class="fac-spinner"></div>
+      <p>Checking service…</p>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    "use strict";
+
+    function render() {
+      const body = document.getElementById("uc-body");
+      body.innerHTML = `<div class="fac-loading"><div class="fac-spinner"></div><p>Checking service…</p></div>`;
+
+      fetch("/usecases/findacard/health")
+        .then(r => r.json())
+        .then(({ online }) => {
+          if (online) {
+            body.innerHTML = `
+              <div class="fac-stage">
+                <iframe class="fac-frame" src="http://localhost:5432" title="Find A Card" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+              </div>`;
+          } else {
+            body.innerHTML = `
+              <div class="fac-offline">
+                <div class="fac-offline-icon">
+                  <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="24" cy="24" r="18"/>
+                    <path d="M24 14v12M24 34v1" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <h3>Service not running</h3>
+                <p>Find A Card must be running locally on port 5432 for you to see this use case.</p>
+                <button class="fac-retry-btn" id="fac-retry">Try again</button>
+              </div>`;
+            const retry = document.getElementById("fac-retry");
+            if (retry) retry.addEventListener("click", render);
+          }
+        })
+        .catch(() => {
+          body.innerHTML = `<div class="fac-offline"><p>Could not reach health check endpoint.</p></div>`;
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", render);
+  })();
+  </script>
+</body>
+</html>
