@@ -2681,7 +2681,7 @@ body {
 
 /* ==========================================================================
    Vima Chat / Global Edit modal — shared modal styles
-   (Used by the global "Edit with Vima Chat" button in the header)
+   (Used by the global "Edit with Claude" button in the header)
    ========================================================================== */
 
 .tc-modal-backdrop {
@@ -2702,7 +2702,7 @@ body {
 .tc-modal {
   display: flex;
   flex-direction: column;
-  width: min(39vw, 460px);
+  width: min(47vw, 557px);
   height: min(85vh, 820px);
   background: #0f0f0f;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -3128,6 +3128,15 @@ body {
 .cfg-lock-btn:hover { color: var(--ink); border-color: #ccc; }
 .cfg-lock-btn.unlocked { color: var(--mc-orange); border-color: rgba(255,95,0,0.35); background: rgba(255,95,0,0.05); }
 .cfg-close-btn:hover { color: var(--ink); border-color: #ccc; }
+.cfg-icon-btn {
+  display: flex; align-items: center; gap: 5px;
+  height: 30px; padding: 0 10px; border-radius: 7px;
+  border: 1px solid var(--line); background: white;
+  color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 600;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.cfg-icon-btn:hover { color: var(--ink); border-color: #ccc; }
+.cfg-icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Panel body */
 .cfg-panel-body {

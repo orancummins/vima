@@ -71,7 +71,7 @@ To **add or register** a new API:
 | **Files** | `apis/binlookup/api.py` |
 | **Docs** | https://developer.mastercard.com/bin-lookup/documentation/ |
 | **Auth** | OAuth 1.0a (env: `BINLOOKUP_CONSUMER_KEY`, `BINLOOKUP_SIGNING_KEY_PATH`) |
-| **Cert** | `binlookup.pkcs12` in project root |
+| **Cert** | `binlookup.p12` in project root |
 
 **Categories & operations:**
 - **Lookup** — Lookup BIN (POST; takes a 6–8 digit BIN / account range; returns issuer, brand, product type, country, prepaid/debit flags)

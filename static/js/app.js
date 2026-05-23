@@ -4050,10 +4050,58 @@
     const saveBtn   = document.getElementById('cfg-save-btn');
     const triggerBtn = document.getElementById('cfg-trigger-btn');
     const tooltip   = document.getElementById('cfg-tooltip');
+    const exportBtn  = document.getElementById('cfg-export-btn');
+    const importBtn  = document.getElementById('cfg-import-btn');
+    const importFile = document.getElementById('cfg-import-file');
 
     let _groups = [];       // loaded config groups
     let _unlocked = false;  // edit mode flag
     let _pending = {};      // { KEY: newValue } for unsaved file uploads
+
+    // ── Export ──────────────────────────────────────────────────────────────
+    exportBtn && exportBtn.addEventListener('click', function () {
+      exportBtn.disabled = true;
+      exportBtn.textContent = 'Exporting…';
+      const a = document.createElement('a');
+      a.href = '/config/export';
+      a.download = 'vima-config.zip';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () {
+        exportBtn.disabled = false;
+        exportBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export';
+      }, 1500);
+    });
+
+    // ── Import ──────────────────────────────────────────────────────────────
+    importBtn && importBtn.addEventListener('click', function () { importFile && importFile.click(); });
+    importFile && importFile.addEventListener('change', function () {
+      const file = importFile.files[0];
+      if (!file) return;
+      if (!confirm('This will overwrite your existing .env and key files with the contents of the zip. Continue?')) {
+        importFile.value = '';
+        return;
+      }
+      importBtn.disabled = true;
+      importBtn.textContent = 'Importing…';
+      const fd = new FormData();
+      fd.append('file', file);
+      fetch('/config/import', { method: 'POST', body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.error) { alert('Import failed: ' + data.error); return; }
+          alert('Imported ' + (data.imported || []).length + ' file(s). Reload the page for changes to take effect.');
+          cfgLoad();
+        })
+        .catch(function () { alert('Import failed.'); })
+        .finally(function () {
+          importBtn.disabled = false;
+          importBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Import';
+          importFile.value = '';
+        });
+    });
+
 
     // ── Open / close ────────────────────────────────────────────────────────
     function cfgOpen() {
@@ -4256,14 +4304,14 @@
       const currentPath = _pending[f.key] !== undefined ? _pending[f.key] : f.value;
       nameEl.className = 'cfg-file-name' + (currentPath ? ' set' : '');
       nameEl.textContent = currentPath
-        ? currentPath.split('/').pop().split('\\').pop()
+        ? currentPath
         : 'No file set';
       wrap.appendChild(nameEl);
 
       if (_unlocked) {
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
-        fileInput.accept = '.p12,.pkcs12';
+        fileInput.accept = '.p12,.pkcs12,.pem';
         fileInput.className = 'cfg-file-input';
 
         const uploadBtn = document.createElement('button');
@@ -4285,7 +4333,7 @@
                 alert('Upload failed: ' + data.error);
               } else {
                 _pending[f.key] = data.path;
-                nameEl.textContent = data.filename;
+                nameEl.textContent = data.path;
                 nameEl.className = 'cfg-file-name set';
               }
             })

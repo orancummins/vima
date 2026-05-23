@@ -14,7 +14,8 @@ import requests as _requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request, redirect, send_from_directory
 
-load_dotenv()
+_CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
+load_dotenv(os.path.join(_CONFIG_DIR, ".env"))
 
 from apis import registry as api_registry  # noqa: E402
 from usecases import registry as usecase_registry  # noqa: E402
@@ -1166,7 +1167,8 @@ def api_call_log():
 # Config management
 # ----------------------------------------------------------------------------
 
-_ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+_ENV_PATH = os.path.join(_CONFIG_DIR, ".env")
+_KEYS_DIR = os.path.join(_CONFIG_DIR, "keys")
 
 _CONFIG_SCHEMA = [
     {
@@ -1191,6 +1193,7 @@ _CONFIG_SCHEMA = [
             {"key": "BINLOOKUP_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' and download the .p12 file."},
             {"key": "BINLOOKUP_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file — usually the lowercase project name (e.g. 'binlookup'). Shown when generating keys on Mastercard Developers."},
             {"key": "BINLOOKUP_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default for Mastercard Developer-generated keys is 'keystorepassword'."},
+            {"key": "BINLOOKUP_ENV",                  "label": "Environment",      "type": "text",     "info": "API environment: 'sandbox' or 'production'."},
         ],
     },
     {
@@ -1203,6 +1206,7 @@ _CONFIG_SCHEMA = [
             {"key": "CONSUMERCLARITY_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
             {"key": "CONSUMERCLARITY_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file — usually the lowercase project name. Shown when generating keys on Mastercard Developers."},
             {"key": "CONSUMERCLARITY_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default for Mastercard Developer-generated keys is 'keystorepassword'."},
+            {"key": "CONSUMERCLARITY_ENV",                  "label": "Environment",      "type": "text",     "info": "API environment: 'sandbox' or 'production'."},
         ],
     },
     {
@@ -1215,6 +1219,7 @@ _CONFIG_SCHEMA = [
             {"key": "EASYSAVINGS_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
             {"key": "EASYSAVINGS_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
             {"key": "EASYSAVINGS_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+            {"key": "EASYSAVINGS_ENV",                  "label": "Environment",      "type": "text",     "info": "API environment: 'sandbox' or 'production'."},
         ],
     },
     {
@@ -1227,6 +1232,7 @@ _CONFIG_SCHEMA = [
             {"key": "PLACES_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
             {"key": "PLACES_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
             {"key": "PLACES_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+            {"key": "PLACES_ENV",                  "label": "Environment",      "type": "text",     "info": "API environment: 'sandbox' or 'production'."},
         ],
     },
     {
@@ -1239,6 +1245,60 @@ _CONFIG_SCHEMA = [
             {"key": "PRICELESS_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
             {"key": "PRICELESS_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
             {"key": "PRICELESS_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+            {"key": "PRICELESS_ENV",                  "label": "Environment",      "type": "text",     "info": "API environment: 'sandbox' or 'production'."},
+        ],
+    },
+    {
+        "id": "txnotify",
+        "title": "Transaction Notifications",
+        "subtitle": "Mastercard Transaction Notifications API",
+        "docs_url": "https://developer.mastercard.com/transaction-notifications/documentation/",
+        "fields": [
+            {"key": "TXNOTIFY_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Transaction Notifications API, and copy the Consumer Key."},
+            {"key": "TXNOTIFY_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
+            {"key": "TXNOTIFY_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
+            {"key": "TXNOTIFY_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+            {"key": "TXNOTIFY_ENV",                  "label": "Environment",      "type": "text",     "info": "API environment: 'sandbox' or 'production'."},
+        ],
+    },
+    {
+        "id": "consent",
+        "title": "Consent Management",
+        "subtitle": "Mastercard Consent Management API",
+        "docs_url": "https://developer.mastercard.com/consent-management/documentation/",
+        "fields": [
+            {"key": "CONSENT_CONSUMER_KEY",          "label": "Consumer Key",          "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Consent Management API, and copy the Consumer Key."},
+            {"key": "CONSENT_SIGNING_KEY_PATH",       "label": "Signing Key File",      "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
+            {"key": "CONSENT_SIGNING_KEY_ALIAS",      "label": "Key Alias",             "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
+            {"key": "CONSENT_SIGNING_KEY_PASSWORD",   "label": "Key Password",          "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+            {"key": "CONSENT_ENV",                    "label": "Environment",           "type": "text",     "info": "API environment: 'sandbox' or 'production'."},
+            {"key": "CONSENT_ENCRYPTION_KEY_PATH",    "label": "Client Encryption Key", "type": "file",     "info": "Client encryption .pem file. Download from your Mastercard Developers project under 'Client Encryption Keys → Actions → Download'."},
+        ],
+    },
+    {
+        "id": "ofpub",
+        "title": "Offers for Publishers",
+        "subtitle": "Mastercard Offers for Publishers API",
+        "docs_url": "https://developer.mastercard.com/presentment/documentation/",
+        "fields": [
+            {"key": "OFPUB_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Offers for Publishers API, and copy the Consumer Key."},
+            {"key": "OFPUB_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
+            {"key": "OFPUB_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
+            {"key": "OFPUB_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+            {"key": "OFPUB_ENV",                  "label": "Environment",      "type": "text",     "info": "API environment: 'sandbox' or 'production'."},
+        ],
+    },
+    {
+        "id": "ofmc",
+        "title": "Offers Merchant Content",
+        "subtitle": "Mastercard Offers Merchant Content API",
+        "docs_url": "https://developer.mastercard.com/eop-admin/documentation/",
+        "fields": [
+            {"key": "OFMC_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Offers Merchant Content API, and copy the Consumer Key."},
+            {"key": "OFMC_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
+            {"key": "OFMC_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
+            {"key": "OFMC_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+            {"key": "OFMC_ENV",                  "label": "Environment",      "type": "text",     "info": "API environment: 'sandbox' or 'production'."},
         ],
     },
     {
@@ -1251,6 +1311,7 @@ _CONFIG_SCHEMA = [
             {"key": "ELIGIBILITY_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
             {"key": "ELIGIBILITY_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
             {"key": "ELIGIBILITY_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+            {"key": "ELIGIBILITY_ENV",                  "label": "Environment",      "type": "text",     "info": "API environment: 'sandbox' or 'production'."},
         ],
     },
     {
@@ -1259,10 +1320,12 @@ _CONFIG_SCHEMA = [
         "subtitle": "Mastercard Benefits Content Eligibility Service (BCES)",
         "docs_url": "https://developer.mastercard.com/bces-service/documentation/",
         "fields": [
-            {"key": "BCES_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Benefits Content Eligibility Service API, and copy the Consumer Key."},
-            {"key": "BCES_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
-            {"key": "BCES_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
-            {"key": "BCES_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+            {"key": "BCES_CONSUMER_KEY",             "label": "Consumer Key",          "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Benefits Content Eligibility Service API, and copy the Consumer Key."},
+            {"key": "BCES_SIGNING_KEY_PATH",          "label": "Signing Key File",      "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
+            {"key": "BCES_SIGNING_KEY_ALIAS",         "label": "Key Alias",             "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
+            {"key": "BCES_SIGNING_KEY_PASSWORD",      "label": "Key Password",          "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+            {"key": "BCES_ENV",                       "label": "Environment",           "type": "text",     "info": "API environment: 'sandbox' or 'production'."},
+            {"key": "BCES_ENCRYPTION_CERT_PATH",      "label": "Client Encryption Key", "type": "file",     "info": "Client encryption .pem file. Download from your Mastercard Developers project under 'Client Encryption Keys → Actions → Download'."},
         ],
     },
 ]
@@ -1353,7 +1416,88 @@ def config_save_route():
     return jsonify({"saved": list(filtered.keys())})
 
 
-@app.route("/config/upload-key", methods=["POST"])
+@app.route("/config/export", methods=["GET"])
+def config_export():
+    """Export config/keys + .env (with ANTHROPIC_API_KEY redacted) as a zip."""
+    import zipfile, io, re as _re
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        # .env — redact ANTHROPIC_API_KEY
+        if os.path.isfile(_ENV_PATH):
+            with open(_ENV_PATH, "r", encoding="utf-8") as fh:
+                env_text = fh.read()
+            env_text = _re.sub(
+                r"(?m)^(ANTHROPIC_API_KEY\s*=\s*).*$",
+                r"\1YOUR_ANTHROPIC_API_KEY_HERE",
+                env_text,
+            )
+            zf.writestr("config/.env", env_text)
+        # all key files
+        if os.path.isdir(_KEYS_DIR):
+            for fname in os.listdir(_KEYS_DIR):
+                fpath = os.path.join(_KEYS_DIR, fname)
+                if os.path.isfile(fpath):
+                    zf.write(fpath, os.path.join("config", "keys", fname))
+
+    buf.seek(0)
+    from flask import send_file
+    return send_file(
+        buf,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name="vima-config.zip",
+    )
+
+
+@app.route("/config/import", methods=["POST"])
+def config_import():
+    """Import a vima-config.zip — overwrites .env and key files."""
+    import zipfile, io as _io
+
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+    fobj = request.files["file"]
+    try:
+        data = fobj.read()
+        with zipfile.ZipFile(_io.BytesIO(data)) as zf:
+            names = zf.namelist()
+            # Validate: must contain config/.env or config/keys/*
+            valid_entries = [n for n in names
+                             if n.startswith("config/.env") or n.startswith("config/keys/")]
+            if not valid_entries:
+                return jsonify({"error": "Zip does not contain a valid vima config layout"}), 400
+
+            os.makedirs(_KEYS_DIR, exist_ok=True)
+            imported = []
+            for name in names:
+                # .env
+                if name == "config/.env":
+                    env_text = zf.read(name).decode("utf-8")
+                    with open(_ENV_PATH, "w", encoding="utf-8") as fh:
+                        fh.write(env_text)
+                    load_dotenv(_ENV_PATH, override=True)
+                    imported.append(".env")
+                # key files
+                elif name.startswith("config/keys/") and not name.endswith("/"):
+                    fname = os.path.basename(name)
+                    if not fname:
+                        continue
+                    ext = os.path.splitext(fname)[1].lower()
+                    if ext not in (".p12", ".pkcs12", ".pem"):
+                        continue
+                    dest = os.path.join(_KEYS_DIR, fname)
+                    with open(dest, "wb") as fh:
+                        fh.write(zf.read(name))
+                    imported.append(os.path.join("config", "keys", fname))
+        return jsonify({"imported": imported})
+    except zipfile.BadZipFile:
+        return jsonify({"error": "Not a valid zip file"}), 400
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+
 def config_upload_key():
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
@@ -1362,13 +1506,15 @@ def config_upload_key():
     if not fname:
         return jsonify({"error": "Empty filename"}), 400
     ext = os.path.splitext(fname)[1].lower()
-    if ext not in (".p12", ".pkcs12"):
-        return jsonify({"error": "Only .p12 or .pkcs12 files are accepted"}), 400
+    if ext not in (".p12", ".pkcs12", ".pem"):
+        return jsonify({"error": "Only .p12, .pkcs12, or .pem files are accepted"}), 400
     # Use only basename to prevent path traversal
     safe_name = os.path.basename(fname)
-    save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), safe_name)
+    os.makedirs(_KEYS_DIR, exist_ok=True)
+    save_path = os.path.join(_KEYS_DIR, safe_name)
     fobj.save(save_path)
-    return jsonify({"filename": safe_name, "path": safe_name})
+    rel_path = os.path.join("config", "keys", safe_name)
+    return jsonify({"filename": safe_name, "path": rel_path})
 
 
 if __name__ == "__main__":

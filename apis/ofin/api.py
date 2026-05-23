@@ -1516,8 +1516,12 @@ _seeded = False
 
 
 def _seed_default_customer() -> None:
-    """On first state access, find the most recently created testing customer
-    that has a checking account, seed customer_id and account_id."""
+    """On first state access, seed customer_id.
+
+    If OFIN_DEFAULT_CUSTOMER_ID is set in the environment, use that customer
+    directly (faster). Otherwise fall back to scanning the customer list for
+    the most recently created testing customer with a checking account.
+    """
     global _seeded
     if _seeded or STATE.get("customer_id"):
         _seeded = True
@@ -1526,6 +1530,25 @@ def _seed_default_customer() -> None:
     client = _get_client()
     if client is None:
         return
+
+    # Fast path: use the configured default customer ID
+    default_cid = os.environ.get("OFIN_DEFAULT_CUSTOMER_ID", "").strip()
+    if default_cid:
+        try:
+            acc_data, acc_status = client.get_customer_accounts(default_cid)
+            if acc_status < 400 and isinstance(acc_data, dict):
+                accounts = acc_data.get("accounts") or []
+                checking = next((a for a in accounts if a.get("type") == "checking"), None)
+                STATE["customer_id"] = default_cid
+                STATE["accounts"] = accounts
+                if checking:
+                    STATE["account_id"] = str(checking.get("id"))
+                elif accounts:
+                    STATE["account_id"] = str(accounts[0].get("id"))
+                return
+        except Exception:
+            pass  # Fall through to scan
+
     try:
         data, status = client.get_customers(start=1, limit=25)
         if status >= 400 or not isinstance(data, dict):
