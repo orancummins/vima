@@ -1,0 +1,27 @@
+{
+  "benefit_contents": [
+    {
+      "cardNumber": 5291070000000000,
+      "id": "bces-bundle-001",
+      "bundles": [
+        {
+          "bundleId": "BUNDLE-CDW-DCG",
+          "bundleName": "Auto Rental CDW",
+          "productCode": "DCG",
+          "contents": [
+            {"locale": "en-US", "displayName": "Collision Damage Waiver", "shortDescription": "Up to $50,000 in coverage for rental car damage.", "longDescription": "When you pay for your rental car with your Mastercard, you may be covered for collision damage or theft.", "imageUrl": "https://example.com/bces/cdw-hero.png"}
+          ],
+          "benefits": [
+            {
+              "benefitCode": "CDW",
+              "benefitName": "Collision Damage Waiver",
+              "contents": [
+                {"locale": "en-US", "displayName": "CDW Coverage", "shortDescription": "Rental car damage coverage up to $50,000.", "termsUrl": "https://example.com/bces/cdw-terms.pdf", "faqUrl": "https://example.com/bces/cdw-faq.html", "ctaFields": [{"label": "File a Claim", "url": "https://example.com/bces/cdw-claim"}]}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

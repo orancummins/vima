@@ -1,0 +1,20 @@
+{
+  "consents": [
+    {
+      "cardReference": "sim-card-ref-001",
+      "pan": "2303779951000297",
+      "consents": [
+        {"id": "sim-consent-001", "name": "notification", "status": "APPROVED", "createdAt": "2026-05-01T10:00:00Z", "updatedAt": "2026-05-01T10:05:00Z"}
+      ],
+      "auth": {
+        "type": "THREEDS",
+        "status": "AUTHENTICATED",
+        "params": {
+          "threeDsMethodUrl": "",
+          "threeDSMethodData": "",
+          "threeDSServerTransID": "sim-trans-001"
+        }
+      }
+    }
+  ]
+}
