@@ -22,6 +22,5 @@ def register(bp):
     def access_token():
         store.lazy_load(API)
         tokens = store.list(API, "access_tokens")
-        if tokens:
-            return jsonify(tokens[0])
-        return jsonify({"token": f"sim-widget-token-{uuid.uuid4().hex[:12]}", "expiresIn": 3600})
+        token_val = tokens[0].get("token", f"sim-widget-token-{uuid.uuid4().hex[:12]}") if tokens else f"sim-widget-token-{uuid.uuid4().hex[:12]}"
+        return jsonify({"accessToken": token_val})

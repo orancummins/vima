@@ -22,7 +22,7 @@ def register(bp):
             "postedDate": "2026-05-23T10:00:00Z",
         }
         store.put(API, "transactions", trans_uid, record)
-        return jsonify(record), 200
+        return jsonify({}), 200
 
     @bp.route("/txnotify/undelivered-notifications", methods=["GET"])
     def get_undelivered():

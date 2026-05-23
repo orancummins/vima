@@ -25,7 +25,7 @@ def register(bp):
         offset = int(request.args.get("offset", 0))
         limit = int(request.args.get("limit", 25))
         page = results[offset: offset + limit]
-        return jsonify({"places": page, "totalCount": len(results), "offset": offset, "limit": limit})
+        return jsonify({"total": len(results), "limit": limit, "offset": offset, "items": page})
 
     @bp.route("/places/places/<location_id>", methods=["GET"])
     def get_place(location_id):
@@ -39,7 +39,11 @@ def register(bp):
     @bp.route("/places/merchant-category-codes", methods=["GET"])
     def list_mcc_codes():
         store.lazy_load(API)
-        return jsonify({"merchantCategoryCodes": store.list(API, "mcc_codes")})
+        items = store.list(API, "mcc_codes")
+        offset = int(request.args.get("offset", 0))
+        limit = int(request.args.get("limit", 25))
+        page = items[offset: offset + limit]
+        return jsonify({"total": len(items), "limit": limit, "offset": offset, "items": page})
 
     @bp.route("/places/merchant-category-codes/mcc-codes/<mcc>", methods=["GET"])
     def get_mcc_code(mcc):
@@ -47,13 +51,17 @@ def register(bp):
         rec = store.get(API, "mcc_codes", mcc)
         if rec is None:
             codes = store.list(API, "mcc_codes")
-            rec = next((c for c in codes if str(c.get("code")) == mcc), codes[0] if codes else {"code": mcc})
+            rec = next((c for c in codes if str(c.get("merchantCategoryCode")) == mcc), codes[0] if codes else {"merchantCategoryCode": mcc})
         return jsonify(rec)
 
     @bp.route("/places/merchant-industry-codes", methods=["GET"])
     def list_industry_codes():
         store.lazy_load(API)
-        return jsonify({"merchantIndustryCodes": store.list(API, "industry_codes")})
+        items = store.list(API, "industry_codes")
+        offset = int(request.args.get("offset", 0))
+        limit = int(request.args.get("limit", 25))
+        page = items[offset: offset + limit]
+        return jsonify({"total": len(items), "limit": limit, "offset": offset, "items": page})
 
     @bp.route("/places/merchant-industry-codes/industries/<industry>", methods=["GET"])
     def get_industry_code(industry):
@@ -61,5 +69,5 @@ def register(bp):
         rec = store.get(API, "industry_codes", industry)
         if rec is None:
             codes = store.list(API, "industry_codes")
-            rec = next((c for c in codes if c.get("industryCode") == industry), codes[0] if codes else {"industryCode": industry})
+            rec = next((c for c in codes if c.get("industry") == industry), codes[0] if codes else {"industry": industry})
         return jsonify(rec)
