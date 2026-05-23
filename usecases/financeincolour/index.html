@@ -9,11 +9,86 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; background: #070a12; overflow: hidden;
-                 font-family: 'Inter', system-ui, sans-serif; }
-    #fic-canvas { position: fixed; inset: 0; display: block; }
+    html, body { width: 100%; height: 100%; background: #f6f6f6;
+                 font-family: 'Inter', system-ui, sans-serif; overflow: hidden; }
+
+    /* ── Two-column layout ────────────────────────────────────── */
+    .fic-stage {
+      display: flex; flex-direction: row; height: 100%;
+    }
+    .fic-info {
+      width: 300px; flex-shrink: 0; display: flex; flex-direction: column;
+      gap: 18px; padding: 20px 20px 20px;
+      background: #fff; border-right: 1px solid #e5e5e5; overflow-y: auto;
+    }
+    .fic-info h1 {
+      font-size: 20px; font-weight: 800; color: #18181b; letter-spacing: -.02em; margin: 0;
+    }
+    .fic-info-desc { font-size: 13px; line-height: 1.65; color: #52525b; margin: 0; }
+    .fic-controlbar {
+      display: flex; flex-direction: column; gap: 10px;
+      background: #fff; border: 1px solid #e5e5e5; border-radius: 12px;
+      padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .fic-controlbar .fc-label {
+      font-size: 11px; font-weight: 700; color: #71717a;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;
+    }
+    .fic-controlbar input {
+      width: 100%; padding: 10px 11px; border: 1.5px solid #e5e5e5;
+      border-radius: 8px; font-family: 'Courier New', monospace; font-size: 13px;
+      outline: none; transition: border-color .2s, box-shadow .2s;
+    }
+    .fic-controlbar input:focus {
+      border-color: #ff5f00; box-shadow: 0 0 0 3px rgba(255,95,0,0.1);
+    }
+    .fic-btn-primary {
+      padding: 10px 14px; background: #ff5f00; color: #fff;
+      border: none; border-radius: 8px; font-size: 13px; font-weight: 700;
+      cursor: pointer; letter-spacing: .01em; transition: background .15s;
+    }
+    .fic-btn-primary:hover { background: #e05500; }
+    .fic-btn-secondary {
+      padding: 10px 14px; background: #fff; color: #18181b;
+      border: 1.5px solid #e5e5e5; border-radius: 8px; font-size: 13px;
+      font-weight: 600; cursor: pointer; transition: all .15s;
+    }
+    .fic-btn-secondary:hover { border-color: #a1a1aa; background: #fafafa; }
+    .fic-or {
+      display: flex; align-items: center; gap: 8px; margin: 2px 0;
+    }
+    .fic-or-line { flex: 1; height: 1px; background: #e5e5e5; }
+    .fic-or span { font-size: 11px; color: #a1a1aa; font-weight: 600; }
+    .fic-personas-link {
+      font-size: 11px; color: #71717a; text-decoration: none; text-align: center;
+      display: block; font-weight: 500; margin-top: 2px;
+    }
+    .fic-personas-link:hover { color: #ff5f00; }
+
+    /* ── Right visualization panel ────────────────────────────── */
+    .fic-viz-wrap {
+      flex: 1; position: relative; overflow: hidden; background: #070a12; min-width: 0;
+    }
+
+    /* ── Tab bar ──────────────────────────────────────────────── */
+    .fic-tabbar {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 30;
+      display: flex; background: rgba(7,10,18,.85); backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,.08); height: 42px;
+    }
+    .fic-tabbar button {
+      flex: 1; border: none; background: none; cursor: pointer;
+      font-family: 'Inter', system-ui, sans-serif; font-size: 12px;
+      font-weight: 600; color: rgba(255,255,255,.35); letter-spacing: .04em;
+      text-transform: uppercase; transition: color .15s; padding: 0 12px;
+    }
+    .fic-tabbar button:hover { color: rgba(255,255,255,.65); }
+    .fic-tabbar button.active { color: #ff5f00; border-bottom: 2px solid #ff5f00; }
+
+    /* ── Canvas and overlays positioned within fic-viz-wrap ───── */
+    #fic-canvas { position: absolute; inset: 0; display: block; top: 42px; }
     #fic-hud {
-      position: fixed; inset: 0; pointer-events: none; display: none;
+      position: absolute; inset: 0; top: 42px; pointer-events: none; display: none;
       flex-direction: column; justify-content: space-between; padding: 20px 24px;
     }
     .hud-top { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -38,7 +113,7 @@
     .hud-pill.steady  { background: rgba(251,191,36,.09);  color: #fbbf24;
                         border: 1px solid rgba(251,191,36,.25); }
     .fic-screen {
-      position: fixed; inset: 0; z-index: 20; background: #070a12;
+      position: absolute; inset: 0; top: 42px; z-index: 20; background: #070a12;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       color: rgba(255,255,255,.35); font-size: 13px; gap: 14px; padding: 40px;
       text-align: center;
@@ -51,7 +126,7 @@
 
     /* ── Connect / Personas screen ────────────────────────────── */
     #fic-connect {
-      position: fixed; inset: 0; z-index: 20; background: #070a12;
+      position: absolute; inset: 0; top: 42px; z-index: 20; background: #070a12;
       overflow-y: auto; display: none; flex-direction: column;
       align-items: center; padding: 32px 20px 48px;
     }
@@ -124,7 +199,7 @@
     }
     .fic-hud-connect-btn:hover { color: rgba(255,255,255,.7); border-color: rgba(255,255,255,.3); }
     #fic-tip {
-      position: fixed; pointer-events: none; z-index: 50;
+      position: absolute; pointer-events: none; z-index: 50;
       background: rgba(7,10,18,.93); border: 1px solid rgba(255,255,255,.13);
       border-radius: 9px; padding: 9px 13px; font-size: 11.5px; line-height: 1.65;
       color: rgba(255,255,255,.76); backdrop-filter: blur(12px);
@@ -138,51 +213,89 @@
 </head>
 <body>
 
-<div id="fic-loading" class="fic-screen">
-  <div class="fic-spinner"></div>
-  Painting your finances&hellip;
-</div>
+<div class="fic-stage">
 
-<!-- Connect + Personas screen -->
-<div id="fic-connect">
-  <div class="fic-connect-inner">
-    <div class="fic-connect-hero">
-      <div class="fic-connect-hero-left">
-        <h2>Finance In Colour</h2>
-        <p id="fic-connect-desc">Connect a bank account through Open Finance to paint your financial picture.</p>
-        <button class="fic-btn-connect" id="fic-connect-btn">&#9679; Connect New Bank</button>
-        <div class="fic-connect-msg" id="fic-connect-msg"></div>
+  <!-- Left info panel -->
+  <div class="fic-info">
+    <div>
+      <h1>Finance In Colour</h1>
+      <p class="fic-info-desc">Finance In Colour translates Open Finance transactions into a vivid picture of how a customer earns, spends and behaves — category petals, daily flow chart, and a generative financial fingerprint, all from a single Mastercard integration.</p>
+    </div>
+    <div class="fic-controlbar">
+      <div>
+        <div class="fc-label">Customer ID</div>
+        <input id="fic-cid-input" placeholder="e.g. 9013023139" />
+      </div>
+      <button class="fic-btn-primary" id="fic-load-btn">Load Finance View</button>
+      <div class="fic-or">
+        <div class="fic-or-line"></div><span>OR</span><div class="fic-or-line"></div>
+      </div>
+      <button class="fic-btn-secondary" id="fic-new-connect-btn">Connect New Bank Account</button>
+      <a class="fic-personas-link"
+         href="https://developer.mastercard.com/open-finance-us/documentation/integration-and-testing/test-the-apis/#test-personas"
+         target="_blank" rel="noopener">View Test Personas &#8599;</a>
+    </div>
+  </div>
+
+  <!-- Right visualization panel -->
+  <div class="fic-viz-wrap" id="fic-viz-wrap">
+
+    <!-- Tab bar -->
+    <div class="fic-tabbar" id="fic-tabbar">
+      <button data-tab="visualise" class="active">Finance View</button>
+    </div>
+
+    <!-- Loading screen -->
+    <div id="fic-loading" class="fic-screen">
+      <div class="fic-spinner"></div>
+      Painting your finances&hellip;
+    </div>
+
+    <!-- Connect + Personas panel (shown as "Connect Bank" tab) -->
+    <div id="fic-connect">
+      <div class="fic-connect-inner">
+        <div class="fic-connect-hero">
+          <div class="fic-connect-hero-left">
+            <h2>Connect a Bank</h2>
+            <p id="fic-connect-desc">Connect a bank account through Open Finance to paint your financial picture.</p>
+            <button class="fic-btn-connect" id="fic-connect-btn">&#9679; Connect New Bank</button>
+            <div class="fic-connect-msg" id="fic-connect-msg"></div>
+          </div>
+        </div>
+        <div class="fic-connect-personas">
+          <h3>Test Personas &mdash; FinBank Profiles A or B</h3>
+          <div class="fic-persona-grid" id="fic-persona-grid"></div>
+        </div>
       </div>
     </div>
-    <div class="fic-connect-personas">
-      <h3>Test Personas &mdash; FinBank Profiles A or B</h3>
-      <div class="fic-persona-grid" id="fic-persona-grid"></div>
-    </div>
-  </div>
-</div>
 
-<canvas id="fic-canvas"></canvas>
-<div id="fic-tip"></div>
+    <!-- Canvas (Finance View tab) -->
+    <canvas id="fic-canvas"></canvas>
+    <div id="fic-tip"></div>
 
-<div id="fic-hud">
-  <div class="hud-top">
-    <div>
-      <div class="hud-title">Finance In Colour</div>
-      <div class="hud-sub" id="hud-sub"></div>
+    <!-- HUD overlay (Finance View tab) -->
+    <div id="fic-hud">
+      <div class="hud-top">
+        <div>
+          <div class="hud-title">Finance In Colour</div>
+          <div class="hud-sub" id="hud-sub"></div>
+        </div>
+        <div class="hud-net">
+          <div class="hud-net-lbl">Net &middot; 90 days</div>
+          <div class="hud-net-val" id="hud-net"></div>
+        </div>
+      </div>
+      <div class="hud-bottom">
+        <div class="hud-stats" id="hud-stats"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="fic-hud-connect-btn" id="hud-connect-btn">+ Connect Bank</button>
+          <div id="hud-pill" class="hud-pill"></div>
+        </div>
+      </div>
     </div>
-    <div class="hud-net">
-      <div class="hud-net-lbl">Net &middot; 90 days</div>
-      <div class="hud-net-val" id="hud-net"></div>
-    </div>
-  </div>
-  <div class="hud-bottom">
-    <div class="hud-stats" id="hud-stats"></div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <button class="fic-hud-connect-btn" id="hud-connect-btn">+ Connect Bank</button>
-      <div id="hud-pill" class="hud-pill"></div>
-    </div>
-  </div>
-</div>
+
+  </div><!-- /fic-viz-wrap -->
+</div><!-- /fic-stage -->
 
 <script>
 (function () {
@@ -466,12 +579,28 @@
   ];
 
   let _ficCid = null, _ficConnectWin = null, _ficSelectedPersona = null, _ficActiveName = null;
+  let _ficPollStop = false;
+
+  const FIC_DEFAULT_CID = "9013023139";
+
+  function ficSwitchTab(tab) {
+    document.querySelectorAll(".fic-tabbar button").forEach(b => {
+      b.classList.toggle("active", b.dataset.tab === tab);
+    });
+    const onConnect = tab === "connect";
+    const hasData = !!document.getElementById("fic-hud") && document.getElementById("fic-hud").style.display === "flex";
+    document.getElementById("fic-connect").style.display = onConnect ? "flex" : "none";
+    document.getElementById("fic-loading").style.display = "none";
+    // Only re-show canvas if data is already loaded; never show loading spinner here
+    if (!onConnect && hasData) {
+      document.getElementById("fic-hud").style.display = "flex";
+    }
+  }
 
   function ficShowConnect(msg) {
-    document.getElementById("fic-loading").style.display="none";
-    document.getElementById("fic-hud").style.display="none";
-    const conn = document.getElementById("fic-connect");
-    conn.style.display="flex";
+    document.getElementById("fic-loading").style.display = "none";
+    document.getElementById("fic-hud").style.display = "none";
+    document.getElementById("fic-connect").style.display = "flex";
     if (typeof msg === "string" && msg) document.getElementById("fic-connect-desc").textContent = msg;
     // Render persona cards
     const grid = document.getElementById("fic-persona-grid");
@@ -557,11 +686,6 @@
           msgEl.textContent = "Complete the bank flow in the popup, then wait\u2026";
         }
       }
-      // Kick off a background refresh so transactions ingest faster, then poll.
-      fetch("/usecases/financeincolour/action", {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({action:"refresh_accounts",params:{customer_id:_ficCid}}),
-      }).catch(()=>{});
       ficPollForAccounts(_ficCid);
     }).catch(e => {
       if (btn) btn.disabled = false;
@@ -577,11 +701,35 @@
       `popup=yes,width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`);
     if (_ficConnectWin) {
       try { _ficConnectWin.focus(); } catch(_){}
+      const watchClose = setInterval(() => {
+        try {
+          if (_ficConnectWin.closed) {
+            clearInterval(watchClose);
+            ficOnConnectComplete(_ficCid);
+          }
+        } catch(_) { clearInterval(watchClose); }
+      }, 800);
     } else {
       // Popup blocked — show a direct link
       const msgEl = document.getElementById("fic-connect-msg");
       if (msgEl) msgEl.innerHTML = 'Pop-up blocked. <a href="' + url + '" target="_blank" style="color:#ff5f00">Open connect page ↗</a>';
     }
+  }
+
+  function ficOnConnectComplete(cid) {
+    if (!cid) return;
+    _ficPollStop = true;
+    const msgEl = document.getElementById("fic-connect-msg");
+    if (msgEl) msgEl.textContent = "Linking accounts\u2026";
+    setTimeout(() => {
+      fetch("/usecases/financeincolour/action", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({action: "refresh_accounts", params: {customer_id: cid}}),
+      }).finally(() => {
+        _ficPollStop = false;
+        ficPollForAccounts(cid, 50);
+      });
+    }, 2000);
   }
 
   function ficPollForAccounts(cid, tries) {
@@ -591,10 +739,12 @@
     fetch(`/usecases/financeincolour/data?customer_id=${encodeURIComponent(cid)}`)
       .then(r=>r.json())
       .then(d => {
-        // Empty accounts → backend returns {error, pending:true}. Keep polling.
-        if ((d.error || (d.accounts && d.accounts.length === 0)) && tries > 1) {
+        if (_ficPollStop) return;
+        const noTxns = !d.error && (d.summary||{}).txn_count_in === 0 && (d.summary||{}).txn_count_out === 0;
+        // Keep polling while: no accounts yet (d.error/pending), or accounts exist but transactions haven't loaded yet.
+        if ((d.error || noTxns) && tries > 1) {
           const elapsed = total - tries + 1;
-          if (msgEl) msgEl.textContent = "Linking your bank\u2026 (" + elapsed + "/" + total + ")";
+          if (msgEl) msgEl.textContent = (d.error ? "Linking your bank\u2026" : "Loading transactions\u2026") + " (" + elapsed + "/" + total + ")";
           // Periodically re-trigger refresh to nudge transactions in.
           if (elapsed % 5 === 0) {
             fetch("/usecases/financeincolour/action", {
@@ -618,7 +768,7 @@
         if (_ficConnectWin) try { _ficConnectWin.close(); } catch(_){}
         start(d);
       })
-      .catch(()=>{ if (tries>1) setTimeout(()=>ficPollForAccounts(cid,tries-1),3000); });
+      .catch(()=>{ if (!_ficPollStop && tries>1) setTimeout(()=>ficPollForAccounts(cid,tries-1),3000); });
   }
 
   function showErr(msg){
@@ -663,9 +813,11 @@
     const ctx=canvas.getContext("2d");
 
     function resize(){
+      const wrap=document.getElementById("fic-viz-wrap");
       const dpr=window.devicePixelRatio||1;
-      canvas.width=innerWidth*dpr; canvas.height=innerHeight*dpr;
-      canvas.style.width=innerWidth+"px"; canvas.style.height=innerHeight+"px";
+      const W=wrap.clientWidth, H=wrap.clientHeight-42; // subtract tab bar
+      canvas.width=W*dpr; canvas.height=H*dpr;
+      canvas.style.width=W+"px"; canvas.style.height=H+"px";
       _petalMeta=null; _particles=null;
     }
     resize();
@@ -675,8 +827,9 @@
     const tip=document.getElementById("fic-tip");
     function showTip(ex,ey,html){
       tip.innerHTML=html; tip.style.display="block";
-      const tx=Math.min(ex+14,window.innerWidth-tip.offsetWidth-10);
-      const ty=Math.min(ey+14,window.innerHeight-tip.offsetHeight-10);
+      const wr=document.getElementById("fic-viz-wrap").getBoundingClientRect();
+      const tx=Math.min(ex+14,wr.right-tip.offsetWidth-10);
+      const ty=Math.min(ey+14,wr.bottom-tip.offsetHeight-10);
       tip.style.left=tx+"px"; tip.style.top=ty+"px";
     }
     canvas.addEventListener("mousemove",function(e){
@@ -731,6 +884,7 @@
     document.getElementById("fic-loading").style.display="none";
     document.getElementById("fic-connect").style.display="none";
     document.getElementById("fic-hud").style.display="flex";
+    ficSwitchTab("visualise");
 
     const hudConnBtn=document.getElementById("hud-connect-btn");
     if(hudConnBtn) hudConnBtn.onclick=()=>ficShowConnect();
@@ -739,12 +893,53 @@
       requestAnimationFrame(loop);
       const dpr=window.devicePixelRatio||1;
       ctx.setTransform(dpr,0,0,dpr,0,0);
-      draw(ctx,innerWidth,innerHeight,data,Date.now());
+      draw(ctx,canvas.clientWidth,canvas.clientHeight,data,Date.now());
     })();
   }
 
-  // Always land on the connect screen — canvas loads only after a successful bank connection.
-  ficShowConnect();
+  // ── Load by Customer ID ──────────────────────────────────────────
+  function ficLoadByCustomerId(cid) {
+    if (!cid) return;
+    _ficCid = cid;
+    document.getElementById("fic-loading").style.display="flex";
+    document.getElementById("fic-connect").style.display="none";
+    document.getElementById("fic-hud").style.display="none";
+    document.querySelectorAll(".fic-tabbar button").forEach(b => {
+      b.classList.toggle("active", b.dataset.tab === "visualise");
+    });
+    fetch("/usecases/financeincolour/data?customer_id=" + encodeURIComponent(cid))
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) { ficShowConnect(data.error); return; }
+        start(data);
+      })
+      .catch(() => ficShowConnect("Could not load data. Check the Customer ID and API config."));
+  }
+
+  // ── Wire left panel controls ──────────────────────────────────
+  const _cidInput = document.getElementById("fic-cid-input");
+  if (_cidInput) {
+    _cidInput.value = FIC_DEFAULT_CID;
+    _cidInput.addEventListener("keydown", e => { if (e.key === "Enter") ficLoadByCustomerId(_cidInput.value.trim()); });
+  }
+  const _loadBtn = document.getElementById("fic-load-btn");
+  if (_loadBtn) _loadBtn.addEventListener("click", () => ficLoadByCustomerId(_cidInput ? _cidInput.value.trim() : FIC_DEFAULT_CID));
+
+  const _newConnBtn = document.getElementById("fic-new-connect-btn");
+  if (_newConnBtn) _newConnBtn.addEventListener("click", () => ficShowConnect());
+
+  // ── Tab bar click (Finance View only — no Connect tab) ───────
+  document.getElementById("fic-tabbar").querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      // If data already loaded switch back to canvas; else trigger a load
+      const hasData = document.getElementById("fic-hud").style.display === "flex";
+      if (hasData) ficSwitchTab("visualise");
+      else ficLoadByCustomerId(document.getElementById("fic-cid-input").value.trim() || FIC_DEFAULT_CID);
+    });
+  });
+
+  // Auto-load the default customer on page load
+  ficLoadByCustomerId(FIC_DEFAULT_CID);
 
 
 })();

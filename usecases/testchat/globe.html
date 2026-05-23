@@ -322,7 +322,7 @@
       <label class="setting-label">
         Globe Color
       </label>
-      <input type="color" id="globeColor" value="#3b82f6">
+      <input type="color" id="globeColor" value="#eab308">
     </div>
 
     <div class="setting-group">
@@ -358,9 +358,9 @@
     
     <div class="setting-group">
       <label class="setting-label">
-        Globe Size <span class="setting-value" id="sizeValue">70%</span>
+        Globe Size <span class="setting-value" id="sizeValue">95%</span>
       </label>
-      <input type="range" id="globeSize" min="30" max="200" step="5" value="70">
+      <input type="range" id="globeSize" min="30" max="200" step="5" value="95">
     </div>
     
     <div class="setting-group">
@@ -517,8 +517,8 @@
       const settings = {
         speed: 0.003,
         glow: 0.9,
-        size: 0.7,
-        color: '#3b82f6',
+        size: 0.95,
+        color: '#eab308',
         bgStyle: 'purple',
         gridOpacity: 0.18,
         gridDensity: 20,
@@ -727,7 +727,7 @@
         globeColorInput.value = defaults.color;
         bgStyleInput.value = defaults.bgStyle;
         spinRateInput.value = 1;
-        globeSizeInput.value = 70;
+        globeSizeInput.value = 95;
         glowIntensityInput.value = 90;
         gridOpacityInput.value = 18;
         gridDensityInput.value = 20;
@@ -746,7 +746,7 @@
         rainbowValue.textContent = '1.0x';
 
         spinValue.textContent = '1.0x';
-        sizeValue.textContent = '70%';
+        sizeValue.textContent = '95%';
         glowValue.textContent = '90%';
         gridValue.textContent = '18%';
         pointValue.textContent = '80';
