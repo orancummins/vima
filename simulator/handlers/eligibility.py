@@ -6,19 +6,19 @@ API = "eligibility"
 
 
 def register(bp):
-    @bp.route("/eligibility/loyalty/eligibility/benefits/searches", methods=["POST"])
+    @bp.route("/eligibility/benefits/searches", methods=["POST"])
     def search_benefits():
         store.lazy_load(API)
         benefits = store.list(API, "benefits")
         return jsonify({"data": benefits})
 
-    @bp.route("/eligibility/loyalty/eligibility/products/searches", methods=["POST"])
+    @bp.route("/eligibility/products/searches", methods=["POST"])
     def search_products():
         store.lazy_load(API)
         products = store.list(API, "products")
         return jsonify({"data": products})
 
-    @bp.route("/eligibility/loyalty/eligibility/widgets/access-tokens", methods=["GET"])
+    @bp.route("/eligibility/widgets/access-tokens", methods=["GET"])
     def access_token():
         store.lazy_load(API)
         tokens = store.list(API, "access_tokens")

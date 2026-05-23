@@ -5,7 +5,7 @@ API = "bces"
 
 
 def register(bp):
-    @bp.route("/bces/loyalty/eligibility/benefit-contents/searches", methods=["POST"])
+    @bp.route("/bces/benefit-contents/searches", methods=["POST"])
     def search_contents():
         store.lazy_load(API)
         body = request.get_json(force=True) or {}

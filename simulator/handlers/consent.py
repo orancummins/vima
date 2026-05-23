@@ -6,7 +6,7 @@ API = "consent"
 
 
 def register(bp):
-    @bp.route("/consent/openapis/authentication/consents", methods=["POST"])
+    @bp.route("/consent/consents", methods=["POST"])
     def create_consent():
         store.lazy_load(API)
         body = request.get_json(force=True) or {}
@@ -35,7 +35,7 @@ def register(bp):
         store.put(API, "consents", card_ref, record)
         return jsonify(record), 200
 
-    @bp.route("/consent/openapis/authentication/consents/<card_ref>", methods=["GET"])
+    @bp.route("/consent/consents/<card_ref>", methods=["GET"])
     def get_consents(card_ref):
         store.lazy_load(API)
         rec = store.get(API, "consents", card_ref)
@@ -45,26 +45,26 @@ def register(bp):
                        all_consents[0] if all_consents else {"cardReference": card_ref, "consents": []})
         return jsonify(rec)
 
-    @bp.route("/consent/openapis/authentication/consents/<card_ref>/start-authentication", methods=["POST"])
+    @bp.route("/consent/consents/<card_ref>/start-authentication", methods=["POST"])
     def start_authentication(card_ref):
         return jsonify({
             "cardReference": card_ref,
             "auth": {"type": "THREEDS", "status": "AUTHENTICATED", "params": {}},
         })
 
-    @bp.route("/consent/openapis/authentication/consents/<card_ref>/verify-authentication", methods=["POST"])
+    @bp.route("/consent/consents/<card_ref>/verify-authentication", methods=["POST"])
     def verify_authentication(card_ref):
         return jsonify({
             "cardReference": card_ref,
             "auth": {"type": "THREEDS", "status": "AUTHENTICATED"},
         })
 
-    @bp.route("/consent/openapis/authentication/consents/<card_ref>", methods=["DELETE"])
+    @bp.route("/consent/consents/<card_ref>", methods=["DELETE"])
     def delete_consents(card_ref):
         store.lazy_load(API)
         store.delete(API, "consents", card_ref)
         return "", 204
 
-    @bp.route("/consent/openapis/authentication/consents/<card_ref>/consents/<consent_id>", methods=["DELETE"])
+    @bp.route("/consent/consents/<card_ref>/consents/<consent_id>", methods=["DELETE"])
     def delete_single_consent(card_ref, consent_id):
         return "", 204
