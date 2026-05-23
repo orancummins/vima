@@ -1,0 +1,20 @@
+{
+  "access_tokens": [
+    {"id": "sim-token-001", "token": "sim-auth-token-abc123xyz", "userId": "user-001", "fiId": "1234", "expiresAt": "2026-05-23T12:00:00Z"}
+  ],
+  "offers": [
+    {"id": "SIM-OFFER-001", "offerId": "SIM-OFFER-001", "title": "10% off at Acme Shoes", "description": "Get 10% off your next purchase.", "merchantName": "Acme Shoes", "discountType": "PERCENTAGE", "discountValue": 10, "currency": "USD", "startDate": "2026-01-01", "endDate": "2026-12-31", "category": "Shopping", "channels": ["ONLINE", "INSTORE"], "presentmentCountries": ["USA"], "active": true},
+    {"id": "SIM-OFFER-002", "offerId": "SIM-OFFER-002", "title": "15% off at Tech World", "description": "Save 15% on all electronics.", "merchantName": "Tech World", "discountType": "PERCENTAGE", "discountValue": 15, "currency": "USD", "startDate": "2026-01-01", "endDate": "2026-12-31", "category": "Electronics", "channels": ["ONLINE"], "presentmentCountries": ["USA"], "active": true},
+    {"id": "SIM-OFFER-003", "offerId": "SIM-OFFER-003", "title": "$5 off at Coffee House", "description": "$5 off any purchase over $20.", "merchantName": "Coffee House", "discountType": "ABSOLUTE", "discountValue": 5, "currency": "USD", "startDate": "2026-01-01", "endDate": "2026-06-30", "category": "Dining", "channels": ["INSTORE"], "presentmentCountries": ["USA"], "active": true}
+  ],
+  "users": [
+    {"crk": "sim-crk-001", "userId": "user-001", "userIdType": "BCN", "firstName": "Jane", "lastName": "Doe", "emailAddress": "jane.doe@example.com", "fiId": "1234", "accounts": [{"accountId": "acct-001", "accountIdType": "BAN", "bankProductCode": "BPC001", "programIdentifier": "PROG01", "status": "ACTIVE"}]},
+    {"crk": "sim-crk-002", "userId": "user-002", "userIdType": "BCN", "firstName": "John", "lastName": "Smith", "emailAddress": "john.smith@example.com", "fiId": "1234", "accounts": [{"accountId": "acct-002", "accountIdType": "BAN", "bankProductCode": "BPC001", "programIdentifier": "PROG01", "status": "ACTIVE"}]}
+  ],
+  "savings": [
+    {"userId": "user-001", "totalSavings": 45.50, "currency": "USD", "potentialSavings": 120.00, "offersActivated": 3, "offersRedeemed": 2}
+  ],
+  "rebates": [
+    {"id": "sim-rebate-001", "userId": "user-001", "amount": 25.00, "currency": "USD", "status": "PROCESSED", "processedAt": "2026-05-01T00:00:00Z"}
+  ]
+}

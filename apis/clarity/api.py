@@ -150,8 +150,10 @@ MANIFEST: Dict[str, Any] = {
 
 
 def _base_url() -> str:
+    from simulator.switcher import sim_base_url
     env = os.environ.get("CONSUMERCLARITY_ENV", "sandbox").lower()
-    return _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
+    real = _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
+    return sim_base_url("clarity", real)
 
 
 def _configured() -> bool:
@@ -161,7 +163,8 @@ def _configured() -> bool:
 
 
 def is_configured() -> bool:
-    return _configured()
+    from simulator.switcher import is_simulated
+    return _configured() or is_simulated("clarity")
 
 
 def get_state() -> Dict[str, Any]:
@@ -175,7 +178,8 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _search_merchant(params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("clarity"):
         return {
             "success": False,
             "error": (
@@ -191,18 +195,8 @@ def _search_merchant(params: Dict[str, Any]) -> Dict[str, Any]:
 
     criteria = {k: v for k, v in preset["criteria"].items()}
 
-    consumer_key  = os.environ["CONSUMERCLARITY_CONSUMER_KEY"]
-    key_path      = os.environ["CONSUMERCLARITY_SIGNING_KEY_PATH"]
-    key_password  = os.environ.get("CONSUMERCLARITY_SIGNING_KEY_PASSWORD", "keystorepassword")
-
-    if not os.path.isabs(key_path):
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        key_path = os.path.join(project_root, key_path)
-
     import json
     import requests
-    import oauth1.authenticationutils as authutils
-    from oauth1.oauth import OAuth
 
     url = f"{_base_url()}{_ENDPOINT}"
     body_obj = {
@@ -215,14 +209,28 @@ def _search_merchant(params: Dict[str, Any]) -> Dict[str, Any]:
         "Accept": "application/json",
     }
 
-    try:
-        signing_key = authutils.load_signing_key(key_path, key_password)
-        auth_header = OAuth.get_authorization_header(
-            url, "POST", body_str, consumer_key, signing_key
-        )
-        headers["Authorization"] = auth_header
-    except Exception as exc:
-        return {"success": False, "error": f"OAuth signing failed: {exc}"}
+    if is_simulated("clarity"):
+        headers["Authorization"] = "Simulated"
+    else:
+        import oauth1.authenticationutils as authutils
+        from oauth1.oauth import OAuth
+
+        consumer_key  = os.environ["CONSUMERCLARITY_CONSUMER_KEY"]
+        key_path      = os.environ["CONSUMERCLARITY_SIGNING_KEY_PATH"]
+        key_password  = os.environ.get("CONSUMERCLARITY_SIGNING_KEY_PASSWORD", "keystorepassword")
+
+        if not os.path.isabs(key_path):
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            key_path = os.path.join(project_root, key_path)
+
+        try:
+            signing_key = authutils.load_signing_key(key_path, key_password)
+            auth_header = OAuth.get_authorization_header(
+                url, "POST", body_str, consumer_key, signing_key
+            )
+            headers["Authorization"] = auth_header
+        except Exception as exc:
+            return {"success": False, "error": f"OAuth signing failed: {exc}"}
 
     try:
         resp = requests.post(url, data=body_str, headers=headers, timeout=15)

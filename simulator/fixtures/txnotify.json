@@ -1,0 +1,7 @@
+{
+  "transactions": [
+    {"transUid": "sim-tx-001", "cardReference": "sim-card-ref-001", "cardholderAmount": 9.99, "cardholderCurrency": "USD", "merchantName": "Coffee Corner", "cardLastNumbers": 1234, "transactionType": "PURCHASE", "postedDate": "2026-05-23T10:00:00Z"},
+    {"transUid": "sim-tx-002", "cardReference": "sim-card-ref-001", "cardholderAmount": 24.50, "cardholderCurrency": "USD", "merchantName": "Centra", "cardLastNumbers": 1234, "transactionType": "PURCHASE", "postedDate": "2026-05-22T14:30:00Z"}
+  ],
+  "undelivered_notifications": []
+}

@@ -328,8 +328,10 @@ MANIFEST: Dict[str, Any] = {
 
 
 def _base_url() -> str:
+    from simulator.switcher import sim_base_url
     env = os.environ.get("CONSENT_ENV", "sandbox").lower()
-    return _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
+    real = _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
+    return sim_base_url("consent", real)
 
 
 def _configured() -> bool:
@@ -339,7 +341,8 @@ def _configured() -> bool:
 
 
 def is_configured() -> bool:
-    return _configured()
+    from simulator.switcher import is_simulated
+    return _configured() or is_simulated("consent")
 
 
 def get_state() -> Dict[str, Any]:
@@ -428,10 +431,14 @@ def _http(method: str, url: str, body: Dict | None = None, _body_str: str | None
     if body_str is not None:
         headers["Content-Type"] = "application/json"
 
-    try:
-        headers["Authorization"] = _get_auth_header(url, method, body_str)
-    except Exception as e:
-        return {"success": False, "error": f"OAuth signing failed: {e}"}
+    from simulator.switcher import is_simulated
+    if is_simulated("consent"):
+        headers["Authorization"] = "Simulated"
+    else:
+        try:
+            headers["Authorization"] = _get_auth_header(url, method, body_str)
+        except Exception as e:
+            return {"success": False, "error": f"OAuth signing failed: {e}"}
 
     try:
         resp = requests.request(method, url, data=body_str, headers=headers, timeout=15)
@@ -454,7 +461,8 @@ def _http(method: str, url: str, body: Dict | None = None, _body_str: str | None
 
 
 def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("consent"):
         return _not_configured_error()
 
     pan  = (params.get("pan") or "").strip()
@@ -488,7 +496,7 @@ def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
 
     url = f"{_base_url()}/consents"
     cert_path = _resolve_cert_path()
-    if not cert_path:
+    if not cert_path and not is_simulated("consent"):
         return {
             "success": False,
             "error": (
@@ -499,8 +507,11 @@ def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
             ),
         }
     try:
-        encrypted_str = _encrypt_body(body, cert_path)
-        result = _http("POST", url, body=body, _body_str=encrypted_str)
+        if cert_path:
+            encrypted_str = _encrypt_body(body, cert_path)
+            result = _http("POST", url, body=body, _body_str=encrypted_str)
+        else:
+            result = _http("POST", url, body=body)
         if result["success"]:
             card_ref = result["data"].get("cardReference", "")
             STATE["card_ref"] = card_ref
@@ -537,7 +548,8 @@ def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _get_consents(params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("consent"):
         return _not_configured_error()
 
     card_ref = (params.get("card_ref") or "").strip()
@@ -567,6 +579,9 @@ def _resolve_cert_path() -> str | None:
 
 def _http_encrypted(method: str, url: str, body: Dict) -> Dict[str, Any]:
     """POST/PUT with JWE encryption if cert is configured, else plain JSON."""
+    from simulator.switcher import is_simulated
+    if is_simulated("consent"):
+        return _http(method, url, body)
     cert_path = _resolve_cert_path()
     if cert_path:
         try:
@@ -578,7 +593,8 @@ def _http_encrypted(method: str, url: str, body: Dict) -> Dict[str, Any]:
 
 
 def _start_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("consent"):
         return _not_configured_error()
 
     card_ref  = (params.get("card_ref") or "").strip()
@@ -627,7 +643,8 @@ def _start_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _verify_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("consent"):
         return _not_configured_error()
 
     card_ref  = (params.get("card_ref") or "").strip()
@@ -647,7 +664,8 @@ def _verify_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _delete_consents(params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("consent"):
         return _not_configured_error()
 
     card_ref = (params.get("card_ref") or "").strip()
@@ -659,7 +677,8 @@ def _delete_consents(params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _delete_single_consent(params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("consent"):
         return _not_configured_error()
 
     card_ref   = (params.get("card_ref") or "").strip()

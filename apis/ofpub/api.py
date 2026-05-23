@@ -233,16 +233,32 @@ MANIFEST: Dict[str, Any] = {
 # Helpers
 # ---------------------------------------------------------------------------
 def _base_url() -> str:
+    from simulator.switcher import sim_base_url
     env = os.environ.get("OFPUB_ENV", "sandbox").lower()
-    return _PROD_BASE if env == "production" else _SANDBOX_BASE
+    real = _PROD_BASE if env == "production" else _SANDBOX_BASE
+    return sim_base_url("ofpub", real)
+
+
+def _is_prod() -> bool:
+    return os.environ.get("OFPUB_ENV", "sandbox").lower() == "production"
 
 
 def _presentment_url(path: str) -> str:
-    return f"{_base_url()}{_PRESENTMENT_SUFFIX}{path}"
+    from simulator.switcher import is_simulated
+    if is_simulated("ofpub"):
+        port = int(os.environ.get("PORT", 9021))
+        return f"http://localhost:{port}/api-sim/ofpub/presentment{path}"
+    base = _PROD_BASE if _is_prod() else _SANDBOX_BASE
+    return f"{base}{_PRESENTMENT_SUFFIX}{path}"
 
 
 def _admin_url(path: str) -> str:
-    return f"{_base_url()}{path}"
+    from simulator.switcher import is_simulated
+    if is_simulated("ofpub"):
+        port = int(os.environ.get("PORT", 9021))
+        return f"http://localhost:{port}/api-sim/ofpub/admin{path}"
+    base = _PROD_BASE if _is_prod() else _SANDBOX_BASE
+    return f"{base}{path}"
 
 
 def _configured() -> bool:
@@ -252,7 +268,8 @@ def _configured() -> bool:
 
 
 def is_configured() -> bool:
-    return _configured()
+    from simulator.switcher import is_simulated
+    return _configured() or is_simulated("ofpub")
 
 
 def get_state() -> Dict[str, Any]:
@@ -283,12 +300,10 @@ def _signed_request(method: str, url: str, body_str: str | None, extra_headers: 
     response — matching the convention used by the other Mastercard APIs.
     """
     import requests
-    import oauth1.authenticationutils as authutils
-    from oauth1.oauth import OAuth
+    from simulator.switcher import is_simulated as _is_sim
 
-    consumer_key = os.environ["OFPUB_CONSUMER_KEY"]
-    key_path     = _resolve_key_path(os.environ["OFPUB_SIGNING_KEY_PATH"])
-    key_password = os.environ.get("OFPUB_SIGNING_KEY_PASSWORD", "keystorepassword")
+    if not _configured() and not _is_sim("ofpub"):
+        return _not_configured_err()
 
     headers = {"Accept": "application/json"}
     if body_str is not None:
@@ -296,14 +311,24 @@ def _signed_request(method: str, url: str, body_str: str | None, extra_headers: 
     if extra_headers:
         headers.update(extra_headers)
 
-    try:
-        signing_key = authutils.load_signing_key(key_path, key_password)
-        auth_header = OAuth.get_authorization_header(
-            url, method, body_str or "", consumer_key, signing_key
-        )
-        headers["Authorization"] = auth_header
-    except Exception as exc:
-        return {"success": False, "error": f"OAuth signing failed: {exc}"}
+    if _is_sim("ofpub"):
+        headers["Authorization"] = "Simulated"
+    else:
+        import oauth1.authenticationutils as authutils
+        from oauth1.oauth import OAuth
+
+        consumer_key = os.environ["OFPUB_CONSUMER_KEY"]
+        key_path     = _resolve_key_path(os.environ["OFPUB_SIGNING_KEY_PATH"])
+        key_password = os.environ.get("OFPUB_SIGNING_KEY_PASSWORD", "keystorepassword")
+
+        try:
+            signing_key = authutils.load_signing_key(key_path, key_password)
+            auth_header = OAuth.get_authorization_header(
+                url, method, body_str or "", consumer_key, signing_key
+            )
+            headers["Authorization"] = auth_header
+        except Exception as exc:
+            return {"success": False, "error": f"OAuth signing failed: {exc}"}
 
     try:
         resp = requests.request(
@@ -341,7 +366,8 @@ def _qs(params: Dict[str, Any]) -> str:
 # Operations
 # ---------------------------------------------------------------------------
 def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("ofpub"):
         return _not_configured_err()
     dispatch = {
         "create_access_token":   _create_access_token,

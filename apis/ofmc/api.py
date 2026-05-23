@@ -221,8 +221,10 @@ MANIFEST: Dict[str, Any] = {
 # Helpers
 # ---------------------------------------------------------------------------
 def _base_url() -> str:
+    from simulator.switcher import sim_base_url
     env = os.environ.get("OFMC_ENV", "sandbox").lower()
-    return _PROD_BASE if env == "production" else _SANDBOX_BASE
+    real = _PROD_BASE if env == "production" else _SANDBOX_BASE
+    return sim_base_url("ofmc", real)
 
 
 def _configured() -> bool:
@@ -232,7 +234,8 @@ def _configured() -> bool:
 
 
 def is_configured() -> bool:
-    return _configured()
+    from simulator.switcher import is_simulated
+    return _configured() or is_simulated("ofmc")
 
 
 def get_state() -> Dict[str, Any]:
@@ -258,25 +261,33 @@ def _resolve_key_path(path: str) -> str:
 
 def _signed_request(method: str, url: str, body_str: str | None) -> Dict[str, Any]:
     import requests
-    import oauth1.authenticationutils as authutils
-    from oauth1.oauth import OAuth
+    from simulator.switcher import is_simulated as _is_sim
 
-    consumer_key = os.environ["OFMC_CONSUMER_KEY"]
-    key_path     = _resolve_key_path(os.environ["OFMC_SIGNING_KEY_PATH"])
-    key_password = os.environ.get("OFMC_SIGNING_KEY_PASSWORD", "keystorepassword")
+    if not _configured() and not _is_sim("ofmc"):
+        return _not_configured_err()
 
     headers = {"Accept": "application/json"}
     if body_str is not None:
         headers["Content-Type"] = "application/json"
 
-    try:
-        signing_key = authutils.load_signing_key(key_path, key_password)
-        auth_header = OAuth.get_authorization_header(
-            url, method, body_str or "", consumer_key, signing_key
-        )
-        headers["Authorization"] = auth_header
-    except Exception as exc:
-        return {"success": False, "error": f"OAuth signing failed: {exc}"}
+    if _is_sim("ofmc"):
+        headers["Authorization"] = "Simulated"
+    else:
+        import oauth1.authenticationutils as authutils
+        from oauth1.oauth import OAuth
+
+        consumer_key = os.environ["OFMC_CONSUMER_KEY"]
+        key_path     = _resolve_key_path(os.environ["OFMC_SIGNING_KEY_PATH"])
+        key_password = os.environ.get("OFMC_SIGNING_KEY_PASSWORD", "keystorepassword")
+
+        try:
+            signing_key = authutils.load_signing_key(key_path, key_password)
+            auth_header = OAuth.get_authorization_header(
+                url, method, body_str or "", consumer_key, signing_key
+            )
+            headers["Authorization"] = auth_header
+        except Exception as exc:
+            return {"success": False, "error": f"OAuth signing failed: {exc}"}
 
     try:
         resp = requests.request(
@@ -314,7 +325,8 @@ def _qs(params: Dict[str, Any]) -> str:
 # Operations
 # ---------------------------------------------------------------------------
 def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("ofmc"):
         return _not_configured_err()
     dispatch = {
         "search_categories":     _search_categories,

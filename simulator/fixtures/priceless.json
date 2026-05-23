@@ -1,0 +1,70 @@
+{
+  "platform_products": [
+    {"id": "PROD-001", "name": "Priceless New York Evening", "category": {"id": "CAT-ENT", "name": "Entertainment"}, "location": {"id": "LOC-NYC", "name": "New York", "country": "US"}, "price": 250.00, "currency": "USD", "inventory": 10, "description": "An exclusive evening in New York City.", "images": [{"url": "https://example.com/priceless/nyc-evening.jpg"}], "partner_id": 1},
+    {"id": "PROD-002", "name": "London Chef's Table Experience", "category": {"id": "CAT-DIN", "name": "Dining"}, "location": {"id": "LOC-LON", "name": "London", "country": "GB"}, "price": 350.00, "currency": "GBP", "inventory": 5, "description": "Exclusive chef's table dining in London.", "images": [{"url": "https://example.com/priceless/london-dining.jpg"}], "partner_id": 1},
+    {"id": "PROD-003", "name": "Singapore Supper Club", "category": {"id": "CAT-DIN", "name": "Dining"}, "location": {"id": "LOC-SGP", "name": "Singapore", "country": "SG"}, "price": 180.00, "currency": "SGD", "inventory": 20, "description": "Exclusive supper club experience in Singapore.", "images": [{"url": "https://example.com/priceless/singapore-dining.jpg"}], "partner_id": 1}
+  ],
+  "platform_categories": [
+    {"id": "CAT-ENT", "name": "Entertainment", "description": "Live events, shows, and experiences"},
+    {"id": "CAT-DIN", "name": "Dining", "description": "Exclusive dining experiences"},
+    {"id": "CAT-TRV", "name": "Travel", "description": "Travel experiences and packages"},
+    {"id": "CAT-SPT", "name": "Sports", "description": "Sports events and experiences"}
+  ],
+  "platform_locations": [
+    {"id": "LOC-NYC", "name": "New York", "country": "US", "latitude": 40.7128, "longitude": -74.0060},
+    {"id": "LOC-LON", "name": "London", "country": "GB", "latitude": 51.5074, "longitude": -0.1278},
+    {"id": "LOC-SGP", "name": "Singapore", "country": "SG", "latitude": 1.3521, "longitude": 103.8198},
+    {"id": "LOC-SYD", "name": "Sydney", "country": "AU", "latitude": -33.8688, "longitude": 151.2093}
+  ],
+  "platform_programs": [
+    {"id": "PROG-001", "name": "World Elite", "description": "Premium programme for World Elite cardholders"}
+  ],
+  "platform_languages": [
+    {"code": "en", "name": "English"},
+    {"code": "fr", "name": "French"},
+    {"code": "es", "name": "Spanish"},
+    {"code": "de", "name": "German"}
+  ],
+  "specials_offers": [
+    {"offerId": "SPE-OFF-001", "title": "20% off dining", "description": "Get 20% off at participating restaurants.", "category": "Dining", "eligibleMarkets": ["US", "GB"], "destinationMarkets": ["US", "GB"], "mastercardProduct": "MWE", "startDate": "2026-01-01", "endDate": "2026-12-31", "merchantName": "Priceless Dining Network"},
+    {"offerId": "SPE-OFF-002", "title": "Complimentary airport lounge", "description": "Complimentary access to airport lounges worldwide.", "category": "Travel", "eligibleMarkets": ["US", "GB", "SG"], "destinationMarkets": ["US", "GB", "SG"], "mastercardProduct": "MWE", "startDate": "2026-01-01", "endDate": "2026-12-31", "merchantName": "Global Lounge Network"}
+  ],
+  "specials_benefits": [
+    {"benefitId": "SPE-BEN-001", "title": "Travel Insurance", "description": "Comprehensive travel insurance for cardholders.", "category": "Travel", "mastercardProduct": "MWE", "startDate": "2026-01-01", "endDate": "2026-12-31"},
+    {"benefitId": "SPE-BEN-002", "title": "Purchase Protection", "description": "60-day purchase protection on eligible items.", "category": "Shopping", "mastercardProduct": "MPL", "startDate": "2026-01-01", "endDate": "2026-12-31"}
+  ],
+  "specials_programs": [
+    {"id": "SPRG-001", "name": "Priceless Experiences", "description": "Curated global experiences programme"},
+    {"id": "SPRG-002", "name": "Priceless Cities", "description": "City-by-city local experiences"}
+  ],
+  "specials_merchants": [
+    {"id": "SMER-001", "name": "Luxury Hotels International", "category": "Travel", "countries": ["US", "GB", "FR"]},
+    {"id": "SMER-002", "name": "Fine Dining Collective", "category": "Dining", "countries": ["US", "GB", "SG"]}
+  ],
+  "specials_categories": [
+    {"id": "SCAT-DIN", "name": "Dining"},
+    {"id": "SCAT-TRV", "name": "Travel"},
+    {"id": "SCAT-ENT", "name": "Entertainment"},
+    {"id": "SCAT-SHO", "name": "Shopping"}
+  ],
+  "specials_countries": [
+    {"code": "US", "name": "United States"},
+    {"code": "GB", "name": "United Kingdom"},
+    {"code": "SG", "name": "Singapore"},
+    {"code": "AU", "name": "Australia"}
+  ],
+  "specials_languages": [
+    {"code": "en-US", "name": "English (US)"},
+    {"code": "en-GB", "name": "English (UK)"},
+    {"code": "fr-FR", "name": "French"},
+    {"code": "es-ES", "name": "Spanish"}
+  ],
+  "specials_mastercard_products": [
+    {"code": "MST", "name": "Standard"},
+    {"code": "MGD", "name": "Gold"},
+    {"code": "MPL", "name": "Platinum"},
+    {"code": "MWE", "name": "World Elite"},
+    {"code": "MWP", "name": "World"},
+    {"code": "MBC", "name": "Business"}
+  ]
+}

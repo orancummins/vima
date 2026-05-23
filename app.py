@@ -19,10 +19,12 @@ load_dotenv(os.path.join(_CONFIG_DIR, ".env"))
 
 from apis import registry as api_registry  # noqa: E402
 from usecases import registry as usecase_registry  # noqa: E402
+from simulator.blueprint import sim_bp  # noqa: E402
 
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "vima-dev-secret")
+app.register_blueprint(sim_bp)
 
 # In-memory store for TxPush events (last 50)
 _txpush_events: deque = deque(maxlen=50)
@@ -42,8 +44,9 @@ _orig_send = _requests.Session.send  # keep reference before patching
 
 def _patched_send(self, prepared_request, **kwargs):
     url = prepared_request.url or ""
-    # Only log outbound calls to external APIs, not loopback traffic
-    is_external = not any(h in url for h in _INTERNAL_HOSTS)
+    # Log simulator requests (/api-sim/) even though they're on localhost
+    is_simulator = "/api-sim/" in url
+    is_external = is_simulator or not any(h in url for h in _INTERNAL_HOSTS)
 
     if not is_external:
         return _orig_send(self, prepared_request, **kwargs)

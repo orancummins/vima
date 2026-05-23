@@ -1,0 +1,32 @@
+{
+  "customers": [
+    {"id": "6012118342", "username": "demo_customer_1", "type": "testing", "createdDate": 1607450357, "firstName": "Demo", "lastName": "Customer"},
+    {"id": "6012118343", "username": "demo_customer_2", "type": "testing", "createdDate": 1607450400, "firstName": "Test", "lastName": "User"}
+  ],
+  "accounts": [
+    {"id": "5011648377", "number": "5011648377", "accountNumberDisplay": "****1111", "name": "FinBank Checking", "balance": 2345.67, "type": "checking", "status": "active", "customerId": "6012118342", "institutionId": "101732", "currency": "USD", "createdDate": 1607450500, "lastUpdatedDate": 1748131200, "aggregationStatusCode": 0},
+    {"id": "5011648378", "number": "5011648378", "accountNumberDisplay": "****2222", "name": "FinBank Savings", "balance": 10500.00, "type": "savings", "status": "active", "customerId": "6012118342", "institutionId": "101732", "currency": "USD", "createdDate": 1607450500, "lastUpdatedDate": 1748131200, "aggregationStatusCode": 0},
+    {"id": "5011648379", "number": "5011648379", "accountNumberDisplay": "****3333", "name": "FinBank Investment", "balance": 52340.12, "type": "investment", "status": "active", "customerId": "6012118342", "institutionId": "101732", "currency": "USD", "createdDate": 1607450500, "lastUpdatedDate": 1748131200, "aggregationStatusCode": 0},
+    {"id": "5011648380", "number": "5011648380", "accountNumberDisplay": "****4444", "name": "FinBank 401k", "balance": 198000.00, "type": "moneyMarket", "status": "active", "customerId": "6012118342", "institutionId": "101732", "currency": "USD", "createdDate": 1607450500, "lastUpdatedDate": 1748131200, "aggregationStatusCode": 0}
+  ],
+  "transactions": [
+    {"id": "21284820379", "amount": -45.99, "description": "AMAZON.COM", "category": "Shopping", "status": "active", "customerId": "6012118342", "accountId": "5011648377", "postedDate": 1748131200, "transactionDate": 1748044800, "memo": "AMZN", "type": "debit"},
+    {"id": "21284820380", "amount": -12.50, "description": "STARBUCKS", "category": "Restaurants", "status": "active", "customerId": "6012118342", "accountId": "5011648377", "postedDate": 1748044800, "transactionDate": 1747958400, "memo": "SBUX", "type": "debit"},
+    {"id": "21284820381", "amount": 3500.00, "description": "DIRECT DEPOSIT - EMPLOYER", "category": "Payroll", "status": "active", "customerId": "6012118342", "accountId": "5011648377", "postedDate": 1747958400, "transactionDate": 1747958400, "memo": "PAYROLL", "type": "credit"},
+    {"id": "21284820382", "amount": -89.99, "description": "NETFLIX", "category": "Entertainment", "status": "active", "customerId": "6012118342", "accountId": "5011648377", "postedDate": 1747872000, "transactionDate": 1747872000, "memo": "NFLX", "type": "debit"},
+    {"id": "21284820383", "amount": -250.00, "description": "WHOLE FOODS", "category": "Groceries", "status": "active", "customerId": "6012118342", "accountId": "5011648377", "postedDate": 1747785600, "transactionDate": 1747785600, "memo": "WFM", "type": "debit"},
+    {"id": "21284820384", "amount": -1850.00, "description": "RENT PAYMENT", "category": "Rent", "status": "active", "customerId": "6012118342", "accountId": "5011648377", "postedDate": 1747699200, "transactionDate": 1747699200, "memo": "RENT", "type": "debit"},
+    {"id": "21284820385", "amount": -32.00, "description": "SHELL OIL", "category": "Gas", "status": "active", "customerId": "6012118342", "accountId": "5011648377", "postedDate": 1747612800, "transactionDate": 1747612800, "memo": "SHELL", "type": "debit"},
+    {"id": "21284820386", "amount": -15.75, "description": "UBER EATS", "category": "Restaurants", "status": "active", "customerId": "6012118342", "accountId": "5011648377", "postedDate": 1747526400, "transactionDate": 1747526400, "memo": "UBEREATS", "type": "debit"},
+    {"id": "21284820387", "amount": 200.00, "description": "TRANSFER FROM SAVINGS", "category": "Transfer", "status": "active", "customerId": "6012118342", "accountId": "5011648377", "postedDate": 1747440000, "transactionDate": 1747440000, "memo": "XFER", "type": "credit"},
+    {"id": "21284820388", "amount": -120.00, "description": "ELECTRIC BILL", "category": "Utilities", "status": "active", "customerId": "6012118342", "accountId": "5011648377", "postedDate": 1747353600, "transactionDate": 1747353600, "memo": "ELEC", "type": "debit"}
+  ],
+  "institutions": [
+    {"id": "101732", "name": "FinBank", "transAgg": true, "voa": true, "stateAgg": false, "ach": true, "transAggByStatement": false, "branding": {"logo": "https://example.com/finbank-logo.png", "icon": "https://example.com/finbank-icon.png", "primaryColor": "#003366"}},
+    {"id": "000000600", "name": "Chase", "transAgg": true, "voa": true, "stateAgg": false, "ach": true, "transAggByStatement": false, "branding": {"logo": "https://example.com/chase-logo.png"}},
+    {"id": "000000016", "name": "Bank of America", "transAgg": true, "voa": true, "stateAgg": false, "ach": true, "transAggByStatement": false, "branding": {"logo": "https://example.com/boa-logo.png"}},
+    {"id": "000000005", "name": "Wells Fargo", "transAgg": true, "voa": true, "stateAgg": false, "ach": true, "transAggByStatement": false, "branding": {"logo": "https://example.com/wf-logo.png"}},
+    {"id": "000000013", "name": "Citibank", "transAgg": true, "voa": true, "stateAgg": false, "ach": true, "transAggByStatement": false, "branding": {"logo": "https://example.com/citi-logo.png"}}
+  ],
+  "reports": []
+}

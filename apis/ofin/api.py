@@ -21,6 +21,11 @@ _client: Optional[OpenFinanceClient] = None
 
 def _get_client() -> Optional[OpenFinanceClient]:
     global _client
+    from simulator.switcher import is_simulated
+    if is_simulated("ofin"):
+        port = int(os.environ.get("PORT", 9021))
+        sim_base = f"http://localhost:{port}/api-sim/ofin"
+        return OpenFinanceClient("sim_partner", "sim_secret", "sim_appkey", base_url=sim_base)
     if _client is not None:
         return _client
     pid = os.environ.get("PARTNER_ID", "")
@@ -34,7 +39,8 @@ def _get_client() -> Optional[OpenFinanceClient]:
 
 
 def is_configured() -> bool:
-    return _get_client() is not None
+    from simulator.switcher import is_simulated
+    return is_simulated("ofin") or _get_client() is not None
 
 
 # ---------------------------------------------------------------------------

@@ -28,7 +28,9 @@ _SANDBOX_BASE = "https://sandbox.api.mastercard.com/loyalty/eligibility"
 
 
 def _base() -> str:
-    return _PROD_BASE if os.environ.get("BCES_ENV", "sandbox").lower() == "production" else _SANDBOX_BASE
+    from simulator.switcher import sim_base_url
+    real = _PROD_BASE if os.environ.get("BCES_ENV", "sandbox").lower() == "production" else _SANDBOX_BASE
+    return sim_base_url("bces", real)
 
 
 def _configured() -> bool:
@@ -38,7 +40,8 @@ def _configured() -> bool:
 
 
 def is_configured() -> bool:
-    return _configured()
+    from simulator.switcher import is_simulated
+    return _configured() or is_simulated("bces")
 
 
 def get_state() -> Dict[str, Any]:
@@ -171,7 +174,8 @@ def _signed_request(
     *,
     body: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("bces"):
         return {
             "success": False,
             "error": (
@@ -180,58 +184,68 @@ def _signed_request(
             ),
         }
 
-    consumer_key = os.environ["BCES_CONSUMER_KEY"]
-    key_path     = os.environ["BCES_SIGNING_KEY_PATH"]
-    key_password = os.environ.get("BCES_SIGNING_KEY_PASSWORD", "keystorepassword")
-    enc_cert     = os.environ.get("BCES_ENCRYPTION_CERT_PATH", "").strip()
-
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    if not os.path.isabs(key_path):
-        key_path = os.path.join(project_root, key_path)
-    if enc_cert and not os.path.isabs(enc_cert):
-        enc_cert = os.path.join(project_root, enc_cert)
-
     import requests
-    import oauth1.authenticationutils as authutils
-    from oauth1.oauth import OAuth
 
     url = f"{_base()}{path}"
 
-    # BCES requires JWE encryption of the request body when one is sent.
-    if body is not None:
-        if not enc_cert or not os.path.isfile(enc_cert):
-            return {
-                "success": False,
-                "error": (
-                    "BCES requires JWE payload encryption. Download the "
-                    "'Client Encryption' .pem from your Mastercard Developers "
-                    "project (BCES service) and set BCES_ENCRYPTION_CERT_PATH "
-                    "in .env, then restart."
-                ),
-                "request": {"method": method, "url": url, "body": body},
-            }
-        try:
-            body_str = _encrypt_body(body, enc_cert)
-        except Exception as e:
-            return {"success": False, "error": f"JWE encryption failed: {e}"}
+    if is_simulated("bces"):
+        body_str = json.dumps(body) if body is not None else None
+        headers: Dict[str, str] = {
+            "Accept": "application/json",
+            "x-openapi-transid": str(uuid.uuid4()),
+        }
+        if body_str is not None:
+            headers["Content-Type"] = "application/json"
+        headers["Authorization"] = "Simulated"
     else:
-        body_str = None
+        consumer_key = os.environ["BCES_CONSUMER_KEY"]
+        key_path     = os.environ["BCES_SIGNING_KEY_PATH"]
+        key_password = os.environ.get("BCES_SIGNING_KEY_PASSWORD", "keystorepassword")
+        enc_cert     = os.environ.get("BCES_ENCRYPTION_CERT_PATH", "").strip()
 
-    headers: Dict[str, str] = {
-        "Accept": "application/json",
-        "X-OpenApi-ClientId": consumer_key.split("!", 1)[0],
-        "x-openapi-transid":  str(uuid.uuid4()),
-    }
-    if body_str is not None:
-        headers["Content-Type"] = "application/json"
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        if not os.path.isabs(key_path):
+            key_path = os.path.join(project_root, key_path)
+        if enc_cert and not os.path.isabs(enc_cert):
+            enc_cert = os.path.join(project_root, enc_cert)
 
-    try:
-        signing_key = authutils.load_signing_key(key_path, key_password)
-        headers["Authorization"] = OAuth.get_authorization_header(
-            url, method, body_str, consumer_key, signing_key,
-        )
-    except Exception as e:
-        return {"success": False, "error": f"OAuth signing failed: {e}"}
+        import oauth1.authenticationutils as authutils
+        from oauth1.oauth import OAuth
+
+        if body is not None:
+            if not enc_cert or not os.path.isfile(enc_cert):
+                return {
+                    "success": False,
+                    "error": (
+                        "BCES requires JWE payload encryption. Download the "
+                        "'Client Encryption' .pem from your Mastercard Developers "
+                        "project (BCES service) and set BCES_ENCRYPTION_CERT_PATH "
+                        "in .env, then restart."
+                    ),
+                    "request": {"method": method, "url": url, "body": body},
+                }
+            try:
+                body_str = _encrypt_body(body, enc_cert)
+            except Exception as e:
+                return {"success": False, "error": f"JWE encryption failed: {e}"}
+        else:
+            body_str = None
+
+        headers = {
+            "Accept": "application/json",
+            "X-OpenApi-ClientId": consumer_key.split("!", 1)[0],
+            "x-openapi-transid":  str(uuid.uuid4()),
+        }
+        if body_str is not None:
+            headers["Content-Type"] = "application/json"
+
+        try:
+            signing_key = authutils.load_signing_key(key_path, key_password)
+            headers["Authorization"] = OAuth.get_authorization_header(
+                url, method, body_str, consumer_key, signing_key,
+            )
+        except Exception as e:
+            return {"success": False, "error": f"OAuth signing failed: {e}"}
 
     try:
         resp = requests.request(method, url, data=body_str, headers=headers, timeout=20)

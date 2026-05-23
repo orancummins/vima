@@ -225,8 +225,10 @@ MANIFEST: Dict[str, Any] = {
 # Helpers
 # ---------------------------------------------------------------------------
 def _base_url() -> str:
+    from simulator.switcher import sim_base_url
     env = os.environ.get("PLACES_ENV", "sandbox").lower()
-    return _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
+    real = _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
+    return sim_base_url("places", real)
 
 
 def _configured() -> bool:
@@ -236,7 +238,8 @@ def _configured() -> bool:
 
 
 def is_configured() -> bool:
-    return _configured()
+    from simulator.switcher import is_simulated
+    return _configured() or is_simulated("places")
 
 
 def get_state() -> Dict[str, Any]:
@@ -262,26 +265,31 @@ def _resolve_key_path(path: str) -> str:
 
 def _signed_request(method: str, url: str, body_str: str | None) -> Dict[str, Any]:
     """Build OAuth-signed headers + execute the HTTP call."""
+    from simulator.switcher import is_simulated
     import requests
-    import oauth1.authenticationutils as authutils
-    from oauth1.oauth import OAuth
-
-    consumer_key = os.environ["PLACES_CONSUMER_KEY"]
-    key_path = _resolve_key_path(os.environ["PLACES_SIGNING_KEY_PATH"])
-    key_password = os.environ.get("PLACES_SIGNING_KEY_PASSWORD", "keystorepassword")
 
     headers = {"Accept": "application/json"}
     if body_str is not None:
         headers["Content-Type"] = "application/json"
 
-    try:
-        signing_key = authutils.load_signing_key(key_path, key_password)
-        auth_header = OAuth.get_authorization_header(
-            url, method, body_str or "", consumer_key, signing_key
-        )
-        headers["Authorization"] = auth_header
-    except Exception as exc:
-        return {"success": False, "error": f"OAuth signing failed: {exc}"}
+    if is_simulated("places"):
+        headers["Authorization"] = "Simulated"
+    else:
+        import oauth1.authenticationutils as authutils
+        from oauth1.oauth import OAuth
+
+        consumer_key = os.environ["PLACES_CONSUMER_KEY"]
+        key_path = _resolve_key_path(os.environ["PLACES_SIGNING_KEY_PATH"])
+        key_password = os.environ.get("PLACES_SIGNING_KEY_PASSWORD", "keystorepassword")
+
+        try:
+            signing_key = authutils.load_signing_key(key_path, key_password)
+            auth_header = OAuth.get_authorization_header(
+                url, method, body_str or "", consumer_key, signing_key
+            )
+            headers["Authorization"] = auth_header
+        except Exception as exc:
+            return {"success": False, "error": f"OAuth signing failed: {exc}"}
 
     try:
         resp = requests.request(
@@ -335,7 +343,8 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
 # Operations
 # ---------------------------------------------------------------------------
 def _search_places(params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("places"):
         return _not_configured_err()
     from urllib.parse import urlencode
 
@@ -383,7 +392,8 @@ def _search_places(params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _get_place(params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("places"):
         return _not_configured_err()
     location_id = (params.get("location_id") or "").strip()
     if not location_id:
@@ -393,13 +403,15 @@ def _get_place(params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _list_mcc_codes() -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("places"):
         return _not_configured_err()
     return _signed_request("GET", f"{_base_url()}/merchant-category-codes", None)
 
 
 def _get_mcc_code(params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("places"):
         return _not_configured_err()
     mcc = (params.get("mcc_code") or "").strip()
     if not mcc:
@@ -408,13 +420,15 @@ def _get_mcc_code(params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _list_industry_codes() -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("places"):
         return _not_configured_err()
     return _signed_request("GET", f"{_base_url()}/merchant-industry-codes", None)
 
 
 def _get_industry_code(params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("places"):
         return _not_configured_err()
     industry = (params.get("industry") or "").strip()
     if not industry:
