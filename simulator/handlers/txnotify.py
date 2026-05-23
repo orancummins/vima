@@ -6,7 +6,7 @@ API = "txnotify"
 
 
 def register(bp):
-    @bp.route("/txnotify/openapis/notifications/transactions", methods=["POST"])
+    @bp.route("/txnotify/notifications/transactions", methods=["POST"])
     def trigger_test_transaction():
         store.lazy_load(API)
         body = request.get_json(force=True) or {}
@@ -24,7 +24,7 @@ def register(bp):
         store.put(API, "transactions", trans_uid, record)
         return jsonify(record), 200
 
-    @bp.route("/txnotify/openapis/undelivered-notifications", methods=["GET"])
+    @bp.route("/txnotify/undelivered-notifications", methods=["GET"])
     def get_undelivered():
         store.lazy_load(API)
         items = store.list(API, "undelivered_notifications")

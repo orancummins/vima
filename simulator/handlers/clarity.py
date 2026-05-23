@@ -5,7 +5,7 @@ API = "clarity"
 
 
 def register(bp):
-    @bp.route("/clarity/ethoca/consumer-clarity/searches", methods=["POST"])
+    @bp.route("/clarity/consumer-clarity/searches", methods=["POST"])
     def search_merchant():
         store.lazy_load(API)
         body = request.get_json(force=True) or {}

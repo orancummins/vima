@@ -6,12 +6,12 @@ API = "easysavings"
 
 
 def register(bp):
-    @bp.route("/easysavings/easysavings/specials/countries", methods=["GET"])
+    @bp.route("/easysavings/countries", methods=["GET"])
     def list_countries():
         store.lazy_load(API)
         return jsonify(store.list(API, "countries"))
 
-    @bp.route("/easysavings/easysavings/specials/offers", methods=["GET"])
+    @bp.route("/easysavings/offers", methods=["GET"])
     def easysavings_list_offers():
         store.lazy_load(API)
         offers = store.list(API, "offers")
@@ -20,7 +20,7 @@ def register(bp):
         page = offers[offset: offset + limit]
         return jsonify({"offers": page, "totalCount": len(offers), "offset": offset, "limit": limit})
 
-    @bp.route("/easysavings/easysavings/specials/redemptions", methods=["POST"])
+    @bp.route("/easysavings/redemptions", methods=["POST"])
     def redeem_offer():
         store.lazy_load(API)
         body = request.get_json(force=True) or {}
@@ -34,7 +34,7 @@ def register(bp):
         store.put(API, "redemptions", order_id, redemption)
         return jsonify(redemption), 200
 
-    @bp.route("/easysavings/easysavings/specials/redemptions/<order_id>", methods=["GET"])
+    @bp.route("/easysavings/redemptions/<order_id>", methods=["GET"])
     def get_redemption(order_id):
         store.lazy_load(API)
         rec = store.get(API, "redemptions", order_id)

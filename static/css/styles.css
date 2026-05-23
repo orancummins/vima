@@ -218,7 +218,25 @@ body {
   font-size: 14px;
   line-height: 1.65;
 }
-.api-meta { display: flex; gap: 8px; }
+.api-meta { display: flex; gap: 8px; align-items: center; }
+
+/* Simulator toggle pill */
+.sim-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; margin-left: 4px; }
+.sim-toggle input { display: none; }
+.sim-toggle-track {
+  position: relative; width: 36px; height: 20px;
+  background: var(--border); border-radius: 10px;
+  transition: background 0.2s;
+}
+.sim-toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #fff; transition: left 0.2s;
+}
+.sim-toggle input:checked ~ .sim-toggle-track { background: #7c3aed; }
+.sim-toggle input:checked ~ .sim-toggle-track .sim-toggle-thumb { left: 19px; }
+.sim-toggle-label { font-size: 12px; font-weight: 600; color: var(--muted); min-width: 30px; }
+.sim-toggle-label.sim-on { color: #7c3aed; }
 
 .btn {
   display: inline-flex; align-items: center; gap: 6px;

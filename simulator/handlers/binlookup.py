@@ -5,7 +5,7 @@ API = "binlookup"
 
 
 def register(bp):
-    @bp.route("/binlookup/bin-resources/bin-ranges", methods=["POST"])
+    @bp.route("/binlookup/bin-ranges", methods=["POST"])
     def bin_ranges():
         store.lazy_load(API)
         body = request.get_json(force=True) or []
