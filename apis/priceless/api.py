@@ -37,10 +37,18 @@ def _is_prod() -> bool:
 
 
 def _platform_base() -> str:
+    from simulator.switcher import is_simulated
+    if is_simulated("priceless"):
+        port = int(os.environ.get("PORT", 9021))
+        return f"http://localhost:{port}/api-sim/priceless/platform"
     return _PLATFORM_PROD if _is_prod() else _PLATFORM_SANDBOX
 
 
 def _specials_base() -> str:
+    from simulator.switcher import is_simulated
+    if is_simulated("priceless"):
+        port = int(os.environ.get("PORT", 9021))
+        return f"http://localhost:{port}/api-sim/priceless/specials"
     return _SPECIALS_PROD if _is_prod() else _SPECIALS_SANDBOX
 
 
@@ -53,7 +61,8 @@ def _configured() -> bool:
 
 
 def is_configured() -> bool:
-    return _configured()
+    from simulator.switcher import is_simulated
+    return _configured() or is_simulated("priceless")
 
 
 def get_state() -> Dict[str, Any]:
@@ -478,7 +487,8 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _do_get(op: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("priceless"):
         return {
             "success": False,
             "error": (
@@ -486,14 +496,6 @@ def _do_get(op: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
                 "PRICELESS_SIGNING_KEY_PATH in .env, then restart the server."
             ),
         }
-
-    consumer_key = os.environ["PRICELESS_CONSUMER_KEY"]
-    key_path     = os.environ["PRICELESS_SIGNING_KEY_PATH"]
-    key_password = os.environ.get("PRICELESS_SIGNING_KEY_PASSWORD", "keystorepassword")
-
-    if not os.path.isabs(key_path):
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        key_path = os.path.join(project_root, key_path)
 
     base = _platform_base() if op["service"] == "platform" else _specials_base()
 
@@ -517,24 +519,33 @@ def _do_get(op: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
         url = f"{url}?{urlencode(query_pairs)}"
 
     import requests
-    import oauth1.authenticationutils as authutils
-    from oauth1.oauth import OAuth
-
     import uuid
     headers = {
-        "Accept":            "application/json",
-        # Some Mastercard sandbox routes (Priceless Specials in particular)
-        # also require these Apigee-style identifiers in addition to the
-        # OAuth 1.0a signature.
-        "X-OpenApi-ClientId": consumer_key.split("!", 1)[0],
-        "x-openapi-transid":  str(uuid.uuid4()),
+        "Accept": "application/json",
+        "x-openapi-transid": str(uuid.uuid4()),
     }
-    try:
-        signing_key = authutils.load_signing_key(key_path, key_password)
-        auth_header = OAuth.get_authorization_header(url, "GET", None, consumer_key, signing_key)
-        headers["Authorization"] = auth_header
-    except Exception as e:
-        return {"success": False, "error": f"OAuth signing failed: {e}"}
+    if is_simulated("priceless"):
+        headers["Authorization"] = "Simulated"
+    else:
+        consumer_key = os.environ["PRICELESS_CONSUMER_KEY"]
+        key_path     = os.environ["PRICELESS_SIGNING_KEY_PATH"]
+        key_password = os.environ.get("PRICELESS_SIGNING_KEY_PASSWORD", "keystorepassword")
+
+        if not os.path.isabs(key_path):
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            key_path = os.path.join(project_root, key_path)
+
+        headers["X-OpenApi-ClientId"] = consumer_key.split("!", 1)[0]
+
+        import oauth1.authenticationutils as authutils
+        from oauth1.oauth import OAuth
+
+        try:
+            signing_key = authutils.load_signing_key(key_path, key_password)
+            auth_header = OAuth.get_authorization_header(url, "GET", None, consumer_key, signing_key)
+            headers["Authorization"] = auth_header
+        except Exception as e:
+            return {"success": False, "error": f"OAuth signing failed: {e}"}
 
     try:
         resp = requests.get(url, headers=headers, timeout=15)

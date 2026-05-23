@@ -73,8 +73,10 @@ _ENDPOINT_SEARCH  = "/bin-ranges/account-searches"  # requires paid plan
 
 
 def _base_url() -> str:
+    from simulator.switcher import sim_base_url
     env = os.environ.get("BINLOOKUP_ENV", "sandbox").lower()
-    return _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
+    real = _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
+    return sim_base_url("binlookup", real)
 
 
 def _configured() -> bool:
@@ -84,7 +86,8 @@ def _configured() -> bool:
 
 
 def is_configured() -> bool:
-    return _configured()
+    from simulator.switcher import is_simulated
+    return _configured() or is_simulated("binlookup")
 
 
 def get_state() -> Dict[str, Any]:
@@ -98,7 +101,8 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _lookup_bin(params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("binlookup"):
         return {
             "success": False,
             "error": (
@@ -111,19 +115,8 @@ def _lookup_bin(params: Dict[str, Any]) -> Dict[str, Any]:
     if not account_range:
         return {"success": False, "error": "account_range is required"}
 
-    consumer_key  = os.environ["BINLOOKUP_CONSUMER_KEY"]
-    key_path      = os.environ["BINLOOKUP_SIGNING_KEY_PATH"]
-    key_password  = os.environ.get("BINLOOKUP_SIGNING_KEY_PASSWORD", "keystorepassword")
-
-    # Resolve relative paths from the project root
-    if not os.path.isabs(key_path):
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        key_path = os.path.join(project_root, key_path)
-
     import json
     import requests
-    import oauth1.authenticationutils as authutils
-    from oauth1.oauth import OAuth
 
     # Filter /bin-ranges by binNum — works on free plan (account-searches needs paid plan)
     base = _base_url()
@@ -135,12 +128,26 @@ def _lookup_bin(params: Dict[str, Any]) -> Dict[str, Any]:
         "Accept": "application/json",
     }
 
-    try:
-        signing_key = authutils.load_signing_key(key_path, key_password)
-        auth_header = OAuth.get_authorization_header(url_with_params, "POST", body_str, consumer_key, signing_key)
-        headers["Authorization"] = auth_header
-    except Exception as e:
-        return {"success": False, "error": f"OAuth signing failed: {e}"}
+    if is_simulated("binlookup"):
+        headers["Authorization"] = "Simulated"
+    else:
+        consumer_key  = os.environ["BINLOOKUP_CONSUMER_KEY"]
+        key_path      = os.environ["BINLOOKUP_SIGNING_KEY_PATH"]
+        key_password  = os.environ.get("BINLOOKUP_SIGNING_KEY_PASSWORD", "keystorepassword")
+
+        if not os.path.isabs(key_path):
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            key_path = os.path.join(project_root, key_path)
+
+        import oauth1.authenticationutils as authutils
+        from oauth1.oauth import OAuth
+
+        try:
+            signing_key = authutils.load_signing_key(key_path, key_password)
+            auth_header = OAuth.get_authorization_header(url_with_params, "POST", body_str, consumer_key, signing_key)
+            headers["Authorization"] = auth_header
+        except Exception as e:
+            return {"success": False, "error": f"OAuth signing failed: {e}"}
 
     try:
         resp = requests.post(url_with_params, data=body_str, headers=headers, timeout=15)

@@ -28,7 +28,9 @@ _SANDBOX_BASE = "https://sandbox.api.mastercard.com/loyalty/eligibility"
 
 
 def _base() -> str:
-    return _PROD_BASE if os.environ.get("ELIGIBILITY_ENV", "sandbox").lower() == "production" else _SANDBOX_BASE
+    from simulator.switcher import sim_base_url
+    real = _PROD_BASE if os.environ.get("ELIGIBILITY_ENV", "sandbox").lower() == "production" else _SANDBOX_BASE
+    return sim_base_url("eligibility", real)
 
 
 def _configured() -> bool:
@@ -38,7 +40,8 @@ def _configured() -> bool:
 
 
 def is_configured() -> bool:
-    return _configured()
+    from simulator.switcher import is_simulated
+    return _configured() or is_simulated("eligibility")
 
 
 def get_state() -> Dict[str, Any]:
@@ -272,7 +275,8 @@ def _signed_request(
     body: Optional[Dict[str, Any]] = None,
     query: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("eligibility"):
         return {
             "success": False,
             "error": (
@@ -281,18 +285,8 @@ def _signed_request(
             ),
         }
 
-    consumer_key = os.environ["ELIGIBILITY_CONSUMER_KEY"]
-    key_path     = os.environ["ELIGIBILITY_SIGNING_KEY_PATH"]
-    key_password = os.environ.get("ELIGIBILITY_SIGNING_KEY_PASSWORD", "keystorepassword")
-
-    if not os.path.isabs(key_path):
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        key_path = os.path.join(project_root, key_path)
-
     from urllib.parse import urlencode
     import requests
-    import oauth1.authenticationutils as authutils
-    from oauth1.oauth import OAuth
 
     url = f"{_base()}{path}"
     if query:
@@ -300,21 +294,41 @@ def _signed_request(
 
     body_str = json.dumps(body) if body is not None else None
 
-    headers: Dict[str, str] = {
-        "Accept": "application/json",
-        "X-OpenApi-ClientId": consumer_key.split("!", 1)[0],
-        "x-openapi-transid":  str(uuid.uuid4()),
-    }
-    if body_str is not None:
-        headers["Content-Type"] = "application/json"
+    if is_simulated("eligibility"):
+        headers: Dict[str, str] = {
+            "Accept": "application/json",
+            "x-openapi-transid": str(uuid.uuid4()),
+        }
+        if body_str is not None:
+            headers["Content-Type"] = "application/json"
+        headers["Authorization"] = "Simulated"
+    else:
+        import oauth1.authenticationutils as authutils
+        from oauth1.oauth import OAuth
 
-    try:
-        signing_key = authutils.load_signing_key(key_path, key_password)
-        headers["Authorization"] = OAuth.get_authorization_header(
-            url, method, body_str, consumer_key, signing_key,
-        )
-    except Exception as e:
-        return {"success": False, "error": f"OAuth signing failed: {e}"}
+        consumer_key = os.environ["ELIGIBILITY_CONSUMER_KEY"]
+        key_path     = os.environ["ELIGIBILITY_SIGNING_KEY_PATH"]
+        key_password = os.environ.get("ELIGIBILITY_SIGNING_KEY_PASSWORD", "keystorepassword")
+
+        if not os.path.isabs(key_path):
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            key_path = os.path.join(project_root, key_path)
+
+        headers = {
+            "Accept": "application/json",
+            "X-OpenApi-ClientId": consumer_key.split("!", 1)[0],
+            "x-openapi-transid":  str(uuid.uuid4()),
+        }
+        if body_str is not None:
+            headers["Content-Type"] = "application/json"
+
+        try:
+            signing_key = authutils.load_signing_key(key_path, key_password)
+            headers["Authorization"] = OAuth.get_authorization_header(
+                url, method, body_str, consumer_key, signing_key,
+            )
+        except Exception as e:
+            return {"success": False, "error": f"OAuth signing failed: {e}"}
 
     try:
         resp = requests.request(method, url, data=body_str, headers=headers, timeout=20)

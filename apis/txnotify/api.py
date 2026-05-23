@@ -219,8 +219,10 @@ MANIFEST: Dict[str, Any] = {
 
 
 def _base_url() -> str:
+    from simulator.switcher import sim_base_url
     env = os.environ.get("TXNOTIFY_ENV", "sandbox").lower()
-    return _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
+    real = _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
+    return sim_base_url("txnotify", real)
 
 
 def _configured() -> bool:
@@ -230,7 +232,8 @@ def _configured() -> bool:
 
 
 def is_configured() -> bool:
-    return _configured()
+    from simulator.switcher import is_simulated
+    return _configured() or is_simulated("txnotify")
 
 
 def get_state() -> Dict[str, Any]:
@@ -274,7 +277,8 @@ def _not_configured_error(op: str) -> Dict[str, Any]:
 
 
 def _trigger_test_transaction(params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("txnotify"):
         return _not_configured_error("trigger_test_transaction")
 
     card_reference = (params.get("card_reference") or "").strip()
@@ -311,10 +315,13 @@ def _trigger_test_transaction(params: Dict[str, Any]) -> Dict[str, Any]:
 
     import requests
 
-    try:
-        headers["Authorization"] = _get_auth_header(url, "POST", body_str)
-    except Exception as e:
-        return {"success": False, "error": f"OAuth signing failed: {e}"}
+    if is_simulated("txnotify"):
+        headers["Authorization"] = "Simulated"
+    else:
+        try:
+            headers["Authorization"] = _get_auth_header(url, "POST", body_str)
+        except Exception as e:
+            return {"success": False, "error": f"OAuth signing failed: {e}"}
 
     try:
         resp = requests.post(url, data=body_str, headers=headers, timeout=15)
@@ -345,7 +352,8 @@ def _trigger_test_transaction(params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _get_undelivered(params: Dict[str, Any]) -> Dict[str, Any]:
-    if not _configured():
+    from simulator.switcher import is_simulated
+    if not _configured() and not is_simulated("txnotify"):
         return _not_configured_error("get_undelivered")
 
     page_number = params.get("page_number", "1")
@@ -358,10 +366,13 @@ def _get_undelivered(params: Dict[str, Any]) -> Dict[str, Any]:
 
     import requests
 
-    try:
-        headers["Authorization"] = _get_auth_header(url, "GET", None)
-    except Exception as e:
-        return {"success": False, "error": f"OAuth signing failed: {e}"}
+    if is_simulated("txnotify"):
+        headers["Authorization"] = "Simulated"
+    else:
+        try:
+            headers["Authorization"] = _get_auth_header(url, "GET", None)
+        except Exception as e:
+            return {"success": False, "error": f"OAuth signing failed: {e}"}
 
     try:
         resp = requests.get(url, headers=headers, timeout=15)
