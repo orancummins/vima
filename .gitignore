@@ -18,3 +18,6 @@ usecases/.enrichment_cache.json
 chat/server.log
 chat/.server.pid
 chat/.env
+
+# Local pip install target used during development/testing
+.pylibs/
