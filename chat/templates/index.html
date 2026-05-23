@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vima Chat</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+  <!-- ── Header ────────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="brand">
+      <div class="brand-marks">
+        <span class="mc-dot mc-dot-red"></span>
+        <span class="mc-dot mc-dot-yellow"></span>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title">Vima Chat</div>
+        <div class="brand-sub">AI Coding Assistant</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="work-dir-label">Work Dir:</span>
+      <span class="work-dir">{{ work_dir }}</span>
+    </div>
+  </header>
+
+  <!-- ── Tab bar ───────────────────────────────────────────────────── -->
+  <nav class="tabs">
+    <button class="tab active" data-tab="chat">Chat</button>
+    <button class="tab" data-tab="files">Files</button>
+    <button class="tab" data-tab="preview">Preview</button>
+    <button class="tab" data-tab="settings">Settings</button>
+  </nav>
+
+  <!-- ── Chat Tab ──────────────────────────────────────────────────── -->
+  <div id="tab-chat" class="tab-content active">
+    <div class="chat-container">
+      <div class="messages" id="messages">
+        <div class="welcome-card">
+          <h2>Welcome to Vima Chat</h2>
+          <p>I'm your AI coding assistant powered by Claude. I can:</p>
+          <ul>
+            <li>Read &amp; write files in your work directory</li>
+            <li>Run whitelisted terminal commands</li>
+            <li>Help you debug, refactor, or build new features</li>
+          </ul>
+          <p>Switch to <strong>Preview</strong> to see your test project, or <strong>Files</strong> to browse and edit code.</p>
+        </div>
+      </div>
+      <div id="chat-status-bar" class="chat-status-bar" aria-live="polite"></div>
+      <div class="chat-input-area">
+        <textarea
+          id="chat-input"
+          placeholder="Ask Claude to help with your code… (Enter to send, Shift+Enter for newline)"
+          rows="3"
+        ></textarea>
+        <div class="chat-controls">
+          <button id="clear-btn" class="btn-secondary">Clear chat</button>
+          <button id="send-btn" class="btn-primary">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Files Tab ─────────────────────────────────────────────────── -->
+  <div id="tab-files" class="tab-content">
+    <div class="files-container">
+      <div class="file-tree-panel">
+        <div class="panel-header">
+          Files
+          <button class="btn-icon" id="refresh-files" title="Refresh">↺</button>
+        </div>
+        <div class="file-tree" id="file-tree"></div>
+      </div>
+      <div class="editor-panel">
+        <div class="panel-header">
+          <span id="editor-filename" class="editor-filename">No file selected</span>
+          <button class="btn-secondary" id="save-file-btn" style="display:none">Save</button>
+        </div>
+        <textarea
+          class="code-editor"
+          id="code-editor"
+          placeholder="Select a file to edit…"
+          disabled
+          spellcheck="false"
+        ></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Preview Tab ───────────────────────────────────────────────── -->
+  <div id="tab-preview" class="tab-content">
+    <div class="preview-container">
+      <div class="preview-toolbar">
+        <span class="preview-url">{{ work_dir }}/index.html</span>
+        <button class="btn-secondary" id="refresh-preview">↺ Refresh</button>
+      </div>
+      <iframe id="preview-frame" src="/preview" class="preview-frame" title="Preview"></iframe>
+    </div>
+  </div>
+
+  <!-- ── Settings Tab ──────────────────────────────────────────────── -->
+  <div id="tab-settings" class="tab-content">
+    <div class="settings-container">
+
+      <div class="settings-card">
+        <h3>Work Directory</h3>
+        <p class="settings-value">{{ work_dir }}</p>
+        <p class="settings-hint">Set the <code>WORK_DIR</code> environment variable to change.</p>
+      </div>
+
+      <div class="settings-card">
+        <h3>Allowed Terminal Commands</h3>
+        <p class="settings-hint">
+          One prefix per line. Claude can run any command whose first word(s) match a prefix below.
+          Changes apply immediately but reset on server restart — edit <code>config.py</code> to persist.
+        </p>
+        <textarea id="allowed-commands" class="commands-editor" rows="16" spellcheck="false"></textarea>
+        <div class="settings-actions">
+          <button class="btn-primary" id="save-commands-btn">Save Commands</button>
+          <span id="commands-status" class="status-msg"></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-.env
+config/.env
 .venv/
 venv/
 __pycache__/
@@ -6,8 +6,15 @@ __pycache__/
 .DS_Store
 
 # Signing keys / certificates
+config/keys/
 *.p12
 *.pkcs12
+*.pem
 
 # Local enrichment cache
 usecases/.enrichment_cache.json
+
+# vima-chat runtime artifacts
+chat/server.log
+chat/.server.pid
+chat/.env
