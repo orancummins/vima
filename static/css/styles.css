@@ -3643,6 +3643,15 @@ body {
   animation: fac-spin 0.9s linear infinite;
   transform-origin: 50% 50%;
   will-change: transform;
+  flex-shrink: 0;
+}
+.idv-progress-heading {
+  display: flex; align-items: center; gap: 14px; justify-content: center;
+}
+.idv-progress-heading h4 { margin: 0; }
+.idv-spinner-inline {
+  width: 28px; height: 28px;
+  margin: 0;
 }
 .idv-verify-list {
   list-style: none; padding: 0; margin: 14px auto 0;
