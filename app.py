@@ -20,6 +20,8 @@ load_dotenv(os.path.join(_CONFIG_DIR, ".env"))
 from apis import registry as api_registry  # noqa: E402
 from usecases import registry as usecase_registry  # noqa: E402
 from simulator.blueprint import sim_bp  # noqa: E402
+from simulator.capture import capture_response  # noqa: E402
+from simulator.switcher import is_simulated  # noqa: E402
 
 
 app = Flask(__name__)
@@ -260,6 +262,13 @@ def explorer_execute(api_id: str):
         result = mod.execute(op_id, params)
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+    # Capture live responses into the simulator DB (non-simulated calls only)
+    if result.get("success") and not is_simulated(api_id):
+        resp_body = (result.get("response") or {}).get("body") or result.get("data")
+        try:
+            capture_response(api_id, op_id, resp_body)
+        except Exception:
+            pass
     # Merge in latest state snapshot for the UI
     result["state"] = getattr(mod, "get_state", lambda: {})()
     return jsonify(result)

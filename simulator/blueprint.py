@@ -37,9 +37,14 @@ for _mod in [
 def admin_status():
     status = {}
     for api in _ALL_APIS:
+        stats = store.stats(api)
+        total = sum(v["total"] for v in stats.values())
+        captured = sum(v["captured"] for v in stats.values())
         status[api] = {
             "simulated": switcher.is_simulated(api),
             "data_loaded": api in store._loaded,
+            "records": total,
+            "captured_from_sandbox": captured,
         }
     return jsonify(status)
 
@@ -57,11 +62,12 @@ def admin_toggle():
 
 @sim_bp.route("/admin/<api>/load", methods=["POST"])
 def admin_load(api):
+    from simulator.datastore import _id_for
     data = request.get_json(force=True) or {}
     store.reset(api)
     for resource, records in data.items():
         for i, rec in enumerate(records):
-            rid = str(rec.get("id", rec.get("uuid", rec.get("offerId", i))))
+            rid = _id_for(rec, i)
             store.put(api, resource, rid, rec)
     store._loaded.add(api)
     return jsonify({"ok": True, "api": api})
@@ -74,22 +80,19 @@ def admin_reset(api):
     return jsonify({"ok": True, "api": api})
 
 
+@sim_bp.route("/admin/<api>/stats")
+def admin_stats(api):
+    stats = store.stats(api)
+    return jsonify({"api": api, "collections": stats})
+
+
 @sim_bp.route("/admin/<api>/data")
 def admin_data(api):
-    resources = [
-        "bins", "merchants", "products", "offers", "places", "benefits",
-        "customers", "accounts", "transactions", "institutions", "sources",
-        "categories", "countries", "redemptions", "users", "rebates",
-        "access_tokens", "savings", "consents", "undelivered_notifications",
-        "benefit_contents", "reports", "mcc_codes", "industry_codes",
-        "platform_products", "platform_categories", "platform_programs",
-        "platform_locations", "platform_languages",
-        "specials_offers", "specials_benefits", "specials_programs",
-        "specials_merchants", "specials_categories", "specials_countries",
-        "specials_languages", "specials_mastercard_products",
-    ]
     result = {}
-    for r in resources:
+    resources = store._conn(api).execute(
+        "SELECT DISTINCT resource FROM records"
+    ).fetchall()
+    for (r,) in resources:
         rows = store.list(api, r)
         if rows:
             result[r] = rows
