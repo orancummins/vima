@@ -472,8 +472,10 @@ function idvBankModal() {
   } else if (stage === 'connecting') {
     body = `
       <div class="idv-modal-body idv-modal-center">
-        <div class="idv-spinner-lg"></div>
-        <h4>Sharing account ownership…</h4>
+        <div class="idv-progress-heading">
+          <div class="idv-spinner-lg idv-spinner-inline"></div>
+          <h4>Sharing account ownership…</h4>
+        </div>
         <ul class="idv-verify-list">
           <li class="idv-vli idv-vli-done">Signed in to ${escapeHtml(sel.name)}</li>
           <li class="idv-vli idv-vli-done">Consent recorded with US Open Finance</li>
