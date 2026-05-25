@@ -12,6 +12,7 @@
 
     :root {
       --orange: #ff5f00;
+      --green:  #2ea043;
       --ink:    #141414;
       --bg:     #f7f7f8;
       --card:   #ffffff;
@@ -260,6 +261,33 @@
     }
     .tool-name { color: var(--orange); font-weight: 600; flex-shrink: 0; }
     .tool-args { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ── Done summary ── */
+    .done-summary {
+      align-self: flex-start;
+      background: color-mix(in srgb, var(--green) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--green) 30%, transparent);
+      border-radius: 8px;
+      padding: 8px 14px;
+      margin-top: 4px;
+      max-width: 92%;
+    }
+    .done-badge {
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--green, #2ea043);
+    }
+    .done-changes {
+      margin-top: 4px;
+      font-size: 11.5px;
+      font-family: var(--mono);
+    }
+    .done-change-row {
+      padding: 1px 0;
+      color: var(--muted);
+    }
+    .done-tool { color: var(--orange); font-weight: 600; }
+    .done-path { color: var(--fg); }
 
     /* ── Status strip ── */
     .status-strip {
@@ -560,7 +588,7 @@
       statusEl.innerHTML = `<div class="s-dot"></div><span class="s-text">${escHtml(text || 'Working\u2026')}</span>`;
     } else if (state === 'done') {
       statusEl.innerHTML = '<div class="s-dot"></div><span class="s-text">Done</span>';
-      _sTimer = setTimeout(() => setStatus(''), 2500);
+      _sTimer = setTimeout(() => setStatus(''), 8000);
     } else {
       statusEl.innerHTML = '';
     }
@@ -749,7 +777,27 @@
     scrollBottom();
   }
 
+  function addDoneSummary(changes) {
+    ensureMessagesVisible();
+    const el = document.createElement('div');
+    el.className = 'msg done-summary';
+    let html = '<div class="done-badge">✓ Complete</div>';
+    if (changes.length) {
+      html += '<div class="done-changes">';
+      changes.forEach(c => {
+        html += `<div class="done-change-row"><span class="done-tool">${escHtml(c.tool)}</span> <span class="done-path">${escHtml(c.path)}</span></div>`;
+      });
+      html += '</div>';
+    }
+    el.innerHTML = html;
+    messagesEl.appendChild(el);
+    scrollBottom();
+  }
+
   /* ── SSE event handler ── */
+  // Track file changes across the current response so we can summarise at the end
+  const _mutatingTools = new Set(['patch_file', 'write_file', 'run_command']);
+
   function handleSSEEvent(data, ctx) {
     switch (data.type) {
       case 'text':
@@ -764,7 +812,13 @@
         break;
       case 'tool_executing':
         setStatus('working', `Running ${data.name}\u2026`);
-        addToolRow(data.name, JSON.stringify(data.input).slice(0, 120));
+        // Only show tool rows for mutating operations
+        if (_mutatingTools.has(data.name)) {
+          const path = data.input && (data.input.path || data.input.command || '');
+          addToolRow(data.name, path);
+          ctx.changes = ctx.changes || [];
+          ctx.changes.push({ tool: data.name, path: path });
+        }
         break;
       case 'tool_result':
         setStatus('working', 'Thinking\u2026');
@@ -776,6 +830,7 @@
         break;
       case 'done':
         setStatus('done');
+        addDoneSummary(ctx.changes || []);
         ctx.bubble = null; ctx.raw = '';
         updatePreview(); // unfreeze
         break;
@@ -837,7 +892,12 @@
       setStatus('');
       addMsg('assistant', `<span style="color:#c44">Error: ${escHtml(String(err))}</span>`);
     } finally {
-      btnSend.disabled = !currentItem;
+      // If stream ended without a 'done' or 'error' event, clear the thinking state
+      if (statusBar.classList.contains('working')) {
+        setStatus('');
+        addMsg('assistant', '<span style="color:#c44">Connection lost — the response stream ended unexpectedly. Check that the API key is valid.</span>');
+      }
+      btnSend.disabled = false;
     }
   }
 

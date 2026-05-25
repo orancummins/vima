@@ -19,7 +19,7 @@ function setStatus(state, text) {
     statusBar.innerHTML = `<div class="status-dot"></div><span class="status-text">${escHtml(text || 'Agent is working\u2026')}</span>`;
   } else if (state === 'done') {
     statusBar.innerHTML = '<div class="status-dot"></div><span class="status-text">Done</span>';
-    _statusTimer = setTimeout(() => setStatus(''), 2000);
+    _statusTimer = setTimeout(() => setStatus(''), 8000);
   } else {
     statusBar.innerHTML = '';
   }
@@ -232,6 +232,11 @@ async function sendMessage() {
     setStatus('');
     addToolEvent('error', 'Network / API error', { message: err.message });
   } finally {
+    // If stream ended without a 'done' or 'error' event, clear the thinking state
+    if (statusBar.classList.contains('working')) {
+      setStatus('');
+      addToolEvent('error', 'Connection lost', { message: 'The response stream ended unexpectedly. Check that the API key is valid.' });
+    }
     isStreaming = false;
     sendBtn.disabled = false;
     scrollBottom();

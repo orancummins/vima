@@ -19,11 +19,21 @@ from config import WORK_DIR, MODEL, MAX_FILE_SIZE, ALLOWED_COMMANDS, VIMA_URL, M
 app = Flask(__name__)
 
 # ─── Anthropic client ──────────────────────────────────────────────────────────
-# Read ANTHROPIC_API_KEY exclusively from config/.env — never from system env
-_api_key = dotenv_values(_config_env_path).get("ANTHROPIC_API_KEY")
-if not _api_key:
+# Re-reads the API key from config/.env on each call so changes via the UI
+# take effect without restarting the server.
+_current_api_key: str | None = dotenv_values(_config_env_path).get("ANTHROPIC_API_KEY")
+if not _current_api_key:
     print("WARNING: ANTHROPIC_API_KEY is not set in config/.env -- Claude API calls will fail.")
-client = anthropic.Anthropic(api_key=_api_key)
+client = anthropic.Anthropic(api_key=_current_api_key or "", timeout=60.0)
+
+
+def _refresh_client_if_needed() -> None:
+    """Re-create the Anthropic client if the API key in config/.env has changed."""
+    global client, _current_api_key
+    fresh_key = dotenv_values(_config_env_path).get("ANTHROPIC_API_KEY") or ""
+    if fresh_key != (_current_api_key or ""):
+        _current_api_key = fresh_key
+        client = anthropic.Anthropic(api_key=fresh_key, timeout=60.0)
 
 # ─── Runtime-mutable allowed commands (updated via Settings tab) ───────────────
 _allowed_commands: list[str] = list(ALLOWED_COMMANDS)
@@ -458,6 +468,8 @@ def _trim_conversation(conv: list) -> None:
 
 def _make_chat_generator(gen_conversation: list, work_dir, allowed_cmds: list, system_prompt: str, model: str | None = None):
     """Return the SSE-streaming agentic-loop generator for a given work context."""
+    # Hot-reload the API key if it changed via the config UI
+    _refresh_client_if_needed()
     # Cache the (large, stable) system prompt + tools across loop iterations and
     # turns within a session. This dramatically reduces latency and cost on the
     # 2nd+ tool call within the same conversation.
@@ -525,6 +537,9 @@ def _make_chat_generator(gen_conversation: list, work_dir, allowed_cmds: list, s
                 return
             except anthropic.APIError as exc:
                 yield _sse({"type": "error", "message": f"Claude API error: {exc}"})
+                return
+            except Exception as exc:
+                yield _sse({"type": "error", "message": f"Unexpected error communicating with Claude: {exc}"})
                 return
 
             # Record assistant turn in conversation
