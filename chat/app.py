@@ -3,6 +3,9 @@ import json
 import subprocess
 from pathlib import Path
 
+import truststore
+truststore.inject_into_ssl()
+
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context, send_from_directory
 import anthropic
 from dotenv import load_dotenv, dotenv_values

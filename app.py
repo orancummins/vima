@@ -10,6 +10,9 @@ import threading
 import json
 from collections import deque
 
+import truststore
+truststore.inject_into_ssl()
+
 import requests as _requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request, redirect, send_from_directory
