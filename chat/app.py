@@ -800,9 +800,9 @@ _SSE_RESPONSE_HEADERS = {
 
 # ─── Simple (modal-embedded) chat ──────────────────────────────────────────────
 
-@chat_bp.route("/simple")
-def simple():
-    return render_template("simple.html")
+@chat_bp.route("/")
+def chat_ui():
+    return render_template("chat.html")
 
 
 @chat_bp.route("/api/simple/items")

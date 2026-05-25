@@ -485,24 +485,13 @@
 </div>
 <div class="chat-wrap">
 
-  <!-- Top bar: type switcher + model picker -->
+  <!-- Top bar: model picker only (type/item are locked to URL params) -->
   <header class="top-bar">
-    <div class="type-switcher">
-      <button class="type-btn active" data-type="usecases" id="tabUsecases">Use Cases</button>
-      <button class="type-btn" data-type="apis" id="tabApis">APIs</button>
-    </div>
     <div class="model-picker" id="modelPicker">
       <select id="modelSelect" title="Loading models…"></select>
       <span class="model-cost" id="modelCost"></span>
     </div>
   </header>
-
-  <!-- Item chips bar -->
-  <div class="item-bar">
-    <div class="item-scroll" id="itemList">
-      <span class="empty-note">Loading…</span>
-    </div>
-  </div>
 
   <!-- Messages -->
   <div class="messages" id="messages">
@@ -510,7 +499,7 @@
       <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
         <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
       </svg>
-      <p>Select a Use Case or API<br>to get started</p>
+      <p>Loading use case…</p>
     </div>
   </div>
 
@@ -550,7 +539,7 @@
   /* ── State ── */
   let sessionId   = crypto.randomUUID();
   let currentItem = null;
-  let currentType = (_paramType === 'apis') ? 'apis' : 'usecases';
+  let currentType = 'usecases';  // always use cases; APIs not permitted
   let allItems    = { usecases: [], apis: [] };
 
   /* ── DOM refs ── */
