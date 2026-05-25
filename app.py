@@ -1445,12 +1445,12 @@ def config_export():
                 env_text,
             )
             zf.writestr("config/.env", env_text)
-        # all key files
+        # all key files — always use forward slashes in zip entries (cross-platform)
         if os.path.isdir(_KEYS_DIR):
             for fname in os.listdir(_KEYS_DIR):
                 fpath = os.path.join(_KEYS_DIR, fname)
                 if os.path.isfile(fpath):
-                    zf.write(fpath, os.path.join("config", "keys", fname))
+                    zf.write(fpath, "config/keys/" + fname)
 
     buf.seek(0)
     from flask import send_file
@@ -1473,26 +1473,29 @@ def config_import():
     try:
         data = fobj.read()
         with zipfile.ZipFile(_io.BytesIO(data)) as zf:
+            # Normalise to forward slashes (handles zips created on Windows)
             names = zf.namelist()
+            norm = {n: n.replace("\\", "/") for n in names}
+
             # Validate: must contain config/.env or config/keys/*
-            valid_entries = [n for n in names
-                             if n.startswith("config/.env") or n.startswith("config/keys/")]
+            valid_entries = [v for v in norm.values()
+                             if v.startswith("config/.env") or v.startswith("config/keys/")]
             if not valid_entries:
                 return jsonify({"error": "Zip does not contain a valid vima config layout"}), 400
 
             os.makedirs(_KEYS_DIR, exist_ok=True)
             imported = []
-            for name in names:
+            for orig, name in norm.items():
                 # .env
                 if name == "config/.env":
-                    env_text = zf.read(name).decode("utf-8")
+                    env_text = zf.read(orig).decode("utf-8")
                     with open(_ENV_PATH, "w", encoding="utf-8") as fh:
                         fh.write(env_text)
                     load_dotenv(_ENV_PATH, override=True)
                     imported.append(".env")
                 # key files
                 elif name.startswith("config/keys/") and not name.endswith("/"):
-                    fname = os.path.basename(name)
+                    fname = name.split("/")[-1]
                     if not fname:
                         continue
                     ext = os.path.splitext(fname)[1].lower()
@@ -1500,14 +1503,13 @@ def config_import():
                         continue
                     dest = os.path.join(_KEYS_DIR, fname)
                     with open(dest, "wb") as fh:
-                        fh.write(zf.read(name))
-                    imported.append(os.path.join("config", "keys", fname))
+                        fh.write(zf.read(orig))
+                    imported.append("config/keys/" + fname)
         return jsonify({"imported": imported})
     except zipfile.BadZipFile:
         return jsonify({"error": "Not a valid zip file"}), 400
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
-
 
 
 def config_upload_key():
@@ -1525,7 +1527,8 @@ def config_upload_key():
     os.makedirs(_KEYS_DIR, exist_ok=True)
     save_path = os.path.join(_KEYS_DIR, safe_name)
     fobj.save(save_path)
-    rel_path = os.path.join("config", "keys", safe_name)
+    # Always use forward slashes — works on Windows, Mac, and Linux
+    rel_path = "config/keys/" + safe_name
     return jsonify({"filename": safe_name, "path": rel_path})
 
 
