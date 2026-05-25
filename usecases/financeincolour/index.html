@@ -919,8 +919,9 @@
     function showTip(ex,ey,html){
       tip.innerHTML=html; tip.style.display="block";
       const wr=document.getElementById("fic-viz-wrap").getBoundingClientRect();
-      const tx=Math.min(ex+14,wr.right-tip.offsetWidth-10);
-      const ty=Math.min(ey+14,wr.bottom-tip.offsetHeight-10);
+      const lx=ex-wr.left, ly=ey-wr.top;
+      const tx=Math.min(lx+8,wr.width-tip.offsetWidth-6);
+      const ty=Math.min(ly+8,wr.height-tip.offsetHeight-6);
       tip.style.left=tx+"px"; tip.style.top=ty+"px";
     }
     canvas.addEventListener("mousemove",function(e){
