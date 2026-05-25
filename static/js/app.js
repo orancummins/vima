@@ -4105,6 +4105,28 @@
     const importBtn  = document.getElementById('cfg-import-btn');
     const importFile = document.getElementById('cfg-import-file');
 
+    // ── Tip overlay ─────────────────────────────────────────────────────────
+    const tipOverlay   = document.getElementById('cfg-tip-overlay');
+    const tipOkBtn     = document.getElementById('cfg-tip-ok');
+    const tipDontShow  = document.getElementById('cfg-tip-dont-show');
+    const tipInfoBtn   = document.getElementById('cfg-tip-btn');
+    const _TIP_KEY     = 'cfgKeysTipDismissed';
+
+    function cfgTipShow() {
+      if (tipOverlay) tipOverlay.classList.remove('cfg-hidden');
+    }
+    function cfgTipHide() {
+      if (tipOverlay) tipOverlay.classList.add('cfg-hidden');
+      if (tipDontShow && tipDontShow.checked) {
+        try { localStorage.setItem(_TIP_KEY, '1'); } catch (_) {}
+      }
+    }
+    tipOkBtn  && tipOkBtn.addEventListener('click', cfgTipHide);
+    tipInfoBtn && tipInfoBtn.addEventListener('click', function () {
+      if (tipDontShow) tipDontShow.checked = false; // reset checkbox when manually opened
+      cfgTipShow();
+    });
+
     let _groups = [];       // loaded config groups
     let _unlocked = false;  // edit mode flag
     let _pending = {};      // { KEY: newValue } for unsaved file uploads
@@ -4159,6 +4181,10 @@
       modal.classList.remove('cfg-hidden');
       document.body.style.overflow = 'hidden';
       cfgLoad();
+      // Show tip on first open unless user dismissed it
+      try {
+        if (!localStorage.getItem(_TIP_KEY)) cfgTipShow();
+      } catch (_) { cfgTipShow(); }
     }
     function cfgClose() {
       modal.classList.add('cfg-hidden');
