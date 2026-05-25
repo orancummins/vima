@@ -21,3 +21,6 @@ chat/.env
 
 # Local pip install target used during development/testing
 .pylibs/
+
+# Config zip bundles
+vima-config*

@@ -39,6 +39,14 @@ if exist "%SCRIPT_DIR%.venv\Scripts\activate.bat" (
 
 cd /d "%SCRIPT_DIR%"
 
+REM Install dependencies using OS cert store (handles corporate proxies)
+echo Installing dependencies...
+if exist "%SCRIPT_DIR%.venv\Scripts\python.exe" (
+    "%SCRIPT_DIR%.venv\Scripts\python.exe" -m pip install --use-feature=truststore -r requirements.txt -r chat\requirements.txt --quiet 2>nul
+) else (
+    py -m pip install --use-feature=truststore -r requirements.txt -r chat\requirements.txt --quiet 2>nul
+)
+
 REM Start vima-chat in background if chat\ exists
 if exist "%CHAT_DIR%\app.py" (
     echo Starting vima-chat on http://127.0.0.1:%CHAT_PORT%

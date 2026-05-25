@@ -3,3 +3,4 @@ requests==2.31.0
 python-dotenv==1.0.0
 mastercard-oauth1-signer>=1.1.0
 anthropic>=0.40.0
+truststore>=0.9.0
