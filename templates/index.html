@@ -399,26 +399,25 @@
         </div>
       </div>
 
-      <div class="cfg-panel-body" id="cfg-panel-body">
-        <!-- Tip banner — shown on first open and via ⓘ icon -->
-        <div id="cfg-tip-banner" class="cfg-tip-banner cfg-hidden">
-          <div class="cfg-tip-banner-content">
-            <div class="cfg-tip-banner-header">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#eb7c22;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <strong>Tip: Sharing Keys Across APIs</strong>
-            </div>
-            <div class="cfg-tip-banner-body">
-              <p>You can create a single project in Mastercard Developers and add multiple APIs to it so you can use the same signing key.</p>
-              <p><strong>Note:</strong> You will still need individual <em>client encryption</em> keys for APIs that require them (e.g. Consent or Benefits Eligibility APIs).</p>
-            </div>
-            <div class="cfg-tip-banner-footer">
-              <label class="cfg-tip-dont-show-label">
-                <input type="checkbox" id="cfg-tip-dont-show"> Don't show this again
-              </label>
-              <button class="btn cfg-save-btn" id="cfg-tip-ok">Got it</button>
-            </div>
-          </div>
+      <!-- Tip banner — shown on first open and via ⓘ icon; outside panel-body so cfgLoad() doesn't destroy it -->
+      <div id="cfg-tip-banner" class="cfg-tip-banner cfg-hidden">
+        <div class="cfg-tip-banner-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#eb7c22;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <strong>Tip: Sharing Keys Across APIs</strong>
         </div>
+        <div class="cfg-tip-banner-body">
+          <p>You can create a single project in Mastercard Developers and add multiple APIs to it so you can use the same signing key.</p>
+          <p><strong>Note:</strong> You will still need individual <em>client encryption</em> keys for APIs that require them (e.g. Consent or Benefits Eligibility APIs).</p>
+        </div>
+        <div class="cfg-tip-banner-footer">
+          <label class="cfg-tip-dont-show-label">
+            <input type="checkbox" id="cfg-tip-dont-show"> Don't show this again
+          </label>
+          <button class="btn cfg-save-btn" id="cfg-tip-ok">Got it</button>
+        </div>
+      </div>
+
+      <div class="cfg-panel-body" id="cfg-panel-body">
         <div class="cfg-loading">Loading configuration…</div>
       </div>
 
