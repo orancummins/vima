@@ -4109,18 +4109,18 @@
     const importBtn  = document.getElementById('cfg-import-btn');
     const importFile = document.getElementById('cfg-import-file');
 
-    // ── Tip overlay ─────────────────────────────────────────────────────────
-    const tipOverlay   = document.getElementById('cfg-tip-overlay');
+    // ── Tip banner ──────────────────────────────────────────────────────────
+    const tipBanner    = document.getElementById('cfg-tip-banner');
     const tipOkBtn     = document.getElementById('cfg-tip-ok');
     const tipDontShow  = document.getElementById('cfg-tip-dont-show');
     const tipInfoBtn   = document.getElementById('cfg-tip-btn');
     const _TIP_KEY     = 'cfgKeysTipDismissed';
 
     function cfgTipShow() {
-      if (tipOverlay) tipOverlay.classList.remove('cfg-hidden');
+      if (tipBanner) tipBanner.classList.remove('cfg-hidden');
     }
     function cfgTipHide() {
-      if (tipOverlay) tipOverlay.classList.add('cfg-hidden');
+      if (tipBanner) tipBanner.classList.add('cfg-hidden');
       if (tipDontShow && tipDontShow.checked) {
         try { localStorage.setItem(_TIP_KEY, '1'); } catch (_) {}
       }
