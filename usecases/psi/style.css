@@ -237,6 +237,12 @@ body {
   transition: background 0.15s; position: relative;
 }
 .psi-day:hover { background: #f8f9fb; }
+.psi-day--locked {
+  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: auto;
+}
+.psi-day--locked:hover { background: transparent; }
 .psi-day--selected {
   background: #f0f0ff !important;
   outline: 2px solid #6366f1; outline-offset: -2px;
