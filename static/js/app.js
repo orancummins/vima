@@ -3911,6 +3911,8 @@
       if (contentSec) contentSec.classList.add('uc--about');
       const sidebarApis = document.getElementById('uc-sidebar-apis');
       if (sidebarApis) sidebarApis.classList.add('hidden');
+      const editBtnTop = document.getElementById('global-edit-btn');
+      if (editBtnTop) editBtnTop.classList.add('hidden');
     }
 
     function ucShowWorkbench() {
@@ -3918,6 +3920,8 @@
       if (aboutPanel) aboutPanel.classList.add('hidden');
       if (workbench)  workbench.classList.remove('hidden');
       if (contentSec) contentSec.classList.remove('uc--about');
+      const editBtnTop = document.getElementById('global-edit-btn');
+      if (editBtnTop) editBtnTop.classList.remove('hidden');
     }
 
     if (aboutBtn) aboutBtn.addEventListener('click', ucShowAbout);
