@@ -17,7 +17,7 @@ app = Flask(__name__)
 # ─── Anthropic client ──────────────────────────────────────────────────────────
 _api_key = os.environ.get("ANTHROPIC_API_KEY")
 if not _api_key:
-    print("⚠  WARNING: ANTHROPIC_API_KEY is not set — Claude API calls will fail.")
+    print("WARNING: ANTHROPIC_API_KEY is not set -- Claude API calls will fail.")
 client = anthropic.Anthropic(api_key=_api_key)
 
 # ─── Runtime-mutable allowed commands (updated via Settings tab) ───────────────
@@ -788,9 +788,9 @@ def api_simple_models():
 if __name__ == "__main__":
     _work_dir().mkdir(parents=True, exist_ok=True)
     SIMPLE_WORK_DIR.mkdir(parents=True, exist_ok=True)
-    print(f"🚀  Vima Chat running at http://localhost:3333")
-    print(f"📁  Work directory : {_work_dir()}")
-    print(f"💬  Simple dir     : {SIMPLE_WORK_DIR}")
-    print(f"🤖  Model          : {MODEL}")
+    print(f">>  Vima Chat running at http://localhost:3333")
+    print(f"    Work directory : {_work_dir()}")
+    print(f"    Simple dir     : {SIMPLE_WORK_DIR}")
+    print(f"    Model          : {MODEL}")
     debug = os.environ.get("FLASK_DEBUG", "1") != "0"
     app.run(host="0.0.0.0", port=3333, debug=debug, use_reloader=debug, threaded=True)
