@@ -28,6 +28,11 @@ from simulator.switcher import is_simulated  # noqa: E402
 
 
 app = Flask(__name__)
+
+# Register the in-process Vima Chat blueprint at /chat. Vima Chat is no
+# longer a standalone service — it lives inside Mastercard Solution Studio.
+from chat.app import chat_bp  # noqa: E402
+app.register_blueprint(chat_bp)
 app.secret_key = os.environ.get("SECRET_KEY", "vima-dev-secret")
 app.register_blueprint(sim_bp)
 

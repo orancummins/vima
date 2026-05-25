@@ -261,6 +261,19 @@
     }
     .tool-name { color: var(--orange); font-weight: 600; flex-shrink: 0; }
     .tool-args { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tool-row.failed {
+      background: color-mix(in srgb, #c44 8%, transparent);
+      border-color: color-mix(in srgb, #c44 40%, transparent);
+    }
+    .tool-row.failed .tool-name { color: #c44; }
+    .tool-row .tool-error {
+      width: 100%;
+      flex-basis: 100%;
+      color: #c44;
+      white-space: pre-wrap;
+      font-size: 11px;
+      margin-top: 4px;
+    }
 
     /* ── Done summary ── */
     .done-summary {
@@ -418,24 +431,62 @@
       transition: border-color .15s, color .15s;
     }
     .btn-clear:hover { border-color: var(--ink); color: var(--ink); }
+
+    /* ── First-run advisory modal ─────────────────────────────── */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      display: none; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal-card {
+      background: #fff; border-radius: 12px; max-width: 480px; width: calc(100% - 40px);
+      padding: 24px 26px 20px; box-shadow: 0 12px 40px rgba(0,0,0,.18);
+      font-size: 13px; line-height: 1.55; color: var(--ink);
+    }
+    .modal-card h2 {
+      margin: 0 0 10px; font-size: 16px; font-weight: 700; letter-spacing: -.01em;
+    }
+    .modal-card p { margin: 0 0 10px; color: #3f3f46; }
+    .modal-card ul { margin: 0 0 12px 18px; padding: 0; color: #3f3f46; }
+    .modal-card li { margin: 2px 0; }
+    .modal-foot {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 14px; gap: 16px;
+    }
+    .modal-foot label {
+      display: flex; align-items: center; gap: 7px; font-size: 12px; color: #52525b;
+      cursor: pointer; user-select: none;
+    }
+    .modal-foot button {
+      padding: 7px 16px; background: var(--ink); color: #fff; border: none;
+      border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .modal-foot button:hover { background: #000; }
   </style>
 </head>
 <body>
+<!-- First-run advisory -->
+<div class="modal-backdrop" id="advisoryModal" role="dialog" aria-modal="true" aria-labelledby="advisoryTitle">
+  <div class="modal-card">
+    <h2 id="advisoryTitle">Heads up — this chat is best for quick edits</h2>
+    <p>This in-app assistant is tuned for small, targeted changes to a single use case or API file:</p>
+    <ul>
+      <li>Renaming a button, swapping a colour, tweaking copy</li>
+      <li>Adding or removing a small UI element</li>
+      <li>Adjusting a handler or a short block of logic</li>
+    </ul>
+    <p>For larger refactors, multi-file changes, or anything where you want to review a diff before it lands, use <b>GitHub Copilot</b> in VS Code, the <b>Claude</b> desktop app, or another full-featured coding agent.</p>
+    <div class="modal-foot">
+      <label><input type="checkbox" id="advisoryDontShow"> Don't show again</label>
+      <button id="advisoryOk">Got it</button>
+    </div>
+  </div>
+</div>
 <div class="chat-wrap">
 
-  <!-- Top bar: path + pencil + type switcher -->
+  <!-- Top bar: type switcher + model picker -->
   <header class="top-bar">
-    <div class="path-area">
-      <svg class="path-icon" width="14" height="14" viewBox="0 0 16 16" fill="none">
-        <path d="M2 4.5A1.5 1.5 0 013.5 3h3l1.5 1.5H12.5A1.5 1.5 0 0114 6v5.5A1.5 1.5 0 0112.5 13h-9A1.5 1.5 0 012 11.5v-7z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>
-      </svg>
-      <span class="path-text" id="pathDisplay">{{ vima_base }}</span>
-      <button class="btn-icon" id="btnEditPath" title="Change directory" aria-label="Edit directory">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-          <path d="M11.5 2.5a1.414 1.414 0 012 2L5 13H3v-2L11.5 2.5z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>
-        </svg>
-      </button>
-    </div>
     <div class="type-switcher">
       <button class="type-btn active" data-type="usecases" id="tabUsecases">Use Cases</button>
       <button class="type-btn" data-type="apis" id="tabApis">APIs</button>
@@ -445,12 +496,6 @@
       <span class="model-cost" id="modelCost"></span>
     </div>
   </header>
-
-  <!-- Dir edit row (hidden by default) -->
-  <div class="dir-edit-row hidden" id="dirEditRow">
-    <input type="text" id="dirInput" value="{{ vima_base }}" placeholder="/path/to/vima" autocomplete="off" spellcheck="false" />
-    <button class="btn-load" id="btnLoad">Load</button>
-  </div>
 
   <!-- Item chips bar -->
   <div class="item-bar">
@@ -499,7 +544,6 @@
 <script>
   /* ── URL params: allow programmatic launch ── */
   const _p        = new URLSearchParams(location.search);
-  const _paramDir  = _p.get('dir');   // override base directory
   const _paramType = _p.get('type');  // 'usecases' | 'apis'
   const _paramItem = _p.get('item');  // item name to auto-select
 
@@ -510,11 +554,6 @@
   let allItems    = { usecases: [], apis: [] };
 
   /* ── DOM refs ── */
-  const pathDisplay  = document.getElementById('pathDisplay');
-  const btnEditPath  = document.getElementById('btnEditPath');
-  const dirEditRow   = document.getElementById('dirEditRow');
-  const dirInput     = document.getElementById('dirInput');
-  const btnLoad      = document.getElementById('btnLoad');
   const tabUsecases  = document.getElementById('tabUsecases');
   const tabApis      = document.getElementById('tabApis');
   const itemListEl   = document.getElementById('itemList');
@@ -535,7 +574,7 @@
 
   async function loadModels() {
     try {
-      const resp = await fetch('/api/simple/models');
+      const resp = await fetch('/chat/api/simple/models');
       const data = await resp.json();
       availableModels = data.models || [];
       selectedModelId = data.default || (availableModels[0] && availableModels[0].id);
@@ -572,12 +611,6 @@
     tabUsecases.classList.remove('active');
     tabApis.classList.add('active');
   }
-
-  /* ── Dir edit row toggle ── */
-  btnEditPath.addEventListener('click', () => {
-    const nowHidden = dirEditRow.classList.toggle('hidden');
-    if (!nowHidden) dirInput.focus();
-  });
 
   /* ── Status bar ── */
   let _sTimer = null;
@@ -617,18 +650,11 @@
 
   /* ── Load items from backend ── */
   async function loadItems() {
-    const dir = dirInput.value.trim();
-    if (!dir) return;
     itemListEl.innerHTML = '<span class="empty-note">\u2026</span>';
-    btnLoad.textContent = '\u2026';
-    btnLoad.disabled = true;
     try {
-      const resp = await fetch(`/api/simple/items?dir=${encodeURIComponent(dir)}`);
+      const resp = await fetch('/chat/api/simple/items');
       const data = await resp.json();
-      if (!resp.ok) { alert(data.error || 'Failed to load'); return; }
-      dirInput.value = data.base;
-      pathDisplay.textContent = data.base;
-      dirEditRow.classList.add('hidden');
+      if (!resp.ok) { itemListEl.innerHTML = `<span class="empty-note">${escHtml(data.error || 'Failed to load')}</span>`; return; }
       allItems = { usecases: data.usecases || [], apis: data.apis || [], base: data.base };
       renderItemList();
       /* Auto-select from URL param */
@@ -638,10 +664,7 @@
         if (found) selectItem(found);
       }
     } catch (e) {
-      alert('Error loading items: ' + e.message);
-    } finally {
-      btnLoad.textContent = 'Load';
-      btnLoad.disabled = false;
+      itemListEl.innerHTML = `<span class="empty-note">Error loading items: ${escHtml(e.message)}</span>`;
     }
   }
 
@@ -675,7 +698,15 @@
 
   function selectItem(item) {
     const type = currentType === 'usecases' ? 'usecase' : 'api';
-    currentItem = { ...item, type, path: (allItems.base || dirInput.value.trim()) };
+    // Use the item's own path. For the synthetic "+ New" chip there is no
+    // per-item path, so fall back to the category root.
+    let itemPath = item.path;
+    if (!itemPath) {
+      const base = allItems.base || '';
+      const categoryDir = currentType === 'usecases' ? 'usecases' : 'apis';
+      itemPath = base.replace(/[\\/]+$/, '') + '/' + categoryDir;
+    }
+    currentItem = { ...item, type, path: itemPath };
     sessionId = crypto.randomUUID();
     messagesEl.innerHTML = '';
     messagesEl.appendChild(emptyStateEl);
@@ -697,9 +728,6 @@
       renderItemList();
     });
   });
-
-  btnLoad.addEventListener('click', loadItems);
-  dirInput.addEventListener('keydown', e => { if (e.key === 'Enter') loadItems(); });
 
   /* ── Compose ── */
   function newPrefixText() {
@@ -772,22 +800,74 @@
     ensureMessagesVisible();
     const el = document.createElement('div');
     el.className = 'tool-row';
+    el.style.flexWrap = 'wrap';
     el.innerHTML = `<span class="tool-name">${escHtml(name)}</span><span class="tool-args">${escHtml(args)}</span>`;
     messagesEl.appendChild(el);
     scrollBottom();
+    return el;
   }
 
-  function addDoneSummary(changes) {
+  function markToolRowFailed(el, errorMsg) {
+    if (!el) return;
+    el.classList.add('failed');
+    const errEl = document.createElement('span');
+    errEl.className = 'tool-error';
+    errEl.textContent = String(errorMsg).slice(0, 400);
+    el.appendChild(errEl);
+  }
+
+  function _fmtCost(usage) {
+    if (!usage) return '';
+    const model = availableModels.find(m => m.id === usage.model);
+    if (!model) return '';
+    const inRate = model.input_per_mtok;
+    const outRate = model.output_per_mtok;
+    // Cache reads are ~10% of input rate; cache creation is ~125% of input rate.
+    const inCost = ((usage.input || 0) * inRate) / 1e6;
+    const outCost = ((usage.output || 0) * outRate) / 1e6;
+    const cacheReadCost = ((usage.cache_read || 0) * inRate * 0.1) / 1e6;
+    const cacheCreateCost = ((usage.cache_creation || 0) * inRate * 1.25) / 1e6;
+    const total = inCost + outCost + cacheReadCost + cacheCreateCost;
+    const parts = [];
+    parts.push(`in ${usage.input || 0}`);
+    if (usage.cache_read) parts.push(`cached ${usage.cache_read}`);
+    parts.push(`out ${usage.output || 0}`);
+    parts.push(`\u2248 $${total.toFixed(4)}`);
+    return parts.join(' \u00b7 ');
+  }
+
+  function addDoneSummary(changes, usage) {
     ensureMessagesVisible();
     const el = document.createElement('div');
     el.className = 'msg done-summary';
-    let html = '<div class="done-badge">✓ Complete</div>';
-    if (changes.length) {
+    const successful = changes.filter(c => !c.failed);
+    const failed = changes.filter(c => c.failed);
+    let badge = '✓ Complete';
+    let warn = false;
+    if (successful.length === 0 && failed.length === 0) {
+      badge = '⚠ No files were modified — the model did not call patch_file or write_file. Try rephrasing (e.g. point at a specific line or string) and re-send.';
+      warn = true;
+    } else if (successful.length === 0 && failed.length > 0) {
+      badge = '⚠ No changes written — all edits failed';
+      warn = true;
+    } else if (failed.length > 0) {
+      badge = `✓ Complete (${failed.length} edit(s) failed)`;
+    }
+    if (warn) {
+      el.style.background = 'color-mix(in srgb, #c44 8%, transparent)';
+      el.style.borderColor = 'color-mix(in srgb, #c44 30%, transparent)';
+    }
+    let html = `<div class="done-badge"${warn ? ' style="color:#c44"' : ''}>${escHtml(badge)}</div>`;
+    if (successful.length) {
       html += '<div class="done-changes">';
-      changes.forEach(c => {
+      successful.forEach(c => {
         html += `<div class="done-change-row"><span class="done-tool">${escHtml(c.tool)}</span> <span class="done-path">${escHtml(c.path)}</span></div>`;
       });
       html += '</div>';
+    }
+    const costLine = _fmtCost(usage);
+    if (costLine) {
+      html += `<div class="done-usage" style="margin-top:6px;font-size:11px;color:#888">${escHtml(costLine)}</div>`;
     }
     el.innerHTML = html;
     messagesEl.appendChild(el);
@@ -796,7 +876,7 @@
 
   /* ── SSE event handler ── */
   // Track file changes across the current response so we can summarise at the end
-  const _mutatingTools = new Set(['patch_file', 'write_file', 'run_command']);
+  const _mutatingTools = new Set(['patch_file', 'replace_lines', 'write_file', 'multi_edit']);
 
   function handleSSEEvent(data, ctx) {
     switch (data.type) {
@@ -814,14 +894,45 @@
         setStatus('working', `Running ${data.name}\u2026`);
         // Only show tool rows for mutating operations
         if (_mutatingTools.has(data.name)) {
-          const path = data.input && (data.input.path || data.input.command || '');
-          addToolRow(data.name, path);
           ctx.changes = ctx.changes || [];
-          ctx.changes.push({ tool: data.name, path: path });
+          if (data.name === 'multi_edit' && data.input && Array.isArray(data.input.edits)) {
+            // Render one row per edit so the user sees what's about to happen.
+            const group = [];
+            data.input.edits.forEach(e => {
+              const label = `multi_edit (${e.op || '?'})`;
+              const row = addToolRow(label, e.path || '');
+              const change = { tool: label, path: e.path || '', row: row, failed: false };
+              ctx.changes.push(change);
+              group.push(change);
+            });
+            ctx.lastMutating = group; // array signals "group"
+          } else {
+            const path = data.input && (data.input.path || data.input.command || '');
+            const row = addToolRow(data.name, path);
+            const change = { tool: data.name, path: path, row: row, failed: false };
+            ctx.changes.push(change);
+            ctx.lastMutating = change;
+          }
+        } else {
+          ctx.lastMutating = null;
         }
         break;
       case 'tool_result':
         setStatus('working', 'Thinking\u2026');
+        if (ctx.lastMutating && data.result && data.result.error) {
+          const msg = data.result.error;
+          if (Array.isArray(ctx.lastMutating)) {
+            ctx.lastMutating.forEach(c => { c.failed = true; c.error = msg; markToolRowFailed(c.row, msg); });
+          } else {
+            ctx.lastMutating.failed = true;
+            ctx.lastMutating.error = msg;
+            markToolRowFailed(ctx.lastMutating.row, msg);
+          }
+        }
+        ctx.lastMutating = null;
+        break;
+      case 'usage':
+        ctx.usage = data;
         break;
       case 'error':
         setStatus('');
@@ -830,7 +941,7 @@
         break;
       case 'done':
         setStatus('done');
-        addDoneSummary(ctx.changes || []);
+        addDoneSummary(ctx.changes || [], ctx.usage);
         ctx.bubble = null; ctx.raw = '';
         updatePreview(); // unfreeze
         break;
@@ -844,6 +955,11 @@
     if (!userTyped) return;
     const fullMessage = buildMessage();
 
+    // Each send is a fresh conversation. The UI is single-shot ("Update X with:")
+    // so persisting history across sends only causes the model to falsely confirm
+    // prior in-flight attempts ("already done") and skip the actual edit.
+    sessionId = crypto.randomUUID();
+
     addMsg('user', escHtml(userTyped).replace(/\n/g, '<br>'));
     userInput.value = '';
     // Freeze preview to show the full message sent while Claude is working
@@ -853,7 +969,7 @@
 
     const ctx = { bubble: null, raw: '' };
     try {
-      const resp = await fetch('/api/simple/chat', {
+      const resp = await fetch('/chat/api/simple/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -869,7 +985,18 @@
 
       if (!resp.ok) {
         setStatus('');
-        addMsg('assistant', '<span style="color:#c44">Request failed.</span>');
+        let detail = `HTTP ${resp.status}`;
+        try {
+          const ct = resp.headers.get('content-type') || '';
+          if (ct.includes('application/json')) {
+            const j = await resp.json();
+            if (j && j.error) detail = j.error;
+          } else {
+            const t = (await resp.text()).trim();
+            if (t) detail = t.slice(0, 300);
+          }
+        } catch (_) {}
+        addMsg('assistant', `<span style="color:#c44">Request failed: ${escHtml(detail)}</span>`);
         return;
       }
 
@@ -892,18 +1019,21 @@
       setStatus('');
       addMsg('assistant', `<span style="color:#c44">Error: ${escHtml(String(err))}</span>`);
     } finally {
-      // If stream ended without a 'done' or 'error' event, clear the thinking state
-      if (statusBar.classList.contains('working')) {
-        setStatus('');
-        addMsg('assistant', '<span style="color:#c44">Connection lost — the response stream ended unexpectedly. Check that the API key is valid.</span>');
-      }
+      // Always re-enable the send button FIRST so a later error can't strand it.
       btnSend.disabled = false;
+      // If stream ended without a 'done' or 'error' event, clear the thinking state.
+      try {
+        if (statusEl.classList.contains('working')) {
+          setStatus('');
+          addMsg('assistant', '<span style="color:#c44">Connection lost — the response stream ended unexpectedly. Check that the API key is valid.</span>');
+        }
+      } catch (_) { /* never let status cleanup strand the UI */ }
     }
   }
 
   /* ── Clear ── */
   async function clearChat() {
-    await fetch('/api/simple/chat/clear', {
+    await fetch('/chat/api/simple/chat/clear', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ session_id: sessionId }),
@@ -920,8 +1050,28 @@
   /* ── Init ── */
   updateCompose();
   loadModels();
-  if (_paramDir) dirInput.value = _paramDir;
-  if (dirInput.value.trim()) loadItems();
+  loadItems();
+
+  /* ── First-run advisory ── */
+  (function showAdvisoryIfNeeded() {
+    try {
+      if (localStorage.getItem('vimaChatAdvisoryDismissed') === '1') return;
+    } catch (_) { /* localStorage blocked — show anyway */ }
+    const modal = document.getElementById('advisoryModal');
+    const okBtn = document.getElementById('advisoryOk');
+    const cb    = document.getElementById('advisoryDontShow');
+    if (!modal || !okBtn) return;
+    modal.classList.add('show');
+    okBtn.addEventListener('click', function () {
+      modal.classList.remove('show');
+      if (cb && cb.checked) {
+        try { localStorage.setItem('vimaChatAdvisoryDismissed', '1'); } catch (_) {}
+      }
+    });
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) okBtn.click();
+    });
+  })();
 </script>
 </body>
 </html>

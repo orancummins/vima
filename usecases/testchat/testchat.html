@@ -8,7 +8,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       width: 100%; height: 100%;
-      background: linear-gradient(135deg, #1a0a1a 0%, #1a0a14 60%, #2a0a1a 100%);
+      background: #ffffff;
       display: flex; align-items: center; justify-content: center;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
@@ -20,41 +20,15 @@
       position: fixed;
       top: 20px;
       right: 20px;
-      background: rgba(20, 20, 30, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
       border-radius: 12px;
       padding: 20px;
       width: 320px;
       max-height: calc(100vh - 40px);
       overflow-y: auto;
-      color: #fff;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(10px);
-    }
-    
-    .settings-toggle {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(20, 20, 30, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      padding: 10px 16px;
-      color: #fff;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      z-index: 100;
-    }
-    
-    .settings-toggle:hover {
-      background: rgba(30, 30, 40, 0.95);
-      border-color: rgba(255, 255, 255, 0.4);
-    }
-    
-    .settings-panel.hidden {
-      display: none;
+      color: #1a1a2e;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     }
     
     .settings-header {
@@ -62,23 +36,14 @@
       font-weight: 700;
       margin-bottom: 20px;
       padding-bottom: 10px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid #e8e8e8;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      color: #1a1a2e;
     }
     
-    .close-btn {
-      cursor: pointer;
-      font-size: 24px;
-      line-height: 1;
-      opacity: 0.7;
-      transition: opacity 0.2s;
-    }
-    
-    .close-btn:hover {
-      opacity: 1;
-    }
+
     
     .setting-group {
       margin-bottom: 20px;
@@ -89,12 +54,12 @@
       font-size: 13px;
       font-weight: 600;
       margin-bottom: 8px;
-      opacity: 0.9;
+      color: #2a2a3e;
     }
     
     .setting-value {
       font-size: 12px;
-      opacity: 0.6;
+      color: #888;
       margin-left: 8px;
     }
     
@@ -102,7 +67,7 @@
       width: 100%;
       height: 6px;
       border-radius: 3px;
-      background: rgba(255, 255, 255, 0.1);
+      background: #e0e0e0;
       outline: none;
       -webkit-appearance: none;
     }
@@ -113,45 +78,45 @@
       width: 16px;
       height: 16px;
       border-radius: 50%;
-      background: #fff;
+      background: #4a4a6a;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
     
     input[type="range"]::-moz-range-thumb {
       width: 16px;
       height: 16px;
       border-radius: 50%;
-      background: #fff;
+      background: #4a4a6a;
       cursor: pointer;
       border: none;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
     
     input[type="color"] {
       width: 100%;
       height: 40px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid #d0d0d0;
       border-radius: 6px;
-      background: transparent;
+      background: #f8f8f8;
       cursor: pointer;
     }
     
     select {
       width: 100%;
       padding: 8px 12px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid #d0d0d0;
       border-radius: 6px;
-      background: rgba(255, 255, 255, 0.05);
-      color: #fff;
+      background: #f8f8f8;
+      color: #1a1a2e;
       font-size: 13px;
       cursor: pointer;
       outline: none;
     }
     
     select option {
-      background: #1a1a2a;
-      color: #fff;
+      background: #ffffff;
+      color: #1a1a2e;
     }
     
     .checkbox-wrapper {
@@ -164,15 +129,16 @@
       width: 18px;
       height: 18px;
       cursor: pointer;
+      accent-color: #4a4a6a;
     }
     
     .reset-btn {
       width: 100%;
       padding: 10px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: #f0f0f5;
+      border: 1px solid #d0d0d0;
       border-radius: 6px;
-      color: #fff;
+      color: #1a1a2e;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
@@ -180,8 +146,8 @@
     }
     
     .reset-btn:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: rgba(255, 255, 255, 0.3);
+      background: #e4e4ee;
+      border-color: #b0b0c0;
     }
     
     ::-webkit-scrollbar {
@@ -189,133 +155,29 @@
     }
     
     ::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
+      background: #f0f0f0;
       border-radius: 4px;
     }
     
     ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
+      background: #c0c0c0;
       border-radius: 4px;
     }
     
     ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: #a0a0a0;
     }
 
     canvas { cursor: pointer; }
 
-    /* Mastercard Sonic Overlay */
-    .sonic-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.92);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.4s ease;
-      cursor: pointer;
-      flex-direction: column;
-      gap: 36px;
-    }
-    .sonic-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .sonic-logo {
-      position: relative;
-      width: 320px;
-      height: 200px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .sonic-circle {
-      position: absolute;
-      border-radius: 50%;
-      width: 180px;
-      height: 180px;
-      background: #fff;
-      mix-blend-mode: screen;
-      animation: sonicPulse 1.8s ease-in-out infinite;
-    }
-    .sonic-circle.left  { transform: translateX(-45px); }
-    .sonic-circle.right { transform: translateX( 45px); animation-delay: 0.3s; }
-
-    .sonic-waves {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .sonic-wave {
-      position: absolute;
-      border: 2px solid rgba(255,255,255,0.7);
-      border-radius: 50%;
-      width: 240px;
-      height: 240px;
-      animation: sonicWave 2.2s ease-out infinite;
-    }
-    .sonic-wave:nth-child(2) { animation-delay: 0.55s; }
-    .sonic-wave:nth-child(3) { animation-delay: 1.10s; }
-    .sonic-wave:nth-child(4) { animation-delay: 1.65s; }
-
-    .sonic-label {
-      color: #fff;
-      font-size: 13px;
-      letter-spacing: 6px;
-      text-transform: uppercase;
-      opacity: 0.85;
-      font-weight: 300;
-    }
-    .sonic-hint {
-      color: rgba(255,255,255,0.45);
-      font-size: 11px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-
-    @keyframes sonicPulse {
-      0%, 100% { transform: var(--tx, translateX(0)) scale(1);   opacity: 0.95; }
-      50%      { transform: var(--tx, translateX(0)) scale(1.06); opacity: 1; }
-    }
-    .sonic-circle.left  { --tx: translateX(-45px); }
-    .sonic-circle.right { --tx: translateX( 45px); }
-
-    @keyframes sonicWave {
-      0%   { transform: scale(0.4); opacity: 0.9; }
-      100% { transform: scale(2.2); opacity: 0;   }
-    }
   </style>
 </head>
 <body>
   <canvas id="globe"></canvas>
 
-  <!-- Mastercard Sonic Brand Overlay (white) -->
-  <div class="sonic-overlay" id="sonicOverlay">
-    <div class="sonic-logo">
-      <div class="sonic-waves">
-        <div class="sonic-wave"></div>
-        <div class="sonic-wave"></div>
-        <div class="sonic-wave"></div>
-        <div class="sonic-wave"></div>
-      </div>
-      <div class="sonic-circle left"></div>
-      <div class="sonic-circle right"></div>
-    </div>
-    <div class="sonic-label">Mastercard Sonic</div>
-    <div class="sonic-hint">Click anywhere to close</div>
-  </div>
-
-  <div class="settings-toggle" id="settingsToggle">⚙️ Settings</div>
-  
-  <div class="settings-panel hidden" id="settingsPanel">
+  <div class="settings-panel" id="settingsPanel">
     <div class="settings-header">
       <span>Globe Settings</span>
-      <span class="close-btn" id="closeSettings">×</span>
     </div>
     
     <div class="setting-group">
@@ -328,11 +190,11 @@
     <div class="setting-group">
       <label class="setting-label">Quick Presets</label>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">
-        <button class="preset-swatch" data-color="#3b82f6" style="height:32px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:#3b82f6;cursor:pointer;"></button>
-        <button class="preset-swatch" data-color="#06b6d4" style="height:32px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:#06b6d4;cursor:pointer;"></button>
-        <button class="preset-swatch" data-color="#a855f7" style="height:32px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:#a855f7;cursor:pointer;"></button>
-        <button class="preset-swatch" data-color="#10b981" style="height:32px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:#10b981;cursor:pointer;"></button>
-        <button class="preset-swatch" data-color="#f59e0b" style="height:32px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:#f59e0b;cursor:pointer;"></button>
+        <button class="preset-swatch" data-color="#3b82f6" style="height:32px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#3b82f6;cursor:pointer;"></button>
+        <button class="preset-swatch" data-color="#06b6d4" style="height:32px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#06b6d4;cursor:pointer;"></button>
+        <button class="preset-swatch" data-color="#a855f7" style="height:32px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#a855f7;cursor:pointer;"></button>
+        <button class="preset-swatch" data-color="#10b981" style="height:32px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#10b981;cursor:pointer;"></button>
+        <button class="preset-swatch" data-color="#f59e0b" style="height:32px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#f59e0b;cursor:pointer;"></button>
       </div>
     </div>
     
@@ -460,10 +322,6 @@
       </label>
     </div>
     
-    <div class="settings-header" style="font-size:14px;margin-top:10px;">
-      <span>✨ Fun Effects</span>
-    </div>
-
     <div class="setting-group">
       <label class="setting-label">
         <div class="checkbox-wrapper">
@@ -498,9 +356,8 @@
       <input type="range" id="rainbowSpeed" min="0.1" max="5" step="0.1" value="1">
     </div>
 
-    <div class="setting-group" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <button class="reset-btn" id="reverseBtn">⟲ Reverse Spin</button>
-      <button class="reset-btn" id="sonicBtn">🔊 Sonic</button>
+    <div class="setting-group">
+      <button class="reset-btn" id="reverseBtn">&#x27F2; Reverse Spin</button>
     </div>
 
     <div class="setting-group">
@@ -539,20 +396,7 @@
       
       const defaults = { ...settings };
       
-      // Settings panel controls
-      const settingsToggle = document.getElementById('settingsToggle');
-      const settingsPanel = document.getElementById('settingsPanel');
-      const closeSettings = document.getElementById('closeSettings');
-      
-      settingsToggle.addEventListener('click', () => {
-        settingsPanel.classList.remove('hidden');
-        settingsToggle.style.display = 'none';
-      });
-      
-      closeSettings.addEventListener('click', () => {
-        settingsPanel.classList.add('hidden');
-        settingsToggle.style.display = 'block';
-      });
+      // Settings panel (always visible — no toggle)
       
       // Setting controls
       const globeColorInput = document.getElementById('globeColor');
@@ -577,8 +421,6 @@
       const rainbowSpeedInput = document.getElementById('rainbowSpeed');
       const rainbowValue = document.getElementById('rainbowValue');
       const reverseBtn = document.getElementById('reverseBtn');
-      const sonicBtn = document.getElementById('sonicBtn');
-      const sonicOverlay = document.getElementById('sonicOverlay');
       const presetSwatches = document.querySelectorAll('.preset-swatch');
       
       // Value displays
@@ -610,6 +452,7 @@
         const value = parseInt(e.target.value);
         settings.size = value / 100;
         sizeValue.textContent = value + '%';
+        resize();
       });
       
       glowIntensityInput.addEventListener('input', (e) => {
@@ -696,16 +539,6 @@
         });
       });
 
-      // --- Mastercard Sonic overlay ---
-      function showSonic() {
-        sonicOverlay.classList.add('active');
-      }
-      function hideSonic() {
-        sonicOverlay.classList.remove('active');
-      }
-      sonicOverlay.addEventListener('click', hideSonic);
-      sonicBtn.addEventListener('click', showSonic);
-
       // Click on ball detection
       canvas.addEventListener('click', (e) => {
         const rect = canvas.getBoundingClientRect();
@@ -716,7 +549,6 @@
         const r  = Math.min(rect.width, rect.height) * 0.5;
         const dx = x - cx, dy = y - cy;
         if (dx * dx + dy * dy <= r * r) {
-          showSonic();
         }
       });
 
@@ -759,17 +591,20 @@
       
       function updateBackground() {
         const gradients = {
-          purple: 'linear-gradient(135deg, #1a0a1a 0%, #1a0a14 60%, #2a0a1a 100%)',
-          blue: 'linear-gradient(135deg, #0a0a1a 0%, #0a141a 60%, #0a1a2a 100%)',
-          dark: 'linear-gradient(135deg, #000000 0%, #0a0a0a 60%, #1a1a1a 100%)',
-          cosmic: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)',
-          aurora: 'linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #0f3460 100%)'
+          purple: '#ffffff',
+          blue: '#ffffff',
+          dark: '#ffffff',
+          cosmic: '#ffffff',
+          aurora: '#ffffff'
         };
-        document.body.style.background = gradients[settings.bgStyle] || gradients.purple;
+        document.body.style.background = gradients[settings.bgStyle] || '#ffffff';
       }
 
       function resize() {
-        const s = Math.min(window.innerWidth, window.innerHeight) * settings.size;
+        // Leave room for the 320px settings panel on the right
+        const availW = window.innerWidth - 360;
+        const availH = window.innerHeight;
+        const s = Math.min(availW, availH) * settings.size;
         canvas.width  = s;
         canvas.height = s;
       }
