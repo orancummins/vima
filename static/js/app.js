@@ -4202,12 +4202,47 @@
 
       function closeGlobalEdit() {
         if (!editModal) return;
+        // Auto-refresh the active use-case webview so changes appear immediately
+        const activeFrame = document.querySelector('.sonic-webview-frame');
+        if (activeFrame) activeFrame.src = activeFrame.src;
         editModal.classList.remove('tc-modal-backdrop--open');
         editModal.addEventListener('transitionend', () => {
           editModal.style.display = 'none';
           if (editIframe) editIframe.src = '';
+          // Clear banner for next session
+          const banner = document.getElementById('global-edit-banner');
+          if (banner) { banner.className = 'tc-modal-banner tc-modal-banner--hidden'; banner.innerHTML = ''; }
         }, { once: true });
       }
+
+      // ── Listen for done/restart signals from the chat iframe ───────────────
+      window.addEventListener('message', function (e) {
+        if (!e.data || e.data.type !== 'vima:chat-done') return;
+        const text   = (e.data.response || '').toLowerCase();
+        const banner = document.getElementById('global-edit-banner');
+        if (!banner) return;
+
+        const needsRestart = /restart(\s+the)?\s+(server|app|flask|vima)|python\s+app\.py|re-?start/.test(text);
+        const needsHardRefresh = /hard[\s-]refresh|ctrl\s*\+\s*shift|cmd\s*\+\s*shift|force[\s-]refresh/.test(text);
+
+        if (needsRestart) {
+          banner.className = 'tc-modal-banner tc-modal-banner--restart';
+          banner.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Server restart required — run <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">python app.py</code> to apply changes.`;
+        } else if (needsHardRefresh) {
+          banner.className = 'tc-modal-banner tc-modal-banner--refresh';
+          banner.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Hard refresh recommended — press <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">Ctrl+Shift+R</code> (Win/Linux) or <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">Cmd+Shift+R</code> (Mac) after closing.`;
+        } else {
+          banner.className = 'tc-modal-banner tc-modal-banner--done';
+          banner.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Done — page refreshed automatically.`;
+          // Auto-hide after 4s if no restart needed
+          setTimeout(() => {
+            if (banner.classList.contains('tc-modal-banner--done')) {
+              banner.className = 'tc-modal-banner tc-modal-banner--hidden';
+              banner.innerHTML = '';
+            }
+          }, 4000);
+        }
+      });
 
       editBtn   && editBtn.addEventListener('click', openGlobalEdit);
       editClose && editClose.addEventListener('click', closeGlobalEdit);
