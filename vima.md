@@ -410,12 +410,12 @@ Front-end-only showcase of Mastercard's sonic identity: acceptance sound, jingle
 
 | | |
 |---|---|
-| **Files** | `usecases/testchat/__init__.py`, `usecases/testchat/globe.html` |
+| **Files** | `usecases/testchat/__init__.py`, `usecases/testchat/testchat.html` |
 | **APIs used** | *(none)* |
 | **Render key** | `testchat` |
 | **Static route** | `GET /testchat/<filename>` → served from `usecases/testchat/` |
 
-Prototype chat interface with a canvas-based revolving Mastercard globe (Fibonacci lattice, no external deps). Features Refresh and Edit buttons; Edit opens a modal iframing `http://localhost:3333/simple` (vima-chat). The globe page is self-contained in `globe.html`.
+Prototype chat interface with a canvas-based revolving Mastercard globe (Fibonacci lattice, no external deps). Features Refresh and Edit buttons; Edit opens the in-process Vima Chat modal (mounted at `/chat/simple`). The page is self-contained in `testchat.html`.
 
 ---
 

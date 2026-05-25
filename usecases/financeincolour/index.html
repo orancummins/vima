@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; background: #f6f6f6;
+    html, body { width: 100%; height: 100%; background: #ffffff;
                  font-family: 'Inter', system-ui, sans-serif; overflow: hidden; }
 
     /* ── Two-column layout ────────────────────────────────────── */
@@ -67,66 +67,51 @@
 
     /* ── Right visualization panel ────────────────────────────── */
     .fic-viz-wrap {
-      flex: 1; position: relative; overflow: hidden; background: #070a12; min-width: 0;
+      flex: 1; position: relative; overflow: hidden; background: #ffffff; min-width: 0;
     }
 
-    /* ── Tab bar ──────────────────────────────────────────────── */
-    .fic-tabbar {
-      position: absolute; top: 0; left: 0; right: 0; z-index: 30;
-      display: flex; background: rgba(7,10,18,.85); backdrop-filter: blur(8px);
-      border-bottom: 1px solid rgba(255,255,255,.08); height: 42px;
-    }
-    .fic-tabbar button {
-      flex: 1; border: none; background: none; cursor: pointer;
-      font-family: 'Inter', system-ui, sans-serif; font-size: 12px;
-      font-weight: 600; color: rgba(255,255,255,.35); letter-spacing: .04em;
-      text-transform: uppercase; transition: color .15s; padding: 0 12px;
-    }
-    .fic-tabbar button:hover { color: rgba(255,255,255,.65); }
-    .fic-tabbar button.active { color: #ff5f00; border-bottom: 2px solid #ff5f00; }
 
     /* ── Canvas and overlays positioned within fic-viz-wrap ───── */
-    #fic-canvas { position: absolute; inset: 0; display: block; top: 42px; }
+    #fic-canvas { position: absolute; inset: 0; display: block; top: 0; }
     #fic-hud {
-      position: absolute; inset: 0; top: 42px; pointer-events: none; display: none;
+      position: absolute; inset: 0; top: 0; pointer-events: none; display: none;
       flex-direction: column; justify-content: space-between; padding: 20px 24px;
     }
     .hud-top { display: flex; justify-content: space-between; align-items: flex-start; }
-    .hud-title { font-size: 17px; font-weight: 700; color: rgba(255,255,255,.88);
+    .hud-title { font-size: 17px; font-weight: 700; color: #18181b;
                  letter-spacing: -.01em; }
-    .hud-sub   { font-size: 11px; color: rgba(255,255,255,.28); margin-top: 3px; }
+    .hud-sub   { font-size: 11px; color: #71717a; margin-top: 3px; }
     .hud-net   { text-align: right; }
     .hud-net-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .07em;
-                   color: rgba(255,255,255,.28); }
+                   color: #71717a; }
     .hud-net-val { font-size: 30px; font-weight: 800; letter-spacing: -.02em; margin-top: 2px; }
     .hud-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
     .hud-stats  { display: flex; gap: 22px; }
     .hud-stat label { display: block; font-size: 10px; text-transform: uppercase;
-                      letter-spacing: .07em; color: rgba(255,255,255,.26); }
-    .hud-stat span  { font-size: 14px; font-weight: 600; color: rgba(255,255,255,.72); }
+                      letter-spacing: .07em; color: #71717a; }
+    .hud-stat span  { font-size: 14px; font-weight: 600; color: #18181b; }
     .hud-pill { font-size: 10px; font-weight: 700; text-transform: uppercase;
                 letter-spacing: .09em; padding: 5px 11px; border-radius: 999px; }
-    .hud-pill.rising  { background: rgba(248,113,113,.1);  color: #f87171;
-                        border: 1px solid rgba(248,113,113,.3); }
-    .hud-pill.cooling { background: rgba(16,217,128,.09);  color: #10d980;
-                        border: 1px solid rgba(16,217,128,.25); }
-    .hud-pill.steady  { background: rgba(251,191,36,.09);  color: #fbbf24;
-                        border: 1px solid rgba(251,191,36,.25); }
+    .hud-pill.rising  { background: #fee2e2; color: #991b1b;
+                        border: 1px solid #fca5a5; }
+    .hud-pill.cooling { background: #dcfce7; color: #166534;
+                        border: 1px solid #86efac; }
+    .hud-pill.steady  { background: #fef9c3; color: #854d0e;
+                        border: 1px solid #fde047; }
     .fic-screen {
-      position: absolute; inset: 0; top: 42px; z-index: 20; background: #070a12;
+      position: absolute; inset: 0; top: 42px; z-index: 20; background: #ffffff;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      color: rgba(255,255,255,.35); font-size: 13px; gap: 14px; padding: 40px;
+      color: #71717a; font-size: 13px; gap: 14px; padding: 40px;
       text-align: center;
     }
-    .fic-screen strong { color: rgba(255,255,255,.62); font-size: 15px; display: block; }
+    .fic-screen strong { color: #18181b; font-size: 15px; display: block; }
     .fic-spinner { width: 22px; height: 22px; border-radius: 50%;
-                   border: 2px solid rgba(255,255,255,.08); border-top-color: #ff5f00;
+                   border: 2px solid #e5e5e5; border-top-color: #ff5f00;
                    animation: spin .9s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
     /* ── Connect / Personas screen ────────────────────────────── */
     #fic-connect {
-      position: absolute; inset: 0; top: 42px; z-index: 20; background: #070a12;
+      position: absolute; inset: 0; top: 42px; z-index: 20; background: #ffffff;
       overflow-y: auto; display: none; flex-direction: column;
       align-items: center; padding: 32px 20px 48px;
     }
@@ -137,9 +122,9 @@
     }
     .fic-connect-hero-left { flex: 0 0 auto; }
     .fic-connect-hero h2 {
-      font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -.02em; margin-bottom: 6px;
+      font-size: 22px; font-weight: 800; color: #18181b; letter-spacing: -.02em; margin-bottom: 6px;
     }
-    .fic-connect-hero p { font-size: 12px; color: rgba(255,255,255,.35); line-height: 1.55; margin-bottom: 14px; max-width: 360px; }
+    .fic-connect-hero p { font-size: 12px; color: #52525b; line-height: 1.55; margin-bottom: 14px; max-width: 360px; }
     .fic-btn-connect {
       display: inline-flex; align-items: center; gap: 7px;
       background: #ff5f00; color: #fff; font-size: 13px; font-weight: 700;
@@ -150,63 +135,63 @@
     .fic-btn-connect:disabled { background: rgba(255,95,0,.35); cursor: not-allowed; }
     .fic-connect-personas h3 {
       font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .1em; color: rgba(255,255,255,.28); margin-bottom: 14px;
+      letter-spacing: .1em; color: #71717a; margin-bottom: 14px;
     }
     .fic-persona-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(230px,1fr));
       gap: 12px; margin-bottom: 28px;
     }
     .fic-persona-card {
-      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+      background: #fafafa; border: 1px solid #e5e5e5;
       border-radius: 10px; padding: 14px 15px;
       transition: border-color .15s, background .15s;
     }
     .fic-persona-card { cursor: pointer; }
-    .fic-persona-card:hover { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.16); }
-    .fic-persona-card.selected { border-color: #ff5f00; background: rgba(255,95,0,.09); }
-    .fic-persona-card.active   { border-color: rgba(16,217,128,.5); background: rgba(16,217,128,.06); }
+    .fic-persona-card:hover { background: #f4f4f5; border-color: #a1a1aa; }
+    .fic-persona-card.selected { border-color: #ff5f00; background: #fff7f0; }
+    .fic-persona-card.active   { border-color: #16a34a; background: #f0fdf4; }
     .fic-persona-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
     .fic-persona-avatar {
       width: 32px; height: 32px; border-radius: 50%; display: flex;
       align-items: center; justify-content: center; font-size: 13px;
-      font-weight: 800; color: #000; flex-shrink: 0;
+      font-weight: 800; color: #fff; flex-shrink: 0;
     }
-    .fic-persona-name { font-size: 13px; font-weight: 700; color: #fff; }
-    .fic-persona-role { font-size: 10.5px; color: rgba(255,255,255,.3); margin-top: 1px; }
-    .fic-persona-desc { font-size: 11px; color: rgba(255,255,255,.36); line-height: 1.55; margin-bottom: 10px; }
+    .fic-persona-name { font-size: 13px; font-weight: 700; color: #18181b; }
+    .fic-persona-role { font-size: 10.5px; color: #71717a; margin-top: 1px; }
+    .fic-persona-desc { font-size: 11px; color: #52525b; line-height: 1.55; margin-bottom: 10px; }
     .fic-cred { display: flex; flex-direction: column; gap: 4px; }
     .fic-cred-row { display: flex; align-items: center; gap: 6px; font-size: 10.5px; }
     .fic-cred-row .lbl {
-      min-width: 52px; color: rgba(255,255,255,.22); font-size: 9.5px;
+      min-width: 52px; color: #a1a1aa; font-size: 9.5px;
       text-transform: uppercase; letter-spacing: .06em; flex-shrink: 0;
     }
     .fic-cred-row code {
-      background: rgba(255,255,255,.07); border-radius: 4px; padding: 1px 7px;
+      background: #f4f4f5; border-radius: 4px; padding: 1px 7px;
       font-family: 'SF Mono','Fira Code',monospace; font-size: 10.5px;
-      color: rgba(255,255,255,.7); cursor: pointer; user-select: all;
-      border: 1px solid rgba(255,255,255,.1); transition: background .12s;
+      color: #3f3f46; cursor: pointer; user-select: all;
+      border: 1px solid #e4e4e7; transition: background .12s;
     }
-    .fic-cred-row code:hover { background: rgba(255,255,255,.14); color: #fff; }
+    .fic-cred-row code:hover { background: #e4e4e7; color: #18181b; }
     .fic-connect-msg {
-      font-size: 12px; color: rgba(255,255,255,.35); margin-top: 6px;
+      font-size: 12px; color: #52525b; margin-top: 6px;
       min-height: 18px; text-align: center;
     }
     .fic-hud-connect-btn {
-      font-size: 10px; font-weight: 600; color: rgba(255,255,255,.3);
-      background: none; border: 1px solid rgba(255,255,255,.1);
+      font-size: 10px; font-weight: 600; color: #52525b;
+      background: #fff; border: 1px solid #d4d4d8;
       border-radius: 5px; padding: 4px 10px; cursor: pointer;
       letter-spacing: .05em; text-transform: uppercase; transition: all .15s;
     }
-    .fic-hud-connect-btn:hover { color: rgba(255,255,255,.7); border-color: rgba(255,255,255,.3); }
+    .fic-hud-connect-btn:hover { color: #18181b; border-color: #71717a; }
     #fic-tip {
       position: absolute; pointer-events: none; z-index: 50;
-      background: rgba(7,10,18,.93); border: 1px solid rgba(255,255,255,.13);
+      background: #ffffff; border: 1px solid #e4e4e7;
       border-radius: 9px; padding: 9px 13px; font-size: 11.5px; line-height: 1.65;
-      color: rgba(255,255,255,.76); backdrop-filter: blur(12px);
+      color: #3f3f46; backdrop-filter: blur(12px);
       white-space: nowrap; display: none;
-      box-shadow: 0 6px 28px rgba(0,0,0,.6);
+      box-shadow: 0 4px 16px rgba(0,0,0,.10);
     }
-    #fic-tip b { color: #fff; display: block; margin-bottom: 1px; font-size: 12px; }
+    #fic-tip b { color: #18181b; display: block; margin-bottom: 1px; font-size: 12px; }
     .tip-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%;
                margin-right: 5px; vertical-align: middle; }
   </style>
@@ -219,7 +204,7 @@
   <div class="fic-info">
     <div>
       <h1>Finance In Colour</h1>
-      <p class="fic-info-desc">Finance In Colour translates Open Finance transactions into a vivid picture of how a customer earns, spends and behaves — category petals, daily flow chart, and a generative financial fingerprint, all from a single Mastercard integration.</p>
+      <p class="fic-info-desc">Finance In Colour turns Open Finance transactions into a generative <em>financial fingerprint</em> — an iris of concentric ridges shaped by the customer's daily flow and volatility, wrapped in chromatic category rays, with a money-in / money-out timeline below. Every customer's print is uniquely theirs.</p>
     </div>
     <div class="fic-controlbar">
       <div>
@@ -330,31 +315,32 @@
   let _layout=null, _mouse={x:-9999,y:-9999};
 
   function buildPetalMeta(cats, innerR, maxLen) {
+    // Each category becomes an angular wedge — a "ridge" of parallel rays.
     const tot = cats.reduce((s,c)=>s+c.pct,0)||100;
     const max = (cats[0]||{}).pct||1;
-    let angle = -Math.PI/2;
+    let angle = -Math.PI/2;             // start at 12 o'clock
     return cats.map(cat => {
-      const arc=(cat.pct/tot)*Math.PI*2;
-      const len=Math.max(30,(cat.pct/max)*maxLen);
-      const col=catCol(cat.category);
-      const mid=angle+arc/2;
-      const d={cat,arc,len,col,start:angle,mid};
-      angle+=arc; return d;
+      const arc = (cat.pct/tot)*Math.PI*2;
+      const len = Math.max(28,(cat.pct/max)*maxLen);
+      const col = catCol(cat.category);
+      const mid = angle+arc/2;
+      const rays = Math.max(3, Math.min(28, Math.round(cat.pct/2.2)));
+      const d = {cat,arc,len,col,start:angle,mid,rays};
+      angle += arc; return d;
     });
   }
 
   function buildParticles(meta, innerR) {
+    // Drifting motes along the iris/ray boundary, each carrying its category hue.
     const ps=[];
     meta.forEach(pd => {
-      const n=Math.max(6,Math.round(pd.cat.pct*1.6));
+      const n=Math.max(3, Math.round(pd.cat.pct*0.7));
       for(let i=0;i<n;i++){
         ps.push({
-          a:pd.mid+(Math.random()-.5)*pd.arc*.75,
-          slack:(Math.random()-.5)*pd.arc*.38,
-          r:innerR+Math.random()*pd.len,
-          dr:.18+Math.random()*.42,
-          minR:innerR*.55, maxR:innerR+pd.len,
-          col:pd.col, sz:1.4+Math.random()*2.6, ph:Math.random()*Math.PI*2,
+          a:  pd.start + Math.random()*pd.arc,
+          r:  innerR*(0.85 + Math.random()*0.55),
+          spd:(Math.random()<.5?-1:1)*(0.00018+Math.random()*0.00055),
+          col:pd.col, sz:.9+Math.random()*1.6, ph:Math.random()*Math.PI*2,
         });
       }
     });
@@ -365,17 +351,22 @@
     const fp=data.fingerprint||{}, series=data.series||[];
     const trend=(data.trend||{}).label||"steady";
     const cats=(data.categories||[]).slice(0,10);
+    const sr=fp.savings_rate||0;
+    const vol=Math.min(Math.max(fp.volatility||0, 0), 1.4);
+    const div=Math.max(3, fp.diversity||cats.length||4);
+    const trendSpd = trend==="rising" ? 1.45 : trend==="cooling" ? 0.55 : 1.0;
 
+    // ── Background ───────────────────────────────────────────────────────
     ctx.fillStyle="#070a12"; ctx.fillRect(0,0,W,H);
-
     const bp=.5+.5*Math.sin(t/4000);
-    const bg=ctx.createRadialGradient(W*.5,H*.38,0,W*.5,H*.38,W*.52);
-    bg.addColorStop(0,"rgba(22,16,50,"+(.45+bp*.1)+")"); bg.addColorStop(1,"transparent");
+    const bg=ctx.createRadialGradient(W*.5,H*.36,0,W*.5,H*.36,W*.58);
+    bg.addColorStop(0,"rgba(28,18,60,"+(.42+bp*.10)+")");
+    bg.addColorStop(1,"transparent");
     ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
 
     if(!_stars){
       _stars=Array.from({length:110},()=>({
-        x:Math.random(),y:Math.random()*.70,r:.35+Math.random()*1.0,
+        x:Math.random(),y:Math.random()*.72,r:.35+Math.random()*1.0,
         a:.07+Math.random()*.32,f:.18+Math.random()*.9,
       }));
     }
@@ -386,96 +377,196 @@
       ctx.fill(); ctx.restore();
     });
 
-    const cx=W*.5, cy=H*.37;
-    const innerR=Math.min(W,H)*.052;
-    const maxLen=Math.min(W*.28,H*.28);
+    // ── Geometry ─────────────────────────────────────────────────────────
+    const cx=W*.5, cy=H*.36;
+    const baseR  = Math.min(W,H)*0.205;    // iris outer / ray inner
+    const coreR  = Math.min(W,H)*0.048;
+    const irisInner = coreR*1.55;
+    const irisBand  = baseR - irisInner;
+    const maxLen = Math.min(W*0.26, H*0.26);
     const tlCY=H*.735;
     const px=W*.055, tw=W*.89, th=H*.115;
     const xs=series.length>1?tw/(series.length-1):tw;
     const mxF=series.reduce((m,s)=>Math.max(m,s.in,s.out),1);
-    _layout={cx,cy,innerR,maxLen,tlCY,px,tw,th,xs,mxF,series};
+    // innerR/maxLen kept for tooltip hit-testing compatibility
+    _layout={cx,cy,innerR:baseR,maxLen,tlCY,px,tw,th,xs,mxF,series,coreR,irisInner,irisBand};
 
+    const coreCol = sr>.05 ? "#10d980" : sr<0 ? "#f87171" : "#fbbf24";
+
+    // ── IRIS: concentric deformed ridges driven by daily net flow ──────
+    // Each ring wraps the 90-day series around the circle (with a per-ring
+    // offset), so the ridge profile literally encodes this customer's
+    // behaviour. Volatility deepens the wobble; trend tunes the rotation.
+    const ringCount = 11;
+    const samples = 200;
+    const seriesN = Math.max(1, series.length);
+    for(let k=0;k<ringCount;k++){
+      const tt = k/(ringCount-1);
+      const r0 = irisInner + tt*irisBand;
+      const amp = (irisBand*0.20) * (0.35 + vol*3.6) * (1 - 0.45*tt);
+      const rot = (t*0.00007*trendSpd) * (k%2?1:-1) + k*0.31;
+      ctx.save();
+      ctx.beginPath();
+      for(let i=0;i<=samples;i++){
+        const u = i/samples;
+        const ang = u*Math.PI*2 + rot;
+        const sIdx = (Math.floor(u*seriesN) + k*7) % seriesN;
+        const s = series[sIdx] || {in:0,out:0,net:0};
+        const sig = (s.net||0) / (mxF||1);
+        const wave = Math.sin(ang*div + k*0.7 + t*0.00065*trendSpd) * 0.35;
+        const rr = r0 + amp*(sig*0.65 + wave*0.55);
+        const x = cx + Math.cos(ang)*rr;
+        const y = cy + Math.sin(ang)*rr;
+        i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+      }
+      ctx.closePath();
+      const ringAlpha = 0.09 + (1-tt)*0.22;
+      ctx.strokeStyle = rgba(coreCol, ringAlpha);
+      ctx.lineWidth   = 0.85 + (1-tt)*0.55;
+      ctx.shadowColor = coreCol;
+      ctx.shadowBlur  = 7 + (1-tt)*10;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // ── CHROMATIC RAY-RIDGES: one wedge per category ───────────────────
     if(cats.length){
-      if(!_petalMeta) _petalMeta=buildPetalMeta(cats,innerR,maxLen);
-      if(!_particles)  _particles=buildParticles(_petalMeta,innerR);
+      if(!_petalMeta) _petalMeta=buildPetalMeta(cats,baseR,maxLen);
+      if(!_particles) _particles=buildParticles(_petalMeta,baseR);
 
       _petalMeta.forEach(pd=>{
-        const {start:s0,arc,len,col,mid}=pd;
+        const {start:s0, arc, len, col, mid, rays} = pd;
 
+        // soft glow wedge backdrop
         ctx.save(); ctx.beginPath(); ctx.moveTo(cx,cy);
-        ctx.arc(cx,cy,innerR+len,s0,s0+arc);
-        ctx.arc(cx,cy,innerR,s0+arc,s0,true); ctx.closePath();
-        ctx.fillStyle=rgba(col,.060); ctx.shadowColor=col; ctx.shadowBlur=38;
+        ctx.arc(cx,cy,baseR+len, s0, s0+arc);
+        ctx.arc(cx,cy,baseR,     s0+arc, s0, true); ctx.closePath();
+        ctx.fillStyle=rgba(col,.045); ctx.shadowColor=col; ctx.shadowBlur=30;
         ctx.fill(); ctx.restore();
 
-        ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,innerR+len,s0,s0+arc);
-        ctx.strokeStyle=rgba(col,.55); ctx.lineWidth=1.5;
-        ctx.shadowColor=col; ctx.shadowBlur=20; ctx.stroke(); ctx.restore();
+        // ridge of parallel rays — each tapers like a real fingerprint ridge
+        for(let j=0;j<rays;j++){
+          const u = (j+0.5)/rays;
+          const a = s0 + u*arc;
+          const tCenter = 1 - Math.abs(u-0.5)*1.25;
+          const breath = 1 + 0.04*Math.sin(t*0.0018 + j*0.7 + s0);
+          const rLen = len * Math.max(0.45, tCenter) * breath;
+          const r1 = baseR;
+          const r2 = baseR + rLen;
+          const x1 = cx+Math.cos(a)*r1, y1 = cy+Math.sin(a)*r1;
+          const x2 = cx+Math.cos(a)*r2, y2 = cy+Math.sin(a)*r2;
+          const grad = ctx.createLinearGradient(x1,y1,x2,y2);
+          grad.addColorStop(0,   rgba(col,0.85));
+          grad.addColorStop(0.8, rgba(col,0.18));
+          grad.addColorStop(1,   rgba(col,0.0));
+          ctx.save();
+          ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+          ctx.strokeStyle = grad; ctx.lineWidth = 1.35; ctx.lineCap = "round";
+          ctx.shadowColor = col; ctx.shadowBlur = 9;
+          ctx.stroke();
+          // pearl at the tip
+          ctx.beginPath();
+          ctx.arc(x2,y2,1.35,0,Math.PI*2);
+          ctx.fillStyle = rgba(col,0.9);
+          ctx.shadowBlur = 12; ctx.fill();
+          ctx.restore();
+        }
 
-        ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,innerR+len*.55,s0,s0+arc);
-        ctx.strokeStyle=rgba(col,.18); ctx.lineWidth=.8;
-        ctx.shadowColor=col; ctx.shadowBlur=8; ctx.stroke(); ctx.restore();
-
+        // arc cap that ties the ridge together
+        const capR = baseR + len + 6;
         ctx.save(); ctx.beginPath();
-        ctx.moveTo(cx+Math.cos(mid)*innerR,cy+Math.sin(mid)*innerR);
-        ctx.lineTo(cx+Math.cos(mid)*(innerR+len),cy+Math.sin(mid)*(innerR+len));
-        ctx.strokeStyle=rgba(col,.28); ctx.lineWidth=.9;
-        ctx.shadowColor=col; ctx.shadowBlur=10; ctx.stroke(); ctx.restore();
+        ctx.arc(cx,cy,capR, s0+arc*0.06, s0+arc*0.94);
+        ctx.strokeStyle = rgba(col,.55); ctx.lineWidth = 1.4;
+        ctx.shadowColor = col; ctx.shadowBlur = 12;
+        ctx.stroke(); ctx.restore();
 
-        const lx=cx+Math.cos(mid)*(innerR+len+17);
-        const ly=cy+Math.sin(mid)*(innerR+len+17);
+        // category label + share %
+        const lx=cx+Math.cos(mid)*(baseR+len+19);
+        const ly=cy+Math.sin(mid)*(baseR+len+19);
         ctx.save();
-        ctx.font="500 10.5px 'Inter',system-ui";
-        ctx.fillStyle=rgba(col,.88);
+        ctx.font="600 10.5px 'Inter',system-ui";
+        ctx.fillStyle=rgba(col,.95);
         ctx.textAlign=Math.cos(mid)>0?"left":"right";
-        ctx.textBaseline="middle"; ctx.shadowColor=col; ctx.shadowBlur=6;
-        ctx.fillText(pd.cat.category,lx,ly); ctx.restore();
+        ctx.textBaseline="middle"; ctx.shadowColor=col; ctx.shadowBlur=7;
+        ctx.fillText(pd.cat.category,lx,ly);
+        ctx.font="500 9px 'Inter',system-ui";
+        ctx.fillStyle="rgba(255,255,255,.42)";
+        ctx.shadowBlur=0;
+        ctx.fillText(pd.cat.pct.toFixed(0)+"%", lx, ly+11);
+        ctx.restore();
       });
 
+      // drifting motes along the iris/ray boundary
       _particles.forEach(p=>{
-        p.r+=p.dr;
-        if(p.r>p.maxR) p.r=p.minR+Math.random()*innerR*.4;
-        const a=p.a+p.slack*Math.sin(t/3200+p.ph);
+        p.a += p.spd*trendSpd;
+        const wob = Math.sin(t*0.001+p.ph)*3.5;
+        const r = p.r + wob;
         ctx.save(); ctx.beginPath();
-        ctx.arc(cx+Math.cos(a)*p.r,cy+Math.sin(a)*p.r,p.sz,0,Math.PI*2);
-        ctx.fillStyle=p.col; ctx.shadowColor=p.col; ctx.shadowBlur=14;
+        ctx.arc(cx+Math.cos(p.a)*r, cy+Math.sin(p.a)*r, p.sz, 0, Math.PI*2);
+        ctx.fillStyle = p.col; ctx.shadowColor=p.col; ctx.shadowBlur=11;
         ctx.fill(); ctx.restore();
       });
     }
 
-    const sr=fp.savings_rate||0;
-    const coreCol=sr>.05?"#10d980":sr<0?"#f87171":"#fbbf24";
-    const pulseSpd=trend==="rising"?370:trend==="cooling"?1400:800;
-    const pulse=1+.085*Math.sin(t/pulseSpd);
-    const cR=innerR*pulse;
+    // ── CORE ORB ───────────────────────────────────────────────────────
+    const pulseSpd = trend==="rising" ? 420 : trend==="cooling" ? 1500 : 850;
+    const pulse = 1 + 0.085*Math.sin(t/pulseSpd);
+    const cR = coreR*pulse;
 
+    // expanding ripple rings
     for(let i=0;i<3;i++){
       const ph=((t/2200)+i/3)%1;
       ctx.save(); ctx.beginPath();
-      ctx.arc(cx,cy,cR+ph*maxLen*.20,0,Math.PI*2);
-      ctx.strokeStyle=rgba(coreCol,(1-ph)*.13); ctx.lineWidth=1.5;
+      ctx.arc(cx,cy, cR*1.5 + ph*irisInner*0.55, 0, Math.PI*2);
+      ctx.strokeStyle=rgba(coreCol,(1-ph)*.11); ctx.lineWidth=1;
       ctx.shadowColor=coreCol; ctx.shadowBlur=18; ctx.stroke(); ctx.restore();
     }
-
-    [.04,.10,.20].forEach((a,i)=>{
+    // soft halos
+    [.04,.10,.18].forEach((a,i)=>{
       ctx.save(); ctx.beginPath();
-      ctx.arc(cx,cy,cR*(1.85-i*.35),0,Math.PI*2);
-      ctx.fillStyle=rgba(coreCol,a); ctx.shadowColor=coreCol; ctx.shadowBlur=55;
+      ctx.arc(cx,cy,cR*(2.0-i*.36),0,Math.PI*2);
+      ctx.fillStyle=rgba(coreCol,a); ctx.shadowColor=coreCol; ctx.shadowBlur=50;
       ctx.fill(); ctx.restore();
     });
-
+    // orb itself
     ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,cR,0,Math.PI*2);
     const og=ctx.createRadialGradient(cx-cR*.32,cy-cR*.32,0,cx,cy,cR);
-    og.addColorStop(0,"#ffffff"); og.addColorStop(.42,coreCol); og.addColorStop(1,rgba(coreCol,.55));
-    ctx.fillStyle=og; ctx.shadowColor=coreCol; ctx.shadowBlur=55;
+    og.addColorStop(0,"#ffffff"); og.addColorStop(.42,coreCol);
+    og.addColorStop(1,rgba(coreCol,.55));
+    ctx.fillStyle=og; ctx.shadowColor=coreCol; ctx.shadowBlur=50;
     ctx.fill(); ctx.restore();
 
+    // savings-rate label
     ctx.save();
-    const fs=Math.max(8,Math.round(cR*.52));
-    ctx.font="700 "+fs+"px 'Inter',system-ui";
-    ctx.fillStyle="rgba(255,255,255,.95)";
+    const fs=Math.max(10, Math.round(cR*.62));
+    ctx.font="800 "+fs+"px 'Inter',system-ui";
+    ctx.fillStyle="rgba(255,255,255,.96)";
     ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.shadowBlur=0;
-    ctx.fillText((sr>=0?"+":"")+Math.round(sr*100)+"%",cx,cy); ctx.restore();
+    ctx.fillText((sr>=0?"+":"")+Math.round(sr*100)+"%",cx,cy);
+    ctx.restore();
+    // micro-label under core
+    ctx.save();
+    ctx.font="700 8.5px 'Inter',system-ui";
+    ctx.fillStyle="rgba(255,255,255,.55)";
+    ctx.textAlign="center";
+    ctx.fillText("SAVINGS RATE", cx, cy + cR + 12);
+    ctx.restore();
+
+    // ── Fingerprint signature row (the metrics that *define* this print) ─
+    ctx.save();
+    ctx.font="600 9.5px 'Inter',system-ui";
+    ctx.fillStyle="rgba(255,255,255,.32)";
+    ctx.textAlign="left"; ctx.textBaseline="middle";
+    const sigY = Math.min(tlCY - th - 22, cy + baseR + maxLen + 32);
+    const sigParts = [
+      "\u2237 "+(fp.txn_per_day||0).toFixed(1)+" txn/day",
+      "\u25C8 "+div+" categories",
+      "\u223F volatility "+(vol).toFixed(2),
+      "\u2933 "+trend,
+    ];
+    let sigX = px;
+    sigParts.forEach(s=>{ ctx.fillText(s, sigX, sigY); sigX += ctx.measureText(s).width + 22; });
+    ctx.restore();
 
     ctx.save();
     const sg=ctx.createLinearGradient(0,0,W,0);

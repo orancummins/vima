@@ -114,7 +114,6 @@ def _flag_from_alpha3(alpha3: str) -> str:
     """Convert ISO 3166-1 alpha-3 code to flag emoji via alpha-2 lookup."""
     alpha2 = _ALPHA3_TO_ALPHA2.get((alpha3 or "").strip().upper(), "")
     return _flag(alpha2) if alpha2 else ""
-    return chr(base + ord(iso2[0].upper()) - ord("A")) + chr(base + ord(iso2[1].upper()) - ord("A"))
 
 
 def _network_from_bin(bin_num: str) -> str:

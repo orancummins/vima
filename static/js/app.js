@@ -4178,8 +4178,11 @@
       function openGlobalEdit() {
         if (!editModal || !editIframe) return;
 
-        // Build URL based on what is currently selected in the explorer
-        let url = 'http://localhost:3333/simple';
+        // Build URL based on what is currently selected in the explorer.
+        // Note: Vima Chat runs on 127.0.0.1:3333 (loopback only) and is
+        // proxied through this app at /chat/* so it is never accessible as
+        // a standalone web service.
+        let url = '/chat/simple';
         const activeTab = document.querySelector('.top-tab.active')?.dataset?.topTab;
         if (activeTab === 'usecases' && _currentUcId) {
           const uc = USE_CASES.find(u => u.id === _currentUcId);
@@ -4498,13 +4501,13 @@
   }());
 
   // ===================== Test Chat Use Case =====================
-  // Rendered as a sandboxed iframe pointing to /testchat/globe.html.
+  // Rendered as a sandboxed iframe pointing to /testchat/testchat.html.
   // All Test Chat UI lives in usecases/testchat/ — edit there to change the look.
 
   function renderTestChat() {
     const body = $('uc-body');
     if (!body) return;
-    body.innerHTML = `<iframe id="testchat-webview-frame" class="sonic-webview-frame" src="/testchat/globe.html" title="Test Chat"></iframe>`;
+    body.innerHTML = `<iframe id="testchat-webview-frame" class="sonic-webview-frame" src="/testchat/testchat.html" title="Test Chat"></iframe>`;
     _attachWebviewRefresh('testchat-webview-frame');
   }
 
