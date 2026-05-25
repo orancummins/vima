@@ -269,8 +269,8 @@ function psiResultHtml(r) {
             const maxScore = Math.max(...daily.map(d => d.nsfScore), 1);
             return daily.map((d, i) => {
               const isBest   = i === bestIdx;
-              const isSel    = i === PSI.selectedDay && !isLocked;
               const isLocked = d.riskLevel === "medium" || d.riskLevel === "high";
+              const isSel    = i === PSI.selectedDay && !isLocked;
               const barPct   = Math.max(2, Math.round((d.nsfScore / maxScore) * 100));
               return `<div class="psi-day ${isBest ? "psi-day--best" : ""} ${isSel ? "psi-day--selected" : ""} ${isLocked ? "psi-day--locked" : ""}" data-day-idx="${i}" data-locked="${isLocked}">
               ${isBest ? `<div class="psi-day-best-label">Best</div>` : ""}
