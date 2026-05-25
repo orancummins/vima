@@ -103,8 +103,11 @@ pip install -r requirements.txt -r chat/requirements.txt
 ./run.sh
 ```
 
-- Solution Studio → http://localhost:9021
-- ViMA chat (used by the embedded UI) → http://localhost:3333
+Solution Studio (including the ViMA chat) starts on a single port:
+**http://localhost:9021**
+
+ViMA chat is embedded directly in the main Flask app — no separate process
+or port is needed.
 
 ### 3. Configure API keys
 
@@ -185,12 +188,12 @@ Mastercard Solution Studio (port 9021, Flask)
 ├── apis/         ← wired Mastercard API integrations
 ├── usecases/     ← end-to-end demos composing those APIs
 ├── simulator/    ← optional response mocking for offline / no-key runs
-└── chat/         ← ViMA — Claude-powered coding assistant (port 3333)
+└── chat/         ← ViMA — Claude-powered coding assistant (Blueprint at /chat)
 ```
 
-The main Flask app serves the UI and proxies API calls; ViMA runs as a
-separate Flask process so it can hot-edit files in the workspace
-independently. Both processes are started by `run.bat` / `run.sh`.
+The main Flask app serves the UI, proxies API calls, and hosts ViMA chat
+as an in-process Blueprint — all on a single port. `run.bat` / `run.sh`
+start one process and you're ready to go.
 
 ---
 
