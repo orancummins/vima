@@ -1343,6 +1343,16 @@ _CONFIG_SCHEMA = [
             {"key": "BCES_ENCRYPTION_CERT_PATH",      "label": "Client Encryption Key", "type": "file",     "info": "Client encryption .pem file. Download from your Mastercard Developers project under 'Client Encryption Keys → Actions → Download'."},
         ],
     },
+    {
+        "id": "claude_chat",
+        "title": "Claude Chat",
+        "subtitle": "Anthropic Claude API for the embedded coding assistant",
+        "docs_url": "https://console.anthropic.com/",
+        "exclude_export": True,
+        "fields": [
+            {"key": "ANTHROPIC_API_KEY", "label": "API Key", "type": "password", "info": "Your Anthropic API key. Sign up at console.anthropic.com, go to Settings → API Keys, and create a new key. Keys start with 'sk-ant-'. Usage is billed to your Anthropic account."},
+        ],
+    },
 ]
 
 
