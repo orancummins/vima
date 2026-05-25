@@ -8,7 +8,6 @@ from dotenv import load_dotenv, dotenv_values
 
 _config_env_path = Path(__file__).parent.parent / "config" / ".env"
 load_dotenv(_config_env_path)
-load_dotenv(Path(__file__).parent / ".env")  # fallback / overrides for chat-specific vars
 
 from .config import MODEL, MAX_FILE_SIZE, MODELS, DEFAULT_MODEL_ID
 
@@ -40,9 +39,9 @@ def _refresh_client_if_needed() -> None:
         client = anthropic.Anthropic(api_key=fresh_key, timeout=60.0)
 
 
-# Project root: the single source of truth for both chat and tool sandboxing.
-# Writes are confined to the per-item work_dir (a subdirectory under here);
-# reads are allowed anywhere under this root so Claude can study siblings.
+# Project root: the server install directory. Claude reads/writes relative to
+# this root; writes are further confined to the per-item subdirectory supplied
+# by the client (a use case or API folder).
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 _simple_conversations: dict[str, list] = {}
 
