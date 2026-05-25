@@ -410,7 +410,10 @@ function psiRunAssessment() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(reqBody),
-  }).then(r => r.json()).then(d => {
+  }).then(r => {
+    if (!r.ok) return r.text().then(t => { throw new Error(`Server error ${r.status}: ${t.slice(0, 200)}`); });
+    return r.json();
+  }).then(d => {
     PSI.loading = false;
     const daily = (d.result || {}).dailyResults || [];
     const firstSelectable = daily.findIndex(day => day.riskLevel === "low");
@@ -419,7 +422,7 @@ function psiRunAssessment() {
     psiRender();
   }).catch(err => {
     PSI.loading = false;
-    PSI.result = { error: "Request failed — check network and try again." };
+    PSI.result = { error: err.message || "Request failed — check network and try again." };
     psiRender();
   });
 }
