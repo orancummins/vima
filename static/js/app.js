@@ -4185,7 +4185,7 @@
         // Note: Vima Chat runs on 127.0.0.1:3333 (loopback only) and is
         // proxied through this app at /chat/* so it is never accessible as
         // a standalone web service.
-        let url = '/chat/simple';
+        let url = '/chat/';
         const activeTab = document.querySelector('.top-tab.active')?.dataset?.topTab;
         if (activeTab === 'usecases' && _currentUcId) {
           const uc = USE_CASES.find(u => u.id === _currentUcId);
