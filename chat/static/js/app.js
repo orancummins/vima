@@ -217,6 +217,11 @@ async function sendMessage() {
               refreshPreview();
               // Reload file editor if a file is open (Claude may have changed it)
               if (currentFile) loadFile(currentFile, null, true);
+              // Notify the parent Vima shell so it can refresh the active page
+              window.parent.postMessage(
+                { type: 'vima:chat-done', response: assistantText },
+                '*'
+              );
               break;
           }
         }
