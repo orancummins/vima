@@ -33,6 +33,8 @@ def _client():
 
 def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
     client = _client()
+    if client is None:
+        return {"error": "Open Finance API is not configured. Please add PARTNER_ID, PARTNER_SECRET and APP_KEY to your config."}
 
     # ------------------------------------------------------------------
     # get_accounts — returns checking/savings accounts for a customer
