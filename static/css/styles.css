@@ -4603,64 +4603,51 @@ body {
 
 
 /* ── API Config tip overlay ─────────────────────────────────────────────── */
-.cfg-tip-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 20;
+/* Tip banner — inline at top of cfg-panel-body */
+.cfg-tip-banner {
+  background: linear-gradient(135deg, #fff5e6 0%, #fff9f0 100%);
+  border: 1px solid #ffcc80;
+  border-radius: 8px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
 }
-.cfg-tip-overlay.cfg-hidden { 
-  display: none;
-  pointer-events: none;
-}
-.cfg-tip-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(255,255,255,0.94);
-}
-.cfg-tip-panel {
-  position: relative;
-  z-index: 1;
-  background: white;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 24px;
-  max-width: 460px;
-  width: calc(100% - 48px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-}
-.cfg-tip-header {
+.cfg-tip-banner.cfg-hidden { display: none; }
+.cfg-tip-banner-header {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 15px;
   font-weight: 600;
   color: #1a1a2e;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
-.cfg-tip-body {
+.cfg-tip-banner-body {
   font-size: 13px;
   color: #333;
   line-height: 1.6;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  padding-left: 28px;
 }
-.cfg-tip-body p { margin: 0 0 12px; }
-.cfg-tip-body p:last-child { margin-bottom: 0; }
-.cfg-tip-footer {
+.cfg-tip-banner-body p { margin: 0 0 10px; }
+.cfg-tip-banner-body p:last-child { margin-bottom: 0; }
+.cfg-tip-banner-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding-left: 28px;
 }
 .cfg-tip-dont-show-label {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 12px;
-  color: #666;
+  font-size: 13px;
+  color: #555;
   cursor: pointer;
   user-select: none;
 }
-.cfg-tip-dont-show-label input { cursor: pointer; }
+.cfg-tip-dont-show-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
