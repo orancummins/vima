@@ -880,6 +880,10 @@ def api_simple_chat():
     if not session_id or not user_message:
         return jsonify({"error": "session_id and message are required"}), 400
 
+    # ViMA chat is scoped to Use Cases only — APIs are read-only via the sandbox.
+    if item_type == "api":
+        return jsonify({"error": "ViMA chat editing is not available for APIs. Select a Use Case to edit."}), 403
+
     # Resolve work directory. Require an explicit work_dir from the client and
     # verify it sits inside PROJECT_ROOT. No fallback — a missing/invalid
     # work_dir is always a client bug.
@@ -1015,6 +1019,7 @@ Workflow for a typical change:
 Rules:
 - Writes MUST target paths inside the write scope. Never use write_file to edit an existing file.
 - NEVER invent a file path. If a file isn't shown by list_directory or grep_files, it does not exist — do not create a directory or file unless the user explicitly asked for a NEW item.
+- NEVER create a new Use Case directory. You may only edit the existing Use Case you have been given write access to. If a user asks to create a new use case, explain that this must be done outside of chat.
 - You may issue multiple independent tool_use blocks in one response to parallelise.
 - You MUST make at least one tool call (read_file/grep_files at minimum) before claiming a change is unnecessary. NEVER assume the file already matches the desired state — verify with read_file or grep_files first.
 - If your verification shows the requested change is already present in the WRITE SCOPE file (not a sibling under the read scope), say so explicitly ("file already in the requested state, no edit needed") rather than implying you made an edit."""

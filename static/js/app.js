@@ -264,6 +264,9 @@
       $("panel-usecases").classList.toggle("hidden", tab !== "usecases");
       const fab = $('api-calls-fab');
       if (fab) fab.classList.toggle('hidden', tab !== 'usecases');
+      // ViMA chat edit is only available on Use Cases
+      const editBtnTop = $('global-edit-btn');
+      if (editBtnTop) editBtnTop.classList.toggle('hidden', tab !== 'usecases');
       if (tab !== 'usecases') { apiCallsClose(); _stopPolling(); }
       else _startPolling();
     });
