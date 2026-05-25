@@ -543,9 +543,6 @@
   let allItems    = { usecases: [], apis: [] };
 
   /* ── DOM refs ── */
-  const tabUsecases  = document.getElementById('tabUsecases');
-  const tabApis      = document.getElementById('tabApis');
-  const itemListEl   = document.getElementById('itemList');
   const messagesEl   = document.getElementById('messages');
   const emptyStateEl = document.getElementById('emptyState');
   const statusEl     = document.getElementById('status-strip');
@@ -595,12 +592,6 @@
     updateModelCost();
   });
 
-  /* Apply type param to tabs */
-  if (currentType === 'apis') {
-    tabUsecases.classList.remove('active');
-    tabApis.classList.add('active');
-  }
-
   /* ── Status bar ── */
   let _sTimer = null;
   function setStatus(state, text) {
@@ -637,111 +628,53 @@
 
   function scrollBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
 
-  /* ── Load items from backend ── */
+  /* ── Load items from backend and auto-select the URL-param item ── */
   async function loadItems() {
-    itemListEl.innerHTML = '<span class="empty-note">\u2026</span>';
     try {
       const resp = await fetch('/chat/api/simple/items');
       const data = await resp.json();
-      if (!resp.ok) { itemListEl.innerHTML = `<span class="empty-note">${escHtml(data.error || 'Failed to load')}</span>`; return; }
-      allItems = { usecases: data.usecases || [], apis: data.apis || [], base: data.base };
-      renderItemList();
-      /* Auto-select from URL param */
-      if (_paramItem) {
-        const list = allItems[currentType] || [];
-        const found = list.find(i => i.name === _paramItem);
-        if (found) selectItem(found);
+      if (!resp.ok) {
+        emptyStateEl.querySelector('p').textContent = data.error || 'Failed to load items';
+        return;
       }
+      const allUsecases = data.usecases || [];
+      const base = data.base || '';
+      if (_paramItem) {
+        const found = allUsecases.find(i => i.name === _paramItem);
+        if (found) {
+          selectItem(found, base);
+          return;
+        }
+      }
+      emptyStateEl.querySelector('p').textContent = 'No use case selected';
     } catch (e) {
-      itemListEl.innerHTML = `<span class="empty-note">Error loading items: ${escHtml(e.message)}</span>`;
+      emptyStateEl.querySelector('p').textContent = 'Error loading: ' + e.message;
     }
   }
 
-  function renderItemList() {
-    itemListEl.innerHTML = '';
-    const items = allItems[currentType] || [];
-
-    /* Always-present 'New' chip */
-    const newItem = { id: '__new__', name: 'New', isNew: true };
-    const newChip = document.createElement('button');
-    newChip.className = 'item-chip' + (currentItem && currentItem.id === '__new__' ? ' active' : '');
-    newChip.textContent = '+ New';
-    newChip.addEventListener('click', () => selectItem(newItem));
-    itemListEl.appendChild(newChip);
-
-    if (!items.length) {
-      const note = document.createElement('span');
-      note.className = 'empty-note';
-      note.textContent = `No ${currentType} found`;
-      itemListEl.appendChild(note);
-      return;
-    }
-    items.forEach(item => {
-      const chip = document.createElement('button');
-      chip.className = 'item-chip' + (currentItem && currentItem.id === item.id ? ' active' : '');
-      chip.textContent = item.name;
-      chip.addEventListener('click', () => selectItem(item));
-      itemListEl.appendChild(chip);
-    });
-  }
-
-  function selectItem(item) {
-    const type = currentType === 'usecases' ? 'usecase' : 'api';
-    // Use the item's own path. For the synthetic "+ New" chip there is no
-    // per-item path, so fall back to the category root.
+  function selectItem(item, base) {
     let itemPath = item.path;
-    if (!itemPath) {
-      const base = allItems.base || '';
-      const categoryDir = currentType === 'usecases' ? 'usecases' : 'apis';
-      itemPath = base.replace(/[\\/]+$/, '') + '/' + categoryDir;
+    if (!itemPath && base) {
+      itemPath = base.replace(/[\\/]+$/, '') + '/usecases';
     }
-    currentItem = { ...item, type, path: itemPath };
-    sessionId = crypto.randomUUID();
-    messagesEl.innerHTML = '';
-    messagesEl.appendChild(emptyStateEl);
-    renderItemList();
+    currentItem = { ...item, type: 'usecase', path: itemPath };
     updateCompose();
     userInput.focus();
   }
 
-  /* ── Type tabs ── */
-  [tabUsecases, tabApis].forEach(tab => {
-    tab.addEventListener('click', () => {
-      currentType = tab.dataset.type;
-      tabUsecases.classList.toggle('active', currentType === 'usecases');
-      tabApis.classList.toggle('active', currentType === 'apis');
-      if (currentItem && currentItem.type !== (currentType === 'usecases' ? 'usecase' : 'api')) {
-        currentItem = null;
-        updateCompose();
-      }
-      renderItemList();
-    });
-  });
-
   /* ── Compose ── */
-  function newPrefixText() {
-    return currentItem.type === 'usecase'
-      ? 'Create a new Use Case which follows same format as other Use Cases called '
-      : 'Create a new API following same format as other APIs called ';
-  }
-
   function updateCompose() {
     const hasItem = !!currentItem;
     userInput.disabled = !hasItem;
     btnSend.disabled = !hasItem;
 
-    if (hasItem && currentItem.isNew) {
+    if (hasItem) {
       prefixBarEl.className = 'compose-prefix-bar has-item';
-      prefixBarEl.innerHTML = escHtml(newPrefixText()) + '<strong>…</strong>';
-      userInput.placeholder = 'Name…';
-    } else if (hasItem) {
-      const typeLabel = currentItem.type === 'usecase' ? 'Use Case' : 'API';
-      prefixBarEl.className = 'compose-prefix-bar has-item';
-      prefixBarEl.innerHTML = `Update <strong>${escHtml(currentItem.name)}</strong> ${escHtml(typeLabel)} only with the following:`;
+      prefixBarEl.innerHTML = `Update <strong>${escHtml(currentItem.name)}</strong> Use Case only with the following:`;
       userInput.placeholder = 'Describe the change…';
     } else {
       prefixBarEl.className = 'compose-prefix-bar placeholder';
-      prefixBarEl.innerHTML = 'Select an item above to begin';
+      prefixBarEl.innerHTML = 'Loading use case…';
       userInput.placeholder = 'Describe the change…';
     }
     updatePreview();
@@ -750,12 +683,7 @@
   function buildMessage() {
     if (!currentItem) return '';
     const userText = userInput.value.trim();
-    if (currentItem.isNew) {
-      return newPrefixText() + userText;
-    }
-    const typeLabel = currentItem.type === 'usecase' ? 'Use Case' : 'API';
-    const prefix = `Update ${currentItem.name} ${typeLabel} only with the following: `;
-    return prefix + userText;
+    return `Update ${currentItem.name} Use Case only with the following: ` + userText;
   }
 
   function updatePreview() {
