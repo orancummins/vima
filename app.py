@@ -1537,10 +1537,10 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", "9021"))
     apis = api_registry.manifests()
     print("\n" + "=" * 60)
-    print("Vima — Mastercard API explorer")
+    print("Vima - Mastercard API explorer")
     print("=" * 60)
     for a in apis:
-        flag = "✓" if a.get("configured") else "✗"
+        flag = "+" if a.get("configured") else "-"
         print(f"  {flag} {a['name']:<20} ({len(a['operations'])} operations)")
     print(f"\nListening on http://0.0.0.0:{port}")
     print("=" * 60 + "\n")
