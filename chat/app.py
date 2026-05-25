@@ -5,9 +5,10 @@ from pathlib import Path
 
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context, send_from_directory
 import anthropic
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 
-load_dotenv(Path(__file__).parent.parent / "config" / ".env")
+_config_env_path = Path(__file__).parent.parent / "config" / ".env"
+load_dotenv(_config_env_path)
 load_dotenv(Path(__file__).parent / ".env")  # fallback / overrides for chat-specific vars
 
 from config import WORK_DIR, MODEL, MAX_FILE_SIZE, ALLOWED_COMMANDS, VIMA_URL, MODELS, DEFAULT_MODEL_ID
@@ -15,9 +16,10 @@ from config import WORK_DIR, MODEL, MAX_FILE_SIZE, ALLOWED_COMMANDS, VIMA_URL, M
 app = Flask(__name__)
 
 # ─── Anthropic client ──────────────────────────────────────────────────────────
-_api_key = os.environ.get("ANTHROPIC_API_KEY")
+# Read ANTHROPIC_API_KEY exclusively from config/.env — never from system env
+_api_key = dotenv_values(_config_env_path).get("ANTHROPIC_API_KEY")
 if not _api_key:
-    print("WARNING: ANTHROPIC_API_KEY is not set -- Claude API calls will fail.")
+    print("WARNING: ANTHROPIC_API_KEY is not set in config/.env -- Claude API calls will fail.")
 client = anthropic.Anthropic(api_key=_api_key)
 
 # ─── Runtime-mutable allowed commands (updated via Settings tab) ───────────────
