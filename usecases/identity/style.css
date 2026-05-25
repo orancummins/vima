@@ -419,6 +419,20 @@ body {
   animation: fac-spin 0.9s linear infinite;
   transform-origin: 50% 50%;
   will-change: transform;
+  flex-shrink: 0;
+}
+.idv-progress-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+.idv-spinner-inline {
+  width: 22px; height: 22px;
+  margin: 0;
+  flex-shrink: 0;
+  -webkit-mask: radial-gradient(circle, transparent 6px, #000 7px);
+          mask: radial-gradient(circle, transparent 6px, #000 7px);
 }
 .idv-verify-list {
   list-style: none; padding: 0; margin: 14px auto 0;
@@ -453,7 +467,10 @@ body {
 .idv-vli-active::before {
   border-color: var(--mc-orange);
   border-top-color: transparent;
+  top: calc(50% - 9px);
+  transform: none;
   animation: fac-spin 0.9s linear infinite;
+  transform-origin: 50% 50%;
 }
 
 /* Done screen */
