@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any, Dict, Tuple
 
 MANIFEST: Dict[str, Any] = {
-    "id": "binlookup",
+    "id": "bin_lookup",
     "name": "BIN Lookup",
     "description": (
         "The first digits of a card number unlock a wealth of intelligence. BIN Lookup "
@@ -18,8 +18,8 @@ MANIFEST: Dict[str, Any] = {
         "cardholder offers. This use case visualises every data point returned by the "
         "Mastercard BIN Lookup API."
     ),
-    "apis": ["binlookup"],
-    "render": "binlookup",
+    "apis": ["bin_lookup"],
+    "render": "bin_lookup",
 }
 
 # ── acceptanceBrand → network ─────────────────────────────────────────────────
@@ -80,7 +80,7 @@ _ALPHA3_TO_ALPHA2: Dict[str, str] = {
 
 def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
     if action == "lookup":
-        from apis.binlookup import api as bin_api
+        from apis.bin_lookup import api as bin_api
         result = bin_api.execute("lookup_bin", params)
         if not result.get("success"):
             return {"found": False, "error": result.get("error", "Lookup failed")}

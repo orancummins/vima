@@ -23,7 +23,7 @@ _PROD_BASE    = "https://api.mastercard.com/loyalty/offers/eop"
 
 
 MANIFEST: Dict[str, Any] = {
-    "id": "ofmc",
+    "id": "offers_merchant_content",
     "name": "Offers Merchant Content",
     "description": (
         "Mastercard Offers Merchant Content — push merchant profiles, offers, "
@@ -62,9 +62,9 @@ MANIFEST: Dict[str, Any] = {
     "categories": ["Categories", "Sources", "Merchants", "Images", "Offers"],
     "state_schema": [],
     "configured": bool(
-        os.environ.get("OFMC_CONSUMER_KEY")
-        and os.environ.get("OFMC_CONSUMER_KEY") != "your-consumer-key-here"
-        and os.environ.get("OFMC_SIGNING_KEY_PATH")
+        os.environ.get("OFFERS_MERCHANT_CONTENT_CONSUMER_KEY")
+        and os.environ.get("OFFERS_MERCHANT_CONTENT_CONSUMER_KEY") != "your-consumer-key-here"
+        and os.environ.get("OFFERS_MERCHANT_CONTENT_SIGNING_KEY_PATH")
     ),
     "operations": [
         # ---- Categories --------------------------------------------------
@@ -222,20 +222,20 @@ MANIFEST: Dict[str, Any] = {
 # ---------------------------------------------------------------------------
 def _base_url() -> str:
     from simulator.switcher import sim_base_url
-    env = os.environ.get("OFMC_ENV", "sandbox").lower()
+    env = os.environ.get("OFFERS_MERCHANT_CONTENT_ENV", "sandbox").lower()
     real = _PROD_BASE if env == "production" else _SANDBOX_BASE
-    return sim_base_url("ofmc", real)
+    return sim_base_url("offers_merchant_content", real)
 
 
 def _configured() -> bool:
-    key = os.environ.get("OFMC_CONSUMER_KEY", "")
-    path = os.environ.get("OFMC_SIGNING_KEY_PATH", "")
+    key = os.environ.get("OFFERS_MERCHANT_CONTENT_CONSUMER_KEY", "")
+    path = os.environ.get("OFFERS_MERCHANT_CONTENT_SIGNING_KEY_PATH", "")
     return bool(key and key != "your-consumer-key-here" and path)
 
 
 def is_configured() -> bool:
     from simulator.switcher import is_simulated
-    return _configured() or is_simulated("ofmc")
+    return _configured() or is_simulated("offers_merchant_content")
 
 
 def get_state() -> Dict[str, Any]:
@@ -246,8 +246,8 @@ def _not_configured_err() -> Dict[str, Any]:
     return {
         "success": False,
         "error": (
-            "Offers Merchant Content is not configured. Set OFMC_CONSUMER_KEY "
-            "and OFMC_SIGNING_KEY_PATH in .env, then restart the server."
+            "Offers Merchant Content is not configured. Set OFFERS_MERCHANT_CONTENT_CONSUMER_KEY "
+            "and OFFERS_MERCHANT_CONTENT_SIGNING_KEY_PATH in .env, then restart the server."
         ),
     }
 
@@ -263,22 +263,22 @@ def _signed_request(method: str, url: str, body_str: str | None) -> Dict[str, An
     import requests
     from simulator.switcher import is_simulated as _is_sim
 
-    if not _configured() and not _is_sim("ofmc"):
+    if not _configured() and not _is_sim("offers_merchant_content"):
         return _not_configured_err()
 
     headers = {"Accept": "application/json"}
     if body_str is not None:
         headers["Content-Type"] = "application/json"
 
-    if _is_sim("ofmc"):
+    if _is_sim("offers_merchant_content"):
         headers["Authorization"] = "Simulated"
     else:
         import oauth1.authenticationutils as authutils
         from oauth1.oauth import OAuth
 
-        consumer_key = os.environ["OFMC_CONSUMER_KEY"]
-        key_path     = _resolve_key_path(os.environ["OFMC_SIGNING_KEY_PATH"])
-        key_password = os.environ.get("OFMC_SIGNING_KEY_PASSWORD", "keystorepassword")
+        consumer_key = os.environ["OFFERS_MERCHANT_CONTENT_CONSUMER_KEY"]
+        key_path     = _resolve_key_path(os.environ["OFFERS_MERCHANT_CONTENT_SIGNING_KEY_PATH"])
+        key_password = os.environ.get("OFFERS_MERCHANT_CONTENT_SIGNING_KEY_PASSWORD", "keystorepassword")
 
         try:
             signing_key = authutils.load_signing_key(key_path, key_password)
@@ -326,7 +326,7 @@ def _qs(params: Dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("ofmc"):
+    if not _configured() and not is_simulated("offers_merchant_content"):
         return _not_configured_err()
     dispatch = {
         "search_categories":     _search_categories,

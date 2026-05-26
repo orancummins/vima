@@ -2,23 +2,23 @@ import uuid
 from flask import request, jsonify
 from simulator.datastore import store
 
-API = "ofmc"
+API = "offers_merchant_content"
 
 
 def register(bp):
-    @bp.route("/ofmc/categories/category-searches", methods=["POST"])
+    @bp.route("/offers_merchant_content/categories/category-searches", methods=["POST"])
     def search_categories():
         store.lazy_load(API)
         categories = store.list(API, "categories")
         return jsonify({"categories": categories, "totalCount": len(categories)})
 
-    @bp.route("/ofmc/sources", methods=["GET"])
+    @bp.route("/offers_merchant_content/sources", methods=["GET"])
     def list_sources():
         store.lazy_load(API)
         sources = store.list(API, "sources")
         return jsonify({"sources": sources, "totalCount": len(sources)})
 
-    @bp.route("/ofmc/sources/<source_uuid>", methods=["GET"])
+    @bp.route("/offers_merchant_content/sources/<source_uuid>", methods=["GET"])
     def get_source(source_uuid):
         store.lazy_load(API)
         rec = store.get(API, "sources", source_uuid)
@@ -27,7 +27,7 @@ def register(bp):
             rec = next((s for s in sources if s.get("uuid") == source_uuid), sources[0] if sources else {"uuid": source_uuid})
         return jsonify(rec)
 
-    @bp.route("/ofmc/merchants", methods=["POST"])
+    @bp.route("/offers_merchant_content/merchants", methods=["POST"])
     def create_merchant():
         store.lazy_load(API)
         body = request.get_json(force=True) or {}
@@ -44,7 +44,7 @@ def register(bp):
         store.put(API, "merchants", mer_uuid, merchant)
         return jsonify(merchant), 200
 
-    @bp.route("/ofmc/merchants/<merchant_id>", methods=["GET"])
+    @bp.route("/offers_merchant_content/merchants/<merchant_id>", methods=["GET"])
     def get_merchant(merchant_id):
         store.lazy_load(API)
         rec = store.get(API, "merchants", merchant_id)
@@ -53,7 +53,7 @@ def register(bp):
             rec = next((m for m in merchants if m.get("uuid") == merchant_id), merchants[0] if merchants else {"uuid": merchant_id})
         return jsonify(rec)
 
-    @bp.route("/ofmc/merchants/<merchant_id>", methods=["PUT"])
+    @bp.route("/offers_merchant_content/merchants/<merchant_id>", methods=["PUT"])
     def update_merchant(merchant_id):
         store.lazy_load(API)
         body = request.get_json(force=True) or {}
@@ -62,20 +62,20 @@ def register(bp):
         store.put(API, "merchants", merchant_id, existing)
         return jsonify(existing)
 
-    @bp.route("/ofmc/merchants/<merchant_id>/addresses", methods=["POST"])
+    @bp.route("/offers_merchant_content/merchants/<merchant_id>/addresses", methods=["POST"])
     def add_merchant_address(merchant_id):
         body = request.get_json(force=True) or {}
         return jsonify({"uuid": str(uuid.uuid4()), "merchantId": merchant_id, **body}), 200
 
-    @bp.route("/ofmc/merchants/<merchant_id>/images", methods=["GET"])
+    @bp.route("/offers_merchant_content/merchants/<merchant_id>/images", methods=["GET"])
     def get_merchant_images(merchant_id):
         return jsonify({"images": [], "merchantId": merchant_id})
 
-    @bp.route("/ofmc/merchants/<merchant_id>/images", methods=["POST"])
+    @bp.route("/offers_merchant_content/merchants/<merchant_id>/images", methods=["POST"])
     def upload_merchant_image(merchant_id):
         return jsonify({"uuid": str(uuid.uuid4()), "merchantId": merchant_id, "status": "UPLOADED"}), 200
 
-    @bp.route("/ofmc/offers", methods=["POST"])
+    @bp.route("/offers_merchant_content/offers", methods=["POST"])
     def create_offer():
         store.lazy_load(API)
         body = request.get_json(force=True) or {}

@@ -22,16 +22,16 @@ _client: Optional[OpenFinanceClient] = None
 def _get_client() -> Optional[OpenFinanceClient]:
     global _client
     from simulator.switcher import is_simulated
-    if is_simulated("ofin"):
+    if is_simulated("open_finance"):
         port = int(os.environ.get("PORT", 9021))
-        sim_base = f"http://localhost:{port}/api-sim/ofin"
+        sim_base = f"http://localhost:{port}/api-sim/open_finance"
         return OpenFinanceClient("sim_partner", "sim_secret", "sim_appkey", base_url=sim_base)
     if _client is not None:
         return _client
-    pid = os.environ.get("PARTNER_ID", "")
-    psec = os.environ.get("PARTNER_SECRET", "")
-    akey = os.environ.get("APP_KEY", "")
-    base = os.environ.get("API_BASE_URL", "https://api.finicity.com")
+    pid = os.environ.get("OPEN_FINANCE_PARTNER_ID", "")
+    psec = os.environ.get("OPEN_FINANCE_PARTNER_SECRET", "")
+    akey = os.environ.get("OPEN_FINANCE_APP_KEY", "")
+    base = os.environ.get("OPEN_FINANCE_API_BASE_URL", "https://api.finicity.com")
     if not (pid and psec and akey) or pid == "your_partner_id_here":
         return None
     _client = OpenFinanceClient(pid, psec, akey, base_url=base)
@@ -40,7 +40,7 @@ def _get_client() -> Optional[OpenFinanceClient]:
 
 def is_configured() -> bool:
     from simulator.switcher import is_simulated
-    return is_simulated("ofin") or _get_client() is not None
+    return is_simulated("open_finance") or _get_client() is not None
 
 
 # ---------------------------------------------------------------------------
@@ -73,7 +73,7 @@ STATE: Dict[str, Any] = {
 
 
 MANIFEST: Dict[str, Any] = {
-    "id": "ofin",
+    "id": "open_finance",
     "name": "Open Finance",
     "description": (
         "Mastercard Open Finance (US Open Banking) — Finicity-powered "
@@ -1082,7 +1082,7 @@ def _report_updates(data: Any, status: int) -> Dict[str, Any]:
 def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     client = _get_client()
     if client is None:
-        return _err("Open Finance client not configured. Check PARTNER_ID / PARTNER_SECRET / APP_KEY in .env")
+        return _err("Open Finance client not configured. Check OPEN_FINANCE_PARTNER_ID / OPEN_FINANCE_PARTNER_SECRET / OPEN_FINANCE_APP_KEY in .env")
 
     p = params or {}
 
@@ -1143,7 +1143,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
         if op_id == "generate_connect_url":
             data, status = client.generate_connect_url(
-                p["customer_id"], os.environ.get("PARTNER_ID", "")
+                p["customer_id"], os.environ.get("OPEN_FINANCE_PARTNER_ID", "")
             )
             hints = {}
             if isinstance(data, dict) and data.get("link"):
@@ -1524,9 +1524,9 @@ _seeded = False
 def _seed_default_customer() -> None:
     """On first state access, seed customer_id.
 
-    If OFIN_DEFAULT_CUSTOMER_ID is set in the environment, use that customer
-    directly (faster). Otherwise fall back to scanning the customer list for
-    the most recently created testing customer with a checking account.
+    If OPEN_FINANCE_DEFAULT_CUSTOMER_ID is set in the environment, use that
+    customer directly (faster). Otherwise fall back to scanning the customer
+    list for the most recently created testing customer with a checking account.
     """
     global _seeded
     if _seeded or STATE.get("customer_id"):
@@ -1538,7 +1538,7 @@ def _seed_default_customer() -> None:
         return
 
     # Fast path: use the configured default customer ID
-    default_cid = os.environ.get("OFIN_DEFAULT_CUSTOMER_ID", "").strip()
+    default_cid = os.environ.get("OPEN_FINANCE_DEFAULT_CUSTOMER_ID", "").strip()
     if default_cid:
         try:
             acc_data, acc_status = client.get_customer_accounts(default_cid)

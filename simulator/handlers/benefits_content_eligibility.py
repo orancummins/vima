@@ -1,11 +1,11 @@
 from flask import request, jsonify
 from simulator.datastore import store
 
-API = "bces"
+API = "benefits_content_eligibility"
 
 
 def register(bp):
-    @bp.route("/bces/benefit-contents/searches", methods=["POST"])
+    @bp.route("/benefits_content_eligibility/benefit-contents/searches", methods=["POST"])
     def search_contents():
         store.lazy_load(API)
         body = request.get_json(force=True) or {}

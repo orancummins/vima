@@ -1,11 +1,11 @@
 from flask import request, jsonify
 from simulator.datastore import store
 
-API = "clarity"
+API = "consumer_clarity"
 
 
 def register(bp):
-    @bp.route("/clarity/consumer-clarity/searches", methods=["POST"])
+    @bp.route("/consumer_clarity/consumer-clarity/searches", methods=["POST"])
     def search_merchant():
         store.lazy_load(API)
         body = request.get_json(force=True) or {}

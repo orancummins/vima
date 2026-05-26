@@ -2,11 +2,11 @@ import uuid
 from flask import request, jsonify
 from simulator.datastore import store
 
-API = "txnotify"
+API = "transaction_notifications"
 
 
 def register(bp):
-    @bp.route("/txnotify/notifications/transactions", methods=["POST"])
+    @bp.route("/transaction_notifications/notifications/transactions", methods=["POST"])
     def trigger_test_transaction():
         store.lazy_load(API)
         body = request.get_json(force=True) or {}
@@ -24,7 +24,7 @@ def register(bp):
         store.put(API, "transactions", trans_uid, record)
         return jsonify({}), 200
 
-    @bp.route("/txnotify/undelivered-notifications", methods=["GET"])
+    @bp.route("/transaction_notifications/undelivered-notifications", methods=["GET"])
     def get_undelivered():
         store.lazy_load(API)
         items = store.list(API, "undelivered_notifications")

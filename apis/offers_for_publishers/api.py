@@ -29,7 +29,7 @@ _PRESENTMENT_SUFFIX = "/presentment"
 
 
 MANIFEST: Dict[str, Any] = {
-    "id": "ofpub",
+    "id": "offers_for_publishers",
     "name": "Offers for Publishers",
     "description": (
         "Mastercard Offers for Publishers — REST APIs for publishers to run an "
@@ -73,9 +73,9 @@ MANIFEST: Dict[str, Any] = {
     "categories": ["Access", "Presentment", "Platform", "User Admin", "Rebates"],
     "state_schema": [],
     "configured": bool(
-        os.environ.get("OFPUB_CONSUMER_KEY")
-        and os.environ.get("OFPUB_CONSUMER_KEY") != "your-consumer-key-here"
-        and os.environ.get("OFPUB_SIGNING_KEY_PATH")
+        os.environ.get("OFFERS_FOR_PUBLISHERS_CONSUMER_KEY")
+        and os.environ.get("OFFERS_FOR_PUBLISHERS_CONSUMER_KEY") != "your-consumer-key-here"
+        and os.environ.get("OFFERS_FOR_PUBLISHERS_SIGNING_KEY_PATH")
     ),
     "operations": [
         # ---- Presentment --------------------------------------------------
@@ -234,18 +234,18 @@ MANIFEST: Dict[str, Any] = {
 # ---------------------------------------------------------------------------
 def _base_url() -> str:
     from simulator.switcher import sim_base_url
-    env = os.environ.get("OFPUB_ENV", "sandbox").lower()
+    env = os.environ.get("OFFERS_FOR_PUBLISHERS_ENV", "sandbox").lower()
     real = _PROD_BASE if env == "production" else _SANDBOX_BASE
-    return sim_base_url("ofpub", real)
+    return sim_base_url("offers_for_publishers", real)
 
 
 def _is_prod() -> bool:
-    return os.environ.get("OFPUB_ENV", "sandbox").lower() == "production"
+    return os.environ.get("OFFERS_FOR_PUBLISHERS_ENV", "sandbox").lower() == "production"
 
 
 def _presentment_url(path: str) -> str:
     from simulator.switcher import is_simulated
-    if is_simulated("ofpub"):
+    if is_simulated("offers_for_publishers"):
         port = int(os.environ.get("PORT", 9021))
         return f"http://localhost:{port}/api-sim/ofpub/presentment{path}"
     base = _PROD_BASE if _is_prod() else _SANDBOX_BASE
@@ -254,7 +254,7 @@ def _presentment_url(path: str) -> str:
 
 def _admin_url(path: str) -> str:
     from simulator.switcher import is_simulated
-    if is_simulated("ofpub"):
+    if is_simulated("offers_for_publishers"):
         port = int(os.environ.get("PORT", 9021))
         return f"http://localhost:{port}/api-sim/ofpub/admin{path}"
     base = _PROD_BASE if _is_prod() else _SANDBOX_BASE
@@ -262,14 +262,14 @@ def _admin_url(path: str) -> str:
 
 
 def _configured() -> bool:
-    key = os.environ.get("OFPUB_CONSUMER_KEY", "")
-    path = os.environ.get("OFPUB_SIGNING_KEY_PATH", "")
+    key = os.environ.get("OFFERS_FOR_PUBLISHERS_CONSUMER_KEY", "")
+    path = os.environ.get("OFFERS_FOR_PUBLISHERS_SIGNING_KEY_PATH", "")
     return bool(key and key != "your-consumer-key-here" and path)
 
 
 def is_configured() -> bool:
     from simulator.switcher import is_simulated
-    return _configured() or is_simulated("ofpub")
+    return _configured() or is_simulated("offers_for_publishers")
 
 
 def get_state() -> Dict[str, Any]:
@@ -280,8 +280,8 @@ def _not_configured_err() -> Dict[str, Any]:
     return {
         "success": False,
         "error": (
-            "Offers for Publishers is not configured. Set OFPUB_CONSUMER_KEY "
-            "and OFPUB_SIGNING_KEY_PATH in .env, then restart the server."
+            "Offers for Publishers is not configured. Set OFFERS_FOR_PUBLISHERS_CONSUMER_KEY "
+            "and OFFERS_FOR_PUBLISHERS_SIGNING_KEY_PATH in .env, then restart the server."
         ),
     }
 
@@ -302,7 +302,7 @@ def _signed_request(method: str, url: str, body_str: str | None, extra_headers: 
     import requests
     from simulator.switcher import is_simulated as _is_sim
 
-    if not _configured() and not _is_sim("ofpub"):
+    if not _configured() and not _is_sim("offers_for_publishers"):
         return _not_configured_err()
 
     headers = {"Accept": "application/json"}
@@ -311,15 +311,15 @@ def _signed_request(method: str, url: str, body_str: str | None, extra_headers: 
     if extra_headers:
         headers.update(extra_headers)
 
-    if _is_sim("ofpub"):
+    if _is_sim("offers_for_publishers"):
         headers["Authorization"] = "Simulated"
     else:
         import oauth1.authenticationutils as authutils
         from oauth1.oauth import OAuth
 
-        consumer_key = os.environ["OFPUB_CONSUMER_KEY"]
-        key_path     = _resolve_key_path(os.environ["OFPUB_SIGNING_KEY_PATH"])
-        key_password = os.environ.get("OFPUB_SIGNING_KEY_PASSWORD", "keystorepassword")
+        consumer_key = os.environ["OFFERS_FOR_PUBLISHERS_CONSUMER_KEY"]
+        key_path     = _resolve_key_path(os.environ["OFFERS_FOR_PUBLISHERS_SIGNING_KEY_PATH"])
+        key_password = os.environ.get("OFFERS_FOR_PUBLISHERS_SIGNING_KEY_PASSWORD", "keystorepassword")
 
         try:
             signing_key = authutils.load_signing_key(key_path, key_password)
@@ -367,7 +367,7 @@ def _qs(params: Dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("ofpub"):
+    if not _configured() and not is_simulated("offers_for_publishers"):
         return _not_configured_err()
     dispatch = {
         "create_access_token":   _create_access_token,
