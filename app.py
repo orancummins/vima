@@ -62,7 +62,7 @@ def _patched_send(self, prepared_request, **kwargs):
     is_simulator = "/api-sim/" in url
     is_external = is_simulator or not any(h in url for h in _INTERNAL_HOSTS)
 
-    if not is_external:
+    if not is_external or os.environ.get("LOG_API_CALLS", "false").lower() != "true":
         return _orig_send(self, prepared_request, **kwargs)
 
     global _api_call_seq
