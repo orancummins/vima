@@ -3,6 +3,7 @@ organization: mastercard
 
 login_url: https://developer.mastercard.com/account/log-in
 dashboard_url_pattern: "**/dashboard**"
+key_password: "foobar!!"
 
 projects:
   - name: BINLookup
@@ -13,4 +14,5 @@ projects:
   - name: USOpenFinance
     description: Mastercard Open Finance (US)
     apis:
-      - ofin
+      - name: ofin
+        region: "United States of America"

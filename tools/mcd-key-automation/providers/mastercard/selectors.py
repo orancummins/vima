@@ -39,6 +39,8 @@ class CreateProjectSelectors:
     on_behalf_self_radio = "#ui\\.onBehalf-0"   # "On behalf of myself"
     on_behalf_company_radio = "#ui\\.onBehalf-1"  # "On behalf of a company"
     company_select_input = "#react-select-2-input"
+    # Region dropdown (present for some APIs e.g. Open Finance)
+    region_select_input = "[placeholder='Type to search']"
     proceed_button = "button:has-text('Proceed')"
     exit_button = "button:has-text('Exit')"
 
@@ -57,6 +59,39 @@ class ProjectSelectors:
     # Placeholders — to be discovered via a follow-up pass that opens an existing project.
     add_api_button = "button:has-text('Add API')"
     api_search_input = "input[placeholder*='Search']"
+
+    # Navigation tabs on the project detail page.
+    sandbox_tab = "[data-testid='option-sandbox']"
+
+
+class SandboxSelectors:
+    """Sandbox credentials page at /project-details/<uuid>/sandbox."""
+
+    sandbox_url_tpl = "https://developer.mastercard.com/project-details/{uuid}/sandbox"
+
+    # OAuth (project-level) keys section
+    add_project_key_button = "[data-testid='add-key-button']"
+    # Existing keys rendered as data-testid="key-name-0", "key-name-1" etc.
+    oauth_key_name_any = "[data-testid^='key-name-']"
+    rotate_key_link = "a:has-text('Rotate key')"
+
+
+class AddProjectKeySelectors:
+    """Add-project-key wizard at /sandbox/add-project-key."""
+
+    # Step 1 — choose key type
+    generate_new_radio_label = "label[for='1']"
+
+    # Step 2 — fill alias and password
+    key_alias_input = "[data-testid='key-alias-input']"
+    key_store_password_input = "[data-testid='key-store-password-input']"
+
+    proceed_button = "button:has-text('Proceed')"
+    create_key_button = "button:has-text('Create key')"
+
+    # Post-creation — same button text as the project-creation confirmation page.
+    download_key_button = "button:has-text('Download key file')"
+    download_key_heading = "h2:has-text('You are almost done'), h3:has-text('You are almost done')"
 
 
 # Known API slugs used in the fast-path URL.
