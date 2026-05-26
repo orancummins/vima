@@ -1465,7 +1465,7 @@ def config_upload_key():
 
 @app.route("/config/purge", methods=["POST"])
 def config_purge():
-    """Remove all provisioned keys and .env, then clear matching env vars from memory."""
+    """Remove all provisioned keys and .env files, then clear matching env vars from memory."""
     import shutil
     removed = []
 
@@ -1475,10 +1475,11 @@ def config_purge():
         os.makedirs(_KEYS_DIR, exist_ok=True)
         removed.append("keys")
 
-    # Remove .env
-    if os.path.isfile(_ENV_PATH):
-        os.remove(_ENV_PATH)
-        removed.append(".env")
+    # Remove .env and any stale .env.TEMP
+    for env_file in [_ENV_PATH, _ENV_PATH + ".TEMP"]:
+        if os.path.isfile(env_file):
+            os.remove(env_file)
+            removed.append(os.path.basename(env_file))
 
     # Clear all credential-related env vars from the running process
     prefixes_to_clear = [
@@ -1497,8 +1498,6 @@ def config_purge():
             cleared.append(key)
 
     return jsonify({"removed": removed, "env_vars_cleared": len(cleared)})
-
-
 
 def provision_status():
     has_env = os.path.isfile(_ENV_PATH)
