@@ -2,13 +2,88 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from pathlib import Path
 
 from loguru import logger
 from playwright.async_api import Page
 
 from browser.downloads import save_download
-from providers.mastercard.selectors import AddProjectKeySelectors, SandboxSelectors
+from providers.mastercard.selectors import AddProjectKeySelectors, OAuth2SandboxSelectors, SandboxSelectors
+
+
+class OAuth2SandboxPage:
+    """Handles the sandbox page for OAuth 2.0 projects (Partner ID / App Key / Secret + Sig Key)."""
+
+    def __init__(self, page: Page) -> None:
+        self.page = page
+
+    async def extract_credentials(self) -> dict[str, str]:
+        """Read OAuth 2.0 credentials, revealing masked values via the show icons."""
+        partner_id = (await self.page.locator(OAuth2SandboxSelectors.partner_id_value).first.text_content() or "").strip()
+
+        show_app = self.page.locator(OAuth2SandboxSelectors.app_key_show)
+        if await show_app.count() > 0:
+            await show_app.first.click()
+            await asyncio.sleep(0.5)
+        app_key = (await self.page.locator(OAuth2SandboxSelectors.app_key_value).first.text_content() or "").strip()
+
+        show_secret = self.page.locator(OAuth2SandboxSelectors.secret_show)
+        if await show_secret.count() > 0:
+            await show_secret.first.click()
+            await asyncio.sleep(0.5)
+        secret = (await self.page.locator(OAuth2SandboxSelectors.secret_value).first.text_content() or "").strip()
+
+        logger.info("Extracted OAuth 2.0 credentials (partner_id={})", partner_id)
+        return {"partner_id": partner_id, "app_key": app_key, "secret": secret}
+
+    async def has_signature_key(self) -> bool:
+        """Return True if a Mastercard Signature Verification Key already exists."""
+        return await self.page.locator(OAuth2SandboxSelectors.sig_key_name_any).count() > 0
+
+    async def download_existing_signature_key(self, *, dest_dir: Path, filename_hint: str = "sig_key") -> Path:
+        """Click Download on the existing Mastercard Signature Verification Key row."""
+        logger.info("Downloading existing Mastercard Signature Verification Key")
+        # The Download link is inside a Bootstrap dropdown — open the toggle first
+        toggle = self.page.locator(OAuth2SandboxSelectors.sig_key_manage_toggle)
+        if await toggle.count() > 0:
+            await toggle.first.click()
+            await asyncio.sleep(0.3)
+        async with self.page.expect_download() as dl_info:
+            await self.page.locator(OAuth2SandboxSelectors.sig_key_download).first.click()
+        download = await dl_info.value
+        original = download.suggested_filename or f"{filename_hint}.zip"
+        dest = dest_dir / original
+        await save_download(download, dest)
+        logger.info("Downloaded signature verification key: {}", dest)
+        return dest
+
+    async def add_signature_key(self, *, dest_dir: Path, filename_hint: str = "sig_key") -> Path:
+        """Run the add-api-key wizard to create + download a new Mastercard Signature Verification Key."""
+        logger.info("Clicking 'Add key' for Mastercard Signature Verification Key")
+        await self.page.locator(OAuth2SandboxSelectors.add_sig_key_button).click()
+        await self.page.wait_for_selector(OAuth2SandboxSelectors.sig_key_proceed, timeout=15000)
+        await self.page.locator(OAuth2SandboxSelectors.sig_key_proceed).click()
+        await self.page.wait_for_selector(OAuth2SandboxSelectors.sig_key_create, timeout=15000)
+        logger.info("Clicking 'Create key' for signature verification key")
+        await self.page.locator(OAuth2SandboxSelectors.sig_key_create).click()
+        await self.page.wait_for_selector(OAuth2SandboxSelectors.sig_key_download_after_create, timeout=30000)
+        logger.info("Downloading new Mastercard Signature Verification Key")
+        async with self.page.expect_download() as dl_info:
+            await self.page.locator(OAuth2SandboxSelectors.sig_key_download_after_create).first.click()
+        download = await dl_info.value
+        original = download.suggested_filename or f"{filename_hint}.zip"
+        dest = dest_dir / original
+        await save_download(download, dest)
+        logger.info("Downloaded new signature verification key: {}", dest)
+        return dest
+
+    async def save_credentials_json(self, creds: dict[str, str], dest_dir: Path, filename: str) -> Path:
+        """Serialise credentials dict to a JSON file and return the path."""
+        dest = dest_dir / filename
+        dest.write_text(json.dumps(creds, indent=2))
+        logger.info("Saved OAuth 2.0 credentials JSON: {}", dest)
+        return dest
 
 
 class SandboxPage:

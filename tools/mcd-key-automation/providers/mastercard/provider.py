@@ -38,38 +38,38 @@ class MastercardProvider(DeveloperPortalProvider):
 
     async def download_keys(self, project: ProjectSpec, api: str) -> list[DownloadedArtifact]:
         await self.dashboard.goto()
-        # Find the ApiSpec to get region (if any)
         api_spec = next((a for a in project.normalised_apis() if a.name == api), None)
         region = api_spec.region if api_spec else None
-        try:
-            raw_file = await ensure_project_with_api(self.dashboard, project, api, self.workspace, self.config, region=region)
-        except RuntimeError as exc:
-            if "OAuth 2.0" in str(exc):
-                logger.warning("Skipping key download for {}/{}: {}", project.name, api, exc)
-                return []
-            raise
+        raw_files = await ensure_project_with_api(self.dashboard, project, api, self.workspace, self.config, region=region)
 
-        alias = make_alias(
-            organization=self.config.organization,
-            environment=self.config.environment,
-            project=project.name,
-            api=api,
-        )
-        ext = raw_file.suffix.lstrip(".")
-        filename = make_filename(alias, ext)
-        dest = self.workspace / "normalized" / filename
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        raw_file.rename(dest)
+        artifacts: list[DownloadedArtifact] = []
+        for raw_file in raw_files:
+            alias = make_alias(
+                organization=self.config.organization,
+                environment=self.config.environment,
+                project=project.name,
+                api=api,
+            )
+            # JSON credentials get a distinct suffix so they don't collide with the key file.
+            if raw_file.suffix == ".json":
+                alias = f"{alias}-credentials"
+            ext = raw_file.suffix.lstrip(".")
+            filename = make_filename(alias, ext)
+            dest = self.workspace / "normalized" / filename
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            raw_file.rename(dest)
 
-        artifact = DownloadedArtifact(
-            alias=alias,
-            filename=filename,
-            path=str(dest),
-            sha256=sha256_file(dest),
-            kind=classify_extension(filename),
-            project=project.name,
-            api=api,
-        )
-        logger.info("Artifact: {} ({})", artifact.filename, artifact.sha256[:12])
-        return [artifact]
+            artifact = DownloadedArtifact(
+                alias=alias,
+                filename=filename,
+                path=str(dest),
+                sha256=sha256_file(dest),
+                kind=classify_extension(filename),
+                project=project.name,
+                api=api,
+            )
+            logger.info("Artifact: {} ({})", artifact.filename, artifact.sha256[:12])
+            artifacts.append(artifact)
+
+        return artifacts
 

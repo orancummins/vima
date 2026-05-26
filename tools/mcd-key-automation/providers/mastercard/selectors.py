@@ -64,6 +64,29 @@ class ProjectSelectors:
     sandbox_tab = "[data-testid='option-sandbox']"
 
 
+class OAuth2SandboxSelectors:
+    """OAuth 2.0 sandbox page selectors (Partner ID / App Key / Secret + Sig Verification Key)."""
+
+    # Credentials card
+    partner_id_value = "[data-testid='credentialscard-partnerid']"
+    app_key_show = "[data-testid^='icon-show-credentials-appKey-']"
+    app_key_value = "[data-testid^='bar-value-credentials-appKey-']"
+    secret_show = "[data-testid^='icon-show-credentialscard-secret-']"
+    secret_value = "[data-testid^='bar-value-credentialscard-secret-']"
+
+    # Existing Mastercard Signature Verification Key row
+    sig_key_name_any = "[data-testid^='open-finance-mastercard-signature-verification-key-name-']"
+    # The download link is inside a Bootstrap dropdown — must open toggle first
+    sig_key_manage_toggle = "[data-testid='open-finance-manage-0'] button, [data-testid='mastercard-signature-verification-manage-key'] button"
+    sig_key_download = "[data-testid='Download']"
+
+    # Add key wizard (creates new sig verification key)
+    add_sig_key_button = "[data-testid='add-encryption-key-open-finance']"
+    sig_key_proceed = "[data-testid='proceed-btn']"
+    sig_key_create = "[data-testid='create-btn']"
+    sig_key_download_after_create = "button:has-text('Download'), a:has-text('Download'), [data-testid='Download']"
+
+
 class SandboxSelectors:
     """Sandbox credentials page at /project-details/<uuid>/sandbox."""
 

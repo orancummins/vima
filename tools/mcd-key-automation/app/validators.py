@@ -15,6 +15,6 @@ def sha256_file(path: str | Path) -> str:
 
 def classify_extension(filename: str) -> str:
     ext = Path(filename).suffix.lstrip(".").lower()
-    if ext in {"p12", "pem", "crt", "key"}:
+    if ext in {"p12", "pem", "crt", "key", "json"}:
         return ext
     return "other"
