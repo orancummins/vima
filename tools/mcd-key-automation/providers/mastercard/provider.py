@@ -38,7 +38,16 @@ class MastercardProvider(DeveloperPortalProvider):
 
     async def download_keys(self, project: ProjectSpec, api: str) -> list[DownloadedArtifact]:
         await self.dashboard.goto()
-        raw_file = await ensure_project_with_api(self.dashboard, project, api, self.workspace)
+        # Find the ApiSpec to get region (if any)
+        api_spec = next((a for a in project.normalised_apis() if a.name == api), None)
+        region = api_spec.region if api_spec else None
+        try:
+            raw_file = await ensure_project_with_api(self.dashboard, project, api, self.workspace, self.config, region=region)
+        except RuntimeError as exc:
+            if "OAuth 2.0" in str(exc):
+                logger.warning("Skipping key download for {}/{}: {}", project.name, api, exc)
+                return []
+            raise
 
         alias = make_alias(
             organization=self.config.organization,

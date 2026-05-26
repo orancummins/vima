@@ -14,6 +14,7 @@ class ApiSpec(BaseModel):
 
     name: str
     version: str = "v1"
+    region: str | None = None  # Required by some APIs (e.g. Open Finance)
 
     @field_validator("name")
     @classmethod
@@ -38,6 +39,7 @@ class AppConfig(BaseModel):
     organization: str = "mastercard"
     login_url: str = "https://developer.mastercard.com/account/log-in"
     dashboard_url_pattern: str = "**/dashboard**"
+    key_password: str = "foobar!!"
     projects: list[ProjectSpec] = Field(default_factory=list)
 
     @field_validator("projects")
