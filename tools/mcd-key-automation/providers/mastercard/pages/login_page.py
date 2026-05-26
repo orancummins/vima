@@ -5,7 +5,9 @@ from loguru import logger
 from playwright.async_api import Page
 
 from browser.waits import wait_until
-from providers.mastercard.selectors import LoginSelectors
+
+
+_LOGIN_PATH_FRAGMENT = "/account/log-in"
 
 
 class LoginPage:
@@ -18,14 +20,19 @@ class LoginPage:
         await self.page.goto(self.login_url, wait_until="domcontentloaded")
 
     async def wait_for_manual_auth(self, *, timeout_s: float = 600.0) -> None:
-        """Block until the user completes login (incl. MFA/CAPTCHA)."""
+        """Block until the user completes login (incl. MFA/CAPTCHA).
+
+        Detection strategy: the login page redirects away from /account/log-in
+        once the session is established, so we poll the current URL.
+        """
         logger.info("Waiting for manual login. Complete sign-in + MFA in the browser window...")
 
         async def authenticated() -> bool:
             try:
-                loc = self.page.locator(LoginSelectors.authenticated_marker).first
-                return await loc.is_visible(timeout=500)
+                url = self.page.url
+                return _LOGIN_PATH_FRAGMENT not in url and url.startswith("http")
             except Exception:
                 return False
 
         await wait_until(authenticated, timeout_s=timeout_s, description="authenticated session")
+        logger.info("Authenticated — landed on {}", self.page.url)
