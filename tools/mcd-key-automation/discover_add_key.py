@@ -18,9 +18,10 @@ async def safe_settle(page, timeout=3000):
 
 async def main():
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=False, slow_mo=200)
+        browser = await pw.chromium.launch(headless=False, slow_mo=200, args=["--foreground"])
         ctx = await browser.new_context()
         page = await ctx.new_page()
+        await page.bring_to_front()
 
         print("🔐 Log in...")
         await page.goto(LOGIN_URL)

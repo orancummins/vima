@@ -85,9 +85,10 @@ async def wait_for_login(page):
 
 async def main():
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=False, slow_mo=300)
+        browser = await pw.chromium.launch(headless=False, slow_mo=300, args=["--foreground"])
         context = await browser.new_context(accept_downloads=True)
         page = await context.new_page()
+        await page.bring_to_front()
 
         await page.goto(LOGIN_URL, wait_until="domcontentloaded")
         await wait_for_login(page)
