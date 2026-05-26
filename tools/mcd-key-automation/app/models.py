@@ -59,6 +59,6 @@ class DownloadedArtifact(BaseModel):
     filename: str
     path: str
     sha256: str
-    kind: Literal["p12", "pem", "crt", "key", "other"]
+    kind: Literal["p12", "pem", "crt", "key", "json", "other"]
     project: str
     api: str
