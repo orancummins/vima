@@ -62,7 +62,7 @@ class MastercardProvider(DeveloperPortalProvider):
             filename = make_filename(alias, ext)
             dest = self.workspace / "normalized" / filename
             dest.parent.mkdir(parents=True, exist_ok=True)
-            raw_file.rename(dest)
+            raw_file.replace(dest)  # cross-platform: replaces existing file on Windows too
 
             artifact = DownloadedArtifact(
                 alias=alias,
