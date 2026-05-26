@@ -1452,7 +1452,7 @@ def config_save_route():
         _write_env_values(filtered)
     except OSError as exc:
         return jsonify({"error": str(exc)}), 500
-    load_dotenv(override=True)
+    load_dotenv(_ENV_PATH, override=True)
     return jsonify({"saved": list(filtered.keys())})
 
 
