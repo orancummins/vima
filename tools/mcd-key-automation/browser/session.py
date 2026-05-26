@@ -29,7 +29,10 @@ async def browser_session(
     downloads_dir: Path | None = None,
 ) -> AsyncIterator[tuple[Browser, BrowserContext, Page]]:
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=headless)
+        browser = await pw.chromium.launch(
+            headless=headless,
+            args=["--foreground"] if not headless else [],
+        )
         ctx_kwargs: dict = {"accept_downloads": True}
         if storage_state and storage_state.exists():
             logger.info("Reusing saved session from {}", storage_state)
@@ -38,6 +41,7 @@ async def browser_session(
             downloads_dir.mkdir(parents=True, exist_ok=True)
         context = await browser.new_context(**ctx_kwargs)
         page = await context.new_page()
+        await page.bring_to_front()
         try:
             yield browser, context, page
         finally:
