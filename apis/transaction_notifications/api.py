@@ -22,7 +22,7 @@ _SANDBOX_BASE_URL = "https://sandbox.api.mastercard.com/openapis"
 _PROD_BASE_URL    = "https://api.mastercard.com/openapis"
 
 MANIFEST: Dict[str, Any] = {
-    "id": "txnotify",
+    "id": "transaction_notifications",
     "name": "Transaction Notifications",
     "description": (
         "Mastercard Transaction Notifications — receive real-time push notifications "
@@ -102,9 +102,9 @@ MANIFEST: Dict[str, Any] = {
     "categories": ["Notifications"],
     "state_schema": [],
     "configured": bool(
-        os.environ.get("TXNOTIFY_CONSUMER_KEY")
-        and os.environ.get("TXNOTIFY_CONSUMER_KEY") != "your-consumer-key-here"
-        and os.environ.get("TXNOTIFY_SIGNING_KEY_PATH")
+        os.environ.get("TRANSACTION_NOTIFICATIONS_CONSUMER_KEY")
+        and os.environ.get("TRANSACTION_NOTIFICATIONS_CONSUMER_KEY") != "your-consumer-key-here"
+        and os.environ.get("TRANSACTION_NOTIFICATIONS_SIGNING_KEY_PATH")
     ),
     "operations": [
         {
@@ -220,20 +220,20 @@ MANIFEST: Dict[str, Any] = {
 
 def _base_url() -> str:
     from simulator.switcher import sim_base_url
-    env = os.environ.get("TXNOTIFY_ENV", "sandbox").lower()
+    env = os.environ.get("TRANSACTION_NOTIFICATIONS_ENV", "sandbox").lower()
     real = _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
-    return sim_base_url("txnotify", real)
+    return sim_base_url("transaction_notifications", real)
 
 
 def _configured() -> bool:
-    key = os.environ.get("TXNOTIFY_CONSUMER_KEY", "")
-    path = os.environ.get("TXNOTIFY_SIGNING_KEY_PATH", "")
+    key = os.environ.get("TRANSACTION_NOTIFICATIONS_CONSUMER_KEY", "")
+    path = os.environ.get("TRANSACTION_NOTIFICATIONS_SIGNING_KEY_PATH", "")
     return bool(key and key != "your-consumer-key-here" and path)
 
 
 def is_configured() -> bool:
     from simulator.switcher import is_simulated
-    return _configured() or is_simulated("txnotify")
+    return _configured() or is_simulated("transaction_notifications")
 
 
 def get_state() -> Dict[str, Any]:
@@ -253,9 +253,9 @@ def _get_auth_header(url: str, method: str, body_str: str | None = None):
     import oauth1.authenticationutils as authutils
     from oauth1.oauth import OAuth
 
-    consumer_key = os.environ["TXNOTIFY_CONSUMER_KEY"]
-    key_path     = os.environ["TXNOTIFY_SIGNING_KEY_PATH"]
-    key_password = os.environ.get("TXNOTIFY_SIGNING_KEY_PASSWORD", "keystorepassword")
+    consumer_key = os.environ["TRANSACTION_NOTIFICATIONS_CONSUMER_KEY"]
+    key_path     = os.environ["TRANSACTION_NOTIFICATIONS_SIGNING_KEY_PATH"]
+    key_password = os.environ.get("TRANSACTION_NOTIFICATIONS_SIGNING_KEY_PASSWORD", "keystorepassword")
 
     if not os.path.isabs(key_path):
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -270,7 +270,7 @@ def _not_configured_error(op: str) -> Dict[str, Any]:
         "success": False,
         "error": (
             f"Transaction Notifications is not configured. "
-            f"Set TXNOTIFY_CONSUMER_KEY and TXNOTIFY_SIGNING_KEY_PATH in .env, "
+            f"Set TRANSACTION_NOTIFICATIONS_CONSUMER_KEY and TRANSACTION_NOTIFICATIONS_SIGNING_KEY_PATH in .env, "
             f"then restart the server."
         ),
     }
@@ -278,7 +278,7 @@ def _not_configured_error(op: str) -> Dict[str, Any]:
 
 def _trigger_test_transaction(params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("txnotify"):
+    if not _configured() and not is_simulated("transaction_notifications"):
         return _not_configured_error("trigger_test_transaction")
 
     card_reference = (params.get("card_reference") or "").strip()
@@ -315,7 +315,7 @@ def _trigger_test_transaction(params: Dict[str, Any]) -> Dict[str, Any]:
 
     import requests
 
-    if is_simulated("txnotify"):
+    if is_simulated("transaction_notifications"):
         headers["Authorization"] = "Simulated"
     else:
         try:
@@ -353,7 +353,7 @@ def _trigger_test_transaction(params: Dict[str, Any]) -> Dict[str, Any]:
 
 def _get_undelivered(params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("txnotify"):
+    if not _configured() and not is_simulated("transaction_notifications"):
         return _not_configured_error("get_undelivered")
 
     page_number = params.get("page_number", "1")
@@ -366,7 +366,7 @@ def _get_undelivered(params: Dict[str, Any]) -> Dict[str, Any]:
 
     import requests
 
-    if is_simulated("txnotify"):
+    if is_simulated("transaction_notifications"):
         headers["Authorization"] = "Simulated"
     else:
         try:

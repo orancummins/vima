@@ -51,7 +51,7 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
 # --- Search ---------------------------------------------------------------
 
 def _search(params: Dict[str, Any]) -> Dict[str, Any]:
-    from apis.priceless import api as p_api
+    from apis.priceless_cities import api as p_api
 
     base: Dict[str, Any] = {
         "language":            params.get("language") or "en-US",

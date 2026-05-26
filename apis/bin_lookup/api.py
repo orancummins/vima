@@ -5,7 +5,7 @@ import os
 from typing import Any, Dict
 
 MANIFEST: Dict[str, Any] = {
-    "id": "binlookup",
+    "id": "bin_lookup",
     "name": "BIN Lookup",
     "description": (
         "Mastercard BIN Resource Lookup API — identify the issuer, brand, "
@@ -35,9 +35,9 @@ MANIFEST: Dict[str, Any] = {
     "categories": ["Lookup"],
     "state_schema": [],
     "configured": bool(
-        os.environ.get("BINLOOKUP_CONSUMER_KEY")
-        and os.environ.get("BINLOOKUP_CONSUMER_KEY") != "your-consumer-key-here"
-        and os.environ.get("BINLOOKUP_SIGNING_KEY_PATH")
+        os.environ.get("BIN_LOOKUP_CONSUMER_KEY")
+        and os.environ.get("BIN_LOOKUP_CONSUMER_KEY") != "your-consumer-key-here"
+        and os.environ.get("BIN_LOOKUP_SIGNING_KEY_PATH")
     ),
     "operations": [
         {
@@ -74,20 +74,20 @@ _ENDPOINT_SEARCH  = "/bin-ranges/account-searches"  # requires paid plan
 
 def _base_url() -> str:
     from simulator.switcher import sim_base_url
-    env = os.environ.get("BINLOOKUP_ENV", "sandbox").lower()
+    env = os.environ.get("BIN_LOOKUP_ENV", "sandbox").lower()
     real = _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
-    return sim_base_url("binlookup", real)
+    return sim_base_url("bin_lookup", real)
 
 
 def _configured() -> bool:
-    key = os.environ.get("BINLOOKUP_CONSUMER_KEY", "")
-    path = os.environ.get("BINLOOKUP_SIGNING_KEY_PATH", "")
+    key = os.environ.get("BIN_LOOKUP_CONSUMER_KEY", "")
+    path = os.environ.get("BIN_LOOKUP_SIGNING_KEY_PATH", "")
     return bool(key and key != "your-consumer-key-here" and path)
 
 
 def is_configured() -> bool:
     from simulator.switcher import is_simulated
-    return _configured() or is_simulated("binlookup")
+    return _configured() or is_simulated("bin_lookup")
 
 
 def get_state() -> Dict[str, Any]:
@@ -102,12 +102,12 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
 def _lookup_bin(params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("binlookup"):
+    if not _configured() and not is_simulated("bin_lookup"):
         return {
             "success": False,
             "error": (
-                "BIN Lookup is not configured. Set BINLOOKUP_CONSUMER_KEY and "
-                "BINLOOKUP_SIGNING_KEY_PATH in .env, then restart the server."
+                "BIN Lookup is not configured. Set BIN_LOOKUP_CONSUMER_KEY and "
+                "BIN_LOOKUP_SIGNING_KEY_PATH in .env, then restart the server."
             ),
         }
 
@@ -128,12 +128,12 @@ def _lookup_bin(params: Dict[str, Any]) -> Dict[str, Any]:
         "Accept": "application/json",
     }
 
-    if is_simulated("binlookup"):
+    if is_simulated("bin_lookup"):
         headers["Authorization"] = "Simulated"
     else:
-        consumer_key  = os.environ["BINLOOKUP_CONSUMER_KEY"]
-        key_path      = os.environ["BINLOOKUP_SIGNING_KEY_PATH"]
-        key_password  = os.environ.get("BINLOOKUP_SIGNING_KEY_PASSWORD", "keystorepassword")
+        consumer_key  = os.environ["BIN_LOOKUP_CONSUMER_KEY"]
+        key_path      = os.environ["BIN_LOOKUP_SIGNING_KEY_PATH"]
+        key_password  = os.environ.get("BIN_LOOKUP_SIGNING_KEY_PASSWORD", "keystorepassword")
 
         if not os.path.isabs(key_path):
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))

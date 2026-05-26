@@ -33,12 +33,12 @@ _SPECIALS_SANDBOX = "https://sandbox.api.mastercard.com/priceless/specials/platf
 
 
 def _is_prod() -> bool:
-    return os.environ.get("PRICELESS_ENV", "sandbox").lower() == "production"
+    return os.environ.get("PRICELESS_CITIES_CITIES_ENV", "sandbox").lower() == "production"
 
 
 def _platform_base() -> str:
     from simulator.switcher import is_simulated
-    if is_simulated("priceless"):
+    if is_simulated("priceless_cities"):
         port = int(os.environ.get("PORT", 9021))
         return f"http://localhost:{port}/api-sim/priceless/platform"
     return _PLATFORM_PROD if _is_prod() else _PLATFORM_SANDBOX
@@ -46,7 +46,7 @@ def _platform_base() -> str:
 
 def _specials_base() -> str:
     from simulator.switcher import is_simulated
-    if is_simulated("priceless"):
+    if is_simulated("priceless_cities"):
         port = int(os.environ.get("PORT", 9021))
         return f"http://localhost:{port}/api-sim/priceless/specials"
     return _SPECIALS_PROD if _is_prod() else _SPECIALS_SANDBOX
@@ -55,14 +55,14 @@ def _specials_base() -> str:
 # --- Configuration --------------------------------------------------------
 
 def _configured() -> bool:
-    key = os.environ.get("PRICELESS_CONSUMER_KEY", "")
-    path = os.environ.get("PRICELESS_SIGNING_KEY_PATH", "")
+    key = os.environ.get("PRICELESS_CITIES_CITIES_CONSUMER_KEY", "")
+    path = os.environ.get("PRICELESS_CITIES_CITIES_SIGNING_KEY_PATH", "")
     return bool(key and key != "your-consumer-key-here" and path)
 
 
 def is_configured() -> bool:
     from simulator.switcher import is_simulated
-    return _configured() or is_simulated("priceless")
+    return _configured() or is_simulated("priceless_cities")
 
 
 def get_state() -> Dict[str, Any]:
@@ -215,7 +215,7 @@ _OPS: Dict[str, Dict[str, Any]] = {
 
 
 MANIFEST: Dict[str, Any] = {
-    "id": "priceless",
+    "id": "priceless_cities",
     "name": "Priceless",
     "description": (
         "Mastercard's Priceless family of APIs — Priceless Platform "
@@ -488,12 +488,12 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
 def _do_get(op: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("priceless"):
+    if not _configured() and not is_simulated("priceless_cities"):
         return {
             "success": False,
             "error": (
-                "Priceless is not configured. Set PRICELESS_CONSUMER_KEY and "
-                "PRICELESS_SIGNING_KEY_PATH in .env, then restart the server."
+                "Priceless is not configured. Set PRICELESS_CITIES_CITIES_CONSUMER_KEY and "
+                "PRICELESS_CITIES_CITIES_SIGNING_KEY_PATH in .env, then restart the server."
             ),
         }
 
@@ -524,12 +524,12 @@ def _do_get(op: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
         "Accept": "application/json",
         "x-openapi-transid": str(uuid.uuid4()),
     }
-    if is_simulated("priceless"):
+    if is_simulated("priceless_cities"):
         headers["Authorization"] = "Simulated"
     else:
-        consumer_key = os.environ["PRICELESS_CONSUMER_KEY"]
-        key_path     = os.environ["PRICELESS_SIGNING_KEY_PATH"]
-        key_password = os.environ.get("PRICELESS_SIGNING_KEY_PASSWORD", "keystorepassword")
+        consumer_key = os.environ["PRICELESS_CITIES_CITIES_CONSUMER_KEY"]
+        key_path     = os.environ["PRICELESS_CITIES_CITIES_SIGNING_KEY_PATH"]
+        key_password = os.environ.get("PRICELESS_CITIES_CITIES_SIGNING_KEY_PASSWORD", "keystorepassword")
 
         if not os.path.isabs(key_path):
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))

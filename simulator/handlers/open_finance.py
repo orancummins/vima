@@ -3,17 +3,17 @@ import time
 from flask import request, jsonify
 from simulator.datastore import store
 
-API = "ofin"
+API = "open_finance"
 
 
 def register(bp):
     # ── Authentication ────────────────────────────────────────────────────────
-    @bp.route("/ofin/aggregation/v2/partners/authentication", methods=["POST"])
+    @bp.route("/open_finance/aggregation/v2/partners/authentication", methods=["POST"])
     def partner_auth():
         return jsonify({"token": "sim_token_abc123", "expiresAt": "2026-12-31T00:00:00Z"})
 
     # ── Customers ─────────────────────────────────────────────────────────────
-    @bp.route("/ofin/aggregation/v2/customers/testing", methods=["POST"])
+    @bp.route("/open_finance/aggregation/v2/customers/testing", methods=["POST"])
     def create_customer():
         store.lazy_load(API)
         body = request.get_json(force=True) or {}
@@ -29,13 +29,13 @@ def register(bp):
         store.put(API, "customers", cust_id, customer)
         return jsonify(customer), 201
 
-    @bp.route("/ofin/aggregation/v1/customers", methods=["GET"])
+    @bp.route("/open_finance/aggregation/v1/customers", methods=["GET"])
     def list_customers():
         store.lazy_load(API)
         customers = store.list(API, "customers")
         return jsonify({"found": len(customers), "customers": customers})
 
-    @bp.route("/ofin/aggregation/v1/customers/<customer_id>", methods=["GET"])
+    @bp.route("/open_finance/aggregation/v1/customers/<customer_id>", methods=["GET"])
     def get_customer(customer_id):
         store.lazy_load(API)
         rec = store.get(API, "customers", customer_id)
@@ -46,7 +46,7 @@ def register(bp):
         return jsonify(rec)
 
     # ── Accounts ──────────────────────────────────────────────────────────────
-    @bp.route("/ofin/aggregation/v1/customers/<customer_id>/accounts", methods=["GET"])
+    @bp.route("/open_finance/aggregation/v1/customers/<customer_id>/accounts", methods=["GET"])
     def list_customer_accounts(customer_id):
         store.lazy_load(API)
         all_accounts = store.list(API, "accounts")
@@ -55,7 +55,7 @@ def register(bp):
             accounts = all_accounts[:2]
         return jsonify({"found": len(accounts), "accounts": accounts})
 
-    @bp.route("/ofin/aggregation/v1/customers/<customer_id>/institutionLogins", methods=["GET"])
+    @bp.route("/open_finance/aggregation/v1/customers/<customer_id>/institutionLogins", methods=["GET"])
     def list_institution_logins(customer_id):
         store.lazy_load(API)
         accounts = store.list(API, "accounts")
@@ -63,7 +63,7 @@ def register(bp):
         return jsonify({"found": len(logins), "institutionLogins": logins})
 
     # ── Transactions ──────────────────────────────────────────────────────────
-    @bp.route("/ofin/aggregation/v3/customers/<customer_id>/transactions", methods=["GET"])
+    @bp.route("/open_finance/aggregation/v3/customers/<customer_id>/transactions", methods=["GET"])
     def list_transactions(customer_id):
         store.lazy_load(API)
         all_txns = store.list(API, "transactions")
@@ -86,7 +86,7 @@ def register(bp):
 
         return jsonify({"found": len(txns), "transactions": txns})
 
-    @bp.route("/ofin/aggregation/v4/customers/<customer_id>/accounts/<account_id>/transactions", methods=["GET"])
+    @bp.route("/open_finance/aggregation/v4/customers/<customer_id>/accounts/<account_id>/transactions", methods=["GET"])
     def list_account_transactions(customer_id, account_id):
         store.lazy_load(API)
         all_txns = store.list(API, "transactions")
@@ -96,7 +96,7 @@ def register(bp):
         return jsonify({"found": len(txns), "transactions": txns})
 
     # ── Institutions ──────────────────────────────────────────────────────────
-    @bp.route("/ofin/institution/v2/institutions/<institution_id>", methods=["GET"])
+    @bp.route("/open_finance/institution/v2/institutions/<institution_id>", methods=["GET"])
     def get_institution(institution_id):
         store.lazy_load(API)
         rec = store.get(API, "institutions", institution_id)
@@ -106,20 +106,20 @@ def register(bp):
                        institutions[0] if institutions else {"id": institution_id})
         return jsonify({"institution": rec})
 
-    @bp.route("/ofin/institution/v2/institutions", methods=["GET"])
+    @bp.route("/open_finance/institution/v2/institutions", methods=["GET"])
     def list_institutions():
         store.lazy_load(API)
         institutions = store.list(API, "institutions")
         return jsonify({"found": len(institutions), "institutions": institutions})
 
     # ── Reports ───────────────────────────────────────────────────────────────
-    @bp.route("/ofin/analytics/data/v1/customers/<customer_id>/reports", methods=["GET"])
+    @bp.route("/open_finance/analytics/data/v1/customers/<customer_id>/reports", methods=["GET"])
     def list_reports(customer_id):
         store.lazy_load(API)
         reports = store.list(API, "reports")
         return jsonify({"reports": reports, "found": len(reports)})
 
-    @bp.route("/ofin/analytics/data/v1/customers/<customer_id>/reports/<report_id>", methods=["GET"])
+    @bp.route("/open_finance/analytics/data/v1/customers/<customer_id>/reports/<report_id>", methods=["GET"])
     def get_report(customer_id, report_id):
         rec = store.get(API, "reports", report_id)
         return jsonify(rec or {"id": report_id, "status": "success"})

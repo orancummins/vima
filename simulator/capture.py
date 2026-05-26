@@ -18,17 +18,17 @@ CaptureSpec = tuple[str, Callable[[Any], list[dict]], str]
 
 CAPTURE_MAP: dict[tuple[str, str], list[CaptureSpec]] = {
     # ── BIN Lookup ─────────────────────────────────────────────────────────
-    ("binlookup", "lookup_bin"): [
+    ("bin_lookup", "lookup_bin"): [
         ("bins", lambda r: r.get("items", []) if isinstance(r, dict) else [], "binNum"),
     ],
 
     # ── BCES ───────────────────────────────────────────────────────────────
-    ("bces", "search_contents"): [
+    ("benefits_content_eligibility", "search_contents"): [
         ("benefit_contents", lambda r: r.get("bundles", []) if isinstance(r, dict) else [], "id"),
     ],
 
     # ── Clarity ────────────────────────────────────────────────────────────
-    ("clarity", "search_merchant"): [
+    ("consumer_clarity", "search_merchant"): [
         (
             "merchants",
             lambda r: [
@@ -41,10 +41,10 @@ CAPTURE_MAP: dict[tuple[str, str], list[CaptureSpec]] = {
     ],
 
     # ── Eligibility ────────────────────────────────────────────────────────
-    ("eligibility", "search_benefits"): [
+    ("benefits_eligibility", "search_benefits"): [
         ("benefits", lambda r: r.get("data", []) if isinstance(r, dict) else [], "benefitCode"),
     ],
-    ("eligibility", "search_products"): [
+    ("benefits_eligibility", "search_products"): [
         ("products", lambda r: r.get("data", []) if isinstance(r, dict) else [], "productCode"),
     ],
 
@@ -69,136 +69,136 @@ CAPTURE_MAP: dict[tuple[str, str], list[CaptureSpec]] = {
     ],
 
     # ── TxNotify ───────────────────────────────────────────────────────────
-    ("txnotify", "trigger_transaction"): [
+    ("transaction_notifications", "trigger_transaction"): [
         ("transactions", lambda r: [r] if isinstance(r, dict) and r.get("transUid") else [], "transUid"),
     ],
-    ("txnotify", "get_undelivered"): [
+    ("transaction_notifications", "get_undelivered"): [
         ("undelivered_notifications", lambda r: r.get("notifications", []) if isinstance(r, dict) else [], "id"),
     ],
 
     # ── Consent ────────────────────────────────────────────────────────────
-    ("consent", "create_consent"): [
+    ("consent_management", "create_consent"): [
         ("consents", lambda r: [r] if isinstance(r, dict) and r.get("cardReference") else [], "cardReference"),
     ],
-    ("consent", "get_consents"): [
+    ("consent_management", "get_consents"): [
         ("consents", lambda r: [r] if isinstance(r, dict) and r.get("cardReference") else [], "cardReference"),
     ],
 
     # ── EasySavings ────────────────────────────────────────────────────────
-    ("easysavings", "list_countries"): [
+    ("easy_savings", "list_countries"): [
         ("countries", lambda r: r if isinstance(r, list) else [], "countryCode"),
     ],
-    ("easysavings", "list_offers"): [
+    ("easy_savings", "list_offers"): [
         ("offers", lambda r: r.get("offers", []) if isinstance(r, dict) else [], "id"),
     ],
-    ("easysavings", "get_offer"): [
+    ("easy_savings", "get_offer"): [
         ("offers", lambda r: [r] if isinstance(r, dict) and r.get("id") else [], "id"),
     ],
-    ("easysavings", "redeem_offer"): [
+    ("easy_savings", "redeem_offer"): [
         ("redemptions", lambda r: [r] if isinstance(r, dict) and r.get("orderId") else [], "orderId"),
     ],
 
     # ── OFMC ───────────────────────────────────────────────────────────────
-    ("ofmc", "search_categories"): [
+    ("offers_merchant_content", "search_categories"): [
         ("categories", lambda r: r.get("categories", []) if isinstance(r, dict) else [], "id"),
     ],
-    ("ofmc", "list_sources"): [
+    ("offers_merchant_content", "list_sources"): [
         ("sources", lambda r: r.get("sources", []) if isinstance(r, dict) else [], "uuid"),
     ],
-    ("ofmc", "get_source"): [
+    ("offers_merchant_content", "get_source"): [
         ("sources", lambda r: [r] if isinstance(r, dict) and r.get("uuid") else [], "uuid"),
     ],
-    ("ofmc", "create_merchant"): [
+    ("offers_merchant_content", "create_merchant"): [
         ("merchants", lambda r: [r] if isinstance(r, dict) and r.get("uuid") else [], "uuid"),
     ],
-    ("ofmc", "get_merchant"): [
+    ("offers_merchant_content", "get_merchant"): [
         ("merchants", lambda r: [r] if isinstance(r, dict) and r.get("uuid") else [], "uuid"),
     ],
-    ("ofmc", "list_offers"): [
+    ("offers_merchant_content", "list_offers"): [
         ("offers", lambda r: r.get("offers", []) if isinstance(r, dict) else [], "id"),
     ],
-    ("ofmc", "get_offer"): [
+    ("offers_merchant_content", "get_offer"): [
         ("offers", lambda r: [r] if isinstance(r, dict) and r.get("id") else [], "id"),
     ],
 
     # ── OFPUB ──────────────────────────────────────────────────────────────
-    ("ofpub", "list_offers"): [
+    ("offers_for_publishers", "list_offers"): [
         ("offers", lambda r: r.get("offers", []) if isinstance(r, dict) else [], "id"),
     ],
-    ("ofpub", "get_offer"): [
+    ("offers_for_publishers", "get_offer"): [
         ("offers", lambda r: [r] if isinstance(r, dict) and r.get("id") else [], "id"),
     ],
 
     # ── Priceless ──────────────────────────────────────────────────────────
-    ("priceless", "platform_products"): [
+    ("priceless_cities", "platform_products"): [
         (
             "platform_products",
             lambda r: r.get("data", []) if isinstance(r, dict) and isinstance(r.get("data"), list) else [],
             "id",
         ),
     ],
-    ("priceless", "platform_categories"): [
+    ("priceless_cities", "platform_categories"): [
         (
             "platform_categories",
             lambda r: r.get("data", []) if isinstance(r, dict) and isinstance(r.get("data"), list) else [],
             "id",
         ),
     ],
-    ("priceless", "platform_programs"): [
+    ("priceless_cities", "platform_programs"): [
         (
             "platform_programs",
             lambda r: r.get("data", []) if isinstance(r, dict) and isinstance(r.get("data"), list) else [],
             "id",
         ),
     ],
-    ("priceless", "specials_offers"): [
+    ("priceless_cities", "specials_offers"): [
         ("specials_offers", lambda r: r if isinstance(r, list) else [], "id"),
     ],
-    ("priceless", "specials_benefits"): [
+    ("priceless_cities", "specials_benefits"): [
         ("specials_benefits", lambda r: r if isinstance(r, list) else [], "id"),
     ],
-    ("priceless", "specials_programs"): [
+    ("priceless_cities", "specials_programs"): [
         ("specials_programs", lambda r: r if isinstance(r, list) else [], "id"),
     ],
-    ("priceless", "specials_merchants"): [
+    ("priceless_cities", "specials_merchants"): [
         ("specials_merchants", lambda r: r if isinstance(r, list) else [], "id"),
     ],
-    ("priceless", "specials_categories"): [
+    ("priceless_cities", "specials_categories"): [
         ("specials_categories", lambda r: r if isinstance(r, list) else [], "id"),
     ],
-    ("priceless", "specials_countries"): [
+    ("priceless_cities", "specials_countries"): [
         ("specials_countries", lambda r: r if isinstance(r, list) else [], "countryCode"),
     ],
-    ("priceless", "specials_languages"): [
+    ("priceless_cities", "specials_languages"): [
         ("specials_languages", lambda r: r if isinstance(r, list) else [], "id"),
     ],
-    ("priceless", "specials_mastercard_products"): [
+    ("priceless_cities", "specials_mastercard_products"): [
         ("specials_mastercard_products", lambda r: r if isinstance(r, list) else [], "id"),
     ],
 
     # ── Open Finance (OFIN) ────────────────────────────────────────────────
-    ("ofin", "list_customers"): [
+    ("open_finance", "list_customers"): [
         ("customers", lambda r: r.get("customers", []) if isinstance(r, dict) else [], "id"),
     ],
-    ("ofin", "get_customer"): [
+    ("open_finance", "get_customer"): [
         ("customers", lambda r: [r] if isinstance(r, dict) and r.get("id") else [], "id"),
     ],
-    ("ofin", "refresh_accounts"): [
+    ("open_finance", "refresh_accounts"): [
         ("accounts", lambda r: r.get("accounts", []) if isinstance(r, dict) else [], "id"),
     ],
-    ("ofin", "get_accounts"): [
+    ("open_finance", "get_accounts"): [
         ("accounts", lambda r: r.get("accounts", []) if isinstance(r, dict) else [], "id"),
     ],
-    ("ofin", "get_transactions"): [
+    ("open_finance", "get_transactions"): [
         ("transactions", lambda r: r.get("transactions", []) if isinstance(r, dict) else [], "id"),
     ],
-    ("ofin", "get_account_transactions"): [
+    ("open_finance", "get_account_transactions"): [
         ("transactions", lambda r: r.get("transactions", []) if isinstance(r, dict) else [], "id"),
     ],
-    ("ofin", "list_institutions"): [
+    ("open_finance", "list_institutions"): [
         ("institutions", lambda r: r.get("institutions", []) if isinstance(r, dict) else [], "id"),
     ],
-    ("ofin", "generate_transactions_report"): [
+    ("open_finance", "generate_transactions_report"): [
         ("reports", lambda r: [r] if isinstance(r, dict) and r.get("id") else [], "id"),
     ],
 }

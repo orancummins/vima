@@ -80,7 +80,7 @@ _PROD_BASE_URL    = "https://api.ethocaweb.com/ethoca"
 _ENDPOINT         = "/consumer-clarity/searches"
 
 MANIFEST: Dict[str, Any] = {
-    "id": "clarity",
+    "id": "consumer_clarity",
     "name": "Consumer Clarity",
     "description": (
         "Ethoca Consumer Clarity — enrich raw card-statement merchant names with "
@@ -117,9 +117,9 @@ MANIFEST: Dict[str, Any] = {
     "categories": ["Merchant Search"],
     "state_schema": [],
     "configured": bool(
-        os.environ.get("CONSUMERCLARITY_CONSUMER_KEY")
-        and os.environ.get("CONSUMERCLARITY_CONSUMER_KEY") != "your-consumer-key-here"
-        and os.environ.get("CONSUMERCLARITY_SIGNING_KEY_PATH")
+        os.environ.get("CONSUMER_CLARITY_CONSUMER_KEY")
+        and os.environ.get("CONSUMER_CLARITY_CONSUMER_KEY") != "your-consumer-key-here"
+        and os.environ.get("CONSUMER_CLARITY_SIGNING_KEY_PATH")
     ),
     "operations": [
         {
@@ -151,20 +151,20 @@ MANIFEST: Dict[str, Any] = {
 
 def _base_url() -> str:
     from simulator.switcher import sim_base_url
-    env = os.environ.get("CONSUMERCLARITY_ENV", "sandbox").lower()
+    env = os.environ.get("CONSUMER_CLARITY_ENV", "sandbox").lower()
     real = _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
-    return sim_base_url("clarity", real)
+    return sim_base_url("consumer_clarity", real)
 
 
 def _configured() -> bool:
-    key = os.environ.get("CONSUMERCLARITY_CONSUMER_KEY", "")
-    path = os.environ.get("CONSUMERCLARITY_SIGNING_KEY_PATH", "")
+    key = os.environ.get("CONSUMER_CLARITY_CONSUMER_KEY", "")
+    path = os.environ.get("CONSUMER_CLARITY_SIGNING_KEY_PATH", "")
     return bool(key and key != "your-consumer-key-here" and path)
 
 
 def is_configured() -> bool:
     from simulator.switcher import is_simulated
-    return _configured() or is_simulated("clarity")
+    return _configured() or is_simulated("consumer_clarity")
 
 
 def get_state() -> Dict[str, Any]:
@@ -179,12 +179,12 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
 def _search_merchant(params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("clarity"):
+    if not _configured() and not is_simulated("consumer_clarity"):
         return {
             "success": False,
             "error": (
-                "Consumer Clarity is not configured. Set CLARITY_CONSUMER_KEY and "
-                "CLARITY_SIGNING_KEY_PATH in .env, then restart the server."
+                "Consumer Clarity is not configured. Set CONSUMER_CLARITY_CONSUMER_KEY and "
+                "CONSUMER_CLARITY_SIGNING_KEY_PATH in .env, then restart the server."
             ),
         }
 
@@ -209,15 +209,15 @@ def _search_merchant(params: Dict[str, Any]) -> Dict[str, Any]:
         "Accept": "application/json",
     }
 
-    if is_simulated("clarity"):
+    if is_simulated("consumer_clarity"):
         headers["Authorization"] = "Simulated"
     else:
         import oauth1.authenticationutils as authutils
         from oauth1.oauth import OAuth
 
-        consumer_key  = os.environ["CONSUMERCLARITY_CONSUMER_KEY"]
-        key_path      = os.environ["CONSUMERCLARITY_SIGNING_KEY_PATH"]
-        key_password  = os.environ.get("CONSUMERCLARITY_SIGNING_KEY_PASSWORD", "keystorepassword")
+        consumer_key  = os.environ["CONSUMER_CLARITY_CONSUMER_KEY"]
+        key_path      = os.environ["CONSUMER_CLARITY_SIGNING_KEY_PATH"]
+        key_password  = os.environ.get("CONSUMER_CLARITY_SIGNING_KEY_PASSWORD", "keystorepassword")
 
         if not os.path.isabs(key_path):
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))

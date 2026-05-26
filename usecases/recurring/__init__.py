@@ -19,13 +19,13 @@ MANIFEST: Dict[str, Any] = {
         "recurrence frequency, average amount, and the next expected date — giving consumers "
         "full visibility and empowering them to take control of their financial commitments."
     ),
-    "apis": ["ofin"],
+    "apis": ["open_finance"],
     "render": "recurring",
 }
 
 
 def _client():
-    from apis.ofin import api as ofin_api
+    from apis.open_finance import api as ofin_api
     return ofin_api._get_client()
 
 

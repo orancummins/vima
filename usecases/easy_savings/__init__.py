@@ -9,7 +9,7 @@ from typing import Any, Dict, List
 
 
 MANIFEST: Dict[str, Any] = {
-    "id": "easysavings",
+    "id": "easy_savings",
     "name": "Easy Savings",
     "description": (
         "Mastercard Easy Savings Specials lets issuers embed localised SME "
@@ -18,8 +18,8 @@ MANIFEST: Dict[str, Any] = {
         "seconds. Browse the global catalogue by BIN and country, then redeem "
         "an offer to reveal its voucher code."
     ),
-    "apis": ["easysavings"],
-    "render": "easysavings",
+    "apis": ["easy_savings"],
+    "render": "easy_savings",
     "defaults": {
         "bin": "52345678",
         "country": "IND",
@@ -29,7 +29,7 @@ MANIFEST: Dict[str, Any] = {
 
 
 def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
-    from apis.easysavings import api as es_api
+    from apis.easy_savings import api as es_api
 
     if action == "browse":
         result = es_api.execute("list_offers", params)

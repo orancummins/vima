@@ -9,7 +9,7 @@ from typing import Any, Dict, List
 
 # Pull the sandbox preset list from the underlying API module so the UI
 # always offers the same choices the backend can actually serve.
-from apis.clarity.api import _PRESETS as _CLARITY_PRESETS  # type: ignore
+from apis.consumer_clarity.api import _PRESETS as _CLARITY_PRESETS  # type: ignore
 
 
 _PRESET_OPTIONS: List[Dict[str, str]] = [
@@ -19,7 +19,7 @@ _PRESET_OPTIONS: List[Dict[str, str]] = [
 
 
 MANIFEST: Dict[str, Any] = {
-    "id": "clarity",
+    "id": "consumer_clarity",
     "name": "Consumer Clarity",
     "description": (
         "Cryptic card statements drive cardholder confusion, unnecessary support calls, "
@@ -29,15 +29,15 @@ MANIFEST: Dict[str, Any] = {
         "links to digital receipts. The result: fewer disputes, happier customers, and "
         "a transaction history that actually makes sense."
     ),
-    "apis": ["clarity"],
-    "render": "clarity",
+    "apis": ["consumer_clarity"],
+    "render": "consumer_clarity",
     "presets": _PRESET_OPTIONS,
 }
 
 
 def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
     if action == "lookup":
-        from apis.clarity import api as clarity_api
+        from apis.consumer_clarity import api as clarity_api
 
         result = clarity_api.execute("search_merchant", params)
         if not result.get("success"):

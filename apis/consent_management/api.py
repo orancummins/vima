@@ -34,7 +34,7 @@ STATE: Dict[str, Any] = {
 }
 
 MANIFEST: Dict[str, Any] = {
-    "id": "consent",
+    "id": "consent_management",
     "name": "Consent Management",
     "description": (
         "Mastercard Consent Management — securely capture, manage, and verify "
@@ -75,9 +75,9 @@ MANIFEST: Dict[str, Any] = {
         {"key": "consent_id", "label": "Consent ID"},
     ],
     "configured": bool(
-        os.environ.get("CONSENT_CONSUMER_KEY")
-        and os.environ.get("CONSENT_CONSUMER_KEY") != "your-consumer-key-here"
-        and os.environ.get("CONSENT_SIGNING_KEY_PATH")
+        os.environ.get("CONSENT_MANAGEMENT_MANAGEMENT_CONSUMER_KEY")
+        and os.environ.get("CONSENT_MANAGEMENT_MANAGEMENT_CONSUMER_KEY") != "your-consumer-key-here"
+        and os.environ.get("CONSENT_MANAGEMENT_MANAGEMENT_SIGNING_KEY_PATH")
     ),
     "operations": [
         {
@@ -329,20 +329,20 @@ MANIFEST: Dict[str, Any] = {
 
 def _base_url() -> str:
     from simulator.switcher import sim_base_url
-    env = os.environ.get("CONSENT_ENV", "sandbox").lower()
+    env = os.environ.get("CONSENT_MANAGEMENT_MANAGEMENT_ENV", "sandbox").lower()
     real = _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
-    return sim_base_url("consent", real)
+    return sim_base_url("consent_management", real)
 
 
 def _configured() -> bool:
-    key  = os.environ.get("CONSENT_CONSUMER_KEY", "")
-    path = os.environ.get("CONSENT_SIGNING_KEY_PATH", "")
+    key  = os.environ.get("CONSENT_MANAGEMENT_MANAGEMENT_CONSUMER_KEY", "")
+    path = os.environ.get("CONSENT_MANAGEMENT_MANAGEMENT_SIGNING_KEY_PATH", "")
     return bool(key and key != "your-consumer-key-here" and path)
 
 
 def is_configured() -> bool:
     from simulator.switcher import is_simulated
-    return _configured() or is_simulated("consent")
+    return _configured() or is_simulated("consent_management")
 
 
 def get_state() -> Dict[str, Any]:
@@ -354,9 +354,9 @@ def _get_auth_header(url: str, method: str, body_str: str | None = None) -> str:
     import oauth1.authenticationutils as authutils
     from oauth1.oauth import OAuth
 
-    consumer_key = os.environ["CONSENT_CONSUMER_KEY"]
-    key_path     = os.environ["CONSENT_SIGNING_KEY_PATH"]
-    key_password = os.environ.get("CONSENT_SIGNING_KEY_PASSWORD", "keystorepassword")
+    consumer_key = os.environ["CONSENT_MANAGEMENT_MANAGEMENT_CONSUMER_KEY"]
+    key_path     = os.environ["CONSENT_MANAGEMENT_MANAGEMENT_SIGNING_KEY_PATH"]
+    key_password = os.environ.get("CONSENT_MANAGEMENT_MANAGEMENT_SIGNING_KEY_PASSWORD", "keystorepassword")
 
     if not os.path.isabs(key_path):
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -371,7 +371,7 @@ def _not_configured_error() -> Dict[str, Any]:
         "success": False,
         "error": (
             "Consent Management is not configured. "
-            "Set CONSENT_CONSUMER_KEY and CONSENT_SIGNING_KEY_PATH in .env, "
+            "Set CONSENT_MANAGEMENT_MANAGEMENT_CONSUMER_KEY and CONSENT_MANAGEMENT_MANAGEMENT_SIGNING_KEY_PATH in .env, "
             "then restart the server."
         ),
     }
@@ -432,7 +432,7 @@ def _http(method: str, url: str, body: Dict | None = None, _body_str: str | None
         headers["Content-Type"] = "application/json"
 
     from simulator.switcher import is_simulated
-    if is_simulated("consent"):
+    if is_simulated("consent_management"):
         headers["Authorization"] = "Simulated"
     else:
         try:
@@ -462,7 +462,7 @@ def _http(method: str, url: str, body: Dict | None = None, _body_str: str | None
 
 def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("consent"):
+    if not _configured() and not is_simulated("consent_management"):
         return _not_configured_error()
 
     pan  = (params.get("pan") or "").strip()
@@ -496,14 +496,14 @@ def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
 
     url = f"{_base_url()}/consents"
     cert_path = _resolve_cert_path()
-    if not cert_path and not is_simulated("consent"):
+    if not cert_path and not is_simulated("consent_management"):
         return {
             "success": False,
             "error": (
                 "Create Consent requires JWE payload encryption. "
                 "Download the encryption certificate (PEM) from your Mastercard Developer "
                 "project page (Client Encryption Keys section) and set "
-                "CONSENT_ENCRYPTION_KEY_PATH=/path/to/cert.pem in .env, then restart."
+                "CONSENT_MANAGEMENT_MANAGEMENT_ENCRYPTION_KEY_PATH=/path/to/cert.pem in .env, then restart."
             ),
         }
     try:
@@ -549,7 +549,7 @@ def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
 
 def _get_consents(params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("consent"):
+    if not _configured() and not is_simulated("consent_management"):
         return _not_configured_error()
 
     card_ref = (params.get("card_ref") or "").strip()
@@ -568,7 +568,7 @@ def _get_consents(params: Dict[str, Any]) -> Dict[str, Any]:
 
 def _resolve_cert_path() -> str | None:
     """Return the absolute cert path if configured and exists, else None."""
-    cert_path = os.environ.get("CONSENT_ENCRYPTION_KEY_PATH", "").strip()
+    cert_path = os.environ.get("CONSENT_MANAGEMENT_MANAGEMENT_ENCRYPTION_KEY_PATH", "").strip()
     if not cert_path or cert_path == "your-encryption-cert.pem":
         return None
     if not os.path.isabs(cert_path):
@@ -580,7 +580,7 @@ def _resolve_cert_path() -> str | None:
 def _http_encrypted(method: str, url: str, body: Dict) -> Dict[str, Any]:
     """POST/PUT with JWE encryption if cert is configured, else plain JSON."""
     from simulator.switcher import is_simulated
-    if is_simulated("consent"):
+    if is_simulated("consent_management"):
         return _http(method, url, body)
     cert_path = _resolve_cert_path()
     if cert_path:
@@ -594,7 +594,7 @@ def _http_encrypted(method: str, url: str, body: Dict) -> Dict[str, Any]:
 
 def _start_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("consent"):
+    if not _configured() and not is_simulated("consent_management"):
         return _not_configured_error()
 
     card_ref  = (params.get("card_ref") or "").strip()
@@ -644,7 +644,7 @@ def _start_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
 
 def _verify_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("consent"):
+    if not _configured() and not is_simulated("consent_management"):
         return _not_configured_error()
 
     card_ref  = (params.get("card_ref") or "").strip()
@@ -665,7 +665,7 @@ def _verify_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
 
 def _delete_consents(params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("consent"):
+    if not _configured() and not is_simulated("consent_management"):
         return _not_configured_error()
 
     card_ref = (params.get("card_ref") or "").strip()
@@ -678,7 +678,7 @@ def _delete_consents(params: Dict[str, Any]) -> Dict[str, Any]:
 
 def _delete_single_consent(params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("consent"):
+    if not _configured() and not is_simulated("consent_management"):
         return _not_configured_error()
 
     card_ref   = (params.get("card_ref") or "").strip()

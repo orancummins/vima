@@ -33,13 +33,13 @@ MANIFEST: Dict[str, Any] = {
         "the above into one personalised graphic — so a single glance "
         "tells you who this customer is, financially."
     ),
-    "apis": ["ofin"],
+    "apis": ["open_finance"],
     "render": "financeincolour",
 }
 
 
 def _client():
-    from apis.ofin import api as ofin_api
+    from apis.open_finance import api as ofin_api
     return ofin_api._get_client()
 
 

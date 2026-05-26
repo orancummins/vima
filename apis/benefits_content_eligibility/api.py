@@ -29,19 +29,19 @@ _SANDBOX_BASE = "https://sandbox.api.mastercard.com/loyalty/eligibility"
 
 def _base() -> str:
     from simulator.switcher import sim_base_url
-    real = _PROD_BASE if os.environ.get("BCES_ENV", "sandbox").lower() == "production" else _SANDBOX_BASE
-    return sim_base_url("bces", real)
+    real = _PROD_BASE if os.environ.get("BENEFITS_CONTENT_BENEFITS_BENEFITS_ELIGIBILITY_ENV", "sandbox").lower() == "production" else _SANDBOX_BASE
+    return sim_base_url("benefits_content_eligibility", real)
 
 
 def _configured() -> bool:
-    key  = os.environ.get("BCES_CONSUMER_KEY", "")
-    path = os.environ.get("BCES_SIGNING_KEY_PATH", "")
+    key  = os.environ.get("BENEFITS_CONTENT_BENEFITS_BENEFITS_ELIGIBILITY_CONSUMER_KEY", "")
+    path = os.environ.get("BENEFITS_CONTENT_BENEFITS_BENEFITS_ELIGIBILITY_SIGNING_KEY_PATH", "")
     return bool(key and key != "your-consumer-key-here" and path)
 
 
 def is_configured() -> bool:
     from simulator.switcher import is_simulated
-    return _configured() or is_simulated("bces")
+    return _configured() or is_simulated("benefits_content_eligibility")
 
 
 def get_state() -> Dict[str, Any]:
@@ -86,7 +86,7 @@ _HOW_TO = (
     "wrapped as <code>{\"encryptedValue\": \"&lt;JWE&gt;\"}</code>. You must "
     "download the BCES <em>Client Encryption</em> <code>.pem</code> from your "
     "Mastercard Developers project and set "
-    "<code>BCES_ENCRYPTION_CERT_PATH</code> in <code>.env</code>.</p>"
+    "<code>BENEFITS_CONTENT_BENEFITS_BENEFITS_ELIGIBILITY_ENCRYPTION_KEY_PATH</code> in <code>.env</code>.</p>"
     "<h3>Sandbox test data</h3>"
     "<ul>"
     "<li><code>cardNumber</code>: <code>5291070000000000</code> (mandatory, integer)</li>"
@@ -120,7 +120,7 @@ _CONTENT_PARAMS: List[Dict[str, Any]] = [
 
 
 MANIFEST: Dict[str, Any] = {
-    "id": "bces",
+    "id": "benefits_content_eligibility",
     "name": "Benefits Content Eligibility",
     "description": (
         "Mastercard BCES — returns rich renderable content (titles, "
@@ -175,12 +175,12 @@ def _signed_request(
     body: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("bces"):
+    if not _configured() and not is_simulated("benefits_content_eligibility"):
         return {
             "success": False,
             "error": (
-                "BCES is not configured. Set BCES_CONSUMER_KEY and "
-                "BCES_SIGNING_KEY_PATH in .env, then restart the server."
+                "BCES is not configured. Set BENEFITS_CONTENT_BENEFITS_BENEFITS_ELIGIBILITY_CONSUMER_KEY and "
+                "BENEFITS_CONTENT_BENEFITS_BENEFITS_ELIGIBILITY_SIGNING_KEY_PATH in .env, then restart the server."
             ),
         }
 
@@ -188,7 +188,7 @@ def _signed_request(
 
     url = f"{_base()}{path}"
 
-    if is_simulated("bces"):
+    if is_simulated("benefits_content_eligibility"):
         body_str = json.dumps(body) if body is not None else None
         headers: Dict[str, str] = {
             "Accept": "application/json",
@@ -198,10 +198,10 @@ def _signed_request(
             headers["Content-Type"] = "application/json"
         headers["Authorization"] = "Simulated"
     else:
-        consumer_key = os.environ["BCES_CONSUMER_KEY"]
-        key_path     = os.environ["BCES_SIGNING_KEY_PATH"]
-        key_password = os.environ.get("BCES_SIGNING_KEY_PASSWORD", "keystorepassword")
-        enc_cert     = os.environ.get("BCES_ENCRYPTION_CERT_PATH", "").strip()
+        consumer_key = os.environ["BENEFITS_CONTENT_BENEFITS_BENEFITS_ELIGIBILITY_CONSUMER_KEY"]
+        key_path     = os.environ["BENEFITS_CONTENT_BENEFITS_BENEFITS_ELIGIBILITY_SIGNING_KEY_PATH"]
+        key_password = os.environ.get("BENEFITS_CONTENT_BENEFITS_BENEFITS_ELIGIBILITY_SIGNING_KEY_PASSWORD", "keystorepassword")
+        enc_cert     = os.environ.get("BENEFITS_CONTENT_BENEFITS_BENEFITS_ELIGIBILITY_ENCRYPTION_KEY_PATH", "").strip()
 
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         if not os.path.isabs(key_path):
@@ -219,7 +219,7 @@ def _signed_request(
                     "error": (
                         "BCES requires JWE payload encryption. Download the "
                         "'Client Encryption' .pem from your Mastercard Developers "
-                        "project (BCES service) and set BCES_ENCRYPTION_CERT_PATH "
+                        "project (BCES service) and set BENEFITS_CONTENT_BENEFITS_BENEFITS_ELIGIBILITY_ENCRYPTION_KEY_PATH "
                         "in .env, then restart."
                     ),
                     "request": {"method": method, "url": url, "body": body},

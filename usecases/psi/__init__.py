@@ -21,20 +21,20 @@ MANIFEST: Dict[str, Any] = {
         "can move confidently, approve more good payments, and dramatically cut costly return rates "
         "— all from a single, low-friction API call before a transaction is ever submitted."
     ),
-    "apis": ["ofin"],
+    "apis": ["open_finance"],
     "render": "psi",
 }
 
 
 def _client():
-    from apis.ofin import api as ofin_api
+    from apis.open_finance import api as ofin_api
     return ofin_api._get_client()
 
 
 def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
     client = _client()
     if client is None:
-        return {"error": "Open Finance API is not configured. Please add PARTNER_ID, PARTNER_SECRET and APP_KEY to your config."}
+        return {"error": "Open Finance API is not configured. Please add OPEN_FINANCE_PARTNER_ID, OPEN_FINANCE_PARTNER_SECRET and OPEN_FINANCE_APP_KEY to your config."}
 
     # ------------------------------------------------------------------
     # get_accounts — returns checking/savings accounts for a customer

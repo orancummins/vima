@@ -990,11 +990,11 @@
       renderRecurring();
     } else if (uc.render === "psi") {
       renderPsi();
-    } else if (uc.render === "binlookup") {
+    } else if (uc.render === "bin_lookup") {
       renderBinLookup();
-    } else if (uc.render === "clarity") {
+    } else if (uc.render === "consumer_clarity") {
       renderClarity();
-    } else if (uc.render === "easysavings") {
+    } else if (uc.render === "easy_savings") {
       renderEasySavings();
     } else if (uc.render === "places") {
       renderPlaces();
@@ -1367,7 +1367,7 @@
   function renderBinLookup() {
     const body = $("uc-body");
     if (!body) return;
-    body.innerHTML = `<iframe id="binlookup-webview-frame" class="sonic-webview-frame" src="/binlookup/index.html" title="BIN Lookup"></iframe>`;
+    body.innerHTML = `<iframe id="binlookup-webview-frame" class="sonic-webview-frame" src="/bin_lookup/index.html" title="BIN Lookup"></iframe>`;
     _attachWebviewRefresh('binlookup-webview-frame');
   }
 
@@ -2202,7 +2202,7 @@
   };
 
   function _clarityManifest() {
-    return USE_CASES.find(u => u.id === "clarity");
+    return USE_CASES.find(u => u.id === "consumer_clarity");
   }
   function _clarityPresets() {
     const m = _clarityManifest();
@@ -2215,7 +2215,7 @@
   function renderClarity() {
     const body = $("uc-body");
     if (!body) return;
-    body.innerHTML = `<iframe id="clarity-webview-frame" class="sonic-webview-frame" src="/clarity/index.html" title="Consumer Clarity"></iframe>`;
+    body.innerHTML = `<iframe id="clarity-webview-frame" class="sonic-webview-frame" src="/consumer_clarity/index.html" title="Consumer Clarity"></iframe>`;
     _attachWebviewRefresh('clarity-webview-frame');
   }
 
@@ -2501,12 +2501,12 @@
     error: null,
   };
 
-  function _esManifest() { return USE_CASES.find(u => u.id === "easysavings"); }
+  function _esManifest() { return USE_CASES.find(u => u.id === "easy_savings"); }
 
   function renderEasySavings() {
     const body = $("uc-body");
     if (!body) return;
-    body.innerHTML = `<iframe id="easysavings-webview-frame" class="sonic-webview-frame" src="/easysavings/index.html" title="Easy Savings"></iframe>`;
+    body.innerHTML = `<iframe id="easysavings-webview-frame" class="sonic-webview-frame" src="/easy_savings/index.html" title="Easy Savings"></iframe>`;
     _attachWebviewRefresh('easysavings-webview-frame');
   }
 
@@ -4548,18 +4548,18 @@
   'use strict';
 
   const APIS = [
-    { id: 'binlookup',   name: 'BIN Lookup',                   note: '' },
+    { id: 'bin_lookup',   name: 'BIN Lookup',                   note: '' },
     { id: 'places',      name: 'Places',                        note: '' },
-    { id: 'easysavings', name: 'Easy Savings',                  note: '' },
-    { id: 'clarity',     name: 'Consumer Clarity',              note: '' },
-    { id: 'priceless',   name: 'Priceless Specials',            note: 'Requires API Owner approval' },
-    { id: 'txnotify',    name: 'Transaction Notifications',     note: '' },
-    { id: 'consent',     name: 'Consent Management',            note: '' },
-    { id: 'ofpub',       name: 'Offers (Publisher)',            note: '' },
-    { id: 'ofmc',        name: 'Offers (Merchant)',             note: '' },
-    { id: 'eligibility', name: 'Benefits Eligibility',          note: '' },
-    { id: 'bces',        name: 'Benefits Content (BCES)',       note: '' },
-    { id: 'ofin',        name: 'Open Finance (Finicity)',       note: '' },
+    { id: 'easy_savings', name: 'Easy Savings',                  note: '' },
+    { id: 'consumer_clarity',     name: 'Consumer Clarity',              note: '' },
+    { id: 'priceless_cities',   name: 'Priceless Specials',            note: 'Requires API Owner approval' },
+    { id: 'transaction_notifications',    name: 'Transaction Notifications',     note: '' },
+    { id: 'consent_management',     name: 'Consent Management',            note: '' },
+    { id: 'offers_for_publishers',       name: 'Offers (Publisher)',            note: '' },
+    { id: 'offers_merchant_content',        name: 'Offers (Merchant)',             note: '' },
+    { id: 'benefits_eligibility', name: 'Benefits Eligibility',          note: '' },
+    { id: 'benefits_content_eligibility',        name: 'Benefits Content (BCES)',       note: '' },
+    { id: 'open_finance',        name: 'Open Finance (Finicity)',       note: '' },
   ];
 
   const modal        = document.getElementById('prov-modal');

@@ -1,34 +1,37 @@
-"""Simulator Flask Blueprint — mounts all API handlers at /api-sim/."""
-from flask import Blueprint, request, jsonify
+"""Simulator Flask Blueprint — discovers handlers dynamically from ``apis.catalog``.
 
-from simulator.datastore import store
+Each entry in the API catalog must have a matching ``simulator/handlers/<id>.py``
+module exposing a ``register(bp)`` function that mounts the simulator routes.
+"""
+from __future__ import annotations
+
+import importlib
+
+from flask import Blueprint, jsonify, request
+
+from apis.catalog import iter_ordered
 from simulator import switcher
+from simulator.datastore import store
 
-import simulator.handlers.binlookup as binlookup_h
-import simulator.handlers.clarity as clarity_h
-import simulator.handlers.priceless as priceless_h
-import simulator.handlers.easysavings as easysavings_h
-import simulator.handlers.places as places_h
-import simulator.handlers.eligibility as eligibility_h
-import simulator.handlers.bces as bces_h
-import simulator.handlers.ofpub as ofpub_h
-import simulator.handlers.ofmc as ofmc_h
-import simulator.handlers.consent as consent_h
-import simulator.handlers.txnotify as txnotify_h
-import simulator.handlers.ofin as ofin_h
 
-_ALL_APIS = [
-    "binlookup", "clarity", "priceless", "easysavings", "places",
-    "eligibility", "bces", "ofpub", "ofmc", "consent", "txnotify", "ofin",
-]
+# Ordered list of api ids handled by the simulator (sourced from the catalog).
+_ALL_APIS: list[str] = [entry.id for entry in iter_ordered()]
+
 
 sim_bp = Blueprint("simulator", __name__, url_prefix="/api-sim")
 
-for _mod in [
-    binlookup_h, clarity_h, priceless_h, easysavings_h, places_h,
-    eligibility_h, bces_h, ofpub_h, ofmc_h, consent_h, txnotify_h, ofin_h,
-]:
-    _mod.register(sim_bp)
+
+# Discover and register each handler module.
+for _api_id in _ALL_APIS:
+    try:
+        _mod = importlib.import_module(f"simulator.handlers.{_api_id}")
+    except ModuleNotFoundError as _e:
+        print(f"[simulator] no handler module for {_api_id}: {_e}")
+        continue
+    if hasattr(_mod, "register"):
+        _mod.register(sim_bp)
+    else:
+        print(f"[simulator] handler {_api_id} has no register() function")
 
 
 # ── Admin routes ──────────────────────────────────────────────────────────────

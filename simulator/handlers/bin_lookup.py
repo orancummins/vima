@@ -1,11 +1,11 @@
 from flask import request, jsonify
 from simulator.datastore import store
 
-API = "binlookup"
+API = "bin_lookup"
 
 
 def register(bp):
-    @bp.route("/binlookup/bin-ranges", methods=["POST"])
+    @bp.route("/bin_lookup/bin-ranges", methods=["POST"])
     def bin_ranges():
         store.lazy_load(API)
         body = request.get_json(force=True) or []

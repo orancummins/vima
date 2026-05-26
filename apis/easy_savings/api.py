@@ -27,7 +27,7 @@ _PROD_BASE_URL    = "https://sme.api.mastercard.com/easysavings/specials"
 _SAMPLE_OFFER_ID = "QDWC0NRZmyabde"
 
 MANIFEST: Dict[str, Any] = {
-    "id": "easysavings",
+    "id": "easy_savings",
     "name": "Easy Savings",
     "description": (
         "Mastercard Easy Savings Specials — a global, no-cost merchant offers "
@@ -63,9 +63,9 @@ MANIFEST: Dict[str, Any] = {
     "categories": ["Lookups", "Offers", "Redemptions"],
     "state_schema": [],
     "configured": bool(
-        os.environ.get("EASYSAVINGS_CONSUMER_KEY")
-        and os.environ.get("EASYSAVINGS_CONSUMER_KEY") != "your-consumer-key-here"
-        and os.environ.get("EASYSAVINGS_SIGNING_KEY_PATH")
+        os.environ.get("EASY_SAVINGS_CONSUMER_KEY")
+        and os.environ.get("EASY_SAVINGS_CONSUMER_KEY") != "your-consumer-key-here"
+        and os.environ.get("EASY_SAVINGS_SIGNING_KEY_PATH")
     ),
     "operations": [
         {
@@ -168,20 +168,20 @@ MANIFEST: Dict[str, Any] = {
 # ---------------------------------------------------------------------------
 def _base_url() -> str:
     from simulator.switcher import sim_base_url
-    env = os.environ.get("EASYSAVINGS_ENV", "sandbox").lower()
+    env = os.environ.get("EASY_SAVINGS_ENV", "sandbox").lower()
     real = _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
-    return sim_base_url("easysavings", real)
+    return sim_base_url("easy_savings", real)
 
 
 def _configured() -> bool:
-    key = os.environ.get("EASYSAVINGS_CONSUMER_KEY", "")
-    path = os.environ.get("EASYSAVINGS_SIGNING_KEY_PATH", "")
+    key = os.environ.get("EASY_SAVINGS_CONSUMER_KEY", "")
+    path = os.environ.get("EASY_SAVINGS_SIGNING_KEY_PATH", "")
     return bool(key and key != "your-consumer-key-here" and path)
 
 
 def is_configured() -> bool:
     from simulator.switcher import is_simulated
-    return _configured() or is_simulated("easysavings")
+    return _configured() or is_simulated("easy_savings")
 
 
 def get_state() -> Dict[str, Any]:
@@ -204,8 +204,8 @@ def _not_configured_err() -> Dict[str, Any]:
     return {
         "success": False,
         "error": (
-            "Easy Savings is not configured. Set EASYSAVINGS_CONSUMER_KEY and "
-            "EASYSAVINGS_SIGNING_KEY_PATH in .env, then restart the server."
+            "Easy Savings is not configured. Set EASY_SAVINGS_CONSUMER_KEY and "
+            "EASY_SAVINGS_SIGNING_KEY_PATH in .env, then restart the server."
         ),
     }
 
@@ -224,7 +224,7 @@ def _signed_request(method: str, url: str, body_str: str | None) -> Dict[str, An
     response — matching the convention used by the other Mastercard APIs.
     """
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("easysavings"):
+    if not _configured() and not is_simulated("easy_savings"):
         return _not_configured_err()
 
     import requests
@@ -235,15 +235,15 @@ def _signed_request(method: str, url: str, body_str: str | None) -> Dict[str, An
     if body_str is not None:
         headers["Content-Type"] = "application/json"
 
-    if is_simulated("easysavings"):
+    if is_simulated("easy_savings"):
         headers["Authorization"] = "Simulated"
     else:
         import oauth1.authenticationutils as authutils
         from oauth1.oauth import OAuth
 
-        consumer_key = os.environ["EASYSAVINGS_CONSUMER_KEY"]
-        key_path     = _resolve_key_path(os.environ["EASYSAVINGS_SIGNING_KEY_PATH"])
-        key_password = os.environ.get("EASYSAVINGS_SIGNING_KEY_PASSWORD", "keystorepassword")
+        consumer_key = os.environ["EASY_SAVINGS_CONSUMER_KEY"]
+        key_path     = _resolve_key_path(os.environ["EASY_SAVINGS_SIGNING_KEY_PATH"])
+        key_password = os.environ.get("EASY_SAVINGS_SIGNING_KEY_PASSWORD", "keystorepassword")
 
         try:
             signing_key = authutils.load_signing_key(key_path, key_password)
@@ -293,14 +293,14 @@ def _signed_request(method: str, url: str, body_str: str | None) -> Dict[str, An
 # ---------------------------------------------------------------------------
 def _list_countries() -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("easysavings"):
+    if not _configured() and not is_simulated("easy_savings"):
         return _not_configured_err()
     return _signed_request("GET", f"{_base_url()}/countries", None)
 
 
 def _list_offers(params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("easysavings"):
+    if not _configured() and not is_simulated("easy_savings"):
         return _not_configured_err()
     from urllib.parse import urlencode
 
@@ -327,7 +327,7 @@ def _list_offers(params: Dict[str, Any]) -> Dict[str, Any]:
 
 def _redeem_offer(params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("easysavings"):
+    if not _configured() and not is_simulated("easy_savings"):
         return _not_configured_err()
     import json
 
@@ -343,7 +343,7 @@ def _redeem_offer(params: Dict[str, Any]) -> Dict[str, Any]:
 
 def _get_redemption(params: Dict[str, Any]) -> Dict[str, Any]:
     from simulator.switcher import is_simulated
-    if not _configured() and not is_simulated("easysavings"):
+    if not _configured() and not is_simulated("easy_savings"):
         return _not_configured_err()
 
     order_id = (params.get("order_id") or "").strip()

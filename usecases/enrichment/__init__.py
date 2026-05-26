@@ -25,7 +25,7 @@ MANIFEST: Dict[str, Any] = {
         "confidence scores — turning opaque payment data into powerful, actionable intelligence "
         "that drives better customer experiences, richer analytics, and stronger engagement."
     ),
-    "apis": ["ofin"],
+    "apis": ["open_finance"],
     "render": "enrichment",
 }
 
@@ -102,7 +102,7 @@ def _save_cache() -> None:
 
 
 def _client():
-    from apis.ofin import api as ofin_api
+    from apis.open_finance import api as ofin_api
     return ofin_api._get_client()
 
 

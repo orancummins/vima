@@ -20,14 +20,14 @@ MANIFEST: Dict[str, Any] = {
         "types, and a full scrollable transaction history — the complete building blocks of "
         "a world-class personal finance app, powered by a single Mastercard integration."
     ),
-    "apis": ["ofin"],
+    "apis": ["open_finance"],
     "render": "pfm",
 }
 
 
 def _client():
     # Defer import so the registry doesn't fail when OFIN isn't configured.
-    from apis.ofin import api as ofin_api
+    from apis.open_finance import api as ofin_api
     return ofin_api._get_client()
 
 
