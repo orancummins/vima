@@ -42,19 +42,43 @@ async def run(config_path: Path, *, dry_run: bool = False) -> Path | None:
             if dry_run:
                 logger.info("Dry-run: stopping after login.")
                 return None
+            failed: list[str] = []
             for project in config.projects:
                 await provider.ensure_project(project)
                 for api_spec in project.normalised_apis():
-                    await provider.attach_api(project, api_spec.name)
-                    arts = await provider.download_keys(project, api_spec.name)
-                    artifacts.extend(arts)
+                    try:
+                        await provider.attach_api(project, api_spec.name)
+                        arts = await provider.download_keys(project, api_spec.name)
+                        artifacts.extend(arts)
+                    except Exception as api_err:
+                        logger.error(
+                            "Failed {}/{}: {} — skipping, continuing with remaining APIs",
+                            project.name, api_spec.name, api_err,
+                        )
+                        await capture(page, f"failure_{project.name}_{api_spec.name}")
+                        failed.append(f"{project.name}/{api_spec.name}")
         except Exception as e:
             logger.exception("Workflow failed: {}", e)
             await capture(page, "workflow_failure")
             raise
 
+    if failed:
+        logger.warning("Skipped {} API(s) due to errors: {}", len(failed), failed)
     if not artifacts:
         logger.warning("No artifacts collected — skipping bundle build.")
         return None
 
-    return build_bundle(config=config, artifacts=artifacts, output_dir=OUTPUT_DIR)
+    bundle = build_bundle(config=config, artifacts=artifacts, output_dir=OUTPUT_DIR)
+
+    # Also build a vima-config.zip ready for /config/import
+    try:
+        from export_vima_config import build_vima_config_zip
+        vima_zip = OUTPUT_DIR / "vima-config.zip"
+        result = build_vima_config_zip(WORKSPACE / "normalized", config.key_password, vima_zip)
+        logger.info("Built vima-config.zip: {} API(s) included", len(result["apis"]))
+        if result["skipped"]:
+            logger.warning("vima-config.zip skipped: {}", result["skipped"])
+    except Exception as e:
+        logger.warning("vima-config.zip build failed (non-fatal): {}", e)
+
+    return bundle

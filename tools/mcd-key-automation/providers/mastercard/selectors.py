@@ -96,16 +96,27 @@ class SandboxSelectors:
     add_project_key_button = "[data-testid='add-key-button']"
     # Existing keys rendered as data-testid="key-name-0", "key-name-1" etc.
     oauth_key_name_any = "[data-testid^='key-name-']"
+    # Plaintext consumer-key value sits next to each key-name in the same row.
+    oauth_consumer_key_value_any = "[data-testid='bar-value']"
+    # "Rotate key" links — one per key row. Use .nth(n) to target a specific key.
     rotate_key_link = "a:has-text('Rotate key')"
 
 
 class AddProjectKeySelectors:
     """Add-project-key wizard at /sandbox/add-project-key."""
 
-    # Step 1 — choose key type
+    # Step 1 — choose key type (Add Key wizard)
     generate_new_radio_label = "label[for='1']"
 
-    # Step 2 — fill alias and password
+    # Step 1 of the Rotate wizard — the step container test id for targeting the correct Proceed button.
+    rotate_step1_proceed = "[data-testid='stepview-selectMethod'] [data-testid='proceed-btn']"
+
+    # Step 2 of the Rotate wizard — "Set private key" (Generate new / existing / CSR)
+    rotate_step2_proceed = "[data-testid='stepview-SetYourPrivateKey'] [data-testid='proceed-btn']"
+    # Fallback radio label visible in Step 2 (confirms we've advanced from Step 1)
+    rotate_step2_generate_new_radio = "label:has-text('Generate a new private key')"
+
+    # Step 3 — fill alias and password (same for Add Key and Rotate wizards)
     key_alias_input = "[data-testid='key-alias-input']"
     key_store_password_input = "[data-testid='key-store-password-input']"
 
@@ -117,9 +128,8 @@ class AddProjectKeySelectors:
     download_key_heading = "h2:has-text('You are almost done'), h3:has-text('You are almost done')"
 
 
-# Known API slugs used in the fast-path URL.
-API_SLUGS: dict[str, str] = {
-    "binlookup": "bin-lookup",
-    "ofin": "ofin",
-}
+# API slug lookup is now in providers.mastercard.api_config.API_CONFIG.
+# This shim keeps imports that still use API_SLUGS working.
+from providers.mastercard.api_config import API_CONFIG as _API_CONFIG  # noqa: E402
+API_SLUGS: dict[str, str] = {k: v.slug for k, v in _API_CONFIG.items()}
 

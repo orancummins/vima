@@ -1,6 +1,7 @@
 """Mastercard Developers provider."""
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 
 from loguru import logger
@@ -22,6 +23,9 @@ class MastercardProvider(DeveloperPortalProvider):
         super().__init__(page, config, workspace)
         self.login_page = LoginPage(page, login_url=config.login_url)
         self.dashboard = DashboardPage(page)
+        # Single timestamp shared across all projects in this run.
+        # Used to construct unique portal project names (SS-<name>-<ts>).
+        self.run_timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
     async def login(self) -> None:
         await self.login_page.goto()
@@ -38,9 +42,10 @@ class MastercardProvider(DeveloperPortalProvider):
 
     async def download_keys(self, project: ProjectSpec, api: str) -> list[DownloadedArtifact]:
         await self.dashboard.goto()
-        api_spec = next((a for a in project.normalised_apis() if a.name == api), None)
-        region = api_spec.region if api_spec else None
-        raw_files = await ensure_project_with_api(self.dashboard, project, api, self.workspace, self.config, region=region)
+        raw_files = await ensure_project_with_api(
+            self.dashboard, project, api, self.workspace, self.config,
+            run_timestamp=self.run_timestamp
+        )
 
         artifacts: list[DownloadedArtifact] = []
         for raw_file in raw_files:

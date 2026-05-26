@@ -4131,6 +4131,27 @@
       cfgTipShow();
     });
 
+    // ── Auto Generate Keys ───────────────────────────────────────────────────
+    const autogenBtn     = document.getElementById('cfg-autogen-btn');
+    const autogenBanner  = document.getElementById('cfg-autogen-banner');
+    const autogenCancel  = document.getElementById('cfg-autogen-cancel');
+    const autogenConfirm = document.getElementById('cfg-autogen-confirm');
+
+    function autogenShowBanner() {
+      if (autogenBanner) autogenBanner.classList.remove('cfg-hidden');
+    }
+    function autogenHideBanner() {
+      if (autogenBanner) autogenBanner.classList.add('cfg-hidden');
+    }
+    autogenBtn    && autogenBtn.addEventListener('click', autogenShowBanner);
+    autogenCancel && autogenCancel.addEventListener('click', autogenHideBanner);
+    autogenConfirm && autogenConfirm.addEventListener('click', function () {
+      autogenHideBanner();
+      cfgClose();
+      // Signal the provision modal IIFE to open directly at the API select screen
+      document.dispatchEvent(new CustomEvent('prov:open-select'));
+    });
+
     let _groups = [];       // loaded config groups
     let _unlocked = false;  // edit mode flag
     let _pending = {};      // { KEY: newValue } for unsaved file uploads
@@ -4543,5 +4564,229 @@
     body.innerHTML = `<iframe id="testchat-webview-frame" class="sonic-webview-frame" src="/testchat/testchat.html" title="Test Chat"></iframe>`;
     _attachWebviewRefresh('testchat-webview-frame');
   }
+
+})();
+
+// ===========================================================================
+// Auto-Provision Modal
+// ===========================================================================
+(function () {
+  'use strict';
+
+  const APIS = [
+    { id: 'binlookup',   name: 'BIN Lookup',                   note: '' },
+    { id: 'places',      name: 'Places',                        note: '' },
+    { id: 'easysavings', name: 'Easy Savings',                  note: '' },
+    { id: 'clarity',     name: 'Consumer Clarity',              note: '' },
+    { id: 'priceless',   name: 'Priceless Specials',            note: 'Requires API Owner approval' },
+    { id: 'txnotify',    name: 'Transaction Notifications',     note: '' },
+    { id: 'consent',     name: 'Consent Management',            note: '' },
+    { id: 'ofpub',       name: 'Offers (Publisher)',            note: '' },
+    { id: 'ofmc',        name: 'Offers (Merchant)',             note: '' },
+    { id: 'eligibility', name: 'Benefits Eligibility',          note: '' },
+    { id: 'bces',        name: 'Benefits Content (BCES)',       note: '' },
+    { id: 'ofin',        name: 'Open Finance (Finicity)',       note: '' },
+  ];
+
+  const modal        = document.getElementById('prov-modal');
+  const overlay      = document.getElementById('prov-overlay');
+  const screenWelcome  = document.getElementById('prov-screen-welcome');
+  const screenSelect   = document.getElementById('prov-screen-select');
+  const screenProgress = document.getElementById('prov-screen-progress');
+  const apiGrid      = document.getElementById('prov-api-grid');
+  const statusGrid   = document.getElementById('prov-status-grid');
+  const logEl        = document.getElementById('prov-log');
+
+  if (!modal) return;
+
+  // ── Show/hide helpers ─────────────────────────────────────────────────────
+  function showScreen(screen) {
+    [screenWelcome, screenSelect, screenProgress].forEach(function (s) {
+      s && s.classList.add('prov-hidden');
+    });
+    screen && screen.classList.remove('prov-hidden');
+  }
+
+  function openModal() {
+    modal.classList.remove('prov-hidden');
+    document.body.style.overflow = 'hidden';
+    showScreen(screenWelcome);
+  }
+
+  function closeModal() {
+    modal.classList.add('prov-hidden');
+    document.body.style.overflow = '';
+  }
+
+  // ── API selection grid ────────────────────────────────────────────────────
+  function buildApiGrid() {
+    if (!apiGrid) return;
+    apiGrid.innerHTML = '';
+    APIS.forEach(function (api) {
+      var label = document.createElement('label');
+      label.className = 'prov-api-item';
+      label.innerHTML =
+        '<input type="checkbox" class="prov-api-cb" data-id="' + api.id + '" checked>' +
+        '<span class="prov-api-name">' + api.name + '</span>' +
+        (api.note ? '<span class="prov-api-note">' + api.note + '</span>' : '');
+      apiGrid.appendChild(label);
+    });
+  }
+
+  // ── Status grid (progress screen) ─────────────────────────────────────────
+  var _apiStatus = {};  // id → 'pending' | 'running' | 'done' | 'failed'
+
+  function buildStatusGrid(selectedIds) {
+    if (!statusGrid) return;
+    statusGrid.innerHTML = '';
+    _apiStatus = {};
+    selectedIds.forEach(function (id) {
+      var api = APIS.find(function (a) { return a.id === id; }) || { id: id, name: id };
+      _apiStatus[id] = 'pending';
+      var card = document.createElement('div');
+      card.className = 'prov-status-card prov-status-pending';
+      card.id = 'prov-status-' + id;
+      card.innerHTML =
+        '<span class="prov-status-dot"></span>' +
+        '<span class="prov-status-name">' + api.name + '</span>' +
+        '<span class="prov-status-label">Pending</span>';
+      statusGrid.appendChild(card);
+    });
+  }
+
+  function setApiStatus(id, status) {
+    _apiStatus[id] = status;
+    var card = document.getElementById('prov-status-' + id);
+    if (!card) return;
+    card.className = 'prov-status-card prov-status-' + status;
+    var labels = { pending: 'Pending', running: 'Provisioning…', done: 'Done ✓', failed: 'Failed ✗' };
+    var labelEl = card.querySelector('.prov-status-label');
+    if (labelEl) labelEl.textContent = labels[status] || status;
+  }
+
+  // ── Log line parser — extract per-API events ──────────────────────────────
+  function parseLogLine(line) {
+    var mStart = line.match(/Provisioning '(\w+)'/);
+    if (mStart) setApiStatus(mStart[1], 'running');
+
+    var mArt = line.match(/Artifact: mastercard-sbx-(\w+)-/);
+    if (mArt) setApiStatus(mArt[1], 'done');
+
+    var mFail = line.match(/Failed (\w+)\/(\w+):/);
+    if (mFail) setApiStatus(mFail[2], 'failed');
+  }
+
+  // ── Log append ─────────────────────────────────────────────────────────────
+  function appendLog(text) {
+    if (!logEl) return;
+    var line = document.createElement('div');
+    line.className = 'prov-log-line';
+    var clean = text.replace(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+ \| \w+\s+\| [^-]+ - /, '');
+    line.textContent = clean || text;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  // ── Start provisioning ─────────────────────────────────────────────────────
+  function startProvisioning(selectedIds) {
+    buildStatusGrid(selectedIds);
+    showScreen(screenProgress);
+
+    fetch('/provision/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apis: selectedIds, password: 'foobar!!' }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) { appendLog('ERROR: ' + data.error); return; }
+        streamJob(data.job_id);
+      })
+      .catch(function (err) { appendLog('ERROR: ' + err); });
+  }
+
+  function streamJob(jobId) {
+    var es = new EventSource('/provision/stream/' + jobId);
+    es.onmessage = function (e) {
+      var raw = e.data;
+      // Sentinels are sent unquoted; regular log lines are JSON-encoded strings
+      if (raw === '__DONE__') { es.close(); onProvisionDone(); return; }
+      if (raw === '__IMPORT_COMPLETE__') { appendLog('✅ Keys imported — Vima is ready!'); return; }
+      if (raw.startsWith('__IMPORT_ERROR__')) { appendLog('⚠️ Import warning: ' + raw); return; }
+      if (raw === '__NO_ZIP__') { appendLog('⚠️ vima-config.zip not found — import manually.'); return; }
+      var line = raw;
+      try { line = JSON.parse(raw); } catch (_) {}
+      if (line) { parseLogLine(line); appendLog(line); }
+    };
+    es.onerror = function () {
+      es.close();
+      appendLog('⚠️ Connection lost — check terminal for progress.');
+    };
+  }
+
+  function onProvisionDone() {
+    var titleEl = document.getElementById('prov-progress-title');
+    var subtitleEl = document.getElementById('prov-progress-subtitle');
+    var activationNote = document.getElementById('prov-activation-note');
+    var footer = document.getElementById('prov-progress-footer');
+    if (titleEl) titleEl.textContent = 'Provisioning Complete!';
+    if (subtitleEl) subtitleEl.textContent = 'Your API keys have been provisioned and imported into Vima.';
+    if (activationNote) activationNote.style.display = '';
+    if (footer) footer.style.display = '';
+    appendLog('');
+    appendLog('🎉 Done! Click below to reload and start exploring.');
+  }
+
+  // ── Wire up buttons ────────────────────────────────────────────────────────
+  var btnAuto   = document.getElementById('prov-btn-auto');
+  var btnManual = document.getElementById('prov-btn-manual');
+  var btnSkip   = document.getElementById('prov-btn-skip');
+  var btnBack   = document.getElementById('prov-back-select');
+  var btnStart  = document.getElementById('prov-btn-start');
+  var btnReload = document.getElementById('prov-btn-reload');
+
+  btnAuto && btnAuto.addEventListener('click', function () {
+    buildApiGrid();
+    showScreen(screenSelect);
+  });
+
+  // Triggered by "Yes, Generate Keys" in the config modal
+  document.addEventListener('prov:open-select', function () {
+    modal.classList.remove('prov-hidden');
+    document.body.style.overflow = 'hidden';
+    buildApiGrid();
+    showScreen(screenSelect);
+  });
+
+  btnManual && btnManual.addEventListener('click', function () {
+    closeModal();
+    var cfgTrigger = document.getElementById('cfg-trigger-btn');
+    if (cfgTrigger) cfgTrigger.click();
+  });
+
+  btnSkip && btnSkip.addEventListener('click', closeModal);
+  overlay && overlay.addEventListener('click', function () {
+    if (!screenProgress.classList.contains('prov-hidden')) return;
+    closeModal();
+  });
+
+  btnBack && btnBack.addEventListener('click', function () { showScreen(screenWelcome); });
+
+  btnStart && btnStart.addEventListener('click', function () {
+    var cbs = apiGrid ? apiGrid.querySelectorAll('.prov-api-cb:checked') : [];
+    var selectedIds = Array.from(cbs).map(function (cb) { return cb.dataset.id; });
+    if (selectedIds.length === 0) { alert('Please select at least one API.'); return; }
+    startProvisioning(selectedIds);
+  });
+
+  btnReload && btnReload.addEventListener('click', function () { location.reload(); });
+
+  // ── Auto-show on load if setup is needed ──────────────────────────────────
+  fetch('/provision/status')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.needs_setup) openModal();
+    })
+    .catch(function () { /* ignore — don't block app */ });
 
 })();
