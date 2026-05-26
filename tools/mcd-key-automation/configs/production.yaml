@@ -1,0 +1,7 @@
+environment: production
+organization: mastercard
+
+login_url: https://developer.mastercard.com/account/sign-in
+dashboard_url_pattern: "**/dashboard**"
+
+projects: []
