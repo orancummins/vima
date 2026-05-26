@@ -1,0 +1,34 @@
+[project]
+name = "mcd-key-automation"
+version = "0.1.0"
+description = "Mastercard Developers automation platform: project creation, API enrollment, key provisioning and packaging."
+requires-python = ">=3.12"
+dependencies = [
+  "playwright>=1.44",
+  "pydantic>=2.7",
+  "pyyaml>=6.0",
+  "typer>=0.12",
+  "loguru>=0.7",
+  "cryptography>=42.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-asyncio>=0.23",
+  "ruff>=0.4",
+]
+
+[project.scripts]
+mcd-key-automation = "app.main:app"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*", "providers*", "browser*"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"

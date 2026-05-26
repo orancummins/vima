@@ -1,0 +1,16 @@
+environment: sandbox
+organization: mastercard
+
+login_url: https://developer.mastercard.com/account/sign-in
+dashboard_url_pattern: "**/dashboard**"
+
+projects:
+  - name: BINLookup
+    description: Mastercard BIN Lookup API
+    apis:
+      - binlookup
+
+  - name: USOpenFinance
+    description: Mastercard Open Finance (US)
+    apis:
+      - ofin
