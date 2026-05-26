@@ -8,6 +8,10 @@ import os
 import time
 import threading
 import json
+import queue
+import uuid
+import subprocess
+import sys
 from collections import deque
 
 import truststore
@@ -1548,6 +1552,139 @@ def config_upload_key():
     # Always use forward slashes — works on Windows, Mac, and Linux
     rel_path = "config/keys/" + safe_name
     return jsonify({"filename": safe_name, "path": rel_path})
+
+
+# ----------------------------------------------------------------------------
+# Auto-provision endpoints
+# ----------------------------------------------------------------------------
+
+_provision_jobs: dict = {}
+
+
+@app.route("/provision/status")
+def provision_status():
+    has_env = os.path.isfile(_ENV_PATH)
+    apis = api_registry.manifests()
+    configured = sum(1 for a in apis if a.get("configured"))
+    needs_setup = not has_env or configured == 0
+    return jsonify({"needs_setup": needs_setup, "configured": configured, "total": len(apis)})
+
+
+@app.route("/provision/start", methods=["POST"])
+def provision_start():
+    body = request.get_json(silent=True) or {}
+    selected_apis = body.get("apis", [])
+    password = body.get("password", "foobar!!")
+    if not selected_apis:
+        return jsonify({"error": "No APIs selected"}), 400
+
+    tool_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools", "mcd-key-automation")
+    python_bin = os.path.join(tool_dir, ".venv", "bin", "python")
+
+    projects_yaml = "\n".join(
+        f"  - name: {api}\n    apis: [{api}]" for api in selected_apis
+    )
+    cfg_text = f"""environment: sandbox
+organization: mastercard
+login_url: https://developer.mastercard.com/account/log-in
+dashboard_url_pattern: "**/dashboard**"
+key_password: "{password}"
+projects:
+{projects_yaml}
+"""
+    import tempfile
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        f.write(cfg_text)
+        cfg_path = f.name
+
+    job_id = str(uuid.uuid4())[:8]
+    q = queue.Queue()
+    _provision_jobs[job_id] = {"queue": q, "done": False, "proc": None}
+
+    def _run():
+        try:
+            proc = subprocess.Popen(
+                [python_bin, "app/main.py", "run", "-c", cfg_path],
+                cwd=tool_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+            )
+            _provision_jobs[job_id]["proc"] = proc
+            for line in proc.stdout:
+                q.put(line.rstrip())
+            proc.wait()
+        except Exception as exc:
+            q.put(f"ERROR: {exc}")
+
+        zip_path = os.path.join(tool_dir, "output", "vima-config.zip")
+        if os.path.isfile(zip_path):
+            try:
+                import zipfile, io as _io
+                with open(zip_path, "rb") as zf_file:
+                    data = zf_file.read()
+                with zipfile.ZipFile(_io.BytesIO(data)) as zf:
+                    names = zf.namelist()
+                    norm = {n: n.replace("\\", "/") for n in names}
+                    os.makedirs(_KEYS_DIR, exist_ok=True)
+                    for orig, name in norm.items():
+                        if name == "config/.env":
+                            env_text = zf.read(orig).decode("utf-8")
+                            with open(_ENV_PATH, "w", encoding="utf-8") as fh:
+                                fh.write(env_text)
+                            load_dotenv(_ENV_PATH, override=True)
+                        elif name.startswith("config/keys/") and not name.endswith("/"):
+                            fname = name.split("/")[-1]
+                            ext = os.path.splitext(fname)[1].lower()
+                            if ext in (".p12", ".pkcs12", ".pem"):
+                                dest = os.path.join(_KEYS_DIR, fname)
+                                with open(dest, "wb") as fh:
+                                    fh.write(zf.read(orig))
+                q.put("__IMPORT_COMPLETE__")
+            except Exception as exc:
+                q.put(f"__IMPORT_ERROR__: {exc}")
+        else:
+            q.put("__NO_ZIP__")
+
+        _provision_jobs[job_id]["done"] = True
+        q.put(None)
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    return jsonify({"job_id": job_id})
+
+
+@app.route("/provision/stream/<job_id>")
+def provision_stream(job_id):
+    job = _provision_jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Unknown job"}), 404
+
+    _SENTINELS = {"__DONE__", "__IMPORT_COMPLETE__", "__NO_ZIP__"}
+
+    def generate():
+        q = job["queue"]
+        while True:
+            try:
+                line = q.get(timeout=60)
+            except queue.Empty:
+                yield "data: \n\n"
+                continue
+            if line is None:
+                yield "data: __DONE__\n\n"
+                break
+            # Send sentinel control strings raw; JSON-encode all other log lines
+            if line in _SENTINELS or (isinstance(line, str) and line.startswith("__IMPORT_ERROR__")):
+                yield f"data: {line}\n\n"
+            else:
+                yield f"data: {json.dumps(line)}\n\n"
+
+    return app.response_class(
+        generate(),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 if __name__ == "__main__":

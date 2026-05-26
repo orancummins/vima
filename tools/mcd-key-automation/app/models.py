@@ -14,7 +14,6 @@ class ApiSpec(BaseModel):
 
     name: str
     version: str = "v1"
-    region: str | None = None  # Required by some APIs (e.g. Open Finance)
 
     @field_validator("name")
     @classmethod

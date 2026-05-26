@@ -1,0 +1,51 @@
+environment: sandbox
+organization: mastercard
+
+login_url: https://developer.mastercard.com/account/log-in
+dashboard_url_pattern: "**/dashboard**"
+key_password: "foobar!!"
+
+# Re-provision keys for APIs that returned AUTHENTICATION_FAILED (mismatched consumer key).
+# All are EXISTING projects — the fix is now to pick the LAST matching alias row.
+projects:
+  - name: mastercard-sbx-binlookup
+    description: Mastercard BIN Lookup API
+    apis: [binlookup]
+
+  - name: TestEasySavings
+    description: Mastercard Easy Savings
+    apis: [easysavings]
+
+  - name: places
+    description: Mastercard Locations / Places
+    apis: [places]
+
+  - name: priceless
+    description: Mastercard Priceless Platform
+    apis: [priceless]
+
+  - name: txnotify
+    description: Mastercard Transaction Notifications
+    apis: [txnotify]
+
+  - name: consent
+    description: Mastercard Consent Management
+    apis: [consent]
+
+  - name: ofpub
+    description: Mastercard Offers for Publishers
+    apis: [ofpub]
+
+  - name: ofmc
+    description: Mastercard Offers Merchant Content
+    apis: [ofmc]
+
+  - name: eligibility
+    description: Mastercard Benefits Eligibility
+    apis: [eligibility]
+
+  - name: USOpenFinance
+    description: Mastercard Open Finance (US)
+    apis:
+      - name: ofin
+        region: "United States of America"
