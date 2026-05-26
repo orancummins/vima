@@ -1,10 +1,13 @@
-"""DOM discovery script.
+"""Login + DOM discovery in one run.
 
-Loads the saved session state and navigates the Mastercard Developers portal,
-capturing screenshots and HTML snippets at each step so we can build real selectors.
+Launches headful Chromium, waits for you to log in, then methodically
+explores the portal capturing screenshots, HTML dumps, and a JSON report
+of buttons/links/inputs at each step so we can build real selectors.
 
-Usage (from tools/mcd-key-automation directory, venv active):
-    python discover.py
+Outputs:
+    logs/screenshots/*.png
+    logs/dom/*.html
+    logs/discovery.json
 """
 from __future__ import annotations
 
@@ -12,156 +15,288 @@ import asyncio
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
-from playwright.async_api import async_playwright
+from playwright.async_api import Page, TimeoutError as PWTimeoutError, async_playwright
 
 ROOT = Path(__file__).parent
-SESSION_STATE = ROOT / "session_state.json"
-SCREENSHOTS_DIR = ROOT / "logs" / "screenshots"
-DOM_DIR = ROOT / "logs" / "dom"
+SHOTS = ROOT / "logs" / "screenshots"
+DOM = ROOT / "logs" / "dom"
+REPORT = ROOT / "logs" / "discovery.json"
 
-SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
-DOM_DIR.mkdir(parents=True, exist_ok=True)
+LOGIN_URL = "https://developer.mastercard.com/account/log-in"
+LOGIN_PATH = "/account/log-in"
 
+for d in (SHOTS, DOM):
+    d.mkdir(parents=True, exist_ok=True)
 
-async def snap(page, label: str) -> None:
-    safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in label)
-    out = SCREENSHOTS_DIR / f"{safe}.png"
-    await page.screenshot(path=str(out), full_page=True)
-    print(f"  📸 {out}")
+report: dict[str, Any] = {"steps": []}
 
 
-async def dump_html(page, label: str, selector: str = "body") -> None:
-    safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in label)
+def step(label: str) -> dict:
+    s = {"label": label, "url": None, "buttons": [], "links": [], "inputs": [], "headings": []}
+    report["steps"].append(s)
+    return s
+
+
+async def snap(page: Page, label: str) -> None:
+    safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in label)
+    out = SHOTS / f"{safe}.png"
     try:
-        html = await page.inner_html(selector)
-    except Exception:
+        await page.screenshot(path=str(out), full_page=True)
+        print(f"  📸 {out.name}")
+    except Exception as e:
+        print(f"  ⚠ screenshot failed: {e}")
+
+
+async def dump(page: Page, label: str) -> None:
+    safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in label)
+    try:
         html = await page.content()
-    out = DOM_DIR / f"{safe}.html"
-    out.write_text(html)
-    print(f"  📄 {out}")
+        (DOM / f"{safe}.html").write_text(html)
+        print(f"  📄 {safe}.html")
+    except Exception as e:
+        print(f"  ⚠ dump failed: {e}")
 
 
-async def query_all_text(page, selector: str) -> list[str]:
-    """Return inner_text of all matching elements."""
+async def inventory(page: Page, s: dict) -> None:
+    """Capture all interactive elements visible on the page."""
+    s["url"] = page.url
     try:
-        els = await page.query_selector_all(selector)
-        return [await e.inner_text() for e in els]
+        s["buttons"] = await page.evaluate(
+            """Array.from(document.querySelectorAll('button, [role=button], input[type=button], input[type=submit]'))
+                .filter(b => b.offsetParent !== null)
+                .map(b => ({text: (b.innerText||b.value||'').trim().slice(0,80), id: b.id||null,
+                            testid: b.getAttribute('data-testid'),
+                            aria: b.getAttribute('aria-label'),
+                            classes: (b.className||'').toString().slice(0,120)}))
+                .filter(b => b.text || b.aria || b.testid)"""
+        )
     except Exception:
-        return []
-
-
-async def find_links(page, pattern: str) -> list[dict]:
-    """Return href+text for anchors containing pattern in href."""
-    js = f"""
-        Array.from(document.querySelectorAll('a[href]'))
-            .filter(a => a.href.includes({json.dumps(pattern)}))
-            .map(a => ({{href: a.href, text: a.innerText.trim(), id: a.id, cls: a.className}}))
-    """
+        pass
     try:
-        return await page.evaluate(js)
+        s["links"] = await page.evaluate(
+            """Array.from(document.querySelectorAll('a[href]'))
+                .filter(a => a.offsetParent !== null)
+                .map(a => ({text: (a.innerText||'').trim().slice(0,80), href: a.href,
+                            testid: a.getAttribute('data-testid')}))
+                .filter(a => a.text || a.testid)"""
+        )
     except Exception:
-        return []
-
-
-async def find_buttons(page) -> list[dict]:
-    js = """
-        Array.from(document.querySelectorAll('button, [role="button"], input[type="button"], input[type="submit"]'))
-            .map(b => ({text: b.innerText.trim(), id: b.id, cls: b.className, disabled: b.disabled}))
-            .filter(b => b.text.length > 0)
-    """
+        pass
     try:
-        return await page.evaluate(js)
+        s["inputs"] = await page.evaluate(
+            """Array.from(document.querySelectorAll('input, textarea, select'))
+                .filter(i => i.offsetParent !== null)
+                .map(i => ({type: i.type||i.tagName, name: i.name, id: i.id,
+                            placeholder: i.placeholder, label: i.getAttribute('aria-label'),
+                            testid: i.getAttribute('data-testid')}))"""
+        )
     except Exception:
-        return []
+        pass
+    try:
+        s["headings"] = await page.evaluate(
+            """Array.from(document.querySelectorAll('h1, h2, h3'))
+                .filter(h => h.offsetParent !== null)
+                .map(h => ({level: h.tagName, text: h.innerText.trim().slice(0,120)}))"""
+        )
+    except Exception:
+        pass
+
+
+async def safe_settle(page: Page, timeout_ms: int = 8000) -> None:
+    """Best-effort wait. Dashboards with persistent connections never hit networkidle."""
+    try:
+        await page.wait_for_load_state("domcontentloaded", timeout=timeout_ms)
+    except Exception:
+        pass
+    try:
+        await page.wait_for_load_state("networkidle", timeout=timeout_ms)
+    except Exception:
+        pass
+    await asyncio.sleep(1.5)
+
+
+async def wait_for_login(page: Page, timeout_s: float = 600) -> None:
+    print(f"\n🔐 Waiting up to {int(timeout_s)}s for manual login. Complete sign-in + MFA in the browser...")
+    start = asyncio.get_event_loop().time()
+    while True:
+        if LOGIN_PATH not in page.url and page.url.startswith("http"):
+            print(f"✅ Authenticated — at {page.url}")
+            return
+        if asyncio.get_event_loop().time() - start > timeout_s:
+            raise PWTimeoutError("Login timeout")
+        await asyncio.sleep(1.5)
+
+
+async def try_click(page: Page, *candidates: str, label: str = "") -> str | None:
+    """Try each selector; click the first visible one. Returns the matching selector."""
+    for sel in candidates:
+        try:
+            loc = page.locator(sel).first
+            if await loc.is_visible(timeout=1500):
+                print(f"  → clicking {sel!r}  ({label})")
+                await loc.click()
+                await safe_settle(page)
+                return sel
+        except Exception:
+            continue
+    return None
 
 
 async def main() -> None:
-    if not SESSION_STATE.exists():
-        print("❌ No session_state.json found. Run `mcd-key-automation login` first.")
-        sys.exit(1)
-
-    print("🔍 Starting DOM discovery (headful) — watch the browser window.")
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=False, slow_mo=500)
-        context = await browser.new_context(storage_state=str(SESSION_STATE), accept_downloads=True)
+        browser = await pw.chromium.launch(headless=False, slow_mo=200)
+        context = await browser.new_context(accept_downloads=True)
         page = await context.new_page()
 
-        # ── STEP 1: Dashboard ────────────────────────────────────────────────
-        print("\n[1] Navigating to dashboard...")
-        await page.goto("https://developer.mastercard.com/dashboard", wait_until="networkidle")
-        print(f"    URL: {page.url}")
-        await snap(page, "01-dashboard")
-        await dump_html(page, "01-dashboard")
+        # ── 1. LOGIN ────────────────────────────────────────────────────────
+        print(f"🌐 Opening {LOGIN_URL}")
+        await page.goto(LOGIN_URL, wait_until="domcontentloaded")
+        await wait_for_login(page)
 
-        buttons = await find_buttons(page)
-        print(f"    Buttons: {json.dumps(buttons, indent=2)}")
+        # ── 2. POST-LOGIN LANDING ───────────────────────────────────────────
+        await safe_settle(page)
+        s = step("01-post-login-landing")
+        await inventory(page, s)
+        await snap(page, "01-post-login-landing")
+        await dump(page, "01-post-login-landing")
 
-        nav_links = await find_links(page, "dashboard")
-        print(f"    Dashboard links: {json.dumps(nav_links, indent=2)}")
+        # ── 3. DASHBOARD ────────────────────────────────────────────────────
+        print("\n📍 Navigating to /dashboard")
+        try:
+            await page.goto("https://developer.mastercard.com/dashboard", wait_until="domcontentloaded")
+            await safe_settle(page)
+        except Exception as e:
+            print(f"  ⚠ dashboard nav failed: {e}")
+        s = step("02-dashboard")
+        await inventory(page, s)
+        await snap(page, "02-dashboard")
+        await dump(page, "02-dashboard")
+        print(f"  Headings: {[h['text'] for h in s['headings']]}")
+        print(f"  Buttons: {[b['text'] for b in s['buttons'][:15]]}")
+        print(f"  Project links: {[l for l in s['links'] if '/project' in l.get('href','')][:10]}")
 
-        project_links = await find_links(page, "project")
-        print(f"    Project links: {json.dumps(project_links[:20], indent=2)}")
-
-        # ── STEP 2: Look for "My Projects" / project list area ───────────────
-        print("\n[2] Looking for projects section...")
-        # Common candidates
-        candidates = [
-            "[data-testid*='project']",
-            "a[href*='/project']",
+        # ── 4. PROJECTS PAGE ────────────────────────────────────────────────
+        print("\n📍 Looking for projects area")
+        clicked = await try_click(
+            page,
+            "a:has-text('My Projects')",
+            "a:has-text('Projects')",
             "a[href*='/projects']",
-            ".project-card",
-            ".project-list",
-            "h2, h3",
-        ]
-        for sel in candidates:
-            texts = await query_all_text(page, sel)
-            if texts:
-                print(f"    {sel}: {texts[:10]}")
+            "[data-testid*='projects-nav']",
+            label="projects nav",
+        )
+        s = step("03-projects-page")
+        await inventory(page, s)
+        await snap(page, "03-projects-page")
+        await dump(page, "03-projects-page")
+        if not clicked:
+            print("  (no Projects nav link clicked — page may already show projects)")
 
-        # ── STEP 3: Try to navigate to a "create project" flow ───────────────
-        print("\n[3] Looking for Create Project button...")
-        create_sel_candidates = [
-            "button:has-text('Create')",
+        # ── 5. CREATE PROJECT ───────────────────────────────────────────────
+        print("\n📍 Looking for Create Project button")
+        clicked = await try_click(
+            page,
+            "button:has-text('Create a new project')",
+            "a:has-text('Create a new project')",
+            "button:has-text('Create new project')",
+            "button:has-text('Create project')",
             "button:has-text('New project')",
             "button:has-text('Add project')",
             "a:has-text('Create')",
-            "a:has-text('New project')",
-            "[data-testid*='create']",
-        ]
-        found_create = None
-        for sel in create_sel_candidates:
+            "[data-testid*='create-project']",
+            label="create project",
+        )
+        s = step("04-create-project")
+        await inventory(page, s)
+        await snap(page, "04-create-project")
+        await dump(page, "04-create-project")
+        if clicked:
+            print(f"  ✅ Create-project trigger: {clicked!r}")
+            print(f"  Inputs on form: {s['inputs']}")
+            print(f"  Buttons on form: {[b['text'] for b in s['buttons']]}")
+        else:
+            print("  ❌ Could not find a Create Project button.")
+
+        # ── 6. EXIT create-project modal and explore an existing project ────
+        print("\n📍 Exiting create-project modal")
+        await try_click(page, "button:has-text('Exit')", label="exit modal")
+        await safe_settle(page)
+
+        print("\n📍 Opening an existing project (first project link)")
+        try:
+            first_proj = page.locator("a[href*='/project-details/']").first
+            href = await first_proj.get_attribute("href")
+            name = (await first_proj.inner_text()).strip()
+            print(f"  → {name}: {href}")
+            await first_proj.click()
+            await safe_settle(page)
+        except Exception as e:
+            print(f"  ⚠ could not open project: {e}")
+
+        s = step("05-project-details")
+        await inventory(page, s)
+        await snap(page, "05-project-details")
+        await dump(page, "05-project-details")
+        print(f"  URL: {s['url']}")
+        print(f"  Headings: {[h['text'] for h in s['headings']]}")
+        print(f"  Buttons: {[b['text'] for b in s['buttons']]}")
+        print(f"  Tabs/links: {[l['text'] for l in s['links'] if l['text']][:20]}")
+
+        # ── 7. LOOK FOR "ADD API" / KEYS SECTION ────────────────────────────
+        print("\n📍 Looking for Add API / Keys controls")
+        for sel, lbl in [
+            ("button:has-text('Add API')", "Add API button"),
+            ("a:has-text('Add API')", "Add API link"),
+            ("button:has-text('Add an API')", "Add an API"),
+            ("a:has-text('Keys')", "Keys tab"),
+            ("button:has-text('Keys')", "Keys tab btn"),
+            ("a:has-text('API Keys')", "API Keys tab"),
+            ("button:has-text('Add Key')", "Add Key btn"),
+            ("button:has-text('Generate')", "Generate btn"),
+            ("button:has-text('Download')", "Download btn"),
+        ]:
             try:
                 loc = page.locator(sel).first
-                if await loc.is_visible(timeout=1000):
-                    found_create = sel
-                    text = await loc.inner_text()
-                    print(f"    Found: {sel!r} → {text!r}")
-                    break
+                if await loc.is_visible(timeout=600):
+                    print(f"  ✓ visible: {sel!r}  ({lbl})")
             except Exception:
                 pass
 
-        if found_create:
-            print(f"\n[4] Clicking {found_create!r}...")
-            await page.locator(found_create).first.click()
-            await page.wait_for_load_state("networkidle")
-            print(f"    URL after click: {page.url}")
-            await snap(page, "04-create-project-modal-or-page")
-            await dump_html(page, "04-create-project-modal-or-page")
-            buttons_after = await find_buttons(page)
-            print(f"    Buttons: {json.dumps(buttons_after, indent=2)}")
-        else:
-            print("    ⚠ No Create Project button found on dashboard.")
+        # Try clicking a Keys tab if present
+        print("\n📍 Trying to open the Keys section")
+        clicked = await try_click(
+            page,
+            "a:has-text('Keys')",
+            "button:has-text('Keys')",
+            "a:has-text('API Keys')",
+            "[role=tab]:has-text('Keys')",
+            label="Keys tab",
+        )
+        s = step("06-keys-section")
+        await inventory(page, s)
+        await snap(page, "06-keys-section")
+        await dump(page, "06-keys-section")
+        print(f"  Headings: {[h['text'] for h in s['headings']]}")
+        print(f"  Buttons: {[b['text'] for b in s['buttons']]}")
 
-        # ── STEP 4: Look for existing projects ───────────────────────────────
-        print("\n[5] Checking for existing project cards/links...")
-        all_proj = await find_links(page, "project")
-        print(f"    Project-related links: {json.dumps(all_proj[:30], indent=2)}")
+        # ── 6. SAVE REPORT ──────────────────────────────────────────────────
+        REPORT.write_text(json.dumps(report, indent=2))
+        print(f"\n📊 Report → {REPORT}")
+        print(f"📂 Screenshots → {SHOTS}")
+        print(f"📂 DOM dumps → {DOM}")
 
-        print("\n✅ Discovery complete. Check logs/screenshots/ and logs/dom/")
-        input("\nPress ENTER to close the browser...")
+        print("\n👀 Browser stays open for 60s so you can manually explore...")
+        try:
+            await asyncio.sleep(60)
+        except KeyboardInterrupt:
+            pass
         await browser.close()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        sys.exit(130)
