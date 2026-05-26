@@ -4548,19 +4548,23 @@
   'use strict';
 
   const APIS = [
-    { id: 'bin_lookup',   name: 'BIN Lookup',                   note: '' },
-    { id: 'places',      name: 'Places',                        note: '' },
-    { id: 'easy_savings', name: 'Easy Savings',                  note: '' },
-    { id: 'consumer_clarity',     name: 'Consumer Clarity',              note: '' },
-    { id: 'priceless_cities',   name: 'Priceless Specials',            note: 'Requires API Owner approval' },
-    { id: 'transaction_notifications',    name: 'Transaction Notifications',     note: '' },
-    { id: 'consent_management',     name: 'Consent Management',            note: '' },
-    { id: 'offers_for_publishers',       name: 'Offers (Publisher)',            note: '' },
-    { id: 'offers_merchant_content',        name: 'Offers (Merchant)',             note: '' },
-    { id: 'benefits_eligibility', name: 'Benefits Eligibility',          note: '' },
-    { id: 'benefits_content_eligibility',        name: 'Benefits Content (BCES)',       note: '' },
-    { id: 'open_finance',        name: 'Open Finance (Finicity)',       note: '' },
+    { id: 'bin_lookup',                  legacy_id: 'binlookup',   name: 'BIN Lookup',                   note: '' },
+    { id: 'places',                      legacy_id: 'places',      name: 'Places',                        note: '' },
+    { id: 'easy_savings',                legacy_id: 'easysavings', name: 'Easy Savings',                  note: '' },
+    { id: 'consumer_clarity',            legacy_id: 'clarity',     name: 'Consumer Clarity',              note: '' },
+    { id: 'priceless_cities',            legacy_id: 'priceless',   name: 'Priceless Specials',            note: 'Requires API Owner approval' },
+    { id: 'transaction_notifications',   legacy_id: 'txnotify',    name: 'Transaction Notifications',     note: '' },
+    { id: 'consent_management',          legacy_id: 'consent',     name: 'Consent Management',            note: '' },
+    { id: 'offers_for_publishers',       legacy_id: 'ofpub',       name: 'Offers (Publisher)',            note: '' },
+    { id: 'offers_merchant_content',     legacy_id: 'ofmc',        name: 'Offers (Merchant)',             note: '' },
+    { id: 'benefits_eligibility',        legacy_id: 'eligibility', name: 'Benefits Eligibility',          note: '' },
+    { id: 'benefits_content_eligibility',legacy_id: 'bces',        name: 'Benefits Content (BCES)',       note: '' },
+    { id: 'open_finance',                legacy_id: 'ofin',        name: 'Open Finance (Finicity)',       note: '' },
   ];
+
+  // Build a map from legacy_id → canonical id so log lines (which use legacy ids) can update cards.
+  const legacyToId = {};
+  APIS.forEach(function (a) { if (a.legacy_id) legacyToId[a.legacy_id] = a.id; });
 
   const modal        = document.getElementById('prov-modal');
   const overlay      = document.getElementById('prov-overlay');
@@ -4639,15 +4643,20 @@
   }
 
   // ── Log line parser — extract per-API events ──────────────────────────────
+  function resolveApiId(rawId) {
+    // rawId may be a legacy id (e.g. 'binlookup') or canonical id (e.g. 'bin_lookup').
+    return legacyToId[rawId] || rawId;
+  }
+
   function parseLogLine(line) {
-    var mStart = line.match(/Provisioning '(\w+)'/);
-    if (mStart) setApiStatus(mStart[1], 'running');
+    var mStart = line.match(/Provisioning '([\w-]+)'/);
+    if (mStart) setApiStatus(resolveApiId(mStart[1]), 'running');
 
-    var mArt = line.match(/Artifact: mastercard-sbx-(\w+)-/);
-    if (mArt) setApiStatus(mArt[1], 'done');
+    var mArt = line.match(/Artifact: mastercard-sbx-([\w-]+?)-([\w-]+?)-(?:signing|credentials)/);
+    if (mArt) setApiStatus(resolveApiId(mArt[1]), 'done');
 
-    var mFail = line.match(/Failed (\w+)\/(\w+):/);
-    if (mFail) setApiStatus(mFail[2], 'failed');
+    var mFail = line.match(/Failed ([\w-]+)\/([\w-]+):/);
+    if (mFail) setApiStatus(resolveApiId(mFail[2]), 'failed');
   }
 
   // ── Log append ─────────────────────────────────────────────────────────────

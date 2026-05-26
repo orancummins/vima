@@ -57,6 +57,7 @@ def manifests() -> List[Dict[str, Any]]:
         m.setdefault("docs_url", entry.docs_url)
         m["env_prefix"] = entry.env_prefix
         m["portal_slug"] = entry.portal_slug
+        m["legacy_id"] = entry.legacy_id  # may be None for newer APIs
         configured_fn = getattr(mod, "is_configured", None)
         if callable(configured_fn):
             m["configured"] = bool(configured_fn())

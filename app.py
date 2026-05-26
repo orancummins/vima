@@ -1463,10 +1463,43 @@ def config_upload_key():
 # Auto-provision endpoints
 # ----------------------------------------------------------------------------
 
-_provision_jobs: dict = {}
+@app.route("/config/purge", methods=["POST"])
+def config_purge():
+    """Remove all provisioned keys and .env, then clear matching env vars from memory."""
+    import shutil
+    removed = []
+
+    # Clear key files
+    if os.path.isdir(_KEYS_DIR):
+        shutil.rmtree(_KEYS_DIR)
+        os.makedirs(_KEYS_DIR, exist_ok=True)
+        removed.append("keys")
+
+    # Remove .env
+    if os.path.isfile(_ENV_PATH):
+        os.remove(_ENV_PATH)
+        removed.append(".env")
+
+    # Clear all credential-related env vars from the running process
+    prefixes_to_clear = [
+        "BIN_LOOKUP_", "PLACES_", "EASY_SAVINGS_", "CONSUMER_CLARITY_",
+        "PRICELESS_CITIES_", "TRANSACTION_NOTIFICATIONS_", "CONSENT_MANAGEMENT_",
+        "OFFERS_FOR_PUBLISHERS_", "OFFERS_MERCHANT_CONTENT_", "BENEFITS_ELIGIBILITY_",
+        "BENEFITS_CONTENT_ELIGIBILITY_", "OPEN_FINANCE_",
+        # Legacy prefixes
+        "BINLOOKUP_", "CLARITY_", "EASYSAVINGS_", "PRICELESS_", "TXNOTIFY_",
+        "CONSENT_", "OFPUB_", "OFMC_", "ELIGIBILITY_", "BCES_", "OFIN_",
+    ]
+    cleared = []
+    for key in list(os.environ.keys()):
+        if any(key.startswith(p) for p in prefixes_to_clear):
+            del os.environ[key]
+            cleared.append(key)
+
+    return jsonify({"removed": removed, "env_vars_cleared": len(cleared)})
 
 
-@app.route("/provision/status")
+
 def provision_status():
     has_env = os.path.isfile(_ENV_PATH)
     apis = api_registry.manifests()
