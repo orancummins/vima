@@ -1499,6 +1499,8 @@ def config_purge():
 
     return jsonify({"removed": removed, "env_vars_cleared": len(cleared)})
 
+
+@app.route("/provision/status")
 def provision_status():
     has_env = os.path.isfile(_ENV_PATH)
     apis = api_registry.manifests()
