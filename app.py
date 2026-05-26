@@ -1587,6 +1587,17 @@ def provision_start():
     tool_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools", "mcd-key-automation")
     python_bin = os.path.join(tool_dir, ".venv", "bin", "python")
 
+    # Preflight: ensure the tool's virtualenv exists
+    if not os.path.isfile(python_bin):
+        return jsonify({
+            "error": (
+                f"mcd-key-automation virtualenv not found at {python_bin}. "
+                "Run: cd tools/mcd-key-automation && python -m venv .venv && "
+                ".venv/bin/pip install -r requirements.txt && "
+                ".venv/bin/playwright install chromium"
+            )
+        }), 500
+
     projects_yaml = "\n".join(
         f"  - name: {api}\n    apis: [{api}]" for api in selected_apis
     )
@@ -1607,7 +1618,15 @@ projects:
     q = queue.Queue()
     _provision_jobs[job_id] = {"queue": q, "done": False, "proc": None}
 
+    # Remove any stale zip so we only import a zip produced by this run
+    zip_path = os.path.join(tool_dir, "output", "vima-config.zip")
+    try:
+        os.remove(zip_path)
+    except OSError:
+        pass
+
     def _run():
+        rc = None
         try:
             proc = subprocess.Popen(
                 [python_bin, "app/main.py", "run", "-c", cfg_path],
@@ -1621,10 +1640,13 @@ projects:
             for line in proc.stdout:
                 q.put(line.rstrip())
             proc.wait()
+            rc = proc.returncode
         except Exception as exc:
-            q.put(f"ERROR: {exc}")
+            q.put(f"ERROR launching provisioner: {exc}")
 
-        zip_path = os.path.join(tool_dir, "output", "vima-config.zip")
+        if rc is not None and rc != 0:
+            q.put(f"ERROR: provisioner exited with code {rc}")
+
         if os.path.isfile(zip_path):
             try:
                 import zipfile, io as _io
