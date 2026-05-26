@@ -4649,13 +4649,14 @@
   }
 
   function parseLogLine(line) {
-    var mStart = line.match(/Provisioning '([\w-]+)'/);
+    var mStart = line.match(/Provisioning '([\w_-]+)'/);
     if (mStart) setApiStatus(resolveApiId(mStart[1]), 'running');
 
-    var mArt = line.match(/Artifact: mastercard-sbx-([\w-]+?)-([\w-]+?)-(?:signing|credentials)/);
-    if (mArt) setApiStatus(resolveApiId(mArt[1]), 'done');
+    // "Provisioned: bin_lookup" — emitted by orchestrator after successful download
+    var mDone = line.match(/^Provisioned: ([\w_-]+)/);
+    if (mDone) setApiStatus(resolveApiId(mDone[1]), 'done');
 
-    var mFail = line.match(/Failed ([\w-]+)\/([\w-]+):/);
+    var mFail = line.match(/Failed ([\w_-]+)\/([\w_-]+):/);
     if (mFail) setApiStatus(resolveApiId(mFail[2]), 'failed');
   }
 

@@ -81,7 +81,6 @@ def main() -> None:
         removed = purge_files()
         for r in removed:
             print(f"  ✓ Removed {r}")
-        print("\n  ⚠️  Vima server not reachable — restart it for the UI to reflect the clean state.")
 
     print("\nDone. Re-run provisioning to restore keys.")
 
