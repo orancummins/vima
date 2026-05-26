@@ -1492,8 +1492,9 @@ def config_export():
 
 @app.route("/config/import", methods=["POST"])
 def config_import():
-    """Import a vima-config.zip — overwrites .env and key files."""
-    import zipfile, io as _io
+    """Import a vima-config.zip or upload_bundle_xxx.zip — overwrites .env and key files."""
+    import zipfile, io as _io, tempfile, importlib.util as _ilu
+    from pathlib import Path as _Path
 
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
@@ -1501,38 +1502,85 @@ def config_import():
     try:
         data = fobj.read()
         with zipfile.ZipFile(_io.BytesIO(data)) as zf:
-            # Normalise to forward slashes (handles zips created on Windows)
             names = zf.namelist()
-            norm = {n: n.replace("\\", "/") for n in names}
+            norm_names = {n: n.replace("\\", "/") for n in names}
+            norm_set = set(norm_names.values())
 
-            # Validate: must contain config/.env or config/keys/*
-            valid_entries = [v for v in norm.values()
-                             if v.startswith("config/.env") or v.startswith("config/keys/")]
-            if not valid_entries:
-                return jsonify({"error": "Zip does not contain a valid vima config layout"}), 400
+            # ----------------------------------------------------------------
+            # Detect upload_bundle_xxx format: has manifest.json + certs/ dir
+            # ----------------------------------------------------------------
+            is_bundle_format = (
+                any(v == "manifest.json" for v in norm_set) and
+                any(v.startswith("certs/") for v in norm_set)
+            )
 
-            os.makedirs(_KEYS_DIR, exist_ok=True)
-            imported = []
-            for orig, name in norm.items():
-                # .env
-                if name == "config/.env":
-                    env_text = zf.read(orig).decode("utf-8")
-                    with open(_ENV_PATH, "w", encoding="utf-8") as fh:
-                        fh.write(env_text)
-                    load_dotenv(_ENV_PATH, override=True)
-                    imported.append(".env")
-                # key files
-                elif name.startswith("config/keys/") and not name.endswith("/"):
-                    fname = name.split("/")[-1]
-                    if not fname:
-                        continue
-                    ext = os.path.splitext(fname)[1].lower()
-                    if ext not in (".p12", ".pkcs12", ".pem"):
-                        continue
-                    dest = os.path.join(_KEYS_DIR, fname)
-                    with open(dest, "wb") as fh:
-                        fh.write(zf.read(orig))
-                    imported.append("config/keys/" + fname)
+            if is_bundle_format:
+                # Extract certs/* to a temp directory so export_vima_config.py
+                # can process them (it expects the same normalized-dir layout)
+                with tempfile.TemporaryDirectory() as _tmp:
+                    norm_dir = _Path(_tmp) / "normalized"
+                    norm_dir.mkdir()
+                    for orig, name in norm_names.items():
+                        if name.startswith("certs/") and not name.endswith("/"):
+                            fname = name.split("/", 1)[-1]
+                            if fname:
+                                with open(norm_dir / fname, "wb") as fh:
+                                    fh.write(zf.read(orig))
+
+                    # Determine keystore password: reuse any existing value in .env
+                    _password = "foobar!!"
+                    if os.path.isfile(_ENV_PATH):
+                        import re as _re
+                        _env_text = open(_ENV_PATH, encoding="utf-8").read()
+                        _m = _re.search(r"_SIGNING_KEY_PASSWORD=(.+)", _env_text)
+                        if _m:
+                            _password = _m.group(1).strip()
+
+                    # Convert to vima-config.zip using export_vima_config.py
+                    _tool_dir = os.path.join(os.path.dirname(__file__),
+                                             "tools", "mcd-key-automation")
+                    _ec_file = os.path.join(_tool_dir, "export_vima_config.py")
+                    _spec = _ilu.spec_from_file_location("export_vima_config", _ec_file)
+                    _mod = _ilu.module_from_spec(_spec)
+                    _spec.loader.exec_module(_mod)
+
+                    _out_zip = _Path(_tmp) / "vima-config.zip"
+                    _mod.build_vima_config_zip(norm_dir, _password, _out_zip)
+                    data = _out_zip.read_bytes()
+
+            # ----------------------------------------------------------------
+            # Import vima-config layout (config/.env + config/keys/*)
+            # ----------------------------------------------------------------
+            with zipfile.ZipFile(_io.BytesIO(data)) as zf2:
+                names2 = zf2.namelist()
+                norm2 = {n: n.replace("\\", "/") for n in names2}
+
+                valid_entries = [v for v in norm2.values()
+                                 if v.startswith("config/.env") or v.startswith("config/keys/")]
+                if not valid_entries:
+                    return jsonify({"error": "Zip does not contain a valid vima config layout"}), 400
+
+                os.makedirs(_KEYS_DIR, exist_ok=True)
+                imported = []
+                for orig, name in norm2.items():
+                    if name == "config/.env":
+                        env_text = zf2.read(orig).decode("utf-8")
+                        with open(_ENV_PATH, "w", encoding="utf-8") as fh:
+                            fh.write(env_text)
+                        load_dotenv(_ENV_PATH, override=True)
+                        imported.append(".env")
+                    elif name.startswith("config/keys/") and not name.endswith("/"):
+                        fname = name.split("/")[-1]
+                        if not fname:
+                            continue
+                        ext = os.path.splitext(fname)[1].lower()
+                        if ext not in (".p12", ".pkcs12", ".pem"):
+                            continue
+                        dest = os.path.join(_KEYS_DIR, fname)
+                        with open(dest, "wb") as fh:
+                            fh.write(zf2.read(orig))
+                        imported.append("config/keys/" + fname)
+
         return jsonify({"imported": imported})
     except zipfile.BadZipFile:
         return jsonify({"error": "Not a valid zip file"}), 400
