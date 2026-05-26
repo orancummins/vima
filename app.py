@@ -33,6 +33,10 @@ from simulator.switcher import is_simulated  # noqa: E402
 
 app = Flask(__name__)
 
+# Suppress Werkzeug's per-request stdout log lines ("GET /... 200")
+import logging as _logging
+_logging.getLogger("werkzeug").setLevel(_logging.ERROR)
+
 # Register the in-process Vima Chat blueprint at /chat. Vima Chat is no
 # longer a standalone service — it lives inside Mastercard Solution Studio.
 from chat.app import chat_bp  # noqa: E402
@@ -62,7 +66,8 @@ def _patched_send(self, prepared_request, **kwargs):
     is_simulator = "/api-sim/" in url
     is_external = is_simulator or not any(h in url for h in _INTERNAL_HOSTS)
 
-    if not is_external or os.environ.get("LOG_API_CALLS", "false").lower() != "true":
+    # Skip internal-only requests (no capturing needed)
+    if not is_external:
         return _orig_send(self, prepared_request, **kwargs)
 
     global _api_call_seq
