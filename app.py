@@ -1401,8 +1401,14 @@ def _write_env_values(updates: dict) -> None:
                 continue
         new_lines.append(line)
 
+    # Section headers to prepend when adding a key for the first time
+    _SECTION_HEADERS = {
+        "ANTHROPIC_API_KEY": "\n# CLAUDE / VIMA CHAT\n",
+    }
     for key, val in updates.items():
         if key not in written:
+            if key in _SECTION_HEADERS:
+                new_lines.append(_SECTION_HEADERS[key])
             new_lines.append(f"{key}={val}\n")
 
     with open(_ENV_PATH, "w", encoding="utf-8") as fh:
