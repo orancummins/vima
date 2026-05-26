@@ -1639,6 +1639,27 @@ projects:
         if rc is not None and rc != 0:
             q.put(f"ERROR: provisioner exited with code {rc}")
 
+        # If the provisioner subprocess didn't produce a zip (e.g. build_vima_config_zip
+        # raised a non-fatal exception inside the subprocess), fall back to building it
+        # directly from the Flask process so we still get a .env on Windows.
+        if not os.path.isfile(zip_path):
+            q.put("ℹ️  vima-config.zip not produced by provisioner — attempting direct build…")
+            try:
+                import importlib.util as _ilu
+                from pathlib import Path as _Path
+                _ec_file = os.path.join(tool_dir, "export_vima_config.py")
+                _spec = _ilu.spec_from_file_location("export_vima_config", _ec_file)
+                _mod = _ilu.module_from_spec(_spec)
+                _spec.loader.exec_module(_mod)
+                _norm_dir = _Path(tool_dir) / "temp" / "normalized"
+                os.makedirs(os.path.join(tool_dir, "output"), exist_ok=True)
+                _result = _mod.build_vima_config_zip(_norm_dir, password, _Path(zip_path))
+                _included = len(_result.get("apis", []))
+                _skipped = _result.get("skipped", [])
+                q.put(f"Direct build: {_included} API(s) included" + (f", skipped: {_skipped}" if _skipped else ""))
+            except Exception as _fb_exc:
+                q.put(f"Direct build also failed: {_fb_exc}")
+
         if os.path.isfile(zip_path):
             try:
                 import zipfile, io as _io
