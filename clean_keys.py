@@ -39,15 +39,16 @@ def purge_via_server() -> bool:
 
 
 def purge_files() -> list[str]:
-    """Directly remove key files and .env. Returns list of removed items."""
+    """Directly remove key files and .env files. Returns list of removed items."""
     removed = []
     if KEYS_DIR.exists():
         shutil.rmtree(KEYS_DIR)
         KEYS_DIR.mkdir()   # recreate empty dir so the app doesn't error
         removed.append(str(KEYS_DIR))
-    if ENV_FILE.exists():
-        ENV_FILE.unlink()
-        removed.append(str(ENV_FILE))
+    for env_file in [ENV_FILE, ENV_FILE.parent / ".env.TEMP"]:
+        if env_file.exists():
+            env_file.unlink()
+            removed.append(str(env_file))
     return removed
 
 
