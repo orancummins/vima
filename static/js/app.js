@@ -4713,7 +4713,7 @@
       if (raw === '__DONE__') { es.close(); onProvisionDone(); return; }
       if (raw === '__IMPORT_COMPLETE__') { appendLog('✅ Keys imported — Vima is ready!'); return; }
       if (raw.startsWith('__IMPORT_ERROR__')) { appendLog('⚠️ Import warning: ' + raw); return; }
-      if (raw === '__NO_ZIP__') { appendLog('⚠️ vima-config.zip not found — import manually.'); return; }
+      if (raw === '__NO_ZIP__') { appendLog('⚠️ Provisioning completed but no vima-config.zip was produced. Check the log above for errors, then import keys manually.'); return; }
       var line = raw;
       try { line = JSON.parse(raw); } catch (_) {}
       if (line) { parseLogLine(line); appendLog(line); }
