@@ -72,6 +72,11 @@ async def run(config_path: Path, *, dry_run: bool = False) -> Path | None:
 
     # Also build a vima-config.zip ready for /config/import
     try:
+        import sys as _sys
+        from pathlib import Path as _Path
+        _tool_root = _Path(__file__).resolve().parents[1]
+        if str(_tool_root) not in _sys.path:
+            _sys.path.insert(0, str(_tool_root))
         from export_vima_config import build_vima_config_zip
         vima_zip = OUTPUT_DIR / "vima-config.zip"
         result = build_vima_config_zip(WORKSPACE / "normalized", config.key_password, vima_zip)

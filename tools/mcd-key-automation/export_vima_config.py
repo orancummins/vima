@@ -25,36 +25,72 @@ import zipfile
 from pathlib import Path
 from typing import Optional
 
+# Make the vima repo importable so we can read the canonical API catalog.
+_HERE = Path(__file__).resolve().parent
+if str(_HERE / "app") not in sys.path:
+    sys.path.insert(0, str(_HERE))
+from app._vima_catalog import (  # noqa: E402
+    AUTH_OAUTH1,
+    AUTH_OAUTH1_ENC,
+    AUTH_OAUTH2,
+    iter_ordered,
+)
+
 
 # ---------------------------------------------------------------------------
-# API mapping: mcd-key-automation api_id → vima .env prefix + key filenames
+# API mapping: mcd-key-automation api_id (legacy) → vima .env prefix + key filenames
 # ---------------------------------------------------------------------------
-
+# Built from apis.catalog so every API is described in exactly one place.
 # Each entry: (vima_prefix, p12_dest_name, pem_env_var | None, pem_dest_name | None)
-API_MAP = {
-    "binlookup":  ("BINLOOKUP",       "binlookup.p12",       None,                       None),
-    "places":     ("PLACES",          "places.p12",          None,                       None),
-    "easysavings":("EASYSAVINGS",     "easysavings.p12",     None,                       None),
-    "clarity":    ("CONSUMERCLARITY", "consumerclarity.p12", None,                       None),
-    "priceless":  ("PRICELESS",       "priceless.p12",       None,                       None),
-    "txnotify":   ("TXNOTIFY",        "txnotify.p12",        None,                       None),
-    "consent":    ("CONSENT",         "consent.p12",         "CONSENT_ENCRYPTION_KEY_PATH", "consent-clientenc.pem"),
-    "ofpub":      ("OFPUB",           "ofpub.p12",           None,                       None),
-    "ofmc":       ("OFMC",            "ofmc.p12",            None,                       None),
-    "eligibility":("ELIGIBILITY",     "eligibility.p12",     None,                       None),
-    "bces":       ("BCES",            "bces.p12",            "BCES_ENCRYPTION_CERT_PATH", "bces-clientenc.pem"),
-    # ofin is OAuth 2.0 — handled separately
-}
 
-OFIN_ID = "ofin"
+API_MAP: dict[str, tuple[str, str, Optional[str], Optional[str]]] = {}
+OFIN_IDS: list[str] = []  # all aliases (legacy + canonical) to probe for OFin artifacts
+OFIN_PREFIX: str = "OPEN_FINANCE"
+
+for _entry in iter_ordered():
+    _aliases = [_entry.id]
+    if _entry.legacy_id and _entry.legacy_id != _entry.id:
+        _aliases.append(_entry.legacy_id)
+    if _entry.auth == AUTH_OAUTH2:
+        # OAuth 2.0 (Open Finance) is handled in its own block below.
+        OFIN_IDS = _aliases
+        OFIN_PREFIX = _entry.env_prefix
+        continue
+    _p12_dest = f"{_entry.id}.p12"
+    if _entry.auth == AUTH_OAUTH1_ENC:
+        _pem_env = f"{_entry.env_prefix}_ENCRYPTION_KEY_PATH"
+        _pem_dest = f"{_entry.id}-clientenc.pem"
+    else:
+        _pem_env = None
+        _pem_dest = None
+    # Register under both ids so artifacts produced by old or new YAML configs resolve.
+    for _alias in _aliases:
+        API_MAP[_alias] = (_entry.env_prefix, _p12_dest, _pem_env, _pem_dest)
 
 
 def _newest(paths: list[Path]) -> Optional[Path]:
     return max(paths, key=lambda p: p.stat().st_mtime) if paths else None
 
 
+def _aliases_for_entry(entry) -> list[str]:
+    out = [entry.id]
+    if entry.legacy_id and entry.legacy_id != entry.id:
+        out.append(entry.legacy_id)
+    return out
+
+
 def _find_credentials(api_id: str, normalized: Path) -> Optional[Path]:
     return _newest(list(normalized.glob(f"*-{api_id}-signing-v1-credentials.json")))
+
+
+def _find_credentials_any(aliases: list[str], normalized: Path) -> tuple[Optional[Path], Optional[str]]:
+    """Return (path, alias_that_matched) for the newest credentials JSON across all aliases."""
+    best: tuple[Optional[Path], Optional[str]] = (None, None)
+    for alias in aliases:
+        p = _find_credentials(alias, normalized)
+        if p and (best[0] is None or p.stat().st_mtime > best[0].stat().st_mtime):
+            best = (p, alias)
+    return best
 
 
 def _find_zip(api_id: str, normalized: Path, cred_path: Optional[Path]) -> Optional[Path]:
@@ -98,27 +134,33 @@ def build_vima_config_zip(
     key_files: dict[str, bytes] = {}  # dest_name → bytes
 
     # -----------------------------------------------------------------------
-    # OAuth 1.0a APIs
+    # OAuth 1.0a APIs — walk catalog, probe each entry's aliases for artifacts
     # -----------------------------------------------------------------------
-    for api_id, (prefix, p12_dest, pem_env, pem_dest) in API_MAP.items():
-        cred_path = _find_credentials(api_id, normalized_dir)
-        if not cred_path:
-            included["skipped"].append(f"{api_id} (no credentials JSON)")
+    for entry in iter_ordered():
+        if entry.auth == AUTH_OAUTH2:
+            continue  # handled below
+        aliases = _aliases_for_entry(entry)
+        cred_path, matched_alias = _find_credentials_any(aliases, normalized_dir)
+        if not cred_path or matched_alias is None:
+            included["skipped"].append(f"{entry.id} (no credentials JSON)")
             continue
+
+        prefix = entry.env_prefix
+        p12_dest = f"{entry.id}.p12"
 
         creds = json.loads(cred_path.read_text())
         consumer_key = creds.get("consumer_key", "")
-        key_alias = creds.get("key_alias", api_id)
+        key_alias = creds.get("key_alias", matched_alias)
 
-        zip_path = _find_zip(api_id, normalized_dir, cred_path)
+        zip_path = _find_zip(matched_alias, normalized_dir, cred_path)
         if not zip_path:
-            included["skipped"].append(f"{api_id} (no signing ZIP)")
+            included["skipped"].append(f"{entry.id} (no signing ZIP)")
             continue
 
         try:
             p12_bytes, _ = _extract_p12_bytes(zip_path)
         except ValueError as e:
-            included["skipped"].append(f"{api_id} ({e})")
+            included["skipped"].append(f"{entry.id} ({e})")
             continue
 
         key_files[p12_dest] = p12_bytes
@@ -133,8 +175,10 @@ def build_vima_config_zip(
         ]
 
         # Optional client encryption PEM
-        if pem_env and pem_dest:
-            pem_path = _find_pem(api_id, normalized_dir, cred_path)
+        if entry.auth == AUTH_OAUTH1_ENC:
+            pem_env = f"{prefix}_ENCRYPTION_KEY_PATH"
+            pem_dest = f"{entry.id}-clientenc.pem"
+            pem_path = _find_pem(matched_alias, normalized_dir, cred_path)
             if pem_path:
                 key_files[pem_dest] = pem_path.read_bytes()
                 env_lines.append(f"{pem_env}=config/keys/{pem_dest}")
@@ -142,34 +186,38 @@ def build_vima_config_zip(
                 env_lines.append(f"{pem_env}=")
 
         env_lines.append("")
-        included["apis"].append(api_id)
+        included["apis"].append(entry.id)
 
     # -----------------------------------------------------------------------
     # Open Finance (OAuth 2.0 / Finicity)
     # -----------------------------------------------------------------------
-    cred_path = _find_credentials(OFIN_ID, normalized_dir)
-    if cred_path:
+    ofin_entry = next((e for e in iter_ordered() if e.auth == AUTH_OAUTH2), None)
+    cred_path = None
+    matched_alias = None
+    if ofin_entry:
+        cred_path, matched_alias = _find_credentials_any(_aliases_for_entry(ofin_entry), normalized_dir)
+    if cred_path and ofin_entry:
         creds = json.loads(cred_path.read_text())
         partner_id = creds.get("partner_id", "")
         app_key    = creds.get("app_key", "")
         secret     = creds.get("secret", "")
 
-        pem_path = _find_pem(OFIN_ID, normalized_dir, cred_path)
+        pem_path = _find_pem(matched_alias, normalized_dir, cred_path)
         env_lines += [
             "# OPEN FINANCE (Finicity OAuth 2.0)",
-            f"PARTNER_ID={partner_id}",
-            f"PARTNER_SECRET={secret}",
-            f"APP_KEY={app_key}",
-            "API_BASE_URL=https://api.finicity.com",
+            f"{ofin_entry.env_prefix}_PARTNER_ID={partner_id}",
+            f"{ofin_entry.env_prefix}_PARTNER_SECRET={secret}",
+            f"{ofin_entry.env_prefix}_APP_KEY={app_key}",
+            f"{ofin_entry.env_prefix}_API_BASE_URL=https://api.finicity.com",
         ]
         if pem_path:
-            pem_dest = "ofin-sig-verification.pem"
+            pem_dest = f"{ofin_entry.id}-sig-verification.pem"
             key_files[pem_dest] = pem_path.read_bytes()
-            env_lines.append(f"OFIN_SIG_KEY_PATH=config/keys/{pem_dest}")
+            env_lines.append(f"{ofin_entry.env_prefix}_SIG_KEY_PATH=config/keys/{pem_dest}")
         env_lines.append("")
-        included["apis"].append(OFIN_ID)
-    else:
-        included["skipped"].append(f"{OFIN_ID} (no credentials JSON)")
+        included["apis"].append(ofin_entry.id)
+    elif ofin_entry:
+        included["skipped"].append(f"{ofin_entry.id} (no credentials JSON)")
 
     # -----------------------------------------------------------------------
     # CLAUDE / VIMA CHAT — preserve existing key if present on disk
