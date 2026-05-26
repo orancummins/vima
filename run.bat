@@ -41,16 +41,21 @@ REM ── Set up key-automation tool (once, on first run) ───────
 set TOOL_DIR=%SCRIPT_DIR%tools\mcd-key-automation
 set TOOL_VENV=%TOOL_DIR%\.venv
 if not exist "%TOOL_VENV%\Scripts\python.exe" (
-    echo Setting up API key automation tool (first run only^)...
+    echo.
+    echo Setting up API key automation tool ^(first run only^)...
+    echo   [1/3] Creating Python virtual environment...
     if exist "%SCRIPT_DIR%.venv\Scripts\python.exe" (
         "%SCRIPT_DIR%.venv\Scripts\python.exe" -m venv "%TOOL_VENV%"
     ) else (
         py -m venv "%TOOL_VENV%"
     )
-    "%TOOL_VENV%\Scripts\pip.exe" install --use-feature=truststore -q -e "%TOOL_DIR%" 2>nul
-    echo Installing browser for key automation...
+    echo   [2/3] Installing dependencies ^(this may take a minute^)...
+    "%TOOL_VENV%\Scripts\pip.exe" install --use-feature=truststore -e "%TOOL_DIR%"
+    echo   [3/3] Installing browser for key automation ^(downloading, please wait^)...
     "%TOOL_VENV%\Scripts\playwright.exe" install chromium
+    echo.
     echo API key automation tool ready.
+    echo.
 )
 
 REM Start vima (Vima Chat is now embedded in-process at /chat)
