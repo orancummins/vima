@@ -1,7 +1,7 @@
 environment: sandbox
 organization: mastercard
 
-login_url: https://developer.mastercard.com/account/sign-in
+login_url: https://developer.mastercard.com/account/log-in
 dashboard_url_pattern: "**/dashboard**"
 
 projects:

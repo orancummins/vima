@@ -7,7 +7,7 @@ from __future__ import annotations
 
 
 class LoginSelectors:
-    sign_in_link = "a[href*='sign-in']"
+    sign_in_link = "a[href*='log-in']"
     email_input = "input[name='email']"
     password_input = "input[name='password']"
     submit_button = "button[type='submit']"

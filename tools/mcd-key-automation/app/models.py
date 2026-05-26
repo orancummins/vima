@@ -36,7 +36,7 @@ class ProjectSpec(BaseModel):
 class AppConfig(BaseModel):
     environment: Environment
     organization: str = "mastercard"
-    login_url: str = "https://developer.mastercard.com/account/sign-in"
+    login_url: str = "https://developer.mastercard.com/account/log-in"
     dashboard_url_pattern: str = "**/dashboard**"
     projects: list[ProjectSpec] = Field(default_factory=list)
 
