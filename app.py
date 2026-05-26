@@ -1585,18 +1585,10 @@ def provision_start():
         return jsonify({"error": "No APIs selected"}), 400
 
     tool_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools", "mcd-key-automation")
+    # Support both Unix and Windows venv layouts
     python_bin = os.path.join(tool_dir, ".venv", "bin", "python")
-
-    # Preflight: ensure the tool's virtualenv exists
     if not os.path.isfile(python_bin):
-        return jsonify({
-            "error": (
-                f"mcd-key-automation virtualenv not found at {python_bin}. "
-                "Run: cd tools/mcd-key-automation && python -m venv .venv && "
-                ".venv/bin/pip install -r requirements.txt && "
-                ".venv/bin/playwright install chromium"
-            )
-        }), 500
+        python_bin = os.path.join(tool_dir, ".venv", "Scripts", "python.exe")
 
     projects_yaml = "\n".join(
         f"  - name: {api}\n    apis: [{api}]" for api in selected_apis

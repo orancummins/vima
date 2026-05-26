@@ -28,6 +28,18 @@ if [[ -f "$SCRIPT_DIR/requirements.txt" ]]; then
   pip install -q -r "$SCRIPT_DIR/requirements.txt"
 fi
 
+# ── Set up key-automation tool (once, on first run) ───────────────────
+TOOL_DIR="$SCRIPT_DIR/tools/mcd-key-automation"
+TOOL_VENV="$TOOL_DIR/.venv"
+if [[ ! -f "$TOOL_VENV/bin/python" ]]; then
+  echo "Setting up API key automation tool (first run only)..."
+  python3 -m venv "$TOOL_VENV"
+  "$TOOL_VENV/bin/pip" install -q -e "$TOOL_DIR"
+  echo "Installing browser for key automation..."
+  "$TOOL_VENV/bin/playwright" install chromium
+  echo "API key automation tool ready."
+fi
+
 # ── Stop mode ─────────────────────────────────────────────────────────
 if [[ "${1:-}" == "stop" ]]; then
   kill_port $VIMA_PORT

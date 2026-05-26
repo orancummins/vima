@@ -37,6 +37,22 @@ if exist "%SCRIPT_DIR%.venv\Scripts\python.exe" (
     py -m pip install --use-feature=truststore -r requirements.txt --quiet 2>nul
 )
 
+REM ── Set up key-automation tool (once, on first run) ──────────────────
+set TOOL_DIR=%SCRIPT_DIR%tools\mcd-key-automation
+set TOOL_VENV=%TOOL_DIR%\.venv
+if not exist "%TOOL_VENV%\Scripts\python.exe" (
+    echo Setting up API key automation tool (first run only^)...
+    if exist "%SCRIPT_DIR%.venv\Scripts\python.exe" (
+        "%SCRIPT_DIR%.venv\Scripts\python.exe" -m venv "%TOOL_VENV%"
+    ) else (
+        py -m venv "%TOOL_VENV%"
+    )
+    "%TOOL_VENV%\Scripts\pip.exe" install --use-feature=truststore -q -e "%TOOL_DIR%" 2>nul
+    echo Installing browser for key automation...
+    "%TOOL_VENV%\Scripts\playwright.exe" install chromium
+    echo API key automation tool ready.
+)
+
 REM Start vima (Vima Chat is now embedded in-process at /chat)
 echo Starting Mastercard Solution Studio on http://127.0.0.1:%VIMA_PORT%
 if exist "%SCRIPT_DIR%.venv\Scripts\python.exe" (
