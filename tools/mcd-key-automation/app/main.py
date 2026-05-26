@@ -11,7 +11,7 @@ import typer
 from loguru import logger
 
 from app import orchestrator
-from app.api_env_map import ENC_KEY_VAR, ENV_PREFIX
+from app._vima_catalog import encryption_env_var, env_prefix_for
 from app.config_loader import load_config
 
 app = typer.Typer(add_completion=False, help="Mastercard Developers key automation.")
@@ -103,9 +103,9 @@ def deploy(
     for project in cfg.projects:
         for api_spec in project.normalised_apis():
             api = api_spec.name
-            prefix = ENV_PREFIX.get(api, api.upper())
+            prefix = env_prefix_for(api)
 
-            # OAuth 2.0 (ofin) is handled with its own variable names.
+            # OAuth 2.0 (ofin / Open Finance) is handled with its own variable names.
             if api == "ofin":
                 creds_file = _find_artifact(normalized, project.name, api, ("json",))
                 pem_file = _find_artifact(normalized, project.name, api, ("pem", "zip"))
@@ -113,14 +113,14 @@ def deploy(
                     typer.echo(f"⚠️  No credentials.json for {project.name}/{api}", err=True)
                     continue
                 creds = json.loads(creds_file.read_text())
-                lines.append(f"# Mastercard Open Finance (ofin) — project {project.name}")
-                lines.append(f"PARTNER_ID={creds.get('partner_id', '')}")
-                lines.append(f"PARTNER_SECRET={creds.get('secret', '')}")
-                lines.append(f"APP_KEY={creds.get('app_key', '')}")
+                lines.append(f"# Mastercard Open Finance — project {project.name}")
+                lines.append(f"{prefix}_PARTNER_ID={creds.get('partner_id', '')}")
+                lines.append(f"{prefix}_PARTNER_SECRET={creds.get('secret', '')}")
+                lines.append(f"{prefix}_APP_KEY={creds.get('app_key', '')}")
                 if pem_file:
                     deployed_pem = keys_dir / f"{api}-sig.pem"
                     deployed_pem.write_bytes(pem_file.read_bytes())
-                    lines.append(f"OFIN_SIGNATURE_KEY_PATH=config/keys/{deployed_pem.name}")
+                    lines.append(f"{prefix}_SIG_KEY_PATH=config/keys/{deployed_pem.name}")
                 lines.append("")
                 deployed[api] = {"creds": str(creds_file)}
                 continue
@@ -149,9 +149,10 @@ def deploy(
             lines.append(f"{prefix}_SIGNING_KEY_ALIAS={key_alias}")
             lines.append(f"{prefix}_SIGNING_KEY_PASSWORD={cfg.key_password}")
             lines.append(f"{prefix}_ENV=sandbox")
-            if api in ENC_KEY_VAR:
+            enc_var = encryption_env_var(api)
+            if enc_var:
                 lines.append(
-                    f"# TODO: {ENC_KEY_VAR[api]}=config/keys/{api}-enc.pem  "
+                    f"# TODO: {enc_var}=config/keys/{api}-enc.pem  "
                     f"(download manually from portal — not yet automated)"
                 )
             lines.append("")
