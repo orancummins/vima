@@ -1,6 +1,8 @@
 """Login page object."""
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 from loguru import logger
 from playwright.async_api import Page
 
@@ -30,7 +32,11 @@ class LoginPage:
         async def authenticated() -> bool:
             try:
                 url = self.page.url
-                return _LOGIN_PATH_FRAGMENT not in url and url.startswith("http")
+                host = urlparse(url).hostname or ""
+                return (
+                    _LOGIN_PATH_FRAGMENT not in url
+                    and host.endswith("developer.mastercard.com")
+                )
             except Exception:
                 return False
 
