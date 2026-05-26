@@ -1500,6 +1500,9 @@ def config_purge():
     return jsonify({"removed": removed, "env_vars_cleared": len(cleared)})
 
 
+_provision_jobs: dict = {}
+
+
 @app.route("/provision/status")
 def provision_status():
     has_env = os.path.isfile(_ENV_PATH)
