@@ -1511,13 +1511,6 @@ def provision_status():
 
 @app.route("/provision/start", methods=["POST"])
 def provision_start():
-    try:
-        return _provision_start_inner()
-    except Exception as exc:
-        return jsonify({"error": f"Internal error: {exc}"}), 500
-
-
-def _provision_start_inner():
     body = request.get_json(silent=True) or {}
     selected_apis = body.get("apis", [])
     password = body.get("password", "foobar!!")
