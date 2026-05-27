@@ -1287,7 +1287,9 @@ def config_get():
             "docs_url": g["docs_url"],
             "fields":   fields,
         })
-    return jsonify({"groups": groups})
+    resp = jsonify({"groups": groups})
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 @app.route("/config", methods=["POST"])
@@ -1509,7 +1511,9 @@ def provision_status():
     apis = api_registry.manifests()
     configured = sum(1 for a in apis if a.get("configured"))
     needs_setup = not has_env or configured == 0
-    return jsonify({"needs_setup": needs_setup, "configured": configured, "total": len(apis)})
+    resp = jsonify({"needs_setup": needs_setup, "configured": configured, "total": len(apis), "apis": apis})
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 @app.route("/provision/start", methods=["POST"])

@@ -4313,7 +4313,7 @@
     // ── Load config from server ──────────────────────────────────────────────
     function cfgLoad() {
       body.innerHTML = '<div class="cfg-loading">Loading configuration\u2026</div>';
-      fetch('/config')
+      fetch('/config', { cache: 'no-store' })
         .then(function (r) { return r.json(); })
         .then(function (data) {
           _groups = data.groups || [];
@@ -4662,7 +4662,7 @@
   // Fetch authoritative configured state for each selected API and update
   // its card accordingly. Called after provisioning finishes.
   function refreshCardStates(selectedIds) {
-    return fetch('/provision/status')
+    return fetch('/provision/status', { cache: 'no-store' })
       .then(function (r) { return r.json(); })
       .catch(function () { return null; })
       .then(function (data) {
