@@ -23,6 +23,7 @@ KEYS_DIR = ROOT / "config" / "keys"
 ENV_FILE = ROOT / "config" / ".env"
 ENV_TEMP = ROOT / "config" / ".env.TEMP"
 TOOL_WORKSPACE = ROOT / "tools" / "mcd-key-automation" / "temp"
+TOOL_OUTPUT = ROOT / "tools" / "mcd-key-automation" / "output"
 VIMA_URL = "http://localhost:9021/config/purge"
 
 
@@ -32,7 +33,7 @@ def confirm(prompt: str) -> bool:
 
 
 def remove_files() -> list[str]:
-    """Delete key files + .env files + tool workspace artifacts from disk."""
+    """Delete key files + .env files + tool workspace/output artifacts from disk."""
     removed = []
     if KEYS_DIR.exists():
         # Remove all contents but keep the directory (app expects it to exist).
@@ -53,6 +54,12 @@ def remove_files() -> list[str]:
         if d.exists():
             shutil.rmtree(d)
             removed.append(str(d))
+    # Remove output bundles/zips that contain key material.
+    if TOOL_OUTPUT.exists():
+        for child in TOOL_OUTPUT.iterdir():
+            if child.is_file() and child.suffix.lower() == ".zip":
+                child.unlink()
+                removed.append(str(child))
     return removed
 
 
@@ -83,6 +90,10 @@ def main() -> None:
         d = TOOL_WORKSPACE / tool_dir
         if d.exists() and any(d.iterdir()):
             targets.append(f"  • {d}/ (tool artifacts)")
+    if TOOL_OUTPUT.exists():
+        zips = [p for p in TOOL_OUTPUT.iterdir() if p.is_file() and p.suffix.lower() == ".zip"]
+        if zips:
+            targets.append(f"  • {TOOL_OUTPUT}/ ({len(zips)} bundle zip(s))")
 
     if not targets:
         print("Nothing to clean — no keys or .env file found.")

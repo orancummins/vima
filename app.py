@@ -1343,9 +1343,39 @@ def config_export():
     )
 
 
+def _merge_env_text(existing_text: str, new_text: str) -> str:
+    """Merge two .env file texts.
+
+    Values from new_text take precedence for keys that appear in both.
+    Keys that only exist in existing_text are appended so previously
+    configured APIs are not wiped when provisioning a subset.
+    """
+    import re as _re
+
+    _KEY_RE = _re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)=")
+
+    def _extract_keys(text: str) -> dict:
+        return {
+            m.group(1): line
+            for line in text.splitlines()
+            if (m := _KEY_RE.match(line.strip()))
+        }
+
+    existing_keys = _extract_keys(existing_text)
+    new_keys = _extract_keys(new_text)
+
+    merged_lines = list(new_text.splitlines())
+
+    extra = [line for key, line in existing_keys.items() if key not in new_keys]
+    if extra:
+        merged_lines += ["", "# Preserved from previous configuration"] + extra
+
+    return "\n".join(merged_lines)
+
+
 @app.route("/config/import", methods=["POST"])
 def config_import():
-    """Import a vima-config.zip or upload_bundle_xxx.zip — overwrites .env and key files."""
+    """Import a vima-config.zip or upload_bundle_xxx.zip — merges into existing .env."""
     import zipfile, io as _io, tempfile, importlib.util as _ilu
     from pathlib import Path as _Path
 
@@ -1417,7 +1447,12 @@ def config_import():
                 imported = []
                 for orig, name in norm2.items():
                     if name == "config/.env":
-                        env_text = zf2.read(orig).decode("utf-8")
+                        new_env_text = zf2.read(orig).decode("utf-8")
+                        if os.path.isfile(_ENV_PATH):
+                            existing = open(_ENV_PATH, encoding="utf-8").read()
+                            env_text = _merge_env_text(existing, new_env_text)
+                        else:
+                            env_text = new_env_text
                         with open(_ENV_PATH, "w", encoding="utf-8") as fh:
                             fh.write(env_text)
                         load_dotenv(_ENV_PATH, override=True)
