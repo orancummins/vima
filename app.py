@@ -1712,6 +1712,7 @@ def provision_stream(job_id):
                 continue
             if line is None:
                 yield "data: __DONE__\n\n"
+                yield ": end\n\n"  # flush keepalive so __DONE__ clears browser buffer
                 break
             # Send sentinel control strings raw; JSON-encode all other log lines
             if line in _SENTINELS or (isinstance(line, str) and line.startswith("__IMPORT_ERROR__")):

@@ -4711,10 +4711,12 @@
 
   function streamJob(jobId, selectedIds) {
     var es = new EventSource('/provision/stream/' + jobId);
+    var _provDone = false;
+
     es.onmessage = function (e) {
       var raw = e.data;
       // Sentinels are sent unquoted; regular log lines are JSON-encoded strings
-      if (raw === '__DONE__') { es.close(); onProvisionDone(selectedIds); return; }
+      if (raw === '__DONE__') { _provDone = true; es.close(); onProvisionDone(selectedIds); return; }
       if (raw === '__IMPORT_COMPLETE__') { appendLog('✅ Keys imported — Vima is ready!'); return; }
       if (raw.startsWith('__IMPORT_ERROR__')) { appendLog('⚠️ Import warning: ' + raw); return; }
       if (raw === '__NO_ZIP__') { appendLog('⚠️ Provisioning completed but no vima-config.zip was produced. Check the log above for errors, then import keys manually.'); return; }
@@ -4724,7 +4726,11 @@
     };
     es.onerror = function () {
       es.close();
-      appendLog('⚠️ Connection lost — check terminal for progress.');
+      if (!_provDone) {
+        // Connection dropped before __DONE__ reached the browser — still refresh
+        // card states from the server so cards don't stay stuck orange.
+        onProvisionDone(selectedIds);
+      }
     };
   }
 
