@@ -223,7 +223,7 @@ function esBrowse() {
   ES.redemption = null;
   esRender();
 
-  fetch("/usecases/easysavings/action", {
+  fetch("/usecases/easy_savings/action", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action: "browse", params: { bin: ES.bin, country: ES.country, language: ES.language } }),
@@ -252,7 +252,7 @@ function esRedeem(offerId) {
   ES.redemption = null;
   esRender();
 
-  fetch("/usecases/easysavings/action", {
+  fetch("/usecases/easy_savings/action", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action: "redeem", params: { bin: ES.bin, offer_id: offerId } }),

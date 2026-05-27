@@ -258,7 +258,7 @@ function clarityWire() {
     CLARITY.result = null;
     clarityRender();
     try {
-      const r = await fetch("/usecases/clarity/action", {
+      const r = await fetch("/usecases/consumer_clarity/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "lookup", params: { preset: CLARITY.presetKey } }),
