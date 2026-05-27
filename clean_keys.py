@@ -10,9 +10,14 @@ Files are always removed directly from disk so this works whether or not the
 Vima server is running. If the server happens to be running, we also POST
 /config/purge so the in-memory os.environ is cleared (no restart needed).
 
+After cleaning local keys, optionally deletes all 'SS-*' projects from the
+Mastercard Developers portal using Chrome automation.
+
 Safe to run at any time; idempotent if already clean.
 """
+import asyncio
 import shutil
+import subprocess
 import sys
 import urllib.request
 import urllib.error
@@ -96,32 +101,65 @@ def main() -> None:
             targets.append(f"  • {TOOL_OUTPUT}/ ({len(zips)} bundle zip(s))")
 
     if not targets:
-        print("Nothing to clean — no keys or .env file found.")
+        print("Nothing to clean locally — no keys or .env file found.")
+    else:
+        print("The following will be permanently deleted:")
+        for t in targets:
+            print(t)
+        print()
+
+        if not confirm("Are you sure you want to proceed?"):
+            print("Aborted.")
+            sys.exit(0)
+
+        print()
+
+        # Always delete from disk first — this works whether the server is running
+        # or not, and whether or not the server has the /config/purge endpoint.
+        removed = remove_files()
+        for r in removed:
+            print(f"  ✓ Removed {r}")
+
+        # If the server is running, ask it to drop in-memory env vars too so the
+        # UI reflects clean state without a restart. Silent if no server.
+        if notify_server():
+            print("  ✓ Notified running Vima server to clear in-memory env vars.")
+
+        print("\nLocal keys cleaned. Re-run provisioning to restore keys.")
+
+    # ----------------------------------------------------------------
+    # Optional: delete SS-* portal projects from Mastercard Developers
+    # ----------------------------------------------------------------
+    print()
+    if confirm("Also delete 'SS-*' projects from the Mastercard Developers portal? (opens Chrome)"):
+        _clean_portal_projects()
+
+
+def _clean_portal_projects() -> None:
+    """Launch Chrome automation to delete all SS-* portal projects."""
+    tool_dir = ROOT / "tools" / "mcd-key-automation"
+    script = tool_dir / "clean_portal_projects.py"
+    if not script.exists():
+        print(f"  ✗ Portal cleanup script not found: {script}")
         return
 
-    print("The following will be permanently deleted:")
-    for t in targets:
-        print(t)
-    print()
+    # Use the tool's venv python so playwright is available.
+    python_bin = tool_dir / ".venv" / "bin" / "python"
+    if not python_bin.exists():
+        python_bin = tool_dir / ".venv" / "Scripts" / "python.exe"
+    if not python_bin.exists():
+        print("  ✗ Tool venv not found. Run: cd tools/mcd-key-automation && python -m venv .venv && pip install -e .")
+        return
 
-    if not confirm("Are you sure you want to proceed?"):
-        print("Aborted.")
-        sys.exit(0)
-
-    print()
-
-    # Always delete from disk first — this works whether the server is running
-    # or not, and whether or not the server has the /config/purge endpoint.
-    removed = remove_files()
-    for r in removed:
-        print(f"  ✓ Removed {r}")
-
-    # If the server is running, ask it to drop in-memory env vars too so the
-    # UI reflects clean state without a restart. Silent if no server.
-    if notify_server():
-        print("  ✓ Notified running Vima server to clear in-memory env vars.")
-
-    print("\nDone. Re-run provisioning to restore keys.")
+    print("  Opening Chrome — log in if prompted, then wait for automation to finish.\n")
+    try:
+        subprocess.run(
+            [str(python_bin), str(script)],
+            cwd=str(tool_dir),
+            check=False,
+        )
+    except Exception as exc:
+        print(f"  ✗ Portal cleanup failed: {exc}")
 
 
 if __name__ == "__main__":
