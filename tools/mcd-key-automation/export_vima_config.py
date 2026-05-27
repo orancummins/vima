@@ -19,11 +19,19 @@ import argparse
 import io
 import json
 import os
+import re
 import sys
 import tempfile
 import zipfile
 from pathlib import Path
 from typing import Optional
+
+_SLUG_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _slug(value: str) -> str:
+    """Convert an API id to its hyphenated slug form as used in filenames."""
+    return _SLUG_RE.sub("-", value.lower()).strip("-")
 
 # Make the vima repo importable so we can read the canonical API catalog.
 _HERE = Path(__file__).resolve().parent
@@ -80,7 +88,8 @@ def _aliases_for_entry(entry) -> list[str]:
 
 
 def _find_credentials(api_id: str, normalized: Path) -> Optional[Path]:
-    return _newest(list(normalized.glob(f"*-{api_id}-signing-v1-credentials.json")))
+    slug = _slug(api_id)
+    return _newest(list(normalized.glob(f"*-{slug}-signing-v1-credentials.json")))
 
 
 def _find_credentials_any(aliases: list[str], normalized: Path) -> tuple[Optional[Path], Optional[str]]:
@@ -98,6 +107,8 @@ def _find_zip(api_id: str, normalized: Path, cred_path: Optional[Path]) -> Optio
         candidate = cred_path.parent / cred_path.name.replace("-credentials.json", ".zip")
         if candidate.exists():
             return candidate
+    slug = _slug(api_id)
+    return _newest(list(normalized.glob(f"*-{slug}-signing-v1.zip")))
     return _newest(list(normalized.glob(f"*-{api_id}-signing-v1.zip")))
 
 
@@ -106,7 +117,8 @@ def _find_pem(api_id: str, normalized: Path, cred_path: Optional[Path]) -> Optio
         candidate = cred_path.parent / cred_path.name.replace("-credentials.json", ".pem")
         if candidate.exists():
             return candidate
-    return _newest(list(normalized.glob(f"*-{api_id}-signing-v1.pem")))
+    slug = _slug(api_id)
+    return _newest(list(normalized.glob(f"*-{slug}-signing-v1.pem")))
 
 
 def _extract_p12_bytes(zip_path: Path) -> tuple[bytes, str]:
