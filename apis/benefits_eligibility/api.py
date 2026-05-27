@@ -29,13 +29,13 @@ _SANDBOX_BASE = "https://sandbox.api.mastercard.com/loyalty/eligibility"
 
 def _base() -> str:
     from simulator.switcher import sim_base_url
-    real = _PROD_BASE if os.environ.get("BENEFITS_BENEFITS_ELIGIBILITY_ENV", "sandbox").lower() == "production" else _SANDBOX_BASE
+    real = _PROD_BASE if os.environ.get("BENEFITS_ELIGIBILITY_ENV", "sandbox").lower() == "production" else _SANDBOX_BASE
     return sim_base_url("benefits_eligibility", real)
 
 
 def _configured() -> bool:
-    key  = os.environ.get("BENEFITS_BENEFITS_ELIGIBILITY_CONSUMER_KEY", "")
-    path = os.environ.get("BENEFITS_BENEFITS_ELIGIBILITY_SIGNING_KEY_PATH", "")
+    key  = os.environ.get("BENEFITS_ELIGIBILITY_CONSUMER_KEY", "")
+    path = os.environ.get("BENEFITS_ELIGIBILITY_SIGNING_KEY_PATH", "")
     return bool(key and key != "your-consumer-key-here" and path)
 
 
@@ -280,8 +280,8 @@ def _signed_request(
         return {
             "success": False,
             "error": (
-                "Benefits Eligibility is not configured. Set BENEFITS_BENEFITS_ELIGIBILITY_CONSUMER_KEY "
-                "and BENEFITS_BENEFITS_ELIGIBILITY_SIGNING_KEY_PATH in .env, then restart the server."
+                "Benefits Eligibility is not configured. Set BENEFITS_ELIGIBILITY_CONSUMER_KEY "
+                "and BENEFITS_ELIGIBILITY_SIGNING_KEY_PATH in .env, then restart the server."
             ),
         }
 
@@ -306,9 +306,9 @@ def _signed_request(
         import oauth1.authenticationutils as authutils
         from oauth1.oauth import OAuth
 
-        consumer_key = os.environ["BENEFITS_BENEFITS_ELIGIBILITY_CONSUMER_KEY"]
-        key_path     = os.environ["BENEFITS_BENEFITS_ELIGIBILITY_SIGNING_KEY_PATH"]
-        key_password = os.environ.get("BENEFITS_BENEFITS_ELIGIBILITY_SIGNING_KEY_PASSWORD", "keystorepassword")
+        consumer_key = os.environ["BENEFITS_ELIGIBILITY_CONSUMER_KEY"]
+        key_path     = os.environ["BENEFITS_ELIGIBILITY_SIGNING_KEY_PATH"]
+        key_password = os.environ.get("BENEFITS_ELIGIBILITY_SIGNING_KEY_PASSWORD", "keystorepassword")
 
         if not os.path.isabs(key_path):
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
