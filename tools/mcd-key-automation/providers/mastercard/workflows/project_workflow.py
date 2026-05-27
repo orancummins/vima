@@ -37,13 +37,38 @@ async def _capture_consumer_key(
     project: ProjectSpec,
     api_name: str,
     alias: str | None,
+    *,
+    retries: int = 4,
+    retry_delay_s: float = 4.0,
 ) -> Path | None:
-    """Return to sandbox and write a credentials.json with the consumer key for OAuth 1.0a."""
+    """Return to sandbox and write a credentials.json with the consumer key for OAuth 1.0a.
+
+    Retries up to ``retries`` times with a page reload between attempts — newly-created
+    projects occasionally take a few seconds for the portal to populate key rows.
+    """
+    import asyncio as _asyncio
     sandbox = SandboxPage(page)
     await sandbox.goto(uuid)
-    consumer_key = await sandbox.extract_consumer_key(alias=alias)
+    consumer_key: str | None = None
+    for attempt in range(1, retries + 1):
+        consumer_key = await sandbox.extract_consumer_key(alias=alias)
+        if consumer_key:
+            break
+        if attempt < retries:
+            logger.info(
+                "Key rows not yet visible for {}/{} (attempt {}/{}) — waiting {:.0f}s then reloading…",
+                project.name, api_name, attempt, retries, retry_delay_s,
+            )
+            await _asyncio.sleep(retry_delay_s)
+            await page.reload(wait_until="domcontentloaded")
+            try:
+                await page.wait_for_load_state("networkidle", timeout=5000)
+            except Exception:
+                pass
+            await _asyncio.sleep(2)
+
     if not consumer_key:
-        logger.warning("No consumer key captured for {}/{}", project.name, api_name)
+        logger.warning("No consumer key captured for {}/{} after {} attempts", project.name, api_name, retries)
         return None
     creds = {"consumer_key": consumer_key, "key_alias": alias}
     dest = dest_dir / f"{project.name}-{api_name}-credentials.json"
