@@ -46,6 +46,15 @@ _SPECIAL_BY_ID: dict[str, dict] = {
         "provision_type": "priceless",
         "api_selection": "Priceless Specials",
     },
+    # Transaction Notifications presents a Step 3 "Additional credentials"
+    # screen offering an optional Mastercard Encryption Key. Creating that key
+    # via the wizard suppresses the signing-key download and leaves the
+    # consumer key unreachable on the sandbox page. We click "Skip this step"
+    # and then add a signing key via the project's sandbox "Add project key"
+    # flow, the same way oauth1_enc_key APIs do.
+    "transaction_notifications": {
+        "provision_type": "oauth1_skip_step3",
+    },
 }
 
 

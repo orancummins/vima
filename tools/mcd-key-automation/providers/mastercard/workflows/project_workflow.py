@@ -167,6 +167,68 @@ async def _provision_oauth1_standard(
     return []
 
 
+async def _provision_oauth1_skip_step3(
+    page, dashboard: DashboardPage, portal_name: str,
+    dest_dir: Path, project: ProjectSpec, api_name: str,
+    alias: str, config: AppConfig,
+) -> list[Path]:
+    """
+    OAuth 1.0a where the wizard Step 3 ("Additional credentials") offers an
+    optional Mastercard Encryption Key we don't want. Clicking the encryption
+    "Create project" suppresses the signing-key download and leaves the
+    sandbox page with no extractable consumer key.
+
+    Flow:
+      Step 1 (name) → Proceed → Step 2 (signing alias+password) → Create project
+      → Step 3: click 'Skip this step' → lands on /project-details/.../sandbox
+      → sandbox: 'Add project key' wizard → download signing zip + extract consumer key
+
+    APIs: transaction_notifications
+    """
+    create_page = CreateProjectPage(page)
+    await create_page.wait_for_form()
+    await create_page.fill(project_name=portal_name, on_behalf_of_company=False)
+    await create_page.proceed()
+
+    result = await create_page.wait_for_confirmation_or_project_page()
+
+    if result == "step2_credentials":
+        await create_page.fill_step2_credentials(alias=alias, password=config.key_password)
+        await create_page.create_key_step2()
+        result = await create_page.wait_for_download_after_step2(
+            alias=alias, password=config.key_password, skip_step3=True,
+        )
+
+    extra_artifacts: list[Path] = []
+    if result == "download":
+        # Mastercard auto-generated an encryption .pem after we clicked Create
+        # on Step 3 without filling the encryption fields. Capture it, then
+        # navigate to the sandbox to add a signing key.
+        enc_pem = await create_page.download_key_file(
+            dest_dir=dest_dir, filename_hint=f"{project.name}-{api_name}-enc"
+        )
+        logger.info("Downloaded auto-generated encryption key: {}", enc_pem)
+        extra_artifacts.append(enc_pem)
+        uuid = await _get_uuid_after_creation(page, dashboard, portal_name)
+        if not uuid:
+            logger.error("oauth1_skip_step3: could not locate project UUID after download")
+            return extra_artifacts
+        signing = await _add_oauth_signing_key_via_sandbox(
+            page, uuid, dest_dir, project, api_name, alias, config
+        )
+        return extra_artifacts + signing
+
+    if result == "project_page":
+        uuid = page.url.rstrip("/").split("/project-details/")[-1].split("/")[0]
+        logger.info("Skipped Step 3 — adding signing key via sandbox ({})", uuid)
+        return await _add_oauth_signing_key_via_sandbox(
+            page, uuid, dest_dir, project, api_name, alias, config
+        )
+
+    logger.error("Unexpected result {!r} for oauth1_skip_step3 ({})", result, api_name)
+    return []
+
+
 async def _provision_oauth1_enc_key(
     page, dashboard: DashboardPage, portal_name: str,
     dest_dir: Path, project: ProjectSpec, api_name: str,
@@ -360,6 +422,11 @@ async def ensure_project_with_api(
 
     if ptype == "oauth1_standard":
         return await _provision_oauth1_standard(
+            page, dashboard, portal_name, dest_dir, project, api_name, alias, config
+        )
+
+    if ptype == "oauth1_skip_step3":
+        return await _provision_oauth1_skip_step3(
             page, dashboard, portal_name, dest_dir, project, api_name, alias, config
         )
 
