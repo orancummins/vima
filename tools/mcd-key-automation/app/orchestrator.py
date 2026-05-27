@@ -50,8 +50,6 @@ async def run(config_path: Path, *, dry_run: bool = False) -> Path | None:
                         await provider.attach_api(project, api_spec.name)
                         arts = await provider.download_keys(project, api_spec.name)
                         artifacts.extend(arts)
-                        if arts:
-                            logger.info("Provisioned: {}", api_spec.name)
                     except Exception as api_err:
                         logger.error(
                             "Failed {}/{}: {} — skipping, continuing with remaining APIs",

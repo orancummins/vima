@@ -4642,22 +4642,42 @@
     if (labelEl) labelEl.textContent = labels[status] || status;
   }
 
-  // ── Log line parser — extract per-API events ──────────────────────────────
+  // ── Log line parser — extract per-API start events (best-effort) ──────────
   function resolveApiId(rawId) {
     // rawId may be a legacy id (e.g. 'binlookup') or canonical id (e.g. 'bin_lookup').
     return legacyToId[rawId] || rawId;
   }
 
   function parseLogLine(line) {
+    // Only mark cards as "running" from logs — done/failed status is determined
+    // authoritatively by refreshCardStates() once provisioning completes, since
+    // log-line regexes are brittle across log format changes.
     var mStart = line.match(/Provisioning '([\w_-]+)'/);
-    if (mStart) setApiStatus(resolveApiId(mStart[1]), 'running');
+    if (mStart) {
+      var id = resolveApiId(mStart[1]);
+      if (_apiStatus[id] === 'pending') setApiStatus(id, 'running');
+    }
+  }
 
-    // "Provisioned: bin_lookup" — emitted by orchestrator after successful download
-    var mDone = line.match(/^Provisioned: ([\w_-]+)/);
-    if (mDone) setApiStatus(resolveApiId(mDone[1]), 'done');
-
-    var mFail = line.match(/Failed ([\w_-]+)\/([\w_-]+):/);
-    if (mFail) setApiStatus(resolveApiId(mFail[2]), 'failed');
+  // Fetch authoritative configured state for each selected API and update
+  // its card accordingly. Called after provisioning finishes.
+  function refreshCardStates(selectedIds) {
+    return fetch('/provision/status')
+      .then(function (r) { return r.json(); })
+      .catch(function () { return null; })
+      .then(function (data) {
+        if (!data || !Array.isArray(data.apis)) return;
+        var byId = {};
+        data.apis.forEach(function (a) { byId[a.id] = a; });
+        selectedIds.forEach(function (id) {
+          var entry = byId[id];
+          if (entry && entry.configured) {
+            setApiStatus(id, 'done');
+          } else {
+            setApiStatus(id, 'failed');
+          }
+        });
+      });
   }
 
   // ── Log append ─────────────────────────────────────────────────────────────
@@ -4684,17 +4704,17 @@
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (data.error) { appendLog('ERROR: ' + data.error); return; }
-        streamJob(data.job_id);
+        streamJob(data.job_id, selectedIds);
       })
       .catch(function (err) { appendLog('ERROR: ' + err); });
   }
 
-  function streamJob(jobId) {
+  function streamJob(jobId, selectedIds) {
     var es = new EventSource('/provision/stream/' + jobId);
     es.onmessage = function (e) {
       var raw = e.data;
       // Sentinels are sent unquoted; regular log lines are JSON-encoded strings
-      if (raw === '__DONE__') { es.close(); onProvisionDone(); return; }
+      if (raw === '__DONE__') { es.close(); onProvisionDone(selectedIds); return; }
       if (raw === '__IMPORT_COMPLETE__') { appendLog('✅ Keys imported — Vima is ready!'); return; }
       if (raw.startsWith('__IMPORT_ERROR__')) { appendLog('⚠️ Import warning: ' + raw); return; }
       if (raw === '__NO_ZIP__') { appendLog('⚠️ Provisioning completed but no vima-config.zip was produced. Check the log above for errors, then import keys manually.'); return; }
@@ -4708,17 +4728,21 @@
     };
   }
 
-  function onProvisionDone() {
-    var titleEl = document.getElementById('prov-progress-title');
-    var subtitleEl = document.getElementById('prov-progress-subtitle');
-    var activationNote = document.getElementById('prov-activation-note');
-    var footer = document.getElementById('prov-progress-footer');
-    if (titleEl) titleEl.textContent = 'Provisioning Complete!';
-    if (subtitleEl) subtitleEl.textContent = 'Your API keys have been provisioned and imported into Vima.';
-    if (activationNote) activationNote.style.display = '';
-    if (footer) footer.style.display = '';
-    appendLog('');
-    appendLog('🎉 Done! Click below to reload and start exploring.');
+  function onProvisionDone(selectedIds) {
+    // Refresh card states from authoritative server status before showing
+    // the "Provisioning Complete!" UI.
+    refreshCardStates(selectedIds || []).then(function () {
+      var titleEl = document.getElementById('prov-progress-title');
+      var subtitleEl = document.getElementById('prov-progress-subtitle');
+      var activationNote = document.getElementById('prov-activation-note');
+      var footer = document.getElementById('prov-progress-footer');
+      if (titleEl) titleEl.textContent = 'Provisioning Complete!';
+      if (subtitleEl) subtitleEl.textContent = 'Your API keys have been provisioned and imported into Vima.';
+      if (activationNote) activationNote.style.display = '';
+      if (footer) footer.style.display = '';
+      appendLog('');
+      appendLog('🎉 Done! Click below to reload and start exploring.');
+    });
   }
 
   // ── Wire up buttons ────────────────────────────────────────────────────────
