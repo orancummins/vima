@@ -2,11 +2,13 @@
 """clean_keys.py — Purge all provisioned API keys and the local .env file.
 
 Removes:
-  - config/keys/   (all .p12 and .pem key files)
-  - config/.env    (the generated environment file)
+  - config/keys/      (all .p12 and .pem key files)
+  - config/.env       (the generated environment file)
+  - config/.env.TEMP  (stale migration artifact, if present)
 
-Also clears the credential env vars from the running Vima server so the UI
-reflects the clean state immediately (no server restart required).
+Files are always removed directly from disk so this works whether or not the
+Vima server is running. If the server happens to be running, we also POST
+/config/purge so the in-memory os.environ is cleared (no restart needed).
 
 Safe to run at any time; idempotent if already clean.
 """
@@ -19,6 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).parent
 KEYS_DIR = ROOT / "config" / "keys"
 ENV_FILE = ROOT / "config" / ".env"
+ENV_TEMP = ROOT / "config" / ".env.TEMP"
 VIMA_URL = "http://localhost:9021/config/purge"
 
 
@@ -27,37 +30,47 @@ def confirm(prompt: str) -> bool:
     return answer == "y"
 
 
-def purge_via_server() -> bool:
-    """Ask the running Vima server to purge keys + env vars. Returns True on success."""
-    try:
-        req = urllib.request.Request(VIMA_URL, data=b"{}", method="POST",
-                                     headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=5) as resp:
-            return resp.status == 200
-    except urllib.error.URLError:
-        return False
-
-
-def purge_files() -> list[str]:
-    """Directly remove key files and .env files. Returns list of removed items."""
+def remove_files() -> list[str]:
+    """Delete key files + .env files from disk. Returns list of removed paths."""
     removed = []
     if KEYS_DIR.exists():
-        shutil.rmtree(KEYS_DIR)
-        KEYS_DIR.mkdir()   # recreate empty dir so the app doesn't error
-        removed.append(str(KEYS_DIR))
-    for env_file in [ENV_FILE, ENV_FILE.parent / ".env.TEMP"]:
+        # Remove all contents but keep the directory (app expects it to exist).
+        for child in KEYS_DIR.iterdir():
+            if child.is_file() or child.is_symlink():
+                child.unlink()
+            elif child.is_dir():
+                shutil.rmtree(child)
+        removed.append(f"{KEYS_DIR}/* (key files)")
+    for env_file in (ENV_FILE, ENV_TEMP):
         if env_file.exists():
             env_file.unlink()
             removed.append(str(env_file))
     return removed
 
 
+def notify_server() -> bool:
+    """Tell the running Vima server to clear cached env vars. Silent if no server."""
+    try:
+        req = urllib.request.Request(
+            VIMA_URL, data=b"{}", method="POST",
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=2) as resp:
+            return 200 <= resp.status < 300
+    except (urllib.error.URLError, ConnectionError, TimeoutError):
+        return False
+
+
 def main() -> None:
     targets = []
-    if KEYS_DIR.exists() and any(KEYS_DIR.iterdir()):
-        targets.append(f"  • {KEYS_DIR}/ ({len(list(KEYS_DIR.iterdir()))} files)")
+    if KEYS_DIR.exists():
+        files = [p for p in KEYS_DIR.iterdir() if p.is_file()]
+        if files:
+            targets.append(f"  • {KEYS_DIR}/ ({len(files)} files)")
     if ENV_FILE.exists():
         targets.append(f"  • {ENV_FILE}")
+    if ENV_TEMP.exists():
+        targets.append(f"  • {ENV_TEMP}")
 
     if not targets:
         print("Nothing to clean — no keys or .env file found.")
@@ -74,17 +87,19 @@ def main() -> None:
 
     print()
 
-    # Prefer calling the server so env vars are cleared from the running process too.
-    if purge_via_server():
-        print("  ✓ Server purged keys and cleared env vars — UI will reflect clean state immediately.")
-    else:
-        removed = purge_files()
-        for r in removed:
-            print(f"  ✓ Removed {r}")
+    # Always delete from disk first — this works whether the server is running
+    # or not, and whether or not the server has the /config/purge endpoint.
+    removed = remove_files()
+    for r in removed:
+        print(f"  ✓ Removed {r}")
+
+    # If the server is running, ask it to drop in-memory env vars too so the
+    # UI reflects clean state without a restart. Silent if no server.
+    if notify_server():
+        print("  ✓ Notified running Vima server to clear in-memory env vars.")
 
     print("\nDone. Re-run provisioning to restore keys.")
 
 
 if __name__ == "__main__":
     main()
-
