@@ -44,6 +44,19 @@ app.register_blueprint(chat_bp)
 app.secret_key = os.environ.get("SECRET_KEY", "vima-dev-secret")
 app.register_blueprint(sim_bp)
 
+# Eagerly trigger Open Finance customer seeding in the background so that
+# the state strip is populated by the time the user navigates to the tab.
+def _eager_seed_ofin():
+    try:
+        ofin_mod = api_registry.get_module("open_finance")
+        if ofin_mod and hasattr(ofin_mod, "_trigger_background_seed"):
+            ofin_mod._trigger_background_seed()
+    except Exception:
+        pass
+
+import threading as _threading
+_threading.Thread(target=_eager_seed_ofin, daemon=True, name="ofin-eager-seed").start()
+
 # In-memory store for TxPush events (last 50)
 _txpush_events: deque = deque(maxlen=50)
 

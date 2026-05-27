@@ -1030,8 +1030,19 @@
     });
   });
 
-  // Auto-load the default customer on page load
-  ficLoadByCustomerId(FIC_DEFAULT_CID);
+  // Auto-load: prefer the customer_id from Open Finance context; fall back to hardcoded default.
+  fetch("/explorer/open_finance/state")
+    .then(r => r.json())
+    .then(d => {
+      const cid = d && d.state && d.state.customer_id;
+      if (cid) {
+        if (_cidInput) _cidInput.value = cid;
+        ficLoadByCustomerId(cid);
+      } else {
+        ficLoadByCustomerId(FIC_DEFAULT_CID);
+      }
+    })
+    .catch(() => ficLoadByCustomerId(FIC_DEFAULT_CID));
 
 
 })();

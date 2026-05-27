@@ -6,6 +6,7 @@ function that dispatches an operation against the underlying client.
 from __future__ import annotations
 
 import os
+import threading
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -59,7 +60,12 @@ STATE: Dict[str, Any] = {
 }
 
 
-# ---------------------------------------------------------------------------
+def _trigger_background_seed() -> None:
+    """Start seeding customer_id in a daemon thread so it's ready quickly."""
+    t = threading.Thread(target=_seed_default_customer, daemon=True, name="ofin-seed")
+    t.start()
+
+
 # Operation manifest
 # ---------------------------------------------------------------------------
 # Each operation has:
@@ -1519,20 +1525,21 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 _seeded = False
+_seed_lock = threading.Lock()
 
 
 def _seed_default_customer() -> None:
-    """On first state access, seed customer_id.
+    """Seed customer_id from the Finicity API if not already set.
 
-    If OPEN_FINANCE_DEFAULT_CUSTOMER_ID is set in the environment, use that
-    customer directly (faster). Otherwise fall back to scanning the customer
-    list for the most recently created testing customer with a checking account.
+    Runs synchronously but is triggered from a background thread at module
+    load time so the result is usually ready before the user opens the tab.
     """
     global _seeded
-    if _seeded or STATE.get("customer_id"):
+    with _seed_lock:
+        if _seeded or STATE.get("customer_id"):
+            _seeded = True
+            return
         _seeded = True
-        return
-    _seeded = True
     client = _get_client()
     if client is None:
         return
@@ -1606,8 +1613,14 @@ def _seed_default_customer() -> None:
 
 
 def get_state() -> Dict[str, Any]:
-    """Return a UI-safe snapshot of state."""
-    _seed_default_customer()
+    """Return a UI-safe snapshot of state.
+
+    Kicks off background seeding on first call; if seeding is still in
+    progress the state snapshot is returned immediately with whatever is
+    available (the UI will refresh again after the next op or page reload).
+    """
+    if not _seeded and not STATE.get("customer_id"):
+        _trigger_background_seed()
     accounts = STATE.get("accounts") or []
     return {
         "customer_id": STATE.get("customer_id"),
