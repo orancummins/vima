@@ -1,6 +1,7 @@
 """Top-level workflow orchestrator."""
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 from loguru import logger
@@ -30,6 +31,13 @@ def _provider_for(name: str):
 async def run(config_path: Path, *, dry_run: bool = False) -> Path | None:
     config: AppConfig = load_config(config_path)
     logger.info("Loaded config for env={} ({} projects)", config.environment, len(config.projects))
+
+    # Clear stale artifacts from previous runs so only keys provisioned in
+    # this session are packaged into vima-config.zip and imported into Vima.
+    for stale_dir in (WORKSPACE / "normalized", WORKSPACE / "downloads"):
+        if stale_dir.exists():
+            shutil.rmtree(stale_dir)
+            logger.debug("Cleared stale workspace dir: {}", stale_dir)
 
     WORKSPACE.mkdir(parents=True, exist_ok=True)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

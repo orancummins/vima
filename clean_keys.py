@@ -22,6 +22,7 @@ ROOT = Path(__file__).parent
 KEYS_DIR = ROOT / "config" / "keys"
 ENV_FILE = ROOT / "config" / ".env"
 ENV_TEMP = ROOT / "config" / ".env.TEMP"
+TOOL_WORKSPACE = ROOT / "tools" / "mcd-key-automation" / "temp"
 VIMA_URL = "http://localhost:9021/config/purge"
 
 
@@ -31,7 +32,7 @@ def confirm(prompt: str) -> bool:
 
 
 def remove_files() -> list[str]:
-    """Delete key files + .env files from disk. Returns list of removed paths."""
+    """Delete key files + .env files + tool workspace artifacts from disk."""
     removed = []
     if KEYS_DIR.exists():
         # Remove all contents but keep the directory (app expects it to exist).
@@ -45,6 +46,13 @@ def remove_files() -> list[str]:
         if env_file.exists():
             env_file.unlink()
             removed.append(str(env_file))
+    # Clear accumulated tool artifacts so old keys aren't re-imported on the
+    # next provisioning run.
+    for tool_dir in ("normalized", "downloads"):
+        d = TOOL_WORKSPACE / tool_dir
+        if d.exists():
+            shutil.rmtree(d)
+            removed.append(str(d))
     return removed
 
 
@@ -71,6 +79,10 @@ def main() -> None:
         targets.append(f"  • {ENV_FILE}")
     if ENV_TEMP.exists():
         targets.append(f"  • {ENV_TEMP}")
+    for tool_dir in ("normalized", "downloads"):
+        d = TOOL_WORKSPACE / tool_dir
+        if d.exists() and any(d.iterdir()):
+            targets.append(f"  • {d}/ (tool artifacts)")
 
     if not targets:
         print("Nothing to clean — no keys or .env file found.")
