@@ -243,13 +243,14 @@ def explorer_apis():
 def diagnostics_us_ip_status():
     """Return whether the caller appears to be on a US IP address."""
     now = time.time()
+    client_ip = (request.remote_addr or "").strip()
     cached = _ip_status_cache.get("payload")
     if cached and (now - float(_ip_status_cache.get("ts") or 0)) < 20:
         resp = jsonify(cached)
         resp.headers["Cache-Control"] = "no-store"
         return resp
 
-    geo = _fetch_geo_payload((request.remote_addr or "").strip())
+    geo = _fetch_geo_payload(client_ip)
     country = (geo.get("country_code") or "").upper()
     is_us = country == "US"
 
@@ -1561,6 +1562,37 @@ def config_purge():
 
 
 _provision_jobs: dict = {}
+
+
+def _build_provision_catalog() -> list[dict]:
+    """Return canonical API metadata for the auto-provisioning UI."""
+    from apis.catalog import iter_ordered
+
+    apis = api_registry.manifests()
+    by_id = {a.get("id"): a for a in apis}
+    catalog: list[dict] = []
+    for entry in iter_ordered():
+        api_id = entry.id
+        api = by_id.get(api_id, {})
+        note = entry.provision_note or ""
+        catalog.append({
+            "id": api_id,
+            "legacy_id": entry.legacy_id,
+            "name": api.get("name") or entry.display_name,
+            "configured": bool(api.get("configured")),
+            "docs_url": entry.docs_url,
+            "requires_owner_approval": bool(note),
+            "provision_note": note,
+        })
+    return catalog
+
+
+@app.route("/provision/catalog")
+def provision_catalog():
+    """Return canonical API metadata used by the auto-provisioning modal."""
+    resp = jsonify({"apis": _build_provision_catalog()})
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 @app.route("/provision/status")

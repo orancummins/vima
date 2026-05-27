@@ -52,6 +52,8 @@ class ApiCatalogEntry:
     categories: tuple[str, ...] = ()
     docs_url: str = ""
     legacy_id: Optional[str] = None
+    # Optional provisioning UX note shown in auto-provision selection UI.
+    provision_note: str = ""
     # Optional override; defaults to ``apis.<id>.api``.
     module_path: Optional[str] = None
 
@@ -114,6 +116,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("Offers",),
         docs_url="https://developer.mastercard.com/priceless-cities/documentation/",
         legacy_id="priceless",
+        provision_note="Requires API Owner approval",
     ),
     ApiCatalogEntry(
         id="easy_savings",

@@ -153,15 +153,26 @@ will display a banner if a non-US IP is detected.
 
 ### Add a new API
 
-1. Create `apis/<id>/api.py` exposing:
+1. Add a canonical entry in [apis/catalog.py](apis/catalog.py). This is the source of truth for API identity, auth type, docs URL, and display order.
+2. Create `apis/<id>/api.py` exposing:
    - `MANIFEST` — `id`, `name`, `description`, `categories`, `operations`,
      `state_schema`
    - `execute(op_id, params) -> dict` returning
      `{success, data, error, request, response, state_updates, hints}`
    - optional `get_state()`, `is_configured()`
-2. Register it in [apis/registry.py](apis/registry.py)
-3. Add a config section in `_CONFIG_SCHEMA` in [app.py](app.py) so users
-   can supply credentials via the UI
+3. If the API has simulator support, add matching handler/fixture files under `simulator/handlers/` and `simulator/fixtures/`.
+4. If the API should be auto-provisioned, add or verify its setup in `tools/mcd-key-automation/providers/mastercard/api_config.py` and ensure the matching `provision_type` exists in `tools/mcd-key-automation/providers/mastercard/workflows/project_workflow.py`.
+5. Run contract validation (see `tools/validate_api_contract.py`) before merging.
+
+```bash
+./.venv/bin/python tools/validate_api_contract.py
+```
+
+Notes:
+- `apis/registry.py` loads APIs dynamically from the catalog, so manual registry edits are no longer required.
+- API Configuration fields are generated dynamically in [app.py](app.py) from catalog auth metadata.
+
+For autonomous onboarding instructions and contract templates, start at [docs/agent-onboarding/README.md](docs/agent-onboarding/README.md).
 
 ### Add a new use case
 

@@ -4626,24 +4626,47 @@
 (function () {
   'use strict';
 
-  const APIS = [
-    { id: 'bin_lookup',                  legacy_id: 'binlookup',   name: 'BIN Lookup',                   note: '' },
-    { id: 'places',                      legacy_id: 'places',      name: 'Places',                        note: '' },
-    { id: 'easy_savings',                legacy_id: 'easysavings', name: 'Easy Savings',                  note: '' },
-    { id: 'consumer_clarity',            legacy_id: 'clarity',     name: 'Consumer Clarity',              note: '' },
-    { id: 'priceless_cities',            legacy_id: 'priceless',   name: 'Priceless Specials',            note: 'Requires API Owner approval' },
-    { id: 'transaction_notifications',   legacy_id: 'txnotify',    name: 'Transaction Notifications',     note: '' },
-    { id: 'consent_management',          legacy_id: 'consent',     name: 'Consent Management',            note: '' },
-    { id: 'offers_for_publishers',       legacy_id: 'ofpub',       name: 'Offers (Publisher)',            note: '' },
-    { id: 'offers_merchant_content',     legacy_id: 'ofmc',        name: 'Offers (Merchant)',             note: '' },
-    { id: 'benefits_eligibility',        legacy_id: 'eligibility', name: 'Benefits Eligibility',          note: '' },
-    { id: 'benefits_content_eligibility',legacy_id: 'bces',        name: 'Benefits Content (BCES)',       note: '' },
-    { id: 'open_finance',                legacy_id: 'ofin',        name: 'Open Finance (Finicity)',       note: '' },
-  ];
+  let APIS = [];
+  let legacyToId = {};
+  let _catalogPromise = null;
 
-  // Build a map from legacy_id → canonical id so log lines (which use legacy ids) can update cards.
-  const legacyToId = {};
-  APIS.forEach(function (a) { if (a.legacy_id) legacyToId[a.legacy_id] = a.id; });
+  function _fallbackCatalogFromWindowApis() {
+    const windowApis = Array.isArray(window.__APIS__) ? window.__APIS__ : [];
+    return windowApis.map(function (a) {
+      const note = a.id === 'priceless_cities' ? 'Requires API Owner approval' : '';
+      return {
+        id: a.id,
+        legacy_id: a.legacy_id,
+        name: a.name,
+        provision_note: note,
+      };
+    });
+  }
+
+  function _setCatalog(apis) {
+    APIS = Array.isArray(apis) ? apis : [];
+    legacyToId = {};
+    APIS.forEach(function (a) {
+      if (a && a.legacy_id) legacyToId[a.legacy_id] = a.id;
+    });
+  }
+
+  function ensureCatalog() {
+    if (_catalogPromise) return _catalogPromise;
+    _catalogPromise = fetch('/provision/catalog', { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        const apis = data && Array.isArray(data.apis) ? data.apis : [];
+        if (!apis.length) throw new Error('Empty provisioning catalog');
+        _setCatalog(apis);
+        return APIS;
+      })
+      .catch(function () {
+        _setCatalog(_fallbackCatalogFromWindowApis());
+        return APIS;
+      });
+    return _catalogPromise;
+  }
 
   const modal        = document.getElementById('prov-modal');
   const overlay      = document.getElementById('prov-overlay');
@@ -4682,10 +4705,11 @@
     APIS.forEach(function (api) {
       var label = document.createElement('label');
       label.className = 'prov-api-item';
+      var note = api.provision_note || api.note || '';
       label.innerHTML =
         '<input type="checkbox" class="prov-api-cb" data-id="' + api.id + '" checked>' +
         '<span class="prov-api-name">' + api.name + '</span>' +
-        (api.note ? '<span class="prov-api-note">' + api.note + '</span>' : '');
+        (note ? '<span class="prov-api-note">' + note + '</span>' : '');
       apiGrid.appendChild(label);
     });
   }
@@ -4858,8 +4882,10 @@
 
   btnAuto && btnAuto.addEventListener('click', function () {
     _provReuse = false;
-    buildApiGrid();
-    showScreen(screenSelect);
+    ensureCatalog().then(function () {
+      buildApiGrid();
+      showScreen(screenSelect);
+    });
   });
 
   // Triggered by "Yes, Generate New Keys" or "Try Using Existing Keys" in the config modal
@@ -4868,8 +4894,10 @@
     _provReuse = !!(e.detail && e.detail.reuse);
     modal.classList.remove('prov-hidden');
     document.body.style.overflow = 'hidden';
-    buildApiGrid();
-    showScreen(screenSelect);
+    ensureCatalog().then(function () {
+      buildApiGrid();
+      showScreen(screenSelect);
+    });
   });
 
   btnManual && btnManual.addEventListener('click', function () {
@@ -4896,6 +4924,8 @@
   btnReload && btnReload.addEventListener('click', function () { location.reload(); });
 
   // ── Auto-show on load if setup is needed ──────────────────────────────────
+  ensureCatalog();
+
   fetch('/provision/status')
     .then(function (r) { return r.json(); })
     .then(function (data) {

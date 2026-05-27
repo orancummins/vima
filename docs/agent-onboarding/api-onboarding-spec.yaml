@@ -1,0 +1,200 @@
+spec_version: "1.0"
+generated_from: "apis/catalog.py + apis/registry.py + tools/mcd-key-automation/providers/mastercard/api_config.py"
+api_definitions:
+  - identity:
+      id: open_finance
+      legacy_id: ofin
+      display_name: Open Finance
+      env_prefix: OPEN_FINANCE
+      portal_slug: ofin
+      docs_url: https://developer.mastercard.com/open-finance-us/documentation/
+    auth:
+      auth_type: oauth2
+      required_env_keys: [OPEN_FINANCE_PARTNER_ID, OPEN_FINANCE_PARTNER_SECRET, OPEN_FINANCE_APP_KEY]
+      optional_env_keys: [OPEN_FINANCE_API_BASE_URL, OPEN_FINANCE_SIG_KEY_PATH]
+      key_file_types: [pem]
+    provisioning:
+      provision_type: oauth2_region
+      region: United States of America
+      api_selection: null
+      skip_step3: false
+      manual_approval_required: false
+      expected_activation_delay_minutes: 3
+    implementation:
+      module_path: apis/open_finance/api.py
+      manifest_symbol: MANIFEST
+      execute_symbol: execute
+      simulator_handler_path: simulator/handlers/open_finance.py
+      simulator_fixture_path: simulator/fixtures/open_finance.json
+    ux:
+      categories: [Auth, Customers, Data Connect, Accounts, Transactions, Reports, Webhooks]
+      how_to_summary: Open Finance setup and operation flow, including Data Connect and reports.
+      how_to_required_topics: [token, create customer, generate data connect URL, refresh accounts]
+      docs_button_label: Docs ↗
+    validation:
+      primary_operation_id: create_token
+      expected_artifacts: [credentials.json, sig.pem]
+      required_endpoints: [/explorer/apis, /provision/catalog, /provision/status]
+      smoke_test_commands: ["./.venv/bin/python tools/validate_api_contract.py"]
+      success_signals: [configured true, docs_url present, how_to present]
+    ownership:
+      team: Solution Studio
+      maintainer: Platform Engineering
+      last_verified_date: "2026-05-27"
+      verification_notes: Seeded from current implementation.
+
+  - identity:
+      id: bin_lookup
+      legacy_id: binlookup
+      display_name: BIN Lookup
+      env_prefix: BIN_LOOKUP
+      portal_slug: bin-lookup
+      docs_url: https://developer.mastercard.com/bin-lookup/documentation/
+    auth:
+      auth_type: oauth1
+      required_env_keys: [BIN_LOOKUP_CONSUMER_KEY, BIN_LOOKUP_SIGNING_KEY_PATH]
+      optional_env_keys: [BIN_LOOKUP_SIGNING_KEY_ALIAS, BIN_LOOKUP_SIGNING_KEY_PASSWORD, BIN_LOOKUP_ENV]
+      key_file_types: [p12]
+    provisioning:
+      provision_type: oauth1_standard
+      region: null
+      api_selection: null
+      skip_step3: false
+      manual_approval_required: false
+      expected_activation_delay_minutes: 3
+    implementation:
+      module_path: apis/bin_lookup/api.py
+      manifest_symbol: MANIFEST
+      execute_symbol: execute
+      simulator_handler_path: simulator/handlers/bin_lookup.py
+      simulator_fixture_path: simulator/fixtures/bin_lookup.json
+    ux:
+      categories: [Lookup]
+      how_to_summary: Lookup card BIN/account range metadata.
+      how_to_required_topics: [select operation, account_range input, send request]
+      docs_button_label: Docs ↗
+    validation:
+      primary_operation_id: lookup_bin
+      expected_artifacts: [credentials.json, signing.zip]
+      required_endpoints: [/explorer/apis, /provision/catalog, /provision/status]
+      smoke_test_commands: ["./.venv/bin/python tools/validate_api_contract.py"]
+      success_signals: [configured true, response status 2xx]
+    ownership:
+      team: Solution Studio
+      maintainer: Platform Engineering
+      last_verified_date: "2026-05-27"
+      verification_notes: Seeded from current implementation.
+
+  - identity:
+      id: consumer_clarity
+      legacy_id: clarity
+      display_name: Consumer Clarity
+      env_prefix: CONSUMER_CLARITY
+      portal_slug: consumer-clarity
+      docs_url: https://developer.mastercard.com/consumer-clarity-us/documentation/
+    auth:
+      auth_type: oauth1_enc
+      required_env_keys: [CONSUMER_CLARITY_CONSUMER_KEY, CONSUMER_CLARITY_SIGNING_KEY_PATH, CONSUMER_CLARITY_ENCRYPTION_KEY_PATH]
+      optional_env_keys: [CONSUMER_CLARITY_SIGNING_KEY_ALIAS, CONSUMER_CLARITY_SIGNING_KEY_PASSWORD, CONSUMER_CLARITY_ENV]
+      key_file_types: [p12, pem]
+    provisioning:
+      provision_type: oauth1_enc_key
+      region: null
+      api_selection: null
+      skip_step3: false
+      manual_approval_required: false
+      expected_activation_delay_minutes: 3
+    implementation:
+      module_path: apis/consumer_clarity/api.py
+      manifest_symbol: MANIFEST
+      execute_symbol: execute
+      simulator_handler_path: simulator/handlers/consumer_clarity.py
+      simulator_fixture_path: simulator/fixtures/consumer_clarity.json
+    ux:
+      categories: [Merchant Search]
+      how_to_summary: Search and enrich merchant details.
+      how_to_required_topics: [merchant search params, enrichment result fields]
+      docs_button_label: Docs ↗
+    validation:
+      primary_operation_id: merchant_search
+      expected_artifacts: [credentials.json, signing.zip, encryption.pem]
+      required_endpoints: [/explorer/apis, /provision/catalog, /provision/status]
+      smoke_test_commands: ["./.venv/bin/python tools/validate_api_contract.py"]
+      success_signals: [configured true]
+    ownership:
+      team: Solution Studio
+      maintainer: Platform Engineering
+      last_verified_date: "2026-05-27"
+      verification_notes: Seeded from current implementation.
+
+  - identity: { id: priceless_cities, legacy_id: priceless, display_name: Priceless Cities, env_prefix: PRICELESS_CITIES, portal_slug: priceless-cities, docs_url: https://developer.mastercard.com/priceless-cities/documentation/ }
+    auth: { auth_type: oauth1, required_env_keys: [PRICELESS_CITIES_CONSUMER_KEY, PRICELESS_CITIES_SIGNING_KEY_PATH], optional_env_keys: [PRICELESS_CITIES_SIGNING_KEY_ALIAS, PRICELESS_CITIES_SIGNING_KEY_PASSWORD, PRICELESS_CITIES_ENV], key_file_types: [p12] }
+    provisioning: { provision_type: priceless, region: null, api_selection: Priceless Specials, skip_step3: false, manual_approval_required: true, expected_activation_delay_minutes: 3 }
+    implementation: { module_path: apis/priceless_cities/api.py, manifest_symbol: MANIFEST, execute_symbol: execute, simulator_handler_path: simulator/handlers/priceless_cities.py, simulator_fixture_path: simulator/fixtures/priceless_cities.json }
+    ux: { categories: [Offers], how_to_summary: Browse Priceless specials and experiences., how_to_required_topics: [approval caveat, offers flow], docs_button_label: "Docs ↗" }
+    validation: { primary_operation_id: list_offers, expected_artifacts: [credentials.json, signing.zip], required_endpoints: [/explorer/apis, /provision/catalog, /provision/status], smoke_test_commands: ["./.venv/bin/python tools/validate_api_contract.py"], success_signals: [configured true or pending approval note] }
+    ownership: { team: Solution Studio, maintainer: Platform Engineering, last_verified_date: "2026-05-27", verification_notes: Seeded from current implementation. }
+
+  - identity: { id: easy_savings, legacy_id: easysavings, display_name: Easy Savings, env_prefix: EASY_SAVINGS, portal_slug: easy-savings-specials, docs_url: https://developer.mastercard.com/easy-savings/documentation/ }
+    auth: { auth_type: oauth1, required_env_keys: [EASY_SAVINGS_CONSUMER_KEY, EASY_SAVINGS_SIGNING_KEY_PATH], optional_env_keys: [EASY_SAVINGS_SIGNING_KEY_ALIAS, EASY_SAVINGS_SIGNING_KEY_PASSWORD, EASY_SAVINGS_ENV], key_file_types: [p12] }
+    provisioning: { provision_type: oauth1_standard, region: null, api_selection: null, skip_step3: false, manual_approval_required: false, expected_activation_delay_minutes: 3 }
+    implementation: { module_path: apis/easy_savings/api.py, manifest_symbol: MANIFEST, execute_symbol: execute, simulator_handler_path: simulator/handlers/easy_savings.py, simulator_fixture_path: simulator/fixtures/easy_savings.json }
+    ux: { categories: [Offers], how_to_summary: Browse and redeem offers., how_to_required_topics: [list offers, redemption], docs_button_label: "Docs ↗" }
+    validation: { primary_operation_id: list_offers, expected_artifacts: [credentials.json, signing.zip], required_endpoints: [/explorer/apis, /provision/catalog, /provision/status], smoke_test_commands: ["./.venv/bin/python tools/validate_api_contract.py"], success_signals: [configured true] }
+    ownership: { team: Solution Studio, maintainer: Platform Engineering, last_verified_date: "2026-05-27", verification_notes: Seeded from current implementation. }
+
+  - identity: { id: places, legacy_id: places, display_name: Places, env_prefix: PLACES, portal_slug: places, docs_url: https://developer.mastercard.com/places/documentation/ }
+    auth: { auth_type: oauth1, required_env_keys: [PLACES_CONSUMER_KEY, PLACES_SIGNING_KEY_PATH], optional_env_keys: [PLACES_SIGNING_KEY_ALIAS, PLACES_SIGNING_KEY_PASSWORD, PLACES_ENV], key_file_types: [p12] }
+    provisioning: { provision_type: oauth1_standard, region: null, api_selection: null, skip_step3: false, manual_approval_required: false, expected_activation_delay_minutes: 3 }
+    implementation: { module_path: apis/places/api.py, manifest_symbol: MANIFEST, execute_symbol: execute, simulator_handler_path: simulator/handlers/places.py, simulator_fixture_path: simulator/fixtures/places.json }
+    ux: { categories: [Location], how_to_summary: Search locations and merchant places., how_to_required_topics: [search inputs, location ids], docs_button_label: "Docs ↗" }
+    validation: { primary_operation_id: search_places, expected_artifacts: [credentials.json, signing.zip], required_endpoints: [/explorer/apis, /provision/catalog, /provision/status], smoke_test_commands: ["./.venv/bin/python tools/validate_api_contract.py"], success_signals: [configured true] }
+    ownership: { team: Solution Studio, maintainer: Platform Engineering, last_verified_date: "2026-05-27", verification_notes: Seeded from current implementation. }
+
+  - identity: { id: offers_for_publishers, legacy_id: ofpub, display_name: Offers for Publishers, env_prefix: OFFERS_FOR_PUBLISHERS, portal_slug: presentment, docs_url: https://developer.mastercard.com/presentment/documentation/ }
+    auth: { auth_type: oauth1, required_env_keys: [OFFERS_FOR_PUBLISHERS_CONSUMER_KEY, OFFERS_FOR_PUBLISHERS_SIGNING_KEY_PATH], optional_env_keys: [OFFERS_FOR_PUBLISHERS_SIGNING_KEY_ALIAS, OFFERS_FOR_PUBLISHERS_SIGNING_KEY_PASSWORD, OFFERS_FOR_PUBLISHERS_ENV], key_file_types: [p12] }
+    provisioning: { provision_type: oauth1_standard, region: null, api_selection: null, skip_step3: false, manual_approval_required: false, expected_activation_delay_minutes: 3 }
+    implementation: { module_path: apis/offers_for_publishers/api.py, manifest_symbol: MANIFEST, execute_symbol: execute, simulator_handler_path: simulator/handlers/offers_for_publishers.py, simulator_fixture_path: simulator/fixtures/offers_for_publishers.json }
+    ux: { categories: [Offers], how_to_summary: Publisher offers retrieval workflow., how_to_required_topics: [publisher offer fetch], docs_button_label: "Docs ↗" }
+    validation: { primary_operation_id: list_offers, expected_artifacts: [credentials.json, signing.zip], required_endpoints: [/explorer/apis, /provision/catalog, /provision/status], smoke_test_commands: ["./.venv/bin/python tools/validate_api_contract.py"], success_signals: [configured true] }
+    ownership: { team: Solution Studio, maintainer: Platform Engineering, last_verified_date: "2026-05-27", verification_notes: Seeded from current implementation. }
+
+  - identity: { id: offers_merchant_content, legacy_id: ofmc, display_name: Offers Merchant Content, env_prefix: OFFERS_MERCHANT_CONTENT, portal_slug: eop-admin, docs_url: https://developer.mastercard.com/eop-admin/documentation/ }
+    auth: { auth_type: oauth1, required_env_keys: [OFFERS_MERCHANT_CONTENT_CONSUMER_KEY, OFFERS_MERCHANT_CONTENT_SIGNING_KEY_PATH], optional_env_keys: [OFFERS_MERCHANT_CONTENT_SIGNING_KEY_ALIAS, OFFERS_MERCHANT_CONTENT_SIGNING_KEY_PASSWORD, OFFERS_MERCHANT_CONTENT_ENV], key_file_types: [p12] }
+    provisioning: { provision_type: oauth1_standard, region: null, api_selection: null, skip_step3: false, manual_approval_required: false, expected_activation_delay_minutes: 3 }
+    implementation: { module_path: apis/offers_merchant_content/api.py, manifest_symbol: MANIFEST, execute_symbol: execute, simulator_handler_path: simulator/handlers/offers_merchant_content.py, simulator_fixture_path: simulator/fixtures/offers_merchant_content.json }
+    ux: { categories: [Offers], how_to_summary: Merchant content retrieval for offers., how_to_required_topics: [merchant content query], docs_button_label: "Docs ↗" }
+    validation: { primary_operation_id: merchant_content_search, expected_artifacts: [credentials.json, signing.zip], required_endpoints: [/explorer/apis, /provision/catalog, /provision/status], smoke_test_commands: ["./.venv/bin/python tools/validate_api_contract.py"], success_signals: [configured true] }
+    ownership: { team: Solution Studio, maintainer: Platform Engineering, last_verified_date: "2026-05-27", verification_notes: Seeded from current implementation. }
+
+  - identity: { id: consent_management, legacy_id: consent, display_name: Consent Management, env_prefix: CONSENT_MANAGEMENT, portal_slug: consent-management, docs_url: https://developer.mastercard.com/consent-management/documentation/ }
+    auth: { auth_type: oauth1_enc, required_env_keys: [CONSENT_MANAGEMENT_CONSUMER_KEY, CONSENT_MANAGEMENT_SIGNING_KEY_PATH, CONSENT_MANAGEMENT_ENCRYPTION_KEY_PATH], optional_env_keys: [CONSENT_MANAGEMENT_SIGNING_KEY_ALIAS, CONSENT_MANAGEMENT_SIGNING_KEY_PASSWORD, CONSENT_MANAGEMENT_ENV], key_file_types: [p12, pem] }
+    provisioning: { provision_type: oauth1_enc_key, region: null, api_selection: null, skip_step3: false, manual_approval_required: false, expected_activation_delay_minutes: 3 }
+    implementation: { module_path: apis/consent_management/api.py, manifest_symbol: MANIFEST, execute_symbol: execute, simulator_handler_path: simulator/handlers/consent_management.py, simulator_fixture_path: simulator/fixtures/consent_management.json }
+    ux: { categories: [Consent, 3DS], how_to_summary: Consent capture and management operations., how_to_required_topics: [consent create, consent check], docs_button_label: "Docs ↗" }
+    validation: { primary_operation_id: create_consent, expected_artifacts: [credentials.json, signing.zip, encryption.pem], required_endpoints: [/explorer/apis, /provision/catalog, /provision/status], smoke_test_commands: ["./.venv/bin/python tools/validate_api_contract.py"], success_signals: [configured true] }
+    ownership: { team: Solution Studio, maintainer: Platform Engineering, last_verified_date: "2026-05-27", verification_notes: Seeded from current implementation. }
+
+  - identity: { id: transaction_notifications, legacy_id: txnotify, display_name: Transaction Notifications, env_prefix: TRANSACTION_NOTIFICATIONS, portal_slug: transaction-notifications, docs_url: https://developer.mastercard.com/transaction-notifications/documentation/ }
+    auth: { auth_type: oauth1, required_env_keys: [TRANSACTION_NOTIFICATIONS_CONSUMER_KEY, TRANSACTION_NOTIFICATIONS_SIGNING_KEY_PATH], optional_env_keys: [TRANSACTION_NOTIFICATIONS_SIGNING_KEY_ALIAS, TRANSACTION_NOTIFICATIONS_SIGNING_KEY_PASSWORD, TRANSACTION_NOTIFICATIONS_ENV], key_file_types: [p12] }
+    provisioning: { provision_type: oauth1_skip_step3, region: null, api_selection: null, skip_step3: true, manual_approval_required: false, expected_activation_delay_minutes: 3 }
+    implementation: { module_path: apis/transaction_notifications/api.py, manifest_symbol: MANIFEST, execute_symbol: execute, simulator_handler_path: simulator/handlers/transaction_notifications.py, simulator_fixture_path: simulator/fixtures/transaction_notifications.json }
+    ux: { categories: [Notifications], how_to_summary: Transaction notification subscription and retrieval., how_to_required_topics: [subscription, callback], docs_button_label: "Docs ↗" }
+    validation: { primary_operation_id: subscribe_notifications, expected_artifacts: [credentials.json, signing.zip], required_endpoints: [/explorer/apis, /provision/catalog, /provision/status], smoke_test_commands: ["./.venv/bin/python tools/validate_api_contract.py"], success_signals: [configured true] }
+    ownership: { team: Solution Studio, maintainer: Platform Engineering, last_verified_date: "2026-05-27", verification_notes: Seeded from current implementation. }
+
+  - identity: { id: benefits_eligibility, legacy_id: eligibility, display_name: Benefits Eligibility, env_prefix: BENEFITS_ELIGIBILITY, portal_slug: eligibility-api, docs_url: https://developer.mastercard.com/eligibility-api/documentation/ }
+    auth: { auth_type: oauth1_enc, required_env_keys: [BENEFITS_ELIGIBILITY_CONSUMER_KEY, BENEFITS_ELIGIBILITY_SIGNING_KEY_PATH, BENEFITS_ELIGIBILITY_ENCRYPTION_KEY_PATH], optional_env_keys: [BENEFITS_ELIGIBILITY_SIGNING_KEY_ALIAS, BENEFITS_ELIGIBILITY_SIGNING_KEY_PASSWORD, BENEFITS_ELIGIBILITY_ENV], key_file_types: [p12, pem] }
+    provisioning: { provision_type: oauth1_enc_key, region: null, api_selection: null, skip_step3: false, manual_approval_required: false, expected_activation_delay_minutes: 3 }
+    implementation: { module_path: apis/benefits_eligibility/api.py, manifest_symbol: MANIFEST, execute_symbol: execute, simulator_handler_path: simulator/handlers/benefits_eligibility.py, simulator_fixture_path: simulator/fixtures/benefits_eligibility.json }
+    ux: { categories: [Benefits], how_to_summary: Card benefits eligibility checks., how_to_required_topics: [eligibility input, eligibility response], docs_button_label: "Docs ↗" }
+    validation: { primary_operation_id: check_eligibility, expected_artifacts: [credentials.json, signing.zip, encryption.pem], required_endpoints: [/explorer/apis, /provision/catalog, /provision/status], smoke_test_commands: ["./.venv/bin/python tools/validate_api_contract.py"], success_signals: [configured true] }
+    ownership: { team: Solution Studio, maintainer: Platform Engineering, last_verified_date: "2026-05-27", verification_notes: Seeded from current implementation. }
+
+  - identity: { id: benefits_content_eligibility, legacy_id: bces, display_name: Benefits Content Eligibility Service, env_prefix: BENEFITS_CONTENT_ELIGIBILITY, portal_slug: bces-service, docs_url: https://developer.mastercard.com/bces-service/documentation/ }
+    auth: { auth_type: oauth1_enc, required_env_keys: [BENEFITS_CONTENT_ELIGIBILITY_CONSUMER_KEY, BENEFITS_CONTENT_ELIGIBILITY_SIGNING_KEY_PATH, BENEFITS_CONTENT_ELIGIBILITY_ENCRYPTION_KEY_PATH], optional_env_keys: [BENEFITS_CONTENT_ELIGIBILITY_SIGNING_KEY_ALIAS, BENEFITS_CONTENT_ELIGIBILITY_SIGNING_KEY_PASSWORD, BENEFITS_CONTENT_ELIGIBILITY_ENV], key_file_types: [p12, pem] }
+    provisioning: { provision_type: oauth1_enc_key, region: null, api_selection: null, skip_step3: false, manual_approval_required: false, expected_activation_delay_minutes: 3 }
+    implementation: { module_path: apis/benefits_content_eligibility/api.py, manifest_symbol: MANIFEST, execute_symbol: execute, simulator_handler_path: simulator/handlers/benefits_content_eligibility.py, simulator_fixture_path: simulator/fixtures/benefits_content_eligibility.json }
+    ux: { categories: [Benefits], how_to_summary: Benefits content and eligibility queries., how_to_required_topics: [search benefits, eligibility filter], docs_button_label: "Docs ↗" }
+    validation: { primary_operation_id: search_content, expected_artifacts: [credentials.json, signing.zip, encryption.pem], required_endpoints: [/explorer/apis, /provision/catalog, /provision/status], smoke_test_commands: ["./.venv/bin/python tools/validate_api_contract.py"], success_signals: [configured true] }
+    ownership: { team: Solution Studio, maintainer: Platform Engineering, last_verified_date: "2026-05-27", verification_notes: Seeded from current implementation. }
