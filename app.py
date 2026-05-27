@@ -712,7 +712,17 @@ def usecase_action(uc_id: str):
     if not action:
         return jsonify({"error": "'action' is required"}), 400
     try:
-        return jsonify(mod.do_action(action, params))
+        result = mod.do_action(action, params)
+        # If the use case produced a customer_id, propagate it to Open Finance STATE
+        # so it becomes the global default for all APIs and use cases.
+        cid = result.get("customer_id") if isinstance(result, dict) else None
+        if cid and not result.get("error"):
+            ofin_mod = api_registry.get_module("open_finance")
+            if ofin_mod is not None and hasattr(ofin_mod, "STATE"):
+                ofin_mod.STATE["customer_id"] = str(cid)
+                if result.get("username") and not ofin_mod.STATE.get("customer_username"):
+                    ofin_mod.STATE["customer_username"] = result["username"]
+        return jsonify(result)
     except Exception as e:  # pragma: no cover
         return jsonify({"error": str(e)}), 500
 
