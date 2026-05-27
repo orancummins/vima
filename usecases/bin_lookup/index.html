@@ -535,7 +535,7 @@ function binDbPanelHtml() {
           BIN Ranges Database
         </div>
         <div class="bin-db-panel-actions">
-          <a class="bin-db-csv-btn" href="/usecases/binlookup/download-bins" download="bin_ranges.csv"
+          <a class="bin-db-csv-btn" href="/usecases/bin_lookup/download-bins" download="bin_ranges.csv"
              title="Download all BIN ranges as CSV${loaded ? " (" + BIN_DB.count.toLocaleString() + " rows)" : ""}">
             <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 3v10M6 9l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 17h14" stroke-linecap="round"/></svg>
             CSV
@@ -571,7 +571,7 @@ function binDbWire() {
   const loadBtn = document.getElementById("bin-db-load-btn");
   if (loadBtn) {
     loadBtn.addEventListener("click", async () => {
-      const r = await fetch("/usecases/binlookup/bin-ranges/load", { method: "POST" });
+      const r = await fetch("/usecases/bin_lookup/bin-ranges/load", { method: "POST" });
       const d = await r.json();
       if (d.ok || d.message === "Already loading") {
         BIN_DB.status = "loading";
@@ -635,7 +635,7 @@ async function _binDbExecSearch(page) {
   const q = BIN_DB.searchQuery;
   if (!q) return;
   const pg = page || BIN_DB.page || 1;
-  const r = await fetch(`/usecases/binlookup/bin-ranges/search?q=${encodeURIComponent(q)}&page=${pg}`);
+  const r = await fetch(`/usecases/bin_lookup/bin-ranges/search?q=${encodeURIComponent(q)}&page=${pg}`);
   const d = await r.json();
   if (BIN_DB.searchQuery !== q) return;
   BIN_DB.searching = false;
@@ -720,7 +720,7 @@ function _binDbStartPoll() {
 
 async function _binDbSyncStatus() {
   try {
-    const r = await fetch("/usecases/binlookup/bin-ranges/status");
+    const r = await fetch("/usecases/bin_lookup/bin-ranges/status");
     const d = await r.json();
     const prev = BIN_DB.status;
     BIN_DB.status = d.status;
@@ -768,7 +768,7 @@ async function _binVisualizeFromBatch(binNum, label) {
   BIN.card = null;
   renderBinLookup();
   try {
-    const r = await fetch("/usecases/binlookup/action", {
+    const r = await fetch("/usecases/bin_lookup/action", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "lookup", params: { account_range: binNum } }),
@@ -818,7 +818,7 @@ function binWire() {
     _binRefreshLookupPanel();
 
     try {
-      const r = await fetch("/usecases/binlookup/action", {
+      const r = await fetch("/usecases/bin_lookup/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "lookup", params: { account_range: BIN.bin } }),

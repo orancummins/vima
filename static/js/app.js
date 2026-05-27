@@ -572,6 +572,10 @@
         renderStateStrip();
         // refresh param defaults if an op is open
         if (currentOpId) renderParams();
+        // Show Open Finance setup guide every time (unless suppressed)
+        if (api.id === 'open_finance') {
+          showOfinSetupModal();
+        }
       })
       .catch(() => {});
   }
@@ -596,6 +600,65 @@
       pill.innerHTML = `<span class="k">${s.label}:</span><span class="v">${v || "—"}</span>`;
       strip.appendChild(pill);
     });
+  }
+
+  // ---------------------------------------------------------------------
+  // Open Finance setup guide modal
+  // ---------------------------------------------------------------------
+  const OFIN_SUPPRESS_KEY = 'vima:ofin-setup-suppress';
+
+  (function () {
+    const modal = $("ofin-setup-modal");
+    const closeBtn = $("ofin-setup-close");
+    const dismissBtn = $("ofin-setup-dismiss");
+    const goCreateBtn = $("ofin-setup-go-create");
+    const suppressCb = $("ofin-setup-suppress");
+    if (!modal) return;
+
+    // Reflect stored suppression state onto the checkbox
+    try {
+      if (localStorage.getItem(OFIN_SUPPRESS_KEY) === '1') suppressCb.checked = true;
+    } catch (e) {}
+
+    function saveSuppression() {
+      try {
+        if (suppressCb && suppressCb.checked) {
+          localStorage.setItem(OFIN_SUPPRESS_KEY, '1');
+        } else {
+          localStorage.removeItem(OFIN_SUPPRESS_KEY);
+        }
+      } catch (e) {}
+    }
+
+    function hide() {
+      saveSuppression();
+      modal.classList.add("hidden");
+    }
+
+    closeBtn && closeBtn.addEventListener("click", hide);
+    dismissBtn && dismissBtn.addEventListener("click", hide);
+    modal.addEventListener("click", (e) => { if (e.target === modal) hide(); });
+
+    goCreateBtn && goCreateBtn.addEventListener("click", () => {
+      hide();
+      // Navigate to open_finance API and select create_test_customer op
+      const apiBtn = document.querySelector('[data-api-id="open_finance"]');
+      if (apiBtn) {
+        apiBtn.click();
+        // Wait for renderApi to complete, then select the op
+        setTimeout(() => selectOp("create_test_customer"), 100);
+      }
+    });
+  })();
+
+  window.showOfinSetupModal = showOfinSetupModal;
+
+  function showOfinSetupModal() {
+    try {
+      if (localStorage.getItem(OFIN_SUPPRESS_KEY) === '1') return;
+    } catch (e) {}
+    const modal = $("ofin-setup-modal");
+    if (modal) modal.classList.remove("hidden");
   }
 
   // ---------------------------------------------------------------------
@@ -867,6 +930,15 @@
       if (data.state) {
         currentState = data.state;
         renderStateStrip();
+      }
+      // Open Finance: show setup guide if refresh_accounts returns no accounts
+      if (api.id === 'open_finance' && op.id === 'refresh_accounts') {
+        const respBody = data.response && data.response.body;
+        const accounts = _findKey(respBody, 'accounts') || (Array.isArray(respBody) ? respBody : null);
+        const isError = data.response && data.response.status_code >= 400;
+        if (isError || (accounts != null && (Array.isArray(accounts) ? accounts.length === 0 : false))) {
+          showOfinSetupModal();
+        }
       }
     } catch (e) {
       $("resp-body").textContent = String(e);
@@ -4109,11 +4181,12 @@
     const importBtn  = document.getElementById('cfg-import-btn');
     const importFile = document.getElementById('cfg-import-file');
 
-    // ── Auto Generate Keys ───────────────────────────────────────────────────
-    const autogenBtn     = document.getElementById('cfg-autogen-btn');
-    const autogenBanner  = document.getElementById('cfg-autogen-banner');
-    const autogenCancel  = document.getElementById('cfg-autogen-cancel');
-    const autogenConfirm = document.getElementById('cfg-autogen-confirm');
+    // ── Auto Provision Keys ──────────────────────────────────────────────────
+    const autogenBtn        = document.getElementById('cfg-autogen-btn');
+    const autogenBanner     = document.getElementById('cfg-autogen-banner');
+    const autogenCancel     = document.getElementById('cfg-autogen-cancel');
+    const autogenConfirm    = document.getElementById('cfg-autogen-confirm');
+    const autogenUseExisting = document.getElementById('cfg-autogen-use-existing');
 
     function autogenShowBanner() {
       if (autogenBanner) autogenBanner.classList.remove('cfg-hidden');
@@ -4126,8 +4199,14 @@
     autogenConfirm && autogenConfirm.addEventListener('click', function () {
       autogenHideBanner();
       cfgClose();
-      // Signal the provision modal IIFE to open directly at the API select screen
-      document.dispatchEvent(new CustomEvent('prov:open-select'));
+      // Open provision modal at the API select screen (generate new keys mode)
+      document.dispatchEvent(new CustomEvent('prov:open-select', { detail: { reuse: false } }));
+    });
+    autogenUseExisting && autogenUseExisting.addEventListener('click', function () {
+      autogenHideBanner();
+      cfgClose();
+      // Open provision modal at the API select screen (reuse existing keys mode)
+      document.dispatchEvent(new CustomEvent('prov:open-select', { detail: { reuse: true } }));
     });
 
     let _groups = [];       // loaded config groups
@@ -4707,14 +4786,17 @@
   }
 
   // ── Start provisioning ─────────────────────────────────────────────────────
-  function startProvisioning(selectedIds) {
+  function startProvisioning(selectedIds, reuse) {
     buildStatusGrid(selectedIds);
     showScreen(screenProgress);
+
+    var body = { apis: selectedIds, password: 'foobar!!' };
+    if (reuse) body.reuse_existing = true;
 
     fetch('/provision/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apis: selectedIds, password: 'foobar!!' }),
+      body: JSON.stringify(body),
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
@@ -4775,12 +4857,15 @@
   var btnReload = document.getElementById('prov-btn-reload');
 
   btnAuto && btnAuto.addEventListener('click', function () {
+    _provReuse = false;
     buildApiGrid();
     showScreen(screenSelect);
   });
 
-  // Triggered by "Yes, Generate Keys" in the config modal
-  document.addEventListener('prov:open-select', function () {
+  // Triggered by "Yes, Generate New Keys" or "Try Using Existing Keys" in the config modal
+  var _provReuse = false;
+  document.addEventListener('prov:open-select', function (e) {
+    _provReuse = !!(e.detail && e.detail.reuse);
     modal.classList.remove('prov-hidden');
     document.body.style.overflow = 'hidden';
     buildApiGrid();
@@ -4805,7 +4890,7 @@
     var cbs = apiGrid ? apiGrid.querySelectorAll('.prov-api-cb:checked') : [];
     var selectedIds = Array.from(cbs).map(function (cb) { return cb.dataset.id; });
     if (selectedIds.length === 0) { alert('Please select at least one API.'); return; }
-    startProvisioning(selectedIds);
+    startProvisioning(selectedIds, _provReuse);
   });
 
   btnReload && btnReload.addEventListener('click', function () { location.reload(); });

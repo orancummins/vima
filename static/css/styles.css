@@ -473,6 +473,36 @@ body {
 }
 .modal-body a { color: var(--mc-orange); font-weight: 600; }
 
+/* Open Finance setup guide */
+.ofin-setup-steps {
+  margin: 0; padding: 0; list-style: none; counter-reset: step;
+}
+.ofin-setup-steps li {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px 0 14px 48px; position: relative;
+  border-bottom: 1px solid var(--line);
+}
+.ofin-setup-steps li:last-child { border-bottom: none; }
+.ofin-setup-steps li::before {
+  counter-increment: step;
+  content: counter(step);
+  position: absolute; left: 0; top: 14px;
+  width: 28px; height: 28px;
+  background: var(--mc-orange); color: white;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+}
+.ofin-setup-steps li strong { font-size: 14px; font-weight: 700; color: var(--ink); }
+.ofin-setup-steps li span { font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+.ofin-setup-hint {
+  margin-top: 8px; padding: 10px 14px;
+  background: #fff8f0; border-left: 3px solid var(--mc-orange);
+  border-radius: 0 6px 6px 0;
+  font-size: 12.5px; line-height: 1.6; color: var(--ink-2);
+}
+.ofin-setup-hint a { color: var(--mc-orange); font-weight: 600; font-size: 12.5px; }
+.ofin-setup-hint code { font-size: 12px; }
+
 /* =================================================================
    Use case: Data Enrichment
    ================================================================= */

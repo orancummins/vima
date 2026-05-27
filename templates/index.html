@@ -356,6 +356,46 @@
     </div>
   </div>
 
+  <!-- ====================== Open Finance Setup Guide Modal ====================== -->
+  <div id="ofin-setup-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="ofin-setup-title">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-header">
+        <h2 id="ofin-setup-title">🏦 Open Finance — First-Time Setup</h2>
+        <button class="modal-close" id="ofin-setup-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin:0 0 16px">Before running <strong>Refresh Accounts</strong> you need a connected test customer. Follow these three steps in the <strong>Open Finance API</strong> workbench:</p>
+        <ol class="ofin-setup-steps">
+          <li>
+            <strong>Create Testing User</strong>
+            <span>Run the <em>Create Testing User</em> operation — this creates a sandbox customer and saves their <code>customer_id</code> to context.</span>
+          </li>
+          <li>
+            <strong>Generate Data Connect URL</strong>
+            <span>Run <em>Generate Data Connect URL</em>. An orange <strong>⋯</strong> button will appear — click it to open the bank connection flow in a new tab.</span>
+            <div class="ofin-setup-hint">
+              For testing, select <strong>FinBank</strong> and use credentials:<br>
+              <code>profile_03 / profile_03</code><br>
+              <a href="https://developer.mastercard.com/open-banking-us/documentation/test-the-apis/testing-with-finbank-personas/" target="_blank" rel="noopener">More test credentials (Mastercard Developers Personas) ↗</a>
+            </div>
+          </li>
+          <li>
+            <strong>Refresh Accounts</strong>
+            <span>Once you've completed the bank connection flow, run <em>Refresh Accounts</em> to pull in the connected accounts. This customer will be valid across all Open Finance APIs and Use Cases.</span>
+          </li>
+        </ol>
+      </div>
+      <div class="modal-footer" style="padding:14px 20px;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:10px">
+        <label class="ofin-suppress-label" style="margin-right:auto;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none">
+          <input type="checkbox" id="ofin-setup-suppress" style="cursor:pointer;accent-color:var(--mc-orange)">
+          Don't show again
+        </label>
+        <button class="btn btn-outline" id="ofin-setup-go-create">Go to Create Testing User</button>
+        <button class="btn prov-btn-primary" id="ofin-setup-dismiss">Got it</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ====================== Provision Modal ====================== -->
   <div id="prov-modal" class="prov-modal prov-hidden" role="dialog" aria-modal="true" aria-labelledby="prov-modal-title">
     <div class="prov-overlay" id="prov-overlay"></div>
@@ -487,11 +527,12 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         </div>
         <div class="cfg-autogen-banner-body">
-          <strong>Auto Generate API Keys?</strong>
-          <p>This will open a browser to log in to Mastercard Developers and automatically create projects and signing keys for each selected API. It can take a few minutes to complete and for keys to become active.</p>
+          <strong>Auto Provision Keys</strong>
+          <p>A browser will open so you can log into Mastercard Developers. Choose to use keys from existing projects, or automatically create new projects and signing keys for each API.</p>
         </div>
         <div class="cfg-autogen-banner-actions">
-          <button class="btn cfg-save-btn cfg-autogen-confirm" id="cfg-autogen-confirm">Yes, Generate Keys</button>
+          <button class="btn btn-outline cfg-autogen-use-existing" id="cfg-autogen-use-existing">Try Using Existing Keys</button>
+          <button class="btn cfg-save-btn cfg-autogen-confirm" id="cfg-autogen-confirm">Yes, Generate New Keys</button>
         </div>
       </div>
 

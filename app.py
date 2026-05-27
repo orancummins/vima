@@ -1579,6 +1579,7 @@ def provision_start():
     body = request.get_json(silent=True) or {}
     selected_apis = body.get("apis", [])
     password = body.get("password", "foobar!!")
+    reuse_existing = bool(body.get("reuse_existing", False))
     if not selected_apis:
         return jsonify({"error": "No APIs selected"}), 400
 
@@ -1615,11 +1616,15 @@ projects:
     except OSError:
         pass
 
+    cmd = [python_bin, "app/main.py", "run", "-c", cfg_path]
+    if reuse_existing:
+        cmd.append("--reuse-existing")
+
     def _run():
         rc = None
         try:
             proc = subprocess.Popen(
-                [python_bin, "app/main.py", "run", "-c", cfg_path],
+                cmd,
                 cwd=tool_dir,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
