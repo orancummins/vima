@@ -33,7 +33,7 @@ _SPECIALS_SANDBOX = "https://sandbox.api.mastercard.com/priceless/specials/platf
 
 
 def _is_prod() -> bool:
-    return os.environ.get("PRICELESS_CITIES_CITIES_ENV", "sandbox").lower() == "production"
+    return os.environ.get("PRICELESS_CITIES_ENV", "sandbox").lower() == "production"
 
 
 def _platform_base() -> str:
@@ -55,8 +55,8 @@ def _specials_base() -> str:
 # --- Configuration --------------------------------------------------------
 
 def _configured() -> bool:
-    key = os.environ.get("PRICELESS_CITIES_CITIES_CONSUMER_KEY", "")
-    path = os.environ.get("PRICELESS_CITIES_CITIES_SIGNING_KEY_PATH", "")
+    key = os.environ.get("PRICELESS_CITIES_CONSUMER_KEY", "")
+    path = os.environ.get("PRICELESS_CITIES_SIGNING_KEY_PATH", "")
     return bool(key and key != "your-consumer-key-here" and path)
 
 
@@ -492,8 +492,8 @@ def _do_get(op: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
         return {
             "success": False,
             "error": (
-                "Priceless is not configured. Set PRICELESS_CITIES_CITIES_CONSUMER_KEY and "
-                "PRICELESS_CITIES_CITIES_SIGNING_KEY_PATH in .env, then restart the server."
+                "Priceless is not configured. Set PRICELESS_CITIES_CONSUMER_KEY and "
+                "PRICELESS_CITIES_SIGNING_KEY_PATH in .env, then restart the server."
             ),
         }
 
@@ -527,9 +527,9 @@ def _do_get(op: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
     if is_simulated("priceless_cities"):
         headers["Authorization"] = "Simulated"
     else:
-        consumer_key = os.environ["PRICELESS_CITIES_CITIES_CONSUMER_KEY"]
-        key_path     = os.environ["PRICELESS_CITIES_CITIES_SIGNING_KEY_PATH"]
-        key_password = os.environ.get("PRICELESS_CITIES_CITIES_SIGNING_KEY_PASSWORD", "keystorepassword")
+        consumer_key = os.environ["PRICELESS_CITIES_CONSUMER_KEY"]
+        key_path     = os.environ["PRICELESS_CITIES_SIGNING_KEY_PATH"]
+        key_password = os.environ.get("PRICELESS_CITIES_SIGNING_KEY_PASSWORD", "keystorepassword")
 
         if not os.path.isabs(key_path):
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
