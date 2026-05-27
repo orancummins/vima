@@ -58,10 +58,19 @@ async def run(config_path: Path, *, dry_run: bool = False) -> Path | None:
                         await provider.attach_api(project, api_spec.name)
                         arts = await provider.download_keys(project, api_spec.name)
                         artifacts.extend(arts)
+                        has_creds = any(a.filename.endswith("-credentials.json") for a in arts)
+                        if has_creds:
+                            logger.info("Provisioned '{}' ✓", api_spec.name)
+                        else:
+                            logger.warning(
+                                "Failed to provision '{}': key zip downloaded but consumer key could not be extracted — check sandbox page",
+                                api_spec.name,
+                            )
+                            failed.append(f"{project.name}/{api_spec.name}")
                     except Exception as api_err:
                         logger.error(
-                            "Failed {}/{}: {} — skipping, continuing with remaining APIs",
-                            project.name, api_spec.name, api_err,
+                            "Failed to provision '{}': {} — skipping, continuing with remaining APIs",
+                            api_spec.name, api_err,
                         )
                         await capture(page, f"failure_{project.name}_{api_spec.name}")
                         failed.append(f"{project.name}/{api_spec.name}")

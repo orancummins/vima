@@ -4649,18 +4649,31 @@
   }
 
   function parseLogLine(line) {
-    // Only mark cards as "running" from logs — done/failed status is determined
-    // authoritatively by refreshCardStates() once provisioning completes, since
-    // log-line regexes are brittle across log format changes.
+    // Mark cards as "running" when provisioning starts for an API.
     var mStart = line.match(/Provisioning '([\w_-]+)'/);
     if (mStart) {
       var id = resolveApiId(mStart[1]);
       if (_apiStatus[id] === 'pending') setApiStatus(id, 'running');
+      return;
+    }
+    // Mark as "done" when the orchestrator logs a per-API success.
+    var mDone = line.match(/Provisioned '([\w_-]+)'/);
+    if (mDone) {
+      setApiStatus(resolveApiId(mDone[1]), 'done');
+      return;
+    }
+    // Mark as "failed" when the orchestrator logs a per-API failure.
+    var mFail = line.match(/Failed to provision '([\w_-]+)'/);
+    if (mFail) {
+      setApiStatus(resolveApiId(mFail[1]), 'failed');
+      return;
     }
   }
 
   // Fetch authoritative configured state for each selected API and update
-  // its card accordingly. Called after provisioning finishes.
+  // its card accordingly. Called after provisioning finishes. Cards that
+  // already have an authoritative log-derived status (done/failed) are left
+  // alone — only cards still showing pending/running are reconciled.
   function refreshCardStates(selectedIds) {
     return fetch('/provision/status', { cache: 'no-store' })
       .then(function (r) { return r.json(); })
@@ -4670,6 +4683,8 @@
         var byId = {};
         data.apis.forEach(function (a) { byId[a.id] = a; });
         selectedIds.forEach(function (id) {
+          var current = _apiStatus[id];
+          if (current === 'done' || current === 'failed') return;
           var entry = byId[id];
           if (entry && entry.configured) {
             setApiStatus(id, 'done');
