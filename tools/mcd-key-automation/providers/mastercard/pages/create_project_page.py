@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from pathlib import Path
 
 from loguru import logger
@@ -301,12 +302,17 @@ class CreateProjectPage:
         alias: str,
         password: str,
         timeout_ms: int = 90000,
+        skip_step3: bool = False,
     ) -> str:
         """After Step 2 click, handle multi-step wizards and wait for final download/confirmation.
 
         Some APIs (e.g. clarity, txnotify) have a Step 3 "Additional credentials" that must be
         filled and submitted before the key download appears. This method detects Step 3 and
         handles it automatically.
+
+        If ``skip_step3`` is True, click the "Skip this step" button instead of filling/creating
+        on Step 3 (used by APIs whose Step 3 offers an optional Mastercard-side encryption key
+        we don't want, e.g. Transaction Notifications).
 
         Returns: 'download' | 'open_project' | 'project_page'
         """
@@ -339,7 +345,44 @@ class CreateProjectPage:
             if step3_heading > 0 and not _step3_clicked:
                 logger.info("Step 3 (Additional credentials) detected")
                 await screenshot(self.page, "step3_detected")
-                
+
+                # Optional manual takeover: when MCD_PAUSE_STEP3=1, block here
+                # so the operator can drive the browser by hand and observe
+                # the actual portal flow (used for diagnosing wizards like
+                # Transaction Notifications). Resume by pressing Enter in the
+                # terminal once the wizard is finished and a key has been
+                # downloaded / the project page is reached.
+                if os.environ.get("MCD_PAUSE_STEP3") == "1":
+                    logger.warning(
+                        "MCD_PAUSE_STEP3=1 — pausing on Step 3. "
+                        "Drive the wizard manually in the browser, then press Enter here to resume."
+                    )
+                    await asyncio.get_event_loop().run_in_executor(
+                        None, input, ">>> Press Enter to resume automation after manual Step 3 walkthrough... "
+                    )
+                    # After manual takeover, re-poll the page state instead of
+                    # re-clicking — the user may already be on the download or
+                    # project-details page.
+                    _step3_clicked = True
+                    await asyncio.sleep(0.5)
+                    continue
+
+                # Per-API override: skip filling encryption-key fields and just
+                # click "Create project" on Step 3, then let the wizard land on
+                # the project page so the caller can provision a signing key via
+                # the sandbox "Add project key" flow (e.g. Transaction
+                # Notifications).
+                if skip_step3:
+                    logger.info(
+                        "Step 3 has skip_step3=True — clicking 'Create project' without filling encryption fields"
+                    )
+                    await self._wait_for_create_button_enabled(max_wait_s=5.0)
+                    clicked = await self._js_click_create_project()
+                    logger.info("Clicked 'Create project' on Step 3 (skip_step3) — found={}", clicked)
+                    _step3_clicked = True
+                    await asyncio.sleep(1.0)
+                    continue
+
                 # Check if this is a "no action needed" informational step (e.g., auto-generated encryption key).
                 no_action_text = await self.page.locator("text=There are no actions needed").count()
                 
