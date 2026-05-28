@@ -78,12 +78,23 @@ if not exist "%TOOL_VENV%\Scripts\playwright.exe" (
     echo   [4/4] Installing browser for key automation ^(downloading, please wait^)...
     "%TOOL_VENV%\Scripts\playwright.exe" install chromium
     if errorlevel 1 (
-        echo ERROR: Failed to install playwright browser. Aborting.
-        goto :end
+        echo.
+        echo WARNING: Playwright chromium download failed ^(often blocked by
+        echo          corporate proxies^). Falling back to system-installed Edge.
+        echo          Set PLAYWRIGHT_BROWSER_CHANNEL=msedge to use it.
+        echo.
+        REM Persist the marker so we don't keep retrying the download every run.
+        REM An empty file is enough; the if-exist check above only tests presence.
+        echo skipped > "%TOOL_VENV%\Scripts\playwright.exe.skip"
     )
     echo.
     echo API key automation tool ready.
     echo.
+)
+
+REM If the chromium download was skipped, drive system Edge instead.
+if exist "%TOOL_VENV%\Scripts\playwright.exe.skip" (
+    set PLAYWRIGHT_BROWSER_CHANNEL=msedge
 )
 
 REM Start vima (Vima Chat is now embedded in-process at /chat)
