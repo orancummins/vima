@@ -9,6 +9,7 @@ Or called programmatically from clean_keys.py.
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 from pathlib import Path
 
@@ -16,6 +17,29 @@ from pathlib import Path
 _HERE = Path(__file__).resolve().parent
 if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
+
+# Load MCD_PORTAL_EMAIL / MCD_PORTAL_PASSWORD from the vima root config/.env so
+# LoginPage can pre-fill credentials automatically (no manual typing required).
+_VIMA_ROOT = _HERE.parent.parent  # tools/mcd-key-automation → tools → vima root
+_ENV_FILE = _VIMA_ROOT / "config" / ".env"
+
+
+def _load_dotenv(path: Path) -> None:
+    """Load a .env file into os.environ without overriding already-set variables."""
+    if not path.exists():
+        return
+    for raw in path.read_text().splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, _, v = line.partition("=")
+        k = k.strip()
+        v = v.strip().strip('"').strip("'")
+        if k and k not in os.environ:
+            os.environ[k] = v
+
+
+_load_dotenv(_ENV_FILE)
 
 from loguru import logger
 from playwright.async_api import Page
