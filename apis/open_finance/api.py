@@ -80,7 +80,7 @@ def _trigger_background_seed() -> None:
 
 MANIFEST: Dict[str, Any] = {
     "id": "open_finance",
-    "name": "Open Finance",
+    "name": "Open Finance US",
     "description": (
         "Mastercard Open Finance (US Open Banking) — Finicity-powered "
         "account, transaction, and decisioning APIs."

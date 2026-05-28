@@ -862,16 +862,22 @@
         $("op-hint").appendChild(n);
       }
       if (data.hints && data.hints.open_link) {
-        const a = document.createElement("a");
-        a.href = data.hints.open_link;
-        a.target = "_blank";
-        a.rel = "noopener";
-        a.textContent = "Open Data Connect ↗";
-        const note = document.createElement("div");
+        const wrap = document.createElement("div");
+        wrap.style.cssText = "margin-top:10px;padding:12px 14px;background:#fff7ed;border:1px solid #fbd9a8;border-radius:6px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;";
+        const note = document.createElement("span");
         note.className = "muted";
-        note.textContent = "Open in a new tab, complete the FinBank flow, then run Refresh Accounts.";
-        $("op-hint").appendChild(note);
-        $("op-hint").appendChild(a);
+        note.style.cssText = "font-size:13px;flex:1;min-width:220px;";
+        note.textContent = data.hints.open_link_note
+          || "Open in a new tab, complete the bank login flow, then run the next step.";
+        const btn = document.createElement("a");
+        btn.href = data.hints.open_link;
+        btn.target = "_blank";
+        btn.rel = "noopener";
+        btn.textContent = data.hints.open_link_label || "Launch Connect ↗";
+        btn.style.cssText = "flex-shrink:0;padding:10px 18px;background:#ff5f00;color:#fff;border-radius:6px;text-decoration:none;font-size:14px;font-weight:700;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.12);";
+        wrap.appendChild(note);
+        wrap.appendChild(btn);
+        $("op-hint").appendChild(wrap);
       }      // Browser-action button: shown when op.browser_action is true.
       // Prefers hints.browser_launch_url; falls back to first URL found in response body.
       if (op.browser_action) {

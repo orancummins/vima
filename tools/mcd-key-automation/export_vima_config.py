@@ -201,26 +201,38 @@ def build_vima_config_zip(
         included["apis"].append(entry.id)
 
     # -----------------------------------------------------------------------
-    # Open Finance (OAuth 2.0 / Finicity)
+    # OAuth 2.0 APIs (Open Finance — US, AU, …) — Finicity-style credentials.
+    # Iterate over every OAuth2 entry so multi-region tenants (e.g. the AU
+    # variant alongside the US one) each get their own env block.
     # -----------------------------------------------------------------------
-    ofin_entry = next((e for e in iter_ordered() if e.auth == AUTH_OAUTH2), None)
-    cred_path = None
-    matched_alias = None
-    if ofin_entry:
-        cred_path, matched_alias = _find_credentials_any(_aliases_for_entry(ofin_entry), normalized_dir)
-    if cred_path and ofin_entry:
+    _DEFAULT_OAUTH2_BASE_URL: dict[str, str] = {
+        "open_finance":    "https://api.finicity.com",
+        "open_finance_au": "https://api.openbanking.mastercard.com.au",
+    }
+    for ofin_entry in [e for e in iter_ordered() if e.auth == AUTH_OAUTH2]:
+        cred_path, matched_alias = _find_credentials_any(
+            _aliases_for_entry(ofin_entry), normalized_dir
+        )
+        if not cred_path:
+            included["skipped"].append(f"{ofin_entry.id} (no credentials JSON)")
+            continue
+
         creds = json.loads(cred_path.read_text())
         partner_id = creds.get("partner_id", "")
         app_key    = creds.get("app_key", "")
         secret     = creds.get("secret", "")
 
+        base_url = _DEFAULT_OAUTH2_BASE_URL.get(
+            ofin_entry.id, "https://api.finicity.com"
+        )
+
         pem_path = _find_pem(matched_alias, normalized_dir, cred_path)
         env_lines += [
-            "# OPEN FINANCE (Finicity OAuth 2.0)",
+            f"# {ofin_entry.env_prefix} ({ofin_entry.display_name} — OAuth 2.0)",
             f"{ofin_entry.env_prefix}_PARTNER_ID={partner_id}",
             f"{ofin_entry.env_prefix}_PARTNER_SECRET={secret}",
             f"{ofin_entry.env_prefix}_APP_KEY={app_key}",
-            f"{ofin_entry.env_prefix}_API_BASE_URL=https://api.finicity.com",
+            f"{ofin_entry.env_prefix}_API_BASE_URL={base_url}",
         ]
         if pem_path:
             pem_dest = f"{ofin_entry.id}-sig-verification.pem"
@@ -228,8 +240,6 @@ def build_vima_config_zip(
             env_lines.append(f"{ofin_entry.env_prefix}_SIG_KEY_PATH=config/keys/{pem_dest}")
         env_lines.append("")
         included["apis"].append(ofin_entry.id)
-    elif ofin_entry:
-        included["skipped"].append(f"{ofin_entry.id} (no credentials JSON)")
 
     # -----------------------------------------------------------------------
     # CLAUDE / VIMA CHAT — preserve existing key if present on disk

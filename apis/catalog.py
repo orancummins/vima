@@ -80,12 +80,26 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         id="open_finance",
         env_prefix="OPEN_FINANCE",
         portal_slug="ofin",
-        display_name="Open Finance",
+        display_name="Open Finance US",
         auth=AUTH_OAUTH2,
         categories=("Auth", "Customers", "Data Connect", "Accounts", "Transactions",
                     "Reports", "Webhooks"),
         docs_url="https://developer.mastercard.com/open-finance-us/documentation/",
         legacy_id="ofin",
+    ),
+    ApiCatalogEntry(
+        id="open_finance_au",
+        env_prefix="OPEN_FINANCE_AU",
+        # Same portal product as US Open Finance — the wizard selects the
+        # variant via the Commercial Countries dropdown (Australia vs USA).
+        portal_slug="ofin",
+        display_name="Open Finance Australia",
+        auth=AUTH_OAUTH2,
+        categories=("Auth", "Customers", "Connect", "Accounts", "Transactions",
+                    "Consent (CDR)", "Reports", "Webhooks"),
+        docs_url="https://developer.mastercard.com/open-finance-au/documentation/",
+        legacy_id=None,
+        provision_note="Portal wizard selects Australia in Commercial Countries — separate Partner ID from US Open Finance.",
     ),
     ApiCatalogEntry(
         id="bin_lookup",
