@@ -54,6 +54,11 @@ class ApiCatalogEntry:
     legacy_id: Optional[str] = None
     # Optional provisioning UX note shown in auto-provision selection UI.
     provision_note: str = ""
+    # When False, the API cannot be auto-provisioned via the portal-wizard
+    # flow — the provisioning modal will disable the checkbox and show the
+    # ``manual_onboarding_url`` instead so the user can request access.
+    auto_provisionable: bool = True
+    manual_onboarding_url: str = ""
     # Optional override; defaults to ``apis.<id>.api``.
     module_path: Optional[str] = None
 
@@ -100,6 +105,27 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/open-finance-au/documentation/",
         legacy_id=None,
         provision_note="Portal wizard selects Australia in Commercial Countries — separate Partner ID from US Open Finance.",
+    ),
+    ApiCatalogEntry(
+        id="open_finance_eu",
+        env_prefix="OPEN_FINANCE_EU",
+        # The Aiia-backed EU stack is a distinct product family from
+        # Finicity-backed US/AU. Onboarding is manual: an onboarding officer
+        # provisions a clientId and adds the partner's public RSA cert to the
+        # trust list. No portal-wizard provisioning slug at this time.
+        portal_slug="ofin-eu",
+        display_name="Open Finance Europe",
+        auth=AUTH_OAUTH2,
+        categories=("Auth", "Providers", "Consent", "Accounts",
+                    "Transactions", "Balances", "Insights"),
+        docs_url="https://developer.mastercard.com/open-finance-data/documentation/",
+        legacy_id=None,
+        provision_note=(
+            "Manual onboarding only — email openbankingeu_support@mastercard.com "
+            "with your RSA-4096 public PEM to receive a sandbox clientId."
+        ),
+        auto_provisionable=False,
+        manual_onboarding_url="https://openbankingeu.mastercard.com/contact-us",
     ),
     ApiCatalogEntry(
         id="bin_lookup",

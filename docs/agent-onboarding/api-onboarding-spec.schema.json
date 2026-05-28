@@ -72,7 +72,9 @@
                 "oauth1_enc_key",
                 "oauth2_region",
                 "priceless",
-                "playbook"
+                "playbook",
+                "manual_onboarding",
+                "match_inline"
               ]
             },
             "region": { "type": ["string", "null"] },

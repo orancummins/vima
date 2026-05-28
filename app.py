@@ -1609,6 +1609,8 @@ def _build_provision_catalog() -> list[dict]:
             "docs_url": entry.docs_url,
             "requires_owner_approval": bool(note),
             "provision_note": note,
+            "auto_provisionable": bool(entry.auto_provisionable),
+            "manual_onboarding_url": entry.manual_onboarding_url or "",
         })
     return catalog
 

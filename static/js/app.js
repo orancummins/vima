@@ -4700,7 +4700,7 @@
   // ── API selection grid ────────────────────────────────────────────────────
   function updateSelectAllState() {
     if (!selectAllCb || !apiGrid) return;
-    var cbs = apiGrid.querySelectorAll('.prov-api-cb');
+    var cbs = apiGrid.querySelectorAll('.prov-api-cb:not(:disabled)');
     if (!cbs.length) {
       selectAllCb.checked = false;
       selectAllCb.indeterminate = false;
@@ -4713,26 +4713,45 @@
 
   function setAllApiSelections(checked) {
     if (!apiGrid) return;
-    var cbs = apiGrid.querySelectorAll('.prov-api-cb');
+    var cbs = apiGrid.querySelectorAll('.prov-api-cb:not(:disabled)');
     cbs.forEach(function (cb) { cb.checked = checked; });
     updateSelectAllState();
+  }
+
+  function _escAttr(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   function buildApiGrid() {
     if (!apiGrid) return;
     apiGrid.innerHTML = '';
+    var autoProvisionable = 0;
     APIS.forEach(function (api) {
+      var manual = api.auto_provisionable === false;
+      var note = manual ? '' : (api.provision_note || api.note || '');
       var label = document.createElement('label');
-      label.className = 'prov-api-item';
-      var note = api.provision_note || api.note || '';
+      label.className = 'prov-api-item' + (manual ? ' prov-api-item--manual' : '');
+      var cbAttrs = 'class="prov-api-cb" data-id="' + _escAttr(api.id) + '"' +
+                    (manual ? ' disabled' : ' checked');
+      var nameHtml = '<span class="prov-api-name">' +
+                     '<span class="prov-api-name-text">' + _escAttr(api.name) + '</span>' +
+                     (manual ? '<span class="prov-api-badge">Manual onboarding</span>' : '') +
+                     '</span>';
+      var noteHtml = '';
+      if (note) {
+        noteHtml = '<span class="prov-api-note">' + _escAttr(note) + '</span>';
+      }
+      var linkHtml = '';
       label.innerHTML =
-        '<input type="checkbox" class="prov-api-cb" data-id="' + api.id + '" checked>' +
-        '<span class="prov-api-name">' + api.name + '</span>' +
-        (note ? '<span class="prov-api-note">' + note + '</span>' : '');
+        '<input type="checkbox" ' + cbAttrs + '>' +
+        '<span class="prov-api-text">' + nameHtml + noteHtml + linkHtml + '</span>';
       apiGrid.appendChild(label);
+      if (!manual) autoProvisionable++;
     });
     if (selectAllCb) {
-      selectAllCb.checked = APIS.length > 0;
+      selectAllCb.checked = autoProvisionable > 0;
       selectAllCb.indeterminate = false;
     }
   }
