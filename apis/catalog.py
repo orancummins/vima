@@ -104,7 +104,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
                     "Consent (CDR)", "Reports", "Webhooks"),
         docs_url="https://developer.mastercard.com/open-finance-au/documentation/",
         legacy_id=None,
-        provision_note="Portal wizard selects Australia in Commercial Countries — separate Partner ID from US Open Finance.",
+        provision_note="",
     ),
     ApiCatalogEntry(
         id="open_finance_eu",
@@ -278,7 +278,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("FX", "Settlement"),
         docs_url="https://developer.mastercard.com/enhanced-currency-conversion-calculator/documentation/",
         legacy_id=None,
-        provision_note="EEA issuers only; quarterly subscription on the portal",
+        provision_note="",
     ),
 )
 
