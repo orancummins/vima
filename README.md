@@ -153,6 +153,25 @@ will display a banner if a non-US IP is detected.
 
 ---
 
+## Rotating or removing API keys
+
+Run `clean_keys.py` to wipe all local credentials and — optionally — delete the
+corresponding projects from the Mastercard Developers portal in one step:
+
+```bash
+python clean_keys.py
+```
+
+What it does:
+
+1. **Deletes local key material** — `config/keys/*.p12`, `config/keys/*.pem`, `config/.env`, and any cached tool artifacts (`tools/mcd-key-automation/temp/`, output zips).
+2. **Clears the running app** — if Solution Studio is open on `localhost:9021` it posts to `/config/purge` so the in-memory env-vars are cleared immediately (no restart needed).
+3. **Optionally deletes portal projects** — prompts you before opening a browser. Uses `MCD_PORTAL_EMAIL` / `MCD_PORTAL_PASSWORD` from `config/.env` to log in automatically (same credentials used during provisioning); no manual typing required.
+
+After cleaning, re-run `./addapi.sh <DOCS_URL>` (or the Copilot agent command) to reprovision fresh keys for any API.
+
+---
+
 ## Extending the platform
 
 ### Add a new API (or fix an existing one)
