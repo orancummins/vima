@@ -10,6 +10,13 @@ class LoginSelectors:
     # Detection of authenticated state is via URL change (page no longer contains /account/log-in).
     sign_in_link = "a[href*='log-in']"
 
+    # Login form — verify / update with discover.py if auto-fill fails.
+    # Run: cd tools/mcd-key-automation && .venv/bin/python discover.py
+    # then inspect logs/dom/*.html for the actual input selectors.
+    email_input = "input[type='email'], input[name='email'], #email, input[name='identifier']"
+    password_input = "input[type='password'], input[name='password'], #password"
+    submit_button = "button[type='submit'], input[type='submit'], button:has-text('Sign in'), button:has-text('Log in')"
+
 
 class DashboardSelectors:
     """Dashboard at https://developer.mastercard.com/dashboard"""

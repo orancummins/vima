@@ -31,7 +31,24 @@ Purpose: run autonomous onboarding by giving an agent only this file and one Mas
 11. Run smoke checks:
 - simulator operation
 - live operation when credentials are available
-12. If provisioning requires login/MFA/CAPTCHA, request human login only, then continue autonomously.
+12. After the provisioning mapping is wired (step 8), acquire portal credentials for the API:
+    ```
+    cd tools/mcd-key-automation
+    .venv/bin/mcd-key-automation provision-api <DOCS_URL>
+    ```
+    The command extracts the portal slug from the URL, creates a portal project, downloads keys,
+    and writes credentials to `config/.env.generated`.
+
+    Prerequisites:
+    - `MCD_PORTAL_EMAIL` and `MCD_PORTAL_PASSWORD` must be set in `config/.env` for login pre-fill.
+    - If a valid session exists from a prior run (`session_state.json`), the browser skips login entirely.
+    - If no session or credentials: the browser opens, complete sign-in + MFA manually, then the tool continues autonomously.
+
+    After the command succeeds, merge the generated credentials into `config/.env`:
+    ```
+    cat config/.env.generated >> config/.env
+    ```
+    Then re-run the live smoke test to confirm credentials are active.
 13. Create and complete a checklist artifact from docs/agent-onboarding/onboarding-checklist-template.md at docs/agent-onboarding/checklists/<api-id>-onboarding-checklist.md.
 14. Source official sandbox test data from docs and set known-good operation defaults in `MANIFEST`.
 15. Add a "Sandbox test values" subsection in `MANIFEST.how_to` that links the official dataset and lists operation-specific sample inputs.
@@ -115,3 +132,27 @@ Use docs/agent-onboarding/one-file-api-onboarding-instruction.md and onboard thi
 <PASTE_MASTERCARD_API_DOCS_URL>
 
 Proceed autonomously. Ask me only for login/MFA/CAPTCHA or unresolved auth-type confirmation.
+
+## Autonomous portal credential acquisition — one-time setup
+
+Before the first use, establish a cached portal session so all subsequent runs are headless:
+
+```bash
+cd tools/mcd-key-automation
+
+# 1. Add credentials to config/.env (once)
+echo "MCD_PORTAL_EMAIL=your@email.com" >> ../../config/.env
+echo "MCD_PORTAL_PASSWORD=yourpassword" >> ../../config/.env
+
+# 2. Establish session (opens browser once for MFA)
+.venv/bin/mcd-key-automation init-session
+```
+
+After init-session succeeds, `provision-api` detects the fresh session and runs headless automatically:
+
+```bash
+# Fully autonomous — no browser window, no interaction
+.venv/bin/mcd-key-automation provision-api <PASTE_MASTERCARD_API_DOCS_URL>
+```
+
+Session stays fresh for ~8 hours. Re-run `init-session` when it expires.
