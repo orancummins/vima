@@ -4835,8 +4835,54 @@ body {
 }
 .prov-api-item:hover { background: #f0f0f0; }
 .prov-api-cb { margin-top: 2px; flex-shrink: 0; accent-color: var(--mc-orange); }
+.prov-api-cb:disabled { cursor: not-allowed; opacity: 0.45; }
+.prov-api-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .prov-api-name { font-weight: 500; color: #222; flex: 1; }
 .prov-api-note { font-size: 0.75rem; color: #f79e1b; display: block; margin-top: 2px; }
+
+/* Manual-onboarding cards (e.g. Open Finance EU) — greyed, non-selectable */
+.prov-api-item--manual {
+  background: #f1f3f5;
+  border-color: #d8dde2;
+  cursor: default;
+  opacity: 0.85;
+}
+.prov-api-item--manual:hover { background: #f1f3f5; }
+.prov-api-item--manual .prov-api-name {
+  color: #6c757d;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  white-space: nowrap;
+}
+.prov-api-item--manual .prov-api-name > :first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}.prov-api-badge {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #fff;
+  background: #6c757d;
+  border-radius: 10px;
+  line-height: 1.4;
+}
+.prov-api-link {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #495057;
+  text-decoration: underline;
+}
+.prov-api-link:hover { color: var(--mc-orange); }
 
 /* Notes */
 .prov-note {
