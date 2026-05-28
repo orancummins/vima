@@ -9,17 +9,20 @@ are derived from ``apis.catalog`` so the canonical vima catalog stays the
 single source of truth. We key by **legacy id** here because YAML configs and
 artifact filenames downloaded from prior runs still embed the legacy ids.
 
-provision_type values:
-    "oauth1_standard"    Standard OAuth 1.0a: Step1 → Step2 (alias+password) → download zip
-    "oauth1_enc_key"     OAuth 1.0a but wizard downloads a client encryption .pem; signing key
-                         must be added separately via sandbox "Add project key"
-    "oauth2_region"      OAuth 2.0 with mandatory region dropdown on Step 1 (e.g. Open Finance)
-    "priceless"          Must select a sub-API card before proceeding (requires API Owner approval)
+provision_type values (see ProvisionType alias below):
+    "oauth1_standard"     Standard OAuth 1.0a: Step1 → Step2 (alias+password) → download zip
+    "oauth1_enc_key"      OAuth 1.0a but wizard downloads a client encryption .pem; signing key
+                          must be added separately via sandbox "Add project key"
+    "oauth1_skip_step3"   OAuth 1.0a with an optional Step 3 that must be skipped
+    "oauth2_region"       OAuth 2.0 with mandatory region dropdown on Step 1 (e.g. Open Finance)
+    "priceless"           Must select a sub-API card before proceeding (requires API Owner approval)
+    "playbook"            Driven from a recorded JSON playbook (playbooks/mastercard/<slug>.json)
+    "match_inline"        Legacy hard-coded MATCH Pro flow (superseded by playbook)
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Literal, Sequence
 
 from app._vima_catalog import (
     AUTH_OAUTH1_ENC,
@@ -27,11 +30,21 @@ from app._vima_catalog import (
     iter_ordered,
 )
 
+ProvisionType = Literal[
+    "oauth1_standard",
+    "oauth1_enc_key",
+    "oauth1_skip_step3",
+    "oauth2_region",
+    "priceless",
+    "playbook",
+    "match_inline",
+]
+
 
 @dataclass(frozen=True)
 class ApiSetup:
     slug: str
-    provision_type: str = "oauth1_standard"
+    provision_type: ProvisionType = "oauth1_standard"
     # Optional: region dropdown value to select in Step 1 (oauth2_region only)
     region: str | None = None
     # Optional: sub-API selector(s) to click in Step 1.
@@ -59,10 +72,11 @@ _SPECIAL_BY_ID: dict[str, dict] = {
     },
     # MATCH Pro shows a single-page create-project form with required
     # service-details (company type, ICA, contact email, replacement-id No)
-    # plus the standard signing-key alias+password. Handled by a dedicated
-    # workflow because the wizard differs structurally from the other APIs.
+    # plus the standard signing-key alias+password. Driven from a recorded
+    # playbook (see playbooks/mastercard/match.json) — the create-project
+    # wizard differs structurally from the other APIs.
     "match": {
-        "provision_type": "match_inline",
+        "provision_type": "playbook",
     },
     # ABU projects can have pull access active while push operations remain
     # unauthorized unless the push service card is explicitly selected.

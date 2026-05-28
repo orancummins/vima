@@ -229,6 +229,17 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/bces-service/documentation/",
         legacy_id="bces",
     ),
+    ApiCatalogEntry(
+        id="enhanced_currency_conversion_calculator",
+        env_prefix="ENHANCED_CURRENCY_CONVERSION_CALCULATOR",
+        portal_slug="enhanced-currency-conversion-calculator",
+        display_name="Enhanced Currency Conversion Calculator",
+        auth=AUTH_OAUTH1,
+        categories=("FX", "Settlement"),
+        docs_url="https://developer.mastercard.com/enhanced-currency-conversion-calculator/documentation/",
+        legacy_id=None,
+        provision_note="EEA issuers only; quarterly subscription on the portal",
+    ),
 )
 
 

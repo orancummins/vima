@@ -267,6 +267,78 @@ async def _provision_match_inline(
     return [creds_file, key_zip] if creds_file else [key_zip]
 
 
+# ---------------------------------------------------------------------------
+# Generic playbook-driven provisioning
+# ---------------------------------------------------------------------------
+
+async def _provision_via_playbook(
+    page, dashboard: DashboardPage, portal_name: str,
+    dest_dir: Path, project: ProjectSpec, api_name: str,
+    alias: str, config: AppConfig,
+) -> list[Path]:
+    """Drive a portal create-project flow from a recorded JSON playbook.
+
+    Looks up ``playbooks/mastercard/<api-slug>.json`` (recorded by
+    ``mcd-key-automation record-api <URL>`` against a manual walk-through).
+    Records artifacts to ``dest_dir`` and captures the consumer key from
+    the resulting project page.
+    """
+    from providers.mastercard.playbook_runner import (
+        PlaybookRunner, find_playbook, load_playbook,
+    )
+    from providers.mastercard.pages.create_project_page import CreateProjectPage
+
+    api_slug = API_SLUGS.get(api_name, api_name)
+    playbook_file = find_playbook("mastercard", api_slug)
+    if playbook_file is None:
+        raise FileNotFoundError(
+            f"No playbook for api_slug={api_slug!r} at "
+            f"playbooks/mastercard/{api_slug}.json. "
+            f"Record one with: mcd-key-automation record-api <docs-url>"
+        )
+
+    playbook = load_playbook(playbook_file)
+    defaults = playbook.get("defaults", {})
+
+    # Resolve contact email from session JWT / env (reuses CreateProjectPage logic).
+    create_page = CreateProjectPage(page)
+    contact_email = await create_page._resolve_contact_email()
+
+    variables: dict[str, str] = {
+        "project_name": portal_name,
+        "alias": alias,
+        "key_password": config.key_password,
+        "contact_email": contact_email,
+        **{k: str(v) for k, v in defaults.items()},
+    }
+
+    runner = PlaybookRunner(
+        page, playbook, variables,
+        dest_dir=dest_dir,
+        download_name_hint=f"{project.name}-{api_name}-signing",
+    )
+    await runner.run()
+
+    # Extract project UUID from the resulting URL (e.g. /project-details/<uuid>).
+    final_url = runner.final_url or page.url
+    if "/project-details/" not in final_url:
+        logger.warning(
+            "Playbook for {} did not land on /project-details/ (final_url={})",
+            api_slug, final_url,
+        )
+        return list(runner.downloads)
+    uuid = final_url.split("/project-details/")[-1].split("/")[0].split("?")[0]
+    logger.info("Playbook[{}] provisioned project uuid={}", api_slug, uuid)
+
+    creds_file = await _capture_consumer_key(
+        page, uuid, dest_dir, project, api_name, alias=alias
+    )
+    artifacts: list[Path] = list(runner.downloads)
+    if creds_file:
+        artifacts.insert(0, creds_file)
+    return artifacts
+
+
 async def _provision_oauth1_enc_key(
     page, dashboard: DashboardPage, portal_name: str,
     dest_dir: Path, project: ProjectSpec, api_name: str,
@@ -453,6 +525,20 @@ async def ensure_project_with_api(
     alias = _key_alias(api_name)
     ts = run_timestamp or "000000"
     portal_name = f"SS-{project.name}-{ts}"
+    # Mastercard Developers portal enforces a 50-char limit on project name.
+    # When the API slug is long (e.g. enhanced-currency-conversion-calculator
+    # is already 40 chars), the default "SS-<slug>-<ts>" overflows and the
+    # Proceed button stays disabled. Truncate the middle while keeping the
+    # SS- prefix and the full timestamp suffix so each run is still unique.
+    _PORTAL_NAME_MAX = 50
+    if len(portal_name) > _PORTAL_NAME_MAX:
+        overflow = len(portal_name) - _PORTAL_NAME_MAX
+        trimmed = project.name[: max(1, len(project.name) - overflow)]
+        portal_name = f"SS-{trimmed}-{ts}"
+        logger.info(
+            "Project name exceeded {} chars — truncated slug portion to {!r}",
+            _PORTAL_NAME_MAX, trimmed,
+        )
 
     api_slug = API_SLUGS.get(api_name, api_cfg.slug)
     fast_path = CreateProjectSelectors.fast_path_url_tpl.format(api_slug=api_slug)
@@ -481,6 +567,11 @@ async def ensure_project_with_api(
 
     if ptype == "match_inline":
         return await _provision_match_inline(
+            page, dashboard, portal_name, dest_dir, project, api_name, alias, config
+        )
+
+    if ptype == "playbook":
+        return await _provision_via_playbook(
             page, dashboard, portal_name, dest_dir, project, api_name, alias, config
         )
 

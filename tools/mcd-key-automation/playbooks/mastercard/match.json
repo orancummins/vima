@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "organization": "mastercard",
+  "api_slug": "match",
+  "description": "MATCH Pro create-project flow. Recorded from a manual provisioning session on 2026-05-28 (project db466ae9-da9a-4126-90f1-3a13d946567b).",
+  "recorded_at": "2026-05-28T01:27:29Z",
+  "start_url": "https://developer.mastercard.com/create-project?services=match",
+  "final_url_pattern": "/project-details/",
+  "variables": [
+    "project_name",
+    "alias",
+    "key_password",
+    "contact_email",
+    "ica"
+  ],
+  "defaults": {
+    "ica": "123456789"
+  },
+  "steps": [
+    { "action": "wait_for", "selector": "input[data-testid='project-name']" },
+    { "action": "fill", "selector": "input[data-testid='project-name']", "value": "{{project_name}}", "delay_ms": 60 },
+    { "action": "wait_for_proceed_enabled" },
+    { "action": "click_proceed" },
+
+    { "action": "wait_for", "selector": "input[name$='_accessToBeUsedBy']", "timeout_ms": 20000 },
+    { "action": "sleep", "ms": 1200 },
+    { "action": "click_radio", "name_suffix": "_accessToBeUsedBy", "value": "Internal MasterCard Partner" },
+
+    { "action": "wait_for", "selector": "input[data-testid='acquirerica-text']", "timeout_ms": 20000 },
+    { "action": "wait_for", "selector": "input[data-testid='acquirercontactemail-text']", "timeout_ms": 20000 },
+    { "action": "wait_for", "selector": "input[name$='_isReplacingClientId'][value='No']", "timeout_ms": 20000 },
+    { "action": "sleep", "ms": 600 },
+
+    { "action": "fill", "selector": "input[data-testid='acquirerica-text']", "value": "{{ica}}", "delay_ms": 90 },
+    { "action": "fill", "selector": "input[data-testid='acquirercontactemail-text']", "value": "{{contact_email}}", "delay_ms": 90 },
+    { "action": "click_radio", "name_suffix": "_isReplacingClientId", "value": "No" },
+    { "action": "screenshot", "name": "match_service_details_filled" },
+
+    { "action": "wait_for_proceed_enabled" },
+    { "action": "click_proceed" },
+
+    { "action": "wait_for", "selector": "input[data-testid='key-alias-input']", "timeout_ms": 20000 },
+    { "action": "sleep", "ms": 1000 },
+    { "action": "fill", "selector": "input[data-testid='key-alias-input']", "value": "{{alias}}", "delay_ms": 80 },
+    { "action": "fill", "selector": "input[data-testid='key-store-password-input']", "value": "{{key_password}}", "delay_ms": 80 },
+    { "action": "screenshot", "name": "match_key_form_filled" },
+
+    { "action": "wait_for_proceed_enabled" },
+    { "action": "screenshot", "name": "match_ready_for_manual_proceed" },
+    { "action": "sleep", "ms": 180000 },
+
+    {
+      "action": "expect_download",
+      "click_selector": "button[data-testid='download-key-action-project-creation']",
+      "timeout_ms": 300000
+    },
+    { "action": "click", "selector": "button[data-testid='proceed-button-create-new-project']", "timeout_ms": 20000 },
+    { "action": "wait_for_url_contains", "value": "/project-details/", "timeout_ms": 20000 }
+  ]
+}

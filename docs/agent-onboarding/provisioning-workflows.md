@@ -11,6 +11,7 @@ This document defines deterministic behavior for each supported `provision_type`
 | oauth1_enc_key | OAuth 1.0a + client encryption | Step1 -> Step2 -> download enc pem -> sandbox add signing key | encryption pem + credentials.json + signing zip |
 | oauth2_region | OAuth 2.0 | Step1 with region -> open project -> sandbox OAuth2 creds + sig key | credentials.json + signature key pem |
 | priceless | OAuth 1.0a | Step1 with api selection -> Step2 creds -> download zip | credentials.json + signing zip (may be pending approval) |
+| playbook | varies | Replay recorded JSON steps from `playbooks/mastercard/<slug>.json` | credentials.json + signing zip |
 
 ## Prerequisites
 
@@ -54,6 +55,31 @@ This document defines deterministic behavior for each supported `provision_type`
 2. Complete step2 alias/password.
 3. Download signing key and capture consumer key.
 4. Mark as pending approval when applicable.
+
+### playbook
+
+The `playbook` driver replays a recorded JSON file at
+`tools/mcd-key-automation/playbooks/mastercard/<slug>.json`. Use this for any
+API whose create-project wizard differs from the standard layout (e.g. MATCH
+Pro, which requires conditional service-details fields).
+
+1. **One-time recording.** Run `./addapi.sh --record <docs-url>`. A headful
+   browser opens at the create-project page. Drive the flow end-to-end:
+   project name → all required fields → key alias + password → Create
+   project → Download key file. When the zip downloads, return to the
+   terminal and press Enter. The recorder compresses the trace into a
+   replayable playbook and prompts you to map captured literal values onto
+   variables (`project_name`, `alias`, `key_password`, `contact_email`,
+   `ica`).
+2. **Replay.** Subsequent `./addapi.sh <docs-url>` calls use
+   `_provision_via_playbook` to replay the recorded steps autonomously and
+   then capture the consumer key from the resulting project page.
+
+Supported playbook actions are documented in
+`tools/mcd-key-automation/playbooks/README.md`. The runner provides
+`contact_email` automatically by decoding the `auth_token` cookie's `alias`
+claim, and defaults `ica` to `123456789` (overridable per-playbook via the
+`defaults` block).
 
 ## Known Failure Modes
 

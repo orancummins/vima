@@ -9,6 +9,12 @@ Purpose: run autonomous onboarding by giving an agent only this file and one Mas
 
 ## What the agent must do
 
+The recommended entry point is `./addapi.sh <DOCS_URL>`. It runs portal
+provisioning (record-once-replay-forever) and then emits an "AGENT NEXT STEPS"
+block telling the agent (you) exactly which codebase additions follow. You
+may invoke `addapi.sh` yourself as the first action; the steps below describe
+the complete workflow you are responsible for end-to-end.
+
 1. Parse the API docs URL and infer product name, portal slug, likely auth model, and candidate operation for smoke tests.
 2. If auth model cannot be inferred confidently, stop and ask for confirmation before coding.
 3. Follow the full implementation workflow in:
@@ -32,12 +38,33 @@ Purpose: run autonomous onboarding by giving an agent only this file and one Mas
 - simulator operation
 - live operation when credentials are available
 12. After the provisioning mapping is wired (step 8), acquire portal credentials for the API:
+
+    **From the repo root, prefer the wrapper:**
+    ```
+    ./addapi.sh <DOCS_URL>
+    ```
+    This runs `provision-api` and the post-provisioning smoke test in one step.
+
+    **Record-once, replay-forever:** Some APIs (e.g. MATCH) use a structurally
+    different create-project wizard and are driven by a recorded JSON playbook
+    at `tools/mcd-key-automation/playbooks/mastercard/<slug>.json`. If
+    `provision-api` prints a warning that no playbook exists for the slug:
+
+    ```
+    ./addapi.sh --record <DOCS_URL>
+    ```
+    Walk through the portal create-project flow manually (project name → all
+    required fields → key alias + password → Create project → Download key
+    file). When the key zip downloads, return to the terminal and press Enter.
+    The recorder compresses the trace into a replayable playbook. Re-run
+    `./addapi.sh <DOCS_URL>` to provision autonomously thereafter.
+
+    Direct CLI equivalents (when not using the wrapper):
     ```
     cd tools/mcd-key-automation
     .venv/bin/mcd-key-automation provision-api <DOCS_URL>
+    .venv/bin/mcd-key-automation record-api --api-slug <slug>   # one-time recording
     ```
-    The command extracts the portal slug from the URL, creates a portal project, downloads keys,
-    and writes credentials to `config/.env.generated`.
 
     Prerequisites:
     - `MCD_PORTAL_EMAIL` and `MCD_PORTAL_PASSWORD` must be set in `config/.env` for login pre-fill.
