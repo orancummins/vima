@@ -81,6 +81,7 @@ GROUP_ORDER: tuple[str, ...] = (
 
 DISABLED_API_IDS: frozenset[str] = frozenset({
     "flight_delay_pass",
+    "carbon_calculator",
 })
 
 
@@ -327,6 +328,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/eligibility-api/documentation/",
         legacy_id="eligibility",
         group=GROUP_LOYALTY,
+        provision_note="Requires API Owner approval",
     ),
     ApiCatalogEntry(
         id="benefits_content_eligibility",
@@ -349,7 +351,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/enhanced-currency-conversion-calculator/documentation/",
         legacy_id=None,
         group=GROUP_DATA,
-        provision_note="",
+        provision_note="Requires API Owner approval",
     ),
     ApiCatalogEntry(
         id="flight_delay_pass",
@@ -374,6 +376,28 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         ),
         auto_provisionable=False,
         manual_onboarding_url="https://developer.mastercard.com/flight-delay-pass/documentation/",
+    ),
+    ApiCatalogEntry(
+        id="carbon_calculator",
+        env_prefix="CARBON_CALCULATOR",
+        portal_slug="carbon-calculator",
+        display_name="Carbon Calculator",
+        # OAuth 1.0a + JWE payload encryption on payment-card registration ops.
+        auth=AUTH_OAUTH1_ENC,
+        categories=("Sustainability", "Service Provider", "Payment Cards",
+                    "Environmental Impact", "Engagement"),
+        docs_url="https://developer.mastercard.com/carbon-calculator/documentation/",
+        legacy_id=None,
+        group=GROUP_DATA,
+        # Sandbox project creation requires a Mastercard-issued Customer ID
+        # (CID), Legal Name, and BIN range — none of which the portal wizard
+        # can supply autonomously. Contact carboncalculator@mastercard.com.
+        provision_note=(
+            "Manual onboarding only — requires Mastercard-issued Customer ID, "
+            "Legal Name and BIN range. Contact carboncalculator@mastercard.com."
+        ),
+        auto_provisionable=False,
+        manual_onboarding_url="https://developer.mastercard.com/create-project/carbon-calculator?services=carbon-calculator",
     ),
 )
 
