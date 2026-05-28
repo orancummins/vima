@@ -132,3 +132,27 @@ Use docs/agent-onboarding/one-file-api-onboarding-instruction.md and onboard thi
 <PASTE_MASTERCARD_API_DOCS_URL>
 
 Proceed autonomously. Ask me only for login/MFA/CAPTCHA or unresolved auth-type confirmation.
+
+## Autonomous portal credential acquisition — one-time setup
+
+Before the first use, establish a cached portal session so all subsequent runs are headless:
+
+```bash
+cd tools/mcd-key-automation
+
+# 1. Add credentials to config/.env (once)
+echo "MCD_PORTAL_EMAIL=your@email.com" >> ../../config/.env
+echo "MCD_PORTAL_PASSWORD=yourpassword" >> ../../config/.env
+
+# 2. Establish session (opens browser once for MFA)
+.venv/bin/mcd-key-automation init-session
+```
+
+After init-session succeeds, `provision-api` detects the fresh session and runs headless automatically:
+
+```bash
+# Fully autonomous — no browser window, no interaction
+.venv/bin/mcd-key-automation provision-api <PASTE_MASTERCARD_API_DOCS_URL>
+```
+
+Session stays fresh for ~8 hours. Re-run `init-session` when it expires.

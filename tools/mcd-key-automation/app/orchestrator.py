@@ -28,7 +28,7 @@ def _provider_for(name: str):
     raise McdAutomationError(f"Unknown provider {name!r}")
 
 
-async def run(config_path: Path, *, dry_run: bool = False) -> Path | None:
+async def run(config_path: Path, *, dry_run: bool = False, headless: bool = False) -> Path | None:
     config: AppConfig = load_config(config_path)
     logger.info("Loaded config for env={} ({} projects)", config.environment, len(config.projects))
 
@@ -43,8 +43,8 @@ async def run(config_path: Path, *, dry_run: bool = False) -> Path | None:
             logger.debug("Cleared stale workspace dir: {}", stale_dir)
 
     artifacts: list[DownloadedArtifact] = []
-    async with browser_session(downloads_dir=WORKSPACE) as (_browser, _ctx, page):
-        provider: DeveloperPortalProvider = _provider_for(config.organization)(page, config, WORKSPACE)
+    async with browser_session(headless=headless, downloads_dir=WORKSPACE) as (_browser, _ctx, page):
+        provider: DeveloperPortalProvider = _provider_for(config.organization)(page, config, WORKSPACE, headless=headless)
         try:
             await provider.login()
             if dry_run:

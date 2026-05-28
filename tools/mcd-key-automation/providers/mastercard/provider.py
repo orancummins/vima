@@ -19,8 +19,8 @@ from providers.mastercard.workflows.project_workflow import ensure_project_with_
 class MastercardProvider(DeveloperPortalProvider):
     name = "mastercard"
 
-    def __init__(self, page: Page, config: AppConfig, workspace: Path) -> None:
-        super().__init__(page, config, workspace)
+    def __init__(self, page: Page, config: AppConfig, workspace: Path, *, headless: bool = False) -> None:
+        super().__init__(page, config, workspace, headless=headless)
         self.login_page = LoginPage(page, login_url=config.login_url)
         self.dashboard = DashboardPage(page)
         # Single timestamp shared across all projects in this run.
@@ -29,7 +29,7 @@ class MastercardProvider(DeveloperPortalProvider):
 
     async def login(self) -> None:
         await self.login_page.goto()
-        await self.login_page.wait_for_manual_auth()
+        await self.login_page.wait_for_manual_auth(headless=self.headless)
         logger.info("Authenticated session detected.")
 
     async def ensure_project(self, project: ProjectSpec) -> None:

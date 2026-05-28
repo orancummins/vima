@@ -12,10 +12,11 @@ from app.models import AppConfig, DownloadedArtifact, ProjectSpec
 class DeveloperPortalProvider(ABC):
     name: str = "abstract"
 
-    def __init__(self, page: Page, config: AppConfig, workspace: Path) -> None:
+    def __init__(self, page: Page, config: AppConfig, workspace: Path, *, headless: bool = False) -> None:
         self.page = page
         self.config = config
         self.workspace = workspace
+        self.headless = headless
 
     @abstractmethod
     async def login(self) -> None:
