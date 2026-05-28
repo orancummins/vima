@@ -127,6 +127,21 @@ print a one-line status summary so the human can follow along.
    ./.venv/bin/python tools/validate_api_contract.py
    ```
 
+5. **Final gate — confirm HTTP 200 OK from the live sandbox.**
+   Run:
+
+   ```bash
+   cd tools/mcd-key-automation && \
+   ./.venv/bin/mcd-key-automation test-api <DOCS_URL>
+   ```
+
+   The output MUST include `✅ PASS` and print `status=200` (or another
+   2xx code documented as the success response for that operation).
+   If it does not:
+   - Do not mark onboarding complete.
+   - Re-read the docs, fix the request, and retry until you see 200 OK.
+   Paste the final passing line (secrets redacted) into the checklist.
+
 ### Deliverable
 
 Finish by writing a checklist at

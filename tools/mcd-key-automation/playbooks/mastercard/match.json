@@ -46,15 +46,16 @@
     { "action": "screenshot", "name": "match_key_form_filled" },
 
     { "action": "wait_for_proceed_enabled" },
-    { "action": "screenshot", "name": "match_ready_for_manual_proceed" },
-    { "action": "sleep", "ms": 180000 },
+    { "action": "screenshot", "name": "match_key_form_ready" },
+    { "action": "os_click", "selector": "button[data-testid='proceed-btn']", "timeout_ms": 20000 },
+    { "action": "wait_for", "selector": "button[data-testid='download-key-action-project-creation']", "timeout_ms": 300000 },
 
     {
       "action": "expect_download",
       "click_selector": "button[data-testid='download-key-action-project-creation']",
       "timeout_ms": 300000
     },
-    { "action": "click", "selector": "button[data-testid='proceed-button-create-new-project']", "timeout_ms": 20000 },
-    { "action": "wait_for_url_contains", "value": "/project-details/", "timeout_ms": 20000 }
+    { "action": "os_click", "selector": "button[data-testid='proceed-button-create-new-project']", "timeout_ms": 20000 },
+    { "action": "wait_for_url_contains", "value": "/project-details/", "timeout_ms": 60000 }
   ]
 }

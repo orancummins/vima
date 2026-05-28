@@ -289,6 +289,9 @@ def explorer_execute(api_id: str):
     params = body.get("params") or {}
     if not op_id:
         return jsonify({"error": "'operation' is required"}), 400
+    # Snapshot the call-log watermark so we can backfill request/response below.
+    with _api_call_lock:
+        seq_before = _api_call_seq
     try:
         result = mod.execute(op_id, params)
     except Exception as e:
@@ -300,6 +303,29 @@ def explorer_execute(api_id: str):
             capture_response(api_id, op_id, resp_body)
         except Exception:
             pass
+    # If the API module did not include the 'request' or 'response' envelope
+    # that the UI needs to render the panels, backfill from the HTTP-level
+    # interceptor log.  This means new APIs don't have to remember to build
+    # those dicts themselves — we derive them from the real HTTP exchange.
+    if not result.get("request") or not result.get("response"):
+        with _api_call_lock:
+            new_entries = [e for e in _api_call_log if e.get("seq", 0) > seq_before]
+        if new_entries:
+            # _api_call_log is newest-first; the oldest new entry is the first
+            # outbound HTTP call that execute() made (pick last in the list).
+            first_call = new_entries[-1]
+            if not result.get("request"):
+                result["request"] = {
+                    "method": first_call.get("method"),
+                    "url": first_call.get("url"),
+                    "body": first_call.get("requestBody"),
+                }
+            if not result.get("response"):
+                last_call = new_entries[0]
+                result["response"] = {
+                    "status_code": last_call.get("status"),
+                    "body": last_call.get("responseBody"),
+                }
     # Merge in latest state snapshot for the UI
     result["state"] = getattr(mod, "get_state", lambda: {})()
     return jsonify(result)
