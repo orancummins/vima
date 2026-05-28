@@ -403,6 +403,72 @@ def provision_api(
         typer.echo(f"  {api}: {info}")
     typer.echo(f"\nMerge into config/.env when ready:\n  cat {env_out} >> {VIMA_CONFIG / '.env'}")
 
+    # Smoke-test the provisioned API
+    from app.api_smoke import run_smoke
+    typer.echo("\nRunning smoke test…")
+    outcome = run_smoke(api_name, url, VIMA_ROOT)
+    _print_smoke_outcome(outcome)
+    if not outcome.success:
+        typer.echo(
+            "  Smoke test did not pass — credentials may need more time to activate.\n"
+            f"  Re-run: mcd-key-automation test-api {url!r}",
+            err=True,
+        )
+
+
+@app.command("test-api")
+def test_api(
+    url: str = typer.Argument(
+        help="Mastercard Developers URL for the API.",
+    ),
+    api_id: str | None = typer.Option(
+        None, "--api-id", help="Override the api_id (default: derived from URL slug)."
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+) -> None:
+    """Test a provisioned API: call its first operation and verify credentials work.
+
+    \b
+    Example:
+      mcd-key-automation test-api https://developer.mastercard.com/bin-lookup/documentation/
+
+    If the first call fails, the command searches the docs URL for sandbox test
+    values, retries with those, and patches the MANIFEST if a good response is
+    obtained.  Reads credentials from config/.env and config/.env.generated.
+    """
+    _configure_logging(verbose)
+    _load_dotenv(VIMA_CONFIG / ".env")
+
+    slug = _slug_from_url(url)
+    if not slug:
+        typer.echo(f"ERROR: Could not extract slug from URL: {url!r}", err=True)
+        raise typer.Exit(1)
+
+    resolved_id = api_id or _resolve_api_name(slug)
+
+    typer.echo(f"Testing {resolved_id!r}  slug={slug!r}  url={url!r}")
+
+    from app.api_smoke import run_smoke
+    outcome = run_smoke(resolved_id, url, VIMA_ROOT)
+    _print_smoke_outcome(outcome)
+
+    if not outcome.success:
+        raise typer.Exit(1)
+
+
+def _print_smoke_outcome(outcome) -> None:
+    status = "✅ PASS" if outcome.success else "❌ FAIL"
+    typer.echo(
+        f"  {status}  api={outcome.api_id}  op={outcome.op_id}  "
+        f"attempts={outcome.attempts}  status={outcome.status_code}"
+    )
+    if outcome.sandbox_values_found:
+        typer.echo(f"  Sandbox values used: {outcome.params_used}")
+    if outcome.manifest_updated:
+        typer.echo("  MANIFEST updated with sandbox test values and defaults.")
+    if not outcome.success and outcome.error:
+        typer.echo(f"  Error: {outcome.error}")
+
 
 @app.command("export-vima-config")
 def export_vima_config_cmd(
@@ -436,6 +502,7 @@ def export_vima_config_cmd(
 
 
 
+@app.command("smoke-test")
 def smoke_test(
     env_file: Path = typer.Option(
         VIMA_CONFIG / ".env.generated",
