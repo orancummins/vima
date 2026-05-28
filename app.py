@@ -223,6 +223,7 @@ def index():
     return render_template(
         "index.html",
         apis=api_registry.manifests(),
+        api_groups=api_registry.manifests_grouped(),
         use_cases=usecase_registry.manifests(),
         cache_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'js', 'app.js'))),
         css_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'css', 'styles.css'))),
@@ -1592,13 +1593,15 @@ _provision_jobs: dict = {}
 
 def _build_provision_catalog() -> list[dict]:
     """Return canonical API metadata for the auto-provisioning UI."""
-    from apis.catalog import iter_ordered
+    from apis.catalog import DISABLED_API_IDS, iter_ordered
 
     apis = api_registry.manifests()
     by_id = {a.get("id"): a for a in apis}
     catalog: list[dict] = []
     for entry in iter_ordered():
         api_id = entry.id
+        if api_id in DISABLED_API_IDS:
+            continue
         api = by_id.get(api_id, {})
         note = entry.provision_note or ""
         catalog.append({

@@ -67,18 +67,21 @@ def main() -> int:
 
     # Load core catalog + registry from repository root.
     sys.path.insert(0, str(ROOT))
-    from apis.catalog import iter_ordered
+    from apis.catalog import DISABLED_API_IDS, iter_ordered
     from apis import registry as api_registry
 
     catalog_entries = list(iter_ordered())
     catalog_ids = {e.id for e in catalog_entries}
+    # APIs explicitly disabled (e.g. awaiting tenant onboarding) are still in
+    # the catalog but intentionally hidden from manifests + provision UI.
+    expected_exposed_ids = catalog_ids - set(DISABLED_API_IDS)
     legacy_to_id = {e.legacy_id: e.id for e in catalog_entries if e.legacy_id}
 
     manifests = api_registry.manifests()
     manifest_ids = {m.get("id") for m in manifests if m.get("id")}
 
-    missing_in_manifests = sorted(catalog_ids - manifest_ids)
-    extra_in_manifests = sorted(manifest_ids - catalog_ids)
+    missing_in_manifests = sorted(expected_exposed_ids - manifest_ids)
+    extra_in_manifests = sorted(manifest_ids - expected_exposed_ids)
     if missing_in_manifests:
         errors.append(f"Missing APIs in manifests: {missing_in_manifests}")
     if extra_in_manifests:
@@ -115,9 +118,9 @@ def main() -> int:
         if row_id:
             provision_ids.add(row_id)
 
-    if provision_ids and provision_ids != catalog_ids:
+    if provision_ids and provision_ids != expected_exposed_ids:
         errors.append(
-            f"Provision catalog IDs mismatch. expected={sorted(catalog_ids)} actual={sorted(provision_ids)}"
+            f"Provision catalog IDs mismatch. expected={sorted(expected_exposed_ids)} actual={sorted(provision_ids)}"
         )
 
     # Validate mcd key-automation mapping against catalog.
@@ -150,6 +153,7 @@ def main() -> int:
 
     print("API contract validation PASSED")
     print(f"- Catalog APIs: {len(catalog_ids)}")
+    print(f"- Disabled APIs: {sorted(DISABLED_API_IDS) or '(none)'}")
     print(f"- Manifest APIs: {len(manifest_ids)}")
     print(f"- Provision catalog APIs: {len(provision_rows)}")
     print(f"- Supported provision types: {sorted(supported_types)}")
