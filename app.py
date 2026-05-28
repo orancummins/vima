@@ -1611,7 +1611,6 @@ def provision_start():
     body = request.get_json(silent=True) or {}
     selected_apis = body.get("apis", [])
     password = body.get("password", "foobar!!")
-    reuse_existing = bool(body.get("reuse_existing", False))
     if not selected_apis:
         return jsonify({"error": "No APIs selected"}), 400
 
@@ -1649,8 +1648,6 @@ projects:
         pass
 
     cmd = [python_bin, "app/main.py", "run", "-c", cfg_path]
-    if reuse_existing:
-        cmd.append("--reuse-existing")
 
     def _run():
         rc = None
@@ -1706,7 +1703,12 @@ projects:
                     os.makedirs(_KEYS_DIR, exist_ok=True)
                     for orig, name in norm.items():
                         if name == "config/.env":
-                            env_text = zf.read(orig).decode("utf-8")
+                            new_env_text = zf.read(orig).decode("utf-8")
+                            if os.path.isfile(_ENV_PATH):
+                                existing = open(_ENV_PATH, encoding="utf-8").read()
+                                env_text = _merge_env_text(existing, new_env_text)
+                            else:
+                                env_text = new_env_text
                             with open(_ENV_PATH, "w", encoding="utf-8") as fh:
                                 fh.write(env_text)
                             load_dotenv(_ENV_PATH, override=True)

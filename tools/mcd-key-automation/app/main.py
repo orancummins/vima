@@ -36,12 +36,11 @@ def _configure_logging(verbose: bool) -> None:
 def run(
     config: Path = typer.Option(..., "--config", "-c", exists=True, help="Path to YAML config."),
     dry_run: bool = typer.Option(False, "--dry-run", help="Stop after login; do not provision."),
-    reuse_existing: bool = typer.Option(False, "--reuse-existing", help="Skip project creation; rebuild Vima config from existing credentials."),
     verbose: bool = typer.Option(False, "--verbose", "-v"),
 ) -> None:
     """Run the end-to-end automation."""
     _configure_logging(verbose)
-    bundle = asyncio.run(orchestrator.run(config, dry_run=dry_run, reuse_existing=reuse_existing))
+    bundle = asyncio.run(orchestrator.run(config, dry_run=dry_run))
     if bundle:
         typer.echo(f"Bundle: {bundle}")
     else:

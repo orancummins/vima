@@ -13,6 +13,7 @@ Defines mandatory UI behavior for every API onboarded into Solution Studio.
 - Trigger: `How To Use These APIs` button in API workbench.
 - Source fields: `api.name`, `api.how_to`.
 - Behavior: show API-specific title and rich content; fallback message when missing.
+- When official sandbox test data exists: `api.how_to` should include a linked source URL and operation-specific sample values.
 
 ## Docs Link Contract
 

@@ -1,0 +1,91 @@
+{
+  "countries": [
+    {
+      "countryCode": "USA",
+      "regionCode": "NAM",
+      "name": "United States",
+      "isStatesAvailable": true
+    },
+    {
+      "countryCode": "BRA",
+      "regionCode": "LAM",
+      "name": "Brazil",
+      "isStatesAvailable": true
+    },
+    {
+      "countryCode": "SGP",
+      "regionCode": "ASP",
+      "name": "Singapore",
+      "isStatesAvailable": false
+    }
+  ],
+  "states": [
+    {"id": "USA-MO", "countryCode": "USA", "stateCode": "MO", "name": "Missouri"},
+    {"id": "USA-CA", "countryCode": "USA", "stateCode": "CA", "name": "California"},
+    {"id": "BRA-SP", "countryCode": "BRA", "stateCode": "SP", "name": "Sao Paulo"}
+  ],
+  "cities": [
+    {"id": "USA-MO-ST_LOUIS", "countryCode": "USA", "stateCode": "MO", "name": "ST LOUIS"},
+    {"id": "USA-CA-SAN_FRANCISCO", "countryCode": "USA", "stateCode": "CA", "name": "SAN FRANCISCO"},
+    {"id": "BRA-SP-SAO_PAULO", "countryCode": "BRA", "stateCode": "SP", "name": "SAO PAULO"},
+    {"id": "SGP--SINGAPORE", "countryCode": "SGP", "stateCode": "", "name": "SINGAPORE"}
+  ],
+  "contact_details": [
+    {
+      "id": "1996",
+      "acquirerId": "1996",
+      "bankName": "Sandbox Acquirer Bank",
+      "region": "North America",
+      "firstName": "Risk",
+      "lastName": "Contact",
+      "phoneNumber": "18005551212",
+      "faxNumber": "18005550000",
+      "emailAddress": "risk-contact@example.com"
+    }
+  ],
+  "termination_inquiry_response": [
+    {
+      "id": "IRN000001",
+      "pageOffset": 0,
+      "ref": "IRN000001",
+      "possibleMerchantMatches": []
+    }
+  ],
+  "termination_inquiry_history": [
+    {
+      "id": "IRN000001",
+      "terminationInquiryRequest": {
+        "acquirerId": "1996",
+        "merchant": {
+          "name": "TEST MERCHANT LLC",
+          "address": {
+            "addressLineOne": "123 MAIN ST",
+            "city": "ST LOUIS",
+            "country": "USA",
+            "postalCode": "63101"
+          },
+          "phoneNumber": "3145551234",
+          "merchantCategory": "5999",
+          "principals": [
+            {
+              "firstName": "JANE",
+              "lastName": "DOE",
+              "address": {
+                "addressLineOne": "123 MAIN ST",
+                "city": "ST LOUIS",
+                "country": "USA"
+              },
+              "phoneNumber": "3145551234",
+              "email": "jane.doe@example.com"
+            }
+          ]
+        }
+      },
+      "terminationInquiryResponse": {
+        "pageOffset": 0,
+        "ref": "IRN000001",
+        "possibleMerchantMatches": []
+      }
+    }
+  ]
+}

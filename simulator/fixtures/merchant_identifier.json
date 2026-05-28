@@ -1,0 +1,34 @@
+{
+  "merchants": [
+    {
+      "merchantId": "mi-1001",
+      "merchantName": "Starbucks",
+      "merchantDescriptor": "STARBUCKS 800-782-7282 WA",
+      "cardAcceptorId": "123456789012345",
+      "taxId": "12-3456789",
+      "countryCode": "US",
+      "city": "Seattle",
+      "state": "WA"
+    },
+    {
+      "merchantId": "mi-1002",
+      "merchantName": "The Home Depot",
+      "merchantDescriptor": "HOME DEPOT 800-466-3337 GA",
+      "cardAcceptorId": "987654321098765",
+      "taxId": "98-7654321",
+      "countryCode": "US",
+      "city": "Atlanta",
+      "state": "GA"
+    },
+    {
+      "merchantId": "mi-1003",
+      "merchantName": "Whole Foods",
+      "merchantDescriptor": "WHOLEFDS 844-936-8255 TX",
+      "cardAcceptorId": "111122223333444",
+      "taxId": "11-2222333",
+      "countryCode": "US",
+      "city": "Austin",
+      "state": "TX"
+    }
+  ]
+}

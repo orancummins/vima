@@ -2,8 +2,12 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import json
 import os
+import time
 from pathlib import Path
+from typing import Sequence
 
 from loguru import logger
 from playwright.async_api import Page
@@ -23,7 +27,7 @@ class CreateProjectPage:
         await self.page.wait_for_selector(CreateProjectSelectors.name_input, timeout=20000)
 
     async def fill(self, *, project_name: str, on_behalf_of_company: bool = False,
-                   region: str | None = None, api_selection: str | None = None) -> None:
+                   region: str | None = None, api_selection: str | Sequence[str] | None = None) -> None:
         logger.info(
             "Filling create-project form: name={!r} on_behalf={} region={!r} api_selection={!r}",
             project_name, on_behalf_of_company, region, api_selection,
@@ -44,24 +48,29 @@ class CreateProjectPage:
         if on_behalf_of_company:
             raise NotImplementedError("Company selection not yet implemented")
 
-        # Sub-API selection (e.g. "Priceless Specials" on the priceless create-project page).
+        # Sub-API selection (e.g. "Priceless Specials" or ABU Push service cards).
         if api_selection:
-            logger.info("Selecting sub-API: {!r}", api_selection)
-            # The portal renders a list of APIs as clickable cards or checkboxes.
-            # Try label text first, then a broader :has-text match.
-            sel = (
-                f"label:has-text('{api_selection}'), "
-                f"[role='checkbox']:has-text('{api_selection}'), "
-                f"li:has-text('{api_selection}'), "
-                f"div[class*='card']:has-text('{api_selection}'), "
-                f"span:has-text('{api_selection}')"
-            )
-            loc = self.page.locator(sel).first
-            if await loc.count() > 0:
-                await loc.click()
-                logger.info("Clicked sub-API: {!r}", api_selection)
-            else:
-                logger.warning("Sub-API {!r} not found on page — skipping selection", api_selection)
+            options = [api_selection] if isinstance(api_selection, str) else list(api_selection)
+            logger.info("Selecting sub-API option(s): {!r}", options)
+
+            selected = False
+            for option in options:
+                sel = (
+                    f"label:has-text('{option}'), "
+                    f"[role='checkbox']:has-text('{option}'), "
+                    f"li:has-text('{option}'), "
+                    f"div[class*='card']:has-text('{option}'), "
+                    f"span:has-text('{option}')"
+                )
+                loc = self.page.locator(sel).first
+                if await loc.count() > 0:
+                    await loc.click()
+                    logger.info("Clicked sub-API: {!r}", option)
+                    selected = True
+                    break
+
+            if not selected:
+                logger.warning("None of the sub-API options were found on page: {!r}", options)
 
         # Region dropdown (only present for some APIs e.g. Open Finance)
         if region:
@@ -271,6 +280,429 @@ class CreateProjectPage:
             await asyncio.sleep(0.5)
         logger.warning("'Create project' button still disabled after {}s — clicking anyway", max_wait_s)
 
+    async def _handle_match_service_details(self) -> bool:
+        """Fill MATCH Pro's required intermediate service details screen.
+
+        Some MATCH tenants show a post-Step2 form requiring company type,
+        acquirer metadata, and replacement-id confirmation before the flow can
+        continue to key generation/download screens.
+        """
+        form_signals = await self.page.evaluate("""
+            () => {
+                const count = (sel) => document.querySelectorAll(sel).length;
+                const text = (document.body?.innerText || '').toLowerCase();
+                const signals = {
+                    companyTypeRadios: count("input[type='radio'][name$='_accessToBeUsedBy']"),
+                    replacementRadios: count("input[type='radio'][name$='_isReplacingClientId']"),
+                    icaInputs: count("input[data-testid='acquirerica-text'], input[name*='acquirer'][name*='ica' i], input[name*='ica' i]"),
+                    emailInputs: count("input[type='email'], input[data-testid*='email' i], input[name*='email' i]"),
+                    hasCompanyText: text.includes('company type') ? 1 : 0,
+                    hasIcaText: text.includes('acquirer processing id/ica') ? 1 : 0,
+                    hasContactEmailText: text.includes('acquirer contact email') ? 1 : 0,
+                };
+                const totalSignals = Object.values(signals).reduce((a, b) => a + Number(b || 0), 0);
+                return { ...signals, totalSignals };
+            }
+        """)
+        if int(form_signals.get("totalSignals", 0)) == 0:
+            return False
+
+        # If terminal controls are present, stop treating this as the active form.
+        if await self.page.locator(ProjectCreatedSelectors.download_key_button).count() > 0:
+            return False
+        if await self.page.locator(ProjectCreatedSelectors.open_project_button).count() > 0:
+            return False
+
+        logger.info("MATCH service details screen detected — filling required fields (signals={})", form_signals)
+        await screenshot(self.page, "match_service_details_detected")
+
+        pause_match_form = os.environ.get("MCD_PAUSE_MATCH_FORM") == "1"
+
+        # Resolve preferred contact email. If no explicit env is set, preserve portal's pre-filled value.
+        requested_email = (
+            os.environ.get("MCD_CONTACT_EMAIL", "").strip()
+            or os.environ.get("MATCH_CONTACT_EMAIL", "").strip()
+            or os.environ.get("MCD_USERNAME", "").strip()
+        )
+        if not requested_email:
+            detected_email = await self.page.evaluate(
+                """
+                () => {
+                    const text = document.body?.innerText || '';
+                    const matches = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/ig) || [];
+                    return matches.length > 0 ? String(matches[0]).trim() : '';
+                }
+                """
+            )
+            requested_email = str(detected_email or "").strip()
+        if not requested_email:
+            requested_email = f"match-{int(time.time())}@example.com"
+            logger.warning(
+                "Could not detect logged-in email; using generated fallback email for MATCH form: {}",
+                requested_email,
+            )
+
+        applied = await self.page.evaluate(
+            """
+            ({ requestedEmail }) => {
+                const labels = Array.from(document.querySelectorAll('label'));
+
+                const setReactInputValue = (input, value) => {
+                    if (!input) return false;
+                    const setter = Object.getOwnPropertyDescriptor(
+                        window.HTMLInputElement.prototype,
+                        'value'
+                    )?.set;
+                    if (setter) {
+                        setter.call(input, value);
+                    } else {
+                        input.value = value;
+                    }
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                    input.dispatchEvent(new Event('blur', { bubbles: true }));
+                    return true;
+                };
+
+                const setRadioChecked = (input) => {
+                    if (!input) return false;
+
+                    if (input.id) {
+                        try {
+                            const safeId = (window.CSS && typeof window.CSS.escape === 'function')
+                                ? window.CSS.escape(input.id)
+                                : input.id.replace(/([#.;?+*~':"!^$[\]()=>|/@])/g, '\\$1');
+                            const label = document.querySelector(`label[for="${safeId}"]`);
+                            if (label) {
+                                label.click();
+                            }
+                        } catch (_e) {
+                            // Ignore label-query failures and continue with direct click.
+                        }
+                    }
+
+                    if (!input.checked) {
+                        input.click();
+                    }
+                    if (!input.checked) {
+                        input.checked = true;
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    return !!input.checked;
+                };
+
+                const clickRadioFromLabel = (predicate) => {
+                    const candidate = labels.find((l) => {
+                        const id = l.getAttribute('for');
+                        const input = id ? document.getElementById(id) : null;
+                        return !!input && predicate((l.textContent || '').trim().toLowerCase());
+                    });
+                    if (!candidate) return false;
+                    const id = candidate.getAttribute('for');
+                    const input = id ? document.getElementById(id) : null;
+                    return setRadioChecked(input);
+                };
+
+                const setInputFromLabelContains = (labelText, value) => {
+                    const norm = labelText.toLowerCase();
+                    const label = labels.find((l) => {
+                        const id = l.getAttribute('for');
+                        const input = id ? document.getElementById(id) : null;
+                        return !!input && (l.textContent || '').trim().toLowerCase().includes(norm);
+                    });
+                    if (!label) return { ok: false, value: '' };
+                    const id = label.getAttribute('for');
+                    const input = id ? document.getElementById(id) : null;
+                    if (!input) return { ok: false, value: '' };
+                    input.focus();
+                    input.value = value;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                    return { ok: true, value: (input.value || '').trim() };
+                };
+
+                const getInputFromLabelContains = (labelText) => {
+                    const norm = labelText.toLowerCase();
+                    const label = labels.find((l) => {
+                        const id = l.getAttribute('for');
+                        const input = id ? document.getElementById(id) : null;
+                        return !!input && (l.textContent || '').trim().toLowerCase().includes(norm);
+                    });
+                    if (!label) return { ok: false, value: '' };
+                    const id = label.getAttribute('for');
+                    const input = id ? document.getElementById(id) : null;
+                    if (!input) return { ok: false, value: '' };
+                    return { ok: true, value: (input.value || '').trim() };
+                };
+
+                const setNoForReplacementQuestion = () => {
+                    const questionNode = Array.from(document.querySelectorAll('*')).find((el) => {
+                        const t = (el.textContent || '').trim().toLowerCase();
+                        return t.includes('is this client id replacing') && t.includes('client id');
+                    });
+                    if (!questionNode) {
+                        return clickRadioFromLabel((txt) => txt === 'no');
+                    }
+                    let scope = questionNode.parentElement;
+                    for (let i = 0; i < 4 && scope; i += 1) {
+                        const noLabel = Array.from(scope.querySelectorAll('label')).find(
+                            (l) => {
+                                const id = l.getAttribute('for');
+                                const input = id ? document.getElementById(id) : null;
+                                return (l.textContent || '').trim().toLowerCase() === 'no' && !!input;
+                            }
+                        );
+                        if (noLabel) {
+                            const id = noLabel.getAttribute('for');
+                            const input = id ? document.getElementById(id) : null;
+                            return setRadioChecked(input);
+                        }
+                        scope = scope.parentElement;
+                    }
+                    return clickRadioFromLabel((txt) => txt === 'no');
+                };
+
+                const companySet = clickRadioFromLabel(
+                    (txt) => txt.includes('internal') && txt.includes('mastercard') && txt.includes('partner')
+                );
+
+                const setAllEmailInputs = (value) => {
+                    const candidates = Array.from(document.querySelectorAll('input')).filter((i) => {
+                        if (i.disabled || i.readOnly) return false;
+                        const t = (i.getAttribute('type') || '').toLowerCase();
+                        const n = (i.getAttribute('name') || '').toLowerCase();
+                        const d = (i.getAttribute('data-testid') || '').toLowerCase();
+                        const p = (i.getAttribute('placeholder') || '').toLowerCase();
+                        return t === 'email' || n.includes('email') || d.includes('email') || p.includes('email');
+                    });
+                    for (const input of candidates) {
+                        setReactInputValue(input, value);
+                    }
+                    return {
+                        count: candidates.length,
+                        values: candidates.map((i) => (i.value || '').trim()),
+                    };
+                };
+
+                // Deterministic fallback for MATCH company-type radio.
+                const companyRadio = document.querySelector(
+                    "input[type='radio'][name$='_accessToBeUsedBy'][value='Internal MasterCard Partner']"
+                );
+                let companyRadioSet = false;
+                if (companyRadio) {
+                    companyRadioSet = setRadioChecked(companyRadio);
+                }
+
+                let ica = setInputFromLabelContains('acquirer processing id/ica', '123456789');
+                if (!ica.ok) {
+                    const testidInput = document.querySelector("input[data-testid='acquirerica-text']");
+                    if (testidInput) {
+                        setReactInputValue(testidInput, '123456789');
+                        ica = { ok: true, value: (testidInput.value || '').trim() };
+                    }
+                }
+
+                let email = requestedEmail
+                    ? setInputFromLabelContains('acquirer contact email', requestedEmail)
+                    : getInputFromLabelContains('acquirer contact email');
+                if (!email.ok) {
+                    const emailInput = document.querySelector("input[data-testid='acquirercontactemail-text']");
+                    if (emailInput) {
+                        if (requestedEmail) {
+                            setReactInputValue(emailInput, requestedEmail);
+                        }
+                        email = { ok: true, value: (emailInput.value || '').trim() };
+                    }
+                }
+                let emailBulk = { count: 0, values: [] };
+                if (requestedEmail) {
+                    emailBulk = setAllEmailInputs(requestedEmail);
+                    if (!email.value && emailBulk.values.length > 0) {
+                        email.value = emailBulk.values[0] || '';
+                    }
+                }
+
+                const replaceNoSet = setNoForReplacementQuestion();
+                const replaceNoRadio = document.querySelector(
+                    "input[type='radio'][name$='_isReplacingClientId'][value='No']"
+                );
+                let replaceNoRadioSet = false;
+                if (replaceNoRadio) {
+                    replaceNoRadioSet = setRadioChecked(replaceNoRadio);
+                }
+
+                const domSnapshot = {
+                    labels: labels
+                        .map((l) => ({
+                            text: (l.textContent || '').trim(),
+                            forId: l.getAttribute('for') || '',
+                        }))
+                        .filter((x) => x.text)
+                        .slice(0, 40),
+                    inputs: Array.from(document.querySelectorAll('input')).map((i) => ({
+                        id: i.id || '',
+                        name: i.getAttribute('name') || '',
+                        type: i.getAttribute('type') || '',
+                        testid: i.getAttribute('data-testid') || '',
+                        value: (i.value || '').trim(),
+                    })),
+                };
+
+                return {
+                    companySet: companySet || companyRadioSet,
+                    icaSet: ica.ok,
+                    icaValue: ica.value,
+                    emailSet: (email.ok && !!email.value) || emailBulk.values.some((v) => !!v),
+                    emailValue: email.value,
+                    emailFieldCount: emailBulk.count,
+                    replaceNoSet: replaceNoSet || replaceNoRadioSet,
+                    domSnapshot,
+                };
+            }
+            """,
+            {"requestedEmail": requested_email},
+        )
+
+        logger.info(
+            "MATCH service details applied: company_internal={} ica_set={} ica='{}' email_set={} email='{}' email_fields={} replace_no={}",
+            applied.get("companySet"),
+            applied.get("icaSet"),
+            applied.get("icaValue"),
+            applied.get("emailSet"),
+            applied.get("emailValue"),
+            applied.get("emailFieldCount"),
+            applied.get("replaceNoSet"),
+        )
+        logger.debug("MATCH service details DOM snapshot: {}", applied.get("domSnapshot"))
+
+        # Some tenants render email later after company type selection; do a second pass.
+        if requested_email and not applied.get("emailSet"):
+            for _ in range(8):
+                await asyncio.sleep(0.5)
+                email_probe = await self.page.evaluate(
+                    """
+                    ({ requestedEmail }) => {
+                        const setReactInputValue = (input, value) => {
+                            if (!input) return false;
+                            const setter = Object.getOwnPropertyDescriptor(
+                                window.HTMLInputElement.prototype,
+                                'value'
+                            )?.set;
+                            if (setter) {
+                                setter.call(input, value);
+                            } else {
+                                input.value = value;
+                            }
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                            input.dispatchEvent(new Event('blur', { bubbles: true }));
+                            return true;
+                        };
+
+                        const candidates = Array.from(document.querySelectorAll('input')).filter((i) => {
+                            const t = (i.getAttribute('type') || '').toLowerCase();
+                            const n = (i.getAttribute('name') || '').toLowerCase();
+                            const d = (i.getAttribute('data-testid') || '').toLowerCase();
+                            return (
+                                t === 'email' ||
+                                n.includes('email') ||
+                                n.includes('acquirercontactemail') ||
+                                n.includes('contactemail') ||
+                                d.includes('acquirercontactemail') ||
+                                d.includes('contactemail')
+                            );
+                        });
+
+                        if (candidates.length === 0) {
+                            return { found: false, value: '' };
+                        }
+
+                        const input = candidates[0];
+                        setReactInputValue(input, requestedEmail);
+                        return { found: true, value: (input.value || '').trim() };
+                    }
+                    """,
+                    {"requestedEmail": requested_email},
+                )
+                if email_probe.get("found") and email_probe.get("value") == requested_email:
+                    applied["emailSet"] = True
+                    applied["emailValue"] = email_probe.get("value")
+                    logger.info("MATCH email second-pass set to requested value")
+                    break
+
+        if requested_email and not applied.get("emailSet"):
+            logger.warning(
+                "MATCH email field was not present/set in this tenant form variant; proceeding without explicit email fill"
+            )
+        if not requested_email and not applied.get("emailValue"):
+            logger.warning(
+                "MATCH email remains blank; set MCD_CONTACT_EMAIL (or MATCH_CONTACT_EMAIL) to force the logged-in user email"
+            )
+
+        # Optional manual takeover for diagnosing tenant-specific MATCH forms.
+        # Pause AFTER automated field fill so operators can verify what was set.
+        if pause_match_form:
+            pause_ctx = await self.page.evaluate("""
+                () => {
+                    const candidates = Array.from(document.querySelectorAll(
+                        "input[type='email'], input[data-testid='acquirerica-text'], " +
+                        "input[type='radio'][name$='_accessToBeUsedBy'], input[type='radio'][name$='_isReplacingClientId']"
+                    ));
+                    if (candidates.length > 0) {
+                        candidates[0].scrollIntoView({ behavior: 'instant', block: 'center' });
+                    }
+                    return {
+                        url: location.href,
+                        candidateCount: candidates.length,
+                        inputNames: candidates.slice(0, 12).map((el) => ({
+                            id: el.id || '',
+                            name: el.getAttribute('name') || '',
+                            type: el.getAttribute('type') || '',
+                            testid: el.getAttribute('data-testid') || '',
+                            value: (el.value || '').trim(),
+                            checked: !!el.checked,
+                        })),
+                    };
+                }
+            """)
+            logger.info("MATCH post-fill pause context: {}", pause_ctx)
+            await screenshot(self.page, "match_service_details_postfill_pause")
+            logger.warning(
+                "MCD_PAUSE_MATCH_FORM=1 — paused after auto-fill on MATCH form. "
+                "Review/adjust fields and click Proceed in the browser, then press Enter here to resume."
+            )
+            await asyncio.get_event_loop().run_in_executor(
+                None,
+                input,
+                ">>> Press Enter after reviewing MATCH auto-fill... ",
+            )
+            return False
+
+        # Proceed button can be blocked by overlays; prefer direct JS click.
+        clicked = await self.page.evaluate("""
+            () => {
+                const btn =
+                    document.querySelector("button[data-testid='proceed-btn']") ||
+                    document.querySelector("button#submit") ||
+                    Array.from(document.querySelectorAll('button')).find(
+                        b => (b.textContent || '').trim() === 'Proceed'
+                    );
+                if (!btn) return false;
+                if (btn.disabled) return false;
+                if ((btn.getAttribute('aria-disabled') || '').toLowerCase() === 'true') return false;
+                btn.click();
+                return true;
+            }
+        """)
+        if clicked:
+            logger.info("Submitted MATCH service details screen")
+            await asyncio.sleep(2.0)
+            return True
+
+        logger.warning("MATCH service details detected but Proceed button was not actionable")
+        return False
+
     async def create_key_step2(self) -> None:
         """Wait for Step 2 'Create project' to enable, log state, and JS-click it."""
         await self._wait_for_create_button_enabled()
@@ -290,6 +722,20 @@ class CreateProjectPage:
         """)
         logger.info("'Create project' button state: {}", btn_info)
         await screenshot(self.page, "step2_before_submit")
+
+        # Optional manual takeover before leaving Step 2.
+        if os.environ.get("MCD_PAUSE_BEFORE_STEP2_CREATE") == "1":
+            logger.warning(
+                "MCD_PAUSE_BEFORE_STEP2_CREATE=1 — paused before Step 2 submit. "
+                "Use the browser to click Create project and continue manually, then press Enter to resume."
+            )
+            await asyncio.get_event_loop().run_in_executor(
+                None,
+                input,
+                ">>> Press Enter after manual Step 2 submit... ",
+            )
+            return
+
         logger.info("Clicking 'Create project' on Step 2")
         clicked = await self._js_click_create_project()
         if not clicked:
@@ -320,6 +766,7 @@ class CreateProjectPage:
         poll_interval = 0.5
         elapsed = 0.0
         _step3_clicked = False  # guard against re-clicking step 3 button in rapid succession
+        _match_form_submit_attempts = 0
 
         while elapsed < deadline:
             url = self.page.url
@@ -339,6 +786,37 @@ class CreateProjectPage:
             if await self.page.locator(ProjectCreatedSelectors.open_project_button).count() > 0:
                 logger.info("Open project button appeared — {}", url)
                 return "open_project"
+
+            # Handle MATCH intermediate service-details form only after checking
+            # terminal states; the form can coexist in DOM with post-submit
+            # controls and should not preempt download/open-project handling.
+            if await self._handle_match_service_details():
+                _match_form_submit_attempts += 1
+                if _match_form_submit_attempts > 3:
+                    raise RuntimeError(
+                        "MATCH service details form did not advance after 3 submissions; "
+                        "check required field bindings/selectors"
+                    )
+                continue
+
+            # MATCH/portal variant: final wizard step can expose a visible
+            # "Skip this step" button and "Create project" CTA without the
+            # literal "Additional credentials" heading.
+            skip_btn_visible = await self.page.locator("button:has-text('Skip this step')").count()
+            create_btn_visible = await self.page.locator("button:has-text('Create project')").count()
+            if skip_btn_visible > 0 and create_btn_visible > 0 and not _step3_clicked:
+                logger.info("Final key step detected via visible 'Skip this step' + 'Create project' buttons")
+                await screenshot(self.page, "step3_detected_via_skip")
+
+                # MATCH-specific behavior requested: proceed with "Create project"
+                # on this step rather than clicking "Skip this step".
+                await self._wait_for_create_button_enabled(max_wait_s=8.0)
+                clicked = await self._js_click_create_project()
+                logger.info("Clicked 'Create project' on final key step — found={}", clicked)
+
+                _step3_clicked = True
+                await asyncio.sleep(1.0)
+                continue
 
             # Step 3 detection: check if "Additional credentials" step is visible.
             step3_heading = await self.page.locator("text=Additional credentials").count()
@@ -425,15 +903,32 @@ class CreateProjectPage:
 
     async def download_key_file(self, *, dest_dir: Path, filename_hint: str = "key") -> Path:
         """Click 'Download key file' and save the file."""
+        before_files = {p.name for p in dest_dir.glob("*") if p.is_file()}
         logger.info("Clicking 'Download key file'")
-        async with self.page.expect_download() as dl_info:
-            await self.page.locator(ProjectCreatedSelectors.download_key_button).click()
-        download = await dl_info.value
-        original = download.suggested_filename or f"{filename_hint}.p12"
-        dest = dest_dir / original
-        await save_download(download, dest)
-        logger.info("Downloaded key file: {}", dest)
-        return dest
+        try:
+            async with self.page.expect_download(timeout=90000) as dl_info:
+                await self.page.locator(ProjectCreatedSelectors.download_key_button).click()
+            download = await dl_info.value
+            original = download.suggested_filename or f"{filename_hint}.p12"
+            dest = dest_dir / original
+            await save_download(download, dest)
+            logger.info("Downloaded key file: {}", dest)
+            return dest
+        except Exception as err:
+            logger.warning("Download event not captured: {} — checking filesystem fallback", err)
+            # Some portal variants trigger browser-managed downloads without
+            # Playwright download events; poll destination for newly created files.
+            for _ in range(20):
+                await asyncio.sleep(1.0)
+                candidates = [
+                    p for p in dest_dir.glob("*")
+                    if p.is_file() and p.name not in before_files and p.suffix.lower() in {".zip", ".p12", ".pem", ".crt"}
+                ]
+                if candidates:
+                    newest = max(candidates, key=lambda p: p.stat().st_mtime)
+                    logger.info("Using filesystem fallback downloaded file: {}", newest)
+                    return newest
+            raise
 
     async def open_project(self) -> str:
         """Click 'Open project' and return the resulting URL."""
@@ -599,3 +1094,496 @@ class CreateProjectPage:
         # Close the dropdown so Proceed is not blocked.
         await api_input.press("Escape")
         await asyncio.sleep(0.4)
+
+    # ------------------------------------------------------------------
+    # MATCH (Pro) end-to-end provisioning
+    # ------------------------------------------------------------------
+
+    async def _detect_logged_in_email(self) -> str:
+        """Best-effort detection of the portal's logged-in user email.
+
+        Strategy:
+          1. Decode the ``auth_token`` JWT cookie — its payload contains
+             ``alias`` set to the user's email (verified empirically against
+             developer.mastercard.com sessions).
+          2. Fall back to scraping common header/profile DOM regions.
+        """
+        # --- Strategy 1: parse auth_token JWT cookie -----------------------
+        try:
+            cookies = await self.page.context.cookies()
+            for cookie in cookies:
+                if cookie.get("name") != "auth_token":
+                    continue
+                token = cookie.get("value", "")
+                parts = token.split(".")
+                if len(parts) != 3:
+                    continue
+                payload = parts[1] + "=" * (-len(parts[1]) % 4)
+                try:
+                    body = base64.urlsafe_b64decode(payload).decode("utf-8", "ignore")
+                    data = json.loads(body)
+                except Exception:
+                    continue
+                for key in ("alias", "email", "preferred_username", "sub"):
+                    val = data.get(key)
+                    if isinstance(val, str) and "@" in val:
+                        return val.strip()
+        except Exception as err:
+            logger.debug("auth_token JWT scrape failed: {}", err)
+
+        # --- Strategy 2: scrape DOM ---------------------------------------
+        try:
+            email = await self.page.evaluate(
+                r"""
+                () => {
+                    const re = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
+                    const candidates = [
+                        ...document.querySelectorAll(
+                            "[data-testid*='user' i], [data-testid*='profile' i], " +
+                            "[class*='user' i], [class*='profile' i], header, nav"
+                        ),
+                    ];
+                    for (const el of candidates) {
+                        const t = el.textContent || '';
+                        const m = t.match(re);
+                        if (m) return m[0];
+                    }
+                    const body = document.body ? (document.body.innerText || '') : '';
+                    const m = body.match(re);
+                    return m ? m[0] : '';
+                }
+                """
+            )
+            return (email or "").strip()
+        except Exception:
+            return ""
+
+    async def _resolve_contact_email(self) -> str:
+        """Resolve the email used for the MATCH 'Acquirer contact email' field.
+
+        Order of precedence:
+          1. ``MCD_CONTACT_EMAIL`` env var
+          2. ``MATCH_CONTACT_EMAIL`` env var
+          3. Detected email from the logged-in portal session (auth_token JWT
+             ``alias`` claim, or DOM scrape)
+          4. ``MCD_USERNAME`` env var (last resort — may be a username, not email)
+          5. Generated fallback ``match-test-<ts>@example.com``
+        """
+        for env_key in ("MCD_CONTACT_EMAIL", "MATCH_CONTACT_EMAIL"):
+            val = (os.environ.get(env_key) or "").strip()
+            if val and "@" in val:
+                logger.info("MATCH contact email source={} value={}", env_key, val)
+                return val
+        detected = await self._detect_logged_in_email()
+        if detected and "@" in detected:
+            logger.info("MATCH contact email source=session value={}", detected)
+            return detected
+        mcd_user = (os.environ.get("MCD_USERNAME") or "").strip()
+        if mcd_user and "@" in mcd_user:
+            logger.info("MATCH contact email source=MCD_USERNAME value={}", mcd_user)
+            return mcd_user
+        fallback = f"match-test-{int(time.time())}@example.com"
+        logger.warning("MATCH contact email source=fallback value={}", fallback)
+        return fallback
+
+    async def _click_proceed_btn(self) -> bool:
+        """Click ``button[data-testid='proceed-btn']`` if visible and enabled."""
+        return await self.page.evaluate(
+            """
+            () => {
+                const btn = document.querySelector("button[data-testid='proceed-btn']");
+                if (!btn) return false;
+                if (btn.disabled) return false;
+                if ((btn.getAttribute('aria-disabled') || '').toLowerCase() === 'true') return false;
+                btn.scrollIntoView({ behavior: 'instant', block: 'center' });
+                btn.click();
+                return true;
+            }
+            """
+        )
+
+    async def _wait_for_proceed_enabled(self, timeout_ms: int = 20000) -> None:
+        """Wait until ``proceed-btn`` is mounted and not disabled."""
+        await self.page.wait_for_function(
+            """
+            () => {
+                const btn = document.querySelector("button[data-testid='proceed-btn']");
+                if (!btn) return false;
+                if (btn.disabled) return false;
+                if ((btn.getAttribute('aria-disabled') || '').toLowerCase() === 'true') return false;
+                return true;
+            }
+            """,
+            timeout=timeout_ms,
+        )
+
+    async def _click_radio_label(self, name_suffix: str, value: str, timeout_ms: int = 10000) -> bool:
+        """Click a radio (or its associated label) using a real Playwright click.
+
+        Strategy: locate the radio's id, then try in order:
+          1. Click the radio input directly (the recording shows the user
+             clicked the input itself for the Yes/No radios).
+          2. Click the associated ``label[for=id]`` (used for the longer
+             company-type labels).
+          3. JS click + dispatch change as a final fallback.
+        """
+        id_value = await self.page.evaluate(
+            """
+            ({ nameSuffix, value }) => {
+                const radio = Array.from(document.querySelectorAll("input[type='radio']"))
+                    .find((r) =>
+                        (r.getAttribute('name') || '').endsWith(nameSuffix) &&
+                        (r.getAttribute('value') || '') === value
+                    );
+                return radio ? radio.id : '';
+            }
+            """,
+            {"nameSuffix": name_suffix, "value": value},
+        )
+        if not id_value:
+            return False
+
+        async def _is_checked() -> bool:
+            return bool(await self.page.evaluate(
+                "(id) => { const el = document.getElementById(id); return !!(el && el.checked); }",
+                id_value,
+            ))
+
+        # Strategy 1: click the input directly (force=True since custom UI
+        # often hides the native input behind a styled wrapper).
+        try:
+            input_loc = self.page.locator(f"input[id='{id_value}']").first
+            await input_loc.scroll_into_view_if_needed()
+            await input_loc.click(force=True, timeout=timeout_ms)
+            await asyncio.sleep(0.3)
+            if await _is_checked():
+                return True
+        except Exception as err:
+            logger.debug("input click failed for {}={}: {}", name_suffix, value, err)
+
+        # Strategy 2: click the associated label.
+        try:
+            label_loc = self.page.locator(f"label[for='{id_value}']").first
+            await label_loc.wait_for(state="visible", timeout=timeout_ms)
+            await label_loc.scroll_into_view_if_needed()
+            await label_loc.click()
+            await asyncio.sleep(0.3)
+            if await _is_checked():
+                return True
+        except Exception as err:
+            logger.debug("label click failed for {}={}: {}", name_suffix, value, err)
+
+        # Strategy 3: JS click + change event.
+        await self.page.evaluate(
+            """
+            (id) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                try { el.click(); } catch (_e) {}
+                if (!el.checked) {
+                    el.checked = true;
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+            """,
+            id_value,
+        )
+        await asyncio.sleep(0.3)
+        return await _is_checked()
+
+    async def _set_react_value(self, selector: str, value: str) -> bool:
+        """Set a React-controlled input's value and dispatch realistic events."""
+        return await self.page.evaluate(
+            """
+            ({ selector, value }) => {
+                const input = document.querySelector(selector);
+                if (!input) return false;
+                const setter = Object.getOwnPropertyDescriptor(
+                    window.HTMLInputElement.prototype,
+                    'value'
+                )?.set;
+                if (setter) {
+                    setter.call(input, value);
+                } else {
+                    input.value = value;
+                }
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+                input.dispatchEvent(new Event('blur', { bubbles: true }));
+                return true;
+            }
+            """,
+            {"selector": selector, "value": value},
+        )
+
+    async def _check_radio_by_name_value(self, name_suffix: str, value: str) -> bool:
+        """Check a radio whose ``name`` ends with ``name_suffix`` and value == ``value``."""
+        return await self.page.evaluate(
+            """
+            ({ nameSuffix, value }) => {
+                const radio = Array.from(document.querySelectorAll("input[type='radio']"))
+                    .find((r) =>
+                        (r.getAttribute('name') || '').endsWith(nameSuffix) &&
+                        (r.getAttribute('value') || '') === value
+                    );
+                if (!radio) return false;
+                if (radio.id) {
+                    try {
+                        const safeId = (window.CSS && typeof window.CSS.escape === 'function')
+                            ? window.CSS.escape(radio.id)
+                            : radio.id;
+                        const label = document.querySelector(`label[for="${safeId}"]`);
+                        if (label) label.click();
+                    } catch (_e) {}
+                }
+                if (!radio.checked) {
+                    try { radio.click(); } catch (_e) {}
+                }
+                if (!radio.checked) {
+                    radio.checked = true;
+                    radio.dispatchEvent(new Event('input', { bubbles: true }));
+                    radio.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                return !!radio.checked;
+            }
+            """,
+            {"nameSuffix": name_suffix, "value": value},
+        )
+
+    async def provision_match(
+        self,
+        *,
+        project_name: str,
+        alias: str,
+        password: str,
+        dest_dir: Path,
+        filename_hint: str,
+        ica: str = "123456789",
+        company_type: str = "Internal MasterCard Partner",
+        is_replacing: str = "No",
+    ) -> tuple[Path, str]:
+        """Drive the entire MATCH create-project flow in one page.
+
+        Mirrors the manual recording at logs/recordings/.../trace.jsonl:
+          1. fill project-name
+          2. click proceed-btn (form Step 1)
+          3. fill MATCH service-details (company radio, ICA, contact email,
+             isReplacingClientId='No')
+          4. click proceed-btn (form Step 2)
+          5. fill key-alias-input + key-store-password-input
+          6. click proceed-btn (label becomes 'Create project')
+          7. click download-key-action-project-creation, save zip
+          8. click proceed-button-create-new-project (Open project)
+          9. wait for /project-details/<uuid>
+
+        Returns ``(downloaded_zip_path, project_uuid)``.
+        """
+        logger.info(
+            "provision_match: name={!r} alias={!r} ica={!r} company={!r} replacing={!r}",
+            project_name, alias, ica, company_type, is_replacing,
+        )
+
+        # ---- Step 1: project name -----------------------------------------
+        name_loc = self.page.locator("input[data-testid='project-name']")
+        await name_loc.wait_for(state="visible", timeout=15000)
+        await name_loc.click()
+        await asyncio.sleep(0.3)
+        await name_loc.fill("")
+        await name_loc.press_sequentially(project_name, delay=50)
+        await name_loc.press("Tab")
+        await asyncio.sleep(0.6)
+
+        contact_email = await self._resolve_contact_email()
+
+        # Wait for Proceed to be enabled before clicking (signals form valid).
+        await self._wait_for_proceed_enabled(timeout_ms=15000)
+        await asyncio.sleep(0.4)
+        clicked = await self._click_proceed_btn()
+        logger.info("MATCH step1 proceed clicked={}", clicked)
+        try:
+            await self.page.wait_for_selector(
+                "input[name$='_accessToBeUsedBy']", timeout=15000
+            )
+        except Exception:
+            await screenshot(self.page, "match_step1_no_service_form")
+            raise
+
+        # ---- Step 2: MATCH service details --------------------------------
+        # Allow React time to mount the radio group.
+        await asyncio.sleep(1.5)
+
+        # 1. Company-type radio FIRST — selecting this reveals ICA, contact
+        #    email, and the isReplacingClientId radios.
+        company_ok = await self._click_radio_label(
+            "_accessToBeUsedBy", company_type
+        )
+        await asyncio.sleep(1.2)
+
+        # Wait for the conditional fields to mount.
+        try:
+            await self.page.wait_for_selector(
+                "input[data-testid='acquirerica-text']", timeout=15000
+            )
+            await self.page.wait_for_selector(
+                "input[data-testid='acquirercontactemail-text']", timeout=15000
+            )
+            await self.page.wait_for_selector(
+                "input[name$='_isReplacingClientId'][value='No']", timeout=15000
+            )
+        except Exception:
+            await screenshot(self.page, "match_conditional_fields_missing")
+            raise
+        await asyncio.sleep(0.6)
+
+        # 2. ICA — real keystrokes
+        ica_loc = self.page.locator("input[data-testid='acquirerica-text']")
+        await ica_loc.scroll_into_view_if_needed()
+        await ica_loc.click()
+        await asyncio.sleep(0.3)
+        await ica_loc.fill("")
+        await ica_loc.press_sequentially(ica, delay=90)
+        await ica_loc.press("Tab")
+        await asyncio.sleep(0.6)
+        ica_val = await ica_loc.input_value()
+        ica_ok = ica_val == ica
+
+        # 3. Contact email — real keystrokes (slow on the email field per user request)
+        email_loc = self.page.locator("input[data-testid='acquirercontactemail-text']")
+        await email_loc.scroll_into_view_if_needed()
+        await email_loc.click()
+        await asyncio.sleep(0.5)
+        await email_loc.fill("")
+        await email_loc.press_sequentially(contact_email, delay=90)
+        await email_loc.press("Tab")
+        await asyncio.sleep(0.8)
+        email_val = await email_loc.input_value()
+        email_ok = email_val == contact_email
+
+        # 4. isReplacingClientId = No (real label click)
+        replace_ok = await self._click_radio_label(
+            "_isReplacingClientId", is_replacing
+        )
+        await asyncio.sleep(0.8)
+
+        logger.info(
+            "MATCH service-details set: company={} ica={} (got={!r}) email={} (got={!r}) replacing={}",
+            company_ok, ica_ok, ica_val, email_ok, email_val, replace_ok,
+        )
+        if not (company_ok and ica_ok and email_ok and replace_ok):
+            await screenshot(self.page, "match_service_details_set_failed")
+            raise RuntimeError(
+                f"MATCH service details set failed (company={company_ok}, "
+                f"ica={ica_ok}, email={email_ok}, replacing={replace_ok})"
+            )
+        await screenshot(self.page, "match_service_details_filled")
+
+        # Wait for Proceed to become enabled — signals the whole form is valid.
+        await self._wait_for_proceed_enabled(timeout_ms=15000)
+        await asyncio.sleep(0.6)
+
+        clicked = await self._click_proceed_btn()
+        logger.info("MATCH step2 proceed clicked={}", clicked)
+        try:
+            await self.page.wait_for_selector(
+                "input[data-testid='key-alias-input']", timeout=15000
+            )
+        except Exception:
+            await screenshot(self.page, "match_step2_no_key_form")
+            raise
+        # Let the key form fully mount before typing.
+        await asyncio.sleep(1.2)
+
+        # ---- Step 3: key alias + password ---------------------------------
+        alias_loc = self.page.locator("input[data-testid='key-alias-input']")
+        await alias_loc.click()
+        await asyncio.sleep(0.3)
+        await alias_loc.fill("")
+        await alias_loc.press_sequentially(alias, delay=70)
+        await alias_loc.press("Tab")
+        await asyncio.sleep(0.5)
+
+        pwd_loc = self.page.locator("input[data-testid='key-store-password-input']")
+        await pwd_loc.click()
+        await asyncio.sleep(0.3)
+        await pwd_loc.fill("")
+        await pwd_loc.press_sequentially(password, delay=70)
+        await pwd_loc.press("Tab")
+        await asyncio.sleep(0.8)
+
+        await screenshot(self.page, "match_key_form_filled")
+        # Wait for Proceed (now "Create project") to be enabled.
+        await self._wait_for_proceed_enabled(timeout_ms=15000)
+        await asyncio.sleep(0.6)
+        clicked = await self._click_proceed_btn()
+        logger.info("MATCH step3 'Create project' clicked={}", clicked)
+
+        # ---- Step 4: download key file ------------------------------------
+        # The portal shows a "Creating your project" loader with 3 stages
+        # (generating keys → creating project → getting keys ready). This can
+        # take well over a minute on busy days, so allow up to 4 minutes.
+        try:
+            await self.page.wait_for_selector(
+                "button[data-testid='download-key-action-project-creation']",
+                timeout=240000,
+            )
+        except Exception:
+            await screenshot(self.page, "match_no_download_button")
+            raise
+
+        before_files = {p.name for p in dest_dir.glob("*") if p.is_file()}
+        try:
+            async with self.page.expect_download(timeout=120000) as dl_info:
+                await self.page.locator(
+                    "button[data-testid='download-key-action-project-creation']"
+                ).click()
+            download = await dl_info.value
+            original = download.suggested_filename or f"{filename_hint}.zip"
+            dest = dest_dir / original
+            await save_download(download, dest)
+            logger.info("MATCH key downloaded: {}", dest)
+            downloaded = dest
+        except Exception as err:
+            logger.warning(
+                "MATCH download event missed ({}) — polling filesystem fallback", err
+            )
+            downloaded = None
+            for _ in range(30):
+                await asyncio.sleep(1.0)
+                new_files = [
+                    p for p in dest_dir.glob("*")
+                    if p.is_file()
+                    and p.name not in before_files
+                    and p.suffix.lower() in {".zip", ".p12", ".pem"}
+                ]
+                if new_files:
+                    downloaded = max(new_files, key=lambda p: p.stat().st_mtime)
+                    logger.info("MATCH key downloaded (fs fallback): {}", downloaded)
+                    break
+            if downloaded is None:
+                raise
+
+        # ---- Step 5: open project -----------------------------------------
+        try:
+            await self.page.wait_for_selector(
+                "button[data-testid='proceed-button-create-new-project']", timeout=20000
+            )
+            await self.page.locator(
+                "button[data-testid='proceed-button-create-new-project']"
+            ).click()
+        except Exception:
+            logger.warning("'Open project' button not found after MATCH key download")
+
+        for _ in range(40):
+            if "/project-details/" in self.page.url:
+                break
+            await asyncio.sleep(0.5)
+        if "/project-details/" not in self.page.url:
+            await screenshot(self.page, "match_no_project_details_redirect")
+            raise RuntimeError(
+                f"MATCH provisioning did not land on /project-details/ — at {self.page.url}"
+            )
+
+        uuid = self.page.url.split("/project-details/")[-1].split("/")[0]
+        logger.info("MATCH project provisioned uuid={} zip={}", uuid, downloaded)
+        return downloaded, uuid
