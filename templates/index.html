@@ -122,13 +122,16 @@
           <span class="api-item-name">About</span>
           <span class="api-item-about-icon">✦</span>
         </button>
-        {% for api in apis %}
+        {% for section in api_groups %}
+        <div class="api-group-heading">{{ section.group }}</div>
+        {% for api in section.apis %}
         <button class="api-item" data-api-id="{{ api.id }}"
                 title="{{ api.description }}">
           <span class="api-item-name">{{ api.name }}</span>
           <span class="api-item-status {% if api.configured %}ok{% else %}off{% endif %}"
                 title="{% if api.configured %}Configured{% else %}Not configured{% endif %}">●</span>
         </button>
+        {% endfor %}
         {% endfor %}
       </div>
     </aside>

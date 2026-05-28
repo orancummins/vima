@@ -20,7 +20,7 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, List
 
-from apis.catalog import CATALOG, iter_ordered, get as catalog_get
+from apis.catalog import CATALOG, DISABLED_API_IDS, GROUP_ORDER, iter_ordered, get as catalog_get
 from apis.credentials import is_configured as default_is_configured
 
 
@@ -42,10 +42,17 @@ def _load_all() -> None:
 
 
 def manifests() -> List[Dict[str, Any]]:
-    """Return the manifest for every registered API, in display order."""
+    """Return the manifest for every registered API, in display order.
+
+    APIs listed in ``catalog.DISABLED_API_IDS`` are silently omitted so the
+    UI sidebar and the /explorer/apis endpoint don't surface them. The
+    underlying modules are still loaded and importable for tests/tools.
+    """
     _load_all()
     out: List[Dict[str, Any]] = []
     for api_id in ORDER:
+        if api_id in DISABLED_API_IDS:
+            continue
         mod = REGISTRY.get(api_id)
         if mod is None:
             continue
@@ -58,6 +65,7 @@ def manifests() -> List[Dict[str, Any]]:
         m["env_prefix"] = entry.env_prefix
         m["portal_slug"] = entry.portal_slug
         m["legacy_id"] = entry.legacy_id  # may be None for newer APIs
+        m["group"] = entry.group
         configured_fn = getattr(mod, "is_configured", None)
         if callable(configured_fn):
             m["configured"] = bool(configured_fn())
@@ -66,6 +74,29 @@ def manifests() -> List[Dict[str, Any]]:
         m["directory"] = os.path.dirname(os.path.abspath(mod.__file__))
         out.append(m)
     return out
+
+
+def manifests_grouped() -> List[Dict[str, Any]]:
+    """Return manifests bucketed by ``ApiCatalogEntry.group``.
+
+    Output: ``[{"group": "...", "apis": [manifest, ...]}, ...]`` ordered by
+    ``GROUP_ORDER`` (Mastercard Developers product categories). Within each
+    group the order matches the catalog declaration order.
+    """
+    by_group: Dict[str, List[Dict[str, Any]]] = {g: [] for g in GROUP_ORDER}
+    for m in manifests():
+        g = m.get("group") or GROUP_ORDER[-1]
+        by_group.setdefault(g, []).append(m)
+    sections: List[Dict[str, Any]] = []
+    for g in GROUP_ORDER:
+        items = by_group.get(g) or []
+        if items:
+            sections.append({"group": g, "apis": items})
+    # Any groups not in GROUP_ORDER (shouldn't normally happen)
+    for g, items in by_group.items():
+        if g not in GROUP_ORDER and items:
+            sections.append({"group": g, "apis": items})
+    return sections
 
 
 def get_module(api_id: str):
@@ -79,4 +110,4 @@ def get_module(api_id: str):
     return REGISTRY.get(entry.id)
 
 
-__all__ = ["REGISTRY", "ORDER", "manifests", "get_module"]
+__all__ = ["REGISTRY", "ORDER", "manifests", "manifests_grouped", "get_module"]

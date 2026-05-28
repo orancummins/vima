@@ -144,6 +144,17 @@ body {
   color: rgba(255, 190, 130, 0.95);
 }
 .api-list { display: flex; flex-direction: column; gap: 2px; }
+.api-group-heading {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #8a8f99;
+  padding: 14px 12px 4px;
+  margin-top: 2px;
+  border-top: 1px solid #ececef;
+}
+.api-group-heading:first-of-type { border-top: none; margin-top: 8px; }
 .api-item {
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 12px; border: none; background: transparent;

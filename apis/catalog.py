@@ -39,6 +39,56 @@ AUTH_OAUTH2 = "oauth2"            # Partner ID / Secret / App Key (Finicity)
 
 
 # ---------------------------------------------------------------------------
+# Product groupings
+# ---------------------------------------------------------------------------
+#
+# Mirrors the top-level categorization used on developer.mastercard.com so the
+# VIMA sidebar groups APIs the same way a developer would find them on the
+# Mastercard Developers portal.
+#
+# The order of GROUP_ORDER drives the rendering order of group headings.
+
+GROUP_OPEN_FINANCE = "Open Banking & Open Finance"
+GROUP_SECURITY = "Security & Risk"
+GROUP_DATA = "Data & Insights"
+GROUP_LOYALTY = "Loyalty, Offers & Benefits"
+
+GROUP_ORDER: tuple[str, ...] = (
+    GROUP_OPEN_FINANCE,
+    GROUP_SECURITY,
+    GROUP_DATA,
+    GROUP_LOYALTY,
+)
+
+
+# ---------------------------------------------------------------------------
+# Disabled APIs
+# ---------------------------------------------------------------------------
+#
+# APIs listed here are kept in the catalog (their code/spec/checklist remain
+# intact) but are hidden from the sidebar API list AND the provisioning modal.
+# Use this for APIs that cannot be auto-provisioned today and are not yet
+# ready for end-user exposure — they can be re-enabled later by removing the
+# id from this set.
+#
+# Currently disabled:
+#   * flight_delay_pass — manual tenant onboarding (~26 days) + JWE; not
+#                         usable end-to-end until Mastercard tenant onboarding
+#                         is complete and the encryption client is wired in.
+#
+# Open Finance Europe is intentionally NOT in this set: it is exposed in the
+# UI with a disabled "Manual onboarding" pill so partners can discover it.
+
+DISABLED_API_IDS: frozenset[str] = frozenset({
+    "flight_delay_pass",
+})
+
+
+def is_disabled(api_id: str) -> bool:
+    return api_id in DISABLED_API_IDS
+
+
+# ---------------------------------------------------------------------------
 # Catalog entry
 # ---------------------------------------------------------------------------
 
@@ -52,6 +102,9 @@ class ApiCatalogEntry:
     categories: tuple[str, ...] = ()
     docs_url: str = ""
     legacy_id: Optional[str] = None
+    # Top-level Mastercard Developers product grouping (see GROUP_* above).
+    # Drives sidebar section headings in the API explorer.
+    group: str = GROUP_DATA
     # Optional provisioning UX note shown in auto-provision selection UI.
     provision_note: str = ""
     # When False, the API cannot be auto-provisioned via the portal-wizard
@@ -91,6 +144,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
                     "Reports", "Webhooks"),
         docs_url="https://developer.mastercard.com/open-finance-us/documentation/",
         legacy_id="ofin",
+        group=GROUP_OPEN_FINANCE,
     ),
     ApiCatalogEntry(
         id="open_finance_au",
@@ -104,6 +158,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
                     "Consent (CDR)", "Reports", "Webhooks"),
         docs_url="https://developer.mastercard.com/open-finance-au/documentation/",
         legacy_id=None,
+        group=GROUP_OPEN_FINANCE,
         provision_note="",
     ),
     ApiCatalogEntry(
@@ -120,6 +175,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
                     "Transactions", "Balances", "Insights"),
         docs_url="https://developer.mastercard.com/open-finance-data/documentation/",
         legacy_id=None,
+        group=GROUP_OPEN_FINANCE,
         provision_note=(
             "Manual onboarding only — email openbankingeu_support@mastercard.com "
             "with your RSA-4096 public PEM to receive a sandbox clientId."
@@ -136,6 +192,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("Lookup",),
         docs_url="https://developer.mastercard.com/bin-lookup/documentation/",
         legacy_id="binlookup",
+        group=GROUP_DATA,
     ),
     ApiCatalogEntry(
         id="merchant_identifier",
@@ -146,6 +203,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("Merchant", "Lookup"),
         docs_url="https://developer.mastercard.com/merchant-identifier/documentation/",
         legacy_id=None,
+        group=GROUP_DATA,
     ),
     ApiCatalogEntry(
         id="automatic_billing_updater",
@@ -156,6 +214,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("Card Lifecycle", "Subscriptions"),
         docs_url="https://developer.mastercard.com/automatic-billing-updater/documentation/",
         legacy_id=None,
+        group=GROUP_DATA,
         provision_note="Push operations require ABU Push service registration",
     ),
     ApiCatalogEntry(
@@ -167,6 +226,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("Risk", "Merchants"),
         docs_url="https://developer.mastercard.com/match/documentation/",
         legacy_id=None,
+        group=GROUP_SECURITY,
     ),
     ApiCatalogEntry(
         id="consumer_clarity",
@@ -177,6 +237,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("Merchant Search",),
         docs_url="https://developer.mastercard.com/consumer-clarity-us/documentation/",
         legacy_id="clarity",
+        group=GROUP_DATA,
     ),
     ApiCatalogEntry(
         id="priceless_cities",
@@ -187,6 +248,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("Offers",),
         docs_url="https://developer.mastercard.com/priceless-cities/documentation/",
         legacy_id="priceless",
+        group=GROUP_LOYALTY,
         provision_note="Requires API Owner approval",
     ),
     ApiCatalogEntry(
@@ -198,6 +260,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("Offers",),
         docs_url="https://developer.mastercard.com/easy-savings/documentation/",
         legacy_id="easysavings",
+        group=GROUP_LOYALTY,
     ),
     ApiCatalogEntry(
         id="places",
@@ -208,6 +271,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("Location",),
         docs_url="https://developer.mastercard.com/places/documentation/",
         legacy_id="places",
+        group=GROUP_DATA,
     ),
     ApiCatalogEntry(
         id="offers_for_publishers",
@@ -218,6 +282,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("Offers",),
         docs_url="https://developer.mastercard.com/presentment/documentation/",
         legacy_id="ofpub",
+        group=GROUP_LOYALTY,
     ),
     ApiCatalogEntry(
         id="offers_merchant_content",
@@ -228,6 +293,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("Offers",),
         docs_url="https://developer.mastercard.com/eop-admin/documentation/",
         legacy_id="ofmc",
+        group=GROUP_LOYALTY,
     ),
     ApiCatalogEntry(
         id="consent_management",
@@ -238,6 +304,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("Consent", "3DS"),
         docs_url="https://developer.mastercard.com/consent-management/documentation/",
         legacy_id="consent",
+        group=GROUP_SECURITY,
     ),
     ApiCatalogEntry(
         id="transaction_notifications",
@@ -248,6 +315,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("Notifications",),
         docs_url="https://developer.mastercard.com/transaction-notifications/documentation/",
         legacy_id="txnotify",
+        group=GROUP_DATA,
     ),
     ApiCatalogEntry(
         id="benefits_eligibility",
@@ -258,6 +326,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("Benefits",),
         docs_url="https://developer.mastercard.com/eligibility-api/documentation/",
         legacy_id="eligibility",
+        group=GROUP_LOYALTY,
     ),
     ApiCatalogEntry(
         id="benefits_content_eligibility",
@@ -268,6 +337,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("Benefits",),
         docs_url="https://developer.mastercard.com/bces-service/documentation/",
         legacy_id="bces",
+        group=GROUP_LOYALTY,
     ),
     ApiCatalogEntry(
         id="enhanced_currency_conversion_calculator",
@@ -278,7 +348,32 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         categories=("FX", "Settlement"),
         docs_url="https://developer.mastercard.com/enhanced-currency-conversion-calculator/documentation/",
         legacy_id=None,
+        group=GROUP_DATA,
         provision_note="",
+    ),
+    ApiCatalogEntry(
+        id="flight_delay_pass",
+        env_prefix="FLIGHT_DELAY_PASS",
+        portal_slug="flight-delay-pass",
+        display_name="Flight Delay Pass",
+        # OAuth 1.0a + JWE payload encryption for PII operations
+        # (POST /registrations, PUT /registrations/{id}).
+        auth=AUTH_OAUTH1_ENC,
+        categories=("Benefits", "Loyalty", "Eligibility", "Registrations"),
+        docs_url="https://developer.mastercard.com/flight-delay-pass/documentation/",
+        legacy_id=None,
+        group=GROUP_LOYALTY,
+        # Issuer must be on-boarded by a Mastercard implementation team as a
+        # Flight Delay Pass tenant (≤26 days) and the project's Client Key
+        # must be whitelisted before the sandbox will return 2xx. The
+        # self-serve portal wizard can mint OAuth1 keys but the API will
+        # 403 until the tenant onboarding is complete.
+        provision_note=(
+            "Manual onboarding only — issuer must be provisioned as a Flight "
+            "Delay Pass tenant (~26 days) and the Client Key whitelisted."
+        ),
+        auto_provisionable=False,
+        manual_onboarding_url="https://developer.mastercard.com/flight-delay-pass/documentation/",
     ),
 )
 
