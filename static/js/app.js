@@ -4728,16 +4728,29 @@
     if (!apiGrid) return;
     apiGrid.innerHTML = '';
     var autoProvisionable = 0;
+    var defaultChecked = 0;
     APIS.forEach(function (api) {
       var manual = api.auto_provisionable === false;
+      var configured = api.configured === true;
+      // Default-select only APIs that don't yet have keys provisioned.
+      // Already-provisioned APIs render unchecked + green-tinted with a
+      // tooltip, but remain selectable so users can re-provision them.
+      var checked = !manual && !configured;
       var note = manual ? '' : (api.provision_note || api.note || '');
       var label = document.createElement('label');
-      label.className = 'prov-api-item' + (manual ? ' prov-api-item--manual' : '');
+      var labelClass = 'prov-api-item';
+      if (manual) labelClass += ' prov-api-item--manual';
+      if (configured && !manual) labelClass += ' prov-api-item--configured';
+      label.className = labelClass;
+      if (configured && !manual) label.title = 'Key already provisioned \u2014 select to re-provision';
       var cbAttrs = 'class="prov-api-cb" data-id="' + _escAttr(api.id) + '"' +
-                    (manual ? ' disabled' : ' checked');
+                    (manual ? ' disabled' : '') +
+                    (checked ? ' checked' : '');
+      var badges = '';
+      if (manual) badges += '<span class="prov-api-badge">Manual onboarding</span>';
       var nameHtml = '<span class="prov-api-name">' +
                      '<span class="prov-api-name-text">' + _escAttr(api.name) + '</span>' +
-                     (manual ? '<span class="prov-api-badge">Manual onboarding</span>' : '') +
+                     badges +
                      '</span>';
       var noteHtml = '';
       if (note) {
@@ -4749,10 +4762,11 @@
         '<span class="prov-api-text">' + nameHtml + noteHtml + linkHtml + '</span>';
       apiGrid.appendChild(label);
       if (!manual) autoProvisionable++;
+      if (checked) defaultChecked++;
     });
     if (selectAllCb) {
-      selectAllCb.checked = autoProvisionable > 0;
-      selectAllCb.indeterminate = false;
+      selectAllCb.checked = autoProvisionable > 0 && defaultChecked === autoProvisionable;
+      selectAllCb.indeterminate = defaultChecked > 0 && defaultChecked < autoProvisionable;
     }
   }
 

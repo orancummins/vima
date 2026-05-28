@@ -4884,6 +4884,25 @@ body {
   border-radius: 10px;
   line-height: 1.4;
 }
+.prov-api-dot {
+  flex-shrink: 0;
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #28a745;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.18);
+  cursor: help;
+}
+.prov-api-item--configured {
+  cursor: pointer;
+}
+.prov-api-item--configured .prov-api-cb {
+  accent-color: #28a745;
+}
+.prov-api-item--configured .prov-api-name-text {
+  color: #28a745;
+}
 .prov-api-link {
   display: inline-block;
   margin-top: 4px;
