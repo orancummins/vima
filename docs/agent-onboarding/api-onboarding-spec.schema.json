@@ -71,7 +71,8 @@
                 "oauth1_skip_step3",
                 "oauth1_enc_key",
                 "oauth2_region",
-                "priceless"
+                "priceless",
+                "playbook"
               ]
             },
             "region": { "type": ["string", "null"] },

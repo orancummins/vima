@@ -130,17 +130,41 @@ def init_session(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None
 def _find_artifact(normalized_dir: Path, project: str, api: str, exts: tuple[str, ...]) -> Path | None:
     """Find the most recent artifact for a given project/api/extension combo."""
     candidates: list[Path] = []
-    project_slug = project.lower().replace(" ", "-")
-    api_slug = api.lower()
+    project_slug = project.lower().replace(" ", "-").replace("_", "-")
+    # make_alias() slug-ifies '_' → '-' in filenames, so always search by the
+    # kebab form regardless of whether api_name uses snake or kebab.
+    api_slug = api.lower().replace("_", "-")
     for f in normalized_dir.glob("*"):
         if f.suffix.lstrip(".").lower() not in exts:
             continue
         name = f.name.lower()
         if project_slug in name and api_slug in name:
             candidates.append(f)
-    if not candidates:
-        return None
-    return max(candidates, key=lambda p: p.stat().st_mtime)
+    if candidates:
+        return max(candidates, key=lambda p: p.stat().st_mtime)
+
+    # Fallback for .p12 lookups: the portal delivers the signing key inside a
+    # password-protected zip, and the orchestrator leaves it that way. If a
+    # matching zip exists, extract the first .p12 entry next to it so the
+    # caller can read it via its returned Path.
+    if "p12" in exts:
+        for f in normalized_dir.glob("*.zip"):
+            name = f.name.lower()
+            if project_slug not in name or api_slug not in name:
+                continue
+            try:
+                import zipfile
+                with zipfile.ZipFile(f) as zf:
+                    p12_members = [n for n in zf.namelist() if n.lower().endswith(".p12")]
+                    if not p12_members:
+                        continue
+                    member = p12_members[0]
+                    extracted = normalized_dir / f"{f.stem}.p12"
+                    extracted.write_bytes(zf.read(member))
+                    return extracted
+            except Exception as exc:
+                logger.warning("Failed to extract .p12 from {}: {}", f, exc)
+    return None
 
 
 def _load_dotenv(path: Path) -> None:
@@ -171,10 +195,18 @@ def _slug_from_url(url: str) -> str | None:
 
 
 def _resolve_api_name(slug: str) -> str:
-    """Return the canonical catalog id for a portal slug, or the slug itself for unwired APIs.
+    """Return the canonical catalog id for a portal slug, or a snake_case id for unwired APIs.
 
-    If the slug is not yet in the catalog or API_CONFIG, registers a temporary
-    oauth1_standard entry so the portal workflow can run before code wiring is complete.
+    Existing catalog entries are returned as-is (already snake_case, e.g.
+    'consumer_clarity', 'bin_lookup'). For a brand-new portal slug like
+    'enhanced-currency-conversion-calculator', we register it under its
+    snake_case form ('enhanced_currency_conversion_calculator') so the signing
+    key alias, ``.env`` prefix, and key file basename all follow the same
+    convention used by every other API in ``config/.env``.
+
+    If a recorded playbook exists for the portal slug, registers with
+    ``provision_type=playbook`` (record-once-replay-forever). Otherwise falls
+    back to ``oauth1_standard`` with a clear warning.
     """
     from app._vima_catalog import iter_ordered
     from providers.mastercard.api_config import API_CONFIG, ApiSetup
@@ -183,14 +215,30 @@ def _resolve_api_name(slug: str) -> str:
         if entry.portal_slug == slug:
             return entry.id
 
-    if slug not in API_CONFIG:
-        API_CONFIG[slug] = ApiSetup(slug=slug, provision_type="oauth1_standard")
-        logger.warning(
-            "Slug {!r} not found in catalog — registering with oauth1_standard for this session. "
-            "Add to api_config.py once the API module is wired.",
-            slug,
-        )
-    return slug
+    # Normalise kebab → snake to match existing alias/env-var conventions.
+    api_name = slug.replace("-", "_")
+
+    if api_name not in API_CONFIG:
+        playbook_file = HERE / "playbooks" / "mastercard" / f"{slug}.json"
+        if playbook_file.is_file():
+            API_CONFIG[api_name] = ApiSetup(slug=slug, provision_type="playbook")
+            logger.info(
+                "Slug {!r} not in catalog — using recorded playbook at {} "
+                "(api_name={!r})",
+                slug, playbook_file, api_name,
+            )
+        else:
+            API_CONFIG[api_name] = ApiSetup(slug=slug, provision_type="oauth1_standard")
+            logger.warning(
+                "Slug {!r} not found in catalog and no playbook recorded — "
+                "falling back to oauth1_standard (api_name={!r}). If the portal "
+                "wizard for this API has more than project-name + alias/password "
+                "fields (extra dropdowns, radios, etc.), the Proceed button will "
+                "stay disabled and provisioning will time out. Record the flow with:"
+                "\n  ./addapi.sh --record https://developer.mastercard.com/{}/documentation/",
+                slug, api_name, slug,
+            )
+    return api_name
 
 
 def _run_deploy(
@@ -339,6 +387,10 @@ def provision_api(
 
     api_name = _resolve_api_name(slug)
     pname = project_name or slug
+
+    # If this API has a portal flow that needs to be recorded (no playbook
+    # found yet) print a clear hint before attempting to provision.
+    _hint_missing_playbook(api_name, slug)
 
     # Auto-select headless mode when a fresh session exists; headful otherwise.
     headless = not headful and _session_is_fresh()
@@ -568,6 +620,91 @@ def smoke_test(
     typer.echo(f"Summary: {n_pass}/{len(results)} passed")
     if n_pass != len(results):
         raise typer.Exit(1)
+
+
+# ---------------------------------------------------------------------------
+# Playbook record / replay support
+# ---------------------------------------------------------------------------
+
+PLAYBOOK_DIR = HERE / "playbooks" / "mastercard"
+
+
+def _playbook_path_for(api_slug: str) -> Path:
+    return PLAYBOOK_DIR / f"{api_slug}.json"
+
+
+def _hint_missing_playbook(api_name: str, slug: str) -> None:
+    """If MATCH-style (provision_type == playbook) and no JSON recorded, hint."""
+    try:
+        from providers.mastercard.api_config import API_CONFIG
+        cfg = API_CONFIG.get(api_name)
+    except Exception:
+        return
+    if cfg is None:
+        return
+    pb = _playbook_path_for(cfg.slug)
+
+    if cfg.provision_type == "playbook":
+        if pb.is_file():
+            return
+        typer.echo(
+            f"\nERROR: API {api_name!r} uses the playbook driver but no playbook "
+            f"was found at {pb}.\n"
+            f"Record one first with:\n"
+            f"  ./addapi.sh --record https://developer.mastercard.com/{cfg.slug}/documentation/\n",
+            err=True,
+        )
+        raise typer.Exit(1)
+
+    # Slug is using the default oauth1_standard fallback because it wasn't in the
+    # catalog. If a playbook exists, the resolver should have picked it up; if
+    # not, warn the operator before we burn ~45s waiting on a possibly-hung wizard.
+    is_uncatalogued = api_name == slug and cfg.provision_type == "oauth1_standard"
+    if is_uncatalogued and not pb.is_file():
+        typer.echo(
+            f"\nNOTE: {slug!r} is not in the catalog and no playbook was recorded.\n"
+            f"  Falling back to the standard oauth1 wizard. If that wizard has\n"
+            f"  extra required fields (radios, dropdowns, etc.), Proceed will\n"
+            f"  stay disabled and this will fail after ~45s.\n"
+            f"  If it fails, record the flow once with:\n"
+            f"    ./addapi.sh --record https://developer.mastercard.com/{slug}/documentation/\n",
+            err=True,
+        )
+
+
+@app.command("record-api")
+def record_api(
+    api_slug: str = typer.Option(
+        ..., "--api-slug",
+        help="Portal API slug (e.g. 'match', 'bin-lookup').",
+    ),
+    start_url: str | None = typer.Option(
+        None, "--start-url",
+        help="Portal create-project URL. Defaults to the standard create-project page for this slug.",
+    ),
+    organization: str = typer.Option("mastercard", "--organization"),
+    no_prompt: bool = typer.Option(
+        False, "--no-prompt",
+        help="Skip interactive variable mapping at the end (keep literal values).",
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+) -> None:
+    """Record a portal create-project flow into a replayable playbook.
+
+    Opens a headful browser. Drive the flow manually end-to-end (create
+    project, download key file). When done, return to this terminal and
+    press Enter — the recorded steps are compressed into
+    ``playbooks/<organization>/<api-slug>.json`` which the regular
+    ``provision-api`` command will replay autonomously thereafter.
+    """
+    _configure_logging(verbose)
+    _load_dotenv(VIMA_CONFIG / ".env")
+
+    if start_url is None:
+        start_url = f"https://developer.mastercard.com/create-project?services={api_slug}"
+
+    from app.playbook_record import _record_async  # local import; heavy deps
+    asyncio.run(_record_async(api_slug, start_url, organization, headed=True, no_prompt=no_prompt))
 
 
 if __name__ == "__main__":
