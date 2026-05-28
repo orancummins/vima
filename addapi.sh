@@ -185,6 +185,26 @@ print('yes' if any(e.portal_slug == '$SLUG' for e in iter_ordered()) else 'no')
 fi
 
 if [[ -z "${PROVISION_SKIPPED:-}" ]]; then
+  # Some APIs have portal steps that require a manual user click because the
+  # portal's bot-detection blocks automated mouse/keyboard events on specific
+  # wizard pages.  For these slugs we force a visible browser so the user can
+  # intervene when prompted, and we print clear instructions.
+  MANUAL_PROCEED_SLUGS="match"
+  if [[ -z "$HEADFUL" && " $MANUAL_PROCEED_SLUGS " =~ " $SLUG " ]]; then
+    HEADFUL="--headful"
+    echo "ℹ️  $SLUG requires two manual clicks during provisioning (Mastercard portal"
+    echo "   bot-detection blocks automated clicks on key-generation pages)."
+    echo ""
+    echo "   A browser window will open and fill in the form automatically."
+    echo "   You will see two amber banners — click the indicated button each time:"
+    echo ""
+    echo "     1. 'Key form ready' banner  → click the blue Proceed button"
+    echo "     2. 'Key downloaded' banner  → click the blue Create Project button"
+    echo ""
+    echo "   Everything else (form fill, download, credential capture) is automatic."
+    echo ""
+  fi
+
   "$MCD_CMD" provision-api $HEADFUL "$URL"
   EXIT_CODE=$?
   if [[ $EXIT_CODE -ne 0 ]]; then

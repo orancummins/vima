@@ -181,6 +181,141 @@ class PlaybookRunner:
         name = step.get("name") or f"playbook_{int(time.time())}"
         await screenshot(self.page, name)
 
+    async def _do_browser_notify(self, step: dict[str, Any]) -> None:
+        """Inject a persistent banner into the visible browser window.
+
+        Used to prompt the user for manual interaction (e.g. clicking a button
+        that the portal's bot-detection blocks for automated input).  The banner
+        is styled to stand out clearly above the page content and disappears
+        automatically once the target selector appears (if ``dismiss_on`` is
+        supplied).
+        """
+        message = self._val(step, "message", default="Action required — see terminal for instructions.")
+        dismiss_on = step.get("dismiss_on", "")
+        color = step.get("color", "#1a73e8")
+
+        await self.page.evaluate(
+            """
+            ({ message, dismissOn, color }) => {
+                // Remove any existing vima banner first.
+                const old = document.getElementById('vima-notify-banner');
+                if (old) old.remove();
+
+                const banner = document.createElement('div');
+                banner.id = 'vima-notify-banner';
+                banner.innerHTML = `
+                  <span style="font-size:22px;margin-right:10px;">👆</span>
+                  <span>${message}</span>
+                `;
+                Object.assign(banner.style, {
+                    position: 'fixed',
+                    top: '0',
+                    left: '0',
+                    right: '0',
+                    zIndex: '2147483647',
+                    background: color,
+                    color: '#fff',
+                    fontFamily: 'system-ui, sans-serif',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    padding: '14px 24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                });
+                document.body.prepend(banner);
+
+                if (dismissOn) {
+                    const observer = new MutationObserver(() => {
+                        if (document.querySelector(dismissOn)) {
+                            banner.style.background = '#188038';
+                            banner.innerHTML = '<span style="font-size:22px;margin-right:10px;">✅</span><span>Key generated — downloading…</span>';
+                            setTimeout(() => banner.remove(), 3000);
+                            observer.disconnect();
+                        }
+                    });
+                    observer.observe(document.body, { childList: true, subtree: true });
+                }
+            }
+            """,
+            {"message": message, "dismissOn": dismiss_on, "color": color},
+        )
+        logger.info("Playbook: browser notify shown — {}", message)
+
+    async def _do_os_click(self, step: dict[str, Any]) -> None:
+        """Click a button using OS-level Quartz mouse events.
+
+        Unlike Playwright's CDP mouse API (page.mouse.click), OS-level events
+        are injected at the macOS input stack before the browser sees them.
+        This makes them indistinguishable from real physical hardware clicks,
+        bypassing any browser-side or server-side bot-detection heuristics.
+
+        The selector must resolve to a *visible* element; we compute the
+        element's screen coordinates from its viewport rect combined with the
+        browser window's screen position, then use pyautogui to move and click.
+        """
+        try:
+            import pyautogui
+        except ImportError:
+            raise RuntimeError(
+                "os_click requires pyautogui: "
+                "pip install pyautogui in the mcd-key-automation venv"
+            )
+
+        selector = self._val(step, "selector")
+        timeout = int(step.get("timeout_ms", 20000))
+
+        # Wait for a visible copy of the button.
+        loc = self.page.locator(selector + ":visible").first
+        await loc.wait_for(state="visible", timeout=timeout)
+        await loc.scroll_into_view_if_needed()
+        await asyncio.sleep(0.4)
+
+        # Compute screen-space coordinates.
+        # window.screenX/Y  — outer-left / outer-top of the browser window
+        # outerHeight - innerHeight — height of browser chrome (tabs + address bar)
+        # getBoundingClientRect()  — element position within the viewport (CSS px)
+        # We iterate all matching elements and pick the first *visible* one
+        # (non-zero bounding box) to avoid the hidden duplicate that the portal
+        # injects alongside the real button.
+        coords: dict = await self.page.evaluate(
+            """
+            (sel) => {
+                let el = null;
+                for (const e of document.querySelectorAll(sel)) {
+                    const r = e.getBoundingClientRect();
+                    if (r.width > 0 && r.height > 0) { el = e; break; }
+                }
+                if (!el) return null;
+                const r = el.getBoundingClientRect();
+                return {
+                    ex: r.left + r.width  / 2,
+                    ey: r.top  + r.height / 2,
+                    wx: window.screenX,
+                    wy: window.screenY,
+                    ch: window.outerHeight - window.innerHeight,
+                };
+            }
+            """,
+            selector,
+        )
+        if coords is None:
+            raise RuntimeError(f"os_click: selector {selector!r} not found in DOM")
+
+        sx = int(coords["wx"] + coords["ex"])
+        sy = int(coords["wy"] + coords["ch"] + coords["ey"])
+        logger.info(
+            "Playbook: os_click selector={!r}  screen=({}, {})", selector, sx, sy
+        )
+
+        # Move naturally to avoid instant-jump suspicion, then click.
+        pyautogui.moveTo(sx - 50, sy + 6, duration=0.25)
+        await asyncio.sleep(0.1)
+        pyautogui.moveTo(sx, sy, duration=0.18)
+        await asyncio.sleep(0.15)
+        pyautogui.click(sx, sy)
+
     async def _do_wait_for(self, step: dict[str, Any]) -> None:
         selector = self._val(step, "selector")
         timeout = int(step.get("timeout_ms", 20000))
@@ -203,11 +338,15 @@ class PlaybookRunner:
         await self.page.wait_for_function(
             f"""
             () => {{
-                const btn = document.querySelector("{self.PROCEED_SELECTOR}");
-                if (!btn) return false;
-                if (btn.disabled) return false;
-                if ((btn.getAttribute('aria-disabled') || '').toLowerCase() === 'true') return false;
-                return true;
+                const btns = document.querySelectorAll("{self.PROCEED_SELECTOR}");
+                for (const btn of btns) {{
+                    if (btn.disabled) continue;
+                    if ((btn.getAttribute('aria-disabled') || '').toLowerCase() === 'true') continue;
+                    // Must also be visually present (not CSS-hidden by the portal).
+                    const rect = btn.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) return true;
+                }}
+                return false;
             }}
             """,
             timeout=timeout,
@@ -242,22 +381,34 @@ class PlaybookRunner:
         await loc.click()
 
     async def _do_click_proceed(self, step: dict[str, Any]) -> None:
-        # JS-driven click handles the wrapper-span layout used by proceed-btn.
-        clicked = await self.page.evaluate(
-            f"""
-            () => {{
-                const btn = document.querySelector("{self.PROCEED_SELECTOR}");
-                if (!btn) return false;
-                if (btn.disabled) return false;
-                if ((btn.getAttribute('aria-disabled') || '').toLowerCase() === 'true') return false;
-                btn.scrollIntoView({{ behavior: 'instant', block: 'center' }});
-                btn.click();
-                return true;
-            }}
-            """
-        )
-        if not clicked:
-            raise RuntimeError("click_proceed: proceed button not clickable")
+        """Click the proceed button.
+
+        Uses Playwright's page.mouse API (generates isTrusted events via CDP)
+        rather than the JS btn.click() path (isTrusted: false).
+
+        NOTE: The Mastercard portal keeps a CSS-hidden proceed-btn in the DOM
+        alongside the visible one.  We must target only the *visible* button;
+        otherwise Playwright's .first picks the hidden one and wait_for("visible")
+        times out after 20 s.
+        """
+        timeout = int(step.get("timeout_ms", 20000))
+        # :visible filters to elements with a non-zero bounding box, skipping
+        # the portal's permanently-hidden duplicate proceed button.
+        btn = self.page.locator(self.PROCEED_SELECTOR + ":visible").first
+        await btn.wait_for(state="visible", timeout=timeout)
+        await btn.scroll_into_view_if_needed()
+        await asyncio.sleep(0.35)
+        box = await btn.bounding_box()
+        if box is None:
+            raise RuntimeError("click_proceed: proceed button has no bounding box")
+        # Click at element centre using OS-level mouse events (isTrusted: true).
+        x = box["x"] + box["width"] / 2
+        y = box["y"] + box["height"] / 2
+        await self.page.mouse.move(x - 55, y + 8, steps=4)
+        await asyncio.sleep(0.12)
+        await self.page.mouse.move(x, y, steps=6)
+        await asyncio.sleep(0.18)
+        await self.page.mouse.click(x, y)
 
     async def _do_click_radio(self, step: dict[str, Any]) -> None:
         name_suffix = self._val(step, "name_suffix")

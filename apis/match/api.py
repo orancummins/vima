@@ -256,8 +256,16 @@ def _request(method: str, path: str, query: Dict[str, Any] | None = None, body: 
 
     return {
         "success": resp.ok,
-        "status": resp.status_code,
         "data": payload,
+        "request": {
+            "method": method,
+            "url": url,
+            "body": body,
+        },
+        "response": {
+            "status_code": resp.status_code,
+            "body": payload,
+        },
     }
 
 
