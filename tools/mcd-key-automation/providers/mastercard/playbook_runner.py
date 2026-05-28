@@ -276,6 +276,13 @@ class PlaybookRunner:
         # window.screenX/Y  — outer-left / outer-top of the browser window
         # outerHeight - innerHeight — height of browser chrome (tabs + address bar)
         # getBoundingClientRect()  — element position within the viewport (CSS px)
+        # devicePixelRatio — physical-px per CSS-px. Used on Retina Macs (=2)
+        #     where Quartz still wants logical points but the comparison is for
+        #     sanity logging. On Windows we deliberately keep the Python process
+        #     DPI-virtualised so pyautogui clicks land in the same coordinate
+        #     space the browser uses (also virtualised, per Edge's default).
+        #     Multiplying by dpr on Windows would cause a mismatch on scaled
+        #     displays where the browser reports dpr=1.0 anyway.
         # We iterate all matching elements and pick the first *visible* one
         # (non-zero bounding box) to avoid the hidden duplicate that the portal
         # injects alongside the real button.
@@ -295,6 +302,7 @@ class PlaybookRunner:
                     wx: window.screenX,
                     wy: window.screenY,
                     ch: window.outerHeight - window.innerHeight,
+                    dpr: window.devicePixelRatio || 1,
                 };
             }
             """,
@@ -306,7 +314,10 @@ class PlaybookRunner:
         sx = int(coords["wx"] + coords["ex"])
         sy = int(coords["wy"] + coords["ch"] + coords["ey"])
         logger.info(
-            "Playbook: os_click selector={!r}  screen=({}, {})", selector, sx, sy
+            "Playbook: os_click selector={!r}  screen=({}, {})  win=({}, {})  ch={}  view=({}, {})  dpr={}",
+            selector, sx, sy,
+            coords["wx"], coords["wy"], coords["ch"], coords["ex"], coords["ey"],
+            coords.get("dpr"),
         )
 
         # Move naturally to avoid instant-jump suspicion, then click.
@@ -315,6 +326,28 @@ class PlaybookRunner:
         pyautogui.moveTo(sx, sy, duration=0.18)
         await asyncio.sleep(0.15)
         pyautogui.click(sx, sy)
+
+        # Verify the click actually advanced past the target. The portal removes
+        # the proceed button from the DOM (or hides it) once the click is
+        # accepted. If it's still visible after a short grace period we likely
+        # missed (DPI virtualisation drift, off-screen window, hidden chrome,
+        # etc.) — fall back to Playwright's CDP click which is reliable even if
+        # less stealthy. Better to provision noisily than to skip the API.
+        try:
+            await loc.wait_for(state="hidden", timeout=4000)
+            logger.info("Playbook: os_click verified — target hidden after click")
+        except Exception:
+            logger.warning(
+                "Playbook: os_click on {!r} did not advance the page — "
+                "falling back to Playwright locator.click()",
+                selector,
+            )
+            try:
+                await loc.click(timeout=8000)
+            except Exception as cdp_exc:
+                raise RuntimeError(
+                    f"os_click fallback also failed for {selector!r}: {cdp_exc}"
+                )
 
     async def _do_wait_for(self, step: dict[str, Any]) -> None:
         selector = self._val(step, "selector")
