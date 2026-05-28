@@ -58,7 +58,7 @@ class LoginPage:
                 str(exc)[:120],
             )
 
-    async def wait_for_manual_auth(self, *, timeout_s: float = 600.0) -> None:
+    async def wait_for_manual_auth(self, *, timeout_s: float = 600.0, headless: bool = False) -> None:
         """Block until the user completes login (incl. MFA/CAPTCHA).
 
         If MCD_PORTAL_EMAIL and MCD_PORTAL_PASSWORD are set in the environment
@@ -67,21 +67,36 @@ class LoginPage:
 
         On re-runs where session_state.json holds a valid cookie the browser
         redirects away from the login page immediately and this returns at once.
+
+        headless=True shortens the wait to 45 s and raises SessionExpiredError
+        if the portal requires interactive login, keeping unattended runs from
+        hanging for 10 minutes on an expired session.
         """
         # Session already authenticated — redirect happened on goto().
         if _LOGIN_PATH_FRAGMENT not in self.page.url:
             logger.info("Session already authenticated — skipping login form.")
             return
 
+        if headless:
+            logger.info("Headless mode: attempting credential-based login...")
+
         email = os.environ.get("MCD_PORTAL_EMAIL", "").strip()
         password = os.environ.get("MCD_PORTAL_PASSWORD", "").strip()
         if email and password:
             await self.fill_credentials(email, password)
         else:
+            if headless:
+                raise RuntimeError(
+                    "Headless mode requires MCD_PORTAL_EMAIL and MCD_PORTAL_PASSWORD in config/.env. "
+                    "Set them and retry, or run 'mcd-key-automation init-session' headfully first."
+                )
             logger.info(
                 "MCD_PORTAL_EMAIL / MCD_PORTAL_PASSWORD not set — "
                 "complete sign-in manually in the browser window..."
             )
+
+        # In headless mode use a shorter timeout and fail fast with a clear message.
+        effective_timeout = 45.0 if headless else timeout_s
 
         async def authenticated() -> bool:
             try:
@@ -94,5 +109,14 @@ class LoginPage:
             except Exception:
                 return False
 
-        await wait_until(authenticated, timeout_s=timeout_s, description="authenticated session")
+        try:
+            await wait_until(authenticated, timeout_s=effective_timeout, description="authenticated session")
+        except TimeoutError:
+            if headless:
+                raise RuntimeError(
+                    "Session expired or MFA required — cannot complete login in headless mode.\n"
+                    "Run 'mcd-key-automation init-session' to refresh your session, then retry."
+                ) from None
+            raise
+
         logger.info("Authenticated — landed on {}", self.page.url)

@@ -25,6 +25,24 @@ WORKSPACE = HERE / "temp"
 VIMA_ROOT = HERE.parent.parent  # /Users/.../vima
 VIMA_CONFIG = VIMA_ROOT / "config"
 VIMA_KEYS = VIMA_CONFIG / "keys"
+SESSION_FILE = HERE / "session_state.json"
+SESSION_MAX_AGE_HOURS = 8.0
+
+
+def _session_is_fresh(max_age_hours: float = SESSION_MAX_AGE_HOURS) -> bool:
+    """True if session_state.json exists and was written within max_age_hours."""
+    if not SESSION_FILE.exists():
+        return False
+    import time
+    return (time.time() - SESSION_FILE.stat().st_mtime) / 3600 < max_age_hours
+
+
+def _session_age_str() -> str:
+    if not SESSION_FILE.exists():
+        return "no session"
+    import time
+    age_m = int((time.time() - SESSION_FILE.stat().st_mtime) / 60)
+    return f"{age_m}m old"
 
 
 def _configure_logging(verbose: bool) -> None:
@@ -40,11 +58,12 @@ def _configure_logging(verbose: bool) -> None:
 def run(
     config: Path = typer.Option(..., "--config", "-c", exists=True, help="Path to YAML config."),
     dry_run: bool = typer.Option(False, "--dry-run", help="Stop after login; do not provision."),
+    headless: bool = typer.Option(False, "--headless/--no-headless", help="Run without browser window."),
     verbose: bool = typer.Option(False, "--verbose", "-v"),
 ) -> None:
     """Run the end-to-end automation."""
     _configure_logging(verbose)
-    bundle = asyncio.run(orchestrator.run(config, dry_run=dry_run))
+    bundle = asyncio.run(orchestrator.run(config, dry_run=dry_run, headless=headless))
     if bundle:
         typer.echo(f"Bundle: {bundle}")
     else:
@@ -59,6 +78,53 @@ def login(
     """Launch the browser and stop after authentication (handy for DOM discovery)."""
     _configure_logging(verbose)
     asyncio.run(orchestrator.run(config, dry_run=True))
+
+
+@app.command("init-session")
+def init_session(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
+    """Establish an authenticated portal session.
+
+    \b
+    Run this once to log in and cache the session in session_state.json.
+    Subsequent 'provision-api' calls will reuse the session automatically
+    (headless, no browser window) until the session expires (~8 hours).
+
+    Reads MCD_PORTAL_EMAIL / MCD_PORTAL_PASSWORD from config/.env to
+    pre-fill the login form.  You still complete MFA/CAPTCHA when prompted.
+    """
+    _configure_logging(verbose)
+    _load_dotenv(VIMA_CONFIG / ".env")
+
+    typer.echo("Opening browser to establish portal session...")
+    email = os.environ.get("MCD_PORTAL_EMAIL", "")
+    if email:
+        typer.echo(f"  Credentials found for {email}")
+    else:
+        typer.echo("  MCD_PORTAL_EMAIL not set — you will need to type your email manually.")
+
+    raw_cfg = {
+        "environment": "sandbox",
+        "organization": "mastercard",
+        "key_password": "foobar!!",
+        "projects": [],
+    }
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as fh:
+        yaml.dump(raw_cfg, fh)
+        tmp_path = Path(fh.name)
+
+    try:
+        asyncio.run(orchestrator.run(tmp_path, dry_run=True, headless=False))
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+    if SESSION_FILE.exists():
+        typer.echo(f"Session saved: {SESSION_FILE}")
+        typer.echo(
+            f"provision-api will now run headless for ~{int(SESSION_MAX_AGE_HOURS)}h. "
+            "Re-run init-session when it expires."
+        )
+    else:
+        typer.echo("Warning: session file not written — check logs/execution.log", err=True)
 
 
 def _find_artifact(normalized_dir: Path, project: str, api: str, exts: tuple[str, ...]) -> Path | None:
@@ -244,6 +310,10 @@ def provision_api(
     project_name: str | None = typer.Option(
         None, "--project-name", help="Portal project name (default: derived from URL slug)"
     ),
+    headful: bool = typer.Option(
+        False, "--headful",
+        help="Force browser window open (useful when session has expired).",
+    ),
     dry_run: bool = typer.Option(False, "--dry-run", help="Stop after login; do not provision."),
     verbose: bool = typer.Option(False, "--verbose", "-v"),
 ) -> None:
@@ -253,9 +323,10 @@ def provision_api(
     Example:
       mcd-key-automation provision-api https://developer.mastercard.com/bin-lookup/documentation/
 
-    Reads MCD_PORTAL_EMAIL / MCD_PORTAL_PASSWORD from config/.env to pre-fill
-    the login form.  After first successful login the session is cached in
-    session_state.json — subsequent runs are fully headless.
+    Reads MCD_PORTAL_EMAIL / MCD_PORTAL_PASSWORD from config/.env.
+    Auto-detects headless mode when a fresh session exists — no browser
+    window or human interaction needed.  Run 'init-session' first to
+    establish the session; subsequent calls run fully autonomously.
     Credentials are written to config/.env.generated on completion.
     """
     _configure_logging(verbose)
@@ -269,7 +340,19 @@ def provision_api(
     api_name = _resolve_api_name(slug)
     pname = project_name or slug
 
-    typer.echo(f"Provisioning API: {api_name!r}  slug={slug!r}  project={pname!r}  env={environment}")
+    # Auto-select headless mode when a fresh session exists; headful otherwise.
+    headless = not headful and _session_is_fresh()
+    mode = "headless" if headless else "headful"
+    session_info = _session_age_str()
+    typer.echo(
+        f"Provisioning {api_name!r}  slug={slug!r}  env={environment}  "
+        f"mode={mode}  session={session_info}"
+    )
+    if not headless and not headful:
+        typer.echo(
+            "  No fresh session found — browser will open for login.\n"
+            "  Tip: run 'init-session' once to cache your session for autonomous re-runs."
+        )
 
     raw_cfg = {
         "environment": environment,
@@ -282,7 +365,15 @@ def provision_api(
         tmp_path = Path(fh.name)
 
     try:
-        bundle = asyncio.run(orchestrator.run(tmp_path, dry_run=dry_run))
+        bundle = asyncio.run(orchestrator.run(tmp_path, dry_run=dry_run, headless=headless))
+    except RuntimeError as exc:
+        # Headless session-expired error — give a clear recovery instruction.
+        typer.echo(f"ERROR: {exc}", err=True)
+        typer.echo(
+            "\nTo fix: run 'mcd-key-automation init-session' to refresh your session, then retry.",
+            err=True,
+        )
+        raise typer.Exit(1) from None
     finally:
         tmp_path.unlink(missing_ok=True)
 
@@ -310,8 +401,7 @@ def provision_api(
     typer.echo("Deployed:")
     for api, info in deployed.items():
         typer.echo(f"  {api}: {info}")
-    typer.echo("\nMerge into config/.env when ready:"
-               f"\n  cat {env_out} >> {VIMA_CONFIG / '.env'}")
+    typer.echo(f"\nMerge into config/.env when ready:\n  cat {env_out} >> {VIMA_CONFIG / '.env'}")
 
 
 @app.command("export-vima-config")
