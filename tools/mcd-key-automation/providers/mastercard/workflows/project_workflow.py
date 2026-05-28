@@ -17,7 +17,7 @@ from providers.mastercard.api_config import API_CONFIG
 from providers.mastercard.pages.create_project_page import CreateProjectPage
 from providers.mastercard.pages.dashboard_page import DashboardPage
 from providers.mastercard.pages.project_page import AddProjectKeyPage, OAuth2SandboxPage, SandboxPage
-from providers.mastercard.selectors import API_SLUGS, CreateProjectSelectors
+from providers.mastercard.selectors import API_SLUGS, CreateProjectSelectors, OAuth2SandboxSelectors
 
 
 def _key_alias(api_name: str) -> str:
@@ -486,6 +486,23 @@ async def _oauth2_sandbox_keys(
             filename_hint=f"{project.name}-{api_name}-sig",
         )
     else:
+        # Some OAuth 2.0 tenants (e.g. Open Finance Australia) do not expose
+        # a Mastercard Signature Verification Key section at all — only the
+        # Partner ID / App Key / Secret are needed. If the "Add key" button
+        # isn't present on the sandbox page, skip the sig-key step instead
+        # of timing out trying to click a non-existent element.
+        add_btn = page.locator(OAuth2SandboxSelectors.add_sig_key_button)
+        try:
+            has_add_btn = await add_btn.count() > 0 and await add_btn.first.is_visible()
+        except Exception:
+            has_add_btn = False
+        if not has_add_btn:
+            logger.info(
+                "No Mastercard Signature Verification Key section on sandbox page "
+                "for {!r} — skipping (credentials-only tenant).",
+                api_name,
+            )
+            return [creds_file]
         sig_file = await oauth2.add_signature_key(
             dest_dir=dest_dir,
             filename_hint=f"{project.name}-{api_name}-sig",

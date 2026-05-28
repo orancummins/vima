@@ -44,6 +44,48 @@ api_definitions:
       verification_notes: Seeded from current implementation.
 
   - identity:
+      id: open_finance_au
+      legacy_id: null
+      display_name: Open Finance Australia
+      env_prefix: OPEN_FINANCE_AU
+      portal_slug: ofin
+      docs_url: https://developer.mastercard.com/open-finance-au/documentation/
+    auth:
+      auth_type: oauth2
+      required_env_keys: [OPEN_FINANCE_AU_PARTNER_ID, OPEN_FINANCE_AU_PARTNER_SECRET, OPEN_FINANCE_AU_APP_KEY]
+      optional_env_keys: [OPEN_FINANCE_AU_API_BASE_URL]
+      key_file_types: [pem]
+    provisioning:
+      provision_type: oauth2_region
+      region: Australia
+      api_selection: null
+      skip_step3: false
+      manual_approval_required: false
+      expected_activation_delay_minutes: 3
+    implementation:
+      module_path: apis/open_finance_au/api.py
+      manifest_symbol: MANIFEST
+      execute_symbol: execute
+      simulator_handler_path: simulator/handlers/open_finance_au.py
+      simulator_fixture_path: simulator/fixtures/open_finance_au.json
+    ux:
+      categories: [Auth, Customers, Connect, Accounts, Consent (CDR)]
+      how_to_summary: AU Open Banking Quick Start — token, test customer, Connect URL, accounts.
+      how_to_required_topics: [token, create customer, generate connect URL, consent receipt]
+      docs_button_label: Docs ↗
+    validation:
+      primary_operation_id: create_token
+      expected_artifacts: [credentials.json]
+      required_endpoints: [/explorer/apis, /provision/catalog, /provision/status]
+      smoke_test_commands: ["./.venv/bin/python tools/validate_api_contract.py"]
+      success_signals: [configured true, docs_url present, how_to present]
+    ownership:
+      team: Solution Studio
+      maintainer: Platform Engineering
+      last_verified_date: "2026-05-27"
+      verification_notes: Seeded from AU sandbox docs (Quick Start). Smoke test = create_token.
+
+  - identity:
       id: bin_lookup
       legacy_id: binlookup
       display_name: BIN Lookup

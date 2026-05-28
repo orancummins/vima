@@ -55,6 +55,7 @@ class ApiSetup:
 # Special-case overrides keyed by the catalog id.
 _REGION_BY_ID: dict[str, str] = {
     "open_finance": "United States of America",
+    "open_finance_au": "Australia",
 }
 _SPECIAL_BY_ID: dict[str, dict] = {
     "priceless_cities": {

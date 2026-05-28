@@ -980,11 +980,47 @@ class CreateProjectPage:
         logger.info("APIs dropdown options: {}", options_text)
         await screenshot(self.page, "ofin_apis_dropdown_open")
 
-        # Pick the first option that contains "United States" or "Open Finance",
-        # or just the first option if nothing specific matches.
-        preferred = [o for o in options_text if "united states" in o.lower() or "open finance" in o.lower()]
-        pick = preferred[0] if preferred else (options_text[0] if options_text else None)
-        logger.info("Selecting API option: {!r}", pick)
+        # Pick the API offering whose label best matches the requested region.
+        # Examples seen in the portal:
+        #   "US Open Finance"        -> region "United States of America"
+        #   "Australia Open Finance" -> region "Australia"
+        # We try a few region-derived hints (full name, country word, ISO-ish prefix)
+        # and fall back to a generic "Open Finance" match, then the first option.
+        region_lower = (region or "").lower()
+        region_hints: list[str] = []
+        if region_lower:
+            region_hints.append(region_lower)
+            # First word of the region, e.g. "australia", "united"
+            region_hints.append(region_lower.split()[0])
+        # Known country-code shorthands used in portal labels
+        country_aliases = {
+            "united states of america": ["us", "u.s.", "usa", "united states"],
+            "australia": ["au", "aus", "australian"],
+            "united kingdom": ["uk", "u.k.", "gb"],
+            "canada": ["ca", "can"],
+        }
+        region_hints.extend(country_aliases.get(region_lower, []))
+
+        def _option_matches(option: str, hint: str) -> bool:
+            text = option.lower()
+            # Match short hints as whole tokens to avoid e.g. "au" matching "auth".
+            if len(hint) <= 3:
+                import re as _re
+                return bool(_re.search(rf"\b{_re.escape(hint)}\b", text))
+            return hint in text
+
+        pick = None
+        for hint in region_hints:
+            for opt in options_text:
+                if _option_matches(opt, hint):
+                    pick = opt
+                    break
+            if pick:
+                break
+        if not pick:
+            generic = [o for o in options_text if "open finance" in o.lower()]
+            pick = generic[0] if generic else (options_text[0] if options_text else None)
+        logger.info("Selecting API option: {!r} (region={!r})", pick, region)
 
         if pick:
             option_loc = self.page.locator(
@@ -1031,9 +1067,12 @@ class CreateProjectPage:
             logger.info("Region dropdown options: {}", region_opts)
             await screenshot(self.page, "ofin_region_dropdown_open")
 
-            # Type to filter then click.
-            await region_inp.press_sequentially("United States", delay=50)
-            await asyncio.sleep(0.8)
+            # Type the first word of the requested region to filter, then click
+            # the option whose visible text matches the full region name.
+            filter_text = (region or "").split()[0] if region else ""
+            if filter_text:
+                await region_inp.press_sequentially(filter_text, delay=50)
+                await asyncio.sleep(0.8)
 
             region_option = self.page.locator(
                 f"[role='option']:has-text('{region}'), "
