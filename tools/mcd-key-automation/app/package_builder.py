@@ -21,7 +21,7 @@ def build_bundle(
     output_dir: str | Path,
     log_file: str | Path | None = None,
 ) -> Path:
-    arts = list(artifacts)
+    arts = _dedupe_artifacts_by_filename(list(artifacts))
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.utcnow().strftime("%Y%m%d")
@@ -48,6 +48,23 @@ def build_bundle(
 
     logger.info("Built bundle {}", bundle_path)
     return bundle_path
+
+
+def _dedupe_artifacts_by_filename(arts: list[DownloadedArtifact]) -> list[DownloadedArtifact]:
+    """Keep the latest artifact per output filename to avoid duplicate zip entries."""
+    seen: set[str] = set()
+    deduped_rev: list[DownloadedArtifact] = []
+    dropped = 0
+    for a in reversed(arts):
+        if a.filename in seen:
+            dropped += 1
+            continue
+        seen.add(a.filename)
+        deduped_rev.append(a)
+    deduped = list(reversed(deduped_rev))
+    if dropped:
+        logger.warning("Dropped {} duplicate artifact(s) by filename during bundle build", dropped)
+    return deduped
 
 
 def _json_text(obj: dict) -> str:

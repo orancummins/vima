@@ -4186,7 +4186,6 @@
     const autogenBanner     = document.getElementById('cfg-autogen-banner');
     const autogenCancel     = document.getElementById('cfg-autogen-cancel');
     const autogenConfirm    = document.getElementById('cfg-autogen-confirm');
-    const autogenUseExisting = document.getElementById('cfg-autogen-use-existing');
 
     function autogenShowBanner() {
       if (autogenBanner) autogenBanner.classList.remove('cfg-hidden');
@@ -4199,14 +4198,7 @@
     autogenConfirm && autogenConfirm.addEventListener('click', function () {
       autogenHideBanner();
       cfgClose();
-      // Open provision modal at the API select screen (generate new keys mode)
-      document.dispatchEvent(new CustomEvent('prov:open-select', { detail: { reuse: false } }));
-    });
-    autogenUseExisting && autogenUseExisting.addEventListener('click', function () {
-      autogenHideBanner();
-      cfgClose();
-      // Open provision modal at the API select screen (reuse existing keys mode)
-      document.dispatchEvent(new CustomEvent('prov:open-select', { detail: { reuse: true } }));
+      document.dispatchEvent(new CustomEvent('prov:open-select'));
     });
 
     let _groups = [];       // loaded config groups
@@ -4674,6 +4666,7 @@
   const screenSelect   = document.getElementById('prov-screen-select');
   const screenProgress = document.getElementById('prov-screen-progress');
   const apiGrid      = document.getElementById('prov-api-grid');
+  const selectAllCb  = document.getElementById('prov-select-all');
   const statusGrid   = document.getElementById('prov-status-grid');
   const logEl        = document.getElementById('prov-log');
 
@@ -4699,6 +4692,26 @@
   }
 
   // ── API selection grid ────────────────────────────────────────────────────
+  function updateSelectAllState() {
+    if (!selectAllCb || !apiGrid) return;
+    var cbs = apiGrid.querySelectorAll('.prov-api-cb');
+    if (!cbs.length) {
+      selectAllCb.checked = false;
+      selectAllCb.indeterminate = false;
+      return;
+    }
+    var checked = Array.from(cbs).filter(function (cb) { return cb.checked; }).length;
+    selectAllCb.checked = checked === cbs.length;
+    selectAllCb.indeterminate = checked > 0 && checked < cbs.length;
+  }
+
+  function setAllApiSelections(checked) {
+    if (!apiGrid) return;
+    var cbs = apiGrid.querySelectorAll('.prov-api-cb');
+    cbs.forEach(function (cb) { cb.checked = checked; });
+    updateSelectAllState();
+  }
+
   function buildApiGrid() {
     if (!apiGrid) return;
     apiGrid.innerHTML = '';
@@ -4712,6 +4725,10 @@
         (note ? '<span class="prov-api-note">' + note + '</span>' : '');
       apiGrid.appendChild(label);
     });
+    if (selectAllCb) {
+      selectAllCb.checked = APIS.length > 0;
+      selectAllCb.indeterminate = false;
+    }
   }
 
   // ── Status grid (progress screen) ─────────────────────────────────────────
@@ -4810,12 +4827,11 @@
   }
 
   // ── Start provisioning ─────────────────────────────────────────────────────
-  function startProvisioning(selectedIds, reuse) {
+  function startProvisioning(selectedIds) {
     buildStatusGrid(selectedIds);
     showScreen(screenProgress);
 
     var body = { apis: selectedIds, password: 'foobar!!' };
-    if (reuse) body.reuse_existing = true;
 
     fetch('/provision/start', {
       method: 'POST',
@@ -4881,17 +4897,14 @@
   var btnReload = document.getElementById('prov-btn-reload');
 
   btnAuto && btnAuto.addEventListener('click', function () {
-    _provReuse = false;
     ensureCatalog().then(function () {
       buildApiGrid();
       showScreen(screenSelect);
     });
   });
 
-  // Triggered by "Yes, Generate New Keys" or "Try Using Existing Keys" in the config modal
-  var _provReuse = false;
-  document.addEventListener('prov:open-select', function (e) {
-    _provReuse = !!(e.detail && e.detail.reuse);
+  // Triggered by "Yes, Generate New Keys" in the config modal
+  document.addEventListener('prov:open-select', function () {
     modal.classList.remove('prov-hidden');
     document.body.style.overflow = 'hidden';
     ensureCatalog().then(function () {
@@ -4914,11 +4927,22 @@
 
   btnBack && btnBack.addEventListener('click', function () { showScreen(screenWelcome); });
 
+  selectAllCb && selectAllCb.addEventListener('change', function () {
+    setAllApiSelections(!!selectAllCb.checked);
+  });
+
+  apiGrid && apiGrid.addEventListener('change', function (e) {
+    var target = e.target;
+    if (target && target.classList && target.classList.contains('prov-api-cb')) {
+      updateSelectAllState();
+    }
+  });
+
   btnStart && btnStart.addEventListener('click', function () {
     var cbs = apiGrid ? apiGrid.querySelectorAll('.prov-api-cb:checked') : [];
     var selectedIds = Array.from(cbs).map(function (cb) { return cb.dataset.id; });
     if (selectedIds.length === 0) { alert('Please select at least one API.'); return; }
-    startProvisioning(selectedIds, _provReuse);
+    startProvisioning(selectedIds);
   });
 
   btnReload && btnReload.addEventListener('click', function () { location.reload(); });

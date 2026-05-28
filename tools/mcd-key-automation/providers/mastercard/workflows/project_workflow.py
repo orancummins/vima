@@ -131,6 +131,7 @@ async def _provision_oauth1_standard(
     page, dashboard: DashboardPage, portal_name: str,
     dest_dir: Path, project: ProjectSpec, api_name: str,
     alias: str, config: AppConfig,
+    api_selection: str | tuple[str, ...] | None = None,
 ) -> list[Path]:
     """
     Standard OAuth 1.0a flow:
@@ -138,7 +139,11 @@ async def _provision_oauth1_standard(
     """
     create_page = CreateProjectPage(page)
     await create_page.wait_for_form()
-    await create_page.fill(project_name=portal_name, on_behalf_of_company=False)
+    await create_page.fill(
+        project_name=portal_name,
+        on_behalf_of_company=False,
+        api_selection=api_selection,
+    )
     await create_page.proceed()
 
     result = await create_page.wait_for_confirmation_or_project_page()
@@ -149,7 +154,10 @@ async def _provision_oauth1_standard(
         result = await create_page.wait_for_download_after_step2(alias=alias, password=config.key_password)
 
     if result == "project_page":
-        uuid = page.url.rstrip("/").split("/project-details/")[-1].split("/")[0]
+        uuid = await _get_uuid_after_creation(page, dashboard, portal_name)
+        if not uuid:
+            logger.error("oauth1_standard: could not resolve project UUID after redirect")
+            return []
         logger.info("Landed on project page — adding key via sandbox ({})", uuid)
         artifacts = await _add_oauth_signing_key_via_sandbox(page, uuid, dest_dir, project, api_name, alias, config)
         return artifacts
@@ -219,7 +227,10 @@ async def _provision_oauth1_skip_step3(
         return extra_artifacts + signing
 
     if result == "project_page":
-        uuid = page.url.rstrip("/").split("/project-details/")[-1].split("/")[0]
+        uuid = await _get_uuid_after_creation(page, dashboard, portal_name)
+        if not uuid:
+            logger.error("oauth1_skip_step3: could not resolve project UUID after redirect")
+            return []
         logger.info("Skipped Step 3 — adding signing key via sandbox ({})", uuid)
         return await _add_oauth_signing_key_via_sandbox(
             page, uuid, dest_dir, project, api_name, alias, config
@@ -227,6 +238,33 @@ async def _provision_oauth1_skip_step3(
 
     logger.error("Unexpected result {!r} for oauth1_skip_step3 ({})", result, api_name)
     return []
+
+
+async def _provision_match_inline(
+    page, dashboard: DashboardPage, portal_name: str,
+    dest_dir: Path, project: ProjectSpec, api_name: str,
+    alias: str, config: AppConfig,
+) -> list[Path]:
+    """MATCH Pro single-page create-project flow.
+
+    Drives every interaction directly with the deterministic selectors
+    captured from a manual recording (see logs/recordings/*/trace.jsonl):
+    project name → service details (company/ICA/email/No) → key alias +
+    password → Create project → Download key file → Open project.
+    """
+    create_page = CreateProjectPage(page)
+    await create_page.wait_for_form()
+    key_zip, uuid = await create_page.provision_match(
+        project_name=portal_name,
+        alias=alias,
+        password=config.key_password,
+        dest_dir=dest_dir,
+        filename_hint=f"{project.name}-{api_name}-signing",
+    )
+    creds_file = await _capture_consumer_key(
+        page, uuid, dest_dir, project, api_name, alias=alias
+    )
+    return [creds_file, key_zip] if creds_file else [key_zip]
 
 
 async def _provision_oauth1_enc_key(
@@ -267,7 +305,10 @@ async def _provision_oauth1_enc_key(
 
     if result == "project_page":
         # Wizard landed directly on project page — add signing key via sandbox.
-        uuid = page.url.rstrip("/").split("/project-details/")[-1].split("/")[0]
+        uuid = await _get_uuid_after_creation(page, dashboard, portal_name)
+        if not uuid:
+            logger.error("oauth1_enc_key: could not resolve project UUID after redirect")
+            return []
         return await _add_oauth_signing_key_via_sandbox(page, uuid, dest_dir, project, api_name, alias, config)
 
     logger.error("Unexpected result {!r} for oauth1_enc_key ({})", result, api_name)
@@ -422,11 +463,24 @@ async def ensure_project_with_api(
 
     if ptype == "oauth1_standard":
         return await _provision_oauth1_standard(
-            page, dashboard, portal_name, dest_dir, project, api_name, alias, config
+            page,
+            dashboard,
+            portal_name,
+            dest_dir,
+            project,
+            api_name,
+            alias,
+            config,
+            api_selection=api_cfg.api_selection,
         )
 
     if ptype == "oauth1_skip_step3":
         return await _provision_oauth1_skip_step3(
+            page, dashboard, portal_name, dest_dir, project, api_name, alias, config
+        )
+
+    if ptype == "match_inline":
+        return await _provision_match_inline(
             page, dashboard, portal_name, dest_dir, project, api_name, alias, config
         )
 

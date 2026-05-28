@@ -2,6 +2,8 @@
 
 Purpose: deterministic instructions for autonomously wiring a new Mastercard Developers API into Solution Studio.
 
+Quick start: if you want single-file handoff, use [one-file-api-onboarding-instruction.md](one-file-api-onboarding-instruction.md) and provide only the API docs URL.
+
 ## Execution Order
 
 1. Read this file.
@@ -10,7 +12,8 @@ Purpose: deterministic instructions for autonomously wiring a new Mastercard Dev
 4. Use [provisioning-workflows.md](provisioning-workflows.md) for key setup automation behavior.
 5. Enforce UI behavior with [ui-integration-contract.md](ui-integration-contract.md).
 6. Execute [testing-matrix.md](testing-matrix.md).
-7. Resolve failures using [troubleshooting.md](troubleshooting.md).
+7. Complete [onboarding-checklist-template.md](onboarding-checklist-template.md) for the target API.
+8. Resolve failures using [troubleshooting.md](troubleshooting.md).
 
 ## Inputs Required
 
@@ -24,13 +27,14 @@ Purpose: deterministic instructions for autonomously wiring a new Mastercard Dev
 - Provisioning mapping for key automation.
 - Updated UI visibility and docs/how-to content.
 - Passing contract validation and smoke checks.
+- Completed onboarding checklist artifact for PR evidence.
 
 ## Happy Path (Agent Sequence)
 
 1. Parse onboarding spec row for target API.
 2. Confirm catalog parity using `./.venv/bin/python tools/validate_api_contract.py`.
 3. Implement code changes per playbook.
-4. Provision keys (or reuse-existing mode), import config, and confirm configured status.
+4. Provision keys via generate-new flow, import config, and confirm configured status.
 5. Run testing matrix checks and record results.
 
 ## Failure Path (Agent Sequence)

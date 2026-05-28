@@ -19,6 +19,7 @@ provision_type values:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Sequence
 
 from app._vima_catalog import (
     AUTH_OAUTH1_ENC,
@@ -33,8 +34,9 @@ class ApiSetup:
     provision_type: str = "oauth1_standard"
     # Optional: region dropdown value to select in Step 1 (oauth2_region only)
     region: str | None = None
-    # Optional: sub-API card/checkbox label to click in Step 1
-    api_selection: str | None = None
+    # Optional: sub-API selector(s) to click in Step 1.
+    # A tuple means "try these labels in order" and stop at first match.
+    api_selection: str | Sequence[str] | None = None
 
 
 # Special-case overrides keyed by the catalog id.
@@ -54,6 +56,23 @@ _SPECIAL_BY_ID: dict[str, dict] = {
     # flow, the same way oauth1_enc_key APIs do.
     "transaction_notifications": {
         "provision_type": "oauth1_skip_step3",
+    },
+    # MATCH Pro shows a single-page create-project form with required
+    # service-details (company type, ICA, contact email, replacement-id No)
+    # plus the standard signing-key alias+password. Handled by a dedicated
+    # workflow because the wizard differs structurally from the other APIs.
+    "match": {
+        "provision_type": "match_inline",
+    },
+    # ABU projects can have pull access active while push operations remain
+    # unauthorized unless the push service card is explicitly selected.
+    "automatic_billing_updater": {
+        "provision_type": "oauth1_standard",
+        "api_selection": (
+            "ABU Push",
+            "Push",
+            "Push Service",
+        ),
     },
 }
 

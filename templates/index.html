@@ -442,6 +442,12 @@
           <h2 class="prov-title">Select APIs to Provision</h2>
           <p class="prov-subtitle">All APIs are selected by default. Uncheck any you don't need.</p>
         </div>
+        <div class="prov-select-all" id="prov-select-all-wrap">
+          <label>
+            <input type="checkbox" id="prov-select-all" checked>
+            Select all APIs
+          </label>
+        </div>
         <div class="prov-api-grid" id="prov-api-grid">
           <!-- JS populated -->
         </div>
@@ -528,10 +534,9 @@
         </div>
         <div class="cfg-autogen-banner-body">
           <strong>Auto Provision Keys</strong>
-          <p>A browser will open so you can log into Mastercard Developers. Choose to use keys from existing projects, or automatically create new projects and signing keys for each API.</p>
+          <p>A browser will open so you can log into Mastercard Developers. Vima will automatically create projects and signing keys for each API you select.</p>
         </div>
         <div class="cfg-autogen-banner-actions">
-          <button class="btn btn-outline cfg-autogen-use-existing" id="cfg-autogen-use-existing">Try Using Existing Keys</button>
           <button class="btn cfg-save-btn cfg-autogen-confirm" id="cfg-autogen-confirm">Yes, Generate New Keys</button>
         </div>
       </div>

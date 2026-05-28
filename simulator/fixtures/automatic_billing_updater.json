@@ -1,0 +1,107 @@
+{
+  "inquiry_cases": [
+    {"suffix": "0", "responseIndicator": "ACCOUNT_UPDATE"},
+    {"suffix": "1", "responseIndicator": "NON_PARTICIPATING"},
+    {"suffix": "2", "responseIndicator": "VALID"},
+    {"suffix": "3", "responseIndicator": "ACCOUNT_UPDATE"},
+    {"suffix": "4", "responseIndicator": "CONTACT"},
+    {"suffix": "5", "responseIndicator": "EXPIRY"},
+    {
+      "suffix": "6",
+      "http_status": 500,
+      "response": {
+        "Errors": {
+          "Error": [
+            {
+              "Source": "automatic-billing-updater",
+              "ReasonCode": "SYSTEM_ERROR",
+              "Description": "Mock internal server error",
+              "Recoverable": true
+            }
+          ]
+        }
+      }
+    },
+    {"suffix": "7", "responseIndicator": "UNKNOWN"},
+    {"suffix": "8", "responseIndicator": "VALID"},
+    {"suffix": "9", "responseIndicator": "VALID"}
+  ],
+  "subscription_cases": [
+    {"suffix": "0", "responseIndicator": "ACCOUNT_UPDATE"},
+    {"suffix": "1", "responseIndicator": "NON_PARTICIPATING"},
+    {"suffix": "2", "responseIndicator": "VALID"},
+    {"suffix": "3", "responseIndicator": "ACCOUNT_UPDATE"},
+    {"suffix": "4", "responseIndicator": "CONTACT"},
+    {"suffix": "5", "responseIndicator": "EXPIRY"},
+    {
+      "suffix": "6",
+      "http_status": 500,
+      "response": {
+        "Errors": {
+          "Error": [
+            {
+              "Source": "automatic-billing-updater",
+              "ReasonCode": "SYSTEM_ERROR",
+              "Description": "Mock internal server error",
+              "Recoverable": true
+            }
+          ]
+        }
+      }
+    },
+    {"suffix": "7", "responseIndicator": "UNKNOWN"},
+    {"suffix": "8", "responseIndicator": "VALID"},
+    {
+      "suffix": "9",
+      "http_status": 503,
+      "response": {
+        "Errors": {
+          "Error": [
+            {
+              "Source": "automatic-billing-updater",
+              "ReasonCode": "SERVICE_UNAVAILABLE",
+              "Description": "ABU Push system not available",
+              "Recoverable": true
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "subscription_inquiry_cases": [
+    {"suffix": "0", "subscribed": false},
+    {"suffix": "1", "subscribed": true},
+    {
+      "suffix": "2",
+      "http_status": 500,
+      "response": {
+        "Errors": {
+          "Error": [
+            {
+              "Source": "automatic-billing-updater",
+              "ReasonCode": "SYSTEM_ERROR",
+              "Description": "Mock internal server error",
+              "Recoverable": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "suffix": "3",
+      "http_status": 401,
+      "response": {
+        "Errors": {
+          "Error": [
+            {
+              "Source": "automatic-billing-updater",
+              "ReasonCode": "AUTHENTICATION_FAILED",
+              "Description": "Mock authentication failure",
+              "Recoverable": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
