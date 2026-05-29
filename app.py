@@ -1899,6 +1899,19 @@ projects:
                     else:
                         q.put(f"⚠️  Incremental .env update skipped: {info}")
                     continue
+                # The provisioner learned a working strategy that differs
+                # from the declared one — surface it so the user can promote
+                # it into providers/mastercard/api_config.py.
+                if stripped.startswith("__VIMA_LEARNED__"):
+                    q.put(f"🧠  Learned: {stripped[len('__VIMA_LEARNED__ '):]} "
+                          f"(see tools/mcd-key-automation/learned/ to promote)")
+                    continue
+                # All provisioning strategies failed — surface the report
+                # path so the user can open the JSON and the screenshot.
+                if stripped.startswith("__VIMA_PROVISION_REPORT__"):
+                    q.put(f"📄  Failure report written: "
+                          f"{stripped[len('__VIMA_PROVISION_REPORT__ '):]}")
+                    continue
                 q.put(stripped)
             proc.wait()
             rc = proc.returncode
