@@ -25,3 +25,6 @@ chat/.env
 
 # Config zip bundles
 vima-config*
+
+# Local-only docs / plans (not for commit)
+*.local.md

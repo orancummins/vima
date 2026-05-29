@@ -62,8 +62,8 @@ the complete workflow you are responsible for end-to-end.
     Direct CLI equivalents (when not using the wrapper):
     ```
     cd tools/mcd-key-automation
-    .venv/bin/mcd-key-automation provision-api <DOCS_URL>
-    .venv/bin/mcd-key-automation record-api --api-slug <slug>   # one-time recording
+    .venv/bin/python -m app.main provision-api <DOCS_URL>
+    .venv/bin/python -m app.main record-api --api-slug <slug>   # one-time recording
     ```
 
     Prerequisites:
@@ -172,14 +172,14 @@ echo "MCD_PORTAL_EMAIL=your@email.com" >> ../../config/.env
 echo "MCD_PORTAL_PASSWORD=yourpassword" >> ../../config/.env
 
 # 2. Establish session (opens browser once for MFA)
-.venv/bin/mcd-key-automation init-session
+.venv/bin/python -m app.main init-session
 ```
 
 After init-session succeeds, `provision-api` detects the fresh session and runs headless automatically:
 
 ```bash
 # Fully autonomous — no browser window, no interaction
-.venv/bin/mcd-key-automation provision-api <PASTE_MASTERCARD_API_DOCS_URL>
+.venv/bin/python -m app.main provision-api <PASTE_MASTERCARD_API_DOCS_URL>
 ```
 
 Session stays fresh for ~8 hours. Re-run `init-session` when it expires.

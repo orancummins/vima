@@ -77,6 +77,22 @@ class LoginPage:
             logger.info("Session already authenticated — skipping login form.")
             return
 
+        # The SSO redirect from /account/log-in -> /dashboard often fires
+        # AFTER domcontentloaded, especially in headless. Give the saved
+        # session a brief window to redirect before deciding we need a login.
+        async def _redirected_away() -> bool:
+            try:
+                return _LOGIN_PATH_FRAGMENT not in self.page.url
+            except Exception:
+                return False
+
+        try:
+            await wait_until(_redirected_away, timeout_s=8.0, description="saved-session redirect")
+            logger.info("Saved session redirected to {} — skipping login form.", self.page.url)
+            return
+        except TimeoutError:
+            pass
+
         if headless:
             logger.info("Headless mode: attempting credential-based login...")
 

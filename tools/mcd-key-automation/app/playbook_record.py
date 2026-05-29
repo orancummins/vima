@@ -50,6 +50,19 @@ RECORDER_JS = r"""
 
     const describe = (el) => {
         if (!(el instanceof Element)) return null;
+        // The Mastercard portal often wraps a button's label in a <span> (the
+        // span is the actual click target). Climb to the enclosing <button>
+        // or <a> so we capture the outer element's data-testid (e.g.
+        // proceed-btn), not the empty-testid span. Only promote if the
+        // ancestor is "near enough" — direct child or grandchild — to avoid
+        // accidentally hoisting a click on a card into its container.
+        if ((el.tagName === 'SPAN' || el.tagName === 'I' || el.tagName === 'svg')
+            && typeof el.closest === 'function') {
+            const btn = el.closest('button, a');
+            if (btn && btn.contains(el)) {
+                el = btn;
+            }
+        }
         return {
             tag: el.tagName.toLowerCase(),
             id: el.id || '',

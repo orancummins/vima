@@ -36,7 +36,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TOOL_DIR="$SCRIPT_DIR/tools/mcd-key-automation"
 TOOL_VENV="$TOOL_DIR/.venv"
-MCD_CMD="$TOOL_VENV/bin/mcd-key-automation"
+TOOL_PY="$TOOL_VENV/bin/python"
+# We never invoke pip-generated console_script shims (e.g.
+# .venv/bin/mcd-key-automation). All CLI work goes through `python -m` so the
+# tool works on locked-down corporate machines that block unsigned generated
+# executables on Windows.
 
 # ── Parse arguments ───────────────────────────────────────────────────────────
 HEADFUL=""
@@ -67,24 +71,30 @@ for arg in "$@"; do
 done
 
 # ── Ensure tool venv exists ───────────────────────────────────────────────────
-if [[ ! -f "$TOOL_VENV/bin/python" ]]; then
+if [[ ! -f "$TOOL_PY" ]]; then
   echo ""
   echo "Setting up API key automation tool (first run only)..."
   echo "  [1/3] Creating virtual environment..."
   python3 -m venv "$TOOL_VENV"
-  echo "  [2/3] Installing dependencies..."
-  "$TOOL_VENV/bin/pip" install -q -e "$TOOL_DIR"
-  echo "  [3/3] Installing Chromium browser..."
-  "$TOOL_VENV/bin/playwright" install chromium
+  echo "  [2/3] Installing dependencies via python -m pip (no console_script shims)..."
+  "$TOOL_PY" -m pip install -q -r "$TOOL_DIR/requirements.txt"
+  echo "  [3/3] Installing Chromium browser via python -m playwright..."
+  "$TOOL_PY" -m playwright install chromium
   echo ""
   echo "API key automation tool ready."
   echo ""
 fi
 
+# Belt-and-braces: remove pip-generated console_script shim if a previous
+# install left one behind.
+if [[ -f "$TOOL_VENV/bin/mcd-key-automation" ]]; then
+  rm -f "$TOOL_VENV/bin/mcd-key-automation"
+fi
+
 # ── Init-session mode ─────────────────────────────────────────────────────────
 if [[ -n "$INIT_SESSION" ]]; then
   echo "Establishing portal session (browser will open for login + MFA)..."
-  "$MCD_CMD" init-session
+  ( cd "$TOOL_DIR" && "$TOOL_PY" -m app.main init-session )
   echo ""
   echo "Session cached. Subsequent addapi.sh calls will run headless."
   exit 0
@@ -117,8 +127,8 @@ if [[ -n "$RECORD" ]]; then
   echo "  A browser window will open. Drive the flow end-to-end (create project,"
   echo "  download key file). When done, return here and press Enter."
   echo ""
-  "$MCD_CMD" record-api --api-slug "$SLUG" \
-    --start-url "https://developer.mastercard.com/create-project?services=$SLUG"
+  ( cd "$TOOL_DIR" && "$TOOL_PY" -m app.main record-api --api-slug "$SLUG" \
+      --start-url "https://developer.mastercard.com/create-project?services=$SLUG" )
   EXIT_CODE=$?
   if [[ $EXIT_CODE -eq 0 ]]; then
     echo ""
@@ -150,7 +160,7 @@ if [[ -z "$CODE_ONLY" ]]; then
 # then continue with provisioning automatically.
 if [[ -z "$HEADFUL" && -n "$SLUG" && ! -f "$PLAYBOOK_FILE" ]]; then
   IS_CATALOGUED="$(
-    "$TOOL_VENV/bin/python" -c "
+    "$TOOL_PY" -c "
 import sys
 sys.path.insert(0, '$TOOL_DIR')
 from app._vima_catalog import iter_ordered
@@ -163,8 +173,8 @@ print('yes' if any(e.portal_slug == '$SLUG' for e in iter_ordered()) else 'no')
     echo "  → A browser will open. Drive the create-project flow end-to-end,"
     echo "    download the key file, then return here and press Enter."
     echo ""
-    "$MCD_CMD" record-api --api-slug "$SLUG" \
-      --start-url "https://developer.mastercard.com/create-project?services=$SLUG"
+    ( cd "$TOOL_DIR" && "$TOOL_PY" -m app.main record-api --api-slug "$SLUG" \
+        --start-url "https://developer.mastercard.com/create-project?services=$SLUG" )
     REC_EXIT=$?
     if [[ $REC_EXIT -ne 0 ]]; then
       echo "Recording failed (exit $REC_EXIT). Aborting." >&2
@@ -205,7 +215,7 @@ if [[ -z "${PROVISION_SKIPPED:-}" ]]; then
     echo ""
   fi
 
-  "$MCD_CMD" provision-api $HEADFUL "$URL"
+  ( cd "$TOOL_DIR" && "$TOOL_PY" -m app.main provision-api $HEADFUL "$URL" )
   EXIT_CODE=$?
   if [[ $EXIT_CODE -ne 0 ]]; then
     exit $EXIT_CODE
@@ -247,7 +257,7 @@ cat <<EOF
    5. Run validation: ./.venv/bin/python tools/validate_api_contract.py
    6. Run live smoke: ./addapi.sh --code-only $URL && \\
       cd tools/mcd-key-automation && \\
-      ./.venv/bin/mcd-key-automation test-api "$URL"
+      ./.venv/bin/python -m app.main test-api "$URL"
    7. Create checklist artifact from
       docs/agent-onboarding/onboarding-checklist-template.md at
       docs/agent-onboarding/checklists/$API_NAME-onboarding-checklist.md.

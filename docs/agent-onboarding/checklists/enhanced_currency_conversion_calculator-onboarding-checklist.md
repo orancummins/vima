@@ -154,7 +154,7 @@ Evidence:
   3. Verified consumer key + signing key load cleanly and signature header reaches the gateway (correlation ID observed).
 - **Next action:**
   1. Request ECCC subscription entitlement on the sandbox project through the developer portal (manual step — quarterly approval cycle). Mastercard rep / partnerships contact required.
-  2. Once entitled, re-run: `cd tools/mcd-key-automation && ./.venv/bin/mcd-key-automation test-api 'https://developer.mastercard.com/enhanced-currency-conversion-calculator/documentation/'` and flip the live-smoke checkboxes above.
+  2. Once entitled, re-run: `cd tools/mcd-key-automation && ./.venv/bin/python -m app.main test-api 'https://developer.mastercard.com/enhanced-currency-conversion-calculator/documentation/'` and flip the live-smoke checkboxes above.
   3. Verify UI wiring in the meantime — simulator path is fully functional, so the explorer, provision modal, and How To panels can be exercised end-to-end with `SIMULATED_SANDBOX=1`.
 
 ## Generic infrastructure fixes shipped during this run
