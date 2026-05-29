@@ -1,0 +1,18 @@
+# Mastercard key-automation tool dependencies.
+#
+# We install these directly (instead of `pip install -e .`) so that pip does
+# NOT generate the `mcd-key-automation.exe` console_script shim — corporate
+# AV / lockdown policies often block running unsigned generated .exe files.
+# The CLI is invoked via `python -m app.main` from the tool directory.
+#
+# Keep this in sync with [project.dependencies] in pyproject.toml.
+
+playwright>=1.44
+pydantic>=2.7
+pyyaml>=6.0
+typer>=0.12
+loguru>=0.7
+cryptography>=42.0
+requests>=2.28
+anthropic>=0.40.0
+pyautogui>=0.9.54

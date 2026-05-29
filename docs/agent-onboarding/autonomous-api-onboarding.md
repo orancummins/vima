@@ -153,7 +153,7 @@ Only proceed to Phase 2 when all five pre-flight checks pass.
 
    ```bash
    cd tools/mcd-key-automation && \
-   ./.venv/bin/mcd-key-automation test-api <DOCS_URL>
+   ./.venv/bin/python -m app.main test-api <DOCS_URL>
    ```
 
    …or invoke `apis/<api_name>/api.py:execute()` directly with the test
@@ -185,7 +185,7 @@ Only proceed to Phase 2 when all five pre-flight checks pass.
 
    ```bash
    cd tools/mcd-key-automation && \
-   ./.venv/bin/mcd-key-automation test-api <DOCS_URL>
+   ./.venv/bin/python -m app.main test-api <DOCS_URL>
    ```
 
    The output MUST include `✅ PASS` and print `status=200` (or another

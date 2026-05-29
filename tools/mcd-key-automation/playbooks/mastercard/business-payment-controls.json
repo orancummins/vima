@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "organization": "mastercard",
+  "api_slug": "business-payment-controls",
+  "description": "Business Payment Controls create-project flow. Authored 2026-05-29 from a recorder session (project 'testbizpaycontrols2'). The recorder captured all selectors but dropped the click_proceed steps because BPC's Proceed button wraps its label in a <span>, and the recorder's _is_proceed() detector keys off the inner element's data-testid (which is empty on the <span>). The proceed clicks have been re-inserted manually below; they fire on the outer button[data-testid='proceed-btn'] which the runner already targets via click_proceed. BPC's wizard has 4 steps (not 3 like most APIs): (1) Project details, (2) Service details / regtoken, (3) Project credentials (OAuth1 signing key), (4) Additional credentials (Mastercard encryption key). Steps 3 and 4 each need their own Proceed click; the Step-4 encryption inputs remain hidden in the DOM until Step-3 Proceed advances the wizard.",
+  "recorded_at": "2026-05-29T14:19:24Z",
+  "start_url": "https://developer.mastercard.com/create-project?services=business-payment-controls",
+  "final_url_pattern": "/project-details/",
+  "variables": [
+    "project_name",
+    "alias",
+    "key_password",
+    "contact_email",
+    "registration_token"
+  ],
+  "defaults": {
+    "registration_token": "123456789"
+  },
+  "steps": [
+    { "action": "wait_for", "selector": "input[data-testid='project-name']" },
+    { "action": "fill", "selector": "input[data-testid='project-name']", "value": "{{project_name}}", "delay_ms": 60 },
+    { "action": "sleep", "ms": 500 },
+    { "action": "screenshot", "name": "bpc_step1_project_name_filled" },
+    { "action": "wait_for_proceed_enabled" },
+    { "action": "click_proceed" },
+
+    { "action": "wait_for", "selector": "input[data-testid='regtoken-text']", "timeout_ms": 30000 },
+    { "action": "sleep", "ms": 1000 },
+    { "action": "fill", "selector": "input[data-testid='regtoken-text']", "value": "{{registration_token}}", "delay_ms": 80 },
+    { "action": "screenshot", "name": "bpc_step2_regtoken_filled" },
+    { "action": "wait_for_proceed_enabled" },
+    { "action": "click_proceed" },
+
+    { "action": "wait_for", "selector": "input[data-testid='key-alias-input']", "timeout_ms": 30000 },
+    { "action": "sleep", "ms": 1000 },
+    { "action": "fill", "selector": "input[data-testid='key-alias-input']", "value": "{{alias}}", "delay_ms": 80 },
+    { "action": "fill", "selector": "input[data-testid='key-store-password-input']", "value": "{{key_password}}", "delay_ms": 80 },
+    { "action": "screenshot", "name": "bpc_step3_signing_key_filled" },
+    { "action": "wait_for_proceed_enabled" },
+    { "action": "click_proceed" },
+
+    { "action": "wait_for", "selector": "input[data-testid='business-payment-controls-mastercard-encryption-key-alias-input']", "timeout_ms": 30000 },
+    { "action": "sleep", "ms": 1000 },
+    { "action": "fill", "selector": "input[data-testid='business-payment-controls-mastercard-encryption-key-alias-input']", "value": "{{alias}}enc", "delay_ms": 80 },
+    { "action": "fill", "selector": "input[data-testid='business-payment-controls-mastercard-encryption-key-store-password-input']", "value": "{{key_password}}", "delay_ms": 80 },
+    { "action": "screenshot", "name": "bpc_step4_encryption_key_filled" },
+
+    { "action": "wait_for", "selector": "button:has-text('Create project'):not([disabled])", "timeout_ms": 20000 },
+    { "action": "screenshot", "name": "bpc_step4_create_ready" },
+    { "action": "click", "selector": "button:has-text('Create project')", "timeout_ms": 20000 },
+    { "action": "wait_for", "selector": "button[data-testid='download-key-action-project-creation']", "timeout_ms": 300000 },
+
+    {
+      "action": "expect_download",
+      "click_selector": "button[data-testid='download-key-action-project-creation']",
+      "timeout_ms": 300000
+    },
+    { "action": "screenshot", "name": "bpc_post_download" },
+    { "action": "click", "selector": "button:has-text('Open project')", "timeout_ms": 30000 },
+    { "action": "wait_for_url_contains", "value": "/project-details/", "timeout_ms": 60000 }
+  ]
+}

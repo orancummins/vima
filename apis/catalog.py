@@ -399,6 +399,33 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         auto_provisionable=False,
         manual_onboarding_url="https://developer.mastercard.com/create-project/carbon-calculator?services=carbon-calculator",
     ),
+    ApiCatalogEntry(
+        id="business_payment_controls",
+        env_prefix="BUSINESS_PAYMENT_CONTROLS",
+        portal_slug="business-payment-controls",
+        display_name="Business Payment Controls",
+        # Standard OAuth 1.0a (signing key + consumer key). Payload encryption
+        # is *optional* per Mastercard FAQ — only enable JWE if your project
+        # has uploaded a Client Encryption key; default is unencrypted.
+        auth=AUTH_OAUTH1,
+        categories=("Real Cards", "Virtual Cards", "Funding Sources",
+                    "Controls", "Custom Data", "Authorization Reports",
+                    "Clearing Reports"),
+        docs_url="https://developer.mastercard.com/business-payment-controls/documentation/",
+        legacy_id=None,
+        # Commercial-card spend controls — closest fit to Security & Risk
+        # (controls limit spending, prevent unauthorised use).
+        group=GROUP_SECURITY,
+        # Provisioning wizard requires a Mastercard-issued *registration
+        # token* (free-text field on Step 2). Auto-provisioning is wired
+        # via a recorded playbook; the token defaults to ``123456789`` in
+        # the playbook's ``defaults`` block for now — swap for a real
+        # token issued by your Mastercard Commercial Products manager.
+        provision_note=(
+            "Requires a registration token from your Mastercard Commercial "
+            "Products implementation manager (default in playbook: 123456789)."
+        ),
+    ),
 )
 
 

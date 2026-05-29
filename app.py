@@ -327,6 +327,45 @@ def explorer_execute(api_id: str):
                     "status_code": last_call.get("status"),
                     "body": last_call.get("responseBody"),
                 }
+    # Last-resort synthesis: if the executor returned WITHOUT making an HTTP
+    # call (e.g. a stub, a validation short-circuit, a not_configured error),
+    # the panels would otherwise be empty. Synthesize a minimal envelope from
+    # the executor's input/output so the user always sees something — the
+    # error message, the stub note, the unknown-operation hint, etc.
+    if not result.get("request"):
+        result["request"] = {
+            "method": "(no HTTP call)",
+            "url": f"explorer://{api_id}/{op_id}",
+            "body": params,
+        }
+    if not result.get("response"):
+        # Build a synthetic response body from the result minus the envelope
+        # keys the UI handles separately.
+        synthetic_body = {
+            k: v for k, v in result.items()
+            if k not in ("request", "response", "state", "state_updates")
+        }
+        # Derive a plausible status: explicit success → 200, explicit failure
+        # markers → 400, otherwise blank.
+        if result.get("success") is True or result.get("ok") is True:
+            synth_status = 200
+        elif (
+            result.get("success") is False
+            or result.get("ok") is False
+            or result.get("error")
+        ):
+            synth_status = 400
+        else:
+            synth_status = None
+        result["response"] = {
+            "status_code": synth_status,
+            "body": synthetic_body,
+            "synthetic": True,
+            "note": (
+                "No outbound HTTP call was made — this envelope was synthesized "
+                "from the executor return value."
+            ),
+        }
     # Merge in latest state snapshot for the UI
     result["state"] = getattr(mod, "get_state", lambda: {})()
     return jsonify(result)

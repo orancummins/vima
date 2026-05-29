@@ -89,6 +89,13 @@ _SPECIAL_BY_ID: dict[str, dict] = {
             "Push Service",
         ),
     },
+    # Business Payment Controls wizard has an extra Service Details step
+    # for the BPC registration token. Driven from a recorded playbook at
+    # playbooks/mastercard/business-payment-controls.json (token defaults
+    # to "123456789" in the playbook's defaults block for now).
+    "business_payment_controls": {
+        "provision_type": "playbook",
+    },
 }
 
 

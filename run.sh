@@ -29,22 +29,33 @@ if [[ -f "$SCRIPT_DIR/requirements.txt" ]]; then
 fi
 
 # ── Set up key-automation tool (once, on first run) ───────────────────
+# Use a sentinel file as the install marker — checking for an interpreter
+# alone is not enough because it exists immediately after `python -m venv`
+# even if the subsequent pip install failed. We install dependencies
+# directly (not `pip install -e .`) so pip never generates console_script
+# shims (e.g. mcd-key-automation, playwright), which corporate AV /
+# lockdown policies on Windows often block as unsigned executables.
 TOOL_DIR="$SCRIPT_DIR/tools/mcd-key-automation"
 TOOL_VENV="$TOOL_DIR/.venv"
-if [[ ! -x "$TOOL_VENV/bin/playwright" ]]; then
+TOOL_PY="$TOOL_VENV/bin/python"
+TOOL_MARKER="$TOOL_VENV/.tool-installed"
+if [[ ! -f "$TOOL_MARKER" ]]; then
   echo ""
   echo "Setting up API key automation tool (first run only)..."
-  if [[ -f "$TOOL_VENV/bin/python" ]]; then
+  if [[ -f "$TOOL_PY" ]]; then
     echo "  Detected incomplete tool venv from a previous run - reinstalling..."
   fi
   echo "  [1/4] Creating Python virtual environment..."
   python3 -m venv "$TOOL_VENV"
   echo "  [2/4] Upgrading pip..."
-  "$TOOL_VENV/bin/python" -m pip install --upgrade pip -q
-  echo "  [3/4] Installing dependencies (this may take a minute)..."
-  "$TOOL_VENV/bin/python" -m pip install -e "$TOOL_DIR"
-  echo "  [4/4] Installing browser for key automation (downloading, please wait)..."
-  "$TOOL_VENV/bin/python" -m playwright install chromium
+  "$TOOL_PY" -m pip install --upgrade pip -q
+  echo "  [3/4] Installing dependencies via python -m pip (no console_script shims)..."
+  "$TOOL_PY" -m pip install -r "$TOOL_DIR/requirements.txt"
+  echo "  [4/4] Installing browser via python -m playwright (downloading, please wait)..."
+  "$TOOL_PY" -m playwright install chromium
+  # Belt-and-braces: remove any console_script shims left behind by older installs.
+  rm -f "$TOOL_VENV/bin/mcd-key-automation" 2>/dev/null || true
+  touch "$TOOL_MARKER"
   echo ""
   echo "API key automation tool ready."
   echo ""

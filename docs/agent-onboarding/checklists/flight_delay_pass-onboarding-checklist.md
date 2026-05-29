@@ -162,7 +162,7 @@ Once tenant onboarding is complete, run:
 
 ```
 cd tools/mcd-key-automation && \
-./.venv/bin/mcd-key-automation test-api https://developer.mastercard.com/flight-delay-pass/documentation/
+./.venv/bin/python -m app.main test-api https://developer.mastercard.com/flight-delay-pass/documentation/
 ```
 
 …or invoke directly:

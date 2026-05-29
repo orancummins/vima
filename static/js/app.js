@@ -825,10 +825,13 @@
     const params = collectParams();
     $("op-send").disabled = true;
     $("op-send").textContent = "Sending…";
-    $("req-body").textContent = "Sending…";
-    $("resp-body").textContent = "";
-    $("resp-status").textContent = "";    $('resp-status').className = "status-pill";
-    $('resp-status').title = "";    try {
+    $("resp-status").textContent = "";
+    $('resp-status').className = "status-pill";
+    $('resp-status').title = "";
+    const _dots = '<div class="sending-dots"><span></span><span></span><span></span></div>';
+    $('req-body').innerHTML = _dots;
+    $('resp-body').innerHTML = _dots;
+    try {
       const r = await fetch(`/explorer/${api.id}/execute`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
