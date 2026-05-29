@@ -1858,21 +1858,6 @@ def provision_start():
         return jsonify({"error": setup_error, "setup_required": True}), 503
     python_bin = _provisioner_python(tool_dir)
 
-    # Credentials preflight — catch missing/placeholder values before the
-    # provisioner subprocess launches a browser and silently hangs for 10 min.
-    _placeholder_emails = {"your@email.com", "", "your-email@example.com"}
-    portal_email = os.environ.get("MCD_PORTAL_EMAIL", "").strip()
-    portal_password = os.environ.get("MCD_PORTAL_PASSWORD", "").strip()
-    if not portal_email or portal_email in _placeholder_emails or not portal_password:
-        return jsonify({
-            "error": (
-                "Mastercard portal credentials are not configured. "
-                "Open the config panel (key icon) and fill in your email and password "
-                "under 'Mastercard Developer Portal', then try again."
-            ),
-            "setup_required": True,
-        }), 503
-
     projects_yaml = "\n".join(
         f"  - name: {api}\n    apis: [{api}]" for api in selected_apis
     )
