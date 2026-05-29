@@ -1287,6 +1287,20 @@ def _build_config_schema() -> list[dict]:
             "fields": fields,
         })
 
+    # Mastercard Developer portal login — required for automated provisioning.
+    groups.insert(0, {
+        "id": "mastercard_portal",
+        "title": "Mastercard Developer Portal",
+        "subtitle": "Login credentials for automated API key provisioning",
+        "docs_url": "https://developer.mastercard.com/account/log-in",
+        "fields": [
+            {"key": "MCD_PORTAL_EMAIL",    "label": "Portal Email",    "type": "text",
+             "info": "Your Mastercard Developer account email (e.g. you@company.com). Used to log in to developer.mastercard.com and provision API keys automatically."},
+            {"key": "MCD_PORTAL_PASSWORD", "label": "Portal Password", "type": "password",
+             "info": "Your Mastercard Developer account password. Stored locally in config/.env and never sent anywhere except the Mastercard login page."},
+        ],
+    })
+
     # Non-API tools shown in the same Settings UI but excluded from export.
     groups.append({
         "id": "claude_chat",
@@ -1853,8 +1867,8 @@ def provision_start():
         return jsonify({
             "error": (
                 "Mastercard portal credentials are not configured. "
-                "Open the config panel (key icon), set MCD_PORTAL_EMAIL and "
-                "MCD_PORTAL_PASSWORD to your Mastercard Developer account, then try again."
+                "Open the config panel (key icon) and fill in your email and password "
+                "under 'Mastercard Developer Portal', then try again."
             ),
             "setup_required": True,
         }), 503
