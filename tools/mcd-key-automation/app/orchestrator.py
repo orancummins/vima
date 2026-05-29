@@ -1,7 +1,6 @@
 """Top-level workflow orchestrator."""
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 from loguru import logger
@@ -35,12 +34,13 @@ async def run(config_path: Path, *, dry_run: bool = False, headless: bool = Fals
     WORKSPACE.mkdir(parents=True, exist_ok=True)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Clear stale artifacts from previous runs so only keys provisioned in
-    # this session are packaged into vima-config.zip and imported into Vima.
-    for stale_dir in (WORKSPACE / "normalized", WORKSPACE / "downloads"):
-        if stale_dir.exists():
-            shutil.rmtree(stale_dir)
-            logger.debug("Cleared stale workspace dir: {}", stale_dir)
+    # NOTE: previously this routine wiped ``temp/normalized`` and
+    # ``temp/downloads`` so each run started from scratch. That made
+    # re-provisioning a single API blow away the staged artifacts for all the
+    # other APIs that had been provisioned in earlier runs. We now keep the
+    # workspace and let the per-API filename naming convention overwrite only
+    # the artifacts for the APIs being re-provisioned this run — so the
+    # ``.env`` is updated one API at a time rather than rebuilt from zero.
 
     artifacts: list[DownloadedArtifact] = []
     async with browser_session(headless=headless, downloads_dir=WORKSPACE) as (_browser, _ctx, page):
@@ -61,6 +61,11 @@ async def run(config_path: Path, *, dry_run: bool = False, headless: bool = Fals
                         has_creds = any(a.filename.endswith("-credentials.json") for a in arts)
                         if has_creds:
                             logger.info("Provisioned '{}' ✓", api_spec.name)
+                            # Rebuild the vima-config zip incrementally so the
+                            # supervisor (the VIMA Flask app) can import each
+                            # API as soon as it's been provisioned, rather
+                            # than waiting for the entire run to finish.
+                            _rebuild_vima_zip(config.key_password)
                         else:
                             logger.warning(
                                 "Failed to provision '{}': key zip downloaded but consumer key could not be extracted — check sandbox page",
@@ -87,7 +92,22 @@ async def run(config_path: Path, *, dry_run: bool = False, headless: bool = Fals
 
     bundle = build_bundle(config=config, artifacts=artifacts, output_dir=OUTPUT_DIR)
 
-    # Also build a vima-config.zip ready for /config/import
+    # Also build a vima-config.zip ready for /config/import. This is the
+    # final, end-of-run rebuild that captures every artifact, including any
+    # OAuth 2.0 / OFin credentials that were provisioned later in the run.
+    _rebuild_vima_zip(config.key_password)
+
+    return bundle
+
+
+def _rebuild_vima_zip(key_password: str) -> None:
+    """Rebuild output/vima-config.zip from the current temp/normalized contents.
+
+    Called both after each successful per-API provisioning (for incremental
+    .env updates on the supervisor side) and at the end of the run.
+    Failures are logged and swallowed — the worst case is the next iteration
+    or the end-of-run rebuild catches whatever this one missed.
+    """
     try:
         import sys as _sys
         from pathlib import Path as _Path
@@ -96,11 +116,16 @@ async def run(config_path: Path, *, dry_run: bool = False, headless: bool = Fals
             _sys.path.insert(0, str(_tool_root))
         from export_vima_config import build_vima_config_zip
         vima_zip = OUTPUT_DIR / "vima-config.zip"
-        result = build_vima_config_zip(WORKSPACE / "normalized", config.key_password, vima_zip)
-        logger.info("Built vima-config.zip: {} API(s) included", len(result["apis"]))
-        if result["skipped"]:
-            logger.warning("vima-config.zip skipped: {}", result["skipped"])
+        result = build_vima_config_zip(WORKSPACE / "normalized", key_password, vima_zip)
+        logger.info(
+            "Built vima-config.zip: {} API(s) included",
+            len(result.get("apis", [])),
+        )
+        if result.get("skipped"):
+            logger.debug("vima-config.zip skipped: {}", result["skipped"])
+        # Emit a stable, machine-readable marker so the supervisor (the
+        # VIMA Flask app) can trigger an incremental import without having
+        # to parse loguru's free-form log lines.
+        print("__VIMA_ZIP_READY__", flush=True)
     except Exception as e:
-        logger.warning("vima-config.zip build failed (non-fatal): {}", e)
-
-    return bundle
+        logger.warning("vima-config.zip rebuild failed (non-fatal): {}", e)

@@ -5004,3 +5004,25 @@ body {
   line-height: 1.6;
 }
 .prov-log-line { white-space: pre-wrap; word-break: break-all; }
+
+/* Progress screen — keep the action button always in view.
+ *
+ * The panel itself is scrollable (max-height: 92vh), so making the footer
+ * `position: sticky; bottom: 0` inside the scrollable container pins it
+ * to the bottom of the visible area regardless of how tall the log grows.
+ * We also cap the log's intrinsic height at a fraction of the viewport so
+ * the status grid + button stay on-screen on shorter displays.
+ */
+#prov-screen-progress .prov-log {
+  height: clamp(120px, 22vh, 220px);
+}
+#prov-screen-progress .prov-footer {
+  position: sticky;
+  bottom: -32px; /* cancel the panel's bottom padding so it hugs the edge */
+  background: #fff;
+  margin: 0 -32px -32px;
+  padding: 16px 32px 32px;
+  border-top: 1px solid #eee;
+  z-index: 2;
+  justify-content: flex-end;
+}
