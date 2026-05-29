@@ -98,9 +98,16 @@ class LoginPage:
         if headless:
             logger.info("Headless mode: attempting credential-based login...")
 
+        _PLACEHOLDER_EMAILS = {"your@email.com", "your-email@example.com"}
+        _PLACEHOLDER_PASSWORDS = {"your-portal-password"}
+
         email = os.environ.get("MCD_PORTAL_EMAIL", "").strip()
         password = os.environ.get("MCD_PORTAL_PASSWORD", "").strip()
-        if email and password:
+        have_real_creds = (
+            bool(email) and email not in _PLACEHOLDER_EMAILS
+            and bool(password) and password not in _PLACEHOLDER_PASSWORDS
+        )
+        if have_real_creds:
             await self.fill_credentials(email, password)
         else:
             if headless:
