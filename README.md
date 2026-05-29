@@ -21,28 +21,78 @@ required.
 
 ### Wired-up APIs
 
-All accessible from the **APIs** tab. Each has full request/response
-inspection, parameter forms and state chaining between operations.
+All accessible from the **APIs** tab, grouped the same way they're
+categorised on developer.mastercard.com. Each has full request/response
+inspection, parameter forms, state chaining between operations and a
+built-in simulator that can serve responses when no live keys are
+configured.
 
-| API | Notes |
-|---|---|
-| **Open Finance** | Mastercard / Finicity US Open Banking — accounts, transactions, balances, reports (VOA / VOI / Cash Flow), Data Connect, ACH details. *US IP required.* |
-| **BIN Lookup** | Card range / BIN metadata |
-| **Consumer Clarity** | Enhanced merchant data and logos |
-| **Consent Management** | Card-on-file consent capture and authentication |
-| **Easy Savings** | Card-linked offers and redemption |
-| **Benefits Eligibility** | Card benefit eligibility checks |
-| **Benefits Content Eligibility** | Searchable benefit content catalogue |
-| **Offers for Publishers** | Card-linked offers for publisher channels |
-| **Offers Merchant Content** | Merchant content for offers |
-| **MATCH Pro** | Merchant Alert to Control High-Risk merchants — termination inquiry and lookup |
-| **Places** | Mastercard Places merchant location data |
-| **Priceless** | Priceless Cities experiences |
-| **Transaction Notifications** | Real-time transaction notifications |
+#### Open Banking & Open Finance
+
+| API | Auth | Notes |
+|---|---|---|
+| **Open Finance US** | OAuth 2.0 | Mastercard / Finicity US Open Banking — accounts, transactions, balances, reports (VOA / VOI / Cash Flow), Data Connect, ACH details. *US IP required.* |
+| **Open Finance Australia** | OAuth 2.0 | Same Finicity stack, AU CDR variant. |
+| **Open Finance Europe** | OAuth 2.0 (RSA-signed JWT client-assertion) | Aiia-backed EU stack — accounts, transactions, balances, insights. **Manual onboarding** — email `openbankingeu_support@mastercard.com` with your RSA-4096 public PEM to receive a sandbox `clientId`. |
+
+#### Security & Risk
+
+| API | Auth | Notes |
+|---|---|---|
+| **MATCH Pro** | OAuth 1.0a | Merchant Alert To Control High-Risk merchants — termination inquiry and lookup. |
+| **Consent Management** | OAuth 1.0a + JWE | Card-on-file consent capture and 3DS step-up authentication. |
+
+#### Data & Insights
+
+| API | Auth | Notes |
+|---|---|---|
+| **BIN Lookup** | OAuth 1.0a | Card range / BIN metadata. |
+| **Merchant Identifier** | OAuth 1.0a | Merchant search by name / location. |
+| **Automatic Billing Updater** | OAuth 1.0a | Card-on-file lifecycle inquiries; push notifications require ABU Push service registration. |
+| **Consumer Clarity** | OAuth 1.0a + JWE | Enhanced merchant data, logos and categories. |
+| **Places** | OAuth 1.0a | Mastercard Places merchant location data. |
+| **Transaction Notifications** | OAuth 1.0a | Real-time transaction notifications. |
+| **Enhanced Currency Conversion Calculator** | OAuth 1.0a | Mastercard daily FX rates + ECB reference rates for EU Reg 2019/518 disclosure. *Requires API Owner approval.* |
+| **Carbon Calculator** | OAuth 1.0a + JWE | Transaction-level carbon footprint scoring + aggregates. **Manual onboarding** — needs Mastercard-issued CID + Legal Name + BIN range. |
+
+#### Loyalty, Offers & Benefits
+
+| API | Auth | Notes |
+|---|---|---|
+| **Easy Savings** | OAuth 1.0a | Card-linked offers and redemption. |
+| **Priceless Cities** | OAuth 1.0a | Priceless Cities experiences. *Requires API Owner approval.* |
+| **Offers for Publishers** | OAuth 1.0a | Card-linked offers for publisher channels. |
+| **Offers Merchant Content** | OAuth 1.0a | Merchant content for offers. |
+| **Benefits Eligibility** | OAuth 1.0a + JWE | Card benefit eligibility checks. *Requires API Owner approval.* |
+| **Benefits Content Eligibility Service** | OAuth 1.0a + JWE | Searchable benefit content catalogue. |
+| **Flight Delay Pass** | OAuth 1.0a + JWE | Eligibility + registrations. **Manual onboarding** — issuer must be provisioned as a FDP tenant (≈26 days) and the Client Key whitelisted. |
+
+> APIs marked *Requires API Owner approval* show a green tag in the
+> provisioning modal — keys can still be auto-provisioned but the API
+> won't return 2xx until Mastercard's product owner approves the
+> request. APIs marked **Manual onboarding** are disabled from
+> auto-provisioning and surface a deep link to the appropriate
+> onboarding channel.
 
 ![APIs tab](docs/screenshots/MastercardSolutionStudio-API.png)
 
 ![Open Finance API](docs/screenshots/MastercardSolutionStudio-API-OpenFinance.png)
+
+### Built-in simulator
+
+Every wired API has a matching handler under `simulator/handlers/` and
+seed fixtures under `simulator/fixtures/`. You can toggle any API to
+"simulated" mode at runtime via the admin endpoint:
+
+```bash
+curl -X POST http://localhost:9021/api-sim/admin/toggle \
+  -H 'Content-Type: application/json' \
+  -d '{"api":"benefits_eligibility","simulated":true}'
+```
+
+…or set `<ENV_PREFIX>_SIMULATED=1` in `config/.env` to make it stick
+across restarts. Useful when you don't have entitlement for an API yet
+but still want to demo the UI end-to-end.
 
 ### Use Cases
 
@@ -113,19 +163,29 @@ or port is needed.
 ### 3. Configure API keys — one-click auto-provisioning
 
 Click the **Save +** button in the top-right of the app. Solution Studio will
-open a provisioning panel listing every wired API. Select the ones you want,
-hit **Provision Selected APIs**, and the automation:
+open a provisioning panel listing every wired API. The grid is colour-coded:
+
+- **White checkbox, ticked** — auto-provisionable and not yet configured (default selection).
+- **Green checkbox, ticked** — already has keys on disk. Untick to skip, tick again to re-provision and rotate the keys.
+- **Disabled with "Manual onboarding" badge** — needs an offline approval flow (Open Finance EU, Flight Delay Pass, Carbon Calculator). Click the link in the notes to start the onboarding email/wizard.
+- **"Requires API Owner approval" note** — auto-provisioning will succeed but live calls won't return 2xx until Mastercard's product owner approves the request.
+
+Hit **Provision Selected APIs** and the automation:
 
 1. Opens the Mastercard Developer portal in a headless browser
 2. Creates a project, adds each selected API, and generates signing keys
-3. Downloads the `.p12` key files and writes all credentials directly into `config/.env`
+3. Downloads the `.p12` / `.pem` files and writes credentials into `config/.env`
+4. Updates `config/.env` **incrementally — one API at a time** as each provisioning completes (so a failure half-way doesn't lose the keys you already have)
 
 No manual portal steps required — just wait ~60 seconds per API.
 
 ![Select APIs to Provision](docs/screenshots/MastercardSolutionStudio-APIProvisioning.png)
 
-> **Note:** Priceless Cities requires separate API Owner approval and won't
-> activate immediately. All other APIs activate within a few minutes of provisioning.
+Once you start the run, a progress screen streams per-API status cards and the live provisioning log. The action button stays pinned to the bottom of the modal so you never have to scroll to dismiss it.
+
+![Key provisioning in progress](docs/screenshots/MastercardSolutionStudio-APIProvisioningProgress.png)
+
+The generated `.env` is rendered in catalog order, grouped by API with a `# <Display Name>` header and a blank line between blocks, so you can hand-edit it later without losing the structure.
 
 Credentials are stored locally in `config/.env`. Use the **Export** button
 to bundle keys for sharing (the `ANTHROPIC_API_KEY` is redacted from
