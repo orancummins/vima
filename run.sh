@@ -17,15 +17,19 @@ kill_port() {
   fi
 }
 
-# ── Activate venv ─────────────────────────────────────────────────────
-if [[ -f "$VENV_DIR/bin/activate" ]]; then
-  source "$VENV_DIR/bin/activate"
+# ── Create venv if missing ────────────────────────────────────────────
+if [[ ! -f "$VENV_DIR/bin/activate" ]]; then
+  echo "Creating Python virtual environment..."
+  python3 -m venv "$VENV_DIR"
 fi
+
+# ── Activate venv ─────────────────────────────────────────────────────
+source "$VENV_DIR/bin/activate"
 
 # ── Install / sync dependencies ───────────────────────────────────────
 if [[ -f "$SCRIPT_DIR/requirements.txt" ]]; then
   echo "Installing dependencies..."
-  pip install -q -r "$SCRIPT_DIR/requirements.txt"
+  python3 -m pip install -q -r "$SCRIPT_DIR/requirements.txt"
 fi
 
 # ── Set up key-automation tool (once, on first run) ───────────────────
