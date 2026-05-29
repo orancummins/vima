@@ -1885,7 +1885,7 @@ projects:
     except OSError:
         pass
 
-    cmd = [python_bin, "app/main.py", "run", "-c", cfg_path]
+    cmd = [python_bin, "-m", "app.main", "run", "-c", cfg_path]
 
     def _import_from_zip() -> tuple[bool, str]:
         """Import the current vima-config.zip into config/.env + config/keys/.
