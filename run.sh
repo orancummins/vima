@@ -26,6 +26,12 @@ fi
 # ── Activate venv ─────────────────────────────────────────────────────
 source "$VENV_DIR/bin/activate"
 
+# ── Bootstrap config/.env on first run ───────────────────────────────
+if [[ ! -f "$SCRIPT_DIR/config/.env" && -f "$SCRIPT_DIR/config/.env.example" ]]; then
+  cp "$SCRIPT_DIR/config/.env.example" "$SCRIPT_DIR/config/.env"
+  echo "Created config/.env from .env.example — open the app and fill in your credentials."
+fi
+
 # ── Install / sync dependencies ───────────────────────────────────────
 if [[ -f "$SCRIPT_DIR/requirements.txt" ]]; then
   echo "Installing dependencies..."
