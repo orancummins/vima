@@ -31,15 +31,20 @@ fi
 # ── Set up key-automation tool (once, on first run) ───────────────────
 TOOL_DIR="$SCRIPT_DIR/tools/mcd-key-automation"
 TOOL_VENV="$TOOL_DIR/.venv"
-if [[ ! -f "$TOOL_VENV/bin/python" ]]; then
+if [[ ! -x "$TOOL_VENV/bin/playwright" ]]; then
   echo ""
   echo "Setting up API key automation tool (first run only)..."
-  echo "  [1/3] Creating Python virtual environment..."
+  if [[ -f "$TOOL_VENV/bin/python" ]]; then
+    echo "  Detected incomplete tool venv from a previous run - reinstalling..."
+  fi
+  echo "  [1/4] Creating Python virtual environment..."
   python3 -m venv "$TOOL_VENV"
-  echo "  [2/3] Installing dependencies (this may take a minute)..."
-  "$TOOL_VENV/bin/pip" install -e "$TOOL_DIR"
-  echo "  [3/3] Installing browser for key automation (downloading, please wait)..."
-  "$TOOL_VENV/bin/playwright" install chromium
+  echo "  [2/4] Upgrading pip..."
+  "$TOOL_VENV/bin/python" -m pip install --upgrade pip -q
+  echo "  [3/4] Installing dependencies (this may take a minute)..."
+  "$TOOL_VENV/bin/python" -m pip install -e "$TOOL_DIR"
+  echo "  [4/4] Installing browser for key automation (downloading, please wait)..."
+  "$TOOL_VENV/bin/python" -m playwright install chromium
   echo ""
   echo "API key automation tool ready."
   echo ""
