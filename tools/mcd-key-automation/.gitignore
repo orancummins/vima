@@ -13,3 +13,4 @@ logs/*
 *.crt
 *.key
 session_state.json
+learned/

@@ -560,21 +560,84 @@ async def ensure_project_with_api(
     api_slug = API_SLUGS.get(api_name, api_cfg.slug)
     fast_path = CreateProjectSelectors.fast_path_url_tpl.format(api_slug=api_slug)
     logger.info("Provisioning {!r} (type={}) — project {!r}", api_name, api_cfg.provision_type, portal_name)
-    await page.goto(fast_path, wait_until="domcontentloaded")
 
-    ptype = api_cfg.provision_type
+    from app.strategy_learner import (
+        fallback_strategies, write_learned, write_failure_report,
+    )
+    from browser.screenshots import capture as _screenshot
 
+    primary = api_cfg.provision_type
+    strategies: list[str] = [primary, *fallback_strategies(primary)]
+    attempts: list[dict] = []
+
+    for idx, ptype in enumerate(strategies):
+        # Each strategy attempt creates a fresh portal project so a partial
+        # leftover from a failed attempt can't contaminate the next one.
+        # ``portal_name`` already embeds ``run_timestamp``; for attempts 2+
+        # we suffix the strategy name to keep portal names unique.
+        attempt_portal_name = portal_name if idx == 0 else f"{portal_name}-{ptype}"
+        if len(attempt_portal_name) > _PORTAL_NAME_MAX:
+            attempt_portal_name = attempt_portal_name[:_PORTAL_NAME_MAX]
+        if idx > 0:
+            logger.warning(
+                "Primary strategy {!r} failed for {!r}; trying fallback {!r} ({} of {})",
+                primary, api_name, ptype, idx + 1, len(strategies),
+            )
+        await page.goto(fast_path, wait_until="domcontentloaded")
+
+        try:
+            artifacts = await _dispatch_provision(
+                ptype, page, dashboard, attempt_portal_name, dest_dir,
+                project, api_name, alias, api_cfg, config,
+            )
+        except Exception as exc:
+            err_url = page.url
+            try:
+                shot_path = await _screenshot(page, f"failure_{api_name}_{ptype}")
+            except Exception:
+                shot_path = None
+            attempts.append({
+                "strategy": ptype,
+                "error": f"{type(exc).__name__}: {exc}",
+                "url": err_url,
+                "screenshot": str(shot_path) if shot_path else None,
+            })
+            # Continue to next strategy unless this was the last.
+            if idx == len(strategies) - 1:
+                report = write_failure_report(
+                    api_name, primary, attempts,
+                    page_url=err_url,
+                    screenshot_path=str(shot_path) if shot_path else None,
+                )
+                # Re-raise with the report path attached so the orchestrator
+                # can surface it (and the user-facing message stays clean).
+                raise type(exc)(
+                    f"{exc} — see failure report: {report}"
+                ) from exc
+            continue
+
+        # Success.
+        attempts.append({
+            "strategy": ptype, "error": None, "url": page.url, "screenshot": None,
+        })
+        if idx > 0:
+            write_learned(api_name, primary, ptype, attempts)
+        return artifacts
+
+    # Unreachable — loop above either returns or raises.
+    raise RuntimeError(f"No strategies tried for {api_name!r}")
+
+
+async def _dispatch_provision(
+    ptype: str, page, dashboard: DashboardPage, portal_name: str,
+    dest_dir: Path, project: ProjectSpec, api_name: str, alias: str,
+    api_cfg, config: AppConfig,
+) -> list[Path]:
+    """Dispatch a single provisioning attempt for ``ptype``."""
     if ptype == "oauth1_standard":
         return await _provision_oauth1_standard(
-            page,
-            dashboard,
-            portal_name,
-            dest_dir,
-            project,
-            api_name,
-            alias,
-            config,
-            api_selection=api_cfg.api_selection,
+            page, dashboard, portal_name, dest_dir, project, api_name,
+            alias, config, api_selection=api_cfg.api_selection,
         )
 
     if ptype == "oauth1_skip_step3":
