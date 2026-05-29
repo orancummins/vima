@@ -1591,6 +1591,57 @@ def config_purge():
 _provision_jobs: dict = {}
 
 
+def _tool_setup_command() -> str:
+    """Return the user-facing command that prepares the key automation tool."""
+    return "run.bat" if os.name == "nt" else "./run.sh"
+
+
+def _provisioner_python(tool_dir: str) -> str:
+    """Return the platform-specific key automation venv Python path."""
+    if os.name == "nt":
+        return os.path.join(tool_dir, ".venv", "Scripts", "python.exe")
+    return os.path.join(tool_dir, ".venv", "bin", "python")
+
+
+def _provisioner_setup_error(tool_dir: str) -> str | None:
+    """Return a setup error if the key automation tool is missing/incomplete."""
+    python_bin = _provisioner_python(tool_dir)
+    setup_cmd = _tool_setup_command()
+    if not os.path.isfile(python_bin):
+        return (
+            "Mastercard key automation is not set up. "
+            f"Run `{setup_cmd}` from the repo root, then try provisioning again."
+        )
+
+    main_path = os.path.join(tool_dir, "app", "main.py")
+    if not os.path.isfile(main_path):
+        return (
+            "Mastercard key automation files are missing. "
+            f"Run `{setup_cmd}` from the repo root, then try provisioning again."
+        )
+
+    try:
+        subprocess.run(
+            [
+                python_bin,
+                "-c",
+                "import cryptography, loguru, playwright, typer, yaml",
+            ],
+            cwd=tool_dir,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=10,
+            check=True,
+        )
+    except Exception:
+        return (
+            "Mastercard key automation dependencies are incomplete. "
+            f"Run `{setup_cmd}` from the repo root so the tool venv can be repaired, "
+            "then try provisioning again."
+        )
+    return None
+
+
 def _build_provision_catalog() -> list[dict]:
     """Return canonical API metadata for the auto-provisioning UI."""
     from apis.catalog import DISABLED_API_IDS, iter_ordered
@@ -1646,10 +1697,10 @@ def provision_start():
         return jsonify({"error": "No APIs selected"}), 400
 
     tool_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools", "mcd-key-automation")
-    # Support both Unix and Windows venv layouts
-    python_bin = os.path.join(tool_dir, ".venv", "bin", "python")
-    if not os.path.isfile(python_bin):
-        python_bin = os.path.join(tool_dir, ".venv", "Scripts", "python.exe")
+    setup_error = _provisioner_setup_error(tool_dir)
+    if setup_error:
+        return jsonify({"error": setup_error, "setup_required": True}), 503
+    python_bin = _provisioner_python(tool_dir)
 
     projects_yaml = "\n".join(
         f"  - name: {api}\n    apis: [{api}]" for api in selected_apis
@@ -1682,6 +1733,7 @@ projects:
 
     def _run():
         rc = None
+        launched = False
         try:
             proc = subprocess.Popen(
                 cmd,
@@ -1691,6 +1743,7 @@ projects:
                 text=True,
                 bufsize=1,
             )
+            launched = True
             _provision_jobs[job_id]["proc"] = proc
             for line in proc.stdout:
                 q.put(line.rstrip())
@@ -1705,7 +1758,7 @@ projects:
         # If the provisioner subprocess didn't produce a zip (e.g. build_vima_config_zip
         # raised a non-fatal exception inside the subprocess), fall back to building it
         # directly from the Flask process so we still get a .env on Windows.
-        if not os.path.isfile(zip_path):
+        if launched and not os.path.isfile(zip_path):
             q.put("ℹ️  vima-config.zip not produced by provisioner — attempting direct build…")
             try:
                 import importlib.util as _ilu
@@ -1720,8 +1773,18 @@ projects:
                 _included = len(_result.get("apis", []))
                 _skipped = _result.get("skipped", [])
                 q.put(f"Direct build: {_included} API(s) included" + (f", skipped: {_skipped}" if _skipped else ""))
+                if _included == 0:
+                    try:
+                        os.remove(zip_path)
+                    except OSError:
+                        pass
+                    q.put("__PROVISION_FAILED__:No credentials were collected. Run the key automation setup with "
+                          f"`{_tool_setup_command()}`, then try provisioning again.")
             except Exception as _fb_exc:
                 q.put(f"Direct build also failed: {_fb_exc}")
+                q.put(f"__PROVISION_FAILED__:Could not build vima-config.zip: {_fb_exc}")
+        elif not launched:
+            q.put("__PROVISION_FAILED__:Provisioner could not be launched.")
 
         if os.path.isfile(zip_path):
             try:
@@ -1785,7 +1848,11 @@ def provision_stream(job_id):
                 yield ": end\n\n"  # flush keepalive so __DONE__ clears browser buffer
                 break
             # Send sentinel control strings raw; JSON-encode all other log lines
-            if line in _SENTINELS or (isinstance(line, str) and line.startswith("__IMPORT_ERROR__")):
+            if (
+                line in _SENTINELS
+                or (isinstance(line, str) and line.startswith("__IMPORT_ERROR__"))
+                or (isinstance(line, str) and line.startswith("__PROVISION_FAILED__:"))
+            ):
                 yield f"data: {line}\n\n"
             else:
                 yield f"data: {json.dumps(line)}\n\n"

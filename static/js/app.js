@@ -4879,23 +4879,50 @@
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        if (data.error) { appendLog('ERROR: ' + data.error); return; }
+        if (data.error) {
+          onProvisionFailed(selectedIds, data.error);
+          return;
+        }
         streamJob(data.job_id, selectedIds);
       })
-      .catch(function (err) { appendLog('ERROR: ' + err); });
+      .catch(function (err) { onProvisionFailed(selectedIds, String(err)); });
   }
 
   function streamJob(jobId, selectedIds) {
     var es = new EventSource('/provision/stream/' + jobId);
     var _provDone = false;
+    var _provFailed = false;
+    var _provFailMessage = '';
 
     es.onmessage = function (e) {
       var raw = e.data;
       // Sentinels are sent unquoted; regular log lines are JSON-encoded strings
-      if (raw === '__DONE__') { _provDone = true; es.close(); onProvisionDone(selectedIds); return; }
+      if (raw === '__DONE__') {
+        _provDone = true;
+        es.close();
+        if (_provFailed) onProvisionFailed(selectedIds, _provFailMessage);
+        else onProvisionDone(selectedIds);
+        return;
+      }
       if (raw === '__IMPORT_COMPLETE__') { appendLog('✅ Keys imported — Vima is ready!'); return; }
-      if (raw.startsWith('__IMPORT_ERROR__')) { appendLog('⚠️ Import warning: ' + raw); return; }
-      if (raw === '__NO_ZIP__') { appendLog('⚠️ Provisioning completed but no vima-config.zip was produced. Check the log above for errors, then import keys manually.'); return; }
+      if (raw.startsWith('__IMPORT_ERROR__')) {
+        _provFailed = true;
+        _provFailMessage = raw.replace('__IMPORT_ERROR__:', '').trim() || 'Could not import generated keys.';
+        appendLog('ERROR: ' + _provFailMessage);
+        return;
+      }
+      if (raw === '__NO_ZIP__') {
+        _provFailed = true;
+        _provFailMessage = 'Provisioning completed but no vima-config.zip was produced. Check the log above for errors, then import keys manually.';
+        appendLog('ERROR: ' + _provFailMessage);
+        return;
+      }
+      if (raw.startsWith('__PROVISION_FAILED__:')) {
+        _provFailed = true;
+        _provFailMessage = raw.slice('__PROVISION_FAILED__:'.length) || 'Provisioning failed.';
+        appendLog('ERROR: ' + _provFailMessage);
+        return;
+      }
       var line = raw;
       try { line = JSON.parse(raw); } catch (_) {}
       if (line) { parseLogLine(line); appendLog(line); }
@@ -4905,9 +4932,27 @@
       if (!_provDone) {
         // Connection dropped before __DONE__ reached the browser — still refresh
         // card states from the server so cards don't stay stuck orange.
-        onProvisionDone(selectedIds);
+        if (_provFailed) onProvisionFailed(selectedIds, _provFailMessage);
+        else onProvisionDone(selectedIds);
       }
     };
+  }
+
+  function onProvisionFailed(selectedIds, message) {
+    (selectedIds || []).forEach(function (id) { setApiStatus(id, 'failed'); });
+    var titleEl = document.getElementById('prov-progress-title');
+    var subtitleEl = document.getElementById('prov-progress-subtitle');
+    var activationNote = document.getElementById('prov-activation-note');
+    var footer = document.getElementById('prov-progress-footer');
+    var reloadBtn = document.getElementById('prov-btn-reload');
+    var msg = message || 'Provisioning failed. Check the log below and try again.';
+    if (titleEl) titleEl.textContent = 'Provisioning Failed';
+    if (subtitleEl) subtitleEl.textContent = msg;
+    if (activationNote) activationNote.style.display = 'none';
+    if (reloadBtn) reloadBtn.textContent = 'Reload & Try Again';
+    if (footer) footer.style.display = '';
+    appendLog('');
+    appendLog('Provisioning failed. ' + msg);
   }
 
   function onProvisionDone(selectedIds) {
