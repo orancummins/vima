@@ -111,8 +111,10 @@ class LoginPage:
                 "complete sign-in manually in the browser window..."
             )
 
-        # In headless mode use a shorter timeout and fail fast with a clear message.
-        effective_timeout = 45.0 if headless else timeout_s
+        # In headless mode allow up to 2 minutes for SSO/MFA to complete after
+        # credential pre-fill — 45 s was too short when the portal is slow or
+        # when an MFA prompt appears.
+        effective_timeout = 120.0 if headless else timeout_s
 
         async def authenticated() -> bool:
             try:
