@@ -829,7 +829,6 @@
     $('resp-status').className = "status-pill";
     $('resp-status').title = "";
     const _dots = '<div class="sending-dots"><span></span><span></span><span></span></div>';
-    $('req-body').innerHTML = _dots;
     $('resp-body').innerHTML = _dots;
     try {
       const r = await fetch(`/explorer/${api.id}/execute`, {
