@@ -35,6 +35,20 @@ Evidence artifact: create and complete a copy of [onboarding-checklist-template.
 
 1. Add new entry in `apis/catalog.py`.
 2. Ensure `id`, `legacy_id`, `env_prefix`, `portal_slug`, `docs_url`, `auth` are correct.
+3. **Pick the catalog group deliberately** — do not let it default to `GROUP_DATA`.
+
+### Picking a catalog group
+
+`apis/catalog.py` defines four `GROUP_*` constants. Use this matrix to decide:
+
+| Group                              | Constant              | Belongs here when the API…                                                                                              | Examples                                                                       |
+|------------------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| Open Banking & Open Finance        | `GROUP_OPEN_FINANCE`  | Aggregates accounts/transactions/balances or moves consent across financial institutions (Finicity, Aiia, CDR, PSD2).    | `open_finance`, `open_finance_au`, `open_finance_eu`                           |
+| Security & Risk                    | `GROUP_SECURITY`      | Authenticates, authorises, flags fraud, scores risk, manages consent records, or sends transaction security signals.     | `consent_management`, `transaction_notifications`, `match`                     |
+| Data & Insights                    | `GROUP_DATA`          | Enriches a transaction, BIN, merchant, or location with reference data; calculates rates; pure lookup/analytics.         | `bin_lookup`, `merchant_identifier`, `consumer_clarity`, `places`, `enhanced_currency_conversion_calculator` |
+| Loyalty, Offers & Benefits         | `GROUP_LOYALTY`       | Surfaces card-linked offers, benefits, eligibility, redemptions, recurring billing updates, or experiences.              | `easy_savings`, `offers_for_publishers`, `offers_merchant_content`, `benefits_eligibility`, `benefits_content_eligibility`, `automatic_billing_updater`, `priceless_cities` |
+
+If an API straddles two groups, place it where users will look for it first (think: which sidebar heading would I scan?). When in doubt, mirror the closest existing API.
 
 ## Module Implementation
 

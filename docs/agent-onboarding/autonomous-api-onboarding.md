@@ -35,10 +35,9 @@ print a one-line status summary so the human can follow along.
    - `tools/mcd-key-automation/providers/mastercard/api_config.py` has a mapping
    - `docs/agent-onboarding/api-onboarding-spec.yaml` has an entry
 
-   While checking, ALSO harvest from the docs URL (fetch it) the candidate
-   smoke-test operation + a working example request body / path params /
-   query params. Save these test values to a scratch note — you will need
-   them in Phase 3 even if the API already exists.
+   While checking, ALSO harvest from the docs URL (fetch it) the **Test Data
+   Kit** — see §Phase 1a below. You will need this in Phase 3 even if the
+   API already exists.
 3. If every item above is present → log `API already integrated` and skip
    to Phase 3 (still run the end-to-end test). Otherwise continue with the
    full implementation per:
@@ -51,6 +50,60 @@ print a one-line status summary so the human can follow along.
    provisioning mapping, and `api-onboarding-spec.yaml` row. Run
    `./.venv/bin/python tools/validate_api_contract.py` and fix anything
    it complains about before continuing.
+
+### Phase 1a — Harvest the Test Data Kit from Mastercard Developers
+
+Before writing any code, fetch the docs URL **and** its sibling pages and
+record the following in a scratch note (you will paste links into the
+`how_to` field and use the values in Phase 3):
+
+- **Try-It panel URL** — the live console page (usually `…/documentation/api-reference/`
+  or a `Try It` tab). Capture the deep link.
+- **Sample request / response** — copy a known-good JSON body verbatim.
+- **Sandbox test values** — test BINs, test PANs, test merchant IDs, test
+  customer IDs, test account refs, test card tokens, etc. Mastercard
+  publishes these under headings like *Test Data*, *Sample Data*,
+  *Test Cases*, *Sandbox Reference Data*, or *Try It Values*. Pull every
+  value you find — you will need several to demonstrate different response
+  shapes.
+- **Auth model** — OAuth 1.0a (signing key + consumer key), OAuth 1.0a + JWE
+  (encryption client required), OAuth 2.0 (client_credentials), or a
+  custom flow. Note the token URL if OAuth 2.0.
+- **Sandbox base URL** vs production base URL.
+- **Rate limits / entitlement gates** — note anything that says "requires
+  approval", "contact your account manager", or "production access only".
+  These map to `provision_note="Requires API Owner approval"` on the
+  catalog entry.
+- **Catalog group** — decide which `GROUP_*` constant in
+  `apis/catalog.py` this API belongs to BEFORE writing the entry. Use the
+  matrix in `new-api-playbook.md` §"Picking a catalog group". Do NOT let
+  it default to `GROUP_DATA`.
+
+### Phase 1b — Pre-flight check before any provisioning attempt
+
+Run these checks now; each one prevents a class of basic Phase 2 error:
+
+1. `py tools\validate_api_contract.py` — must print `OK`. Catches missing
+   manifest, missing fixture, catalog/spec drift, and bad `module_path`.
+2. `py -c "from apis.catalog import CATALOG; e=[x for x in CATALOG if x.id=='<api_name>'][0]; print(e.group, e.env_prefix, e.portal_slug, e.auth)"` —
+   confirms the entry loads, the group is the one you chose, and the
+   `env_prefix` is unique (grep for it in `apis/catalog.py`; collisions cause
+   the prefix-match bug we fixed in the `.env` merge).
+3. Open `tools/mcd-key-automation/providers/mastercard/api_config.py` and
+   confirm the new mapping has: matching `api_name`, correct `portal_slug`,
+   correct `provision_type` (`playbook` only if the JSON exists under
+   `playbooks/mastercard/<portal-slug>.json`), and a `key_alias` that matches
+   what `apis/<api_name>/api.py` reads from `<ENV_PREFIX>_SIGNING_KEY_ALIAS`.
+4. If the auth is OAuth 1.0a + JWE, verify the encryption client is wired up
+   in `apis/<api_name>/api.py` (encryption certs, content encryption alg).
+   If it isn't, add the API to `DISABLED_API_IDS` and stop — flag to the
+   human that JWE is required.
+5. Confirm portal credentials exist in `config/.env`:
+   `MCD_PORTAL_USERNAME`, `MCD_PORTAL_PASSWORD`, and `MCD_PORTAL_TOTP_SECRET`
+   (or that the human is on standby for interactive 2FA). If missing, stop
+   and tell the human exactly what to add.
+
+Only proceed to Phase 2 when all five pre-flight checks pass.
 
 ### Phase 2 — Is the 'Add Project' (portal provisioning) workflow working?
 
@@ -142,19 +195,62 @@ print a one-line status summary so the human can follow along.
    - Re-read the docs, fix the request, and retry until you see 200 OK.
    Paste the final passing line (secrets redacted) into the checklist.
 
+### Phase 3a — `how_to` quality bar
+
+The `how_to` HTML string in `apis/<api_name>/api.py:MANIFEST` is what the
+user sees in the *How To Use: <API>* modal. It MUST contain, in this order:
+
+1. A one-sentence plain-English summary of what the API does.
+2. **Numbered "How to use" steps** that name the exact operation in the
+   sidebar (`<strong>Category → Operation name</strong>`) and the exact
+   field values to type — taken verbatim from the Test Data Kit harvested
+   in Phase 1a. Never invent values; only ship values that returned 2xx in
+   Phase 3.
+3. **"What you get back"** bullets — the headline response fields.
+4. **"Test data & references"** section with explicit links:
+   - `<a href="<docs_url>">API documentation</a>`
+   - `<a href="<docs_url>api-reference/">Try It console</a>` (or the actual
+     deep link harvested in Phase 1a)
+   - `<a href="<sandbox-test-data-url>">Sandbox test data</a>` if Mastercard
+     publishes a dedicated test-data page
+   - An inline `<ul>` of the 3–5 test values you confirmed working (BINs,
+     PANs, merchant IDs, etc.) with a one-line caption each.
+5. If the API requires approval / has entitlement gates, an italicised
+   note: *"Requires API Owner approval on developer.mastercard.com before
+   the sandbox returns live data."*
+
+Compare your draft against `apis/bin_lookup/api.py` and
+`apis/consumer_clarity/api.py` — those are the reference quality bar. If
+your `how_to` is shorter or has fewer concrete values/links, expand it.
+
 ### Deliverable
 
 Finish by writing a checklist at
 `docs/agent-onboarding/checklists/<api_name>-onboarding-checklist.md`
 based on `docs/agent-onboarding/onboarding-checklist-template.md`, ticking
 off each phase and pasting in the successful live response (with secrets
-redacted). Then summarise to the human: phase results, files changed,
-and the exact smoke command they can re-run.
+redacted). Then summarise to the human: phase results, catalog group
+chosen, files changed, and the exact smoke command they can re-run.
 
 ### Constraints
 
 - Do not commit or push anything.
 - Do not modify `config/.env` directly except by appending `config/.env.generated`.
 - Do not mock the live call in Phase 3 — it must hit the real sandbox.
+- Do not let the catalog `group` default to `GROUP_DATA`; pick deliberately.
+- Do not ship a `how_to` that fails the Phase 3a rubric.
 - If you genuinely cannot proceed (e.g. portal credentials missing from
-  `config/.env`), stop and tell the human exactly what to add.
+  `config/.env`, or JWE wiring required), stop and tell the human exactly
+  what to add.
+
+### Common failure modes (and how to pre-empt them)
+
+| Symptom in Phase 2/3                                  | Root cause                                              | Pre-empt in Phase 1b                                                       |
+|-------------------------------------------------------|---------------------------------------------------------|----------------------------------------------------------------------------|
+| `.env` merge puts new keys under the wrong API header | Two `env_prefix` values share a prefix (e.g. `FOO` vs `FOO_BAR`) | Grep `apis/catalog.py` for prefix collisions; the merge uses longest-prefix-first, but only if each prefix is unique |
+| `addapi.sh` hangs on portal login                     | Missing/expired `MCD_PORTAL_*` credentials              | Pre-flight check #5                                                        |
+| Playbook driver errors `selector not found`           | Portal UI changed since playbook was recorded           | Re-record with `./addapi.sh --record <DOCS_URL>`                            |
+| Phase 3 returns 401/403                               | `key_alias`/`env_prefix` mismatch between catalog and `api_config.py` | Pre-flight check #3                                                        |
+| Phase 3 returns 404                                   | Sandbox base URL wrong, or the project lacks entitlement | Phase 1a (base URL) + flag `provision_note="Requires API Owner approval"` |
+| Phase 3 returns 400 "invalid field"                   | Sample body invented instead of harvested               | Phase 1a (copy Mastercard's sample verbatim)                                |
+| API renders in wrong sidebar section                  | `group` defaulted to `GROUP_DATA`                       | Phase 1a final bullet                                                      |
