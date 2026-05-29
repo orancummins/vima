@@ -94,6 +94,18 @@ curl -X POST http://localhost:9021/api-sim/admin/toggle \
 across restarts. Useful when you don't have entitlement for an API yet
 but still want to demo the UI end-to-end.
 
+> **Note on simulator scope.** The simulator is intentionally thin.
+> Faithfully mocking every API surface is expensive to build and even
+> more expensive to keep in sync with the live contracts — and there's a
+> strong argument that use cases built on agents should be *sympathetic
+> to the existing interfaces* rather than wire APIs up directly, which
+> reduces the need for a deep simulator in the first place. The
+> simulator earns its keep later in the lifecycle: once an idea
+> crystallises and you need to probe real-world viability with data
+> shapes the sandbox can't produce, a flexible sandbox you can seed with
+> arbitrary test data becomes valuable. Until then, expect handlers and
+> fixtures to cover the happy path only.
+
 ### Use Cases
 
 Showcased under the **Use Cases** tab. Each is a self-contained scenario
