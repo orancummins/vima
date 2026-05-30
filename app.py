@@ -110,8 +110,10 @@ def _patched_send(self, prepared_request, **kwargs):
         "method": (prepared_request.method or "").upper(),
         "url": url,
         "requestBody": req_body,
+        "requestHeaders": {k: v for k, v in prepared_request.headers.items() if k.lower() != "authorization"},
         "status": None,
         "responseBody": None,
+        "responseHeaders": None,
         "elapsed_ms": None,
     }
 
@@ -128,6 +130,7 @@ def _patched_send(self, prepared_request, **kwargs):
 
     entry["status"] = resp.status_code
     entry["elapsed_ms"] = round((time.time() - t0) * 1000)
+    entry["responseHeaders"] = dict(resp.headers)
     try:
         entry["responseBody"] = resp.json()
     except Exception:
@@ -308,25 +311,30 @@ def explorer_execute(api_id: str):
     # that the UI needs to render the panels, backfill from the HTTP-level
     # interceptor log.  This means new APIs don't have to remember to build
     # those dicts themselves — we derive them from the real HTTP exchange.
-    if not result.get("request") or not result.get("response"):
-        with _api_call_lock:
-            new_entries = [e for e in _api_call_log if e.get("seq", 0) > seq_before]
-        if new_entries:
-            # _api_call_log is newest-first; the oldest new entry is the first
-            # outbound HTTP call that execute() made (pick last in the list).
-            first_call = new_entries[-1]
-            if not result.get("request"):
-                result["request"] = {
-                    "method": first_call.get("method"),
-                    "url": first_call.get("url"),
-                    "body": first_call.get("requestBody"),
-                }
-            if not result.get("response"):
-                last_call = new_entries[0]
-                result["response"] = {
-                    "status_code": last_call.get("status"),
-                    "body": last_call.get("responseBody"),
-                }
+    # Also backfill headers even when the API provided its own envelope body,
+    # so "Show Headers" always works regardless of which API built the envelope.
+    with _api_call_lock:
+        new_entries = [e for e in _api_call_log if e.get("seq", 0) > seq_before]
+    if new_entries:
+        first_call = new_entries[-1]
+        last_call  = new_entries[0]
+        if not result.get("request"):
+            result["request"] = {
+                "method":  first_call.get("method"),
+                "url":     first_call.get("url"),
+                "body":    first_call.get("requestBody"),
+                "headers": first_call.get("requestHeaders"),
+            }
+        elif not result["request"].get("headers"):
+            result["request"]["headers"] = first_call.get("requestHeaders")
+        if not result.get("response"):
+            result["response"] = {
+                "status_code": last_call.get("status"),
+                "body":        last_call.get("responseBody"),
+                "headers":     last_call.get("responseHeaders"),
+            }
+        elif not result["response"].get("headers"):
+            result["response"]["headers"] = last_call.get("responseHeaders")
     # Last-resort synthesis: if the executor returned WITHOUT making an HTTP
     # call (e.g. a stub, a validation short-circuit, a not_configured error),
     # the panels would otherwise be empty. Synthesize a minimal envelope from

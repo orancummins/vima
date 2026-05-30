@@ -1,0 +1,171 @@
+﻿Adding API from: https://developer.mastercard.com/presentment/documentation/
+
+Provisioning 'offers_for_publishers'  slug='presentment'  env=sandbox  mode=headless  session=3m old
+.\addapi.bat : 2026-05-30 01:01:15.745 | INFO     | app.orchestrator:run:32 - 
+Loaded config for env=sandbox (1 projects)
+At line:1 char:217
++ ... NG="utf-8"; .\addapi.bat https://developer.mastercard.com/presentment ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (2026-05-30 01:0...ox (1 projects) 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+2026-05-30 01:01:16.872 | INFO     | browser.session:browser_session:48 - 
+Reusing saved session from 
+C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
+2026-05-30 01:01:19.779 | INFO     | 
+providers.mastercard.pages.login_page:goto:24 - Navigating to 
+https://developer.mastercard.com/account/log-in
+2026-05-30 01:01:32.330 | INFO     | browser.waits:wait_until:33 - Still 
+waiting for saved-session redirect...
+2026-05-30 01:01:33.840 | INFO     | browser.waits:wait_until:25 - Reached 
+saved-session redirect
+2026-05-30 01:01:33.840 | INFO     | 
+providers.mastercard.pages.login_page:wait_for_manual_auth:92 - Saved session 
+redirected to https://developer.mastercard.com/dashboard ÔÇö skipping login 
+form.
+2026-05-30 01:01:33.840 | INFO     | providers.mastercard.provider:login:33 - 
+Authenticated session detected.
+2026-05-30 01:01:33.840 | INFO     | 
+providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
+2026-05-30 01:01:36.093 | INFO     | 
+providers.mastercard.workflows.project_workflow:ensure_project_with_api:581 - 
+Provisioning 'offers_for_publishers' (type=oauth1_enc_key) ÔÇö project 
+'SS-presentment-20260530010119'
+2026-05-30 01:01:39.832 | INFO     | 
+providers.mastercard.pages.create_project_page:fill:31 - Filling 
+create-project form: name='SS-presentment-20260530010119' on_behalf=False 
+region=None api_selection=None
+2026-05-30 01:01:41.729 | INFO     | 
+providers.mastercard.pages.create_project_page:proceed:91 - Proceed button 
+enabled after 0.0s
+2026-05-30 01:01:41.729 | INFO     | 
+providers.mastercard.pages.create_project_page:proceed:97 - Clicking Proceed 
+(url=https://developer.mastercard.com/create-project?services=presentment)
+2026-05-30 01:01:41.757 | INFO     | 
+providers.mastercard.pages.create_project_page:proceed:101 - Proceed clicked 
+ÔÇö url now: 
+https://developer.mastercard.com/create-project?services=presentment
+2026-05-30 01:01:42.300 | INFO     | providers.mastercard.pages.create_project_
+page:wait_for_confirmation_or_project_page:134 - Wizard advanced to Step 2 
+(Project credentials) ÔÇö 
+https://developer.mastercard.com/create-project?services=presentment
+2026-05-30 01:01:42.301 | INFO     | 
+providers.mastercard.pages.create_project_page:fill_step2_credentials:189 - 
+Filling Step 2 credentials: alias='offers_for_publishers'
+2026-05-30 01:01:43.833 | INFO     | providers.mastercard.pages.create_project_
+page:_wait_for_create_button_enabled:278 - 'Create project' button enabled 
+after 0.0s
+2026-05-30 01:01:43.837 | INFO     | 
+providers.mastercard.pages.create_project_page:create_key_step2:723 - 'Create 
+project' button state: {'found': True, 'disabled': False, 'ariaDisabled': 
+'false', 'display': 'block', 'visibility': 'visible'}
+2026-05-30 01:01:43.951 | INFO     | browser.screenshots:capture:20 - Captured 
+screenshot C:\Users\e031093\dev\vima\tools\mcd-key-automation\logs\screenshots\
+20260530T000143_step2_before_submit.png
+2026-05-30 01:01:43.951 | INFO     | 
+providers.mastercard.pages.create_project_page:create_key_step2:739 - Clicking 
+'Create project' on Step 2
+2026-05-30 01:01:43.983 | INFO     | providers.mastercard.pages.create_project_
+page:wait_for_download_after_step2:808 - Final key step detected via visible 
+'Skip this step' + 'Create project' buttons
+2026-05-30 01:01:44.075 | INFO     | browser.screenshots:capture:20 - Captured 
+screenshot C:\Users\e031093\dev\vima\tools\mcd-key-automation\logs\screenshots\
+20260530T000143_step3_detected_via_skip.png
+2026-05-30 01:01:44.085 | INFO     | providers.mastercard.pages.create_project_
+page:_wait_for_create_button_enabled:278 - 'Create project' button enabled 
+after 0.0s
+2026-05-30 01:01:44.090 | INFO     | providers.mastercard.pages.create_project_
+page:wait_for_download_after_step2:820 - Clicked 'Create project' on final key 
+step ÔÇö found=True
+2026-05-30 01:01:49.972 | INFO     | providers.mastercard.pages.create_project_
+page:wait_for_download_after_step2:784 - Download key button appeared ÔÇö 
+https://developer.mastercard.com/create-project?services=presentment
+2026-05-30 01:01:49.973 | INFO     | 
+providers.mastercard.pages.create_project_page:download_key_file:924 - 
+Clicking 'Download key file'
+2026-05-30 01:01:51.415 | INFO     | browser.downloads:save_download:19 - 
+Copied download C:\Users\e031093\AppData\Local\Temp\1\playwright-artifacts-qAdU
+km\fa30f40e-2dc7-4334-889f-e064af235306 -> C:\Users\e031093\dev\vima\tools\mcd-
+key-automation\temp\downloads\presentment-offers_for_publishers-signing.zip
+2026-05-30 01:01:51.416 | INFO     | 
+providers.mastercard.pages.create_project_page:download_key_file:941 - 
+Downloaded key file: C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\do
+wnloads\presentment-offers_for_publishers-signing.zip
+2026-05-30 01:01:51.416 | INFO     | 
+providers.mastercard.workflows.project_workflow:_provision_oauth1_enc_key:385 
+- Downloaded OAuth 1.0a signing key (wizard Step 3): C:\Users\e031093\dev\vima\
+tools\mcd-key-automation\temp\downloads\presentment-offers_for_publishers-signi
+ng.zip
+2026-05-30 01:01:51.416 | INFO     | 
+providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
+2026-05-30 01:01:53.383 | INFO     | 
+providers.mastercard.pages.project_page:goto:97 - Navigating to sandbox page: h
+ttps://developer.mastercard.com/project-details/5dc214a8-6495-411d-bbbc-25653be
+650d0/sandbox
+2026-05-30 01:01:59.143 | INFO     | 
+providers.mastercard.pages.project_page:extract_consumer_key:216 - Extracted 
+consumer key (alias='offers_for_publishers', idx=0): dNgQg3cC...0000
+2026-05-30 01:01:59.148 | INFO     | 
+providers.mastercard.workflows.project_workflow:_capture_consumer_key:76 - 
+Saved OAuth 1.0a credentials JSON: C:\Users\e031093\dev\vima\tools\mcd-key-auto
+mation\temp\downloads\presentment-offers_for_publishers-credentials.json
+2026-05-30 01:01:59.189 | INFO     | 
+providers.mastercard.provider:download_keys:84 - Artifact: 
+mastercard-sbx-presentment-offers-for-publishers-signing-v1.zip (5c8663dd6f99)
+2026-05-30 01:01:59.237 | INFO     | 
+providers.mastercard.provider:download_keys:84 - Artifact: 
+mastercard-sbx-presentment-offers-for-publishers-signing-v1-credentials.json 
+(71da766e25d7)
+2026-05-30 01:01:59.237 | INFO     | app.orchestrator:run:63 - Provisioned 
+'offers_for_publishers' Ô£ô
+2026-05-30 01:01:59.262 | INFO     | app.orchestrator:_rebuild_vima_zip:120 - 
+Built vima-config.zip: 1 API(s) included
+__VIMA_ZIP_READY__
+2026-05-30 01:01:59.280 | INFO     | browser.session:browser_session:61 - 
+Saved session state to 
+C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
+2026-05-30 01:01:59.956 | INFO     | app.package_builder:build_bundle:49 - 
+Built bundle C:\Users\e031093\dev\vima\tools\mcd-key-automation\output\upload_b
+undle_20260530.zip
+2026-05-30 01:01:59.972 | INFO     | app.orchestrator:_rebuild_vima_zip:120 - 
+Built vima-config.zip: 1 API(s) included
+__VIMA_ZIP_READY__
+Bundle: C:\Users\e031093\dev\vima\tools\mcd-key-automation\output\upload_bundle_20260530.zip
+
+Ô£à Credentials written to: C:\Users\e031093\dev\vima\config\.env.generated
+Deployed:
+  offers_for_publishers: {'p12': 'C:\\Users\\e031093\\dev\\vima\\config\\keys\\offers_for_publishers.p12', 'consumer_key_present': True}
+
+Merge into config/.env when ready:
+  cat C:\Users\e031093\dev\vima\config\.env.generated >> C:\Users\e031093\dev\vima\config\.env
+
+Running smoke testÔÇª
+2026-05-30 01:02:05.235 | INFO     | app.api_smoke:_wait_for_activation:206 - 
+Key not yet active (401/403) ÔÇö waiting 60s (retry 1/3)ÔÇª
+2026-05-30 01:03:05.874 | INFO     | app.api_smoke:_wait_for_activation:206 - 
+Key not yet active (401/403) ÔÇö waiting 60s (retry 2/3)ÔÇª
+2026-05-30 01:04:06.649 | INFO     | app.api_smoke:_wait_for_activation:206 - 
+Key not yet active (401/403) ÔÇö waiting 60s (retry 3/3)ÔÇª
+2026-05-30 01:05:07.271 | INFO     | app.api_smoke:run_smoke:122 - Smoke call: 
+status=403 success=False ÔÇö searching docs for test valuesÔÇª
+2026-05-30 01:05:20.928 | WARNING  | app.api_smoke:run_smoke:135 - Smoke FAIL: 
+offers_for_publishers ÔÇö status=403, no sandbox values found in docs. Error: 
+{'Error': [{'ReasonCode': 'AUTHENTICATION_FAILED', 'Description': 'OAuth 
+Signature parameter failed verification. Acceptable signature base string: GET&
+https%3A%2F%2Fsandbox.api.mastercard.com%2Floyalty%2Foffers%2Fpresentment%2Fpla
+tforms%2Foffers&fid%3D999999%26limit%3D10%26oauth_body_hash%3D47DEQpj8HBSa%2B%2
+FTImW%2B5JCeuQeRkm5NMpJWZG3hSuFU%3D%26oauth_consumer_key%3DVmyUW5_4IFVyrPGBOrZc
+waIGutsXmpAU26pmzwaZ231bbe89%21205110691b3048a99194608a4df46b4d0000000000000000
+%26oauth_nonce%3D9PeV7i3UKEvXZW9l%26oauth_signature_method%3DRSA-SHA256%26oauth
+_timestamp%3D1780099506%26oauth_version%3D1.0%26offset%3D0', 'Recoverable': 
+False, 'Details': None, 'Source': 'Gateway'}]}
+  ÔØî FAIL  api=offers_for_publishers  op=list_platform_offers  attempts=4  status=403
+  Error: status=403, no sandbox values found in docs. Error: {'Error': [{'ReasonCode': 'AUTHENTICATION_FAILED', 'Description': 'OAuth Signature parameter failed verification. Acceptable signature base string: GET&https%3A%2F%2Fsandbox.api.mastercard.com%2Floyalty%2Foffers%2Fpresentment%2Fplatforms%2Foffers&fid%3D999999%26limit%3D10%26oauth_body_hash%3D47DEQpj8HBSa%2B%2FTImW%2B5JCeuQeRkm5NMpJWZG3hSuFU%3D%26oauth_consumer_key%3DVmyUW5_4IFVyrPGBOrZcwaIGutsXmpAU26pmzwaZ231bbe89%21205110691b3048a99194608a4df46b4d0000000000000000%26oauth_nonce%3D9PeV7i3UKEvXZW9l%26oauth_signature_method%3DRSA-SHA256%26oauth_timestamp%3D1780099506%26oauth_version%3D1.0%26offset%3D0', 'Recoverable': False, 'Details': None, 'Source': 'Gateway'}]}
+  Smoke test did not pass ÔÇö credentials may need more time to activate.
+  Re-run: mcd-key-automation test-api 
+'https://developer.mastercard.com/presentment/documentation/'
+
+Done. To activate the credentials:
+  type config\.env.generated >> config\.env
+  run.bat  (restart the server)

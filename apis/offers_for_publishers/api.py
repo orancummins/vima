@@ -78,17 +78,43 @@ MANIFEST: Dict[str, Any] = {
         and os.environ.get("OFFERS_FOR_PUBLISHERS_SIGNING_KEY_PATH")
     ),
     "operations": [
+        # ---- Platform (no auth token needed — smoke test entry point) ------
+        {
+            "id": "list_platform_offers",
+            "name": "List platform offers",
+            "category": "Platform",
+            "method": "GET",
+            "description": (
+                "Catalogue view of all offers across the platform — does not require a user-scoped access token "
+                "and does not require User Account Administration. "
+                "✅ Start here to verify your Presentment API credentials are working."
+            ),
+            "params": [
+                {"name": "fi_id",                "label": "X-FID (FI identifier)",     "type": "text", "default": "999999", "required": True},
+                {"name": "category",              "label": "category",              "type": "text", "default": "", "required": False},
+                {"name": "presentment_countries", "label": "presentment_countries (ISO-3)", "type": "text", "default": "", "required": False},
+                {"name": "limit",                 "label": "limit",                 "type": "text", "default": "10", "required": False},
+                {"name": "offset",                "label": "offset",                "type": "text", "default": "0",  "required": False},
+                {"name": "accept_language",       "label": "Accept-Language",       "type": "text", "default": "en-US", "required": False},
+            ],
+        },
         # ---- Presentment --------------------------------------------------
         {
             "id": "create_access_token",
             "name": "Create access token",
             "category": "Access",
             "method": "POST",
-            "description": "Exchange a registered user's identifiers for a short-lived X-Auth-Token used by other Presentment calls.",
+            "description": (
+                "Exchange an enrolled user's identifiers for a short-lived X-Auth-Token used by all other Presentment calls. "
+                "⚠️ The userId must belong to a user already enrolled via the User Account Administration API "
+                "(requires a separate project subscription). "
+                "If you have not enrolled any users, start with List platform offers instead — that endpoint "
+                "works without a user token and does not require User Account Administration."
+            ),
             "params": [
-                {"name": "fi_id",      "label": "fiId (FI identifier)", "type": "text", "default": "1234", "required": True},
-                {"name": "user_id",    "label": "userId (BCN)",         "type": "text", "default": "user-001", "required": True},
-                {"name": "utc_offset", "label": "utcOffset",            "type": "text", "default": "+00:00", "required": False},
+                {"name": "fi_id",      "label": "fiId (FI identifier)", "type": "text", "default": "999999", "required": True},
+                {"name": "user_id",    "label": "userId (BCN — 16-19 digit numeric)", "type": "text", "default": "5500005555555559", "required": True},
+                {"name": "utc_offset", "label": "utcOffset",            "type": "text", "default": "+00:00", "required": True},
             ],
         },
         {
@@ -120,20 +146,6 @@ MANIFEST: Dict[str, Any] = {
                 {"name": "access_token",    "label": "X-Auth-Token",    "type": "text", "default": "", "required": True},
                 {"name": "offer_id",        "label": "Offer ID",        "type": "text", "default": "", "required": True},
                 {"name": "accept_language", "label": "Accept-Language", "type": "text", "default": "en-US", "required": False},
-            ],
-        },
-        {
-            "id": "list_platform_offers",
-            "name": "List platform offers",
-            "category": "Platform",
-            "method": "GET",
-            "description": "Catalogue view of offers across the platform — does not require a user-scoped access token.",
-            "params": [
-                {"name": "category",              "label": "category",              "type": "text", "default": "", "required": False},
-                {"name": "presentment_countries", "label": "presentment_countries (ISO-3)", "type": "text", "default": "", "required": False},
-                {"name": "limit",                 "label": "limit",                 "type": "text", "default": "10", "required": False},
-                {"name": "offset",                "label": "offset",                "type": "text", "default": "0",  "required": False},
-                {"name": "accept_language",       "label": "Accept-Language",       "type": "text", "default": "en-US", "required": False},
             ],
         },
         {
@@ -174,19 +186,26 @@ MANIFEST: Dict[str, Any] = {
             "name": "Enrol user + account",
             "category": "User Admin",
             "method": "POST",
-            "description": "Enrol an initial user and primary account into the offers programme.",
+            "description": (
+                "Enrol an initial user and primary account into the offers programme. "
+                "⚠️ Requires the User Account Administration service to be added to your "
+                "Mastercard Developers project separately from the Presentment API. "
+                "If you see 401 DECLINED, your credentials are not subscribed to this service. "
+                "For Presentment-only testing, use Create access token directly — "
+                "the sandbox has pre-enrolled test users."
+            ),
             "params": [
-                {"name": "fi_id",              "label": "X-FID (ICA)",        "type": "text", "default": "1234", "required": True},
-                {"name": "user_id",            "label": "userId",             "type": "text", "default": "user-001", "required": True},
+                {"name": "fi_id",              "label": "X-FID (ICA)",        "type": "text", "default": "999999", "required": True},
+                {"name": "user_id",            "label": "userId (BCN)",        "type": "text", "default": "5500005555555559", "required": True},
                 {"name": "user_id_type",       "label": "userIdType",         "type": "select", "options": ["BAN", "BCN", "ARK", "CRK"], "default": "BCN", "required": True},
                 {"name": "first_name",         "label": "firstName",          "type": "text", "default": "Jane",  "required": False},
                 {"name": "last_name",          "label": "lastName",           "type": "text", "default": "Doe",   "required": False},
                 {"name": "email_address",      "label": "emailAddress",       "type": "text", "default": "jane.doe@example.com", "required": False},
                 {"name": "preferred_language", "label": "preferredLanguage",  "type": "text", "default": "en-US", "required": False},
-                {"name": "account_id",         "label": "account.accountId",  "type": "text", "default": "acct-001", "required": True},
+                {"name": "account_id",         "label": "account.accountId (BAN 16-19 digits)", "type": "text", "default": "5500005555555559", "required": True},
                 {"name": "account_id_type",    "label": "account.accountIdType", "type": "select", "options": ["BAN", "BCN", "ARK", "CRK"], "default": "BAN", "required": True},
                 {"name": "bank_product_code",  "label": "account.bankProductCode", "type": "text", "default": "BPC001", "required": True},
-                {"name": "program_identifier", "label": "account.programIdentifier", "type": "text", "default": "PROG01", "required": True},
+                {"name": "program_identifier", "label": "account.programIdentifier", "type": "text", "default": "999999", "required": True},
             ],
         },
         {
@@ -196,7 +215,7 @@ MANIFEST: Dict[str, Any] = {
             "method": "GET",
             "description": "Look up an enrolled user (and all accounts) by Customer Reference Key (CRK).",
             "params": [
-                {"name": "fi_id", "label": "X-FID (ICA)", "type": "text", "default": "1234", "required": True},
+                {"name": "fi_id", "label": "X-FID (ICA)", "type": "text", "default": "999999", "required": True},
                 {"name": "crk",   "label": "CRK",         "type": "text", "default": "", "required": True},
             ],
         },
@@ -207,8 +226,8 @@ MANIFEST: Dict[str, Any] = {
             "method": "POST",
             "description": "Search for a user by BAN, BCN, ARK or CRK.",
             "params": [
-                {"name": "fi_id",        "label": "X-FID (ICA)",      "type": "text", "default": "1234", "required": True},
-                {"name": "search_id",    "label": "Search identifier","type": "text", "default": "user-001", "required": True},
+                {"name": "fi_id",        "label": "X-FID (ICA)",      "type": "text", "default": "999999", "required": True},
+                {"name": "search_id",    "label": "Search identifier","type": "text", "default": "5500005555555559", "required": True},
                 {"name": "search_type",  "label": "Identifier type",  "type": "select", "options": ["BAN", "BCN", "ARK", "CRK"], "default": "BCN", "required": True},
             ],
         },
@@ -220,7 +239,7 @@ MANIFEST: Dict[str, Any] = {
             "method": "GET",
             "description": "Retrieve rebates matching the supplied filters.",
             "params": [
-                {"name": "fi_id",  "label": "X-FID (ICA)", "type": "text", "default": "1234", "required": True},
+                {"name": "fi_id",  "label": "X-FID (ICA)", "type": "text", "default": "999999",   "required": True},
                 {"name": "limit",  "label": "limit",       "type": "text", "default": "10",   "required": False},
                 {"name": "offset", "label": "offset",      "type": "text", "default": "0",    "required": False},
             ],
@@ -362,6 +381,41 @@ def _qs(params: Dict[str, Any]) -> str:
     return ("?" + urlencode(items)) if items else ""
 
 
+def _enc_cert_path() -> str | None:
+    """Return the absolute path to the JWE encryption certificate, or None if not configured."""
+    cert = os.environ.get("OFFERS_FOR_PUBLISHERS_ENCRYPTION_KEY_PATH", "").strip()
+    if not cert or cert == "your-encryption-cert.pem":
+        return None
+    if not os.path.isabs(cert):
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        cert = os.path.join(project_root, cert)
+    return cert if os.path.exists(cert) else None
+
+
+def _encrypt_admin_body(body: Dict[str, Any]) -> str:
+    """JWE-encrypt a UA Admin request body using the Mastercard client-encryption library."""
+    from client_encryption.jwe_encryption_config import JweEncryptionConfig
+    from client_encryption.jwe_encryption import encrypt_payload
+
+    cert_path = _enc_cert_path()
+    if not cert_path:
+        # No cert — send plain (sandbox may permit this during initial testing)
+        return json.dumps(body)
+
+    config = JweEncryptionConfig({
+        "paths": {
+            "$": {
+                "toEncrypt": {"$": "$"},
+                "toDecrypt": {},
+            }
+        },
+        "encryptedValueFieldName": "jweEncryptedData",
+        "encryptionCertificate": cert_path,
+    })
+    encrypted = encrypt_payload(json.dumps(body), config)
+    return json.dumps(encrypted)
+
+
 # ---------------------------------------------------------------------------
 # Operations
 # ---------------------------------------------------------------------------
@@ -389,12 +443,12 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _create_access_token(p: Dict[str, Any]) -> Dict[str, Any]:
-    body = {
+    body: Dict[str, Any] = {
         "fiId":      (p.get("fi_id") or "").strip(),
         "userId":    (p.get("user_id") or "").strip(),
-        "utcOffset": (p.get("utc_offset") or "").strip(),
+        "utcOffset": (p.get("utc_offset") or "+00:00").strip(),
     }
-    return _signed_request("POST", _presentment_url("/access-tokens"), json.dumps(body))
+    return _signed_request("POST", _presentment_url("/access-tokens"), json.dumps(body), _fid_header(p))
 
 
 def _auth_headers(p: Dict[str, Any]) -> Dict[str, str]:
@@ -409,6 +463,8 @@ def _auth_headers(p: Dict[str, Any]) -> Dict[str, str]:
 
 
 def _list_offers(p: Dict[str, Any]) -> Dict[str, Any]:
+    if not (p.get("access_token") or "").strip():
+        return {"success": False, "error": "'access_token' (X-Auth-Token) is required. Use Create access token first."}
     qs = _qs({
         "offer_types":           p.get("offer_types"),
         "category":              p.get("category"),
@@ -423,6 +479,8 @@ def _list_offers(p: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _get_offer(p: Dict[str, Any]) -> Dict[str, Any]:
+    if not (p.get("access_token") or "").strip():
+        return {"success": False, "error": "'access_token' (X-Auth-Token) is required. Use Create access token first."}
     offer_id = (p.get("offer_id") or "").strip()
     if not offer_id:
         return {"success": False, "error": "'offer_id' is required."}
@@ -431,6 +489,7 @@ def _get_offer(p: Dict[str, Any]) -> Dict[str, Any]:
 
 def _list_platform_offers(p: Dict[str, Any]) -> Dict[str, Any]:
     qs = _qs({
+        "fid":                   p.get("fi_id") or "999999",
         "category":              p.get("category"),
         "presentment_countries": p.get("presentment_countries"),
         "limit":                 p.get("limit") or "10",
@@ -440,6 +499,8 @@ def _list_platform_offers(p: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _activate_offer(p: Dict[str, Any]) -> Dict[str, Any]:
+    if not (p.get("access_token") or "").strip():
+        return {"success": False, "error": "'access_token' (X-Auth-Token) is required. Use Create access token first."}
     offer_id = (p.get("offer_id") or "").strip()
     if not offer_id:
         return {"success": False, "error": "'offer_id' is required."}
@@ -448,11 +509,15 @@ def _activate_offer(p: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _list_activities(p: Dict[str, Any]) -> Dict[str, Any]:
+    if not (p.get("access_token") or "").strip():
+        return {"success": False, "error": "'access_token' (X-Auth-Token) is required. Use Create access token first."}
     source_type = (p.get("source_type") or "OFFER").strip()
     return _signed_request("GET", _presentment_url(f"/activities/{source_type}"), None, _auth_headers(p))
 
 
 def _get_savings(p: Dict[str, Any]) -> Dict[str, Any]:
+    if not (p.get("access_token") or "").strip():
+        return {"success": False, "error": "'access_token' (X-Auth-Token) is required. Use Create access token first."}
     return _signed_request("GET", _presentment_url("/savings"), None, _auth_headers(p))
 
 
@@ -481,7 +546,7 @@ def _enroll_user(p: Dict[str, Any]) -> Dict[str, Any]:
         v = (p.get(k_in) or "").strip()
         if v:
             body[k_out] = v
-    return _signed_request("POST", _admin_url("/enrollments/users"), json.dumps(body), _fid_header(p))
+    return _signed_request("POST", _admin_url("/enrollments/users"), _encrypt_admin_body(body), _fid_header(p))
 
 
 def _retrieve_user(p: Dict[str, Any]) -> Dict[str, Any]:
@@ -497,7 +562,7 @@ def _search_users(p: Dict[str, Any]) -> Dict[str, Any]:
     if not search_id:
         return {"success": False, "error": "'search_id' is required."}
     body = {"id": search_id, "idType": search_type}
-    return _signed_request("POST", _admin_url("/enrollments/users/searches"), json.dumps(body), _fid_header(p))
+    return _signed_request("POST", _admin_url("/enrollments/users/searches"), _encrypt_admin_body(body), _fid_header(p))
 
 
 def _list_rebates(p: Dict[str, Any]) -> Dict[str, Any]:

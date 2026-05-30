@@ -127,8 +127,13 @@ def init_session(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None
         typer.echo("Warning: session file not written — check logs/execution.log", err=True)
 
 
-def _find_artifact(normalized_dir: Path, project: str, api: str, exts: tuple[str, ...]) -> Path | None:
-    """Find the most recent artifact for a given project/api/extension combo."""
+def _find_artifact(normalized_dir: Path, project: str, api: str, exts: tuple[str, ...], purpose: str | None = None) -> Path | None:
+    """Find the most recent artifact for a given project/api/extension combo.
+
+    If ``purpose`` is given (e.g. 'signing' or 'enc'), only files whose name
+    contains ``-{purpose}-`` are considered.  This prevents enc P12s from
+    being returned when the caller wants the signing P12.
+    """
     candidates: list[Path] = []
     project_slug = project.lower().replace(" ", "-").replace("_", "-")
     # make_alias() slug-ifies '_' → '-' in filenames, so always search by the
@@ -139,6 +144,8 @@ def _find_artifact(normalized_dir: Path, project: str, api: str, exts: tuple[str
             continue
         name = f.name.lower()
         if project_slug in name and api_slug in name:
+            if purpose and f"-{purpose}-" not in name:
+                continue
             candidates.append(f)
     if candidates:
         return max(candidates, key=lambda p: p.stat().st_mtime)
@@ -151,6 +158,8 @@ def _find_artifact(normalized_dir: Path, project: str, api: str, exts: tuple[str
         for f in normalized_dir.glob("*.zip"):
             name = f.name.lower()
             if project_slug not in name or api_slug not in name:
+                continue
+            if purpose and f"-{purpose}-" not in name:
                 continue
             try:
                 import zipfile
@@ -281,7 +290,7 @@ def _run_deploy(
                 continue
 
             # OAuth 1.0a
-            p12 = _find_artifact(normalized, project.name, api, ("p12",))
+            p12 = _find_artifact(normalized, project.name, api, ("p12",), purpose="signing")
             creds_file = _find_artifact(normalized, project.name, api, ("json",))
             if not p12:
                 typer.echo(f"No p12 found for {project.name}/{api}", err=True)
@@ -306,10 +315,32 @@ def _run_deploy(
             lines.append(f"{prefix}_ENV=sandbox")
             enc_var = encryption_env_var(api)
             if enc_var:
-                lines.append(
-                    f"# TODO: {enc_var}=config/keys/{api}-enc.pem  "
-                    f"(download manually from portal — not yet automated)"
-                )
+                enc_artifact = _find_artifact(normalized, project.name, api, ("pem", "p12"), purpose="enc")
+                if enc_artifact:
+                    target_enc = keys_dir / f"{api}-clientenc.pem"
+                    if enc_artifact.suffix.lower() == ".p12":
+                        # Extract Mastercard's certificate from the enc P12 and save as PEM.
+                        try:
+                            from cryptography.hazmat.primitives.serialization import pkcs12 as _pkcs12
+                            from cryptography.hazmat.primitives.serialization import Encoding
+                            _, cert, _ = _pkcs12.load_key_and_certificates(
+                                enc_artifact.read_bytes(), cfg.key_password.encode()
+                            )
+                            target_enc.write_bytes(cert.public_bytes(Encoding.PEM))
+                            logger.info("Extracted enc cert from P12 → {}", target_enc)
+                        except Exception as exc:
+                            logger.warning("Failed to extract cert from enc P12 for {}: {}", api, exc)
+                            lines.append(f"# TODO: {enc_var}=config/keys/{api}-clientenc.pem  (enc P12 extraction failed: {exc})")
+                            enc_artifact = None  # fall through
+                    else:
+                        target_enc.write_bytes(enc_artifact.read_bytes())
+                    if enc_artifact:  # write env var only if deployment succeeded
+                        lines.append(f"{enc_var}=config/keys/{target_enc.name}")
+                else:
+                    lines.append(
+                        f"# TODO: {enc_var}=config/keys/{api}-clientenc.pem  "
+                        f"(not found in provisioning run — re-run addapi)"
+                    )
             lines.append("")
             deployed[api] = {"p12": str(target_p12), "consumer_key_present": bool(consumer_key)}
 

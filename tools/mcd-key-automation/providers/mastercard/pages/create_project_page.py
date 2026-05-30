@@ -808,11 +808,16 @@ class CreateProjectPage:
                 logger.info("Final key step detected via visible 'Skip this step' + 'Create project' buttons")
                 await screenshot(self.page, "step3_detected_via_skip")
 
-                # MATCH-specific behavior requested: proceed with "Create project"
-                # on this step rather than clicking "Skip this step".
-                await self._wait_for_create_button_enabled(max_wait_s=8.0)
-                clicked = await self._js_click_create_project()
-                logger.info("Clicked 'Create project' on final key step — found={}", clicked)
+                if skip_step3:
+                    # Caller wants to skip the enc key step entirely — click 'Skip this step'
+                    # so the portal lands on the project page without downloading the cert.
+                    logger.info("skip_step3=True — clicking 'Skip this step'")
+                    await self.page.locator("button:has-text('Skip this step')").first.click()
+                else:
+                    # MATCH-specific behavior: proceed with "Create project".
+                    await self._wait_for_create_button_enabled(max_wait_s=8.0)
+                    clicked = await self._js_click_create_project()
+                    logger.info("Clicked 'Create project' on final key step — found={}", clicked)
 
                 _step3_clicked = True
                 await asyncio.sleep(1.0)
@@ -863,13 +868,25 @@ class CreateProjectPage:
 
                 # Check if this is a "no action needed" informational step (e.g., auto-generated encryption key).
                 no_action_text = await self.page.locator("text=There are no actions needed").count()
-                
+
                 if no_action_text > 0:
-                    # No inputs to fill — just click "Create project" or "Skip this step".
-                    logger.info("Step 3 has no inputs (auto-generated key) — clicking 'Create project'")
-                    await self._wait_for_create_button_enabled(max_wait_s=5.0)
-                    clicked = await self._js_click_create_project()
-                    logger.info("Clicked 'Create project' on Step 3 (no-action) — found={}", clicked)
+                    if skip_step3:
+                        # skip_step3=True means we don't want to download the auto-generated cert.
+                        # Try the 'Skip this step' button; fall back to 'Create project' if absent.
+                        skip_loc = self.page.locator("button:has-text('Skip this step')")
+                        if await skip_loc.count() > 0:
+                            logger.info("Step 3 'no actions needed' + skip_step3=True — clicking 'Skip this step'")
+                            await skip_loc.first.click()
+                        else:
+                            logger.info("Step 3 'no actions needed' + skip_step3=True — no skip button, clicking 'Create project'")
+                            await self._wait_for_create_button_enabled(max_wait_s=5.0)
+                            await self._js_click_create_project()
+                    else:
+                        # No inputs to fill — just click 'Create project'.
+                        logger.info("Step 3 has no inputs (auto-generated key) — clicking 'Create project'")
+                        await self._wait_for_create_button_enabled(max_wait_s=5.0)
+                        clicked = await self._js_click_create_project()
+                        logger.info("Clicked 'Create project' on Step 3 (no-action) — found={}", clicked)
                 else:
                     # Step 3 has inputs — fill them.
                     logger.info("Step 3 has inputs — filling credentials")
@@ -910,7 +927,16 @@ class CreateProjectPage:
                 await self.page.locator(ProjectCreatedSelectors.download_key_button).click()
             download = await dl_info.value
             original = download.suggested_filename or f"{filename_hint}.p12"
-            dest = dest_dir / original
+            # If a filename_hint was supplied, prepend it to the saved name so that
+            # downstream artifact classification (enc vs signing) can rely on tokens
+            # like "-enc" being present in the stem. Portal-suggested names (e.g.
+            # MCD_Sandbox_*_API_Keys.zip) do not carry that distinction.
+            if filename_hint and filename_hint != "key":
+                ext = Path(original).suffix or ".zip"
+                saved_name = f"{filename_hint}{ext}"
+            else:
+                saved_name = original
+            dest = dest_dir / saved_name
             await save_download(download, dest)
             logger.info("Downloaded key file: {}", dest)
             return dest
