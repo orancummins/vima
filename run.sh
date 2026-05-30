@@ -17,15 +17,25 @@ kill_port() {
   fi
 }
 
+# ── Create venv if missing ────────────────────────────────────────────
+if [[ ! -f "$VENV_DIR/bin/activate" ]]; then
+  echo "Creating Python virtual environment..."
+  python3 -m venv "$VENV_DIR"
+fi
+
 # ── Activate venv ─────────────────────────────────────────────────────
-if [[ -f "$VENV_DIR/bin/activate" ]]; then
-  source "$VENV_DIR/bin/activate"
+source "$VENV_DIR/bin/activate"
+
+# ── Bootstrap config/.env on first run ───────────────────────────────
+if [[ ! -f "$SCRIPT_DIR/config/.env" && -f "$SCRIPT_DIR/config/.env.example" ]]; then
+  cp "$SCRIPT_DIR/config/.env.example" "$SCRIPT_DIR/config/.env"
+  echo "Created config/.env from .env.example — open the app and fill in your credentials."
 fi
 
 # ── Install / sync dependencies ───────────────────────────────────────
 if [[ -f "$SCRIPT_DIR/requirements.txt" ]]; then
   echo "Installing dependencies..."
-  pip install -q -r "$SCRIPT_DIR/requirements.txt"
+  python3 -m pip install -q -r "$SCRIPT_DIR/requirements.txt"
 fi
 
 # ── Set up key-automation tool (once, on first run) ───────────────────
