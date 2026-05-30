@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 from loguru import logger
 from playwright.async_api import Page
 
+from app.exceptions import LoginTimeoutError
 from browser.waits import wait_until
 from app.exceptions import LoginTimeoutError
 from providers.mastercard.selectors import LoginSelectors
@@ -92,14 +93,22 @@ class LoginPage:
             logger.info("Saved session redirected to {} — skipping login form.", self.page.url)
             return
         except (TimeoutError, LoginTimeoutError):
+            # Saved session is expired — fall through to credential pre-fill.
             pass
 
         if headless:
             logger.info("Headless mode: attempting credential-based login...")
 
+        _PLACEHOLDER_EMAILS = {"your@email.com", "your-email@example.com"}
+        _PLACEHOLDER_PASSWORDS = {"your-portal-password"}
+
         email = os.environ.get("MCD_PORTAL_EMAIL", "").strip()
         password = os.environ.get("MCD_PORTAL_PASSWORD", "").strip()
-        if email and password:
+        have_real_creds = (
+            bool(email) and email not in _PLACEHOLDER_EMAILS
+            and bool(password) and password not in _PLACEHOLDER_PASSWORDS
+        )
+        if have_real_creds:
             await self.fill_credentials(email, password)
         else:
             if headless:
@@ -112,8 +121,10 @@ class LoginPage:
                 "complete sign-in manually in the browser window..."
             )
 
-        # In headless mode use a shorter timeout and fail fast with a clear message.
-        effective_timeout = 45.0 if headless else timeout_s
+        # In headless mode allow up to 2 minutes for SSO/MFA to complete after
+        # credential pre-fill — 45 s was too short when the portal is slow or
+        # when an MFA prompt appears.
+        effective_timeout = 120.0 if headless else timeout_s
 
         async def authenticated() -> bool:
             try:
