@@ -345,12 +345,24 @@ async def _provision_oauth1_enc_key(
     alias: str, config: AppConfig,
 ) -> list[Path]:
     """
-    OAuth 1.0a with client encryption key:
+    OAuth 1.0a with optional client encryption key:
       Step 1 → Proceed → Step 2 (alias + password) → Create project
-      → [Step 3: auto-generated encryption key — Create project again] → download .pem
-      → sandbox: Add project key (OAuth signing key) → download zip
+      → [Step 3: auto-generated signing key — Create project again] → download .zip/.p12
 
-    APIs: clarity, consent, eligibility, bces
+    The Step 3 download is a SIGNING P12 paired with the consumer key
+    auto-created by the wizard. It is NOT a separate encryption certificate.
+    (Despite the "enc_key" provision type name, Mastercard's wizard does not
+    produce a distinct JWE encryption certificate here — the same key is used
+    for OAuth signing, and the consumer key + P12 form a single pair.)
+
+    For APIs that DO require JWE body encryption (clarity, consent, eligibility,
+    bces), the encryption certificate is downloaded separately from the API's
+    documentation page and provisioned manually; it is NOT produced by this
+    portal flow.
+
+    Therefore: we use the wizard P12 as the signing key and skip the redundant
+    "Add project key" step on the Sandbox tab (which would create a SECOND
+    consumer key + P12 pair that we don't use).
     """
     create_page = CreateProjectPage(page)
     await create_page.wait_for_form()
@@ -365,18 +377,25 @@ async def _provision_oauth1_enc_key(
         result = await create_page.wait_for_download_after_step2(alias=alias, password=config.key_password)
 
     if result == "download":
-        enc_pem = await create_page.download_key_file(dest_dir=dest_dir, filename_hint=f"{project.name}-{api_name}-enc")
-        logger.info("Downloaded client encryption key: {}", enc_pem)
+        # Save with -signing- hint so provider.download_keys classifies it as
+        # the signing artifact (which _run_deploy then deploys as the P12).
+        signing_p12 = await create_page.download_key_file(
+            dest_dir=dest_dir, filename_hint=f"{project.name}-{api_name}-signing"
+        )
+        logger.info("Downloaded OAuth 1.0a signing key (wizard Step 3): {}", signing_p12)
+        # Capture the consumer key auto-created by the wizard from the sandbox page.
         uuid = await _get_uuid_after_creation(page, dashboard, portal_name)
-        signing_artifacts = []
+        credentials: list[Path] = []
         if uuid:
-            signing_artifacts = await _add_oauth_signing_key_via_sandbox(
-                page, uuid, dest_dir, project, api_name, alias, config
+            creds_file = await _capture_consumer_key(
+                page, uuid, dest_dir, project, api_name, alias=alias
             )
-        return [enc_pem] + signing_artifacts
+            if creds_file:
+                credentials.append(creds_file)
+        return [signing_p12] + credentials
 
     if result == "project_page":
-        # Wizard landed directly on project page — add signing key via sandbox.
+        # Wizard landed directly on project page — fall back to Sandbox-tab key.
         uuid = await _get_uuid_after_creation(page, dashboard, portal_name)
         if not uuid:
             logger.error("oauth1_enc_key: could not resolve project UUID after redirect")

@@ -8,6 +8,7 @@ from loguru import logger
 from playwright.async_api import Page
 
 from browser.waits import wait_until
+from app.exceptions import LoginTimeoutError
 from providers.mastercard.selectors import LoginSelectors
 
 
@@ -90,7 +91,7 @@ class LoginPage:
             await wait_until(_redirected_away, timeout_s=8.0, description="saved-session redirect")
             logger.info("Saved session redirected to {} — skipping login form.", self.page.url)
             return
-        except TimeoutError:
+        except (TimeoutError, LoginTimeoutError):
             pass
 
         if headless:
@@ -127,7 +128,7 @@ class LoginPage:
 
         try:
             await wait_until(authenticated, timeout_s=effective_timeout, description="authenticated session")
-        except TimeoutError:
+        except (TimeoutError, LoginTimeoutError):
             if headless:
                 raise RuntimeError(
                     "Session expired or MFA required — cannot complete login in headless mode.\n"

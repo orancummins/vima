@@ -49,11 +49,19 @@ class MastercardProvider(DeveloperPortalProvider):
 
         artifacts: list[DownloadedArtifact] = []
         for raw_file in raw_files:
+            # Detect enc vs signing from the filename hint embedded by the workflow layer.
+            # enc artifacts are named with "-enc" in the stem; everything else is "signing".
+            raw_stem = raw_file.stem.lower()
+            if "-enc" in raw_stem or raw_stem.endswith("enc"):
+                purpose = "enc"
+            else:
+                purpose = "signing"
             alias = make_alias(
                 organization=self.config.organization,
                 environment=self.config.environment,
                 project=project.name,
                 api=api,
+                purpose=purpose,
             )
             # JSON credentials get a distinct suffix so they don't collide with the key file.
             if raw_file.suffix == ".json":
