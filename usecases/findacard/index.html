@@ -24,11 +24,12 @@
 
       fetch("/usecases/findacard/health")
         .then(r => r.json())
-        .then(({ online }) => {
+        .then(({ online, url }) => {
           if (online) {
+            const facUrl = url || "http://localhost:5432";
             body.innerHTML = `
               <div class="fac-stage">
-                <iframe class="fac-frame" src="http://localhost:5432" title="Find A Card" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+                <iframe class="fac-frame" src="${facUrl}" title="Find A Card" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
               </div>`;
           } else {
             body.innerHTML = `
