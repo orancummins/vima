@@ -114,10 +114,16 @@ def _find_zip(api_id: str, normalized: Path, cred_path: Optional[Path]) -> Optio
 
 def _find_pem(api_id: str, normalized: Path, cred_path: Optional[Path]) -> Optional[Path]:
     if cred_path:
+        # Try sibling PEM with same base name (signing-named PEMs from old runs).
         candidate = cred_path.parent / cred_path.name.replace("-credentials.json", ".pem")
         if candidate.exists():
             return candidate
     slug = _slug(api_id)
+    # New naming: encryption PEM saved with -enc- purpose marker.
+    enc_pem = _newest(list(normalized.glob(f"*-{slug}-enc-v1.pem")))
+    if enc_pem:
+        return enc_pem
+    # Legacy fallback: PEM saved with -signing- marker (old runs).
     return _newest(list(normalized.glob(f"*-{slug}-signing-v1.pem")))
 
 

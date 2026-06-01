@@ -4677,6 +4677,10 @@
 (function () {
   'use strict';
 
+  const RUNTIME_MODE = window.__RUNTIME_MODE__ || {};
+  const SERVER_MODE = !!RUNTIME_MODE.server_mode;
+  const NON_US_MODE = !!RUNTIME_MODE.non_us_mode;
+
   let APIS = [];
   let legacyToId = {};
   let _catalogPromise = null;
@@ -4730,6 +4734,10 @@
   const logEl        = document.getElementById('prov-log');
 
   if (!modal) return;
+  if (SERVER_MODE) {
+    modal.classList.add('prov-hidden');
+    return;
+  }
 
   // ── Show/hide helpers ─────────────────────────────────────────────────────
   function showScreen(screen) {
