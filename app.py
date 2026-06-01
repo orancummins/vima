@@ -4,6 +4,8 @@ A small Flask app on port 9021 that exposes a tabbed UI for testing
 Mastercard Developer APIs (Open Finance, BIN Lookup, …) and demoing use
 cases composed from them.
 """
+import warnings
+warnings.filterwarnings("ignore", message="resource_tracker", category=UserWarning)
 import os
 import time
 import threading
@@ -34,6 +36,8 @@ from simulator.switcher import is_simulated  # noqa: E402
 
 
 app = Flask(__name__)
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 # Suppress Werkzeug's per-request stdout log lines ("GET /... 200")
 import logging as _logging
