@@ -4,6 +4,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/.venv"
 VIMA_PORT=9021
+APP_ARGS=("$@")
 
 # ── Helpers ──────────────────────────────────────────────────────────
 kill_port() {
@@ -86,4 +87,4 @@ cd "$SCRIPT_DIR"
 # ViMA Chat is embedded in-process as a Flask Blueprint — no separate
 # chat server is needed.
 echo "Starting vima on http://127.0.0.1:$VIMA_PORT"
-exec python3 app.py
+exec python3 app.py "${APP_ARGS[@]}"

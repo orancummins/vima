@@ -172,6 +172,36 @@ Solution Studio (including the ViMA chat) starts on a single port:
 ViMA chat is embedded directly in the main Flask app — no separate process
 or port is needed.
 
+#### Runtime modes
+
+`run.bat` and `run.sh` pass through startup flags to `app.py`.
+
+- `--server`
+   - Locks sensitive configuration surfaces for web users.
+   - Disables API Configuration UI actions.
+   - Disables ViMA chat (`/chat`) in both UI and backend.
+
+- `--non-us`
+   - Forces non-US behavior for the session.
+   - Disables **Open Finance US** APIs and any use cases that depend on Open Finance US.
+   - Adds menu tooltips indicating these items would be enabled on a US IP.
+
+Examples:
+
+```bash
+# macOS / Linux
+./run.sh --server
+./run.sh --non-us
+./run.sh --server --non-us
+```
+
+```bat
+:: Windows
+run.bat --server
+run.bat --non-us
+run.bat --server --non-us
+```
+
 ### 3. Configure API keys — one-click auto-provisioning
 
 Click the **Save +** button in the top-right of the app. Solution Studio will

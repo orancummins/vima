@@ -163,6 +163,14 @@ body {
 }
 .api-item:hover { background: #f0f0f1; }
 .api-item.active { background: var(--ink); color: white; }
+.api-item.api-item--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: transparent;
+}
+.api-item.api-item--disabled:hover {
+  background: transparent;
+}
 .api-item-status { font-size: 11px; }
 .api-item-status.ok { color: var(--ok); }
 .api-item-status.off { color: var(--muted); }
@@ -3224,6 +3232,17 @@ body {
   margin-left: 10px; flex-shrink: 0;
 }
 .cfg-trigger-btn:hover { background: rgba(255,255,255,0.14); color: white; border-color: rgba(255,255,255,0.22); }
+.cfg-trigger-btn:disabled,
+.cfg-trigger-btn--locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.cfg-trigger-btn:disabled:hover,
+.cfg-trigger-btn--locked:hover {
+  background: rgba(255,255,255,0.08);
+  color: #ccc;
+  border-color: rgba(255,255,255,0.12);
+}
 
 #global-edit-btn {
   animation: edit-btn-pulse 2.4s ease-in-out infinite;

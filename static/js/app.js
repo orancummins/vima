@@ -1,8 +1,45 @@
 (() => {
   const APIS = window.__APIS__ || [];
   const USE_CASES = window.__USE_CASES__ || [];
+  const RUNTIME_MODE = window.__RUNTIME_MODE__ || {};
+  const SERVER_MODE = !!RUNTIME_MODE.server_mode;
+  const NON_US_MODE = !!RUNTIME_MODE.non_us_mode;
+  const OPEN_FINANCE_US_API_ID = 'open_finance';
+  const SERVER_MODE_TOOLTIP = 'server mode';
+  const NON_US_TOOLTIP = 'Disabled in non-us mode. If running on US IP, this would be enabled.';
 
   const $ = (id) => document.getElementById(id);
+
+  function _isNonUsBlockedApiId(apiId) {
+    return NON_US_MODE && apiId === OPEN_FINANCE_US_API_ID;
+  }
+
+  function _isNonUsBlockedUseCaseById(ucId) {
+    if (!NON_US_MODE) return false;
+    const uc = USE_CASES.find((u) => u.id === ucId);
+    if (!uc) return false;
+    return (uc.apis || []).includes(OPEN_FINANCE_US_API_ID);
+  }
+
+  function _markRuntimeBlockedMenuItems() {
+    if (!NON_US_MODE) return;
+    document.querySelectorAll('[data-api-id]').forEach((btn) => {
+      if (_isNonUsBlockedApiId(btn.dataset.apiId)) {
+        btn.classList.add('api-item--disabled');
+        btn.setAttribute('aria-disabled', 'true');
+        btn.setAttribute('title', NON_US_TOOLTIP);
+      }
+    });
+    document.querySelectorAll('[data-uc-id]').forEach((btn) => {
+      if (_isNonUsBlockedUseCaseById(btn.dataset.ucId)) {
+        btn.classList.add('api-item--disabled');
+        btn.setAttribute('aria-disabled', 'true');
+        btn.setAttribute('title', NON_US_TOOLTIP);
+      }
+    });
+  }
+
+  _markRuntimeBlockedMenuItems();
 
   // -------------------------------------------------------------------
   // API Calls Logger — polls /api-call-log for outbound Mastercard calls
@@ -266,7 +303,7 @@
       if (fab) fab.classList.toggle('hidden', tab !== 'usecases');
       // ViMA chat edit is only available on Use Cases
       const editBtnTop = $('global-edit-btn');
-      if (editBtnTop) editBtnTop.classList.toggle('hidden', tab !== 'usecases');
+      if (editBtnTop) editBtnTop.classList.toggle('hidden', tab !== 'usecases' || SERVER_MODE);
       if (tab !== 'usecases') { apiCallsClose(); _stopPolling(); }
       else _startPolling();
     });
@@ -435,6 +472,7 @@
   // ---------------------------------------------------------------------
   document.querySelectorAll("[data-api-id]").forEach((btn) => {
     btn.addEventListener("click", () => {
+      if (_isNonUsBlockedApiId(btn.dataset.apiId)) return;
       document.querySelectorAll("[data-api-id]").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       currentApiId = btn.dataset.apiId;
@@ -495,6 +533,7 @@
   function renderApi() {
     const api = currentApi();
     if (!api) return;
+    if (_isNonUsBlockedApiId(api.id)) return;
     $("api-title").textContent = api.name;
     $("api-desc").textContent = api.description || "";
     const docs = $("api-docs");
@@ -573,7 +612,7 @@
         // refresh param defaults if an op is open
         if (currentOpId) renderParams();
         // Show Open Finance setup guide every time (unless suppressed)
-        if (api.id === 'open_finance') {
+          if (api.id === 'open_finance' && !NON_US_MODE) {
           showOfinSetupModal();
         }
       })
@@ -940,7 +979,7 @@
         renderStateStrip();
       }
       // Open Finance: show setup guide if refresh_accounts returns no accounts
-      if (api.id === 'open_finance' && op.id === 'refresh_accounts') {
+      if (api.id === 'open_finance' && op.id === 'refresh_accounts' && !NON_US_MODE) {
         const respBody = data.response && data.response.body;
         const accounts = _findKey(respBody, 'accounts') || (Array.isArray(respBody) ? respBody : null);
         const isError = data.response && data.response.status_code >= 400;
@@ -4001,7 +4040,7 @@
       if (workbench)  workbench.classList.remove('hidden');
       if (contentSec) contentSec.classList.remove('uc--about');
       const editBtnTop = document.getElementById('global-edit-btn');
-      if (editBtnTop) editBtnTop.classList.remove('hidden');
+      if (editBtnTop && !SERVER_MODE) editBtnTop.classList.remove('hidden');
     }
 
     if (aboutBtn) aboutBtn.addEventListener('click', ucShowAbout);
@@ -4086,6 +4125,7 @@
 
   document.querySelectorAll("[data-uc-id]").forEach((btn) => {
     btn.addEventListener("click", () => {
+      if (_isNonUsBlockedUseCaseById(btn.dataset.ucId)) return;
       // Close fullscreen overlay if open so #uc-body returns to normal position
       document.getElementById('uc-fullscreen-overlay')?.querySelector('.uc-fullscreen-reduce-btn')?.click();
       if (window._showUcWorkbench) window._showUcWorkbench();
@@ -4260,6 +4300,7 @@
 
     // ── Open / close ────────────────────────────────────────────────────────
     function cfgOpen() {
+      if (SERVER_MODE) return;
       modal.classList.remove('cfg-hidden');
       document.body.style.overflow = 'hidden';
       cfgLoad();
@@ -4271,6 +4312,9 @@
       _pending = {};
     }
 
+    if (triggerBtn && SERVER_MODE) {
+      triggerBtn.title = SERVER_MODE_TOOLTIP;
+    }
     triggerBtn && triggerBtn.addEventListener('click', cfgOpen);
     closeBtn && closeBtn.addEventListener('click', cfgClose);
     overlay && overlay.addEventListener('click', cfgClose);
@@ -4282,7 +4326,14 @@
       const editClose = document.getElementById('global-edit-modal-close');
       const editIframe = document.getElementById('global-edit-modal-iframe');
 
+      if (editBtn && SERVER_MODE) {
+        editBtn.title = SERVER_MODE_TOOLTIP;
+        editBtn.setAttribute('aria-disabled', 'true');
+        editBtn.classList.add('hidden');
+      }
+
       function openGlobalEdit() {
+        if (SERVER_MODE) return;
         if (!editModal || !editIframe) return;
 
         // Build URL based on what is currently selected in the explorer.
@@ -4733,23 +4784,28 @@
     var defaultChecked = 0;
     APIS.forEach(function (api) {
       var manual = api.auto_provisionable === false;
+      var blockedNonUs = NON_US_MODE && api.disabled_in_non_us === true;
       var configured = api.configured === true;
       // Default-select only APIs that don't yet have keys provisioned.
       // Already-provisioned APIs render unchecked + green-tinted with a
       // tooltip, but remain selectable so users can re-provision them.
-      var checked = !manual && !configured;
+      var checked = !manual && !blockedNonUs && !configured;
       var note = manual ? '' : (api.provision_note || api.note || '');
+      if (blockedNonUs) note = api.disabled_reason || NON_US_TOOLTIP;
       var label = document.createElement('label');
       var labelClass = 'prov-api-item';
       if (manual) labelClass += ' prov-api-item--manual';
+      if (blockedNonUs) labelClass += ' prov-api-item--manual';
       if (configured && !manual) labelClass += ' prov-api-item--configured';
       label.className = labelClass;
+      if (blockedNonUs) label.title = note;
       if (configured && !manual) label.title = 'Key already provisioned \u2014 select to re-provision';
       var cbAttrs = 'class="prov-api-cb" data-id="' + _escAttr(api.id) + '"' +
-                    (manual ? ' disabled' : '') +
+                    (manual || blockedNonUs ? ' disabled' : '') +
                     (checked ? ' checked' : '');
       var badges = '';
       if (manual) badges += '<span class="prov-api-badge">Manual onboarding</span>';
+      if (blockedNonUs) badges += '<span class="prov-api-badge">Non-US mode</span>';
       var nameHtml = '<span class="prov-api-name">' +
                      '<span class="prov-api-name-text">' + _escAttr(api.name) + '</span>' +
                      badges +
@@ -4763,7 +4819,7 @@
         '<input type="checkbox" ' + cbAttrs + '>' +
         '<span class="prov-api-text">' + nameHtml + noteHtml + linkHtml + '</span>';
       apiGrid.appendChild(label);
-      if (!manual) autoProvisionable++;
+      if (!manual && !blockedNonUs) autoProvisionable++;
       if (checked) defaultChecked++;
     });
     if (selectAllCb) {

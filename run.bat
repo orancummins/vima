@@ -3,6 +3,7 @@ setlocal
 
 set VIMA_PORT=9021
 set SCRIPT_DIR=%~dp0
+set APP_ARGS=%*
 
 if /i "%~1"=="stop" goto :stop
 goto :start
@@ -108,9 +109,9 @@ if exist "%TOOL_VENV%\.chromium-skipped" (
 REM Start vima (Vima Chat is now embedded in-process at /chat)
 echo Starting Mastercard Solution Studio on http://127.0.0.1:%VIMA_PORT%
 if exist "%SCRIPT_DIR%.venv\Scripts\python.exe" (
-    "%SCRIPT_DIR%.venv\Scripts\python.exe" app.py
+    "%SCRIPT_DIR%.venv\Scripts\python.exe" app.py %APP_ARGS%
 ) else (
-    py app.py
+    py app.py %APP_ARGS%
 )
 
 :end
