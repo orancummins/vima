@@ -29,12 +29,12 @@
       <button class="top-tab" data-top-tab="usecases">Use Cases</button>
     </nav>
     <div style="display:flex;align-items:center;gap:4px">
-      <button class="cfg-trigger-btn" id="cfg-trigger-btn" title="API Configuration">
+      <button class="cfg-trigger-btn{% if runtime_mode.server_mode %} cfg-trigger-btn--locked{% endif %}" id="cfg-trigger-btn" title="{% if runtime_mode.server_mode %}server mode{% else %}API Configuration{% endif %}" {% if runtime_mode.server_mode %}aria-disabled="true"{% endif %}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
         </svg>
       </button>
-      <button class="cfg-trigger-btn hidden" id="global-edit-btn" title="Edit with Claude">
+      <button class="cfg-trigger-btn hidden{% if runtime_mode.server_mode %} cfg-trigger-btn--locked{% endif %}" id="global-edit-btn" title="{% if runtime_mode.server_mode %}server mode{% else %}Edit with Claude{% endif %}" {% if runtime_mode.server_mode %}aria-disabled="true"{% endif %}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -594,6 +594,7 @@
   <script>
     window.__APIS__ = {{ apis | tojson }};
     window.__USE_CASES__ = {{ use_cases | tojson }};
+    window.__RUNTIME_MODE__ = {{ runtime_mode | tojson }};
   </script>
   <script src="{{ url_for('static', filename='js/app.js') }}?v={{ cache_bust }}"></script>
   <script>

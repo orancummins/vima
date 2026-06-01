@@ -12,7 +12,9 @@ import queue
 import uuid
 import subprocess
 import sys
+import argparse
 from collections import deque
+from functools import wraps
 
 import truststore
 truststore.inject_into_ssl()
@@ -155,6 +157,101 @@ _ip_status_cache = {
 }
 
 
+def _parse_runtime_flags(argv: list[str]) -> argparse.Namespace:
+    """Parse runtime flags used when launching app.py directly.
+
+    parse_known_args is used so unknown flags from external launchers do not
+    break startup.
+    """
+    parser = argparse.ArgumentParser(add_help=True)
+    parser.add_argument(
+        "--server",
+        action="store_true",
+        help="Run in server mode: hide/disable sensitive config surfaces.",
+    )
+    parser.add_argument(
+        "--non-us",
+        action="store_true",
+        help="Force non-US behavior: disable Open Finance US API and dependent use cases.",
+    )
+    parser.add_argument(
+        "--host",
+        default=os.environ.get("HOST", "0.0.0.0"),
+        help="Host interface to bind.",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.environ.get("PORT", "9021")),
+        help="Port to bind.",
+    )
+    args, _ = parser.parse_known_args(argv)
+    return args
+
+
+_RUNTIME_FLAGS = _parse_runtime_flags(sys.argv[1:] if __name__ == "__main__" else [])
+_SERVER_MODE = _RUNTIME_FLAGS.server or os.environ.get("VIMA_SERVER_MODE", "").strip().lower() in {
+    "1", "true", "yes", "on"
+}
+_FORCE_NON_US = _RUNTIME_FLAGS.non_us or os.environ.get("VIMA_NON_US", "").strip().lower() in {
+    "1", "true", "yes", "on"
+}
+_OPEN_FINANCE_US_API_ID = "open_finance"
+_NON_US_DISABLED_HINT = (
+    "Disabled in --non-us mode. This Open Finance US capability requires a US IP. "
+    "If running on a US IP, this item would be enabled."
+)
+
+
+def _server_mode_enabled() -> bool:
+    return bool(_SERVER_MODE)
+
+
+def _non_us_mode_enabled() -> bool:
+    return bool(_FORCE_NON_US)
+
+
+def _server_mode_forbidden_response():
+    return jsonify({"error": "Disabled in server mode."}), 403
+
+
+def _non_us_forbidden_response():
+    return jsonify({
+        "error": _NON_US_DISABLED_HINT
+    }), 403
+
+
+def _require_not_server_mode(fn):
+    @wraps(fn)
+    def _wrapped(*args, **kwargs):
+        if _server_mode_enabled():
+            return _server_mode_forbidden_response()
+        return fn(*args, **kwargs)
+    return _wrapped
+
+
+def _is_non_us_blocked_api(api_id: str) -> bool:
+    return _non_us_mode_enabled() and api_id == _OPEN_FINANCE_US_API_ID
+
+
+def _is_non_us_blocked_usecase(uc_id: str) -> bool:
+    if not _non_us_mode_enabled():
+        return False
+    mod = usecase_registry.get_module(uc_id)
+    if mod is None:
+        return False
+    manifest = getattr(mod, "MANIFEST", {}) or {}
+    return _OPEN_FINANCE_US_API_ID in (manifest.get("apis") or [])
+
+
+@app.before_request
+def _enforce_server_mode_surfaces():
+    """Block sensitive surfaces that must be unavailable in server mode."""
+    if _server_mode_enabled() and request.path.startswith("/chat"):
+        return _server_mode_forbidden_response()
+    return None
+
+
 def _fetch_geo_payload(client_ip: str) -> dict:
     """Resolve country and public IP using external geo services."""
     # Prefer a plain-text trace endpoint that exposes the egress country directly.
@@ -228,6 +325,10 @@ def index():
         apis=api_registry.manifests(),
         api_groups=api_registry.manifests_grouped(),
         use_cases=usecase_registry.manifests(),
+        runtime_mode={
+            "server_mode": _server_mode_enabled(),
+            "non_us_mode": _non_us_mode_enabled(),
+        },
         cache_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'js', 'app.js'))),
         css_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'css', 'styles.css'))),
     )
@@ -247,6 +348,21 @@ def explorer_apis():
 def diagnostics_us_ip_status():
     """Return whether the caller appears to be on a US IP address."""
     now = time.time()
+    if _non_us_mode_enabled():
+        payload = {
+            "success": True,
+            "is_us": False,
+            "country_code": "NON-US",
+            "ip": "runtime-flag",
+            "provider": "runtime-flag",
+            "source": "runtime-flag",
+            "checked_at": int(now),
+            "forced": True,
+        }
+        resp = jsonify(payload)
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+
     client_ip = (request.remote_addr or "").strip()
     cached = _ip_status_cache.get("payload")
     if cached and (now - float(_ip_status_cache.get("ts") or 0)) < 20:
@@ -276,6 +392,8 @@ def diagnostics_us_ip_status():
 
 @app.route("/explorer/<api_id>/state")
 def explorer_state(api_id: str):
+    if _is_non_us_blocked_api(api_id):
+        return _non_us_forbidden_response()
     mod = api_registry.get_module(api_id)
     if mod is None:
         return jsonify({"error": "Unknown API"}), 404
@@ -285,6 +403,8 @@ def explorer_state(api_id: str):
 
 @app.route("/explorer/<api_id>/execute", methods=["POST"])
 def explorer_execute(api_id: str):
+    if _is_non_us_blocked_api(api_id):
+        return _non_us_forbidden_response()
     mod = api_registry.get_module(api_id)
     if mod is None:
         return jsonify({"error": "Unknown API"}), 404
@@ -762,6 +882,8 @@ def usecases_list():
 
 @app.route("/usecases/<uc_id>/data")
 def usecase_data(uc_id: str):
+    if _is_non_us_blocked_usecase(uc_id):
+        return _non_us_forbidden_response()
     mod = usecase_registry.get_module(uc_id)
     if mod is None:
         return jsonify({"error": "Unknown use case"}), 404
@@ -791,6 +913,8 @@ def usecase_data(uc_id: str):
 
 @app.route("/usecases/<uc_id>/action", methods=["POST"])
 def usecase_action(uc_id: str):
+    if _is_non_us_blocked_usecase(uc_id):
+        return _non_us_forbidden_response()
     mod = usecase_registry.get_module(uc_id)
     if mod is None or not hasattr(mod, "do_action"):
         return jsonify({"error": "Unknown action"}), 404
@@ -1378,6 +1502,7 @@ def _write_env_values(updates: dict) -> None:
 
 
 @app.route("/config", methods=["GET"])
+@_require_not_server_mode
 def config_get():
     env = _read_env_values()
     groups = []
@@ -1404,6 +1529,7 @@ def config_get():
 
 
 @app.route("/config", methods=["POST"])
+@_require_not_server_mode
 def config_save_route():
     body = request.get_json(silent=True) or {}
     updates = body.get("updates") or {}
@@ -1421,6 +1547,7 @@ def config_save_route():
 
 
 @app.route("/config/export", methods=["GET"])
+@_require_not_server_mode
 def config_export():
     """Export config/keys + .env (with ANTHROPIC_API_KEY redacted) as a zip."""
     import zipfile, io, re as _re
@@ -1591,6 +1718,7 @@ def _atomic_write_bytes(path: str, data: bytes) -> None:
 
 
 @app.route("/config/import", methods=["POST"])
+@_require_not_server_mode
 def config_import():
     """Import a vima-config.zip or upload_bundle_xxx.zip — merges into existing .env."""
     import zipfile, io as _io, tempfile, importlib.util as _ilu
@@ -1691,6 +1819,8 @@ def config_import():
         return jsonify({"error": str(exc)}), 500
 
 
+@app.route("/config/upload-key", methods=["POST"])
+@_require_not_server_mode
 def config_upload_key():
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
@@ -1716,6 +1846,7 @@ def config_upload_key():
 # ----------------------------------------------------------------------------
 
 @app.route("/config/purge", methods=["POST"])
+@_require_not_server_mode
 def config_purge():
     """Remove all provisioned keys and .env files, then clear matching env vars from memory."""
     import shutil
@@ -1829,11 +1960,14 @@ def _build_provision_catalog() -> list[dict]:
             "provision_note": note,
             "auto_provisionable": bool(entry.auto_provisionable),
             "manual_onboarding_url": entry.manual_onboarding_url or "",
+            "disabled_in_non_us": _is_non_us_blocked_api(api_id),
+            "disabled_reason": _NON_US_DISABLED_HINT if _is_non_us_blocked_api(api_id) else "",
         })
     return catalog
 
 
 @app.route("/provision/catalog")
+@_require_not_server_mode
 def provision_catalog():
     """Return canonical API metadata used by the auto-provisioning modal."""
     resp = jsonify({"apis": _build_provision_catalog()})
@@ -1842,6 +1976,7 @@ def provision_catalog():
 
 
 @app.route("/provision/status")
+@_require_not_server_mode
 def provision_status():
     has_env = os.path.isfile(_ENV_PATH)
     apis = api_registry.manifests()
@@ -1853,12 +1988,15 @@ def provision_status():
 
 
 @app.route("/provision/start", methods=["POST"])
+@_require_not_server_mode
 def provision_start():
     body = request.get_json(silent=True) or {}
     selected_apis = body.get("apis", [])
     password = body.get("password", "foobar!!")
     if not selected_apis:
         return jsonify({"error": "No APIs selected"}), 400
+    if _non_us_mode_enabled() and _OPEN_FINANCE_US_API_ID in selected_apis:
+        return _non_us_forbidden_response()
 
     tool_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools", "mcd-key-automation")
     setup_error = _provisioner_setup_error(tool_dir)
@@ -2034,6 +2172,7 @@ projects:
 
 
 @app.route("/provision/stream/<job_id>")
+@_require_not_server_mode
 def provision_stream(job_id):
     job = _provision_jobs.get(job_id)
     if not job:
@@ -2072,7 +2211,8 @@ def provision_stream(job_id):
 
 if __name__ == "__main__":
     _bin_try_load_from_disk()
-    port = int(os.environ.get("PORT", "9021"))
+    port = _RUNTIME_FLAGS.port
+    host = _RUNTIME_FLAGS.host
     apis = api_registry.manifests()
     print("\n" + "=" * 60)
     print("Vima - Mastercard API explorer")
@@ -2080,6 +2220,10 @@ if __name__ == "__main__":
     for a in apis:
         flag = "+" if a.get("configured") else "-"
         print(f"  {flag} {a['name']:<20} ({len(a['operations'])} operations)")
-    print(f"\nListening on http://0.0.0.0:{port}")
+    if _server_mode_enabled() or _non_us_mode_enabled():
+        print("\nRuntime mode:")
+        print(f"  - server mode: {'ON' if _server_mode_enabled() else 'OFF'}")
+        print(f"  - non-us mode: {'ON' if _non_us_mode_enabled() else 'OFF'}")
+    print(f"\nListening on http://{host}:{port}")
     print("=" * 60 + "\n")
-    app.run(host="0.0.0.0", port=port, debug=True, use_reloader=False)
+    app.run(host=host, port=port, debug=True, use_reloader=False)
