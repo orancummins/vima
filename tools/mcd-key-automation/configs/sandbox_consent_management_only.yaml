@@ -1,0 +1,14 @@
+environment: sandbox
+organization: mastercard
+
+login_url: https://developer.mastercard.com/account/log-in
+dashboard_url_pattern: "**/dashboard**"
+key_password: "foobar!!"
+
+# Single-API config for re-provisioning Consent Management.
+# The wizard downloads a Mastercard public encryption PEM at Step 3,
+# then the signing key is added via the sandbox "Add project key" flow.
+projects:
+  - name: consent_management
+    description: Mastercard Consent Management
+    apis: [consent_management]
