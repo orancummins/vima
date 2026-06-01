@@ -1355,9 +1355,14 @@ def findacard_health():
     try:
         sock = socket.create_connection(("127.0.0.1", 5432), timeout=1)
         sock.close()
-        return jsonify({"online": True})
+        # If request came through a reverse proxy, the browser should reach fac
+        # via the proxied path rather than localhost:5432 (which the browser
+        # can't access on the server).
+        forwarded_prefix = request.headers.get("X-Forwarded-Prefix", "")
+        url = (forwarded_prefix + "/fac") if forwarded_prefix else "http://localhost:5432"
+        return jsonify({"online": True, "url": url})
     except (socket.timeout, ConnectionRefusedError, OSError):
-        return jsonify({"online": False})
+        return jsonify({"online": False, "url": "http://localhost:5432"})
 
 
 @app.route("/api-call-log")
