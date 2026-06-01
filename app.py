@@ -1355,11 +1355,15 @@ def findacard_health():
     try:
         sock = socket.create_connection(("127.0.0.1", 5432), timeout=1)
         sock.close()
-        # If request came through a reverse proxy, the browser should reach fac
-        # via the proxied path rather than localhost:5432 (which the browser
-        # can't access on the server).
-        forwarded_prefix = request.headers.get("X-Forwarded-Prefix", "")
-        url = (forwarded_prefix + "/fac") if forwarded_prefix else "http://localhost:5432"
+        # If request came through a reverse proxy, the browser must reach fac
+        # via an absolute URL so path-rewriting patches don't corrupt it.
+        # fac lives at nginx-level /fac, outside the /vima/ proxy.
+        proto = request.headers.get("X-Forwarded-Proto", "")
+        host = request.headers.get("X-Forwarded-Host") or request.headers.get("Host", "")
+        if proto and host:
+            url = f"{proto}://{host}/fac"
+        else:
+            url = "http://localhost:5432"
         return jsonify({"online": True, "url": url})
     except (socket.timeout, ConnectionRefusedError, OSError):
         return jsonify({"online": False, "url": "http://localhost:5432"})
