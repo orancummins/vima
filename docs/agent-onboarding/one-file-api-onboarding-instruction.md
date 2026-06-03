@@ -25,19 +25,21 @@ the complete workflow you are responsible for end-to-end.
 - docs/agent-onboarding/troubleshooting.md
 4. Update docs/agent-onboarding/api-onboarding-spec.yaml for the new API.
 5. Add API identity entry in apis/catalog.py.
-6. Implement apis/<id>/api.py with MANIFEST (including docs_url and how_to) and execute.
-7. Add simulator handler and fixture.
-8. Add provisioning mapping in tools/mcd-key-automation/providers/mastercard/api_config.py and ensure the provision_type is supported in tools/mcd-key-automation/providers/mastercard/workflows/project_workflow.py.
-9. Verify UI surfacing:
+6. Assign the API to at least one bundle in apis/bundles.py — append the new api id to the `apis=(...)` tuple of every relevant `Bundle(...)` (multi-bundle is normal). See "Bundle Assignment" in docs/agent-onboarding/new-api-playbook.md for the decision matrix.
+7. Implement apis/<id>/api.py with MANIFEST (including docs_url and how_to) and execute.
+8. Add simulator handler and fixture.
+9. Add provisioning mapping in tools/mcd-key-automation/providers/mastercard/api_config.py and ensure the provision_type is supported in tools/mcd-key-automation/providers/mastercard/workflows/project_workflow.py.
+10. Verify UI surfacing:
 - appears in APIs tab via manifests
 - appears in provisioning modal via /provision/catalog
 - Docs and How To render
-10. Run validation:
+- "Part of bundles" chip row on the API detail panel lists every bundle the API was added to
+11. Run validation:
 - ./.venv/bin/python tools/validate_api_contract.py
-11. Run smoke checks:
+12. Run smoke checks:
 - simulator operation
 - live operation when credentials are available
-12. After the provisioning mapping is wired (step 8), acquire portal credentials for the API:
+13. After the provisioning mapping is wired (step 9), acquire portal credentials for the API:
 
     **From the repo root, prefer the wrapper:**
     ```

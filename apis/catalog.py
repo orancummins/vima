@@ -113,6 +113,15 @@ class ApiCatalogEntry:
     # ``manual_onboarding_url`` instead so the user can request access.
     auto_provisionable: bool = True
     manual_onboarding_url: str = ""
+    # Sibling APIs that pair naturally with this one. Surfaced as
+    # "Often paired with" chips on the API detail panel. Free-form
+    # ordering — closest pair first. See ``apis/bundles.py`` for the
+    # solution-shaped bundle definitions that aggregate these pairings.
+    complements: tuple[str, ...] = ()
+    # Hard prerequisites — APIs whose credentials must be in place for
+    # *this* API to be useful (e.g. Easy Savings needs a BIN to query
+    # against; any Open Finance use case needs a Consent mandate first).
+    requires: tuple[str, ...] = ()
     # Optional override; defaults to ``apis.<id>.api``.
     module_path: Optional[str] = None
 
@@ -146,6 +155,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/open-finance-us/documentation/",
         legacy_id="ofin",
         group=GROUP_OPEN_FINANCE,
+        complements=("consumer_clarity", "merchant_identifier", "places", "carbon_calculator", "consent_management"),
     ),
     ApiCatalogEntry(
         id="open_finance_au",
@@ -161,6 +171,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         legacy_id=None,
         group=GROUP_OPEN_FINANCE,
         provision_note="",
+        complements=("consumer_clarity", "merchant_identifier", "places", "carbon_calculator", "consent_management"),
     ),
     ApiCatalogEntry(
         id="open_finance_eu",
@@ -183,6 +194,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         ),
         auto_provisionable=False,
         manual_onboarding_url="https://openbankingeu.mastercard.com/contact-us",
+        complements=("consumer_clarity", "merchant_identifier", "places", "carbon_calculator", "consent_management"),
     ),
     ApiCatalogEntry(
         id="bin_lookup",
@@ -194,6 +206,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/bin-lookup/documentation/",
         legacy_id="binlookup",
         group=GROUP_DATA,
+        complements=("easy_savings", "benefits_eligibility", "business_payment_controls", "match", "merchant_identifier"),
     ),
     ApiCatalogEntry(
         id="merchant_identifier",
@@ -205,6 +218,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/merchant-identifier/documentation/",
         legacy_id=None,
         group=GROUP_DATA,
+        complements=("consumer_clarity", "places", "open_finance", "match"),
     ),
     ApiCatalogEntry(
         id="automatic_billing_updater",
@@ -217,6 +231,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         legacy_id=None,
         group=GROUP_DATA,
         provision_note="Push operations require ABU Push service registration",
+        complements=("open_finance", "transaction_notifications", "consent_management"),
     ),
     ApiCatalogEntry(
         id="match",
@@ -228,6 +243,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/match/documentation/",
         legacy_id=None,
         group=GROUP_SECURITY,
+        complements=("merchant_identifier", "bin_lookup", "consumer_clarity"),
     ),
     ApiCatalogEntry(
         id="consumer_clarity",
@@ -239,6 +255,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/consumer-clarity-us/documentation/",
         legacy_id="clarity",
         group=GROUP_DATA,
+        complements=("merchant_identifier", "places", "open_finance"),
     ),
     ApiCatalogEntry(
         id="priceless_cities",
@@ -251,6 +268,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         legacy_id="priceless",
         group=GROUP_LOYALTY,
         provision_note="Requires API Owner approval",
+        complements=("places", "offers_for_publishers", "easy_savings"),
     ),
     ApiCatalogEntry(
         id="easy_savings",
@@ -262,6 +280,8 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/easy-savings/documentation/",
         legacy_id="easysavings",
         group=GROUP_LOYALTY,
+        complements=("offers_for_publishers", "offers_merchant_content", "places"),
+        requires=("bin_lookup",),
     ),
     ApiCatalogEntry(
         id="places",
@@ -273,6 +293,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/places/documentation/",
         legacy_id="places",
         group=GROUP_DATA,
+        complements=("consumer_clarity", "merchant_identifier", "priceless_cities", "easy_savings"),
     ),
     ApiCatalogEntry(
         id="offers_for_publishers",
@@ -284,6 +305,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/presentment/documentation/",
         legacy_id="ofpub",
         group=GROUP_LOYALTY,
+        complements=("offers_merchant_content", "easy_savings", "places"),
     ),
     ApiCatalogEntry(
         id="offers_merchant_content",
@@ -295,6 +317,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/eop-admin/documentation/",
         legacy_id="ofmc",
         group=GROUP_LOYALTY,
+        complements=("offers_for_publishers", "easy_savings", "merchant_identifier"),
     ),
     ApiCatalogEntry(
         id="consent_management",
@@ -306,6 +329,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/consent-management/documentation/",
         legacy_id="consent",
         group=GROUP_SECURITY,
+        complements=("open_finance", "automatic_billing_updater", "transaction_notifications"),
     ),
     ApiCatalogEntry(
         id="transaction_notifications",
@@ -317,6 +341,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/transaction-notifications/documentation/",
         legacy_id="txnotify",
         group=GROUP_DATA,
+        complements=("open_finance", "automatic_billing_updater", "consent_management"),
     ),
     ApiCatalogEntry(
         id="benefits_eligibility",
@@ -329,6 +354,8 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         legacy_id="eligibility",
         group=GROUP_LOYALTY,
         provision_note="Requires API Owner approval",
+        complements=("benefits_content_eligibility", "flight_delay_pass"),
+        requires=("bin_lookup",),
     ),
     ApiCatalogEntry(
         id="benefits_content_eligibility",
@@ -340,6 +367,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/bces-service/documentation/",
         legacy_id="bces",
         group=GROUP_LOYALTY,
+        complements=("benefits_eligibility", "flight_delay_pass"),
     ),
     ApiCatalogEntry(
         id="enhanced_currency_conversion_calculator",
@@ -352,6 +380,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         legacy_id=None,
         group=GROUP_DATA,
         provision_note="Requires API Owner approval",
+        complements=("business_payment_controls",),
     ),
     ApiCatalogEntry(
         id="flight_delay_pass",
@@ -376,6 +405,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         ),
         auto_provisionable=False,
         manual_onboarding_url="https://developer.mastercard.com/flight-delay-pass/documentation/",
+        complements=("benefits_eligibility", "benefits_content_eligibility"),
     ),
     ApiCatalogEntry(
         id="carbon_calculator",
@@ -398,6 +428,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         ),
         auto_provisionable=False,
         manual_onboarding_url="https://developer.mastercard.com/create-project/carbon-calculator?services=carbon-calculator",
+        complements=("open_finance", "consumer_clarity", "merchant_identifier"),
     ),
     ApiCatalogEntry(
         id="business_payment_controls",
@@ -425,6 +456,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
             "Requires a registration token from your Mastercard Commercial "
             "Products implementation manager (default in playbook: 123456789)."
         ),
+        complements=("bin_lookup", "transaction_notifications", "enhanced_currency_conversion_calculator"),
     ),
 )
 

@@ -20,7 +20,7 @@ MANIFEST: Dict[str, Any] = {
         "types, and a full scrollable transaction history — the complete building blocks of "
         "a world-class personal finance app, powered by a single Mastercard integration."
     ),
-    "apis": ["open_finance"],
+    "apis": ["open_finance", "consumer_clarity", "merchant_identifier", "places"],
     "render": "pfm",
 }
 
@@ -29,6 +29,27 @@ def _client():
     # Defer import so the registry doesn't fail when OFIN isn't configured.
     from apis.open_finance import api as ofin_api
     return ofin_api._get_client()
+
+
+def _ofin_state() -> Dict[str, Any]:
+    """Snapshot of the Open Finance US module's shared context.
+
+    The Open Finance tab populates ``STATE`` (customer_id, username, the
+    full ``accounts`` list, etc.) whenever an operation runs there or
+    when the background seeder finds a default customer. PFM consumes
+    that same context so the dashboard always reflects whichever
+    customer is "live" in the rest of Solution Studio — no duplicate
+    fetches, no diverging view.
+    """
+    from apis.open_finance import api as ofin_api
+    # get_state() also kicks off the background seed on first call, so
+    # PFM benefits from the same auto-discovery as the API tab.
+    snapshot = getattr(ofin_api, "get_state", lambda: {})() or {}
+    # Pull the raw accounts list (with full balance/type/etc.) straight
+    # from STATE — get_state() only exposes a UI-trimmed projection.
+    raw_state = getattr(ofin_api, "STATE", {}) or {}
+    snapshot["raw_accounts"] = raw_state.get("accounts") or []
+    return snapshot
 
 
 def _categorize(txn: Dict[str, Any]) -> str:
@@ -41,19 +62,51 @@ def _categorize(txn: Dict[str, Any]) -> str:
 
 
 def get_data(customer_id: str) -> Dict[str, Any]:
-    """Fetch and shape data for the PFM dashboard."""
+    """Fetch and shape data for the PFM dashboard.
+
+    Reads customer + accounts from the Open Finance US ``STATE`` context
+    (populated by the API tab / background seeder) so the dashboard
+    mirrors the rest of Solution Studio. ``customer_id`` overrides the
+    context for ad-hoc views. Transactions are still fetched live since
+    they're not cached in shared state.
+    """
+    state = _ofin_state()
+    # Effective customer_id: explicit arg wins, otherwise use whatever
+    # the Open Finance module has loaded into context.
+    effective_cid = (customer_id or "").strip() or state.get("customer_id")
+    if not effective_cid:
+        return {
+            "error": (
+                "No customer linked. Open the Open Finance tab and create or "
+                "select a customer to populate context, then reload."
+            ),
+        }
+
     client = _client()
+    if client is None:
+        return {"error": "Open Finance US is not configured."}
 
-    # Accounts
-    acct_resp, acct_status = client.get_customer_accounts(customer_id)
-    if acct_status >= 400 or not isinstance(acct_resp, dict):
-        return {"error": "Could not load accounts", "status": acct_status, "detail": acct_resp}
-    accounts = acct_resp.get("accounts", []) or []
+    # Accounts — prefer the list already loaded into Open Finance
+    # context (avoids a redundant round-trip and keeps the PFM view in
+    # lock-step with the API tab). Fall back to a live fetch if context
+    # is empty or the caller asked for a different customer.
+    using_context_accounts = (
+        bool(state.get("raw_accounts"))
+        and effective_cid == state.get("customer_id")
+    )
+    if using_context_accounts:
+        accounts = state["raw_accounts"]
+    else:
+        acct_resp, acct_status = client.get_customer_accounts(effective_cid)
+        if acct_status >= 400 or not isinstance(acct_resp, dict):
+            return {"error": "Could not load accounts", "status": acct_status, "detail": acct_resp}
+        accounts = acct_resp.get("accounts", []) or []
 
-    # Transactions (last 90 days)
+    # Transactions (last 90 days) — not cached in Open Finance STATE,
+    # so always fetched live for the active customer.
     now = int(time.time())
     past = now - 90 * 24 * 3600
-    txn_resp, txn_status = client.get_customer_transactions(customer_id, past, now, limit=500)
+    txn_resp, txn_status = client.get_customer_transactions(effective_cid, past, now, limit=500)
     transactions = []
     if isinstance(txn_resp, dict) and txn_status < 400:
         transactions = txn_resp.get("transactions", []) or []
@@ -121,7 +174,15 @@ def get_data(customer_id: str) -> Dict[str, Any]:
     ]
 
     return {
-        "customer_id": customer_id,
+        "customer_id": effective_cid,
+        "customer_username": state.get("customer_username"),
+        # Provenance hint so the UI can surface "loaded from Open Finance
+        # context" vs "fetched fresh from the API" — useful for demos.
+        "context": {
+            "source": "open_finance_us_state" if using_context_accounts else "open_finance_us_api",
+            "context_customer_id": state.get("customer_id"),
+            "context_username": state.get("customer_username"),
+        },
         "accounts": shaped_accounts,
         "transactions": shaped_txns[:50],
         "summary": {

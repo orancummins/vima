@@ -43,6 +43,17 @@ Evidence:
 Evidence:
 - Catalog entry snippet/location:
 
+## Bundle Assignment
+
+- [ ] Reviewed every `Bundle(...)` in `apis/bundles.py` and decided membership.
+- [ ] API id appended to the `apis=(...)` tuple of every relevant bundle (or rationale recorded for assigning to none).
+- [ ] If a new bundle was created, accent colour is distinct from existing bundles and reviewer signoff captured.
+- [ ] UI verified: API appears under "APIs in this bundle" for each chosen bundle, and "Part of bundles" chip row on the API detail panel lists them.
+
+Evidence:
+- Bundles assigned to:
+- bundles.py changes:
+
 ## Module Implementation
 
 - [ ] `apis/<id>/api.py` added.

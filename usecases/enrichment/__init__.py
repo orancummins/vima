@@ -25,7 +25,7 @@ MANIFEST: Dict[str, Any] = {
         "confidence scores — turning opaque payment data into powerful, actionable intelligence "
         "that drives better customer experiences, richer analytics, and stronger engagement."
     ),
-    "apis": ["open_finance"],
+    "apis": ["open_finance", "consumer_clarity", "merchant_identifier"],
     "render": "enrichment",
 }
 

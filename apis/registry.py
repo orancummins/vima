@@ -21,6 +21,7 @@ import os
 from typing import Any, Dict, List
 
 from apis.catalog import CATALOG, DISABLED_API_IDS, GROUP_ORDER, iter_ordered, get as catalog_get
+from apis.bundles import iter_bundles, bundles_for_api
 from apis.credentials import is_configured as default_is_configured
 
 
@@ -66,6 +67,9 @@ def manifests() -> List[Dict[str, Any]]:
         m["portal_slug"] = entry.portal_slug
         m["legacy_id"] = entry.legacy_id  # may be None for newer APIs
         m["group"] = entry.group
+        m["complements"] = list(entry.complements)
+        m["requires"] = list(entry.requires)
+        m["bundles"] = [b.id for b in bundles_for_api(entry.id)]
         configured_fn = getattr(mod, "is_configured", None)
         if callable(configured_fn):
             m["configured"] = bool(configured_fn())
@@ -107,7 +111,66 @@ def get_module(api_id: str):
     entry = catalog_get(api_id)
     if entry is None:
         return None
-    return REGISTRY.get(entry.id)
+def solutions() -> List[Dict[str, Any]]:
+    """Return solution-shaped bundles enriched with per-bundle status.
+
+    Each bundle yields:
+
+        {
+          "id":         "pfm_stack",
+          "name":       "Account intelligence & PFM",
+          "tagline":    "...",
+          "anchor":     "open_finance",
+          "apis":       [ {id, name, configured, group, disabled}, ... ],
+          "configured": 3,   # how many APIs in the bundle are configured
+          "total":      8,   # total APIs in the bundle (excl. disabled)
+        }
+
+    Disabled APIs (catalog ``DISABLED_API_IDS``) are filtered out of the
+    ``apis`` array so the UI doesn't surface things the user cannot
+    onboard.  The chat agent uses this same shape so it can recommend
+    coherent solution stacks rather than individual APIs.
+    """
+    manifest_by_id = {m["id"]: m for m in manifests()}
+    out: List[Dict[str, Any]] = []
+    for b in iter_bundles():
+        apis_out: List[Dict[str, Any]] = []
+        configured = 0
+        for api_id in b.apis:
+            m = manifest_by_id.get(api_id)
+            if m is None:
+                # Either unknown or disabled — skip so the bundle stays clean.
+                continue
+            apis_out.append({
+                "id": m["id"],
+                "name": m["name"],
+                "group": m.get("group"),
+                "configured": bool(m.get("configured")),
+            })
+            if m.get("configured"):
+                configured += 1
+        out.append({
+            "id": b.id,
+            "name": b.name,
+            "tagline": b.tagline,
+            "description": b.description,
+            "accent": b.accent,
+            "icon_path": b.icon_path,
+            "value_props": list(b.value_props),
+            "journey": [
+                {"api_id": step[0], "title": step[1], "detail": step[2]}
+                for step in b.journey
+            ],
+            "walkthroughs": [
+                {"title": w[0], "body": w[1]} for w in b.walkthroughs
+            ],
+            "examples": list(b.examples),
+            "anchor": b.anchor,
+            "apis": apis_out,
+            "configured": configured,
+            "total": len(apis_out),
+        })
+    return out
 
 
-__all__ = ["REGISTRY", "ORDER", "manifests", "manifests_grouped", "get_module"]
+__all__ = ["REGISTRY", "ORDER", "manifests", "manifests_grouped", "get_module", "solutions"]
