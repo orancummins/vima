@@ -340,7 +340,8 @@
         </div>
         <pre class="apis-snippets-code"><code>${escapeHtml('# Building authentic snippet\u2026')}</code></pre>
       </div>`;
-    const op = (api.operations || [])[0];
+    const op = (api.operations || []).find((o) => o.id === currentOpId)
+             || (api.operations || [])[0];
     const opId = op ? op.id : '';
     const url = `/explorer/${encodeURIComponent(api.id)}/snippet`
               + (opId ? `?op=${encodeURIComponent(opId)}` : '');
@@ -696,8 +697,24 @@
       const apiManifest = APIS.find(a => a.id === apiId);
       const configured = apiManifest ? apiManifest.configured : false;
       const name = apiManifest ? apiManifest.name : apiId;
-      return `<div class="uc-sidebar-api-badge ${configured ? 'configured' : 'unconfigured'}"><span class="uc-sidebar-api-dot"></span>${escapeHtml(name)}</div>`;
+      const known = !!apiManifest;
+      const title = known ? `Open ${name} in APIs tab` : `${apiId} (not registered)`;
+      return `<button type="button" class="uc-sidebar-api-badge ${configured ? 'configured' : 'unconfigured'}${known ? '' : ' disabled'}" data-uc-api-link="${escapeHtml(apiId)}" title="${escapeHtml(title)}"${known ? '' : ' disabled'}><span class="uc-sidebar-api-dot"></span>${escapeHtml(name)}</button>`;
     }).join('');
+    // Wire click → switch to APIs tab and select the API.
+    list.querySelectorAll('[data-uc-api-link]').forEach(btn => {
+      btn.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const apiId = btn.getAttribute('data-uc-api-link');
+        if (!apiId) return;
+        const tabBtn = document.querySelector('.top-tab[data-top-tab="apis"]');
+        if (tabBtn) tabBtn.click();
+        setTimeout(() => {
+          const apiBtn = document.querySelector('[data-api-id="' + apiId + '"]');
+          if (apiBtn) apiBtn.click();
+        }, 0);
+      });
+    });
     container.classList.remove('hidden');
   }
 
@@ -1077,6 +1094,18 @@
       .catch(() => []);
   }
   loadBundles();
+
+  // Use-cases cache — used by the API detail panel to render a
+  // "See it working in use cases" row from each manifest's `apis: [...]`.
+  let _useCasesCache = null;
+  function loadUseCases() {
+    if (_useCasesCache) return Promise.resolve(_useCasesCache);
+    return fetch('/usecases', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d) => { _useCasesCache = d.use_cases || []; return _useCasesCache; })
+      .catch(() => []);
+  }
+  loadUseCases();
 
   function _bundleApiTileHtml(bundle, a) {
     const isAnchor = a.id === bundle.anchor;
@@ -1586,12 +1615,12 @@
     }
     let html = '';
     if (requires.length) {
-      html += '<div class="api-pairs-row"><span class="api-pairs-label">Requires</span>' +
-        requires.map((id) => chip(id, 'requires')).join('') + '</div>';
+      html += '<div class="api-pairs-row"><span class="api-pairs-label">Requires</span><div class="api-pairs-chips">' +
+        requires.map((id) => chip(id, 'requires')).join('') + '</div></div>';
     }
     if (complements.length) {
-      html += '<div class="api-pairs-row"><span class="api-pairs-label">APIs often paired with</span>' +
-        complements.map((id) => chip(id, 'complement')).join('') + '</div>';
+      html += '<div class="api-pairs-row"><span class="api-pairs-label">APIs often paired with</span><div class="api-pairs-chips">' +
+        complements.map((id) => chip(id, 'complement')).join('') + '</div></div>';
     }
     if (bundles.length) {
       const bundleChips = bundles.map((bid) => {
@@ -1600,7 +1629,24 @@
         const accent = (cached && cached.accent) || '#ffcb05';
         return `<button class="api-pair-chip api-pair-chip--bundle" data-pair-bundle="${escapeHtml(bid)}" style="--bundle-accent: ${escapeHtml(accent)};"><span class="api-pair-chip-dot"></span>${escapeHtml(label)}</button>`;
       }).join('');
-      html += '<div class="api-pairs-row"><span class="api-pairs-label">Part of bundles</span>' + bundleChips + '</div>';
+      html += '<div class="api-pairs-row"><span class="api-pairs-label">Part of bundles</span><div class="api-pairs-chips">' + bundleChips + '</div></div>';
+    }
+    // "See it working in use cases" — any use case whose manifest lists
+    // this API id under `apis`.
+    const matchingUseCases = (_useCasesCache || []).filter((uc) =>
+      Array.isArray(uc.apis) && uc.apis.includes(api.id)
+    );
+    if (matchingUseCases.length) {
+      const ucChips = matchingUseCases.map((uc) => {
+        const accent = uc.accent || '#ff6a00';
+        return `<button class="api-pair-chip api-pair-chip--usecase" data-pair-usecase="${escapeHtml(uc.id)}" style="--bundle-accent: ${escapeHtml(accent)};" title="Open the ${escapeHtml(uc.name || uc.id)} use case"><span class="api-pair-chip-dot"></span>${escapeHtml(uc.name || uc.id)}</button>`;
+      }).join('');
+      html += '<div class="api-pairs-row"><span class="api-pairs-label">See it working in use cases</span><div class="api-pairs-chips">' + ucChips + '</div></div>';
+    } else if (!_useCasesCache) {
+      // Cache not loaded yet — re-render once it arrives.
+      loadUseCases().then(() => {
+        if (currentApi() && currentApi().id === api.id) renderApiPairs(api);
+      });
     }
     el.hidden = false;
     el.innerHTML = html;
@@ -1616,6 +1662,18 @@
         if (bundlesTabBtn) bundlesTabBtn.click();
         setTimeout(() => {
           const sideBtn = document.querySelector(`[data-bundle-id="${b.dataset.pairBundle}"]`);
+          if (sideBtn) sideBtn.click();
+        }, 0);
+      });
+    });
+    el.querySelectorAll('[data-pair-usecase]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const ucId = b.dataset.pairUsecase;
+        if (typeof _isNonUsBlockedUseCaseById === 'function' && _isNonUsBlockedUseCaseById(ucId)) return;
+        const ucTabBtn = document.querySelector('.top-tab[data-top-tab="usecases"]');
+        if (ucTabBtn) ucTabBtn.click();
+        setTimeout(() => {
+          const sideBtn = document.querySelector(`[data-uc-id="${ucId}"]`);
           if (sideBtn) sideBtn.click();
         }, 0);
       });
@@ -1866,6 +1924,13 @@
     $("op-send").disabled = false;
     $("op-hint").innerHTML = "";
     renderParams();    restoreIo();
+    // If the View Code panel is open for this API, refresh it so the
+    // snippet tracks whichever operation the user has chosen.
+    if (typeof APIS_SNIPPETS_VISIBLE !== 'undefined' && APIS_SNIPPETS_VISIBLE
+        && APIS_SNIPPETS_ACTIVE === currentApiId) {
+      const active = APIS.find((a) => a.id === currentApiId);
+      if (active) _snippetRenderBody(active);
+    }
   }
 
   function restoreIo() {
@@ -2274,8 +2339,8 @@
       renderSonic();
     } else if (uc.render === "testchat") {
       renderTestChat();
-    } else if (uc.render === "financeincolour") {
-      renderFinanceInColour();
+    } else if (uc.render === "the_wire") {
+      renderTheWire();
     } else {
       $("uc-body").innerHTML = `<p class="muted">${(uc.apis && uc.apis.length)
         ? "Composes: " + uc.apis.join(", ")
@@ -3253,7 +3318,7 @@
         ? `<span class="psi-spinner" style="width:12px;height:12px;border-width:1.5px"></span> Loading…`
         : loaded
           ? `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/><path d="M4 10l-2-2 2-2"/></svg> Reload`
-          : `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/><path d="M4 10l-2-2 2-2"/></svg> Load into VIMA`;
+          : `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/><path d="M4 10l-2-2 2-2"/></svg> Load into MSS`;
     }
   }
 
@@ -5132,15 +5197,15 @@
     _attachWebviewRefresh('findacard-webview-frame');
   }
 
-  // ===================== Finance In Colour Use Case =====================
-  // Rendered as a sandboxed iframe pointing to /financeincolour/index.html.
-  // All Finance In Colour UI lives in usecases/financeincolour/ — edit there to change the look.
+  // ===================== The Wire Use Case =====================
+  // Rendered as a sandboxed iframe pointing to /the_wire/index.html.
+  // All The Wire UI lives in usecases/the_wire/ — edit there to change the look.
 
-  function renderFinanceInColour() {
+  function renderTheWire() {
     const body = $("uc-body");
     if (!body) return;
-    body.innerHTML = `<iframe id="financeincolour-webview-frame" class="sonic-webview-frame" src="/financeincolour/index.html" title="Finance In Colour"></iframe>`;
-    _attachWebviewRefresh('financeincolour-webview-frame');
+    body.innerHTML = `<iframe id="the-wire-webview-frame" class="sonic-webview-frame" src="/the_wire/index.html" title="The Wire"></iframe>`;
+    _attachWebviewRefresh('the-wire-webview-frame');
   }
 
   // ===================== Sonic Branding Use Case =====================
@@ -6132,7 +6197,7 @@
         else onProvisionDone(selectedIds);
         return;
       }
-      if (raw === '__IMPORT_COMPLETE__') { appendLog('✅ Keys imported — Vima is ready!'); return; }
+      if (raw === '__IMPORT_COMPLETE__') { appendLog('✅ Keys imported — Mastercard Solution Studio is ready!'); return; }
       if (raw.startsWith('__IMPORT_ERROR__')) {
         _provFailed = true;
         _provFailMessage = raw.replace('__IMPORT_ERROR__:', '').trim() || 'Could not import generated keys.';
@@ -6141,7 +6206,7 @@
       }
       if (raw === '__NO_ZIP__') {
         _provFailed = true;
-        _provFailMessage = 'Provisioning completed but no vima-config.zip was produced. Check the log above for errors, then import keys manually.';
+        _provFailMessage = 'Provisioning completed but no vima-config.zip was produced. Check the log above for errors, then import keys manually.';;
         appendLog('ERROR: ' + _provFailMessage);
         return;
       }
@@ -6192,7 +6257,7 @@
       var activationNote = document.getElementById('prov-activation-note');
       var footer = document.getElementById('prov-progress-footer');
       if (titleEl) titleEl.textContent = 'Provisioning Complete!';
-      if (subtitleEl) subtitleEl.textContent = 'Your API keys have been provisioned and imported into Vima.';
+      if (subtitleEl) subtitleEl.textContent = 'Your API keys have been provisioned and imported into Mastercard Solution Studio.';
       if (activationNote) activationNote.style.display = '';
       if (footer) footer.style.display = '';
       appendLog('');

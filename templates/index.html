@@ -913,7 +913,7 @@
         </div>
         <div class="cfg-autogen-banner-body">
           <strong>Auto Provision Keys</strong>
-          <p>A browser will open so you can log into Mastercard Developers. Vima will automatically create projects and signing keys for each API you select.</p>
+          <p>A browser will open so you can log into Mastercard Developers. Mastercard Solution Studio will automatically create projects and signing keys for each API you select.</p>
         </div>
         <div class="cfg-autogen-banner-actions">
           <button class="btn cfg-save-btn cfg-autogen-confirm" id="cfg-autogen-confirm">Yes, Generate New Keys</button>
@@ -1008,6 +1008,7 @@
   <script>
     window.__APIS__ = {{ apis | tojson }};
     window.__USE_CASES__ = {{ use_cases | tojson }};
+    window.__BUNDLES__ = {{ bundles | tojson }};
     window.__RUNTIME_MODE__ = {{ runtime_mode | tojson }};
   </script>
   <script src="{{ url_for('static', filename='js/app.js') }}?v={{ cache_bust }}"></script>
@@ -1167,20 +1168,24 @@
       buildApiRow('home-api-row-2-inner', ROW2, 50);
       buildApiRow('home-api-row-3-inner', ROW3, 70);
 
-      /* ---- Combined API + Use Case fade-cycle panel ---- */
-      var ucs  = window.__USE_CASES__ || [];
-      var apis = window.__APIS__ || [];
+      /* ---- Combined Use Case + API + Bundle fade-cycle panel ---- */
+      var ucs     = window.__USE_CASES__ || [];
+      var apis    = window.__APIS__ || [];
+      var bundles = window.__BUNDLES__ || [];
       var panel = document.getElementById('home-uc-panel');
       if (!panel) return;
 
-      /* Interleave: uc, api, uc, api … */
+      /* Interleave: uc, api, bundle, uc, api, bundle … */
       var items = [];
-      var maxLen = Math.max(ucs.length, apis.length);
+      var maxLen = Math.max(ucs.length, apis.length, bundles.length);
       for (var ii = 0; ii < maxLen; ii++) {
-        if (ii < ucs.length)  items.push({ type: 'usecase', d: ucs[ii] });
-        if (ii < apis.length) items.push({ type: 'api',     d: apis[ii] });
+        if (ii < ucs.length)     items.push({ type: 'usecase', d: ucs[ii] });
+        if (ii < apis.length)    items.push({ type: 'api',     d: apis[ii] });
+        if (ii < bundles.length) items.push({ type: 'bundle',  d: bundles[ii] });
       }
       if (!items.length) return;
+
+      var TYPE_LABEL = { usecase: 'Use Case', api: 'API', bundle: 'API Bundle' };
 
       items.forEach(function (item, i) {
         var card = document.createElement('div');
@@ -1188,7 +1193,7 @@
 
         var tagEl = document.createElement('div');
         tagEl.className = 'home-uc-card-tag home-uc-card-tag--' + item.type;
-        tagEl.textContent = item.type === 'usecase' ? 'Use Case' : 'API';
+        tagEl.textContent = TYPE_LABEL[item.type] || item.type;
 
         var nameEl = document.createElement('div');
         nameEl.className = 'home-uc-card-name';
@@ -1196,7 +1201,7 @@
 
         var descEl = document.createElement('div');
         descEl.className = 'home-uc-card-desc';
-        var desc = (item.d.description || '').trim();
+        var desc = (item.d.description || item.d.tagline || '').trim();
         if (desc.length > 220) {
           var cut = desc.indexOf('. ', 120);
           desc = (cut > 0 && cut < 210) ? desc.slice(0, cut + 1) : desc.slice(0, 200) + '\u2026';

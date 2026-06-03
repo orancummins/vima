@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 
 # Each use case is a module under `usecases/` exposing at least a MANIFEST dict.
-USE_CASE_MODULES = ["pfm", "enrichment", "recurring", "psi", "bin_lookup", "consumer_clarity", "easy_savings", "places", "identity", "specials", "findacard", "sonic", "testchat", "financeincolour"]
+USE_CASE_MODULES = ["pfm", "enrichment", "recurring", "psi", "bin_lookup", "consumer_clarity", "easy_savings", "places", "identity", "specials", "findacard", "sonic", "testchat", "the_wire"]
 
 
 _modules: Dict[str, Any] = {}
