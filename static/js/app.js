@@ -365,8 +365,52 @@
                 ${runBtn}
               </div>
             </div>
-            <pre class="apis-snippets-code"><code>${_snippetHighlight(code)}</code></pre>
+            <pre class="apis-snippets-code"><code contenteditable="plaintext-only" spellcheck="false" autocorrect="off" autocapitalize="off" data-snippet-code>${_snippetHighlight(code)}</code></pre>
           </div>`;
+        const codeEl = body.querySelector('[data-snippet-code]');
+        const getCurrentCode = () => (codeEl ? codeEl.innerText : code);
+        // First edit strips syntax highlighting so the user sees plain
+        // editable text instead of fighting nested <span> elements.
+        let flattened = false;
+        if (codeEl) {
+          const flatten = () => {
+            if (flattened) return;
+            flattened = true;
+            const txt = codeEl.innerText;
+            codeEl.textContent = txt;
+          };
+          codeEl.addEventListener('focus', flatten, { once: true });
+          codeEl.addEventListener('beforeinput', flatten, { once: true });
+          // Tab inserts 4 spaces instead of moving focus out of the
+          // editor. Shift+Tab still escapes so keyboard users aren't
+          // trapped. Works with multi-line selections by indenting
+          // every selected line.
+          codeEl.addEventListener('keydown', (ev) => {
+            if (ev.key !== 'Tab' || ev.shiftKey) return;
+            ev.preventDefault();
+            flatten();
+            const sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) return;
+            const range = sel.getRangeAt(0);
+            const INDENT = '    ';
+            if (range.collapsed) {
+              range.insertNode(document.createTextNode(INDENT));
+              range.collapse(false);
+            } else {
+              const text = range.toString();
+              const replaced = text.includes('\n')
+                ? text.split('\n').map((ln) => INDENT + ln).join('\n')
+                : INDENT + text;
+              range.deleteContents();
+              const node = document.createTextNode(replaced);
+              range.insertNode(node);
+              range.setStartAfter(node);
+              range.collapse(true);
+            }
+            sel.removeAllRanges();
+            sel.addRange(range);
+          });
+        }
         const flashCopied = (btn, label) => {
           const original = btn.textContent;
           btn.textContent = label || 'Copied';
@@ -378,7 +422,7 @@
         };
         const copyBtn = body.querySelector('[data-snippet-copy]');
         if (copyBtn) copyBtn.addEventListener('click', () => {
-          navigator.clipboard.writeText(code).then(() => flashCopied(copyBtn, 'Copied \u2713'));
+          navigator.clipboard.writeText(getCurrentCode()).then(() => flashCopied(copyBtn, 'Copied \u2713'));
         });
         const runBtnEl = body.querySelector('[data-snippet-run]');
         if (runBtnEl) runBtnEl.addEventListener('click', () => {
@@ -388,7 +432,7 @@
           fetch(`/explorer/${encodeURIComponent(api.id)}/run`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ operation: opId }),
+            body: JSON.stringify({ operation: opId, code: getCurrentCode() }),
           })
             .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
             .then(({ ok, d }) => {
@@ -638,7 +682,7 @@
     if (fab) {
       fab.classList.remove('api-calls-fab--active');
       const lbl = fab.querySelector('.api-calls-fab-label');
-      if (lbl) lbl.textContent = 'Python snippet';
+      if (lbl) lbl.textContent = 'View Code';
     }
   }
 
@@ -793,21 +837,25 @@
     if (_applyingHistory) return;
     const t = e.target.closest('.top-tab, [data-bundle-id], [data-api-id], [data-uc-id]');
     if (!t) return;
-    // Programmatic clicks (e.g. an "open this API" chip that synthesises a
-    // tab click + a row click in one user gesture) come through with
-    // ``isTrusted = false``. Collapse them into the same history entry as
-    // the genuine user gesture so Back skips the intermediate hops.
-    const replace = !e.isTrusted;
+    // Every nav click — whether from a real user gesture or a synthetic
+    // ``.click()`` issued by another handler (e.g. a home-page CTA that
+    // switches tabs, or a chip that opens an API) — gets its own history
+    // entry. Earlier we collapsed synthetic clicks via ``replace`` to
+    // avoid "intermediate hops", but that ate the home entry whenever a
+    // CTA jumped from home to a tab, leaving Back to exit the app.
     if (t.matches('.top-tab')) {
       const tab = t.dataset.topTab;
       // Switching tabs clears the in-tab selection so Back goes to the bare tab.
-      _pushNavState({ tab, bundle: null, api: null, uc: null }, { replace });
+      _pushNavState({ tab, bundle: null, api: null, uc: null });
     } else if (t.matches('[data-bundle-id]')) {
-      _pushNavState({ tab: 'bundles', bundle: t.dataset.bundleId }, { replace });
+      // Each per-tab selection also clears the *other* tabs' selections,
+      // otherwise stale ?api=… / ?uc=… ride along in the URL and get
+      // re-applied when the user pops back to a different tab.
+      _pushNavState({ tab: 'bundles', bundle: t.dataset.bundleId, api: null, uc: null });
     } else if (t.matches('[data-api-id]')) {
-      _pushNavState({ tab: 'apis', api: t.dataset.apiId }, { replace });
+      _pushNavState({ tab: 'apis', api: t.dataset.apiId, bundle: null, uc: null });
     } else if (t.matches('[data-uc-id]')) {
-      _pushNavState({ tab: 'usecases', uc: t.dataset.ucId }, { replace });
+      _pushNavState({ tab: 'usecases', uc: t.dataset.ucId, bundle: null, api: null });
     }
   });
 

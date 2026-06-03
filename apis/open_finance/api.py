@@ -49,7 +49,86 @@ def is_configured() -> bool:
 # ---------------------------------------------------------------------------
 # Single-user demo state. Keys produced by one operation are pre-filled into
 # the inputs of dependent operations in the UI.
-STATE: Dict[str, Any] = {
+#
+# Persistence: the live customer (and the accounts list discovered for them)
+# is written to ``data/open_finance_state.json`` on every mutation, then
+# reloaded at module import. That way the last linked Open Finance US user
+# survives a server restart, so the user doesn't have to re-run the Connect
+# flow at the start of every session, and PFM / PSI / Recurring / Use Cases
+# can all share the same active customer across runs.
+
+import json as _json
+
+_STATE_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "data",
+    "open_finance_state.json",
+)
+# Keys we persist. ``accounts`` is the full raw account list (PFM reads it
+# straight from STATE). Other ephemeral keys (``connect_url`` etc.) are
+# intentionally omitted.
+_PERSIST_KEYS = (
+    "customer_id",
+    "customer_username",
+    "consumer_id",
+    "account_id",
+    "report_id",
+    "micro_account_id",
+    "accounts",
+)
+_state_save_lock = threading.Lock()
+
+
+class _PersistentDict(dict):
+    """``dict`` that snapshots its persistable keys to disk on every write.
+
+    Writes are wrapped in a lock + atomic os.replace so concurrent
+    background-seed and request-handler mutations can't corrupt the file.
+    Failures (read-only fs, permissions, etc.) are swallowed because demo
+    state should never break the API surface.
+    """
+
+    def __setitem__(self, key: str, value: Any) -> None:  # type: ignore[override]
+        super().__setitem__(key, value)
+        _save_state()
+
+    def update(self, *args, **kwargs) -> None:  # type: ignore[override]
+        super().update(*args, **kwargs)
+        _save_state()
+
+    def pop(self, key, *args):  # type: ignore[override]
+        result = super().pop(key, *args)
+        _save_state()
+        return result
+
+
+def _save_state() -> None:
+    """Snapshot persistable keys to ``_STATE_FILE`` atomically."""
+    try:
+        with _state_save_lock:
+            payload = {k: STATE.get(k) for k in _PERSIST_KEYS}
+            os.makedirs(os.path.dirname(_STATE_FILE), exist_ok=True)
+            tmp = _STATE_FILE + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as fh:
+                _json.dump(payload, fh, default=str)
+            os.replace(tmp, _STATE_FILE)
+    except Exception:
+        pass
+
+
+def _load_state_from_disk() -> Dict[str, Any]:
+    """Return the persisted state dict, or an empty dict if none/unreadable."""
+    try:
+        with open(_STATE_FILE, "r", encoding="utf-8") as fh:
+            data = _json.load(fh) or {}
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    return data
+
+
+STATE: Dict[str, Any] = _PersistentDict({
     "customer_id": None,
     "customer_username": None,
     "consumer_id": None,
@@ -57,7 +136,15 @@ STATE: Dict[str, Any] = {
     "report_id": None,
     "micro_account_id": None,
     "accounts": [],
-}
+})
+
+# Hydrate from disk. We use ``dict.update`` (the base class method) to avoid
+# triggering a redundant save during startup.
+_persisted = _load_state_from_disk()
+if _persisted:
+    for _k in _PERSIST_KEYS:
+        if _k in _persisted and _persisted[_k] is not None:
+            dict.__setitem__(STATE, _k, _persisted[_k])
 
 
 def _trigger_background_seed() -> None:
@@ -1524,7 +1611,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
         return _err(str(e))
 
 
-_seeded = False
+_seeded = bool(STATE.get("customer_id"))  # disk-hydrated state counts as seeded
 _seed_lock = threading.Lock()
 
 

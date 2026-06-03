@@ -589,8 +589,15 @@ def explorer_run(api_id: str):
     if not op_id:
         return jsonify({"error": "No operations defined"}), 400
 
-    snippet_payload = api_snippet.build_snippet(api_id, op_id, mod=mod, manifest=manifest)
-    code = snippet_payload.get("snippet") or ""
+    # Allow the UI to send an edited version of the snippet. If the
+    # caller provides a `code` string, run that verbatim; otherwise
+    # build the canonical snippet for this operation.
+    override_code = body.get("code")
+    if isinstance(override_code, str) and override_code.strip():
+        code = override_code
+    else:
+        snippet_payload = api_snippet.build_snippet(api_id, op_id, mod=mod, manifest=manifest)
+        code = snippet_payload.get("snippet") or ""
 
     # Build the env-var list using the same logic as /setup so the
     # spawned terminal sees what the local server sees.
