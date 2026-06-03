@@ -21,7 +21,7 @@ MANIFEST: Dict[str, Any] = {
         "can move confidently, approve more good payments, and dramatically cut costly return rates "
         "— all from a single, low-friction API call before a transaction is ever submitted."
     ),
-    "apis": ["open_finance"],
+    "apis": ["open_finance", "consent_management"],
     "render": "psi",
 }
 

@@ -26,9 +26,25 @@
       <canvas id="mini-globe" width="52" height="52" style="display:block;flex-shrink:0;opacity:0.75;margin-right:8px"></canvas>
       <button class="top-tab active" data-top-tab="home">Home</button>
       <button class="top-tab" data-top-tab="apis">APIs</button>
+      <button class="top-tab" data-top-tab="bundles">API Bundles</button>
       <button class="top-tab" data-top-tab="usecases">Use Cases</button>
     </nav>
     <div style="display:flex;align-items:center;gap:4px">
+      {% if spotlight %}
+      <button class="aotd-trigger-btn"
+              id="aotd-trigger-btn"
+              data-spotlight-id="{{ spotlight.id }}"
+              title="API of the day — {{ spotlight.name }}"
+              aria-label="Open API of the day">
+        <span class="aotd-trigger-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"/>
+            <circle cx="12" cy="12" r="4" fill="currentColor" fill-opacity="0.18"/>
+          </svg>
+        </span>
+        <span class="aotd-trigger-pulse" aria-hidden="true"></span>
+      </button>
+      {% endif %}
       <button class="cfg-trigger-btn{% if runtime_mode.server_mode %} cfg-trigger-btn--locked{% endif %}" id="cfg-trigger-btn" title="{% if runtime_mode.server_mode %}server mode{% else %}API Configuration{% endif %}" {% if runtime_mode.server_mode %}aria-disabled="true"{% endif %}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
@@ -58,6 +74,71 @@
     </div>
   </div>
 
+  {% if spotlight %}
+  <!-- API of the Day modal — triggered by the sparkle button in the header.
+       Replaces the previous inline home-page spotlight card; the modal is
+       now the canonical surface so the home page stays uncluttered.
+
+       The full set of per-API spotlights is serialised into a JSON
+       payload (``#aotd-data``) so the "Browse all" checkbox can iterate
+       through every entry client-side without re-fetching. -->
+  <script type="application/json" id="aotd-data">{{ spotlight.all|tojson }}</script>
+  <div class="tc-modal-backdrop aotd-modal-backdrop"
+       id="aotd-modal"
+       data-aotd-index="{{ spotlight.index }}"
+       style="display:none" role="dialog" aria-modal="true" aria-label="API of the day">
+    <div class="tc-modal aotd-modal">
+      <div class="tc-modal-header aotd-modal-header">
+        <span class="aotd-modal-eyebrow">
+          <span class="aotd-modal-eyebrow-dot" aria-hidden="true"></span>
+          <span id="aotd-modal-eyebrow-text">API of the day</span>
+        </span>
+        <button class="tc-modal-close" id="aotd-modal-close" title="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="aotd-modal-body">
+        <div class="aotd-modal-group" id="aotd-modal-group">{{ spotlight.group or '' }}</div>
+        <h2 class="aotd-modal-name" id="aotd-modal-name">{{ spotlight.name }}</h2>
+        <p class="aotd-modal-insight" id="aotd-modal-insight">{{ spotlight.insight }}</p>
+        <div class="aotd-modal-example" id="aotd-modal-example">
+          <span class="aotd-modal-example-label">In practice</span>
+          <p id="aotd-modal-example-text">{{ spotlight.example or '' }}</p>
+        </div>
+        <div class="aotd-modal-actions">
+          <button class="aotd-modal-cta aotd-modal-cta--primary"
+                  id="aotd-modal-open"
+                  data-spotlight-open="{{ spotlight.id }}">
+            Open in Solution Studio
+            <span aria-hidden="true">→</span>
+          </button>
+          <a class="aotd-modal-cta aotd-modal-cta--secondary"
+             id="aotd-modal-docs"
+             href="{{ spotlight.docs_url or '#' }}"
+             target="_blank" rel="noopener"
+             {% if not spotlight.docs_url %}hidden{% endif %}>
+            Mastercard Developers
+            <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </div>
+      <div class="aotd-modal-footer">
+        <label class="aotd-browse-toggle" title="Step through every API spotlight, not just today's pick">
+          <input type="checkbox" id="aotd-browse-toggle" />
+          <span class="aotd-browse-toggle-box" aria-hidden="true"></span>
+          <span class="aotd-browse-toggle-text">Browse all APIs</span>
+        </label>
+        <div class="aotd-browse-nav" id="aotd-browse-nav" hidden>
+          <button type="button" class="aotd-browse-btn" id="aotd-browse-prev" title="Previous API" aria-label="Previous API">‹</button>
+          <span class="aotd-browse-counter" id="aotd-browse-counter">1 / 1</span>
+          <button type="button" class="aotd-browse-btn" id="aotd-browse-next" title="Next API" aria-label="Next API">›</button>
+          <button type="button" class="aotd-browse-today" id="aotd-browse-today" title="Jump back to today's pick">Today</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- ====================== Home ====================== -->
   <main class="panel panel-home" id="panel-home">
     <div class="home-stage">
@@ -77,6 +158,10 @@
             A unified platform for exploring, showcasing and innovating
             across Mastercard APIs and use cases.
           </p>
+
+          {# API of the day spotlight now lives behind the sparkle
+             button in the main header (#aotd-trigger-btn) and opens as
+             a modal — keeps the home page uncluttered. #}
 
         </div>
 
@@ -109,13 +194,14 @@
   <!-- ====================== APIs ====================== -->
   <main class="panel hidden" id="panel-apis">
     <aside class="sidebar">
-      <div class="sidebar-title">APIs</div>
-      <div class="of-vpn-warning" data-us-ip-warning>
-        <div class="of-vpn-warning-top">
+      <div class="sidebar-title">
+        <span>APIs</span>
+        <span class="of-ip-pill of-ip-pill--unknown" data-us-ip-warning
+              data-tooltip="Checking US IP status..."
+              title="Checking US IP status...">
           <span class="of-ip-light of-ip-light--unknown" data-us-ip-light aria-hidden="true"></span>
-          <span class="of-ip-text" data-us-ip-text>Checking US IP status...</span>
-        </div>
-        <div class="of-vpn-warning-note">US Open Finance APIs require a US VPN connection.</div>
+          <span class="of-ip-pill-label" data-us-ip-text>US IP</span>
+        </span>
       </div>
       <div class="api-list" id="api-list">
         <button class="api-item api-item--about active" id="api-about-btn">
@@ -140,9 +226,86 @@
       <!-- About panel (default) -->
       <div id="api-about-panel" class="api-about-panel">
         <div class="aap-inner">
-          <div class="aap-globe-wrap">
-            <div class="aap-globe-glow"></div>
-            <canvas id="aap-globe" width="820" height="820"></canvas>
+          <div class="aap-globe-wrap aap-mesh-wrap">
+            <!-- API → Bundles prism.
+                 Four vertical "glass pillars" (one per Mastercard
+                 Developers product group), each containing one floating
+                 dot per API in that group (filled = configured). SVG
+                 funnel curves visually pour the four streams into a
+                 single glowing "API Bundles" CTA pill at the bottom —
+                 which is also the literal navigation to the Bundles
+                 tab. Mirrors the bundles constellation visually
+                 (radial = bundles, columnar = APIs) so the two
+                 "About" panels read as a pair. -->
+            <div class="aap-prism" role="img" aria-label="API groups flowing into API Bundles">
+              <div class="aap-prism-stage">
+                <div class="aap-prism-pillars">
+                  {% for section in api_groups %}
+                  {% set group_class = ({
+                    'Open Banking & Open Finance': 'aap-prism-pillar--openfinance',
+                    'Security & Risk': 'aap-prism-pillar--security',
+                    'Data & Insights': 'aap-prism-pillar--data',
+                    'Loyalty, Offers & Benefits': 'aap-prism-pillar--loyalty'
+                  })[section.group] or '' %}
+                  {% set short = ({
+                    'Open Banking & Open Finance': 'Open Finance',
+                    'Security & Risk': 'Security',
+                    'Data & Insights': 'Data',
+                    'Loyalty, Offers & Benefits': 'Loyalty'
+                  })[section.group] or section.group %}
+                  <div class="aap-prism-pillar {{ group_class }}" style="--i: {{ loop.index0 }};" title="{{ section.group }} — {{ section.apis|length }} APIs">
+                    <div class="aap-prism-pillar-glass">
+                      <div class="aap-prism-pillar-dots">
+                        {% for api in section.apis %}
+                        <span class="aap-prism-dot{% if api.configured %} aap-prism-dot--on{% endif %}" style="--d: {{ loop.index0 }};" title="{{ api.name }}{% if api.configured %} — configured{% endif %}" aria-hidden="true"></span>
+                        {% endfor %}
+                      </div>
+                    </div>
+                    <div class="aap-prism-pillar-label">
+                      <span class="aap-prism-pillar-name">{{ short }}</span>
+                      <span class="aap-prism-pillar-count">{{ section.apis|length }}</span>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                <svg class="aap-prism-funnel" viewBox="0 0 320 90" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="aap-prism-funnel-grad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="rgba(255,255,255,0.0)"/>
+                      <stop offset="55%" stop-color="rgba(255,160,80,0.35)"/>
+                      <stop offset="100%" stop-color="rgba(255,180,100,0.7)"/>
+                    </linearGradient>
+                    <linearGradient id="aap-prism-funnel-fill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="rgba(255,140,50,0.0)"/>
+                      <stop offset="100%" stop-color="rgba(255,140,50,0.18)"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M 12 0 L 308 0 L 200 90 L 120 90 Z" fill="url(#aap-prism-funnel-fill)"/>
+                  <path d="M 12 0 L 120 90" stroke="url(#aap-prism-funnel-grad)" stroke-width="1.2" fill="none"/>
+                  <path d="M 308 0 L 200 90" stroke="url(#aap-prism-funnel-grad)" stroke-width="1.2" fill="none"/>
+                  <path d="M 80 0 L 145 90" stroke="url(#aap-prism-funnel-grad)" stroke-width="0.8" fill="none" opacity="0.6"/>
+                  <path d="M 240 0 L 175 90" stroke="url(#aap-prism-funnel-grad)" stroke-width="0.8" fill="none" opacity="0.6"/>
+                </svg>
+              </div>
+              <button type="button"
+                      class="aap-prism-cta"
+                      data-mesh-to-bundles
+                      title="Open the API Bundles tab to see solution-shaped groupings of these APIs">
+                <span class="aap-prism-cta-glow" aria-hidden="true"></span>
+                <span class="aap-prism-cta-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 7l9-5 9 5-9 5-9-5z"/>
+                    <path d="M3 12l9 5 9-5"/>
+                    <path d="M3 17l9 5 9-5"/>
+                  </svg>
+                </span>
+                <span class="aap-prism-cta-text">
+                  <span class="aap-prism-cta-eyebrow">Combine into</span>
+                  <span class="aap-prism-cta-title">API Bundles</span>
+                </span>
+                <span class="aap-prism-cta-arrow" aria-hidden="true">→</span>
+              </button>
+            </div>
           </div>
           <div class="aap-text">
             <div class="aap-eyebrow">Mastercard Developer APIs</div>
@@ -192,7 +355,7 @@
           </div>
           <div class="api-meta">
             <button class="btn btn-outline" id="btn-how-to">How To Use These APIs</button>
-            <a id="api-docs" href="#" target="_blank" class="btn btn-outline">Docs ↗</a>
+            <!-- <a id="api-docs" href="#" target="_blank" class="btn btn-outline">Docs ↗</a>
             <label class="sim-toggle" id="sim-toggle-wrap" title="Switch between live Mastercard sandbox and local simulator">
               <input type="checkbox" id="sim-toggle-cb">
               <span class="sim-toggle-track">
@@ -200,9 +363,26 @@
               </span>
               <span class="sim-toggle-label" id="sim-toggle-label">Live</span>
             </label>
+            -->
           </div>
         </div>
+
+        <!-- Solution detail panel -->
+        <div id="api-solution-panel" class="api-solution-panel hidden">
+          <div class="asp-inner">
+            <div class="asp-eyebrow">Solution bundle</div>
+            <h2 class="asp-title" id="asp-title">—</h2>
+            <p class="asp-tagline" id="asp-tagline"></p>
+            <div class="asp-progress">
+              <span id="asp-progress-text">0 of 0 configured</span>
+              <div class="asp-bar"><div class="asp-bar-fill" id="asp-bar-fill"></div></div>
+            </div>
+            <div class="asp-apis" id="asp-apis"></div>
+          </div>
+        </div>
+
         <div class="state-strip" id="state-strip"></div>
+        <div class="api-pairs" id="api-pairs" hidden></div>
       </div>
 
       <div class="workbench">
@@ -253,15 +433,115 @@
       </div><!-- /#api-workbench -->
     </section>
   </main>
+
+  <!-- ====================== API Bundles ====================== -->
+  <main class="panel hidden" id="panel-bundles">
+    <aside class="sidebar">
+      <div class="sidebar-title">API Bundles</div>
+      <div class="api-list" id="bundle-list">
+        <button class="api-item api-item--about active" id="bundle-about-btn">
+          <span class="api-item-name">About bundles</span>
+          <span class="api-item-about-icon">✦</span>
+        </button>
+        {% for sol in solutions %}
+        <button class="api-item bundle-sidebar-item"
+                data-bundle-id="{{ sol.id }}"
+                style="--bundle-accent: {{ sol.accent }};"
+                title="{{ sol.tagline }}">
+          <span class="bundle-sidebar-icon" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="{{ sol.icon_path }}"></path>
+            </svg>
+          </span>
+          <span class="api-item-name">{{ sol.name }}</span>
+          <span class="bundle-sidebar-count" title="{{ sol.configured }} of {{ sol.total }} APIs configured">{{ sol.configured }}/{{ sol.total }}</span>
+        </button>
+        {% endfor %}
+      </div>
+    </aside>
+
+    <section class="content bundles-content">
+      <!-- About bundles (default) -->
+      <div id="bundle-about-panel" class="api-about-panel">
+        <div class="aap-inner">
+          <div class="aap-globe-wrap bundles-visual-wrap">
+            <div class="aap-globe-glow bundles-visual-glow"></div>
+            <div class="bundles-constellation" role="navigation" aria-label="Bundle navigator">
+              <span class="bundles-constellation-hub" aria-hidden="true">
+                <span class="bundles-constellation-hub-inner">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <circle cx="12" cy="12" r="9" stroke-dasharray="2 4"/>
+                  </svg>
+                </span>
+              </span>
+              {% for sol in solutions %}
+              <button class="bundles-constellation-node"
+                      data-bundle-link="{{ sol.id }}"
+                      style="--bundle-accent: {{ sol.accent }}; --i: {{ loop.index0 }}; --n: {{ solutions|length }};"
+                      title="Open {{ sol.name }} — {{ sol.configured }}/{{ sol.total }} APIs configured">
+                <span class="bundles-constellation-node-icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ sol.icon_path }}"></path></svg>
+                </span>
+                <span class="bundles-constellation-node-label">{{ sol.name }}</span>
+                <span class="bundles-constellation-node-count">{{ sol.configured }}/{{ sol.total }}</span>
+              </button>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="aap-text">
+            <div class="aap-eyebrow">Mastercard Solution Bundles</div>
+            <h2 class="aap-title">Combine. Compose. Deliver.</h2>
+            <p class="aap-body">API Bundles are solution-shaped groupings of Mastercard APIs that are stronger together than alone. Each bundle explains why the APIs belong in the same project, the technical journey across them, and end-to-end walkthrough scenarios.</p>
+            <div class="aap-features">
+              <div class="aap-feature">
+                <span class="aap-feature-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </span>
+                <div>
+                  <strong>Solution-shaped</strong>
+                  <span>Each bundle pairs an anchor API with the supporting capabilities you need to ship a real experience.</span>
+                </div>
+              </div>
+              <div class="aap-feature">
+                <span class="aap-feature-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+                </span>
+                <div>
+                  <strong>Numbered journeys</strong>
+                  <span>See exactly how the APIs fit together step by step, from data capture to enrichment to action.</span>
+                </div>
+              </div>
+              <div class="aap-feature">
+                <span class="aap-feature-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                </span>
+                <div>
+                  <strong>End-to-end walkthroughs</strong>
+                  <span>Concrete scenarios show the bundle in action — what each API contributes and the result it produces.</span>
+                </div>
+              </div>
+            </div>
+            <p class="aap-footer-note">Click any bundle on the left to open it, or pick one from the sidebar.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bundle detail (populated by JS) -->
+      <div id="bundle-detail" class="bundle-detail hidden"></div>
+    </section>
+  </main>
+
   <main class="panel hidden" id="panel-usecases">
     <aside class="sidebar">
-      <div class="sidebar-title">Use Cases</div>
-      <div class="of-vpn-warning" data-us-ip-warning>
-        <div class="of-vpn-warning-top">
+      <div class="sidebar-title">
+        <span>Use Cases</span>
+        <span class="of-ip-pill of-ip-pill--unknown" data-us-ip-warning
+              data-tooltip="Checking US IP status..."
+              title="Checking US IP status...">
           <span class="of-ip-light of-ip-light--unknown" data-us-ip-light aria-hidden="true"></span>
-          <span class="of-ip-text" data-us-ip-text>Checking US IP status...</span>
-        </div>
-        <div class="of-vpn-warning-note">US Open Finance APIs require a US VPN connection.</div>
+          <span class="of-ip-pill-label" data-us-ip-text>US IP</span>
+        </span>
       </div>
       <div class="api-list" id="usecase-list">
         <button class="api-item api-item--about active" id="uc-about-btn">
@@ -283,13 +563,109 @@
       <!-- Use Case About panel (default) -->
       <div id="uc-about-panel" class="api-about-panel">
         <div class="aap-inner">
-          <div class="aap-globe-wrap">
-            <div class="aap-globe-glow"></div>
-            <canvas id="uc-globe" width="820" height="820"></canvas>
+          <div class="aap-globe-wrap uc-visual-wrap">
+            <div class="aap-globe-glow uc-visual-glow"></div>
+            <div class="uc-visual" aria-hidden="true">
+              <!-- Back: laptop/dashboard with charts -->
+              <div class="uc-ui uc-ui--laptop">
+                <div class="uc-ui-chrome">
+                  <span></span><span></span><span></span>
+                  <span class="uc-ui-url">app.experience</span>
+                </div>
+                <div class="uc-ui-body uc-ui-body--dash">
+                  <div class="uc-dash-row">
+                    <div class="uc-dash-kpi">
+                      <span class="uc-dash-kpi-label">SPEND</span>
+                      <span class="uc-dash-kpi-val">£2,438</span>
+                      <span class="uc-dash-spark"></span>
+                    </div>
+                    <div class="uc-dash-kpi">
+                      <span class="uc-dash-kpi-label">SAVED</span>
+                      <span class="uc-dash-kpi-val uc-accent">£312</span>
+                      <span class="uc-dash-spark uc-dash-spark--up"></span>
+                    </div>
+                  </div>
+                  <div class="uc-dash-bars">
+                    <span style="--h:38%"></span><span style="--h:62%"></span>
+                    <span style="--h:48%"></span><span style="--h:78%"></span>
+                    <span style="--h:54%"></span><span style="--h:88%"></span>
+                    <span style="--h:66%"></span>
+                  </div>
+                  <div class="uc-dash-line">
+                    <svg viewBox="0 0 100 26" preserveAspectRatio="none">
+                      <polyline points="0,20 14,16 28,18 42,11 56,13 70,6 84,8 100,3"
+                                fill="none" stroke="#ffcb05" stroke-width="1.4"
+                                stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Front: phone with transaction feed -->
+              <div class="uc-ui uc-ui--phone">
+                <div class="uc-phone-notch"></div>
+                <div class="uc-phone-body">
+                  <div class="uc-phone-header">
+                    <span class="uc-phone-greeting">Hi, Alex</span>
+                    <span class="uc-phone-balance">£1,240.55</span>
+                  </div>
+                  <div class="uc-phone-row">
+                    <span class="uc-phone-row-icon" style="--c:#f37338;">☕</span>
+                    <span class="uc-phone-row-text">
+                      <span class="uc-phone-row-name">Pret a Manger</span>
+                      <span class="uc-phone-row-cat">Food &amp; Drink</span>
+                    </span>
+                    <span class="uc-phone-row-amt">£4.80</span>
+                  </div>
+                  <div class="uc-phone-row">
+                    <span class="uc-phone-row-icon" style="--c:#eb001b;">★</span>
+                    <span class="uc-phone-row-text">
+                      <span class="uc-phone-row-name">Netflix</span>
+                      <span class="uc-phone-row-cat">Subscription</span>
+                    </span>
+                    <span class="uc-phone-row-amt">£10.99</span>
+                  </div>
+                  <div class="uc-phone-row">
+                    <span class="uc-phone-row-icon" style="--c:#ffcb05;">⛽</span>
+                    <span class="uc-phone-row-text">
+                      <span class="uc-phone-row-name">BP Station</span>
+                      <span class="uc-phone-row-cat">Fuel</span>
+                    </span>
+                    <span class="uc-phone-row-amt">£42.10</span>
+                  </div>
+                  <div class="uc-phone-cta">View insights →</div>
+                </div>
+              </div>
+
+              <!-- API call chips orbiting / feeding into the UIs -->
+              <span class="uc-api-chip uc-api-chip--1">GET /transactions</span>
+              <span class="uc-api-chip uc-api-chip--2">POST /enrich</span>
+              <span class="uc-api-chip uc-api-chip--3">GET /offers</span>
+
+              <!-- Animated data flow arrow from chips to phone -->
+              <svg class="uc-flow" viewBox="0 0 300 300" preserveAspectRatio="none" aria-hidden="true">
+                <defs>
+                  <linearGradient id="uc-flow-grad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%"  stop-color="rgba(255,160,60,0)"/>
+                    <stop offset="50%" stop-color="rgba(255,200,120,0.85)"/>
+                    <stop offset="100%" stop-color="rgba(255,160,60,0)"/>
+                  </linearGradient>
+                </defs>
+                <path d="M 30 60  C 110 90, 130 140, 160 180"
+                      fill="none" stroke="url(#uc-flow-grad)" stroke-width="1.2"
+                      stroke-dasharray="3 5" class="uc-flow-line"/>
+                <path d="M 270 80  C 220 110, 200 150, 175 175"
+                      fill="none" stroke="url(#uc-flow-grad)" stroke-width="1.2"
+                      stroke-dasharray="3 5" class="uc-flow-line uc-flow-line--2"/>
+                <path d="M 30 240 C 90 220, 130 215, 165 200"
+                      fill="none" stroke="url(#uc-flow-grad)" stroke-width="1.2"
+                      stroke-dasharray="3 5" class="uc-flow-line uc-flow-line--3"/>
+              </svg>
+            </div>
           </div>
           <div class="aap-text">
             <div class="aap-eyebrow">Mastercard Solution Studio</div>
-            <h2 class="aap-title">Explore. Innovate. Integrate.</h2>
+            <h2 class="aap-title">Innovate. Integrate. Showcase.</h2>
             <p class="aap-body">Use cases are end-to-end scenarios that show Mastercard APIs working together. Explore pre-built flows, craft your own constructs, and see how capabilities combine into real-world solutions.</p>
             <div class="aap-features">
               <div class="aap-feature">
@@ -572,6 +948,20 @@
     <span id="api-calls-fab-badge" class="api-calls-fab-badge hidden">0</span>
   </button>
 
+  <!-- APIs tab — Python snippets FAB + drawer.
+       Shows ready-to-run Python code that calls the local Solution
+       Studio's /explorer/<api_id>/execute proxy. One snippet per API
+       in the currently-selected API's group, so users can see how to
+       drive every related API from their own code. -->
+  <button id="apis-snippets-fab" class="api-calls-fab apis-snippets-fab hidden" aria-label="Show Python snippets">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 7 2 10 6 13"/>
+      <polyline points="14 7 18 10 14 13"/>
+      <line x1="11" y1="4" x2="9" y2="16"/>
+    </svg>
+    <span class="api-calls-fab-label">Python snippets</span>
+  </button>
+
   <div id="api-calls-drawer" class="api-calls-drawer hidden" role="dialog" aria-label="API Calls log">
     <div class="api-calls-drawer-header">
       <div class="api-calls-drawer-title">
@@ -588,6 +978,30 @@
     </div>
     <div class="api-calls-drawer-body" id="api-calls-body">
       <p class="api-calls-empty">No API calls yet. Perform an action to see calls here.</p>
+    </div>
+  </div>
+
+  <!-- APIs tab Python snippets modal — rendered client-side from
+       window.__APIS__ when the user opens the FAB. Shows a copy-able
+       Python snippet for the currently-selected API; selecting a
+       different API in the sidebar updates the snippet. -->
+  <div id="apis-snippets-backdrop" class="tc-modal-backdrop apis-snippets-backdrop hidden" role="presentation">
+    <div id="apis-snippets-modal" class="tc-modal apis-snippets-modal" role="dialog" aria-modal="true" aria-label="Python snippet">
+      <div class="tc-modal-header">
+        <div class="tc-modal-title apis-snippets-modal-title">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0;vertical-align:-2px;margin-right:6px">
+            <polyline points="6 7 2 10 6 13"/>
+            <polyline points="14 7 18 10 14 13"/>
+            <line x1="11" y1="4" x2="9" y2="16"/>
+          </svg>
+          Python snippet
+          <span id="apis-snippets-group" class="apis-snippets-modal-chip"></span>
+        </div>
+        <button id="apis-snippets-close" class="tc-modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="apis-snippets-modal-body apis-snippets-body" id="apis-snippets-body">
+        <p class="api-calls-empty">Select an API to see a Python snippet.</p>
+      </div>
     </div>
   </div>
 
@@ -806,6 +1220,156 @@
         cards[current].classList.add('home-uc-card--active');
       }, 3000);
 
+    })();
+  </script>
+
+  <script>
+    /* API of the Day — wire the "Open in Solution Studio" button.
+       The history-recorder in app.js already listens for clicks on
+       ``.top-tab`` and ``[data-api-id]``, so we just synthesise those
+       clicks in order: switch to the APIs tab, then select the spotlight
+       API. The recorder collapses the two synthetic clicks into one
+       history entry via ``event.isTrusted`` checks, so Back works
+       cleanly. */
+    (function () {
+      var btn = document.querySelector('[data-spotlight-open]');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var apiId = btn.getAttribute('data-spotlight-open');
+        // Close the modal first if we were launched from it.
+        var modal = document.getElementById('aotd-modal');
+        if (modal) {
+          modal.classList.remove('tc-modal-backdrop--open');
+          setTimeout(function () { modal.style.display = 'none'; }, 200);
+        }
+        var tab = document.querySelector('.top-tab[data-top-tab="apis"]');
+        if (tab) tab.click();
+        // Defer the API click until after the tab swap has rendered.
+        setTimeout(function () {
+          var apiBtn = document.querySelector('[data-api-id="' + apiId + '"]');
+          if (apiBtn) apiBtn.click();
+        }, 0);
+      });
+    })();
+
+    /* API of the day — header trigger button opens the spotlight modal.
+       The modal reuses the existing ``tc-modal-backdrop`` open/close
+       animation pattern (display flip then add ``--open`` class on the
+       next frame so the opacity/scale transitions actually fire).
+
+       The "Browse all APIs" checkbox in the footer reveals prev/next
+       arrows and a counter so users can step through every spotlight
+       client-side (data is pre-serialised in ``#aotd-data``). A
+       "Today" shortcut resets the index back to the deterministic
+       per-day pick. */
+    (function () {
+      var trigger = document.getElementById('aotd-trigger-btn');
+      var modal   = document.getElementById('aotd-modal');
+      var closeBtn = document.getElementById('aotd-modal-close');
+      if (!trigger || !modal) return;
+
+      var dataEl = document.getElementById('aotd-data');
+      var ALL = [];
+      try { ALL = dataEl ? JSON.parse(dataEl.textContent || '[]') : []; }
+      catch (e) { ALL = []; }
+      var TODAY_INDEX = parseInt(modal.getAttribute('data-aotd-index') || '0', 10) || 0;
+      var current = TODAY_INDEX;
+
+      var elGroup    = document.getElementById('aotd-modal-group');
+      var elName     = document.getElementById('aotd-modal-name');
+      var elInsight  = document.getElementById('aotd-modal-insight');
+      var elExample  = document.getElementById('aotd-modal-example');
+      var elExampleT = document.getElementById('aotd-modal-example-text');
+      var elOpen     = document.getElementById('aotd-modal-open');
+      var elDocs     = document.getElementById('aotd-modal-docs');
+      var elEyebrow  = document.getElementById('aotd-modal-eyebrow-text');
+      var toggle     = document.getElementById('aotd-browse-toggle');
+      var nav        = document.getElementById('aotd-browse-nav');
+      var prevBtn    = document.getElementById('aotd-browse-prev');
+      var nextBtn    = document.getElementById('aotd-browse-next');
+      var counterEl  = document.getElementById('aotd-browse-counter');
+      var todayBtn   = document.getElementById('aotd-browse-today');
+
+      function render(idx) {
+        if (!ALL.length) return;
+        current = ((idx % ALL.length) + ALL.length) % ALL.length;
+        var s = ALL[current];
+        if (elGroup) {
+          elGroup.textContent = s.group || '';
+          elGroup.style.display = s.group ? '' : 'none';
+        }
+        if (elName)    elName.textContent = s.name || s.id;
+        if (elInsight) elInsight.textContent = s.insight || '';
+        if (elExample) elExample.style.display = s.example ? '' : 'none';
+        if (elExampleT) elExampleT.textContent = s.example || '';
+        if (elOpen)    elOpen.setAttribute('data-spotlight-open', s.id);
+        if (elDocs) {
+          if (s.docs_url) {
+            elDocs.setAttribute('href', s.docs_url);
+            elDocs.hidden = false;
+          } else {
+            elDocs.hidden = true;
+          }
+        }
+        if (elEyebrow) {
+          elEyebrow.textContent = (current === TODAY_INDEX)
+            ? 'API of the day'
+            : 'API spotlight \u00b7 ' + (current + 1) + ' of ' + ALL.length;
+        }
+        if (counterEl) counterEl.textContent = (current + 1) + ' / ' + ALL.length;
+        if (todayBtn) todayBtn.disabled = (current === TODAY_INDEX);
+      }
+
+      function open() {
+        modal.style.display = 'flex';
+        requestAnimationFrame(function () {
+          modal.classList.add('tc-modal-backdrop--open');
+        });
+      }
+      function close() {
+        modal.classList.remove('tc-modal-backdrop--open');
+        setTimeout(function () { modal.style.display = 'none'; }, 200);
+      }
+      trigger.addEventListener('click', open);
+      if (closeBtn) closeBtn.addEventListener('click', close);
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) close();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (!modal.classList.contains('tc-modal-backdrop--open')) return;
+        if (e.key === 'Escape') { close(); return; }
+        if (toggle && toggle.checked) {
+          if (e.key === 'ArrowLeft')  { render(current - 1); }
+          if (e.key === 'ArrowRight') { render(current + 1); }
+        }
+      });
+
+      if (toggle && nav) {
+        toggle.addEventListener('change', function () {
+          nav.hidden = !toggle.checked;
+        });
+      }
+      if (prevBtn)  prevBtn.addEventListener('click',  function () { render(current - 1); });
+      if (nextBtn)  nextBtn.addEventListener('click',  function () { render(current + 1); });
+      if (todayBtn) todayBtn.addEventListener('click', function () { render(TODAY_INDEX); });
+
+      // Initial render matches the server-rendered today's pick — this
+      // is a no-op for visible content but ensures the eyebrow/counter
+      // state stays in sync if a user re-opens the modal after browsing.
+      render(TODAY_INDEX);
+    })();
+
+    /* About APIs → API Bundles mesh CTA.
+       Clicking the mesh CTA at the bottom of the About APIs panel jumps
+       to the Bundles tab so users can see how individual APIs combine
+       into solution-shaped bundles. */
+    (function () {
+      var cta = document.querySelector('[data-mesh-to-bundles]');
+      if (!cta) return;
+      cta.addEventListener('click', function () {
+        var tab = document.querySelector('.top-tab[data-top-tab="bundles"]');
+        if (tab) tab.click();
+      });
     })();
   </script>
 

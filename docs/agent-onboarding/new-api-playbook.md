@@ -50,6 +50,51 @@ Evidence artifact: create and complete a copy of [onboarding-checklist-template.
 
 If an API straddles two groups, place it where users will look for it first (think: which sidebar heading would I scan?). When in doubt, mirror the closest existing API.
 
+## Bundle Assignment
+
+Catalog groups drive the sidebar; **bundles** drive the solution-shaped grouping in the Bundles tab and the "Part of bundles" chip on the API detail panel. Every new API must be assigned to **at least one** bundle (or explicitly justified as not belonging to any).
+
+1. Open `apis/bundles.py` and read each existing `Bundle(...)` block — the `tagline` and `description` describe what real-world solution the bundle delivers. Current bundles:
+
+   | Bundle id            | Anchor                | Theme                                                                                         |
+   |----------------------|-----------------------|-----------------------------------------------------------------------------------------------|
+   | `pfm_stack`          | `open_finance`        | Pull, clean, geo-tag, contextualise and CO₂-score consumer transactions for PFM experiences. |
+   | `subscriptions`      | `automatic_billing_updater` | Detect, keep alive and notify on recurring payments / subscriptions.                     |
+   | `loyalty_stack`      | `easy_savings`        | Card-linked offers, benefits eligibility, and reward experiences.                            |
+   | `merchant_resolution`| `consumer_clarity`    | Resolve cryptic descriptors to clean merchant names, logos and POIs.                         |
+   | `issuer_toolkit`     | `bin_lookup`          | Issuer-side card-program ops: BIN data, billing updates, transaction signals.                |
+   | `acquirer_risk`      | `match`               | Acquirer onboarding, risk screening and merchant controls.                                   |
+   | `sustainability`     | `carbon_calculator`   | Climate-aware payment experiences sourced from real transactions.                            |
+
+2. Decide membership using this rule of thumb:
+   - **Anchor candidate?** If the new API defines a category of experience that the bundle would be meaningless without (e.g. Open Finance for `pfm_stack`), it may deserve its own bundle. Get reviewer agreement before adding one.
+   - **Complement?** If the new API extends or enriches an anchor (cleaner data, more context, downstream signal), append its id to the existing bundle's `apis=(...)` tuple — ordered by how directly it pairs with the anchor.
+   - **Multi-bundle?** APIs frequently belong to several bundles (e.g. `bin_lookup` is in `issuer_toolkit`, `acquirer_risk` and gates `easy_savings` inside `loyalty_stack`). Add it to every bundle where a developer would expect to find it.
+   - **None of the above?** If the API genuinely doesn't pair with any existing bundle, record the rationale in the onboarding checklist and propose a new `Bundle(...)` entry (see step 4).
+
+3. To add the API to an existing bundle, edit only the `apis=(...)` tuple — no other code changes required. Example:
+
+   ```python
+   # In apis/bundles.py, inside Bundle(id="pfm_stack", ...)
+   apis=(
+       "open_finance",
+       "consumer_clarity",
+       "merchant_identifier",
+       "places",
+       "carbon_calculator",
+       "consent_management",
+       "<new_api_id>",   # ← add here, position by how directly it pairs with the anchor
+   ),
+   ```
+
+   If the bundle has a `journey=(...)` or `walkthroughs=(...)` block and the new API materially changes the story, add a step/sentence there too. Otherwise leave them alone — the API will still render under "APIs in this bundle".
+
+4. To propose a new bundle, copy an existing `Bundle(...)` block at the top of `apis/bundles.py` and fill in `id`, `name`, `tagline`, `description`, `anchor`, `accent` (pick a hex distinct from the existing palette — currently amber, teal, purple, red, orange, blue, dark red, green), `icon_path`, `apis`, and ideally `value_props` + `journey` + `examples`. New bundles need reviewer signoff.
+
+5. Verify in the UI:
+   - Bundles tab lists the bundle, with the new API rendered in "APIs in this bundle".
+   - APIs tab → open the new API → "Part of bundles" chip row includes every bundle you added it to, each in the bundle's accent colour.
+
 ## Module Implementation
 
 1. Create `apis/<id>/api.py`.

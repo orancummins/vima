@@ -1135,8 +1135,12 @@ function pfmCloseSheet() {
 }
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
+// PFM is a thin visualisation over the Open Finance US API context. On
+// load we ask the API module for its current customer_id (set by the
+// API tab or the background seeder) and render the dashboard against
+// that. Falls back to the demo default only if nothing's in context.
 document.addEventListener("DOMContentLoaded", () => {
-  fetch("/explorer/ofin/state")
+  fetch("/explorer/open_finance/state")
     .then(r => r.json())
     .then(d => {
       const cid = (d.state || {}).customer_id || PFM_DEFAULT_CID;

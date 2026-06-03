@@ -29,6 +29,7 @@ _CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
 load_dotenv(os.path.join(_CONFIG_DIR, ".env"))
 
 from apis import registry as api_registry  # noqa: E402
+from apis import spotlights as api_spotlights  # noqa: E402
 from usecases import registry as usecase_registry  # noqa: E402
 from simulator.blueprint import sim_bp  # noqa: E402
 from simulator.capture import capture_response  # noqa: E402
@@ -328,7 +329,9 @@ def index():
         "index.html",
         apis=api_registry.manifests(),
         api_groups=api_registry.manifests_grouped(),
+        solutions=api_registry.solutions(),
         use_cases=usecase_registry.manifests(),
+        spotlight=_build_spotlight(api_registry.manifests()),
         runtime_mode={
             "server_mode": _server_mode_enabled(),
             "non_us_mode": _non_us_mode_enabled(),
@@ -336,6 +339,59 @@ def index():
         cache_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'js', 'app.js'))),
         css_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'css', 'styles.css'))),
     )
+
+
+def _build_spotlight(apis):
+    """Combine today's spotlight pick with its catalog metadata.
+
+    Returns ``None`` when no APIs are registered (fresh install) so the
+    template can render a graceful no-op rather than a broken card.
+
+    The returned dict also carries an ``all`` list — every registered API
+    with its spotlight content — so the modal can let users browse every
+    "API of the day" with prev/next navigation. The ``index`` field marks
+    where today's pick sits in that list so the modal can open on it.
+    """
+    if not apis:
+        return None
+    spotlight_id = api_spotlights.pick_today([a["id"] for a in apis])
+    if not spotlight_id:
+        return None
+    api = next((a for a in apis if a["id"] == spotlight_id), None)
+    if not api:
+        return None
+    content = api_spotlights.for_api(spotlight_id)
+
+    def _entry(a):
+        c = api_spotlights.for_api(a["id"])
+        return {
+            "id": a["id"],
+            "name": a.get("name", a["id"]),
+            "group": a.get("group", ""),
+            "docs_url": a.get("docs_url", ""),
+            "configured": bool(a.get("configured")),
+            "insight": c["insight"],
+            "example": c["example"],
+        }
+
+    all_entries = [_entry(a) for a in apis]
+    today_index = next(
+        (i for i, e in enumerate(all_entries) if e["id"] == spotlight_id),
+        0,
+    )
+
+    return {
+        "id": api["id"],
+        "name": api.get("name", api["id"]),
+        "group": api.get("group", ""),
+        "docs_url": api.get("docs_url", ""),
+        "configured": bool(api.get("configured")),
+        "insight": content["insight"],
+        "example": content["example"],
+        "studio_url": f"/app?tab=apis&api={api['id']}",
+        "all": all_entries,
+        "index": today_index,
+    }
 
 
 # ----------------------------------------------------------------------------
@@ -403,6 +459,292 @@ def explorer_state(api_id: str):
         return jsonify({"error": "Unknown API"}), 404
     state = getattr(mod, "get_state", lambda: {})()
     return jsonify({"state": state})
+
+
+@app.route("/explorer/<api_id>/snippet")
+def explorer_snippet(api_id: str):
+    """Return an authentic Python snippet showing how to call the
+    underlying Mastercard API directly (OAuth1 signing or vendor-specific
+    auth) — bypassing the Solution Studio proxy.
+
+    Query string: ``op=<operation_id>`` (defaults to the first operation
+    declared in the API's MANIFEST).
+    """
+    from apis import snippet as api_snippet
+    mod = api_registry.get_module(api_id)
+    if mod is None:
+        return jsonify({"error": "Unknown API"}), 404
+    manifest = next(
+        (m for m in api_registry.manifests() if m.get("id") == api_id),
+        None,
+    )
+    if manifest is None:
+        return jsonify({"error": "API manifest unavailable"}), 404
+    op_id = (request.args.get("op") or "").strip()
+    if not op_id and manifest.get("operations"):
+        op_id = manifest["operations"][0]["id"]
+    if not op_id:
+        return jsonify({"error": "No operations defined"}), 404
+    return jsonify(api_snippet.build_snippet(api_id, op_id, mod=mod, manifest=manifest))
+
+
+@app.route("/explorer/<api_id>/setup")
+@_require_not_server_mode
+def explorer_setup(api_id: str):
+    """Return OS-specific shell commands that install the snippet's
+    dependencies and export the credentials the snippet needs.
+
+    The values come from the local Solution Studio config (the same env
+    vars Solution Studio itself reads), so the commands are ready to
+    paste into a fresh terminal on the demo machine. Disabled in server
+    mode — credentials must never leave the host that way.
+    """
+    manifest = next(
+        (m for m in api_registry.manifests() if m.get("id") == api_id),
+        None,
+    )
+    if manifest is None:
+        return jsonify({"error": "Unknown API"}), 404
+
+    env_prefix = manifest.get("env_prefix") or api_id.upper()
+    # Standard Mastercard OAuth1 credential triple. Open Finance uses a
+    # different shape — we still surface what's set so the operator can
+    # see which vars are populated.
+    if api_id.startswith("open_finance"):
+        var_names = [
+            f"{env_prefix}_PARTNER_ID",
+            f"{env_prefix}_PARTNER_SECRET",
+            f"{env_prefix}_APP_KEY",
+        ]
+        packages = ["requests"]
+    else:
+        var_names = [
+            f"{env_prefix}_CONSUMER_KEY",
+            f"{env_prefix}_SIGNING_KEY_PATH",
+            f"{env_prefix}_SIGNING_KEY_PASSWORD",
+        ]
+        packages = ["requests", "mastercard-oauth1-signer"]
+
+    env: list[dict[str, str]] = []
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    for name in var_names:
+        val = os.environ.get(name, "")
+        # Resolve relative *_PATH values (e.g. config/keys/foo.p12) to
+        # absolute paths so generated scripts work from any cwd.
+        if val and name.endswith("_PATH") and not os.path.isabs(val):
+            candidate = os.path.normpath(os.path.join(project_root, val))
+            if os.path.exists(candidate):
+                val = candidate
+        env.append({
+            "name": name,
+            "value": val,
+            "set": name in os.environ and bool(os.environ.get(name)),
+        })
+
+    return jsonify({
+        "api_id": api_id,
+        "env_prefix": env_prefix,
+        "packages": packages,
+        "env": env,
+    })
+
+
+@app.route("/explorer/<api_id>/run", methods=["POST"])
+@_require_not_server_mode
+def explorer_run(api_id: str):
+    """Write the runnable snippet to a temp script and launch the host
+    OS's native terminal so the user can watch it execute.
+
+    The script does the full set-env / pip-install / run-snippet flow
+    using the same credentials the rest of Solution Studio reads. After
+    the snippet finishes, the terminal pauses so the user can read the
+    request + response printout before the window closes.
+
+    Disabled in server mode — spawning a terminal on the host only ever
+    makes sense for the local demo workflow.
+    """
+    import platform
+    import shlex
+    import subprocess
+    import sys
+    import tempfile
+    from pathlib import Path
+
+    from apis import snippet as api_snippet
+
+    mod = api_registry.get_module(api_id)
+    if mod is None:
+        return jsonify({"error": "Unknown API"}), 404
+    manifest = next(
+        (m for m in api_registry.manifests() if m.get("id") == api_id),
+        None,
+    )
+    if manifest is None:
+        return jsonify({"error": "API manifest unavailable"}), 404
+
+    body = request.get_json(silent=True) or {}
+    op_id = (body.get("operation") or "").strip()
+    if not op_id and manifest.get("operations"):
+        op_id = manifest["operations"][0]["id"]
+    if not op_id:
+        return jsonify({"error": "No operations defined"}), 400
+
+    snippet_payload = api_snippet.build_snippet(api_id, op_id, mod=mod, manifest=manifest)
+    code = snippet_payload.get("snippet") or ""
+
+    # Build the env-var list using the same logic as /setup so the
+    # spawned terminal sees what the local server sees.
+    env_prefix = manifest.get("env_prefix") or api_id.upper()
+    if api_id.startswith("open_finance"):
+        var_names = [
+            f"{env_prefix}_PARTNER_ID",
+            f"{env_prefix}_PARTNER_SECRET",
+            f"{env_prefix}_APP_KEY",
+        ]
+        packages = ["requests"]
+    else:
+        var_names = [
+            f"{env_prefix}_CONSUMER_KEY",
+            f"{env_prefix}_SIGNING_KEY_PATH",
+            f"{env_prefix}_SIGNING_KEY_PASSWORD",
+        ]
+        packages = ["requests", "mastercard-oauth1-signer"]
+
+    env_pairs = [(n, os.environ.get(n, "")) for n in var_names]
+    # Modules typically resolve a relative SIGNING_KEY_PATH against the
+    # project root before opening it. The spawned terminal runs in a
+    # temp dir, so relative paths break (FileNotFoundError on the .p12).
+    # Resolve any *_PATH style vars to absolute paths here so the
+    # snippet's `open(key_path)` works from anywhere.
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    resolved_pairs: list[tuple[str, str]] = []
+    for name, val in env_pairs:
+        if val and name.endswith("_PATH") and not os.path.isabs(val):
+            candidate = os.path.normpath(os.path.join(project_root, val))
+            if os.path.exists(candidate):
+                val = candidate
+        resolved_pairs.append((name, val))
+    env_pairs = resolved_pairs
+
+    system = platform.system().lower()
+    tmpdir = Path(tempfile.gettempdir()) / "vima-snippets"
+    tmpdir.mkdir(parents=True, exist_ok=True)
+
+    if system == "windows":
+        # PowerShell script: set env vars, install deps via `py -m pip`
+        # (works around corporate AV blocking pip.exe), write the snippet
+        # to a .py file next to the .ps1, run it, then pause.
+        py_path = tmpdir / f"{api_id}_{op_id}.py"
+        ps1_path = tmpdir / f"{api_id}_{op_id}.ps1"
+        py_path.write_text(code, encoding="utf-8")
+
+        def _ps_quote(v: str) -> str:
+            return "'" + (v or "").replace("'", "''") + "'"
+
+        lines = [
+            "$ErrorActionPreference = 'Continue'",
+            "Write-Host 'Vima Solution Studio - running snippet for " + api_id + "' -ForegroundColor Cyan",
+            "Write-Host ''",
+        ]
+        for name, val in env_pairs:
+            lines.append(f"$env:{name} = {_ps_quote(val)}")
+        if packages:
+            lines.append("Write-Host 'Installing dependencies...' -ForegroundColor DarkGray")
+            lines.append(f"py -m pip install --user --quiet {' '.join(packages)}")
+        lines += [
+            "Write-Host ''",
+            f"py {_ps_quote(str(py_path))}",
+            "$code = $LASTEXITCODE",
+            "Write-Host ''",
+            "Write-Host ('Exit code: ' + $code) -ForegroundColor Cyan",
+            "Write-Host 'Press Enter to close...' -ForegroundColor DarkGray",
+            "Read-Host | Out-Null",
+        ]
+        ps1_path.write_text("\r\n".join(lines), encoding="utf-8")
+
+        # Launch a new PowerShell window. Prefer Windows Terminal (wt.exe)
+        # if available because it stays visible and looks better; fall
+        # back to conhost-hosted powershell.exe.
+        powershell_args = [
+            "powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass",
+            "-File", str(ps1_path),
+        ]
+        try:
+            subprocess.Popen(
+                ["wt.exe", "new-tab", "--title", f"Vima: {api_id}", *powershell_args],
+                close_fds=True,
+            )
+            launcher = "wt"
+        except FileNotFoundError:
+            subprocess.Popen(
+                powershell_args,
+                creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0),
+                close_fds=True,
+            )
+            launcher = "powershell"
+
+    elif system == "darwin":
+        sh_path = tmpdir / f"{api_id}_{op_id}.sh"
+        py_path = tmpdir / f"{api_id}_{op_id}.py"
+        py_path.write_text(code, encoding="utf-8")
+        lines = ["#!/bin/bash", "set +e",
+                 f"echo 'Vima Solution Studio - running snippet for {api_id}'", ""]
+        for name, val in env_pairs:
+            lines.append(f"export {name}={shlex.quote(val)}")
+        if packages:
+            lines.append("echo 'Installing dependencies...'")
+            lines.append(f"python3 -m pip install --user --quiet {' '.join(packages)}")
+        lines += ["echo", f"python3 {shlex.quote(str(py_path))}",
+                  "echo", "echo 'Press Enter to close...'", "read"]
+        sh_path.write_text("\n".join(lines), encoding="utf-8")
+        sh_path.chmod(0o755)
+        subprocess.Popen(["open", "-a", "Terminal", str(sh_path)], close_fds=True)
+        launcher = "Terminal.app"
+
+    else:  # Linux + other POSIX
+        sh_path = tmpdir / f"{api_id}_{op_id}.sh"
+        py_path = tmpdir / f"{api_id}_{op_id}.py"
+        py_path.write_text(code, encoding="utf-8")
+        lines = ["#!/bin/bash", "set +e",
+                 f"echo 'Vima Solution Studio - running snippet for {api_id}'", ""]
+        for name, val in env_pairs:
+            lines.append(f"export {name}={shlex.quote(val)}")
+        if packages:
+            lines.append("echo 'Installing dependencies...'")
+            lines.append(f"python3 -m pip install --user --quiet {' '.join(packages)}")
+        lines += ["echo", f"python3 {shlex.quote(str(py_path))}",
+                  "echo", "echo 'Press Enter to close...'", "read"]
+        sh_path.write_text("\n".join(lines), encoding="utf-8")
+        sh_path.chmod(0o755)
+        spawned = False
+        # Try common terminal emulators in order of likelihood.
+        for term, args in [
+            ("x-terminal-emulator", ["-e", "bash", str(sh_path)]),
+            ("gnome-terminal", ["--", "bash", str(sh_path)]),
+            ("konsole", ["-e", "bash", str(sh_path)]),
+            ("xterm", ["-e", "bash", str(sh_path)]),
+        ]:
+            try:
+                subprocess.Popen([term, *args], close_fds=True)
+                launcher = term
+                spawned = True
+                break
+            except FileNotFoundError:
+                continue
+        if not spawned:
+            return jsonify({
+                "error": (
+                    "No supported terminal emulator found "
+                    "(tried x-terminal-emulator, gnome-terminal, konsole, xterm)."
+                ),
+                "script": str(sh_path),
+            }), 500
+
+    return jsonify({
+        "ok": True,
+        "launcher": launcher,
+        "platform": system,
+    })
 
 
 @app.route("/explorer/<api_id>/execute", methods=["POST"])
@@ -848,9 +1190,10 @@ _register_usecase_static_routes()
 
 @app.route("/catalog")
 def catalog():
-    """Unified catalog of all registered APIs and Use Cases."""
+    """Unified catalog of all registered APIs, Use Cases and Solutions."""
     apis = api_registry.manifests()
     use_cases = usecase_registry.manifests()
+    solutions = api_registry.solutions()
     return jsonify({
         "apis": [
             {
@@ -859,6 +1202,9 @@ def catalog():
                 "configured": a.get("configured", False),
                 "categories": a.get("categories", []),
                 "operations": [op["id"] for op in a.get("operations", [])],
+                "complements": a.get("complements", []),
+                "requires": a.get("requires", []),
+                "bundles": a.get("bundles", []),
             }
             for a in apis
         ],
@@ -871,12 +1217,25 @@ def catalog():
             }
             for u in use_cases
         ],
+        "solutions": solutions,
         "summary": {
             "total_apis": len(apis),
             "configured_apis": sum(1 for a in apis if a.get("configured")),
             "total_use_cases": len(use_cases),
+            "total_solutions": len(solutions),
         },
     })
+
+
+@app.route("/catalog/bundles")
+def catalog_bundles():
+    """Return solution-shaped bundles enriched with per-bundle status.
+
+    See :func:`apis.registry.solutions` for the response shape. Drives the
+    Solutions sidebar section in the explorer and feeds the chat agent's
+    "what should I add next?" recommendations.
+    """
+    return jsonify({"bundles": api_registry.solutions()})
 
 
 @app.route("/usecases")

@@ -94,6 +94,9 @@
       ? `US IP detected${ip ? ` (${ip})` : ''} via ${source}`
       : `Non-US or unverified${country ? ` (${country})` : ''}${ip ? ` - ${ip}` : ''} via ${source}`;
     const lightClass = statusOk && isUs ? 'of-ip-light--green' : 'of-ip-light--red';
+    const pillClass = statusOk && isUs ? 'of-ip-pill--green' : 'of-ip-pill--red';
+    const shortLabel = statusOk && isUs ? 'US IP' : 'Non-US IP used';
+    const tooltip = `${statusText}\nUS Open Finance APIs require a US VPN connection.`;
 
     document.querySelectorAll('[data-us-ip-warning]').forEach((card) => {
       const light = card.querySelector('[data-us-ip-light]');
@@ -102,7 +105,11 @@
         light.classList.remove('of-ip-light--green', 'of-ip-light--red', 'of-ip-light--unknown');
         light.classList.add(lightClass);
       }
-      if (label) label.textContent = statusText;
+      if (label) label.textContent = shortLabel;
+      card.classList.remove('of-ip-pill--green', 'of-ip-pill--red', 'of-ip-pill--unknown');
+      card.classList.add(pillClass);
+      card.setAttribute('title', tooltip);
+      card.setAttribute('data-tooltip', tooltip);
     });
 
     _lastUsIpStatus = { success: statusOk, is_us: isUs, country_code: country, ip, source };
@@ -238,6 +245,403 @@
     }
   }
 
+  // -------------------------------------------------------------------
+  // APIs tab — Python snippets drawer
+  // Renders a copy-able Python snippet for the currently-selected API,
+  // calling /explorer/<api_id>/snippet for the authoritative server-
+  // rendered code. Selecting a different API in the sidebar updates
+  // the snippet shown here.
+  // -------------------------------------------------------------------
+  let APIS_SNIPPETS_VISIBLE = false;
+  let APIS_SNIPPETS_ACTIVE = null; // api_id of currently shown snippet
+
+  function _snippetHighlight(code) {
+    // Very small Python-ish syntax highlighter — order matters: strings
+    // first (to swallow keyword-like content), then comments, then
+    // keywords/numbers. We tokenise into a flat list so we never wrap a
+    // span that already contains another span.
+    const KEYWORDS = ['import', 'from', 'as', 'def', 'return', 'if', 'else', 'for', 'in', 'True', 'False', 'None', 'print', 'with'];
+    const tokens = [];
+    let i = 0;
+    while (i < code.length) {
+      const ch = code[i];
+      if (ch === '#') {
+        const end = code.indexOf('\n', i);
+        const stop = end === -1 ? code.length : end;
+        tokens.push({ t: 'com', v: code.slice(i, stop) });
+        i = stop;
+        continue;
+      }
+      if (ch === '"' || ch === "'") {
+        // Triple-quoted strings
+        if (code.slice(i, i + 3) === ch + ch + ch) {
+          const end = code.indexOf(ch + ch + ch, i + 3);
+          const stop = end === -1 ? code.length : end + 3;
+          tokens.push({ t: 'str', v: code.slice(i, stop) });
+          i = stop;
+          continue;
+        }
+        // Single-line string
+        let j = i + 1;
+        while (j < code.length && code[j] !== ch) {
+          if (code[j] === '\\' && j + 1 < code.length) j += 2;
+          else j += 1;
+        }
+        tokens.push({ t: 'str', v: code.slice(i, j + 1) });
+        i = j + 1;
+        continue;
+      }
+      // Word
+      if (/[A-Za-z_]/.test(ch)) {
+        let j = i;
+        while (j < code.length && /[A-Za-z0-9_]/.test(code[j])) j += 1;
+        const word = code.slice(i, j);
+        if (KEYWORDS.indexOf(word) !== -1) tokens.push({ t: 'kw', v: word });
+        else if (code[j] === '(') tokens.push({ t: 'fn', v: word });
+        else tokens.push({ t: 'raw', v: word });
+        i = j;
+        continue;
+      }
+      // Number
+      if (/[0-9]/.test(ch)) {
+        let j = i;
+        while (j < code.length && /[0-9.]/.test(code[j])) j += 1;
+        tokens.push({ t: 'num', v: code.slice(i, j) });
+        i = j;
+        continue;
+      }
+      tokens.push({ t: 'raw', v: ch });
+      i += 1;
+    }
+    return tokens.map((tok) => {
+      const v = escapeHtml(tok.v);
+      if (tok.t === 'raw') return v;
+      return `<span class="apis-snippets-tok-${tok.t}">${v}</span>`;
+    }).join('');
+  }
+
+  function _snippetRenderTabs() { /* removed — only one snippet shown at a time */ }
+
+  function _snippetRenderBody(api) {
+    const body = $('apis-snippets-body');
+    if (!body) return;
+    if (!api) {
+      body.innerHTML = `<p class="api-calls-empty">No API in this group.</p>`;
+      return;
+    }
+    // Show a loading state immediately, then fetch the authoritative
+    // server-rendered snippet (which knows the upstream URL, the env
+    // vars from the catalog, and the OAuth1 signing pattern). This
+    // replaces the previous client-only "call the proxy" stub.
+    body.innerHTML = `
+      <div class="apis-snippets-section">
+        <div class="apis-snippets-section-meta">
+          <span class="apis-snippets-section-label">Loading\u2026</span>
+        </div>
+        <pre class="apis-snippets-code"><code>${escapeHtml('# Building authentic snippet\u2026')}</code></pre>
+      </div>`;
+    const op = (api.operations || [])[0];
+    const opId = op ? op.id : '';
+    const url = `/explorer/${encodeURIComponent(api.id)}/snippet`
+              + (opId ? `?op=${encodeURIComponent(opId)}` : '');
+    // Guard against rapid tab switches — only render if this fetch is
+    // still the latest one for the active API.
+    const requestForApi = api.id;
+    fetch(url)
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+      .then((data) => {
+        if (APIS_SNIPPETS_ACTIVE !== requestForApi) return;
+        const code = data.snippet || '';
+        const summary = data.summary || (op ? `${op.method || 'POST'} \u00b7 ${op.name}` : 'No operations');
+        const runBtn = SERVER_MODE
+          ? ''
+          : `<button class="apis-snippets-copy apis-snippets-run" type="button" data-snippet-run title="Open a terminal on this machine and run the snippet">\u25b6 Run in terminal</button>`;
+        body.innerHTML = `
+          <div class="apis-snippets-section">
+            <div class="apis-snippets-section-meta">
+              <span class="apis-snippets-section-label">${escapeHtml(summary)}</span>
+              <div class="apis-snippets-section-actions">
+                <button class="apis-snippets-codeonly" type="button" data-snippet-copy title="Copy the Python source">Copy code</button>
+                ${runBtn}
+              </div>
+            </div>
+            <pre class="apis-snippets-code"><code>${_snippetHighlight(code)}</code></pre>
+          </div>`;
+        const flashCopied = (btn, label) => {
+          const original = btn.textContent;
+          btn.textContent = label || 'Copied';
+          btn.classList.add('apis-snippets-copy--copied');
+          setTimeout(() => {
+            btn.textContent = original;
+            btn.classList.remove('apis-snippets-copy--copied');
+          }, 1600);
+        };
+        const copyBtn = body.querySelector('[data-snippet-copy]');
+        if (copyBtn) copyBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(code).then(() => flashCopied(copyBtn, 'Copied \u2713'));
+        });
+        const runBtnEl = body.querySelector('[data-snippet-run]');
+        if (runBtnEl) runBtnEl.addEventListener('click', () => {
+          const original = runBtnEl.textContent;
+          runBtnEl.disabled = true;
+          runBtnEl.textContent = 'Launching\u2026';
+          fetch(`/explorer/${encodeURIComponent(api.id)}/run`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ operation: opId }),
+          })
+            .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+            .then(({ ok, d }) => {
+              runBtnEl.disabled = false;
+              if (!ok || d.error) {
+                runBtnEl.textContent = 'Failed';
+                runBtnEl.classList.add('apis-snippets-run--err');
+                alert('Could not launch terminal: ' + (d.error || 'unknown error'));
+                setTimeout(() => {
+                  runBtnEl.textContent = original;
+                  runBtnEl.classList.remove('apis-snippets-run--err');
+                }, 2400);
+              } else {
+                runBtnEl.textContent = 'Launched \u2713';
+                runBtnEl.classList.add('apis-snippets-copy--copied');
+                setTimeout(() => {
+                  runBtnEl.textContent = original;
+                  runBtnEl.classList.remove('apis-snippets-copy--copied');
+                }, 2400);
+              }
+            })
+            .catch((err) => {
+              runBtnEl.disabled = false;
+              runBtnEl.textContent = original;
+              alert('Could not launch terminal: ' + (err && err.message || err));
+            });
+        });
+      })
+      .catch((err) => {
+        if (APIS_SNIPPETS_ACTIVE !== requestForApi) return;
+        body.innerHTML = `
+          <div class="apis-snippets-section">
+            <div class="apis-snippets-section-meta">
+              <span class="apis-snippets-section-label">Snippet unavailable</span>
+            </div>
+            <pre class="apis-snippets-code"><code>${escapeHtml('# Unable to build snippet: ' + (err && err.message || err))}</code></pre>
+          </div>`;
+      });
+  }
+
+  // ---- "Commands" sub-modal --------------------------------------
+  // Builds a one-shot install + env-var script for the user's OS using
+  // values pulled from the local Solution Studio config. Disabled in
+  // server mode (the button isn't rendered, and the endpoint 403s).
+  function _detectOs() {
+    const p = (navigator.userAgentData && navigator.userAgentData.platform)
+      || navigator.platform || navigator.userAgent || '';
+    const s = String(p).toLowerCase();
+    if (s.indexOf('win') !== -1) return 'windows';
+    if (s.indexOf('mac') !== -1) return 'macos';
+    return 'linux';
+  }
+
+  function _shellQuote(val, os) {
+    if (val === null || val === undefined) val = '';
+    const s = String(val);
+    if (os === 'windows') {
+      // PowerShell single-quoted: double any embedded single quotes.
+      return "'" + s.replace(/'/g, "''") + "'";
+    }
+    // POSIX single-quoted: close, escape, reopen.
+    return "'" + s.replace(/'/g, "'\\''") + "'";
+  }
+
+  function _buildSetupScript(data, os) {
+    const pkgs = (data.packages || []).join(' ');
+    const lines = [];
+    if (os === 'windows') {
+      lines.push('# Windows PowerShell \u2014 uses `py -m pip` so it works even if pip.exe is blocked.');
+      if (pkgs) lines.push(`py -m pip install --user ${pkgs}`);
+      lines.push('');
+      (data.env || []).forEach((e) => {
+        const v = e.set ? e.value : `<your ${e.name}>`;
+        lines.push(`$env:${e.name} = ${_shellQuote(v, os)}`);
+      });
+    } else {
+      lines.push(os === 'macos' ? '# macOS (bash/zsh)' : '# Linux (bash/zsh)');
+      if (pkgs) lines.push(`python3 -m pip install --user ${pkgs}`);
+      lines.push('');
+      (data.env || []).forEach((e) => {
+        const v = e.set ? e.value : `<your ${e.name}>`;
+        lines.push(`export ${e.name}=${_shellQuote(v, os)}`);
+      });
+    }
+    return lines.join('\n') + '\n';
+  }
+
+  // Build a single, paste-and-run command for the user's OS:
+  //   * exports the credentials (real values where set locally, placeholders otherwise)
+  //   * pip-installs the dependencies (via `<launcher> -m pip` so it
+  //     works even if pip.exe is blocked by AV/EDR, which is common on
+  //     locked-down corporate Windows machines)
+  //   * pipes the snippet into the Python launcher via stdin so no .py
+  //     file is needed
+  // Uses `py` on Windows (the launcher is installed by every Python
+  // distribution, while `python.exe` is often the WindowsApps store
+  // stub) and `python3` on POSIX. `--user` avoids permission errors
+  // when site-packages isn't writable.
+  function _buildRunCommand(setup, code, os) {
+    const pkgs = (setup.packages || []).join(' ');
+    const lines = [];
+    if (os === 'windows') {
+      const launcher = 'py';
+      lines.push('# Paste into PowerShell. Sets env vars, installs deps, runs the snippet.');
+      lines.push('# Uses the `py` launcher + `py -m pip` so it works even if pip.exe / python.exe');
+      lines.push('# are blocked by corporate AV or shadowed by the Windows Store stub.');
+      (setup.env || []).forEach((e) => {
+        const v = e.set ? e.value : `<your ${e.name}>`;
+        lines.push(`$env:${e.name} = ${_shellQuote(v, os)}`);
+      });
+      if (pkgs) lines.push(`${launcher} -m pip install --user ${pkgs}`);
+      // Single-quoted PowerShell here-string: opaque literal, no
+      // variable expansion, no escaping needed for $ or quotes inside.
+      lines.push("@'");
+      lines.push(code.replace(/\r?\n$/, ''));
+      lines.push(`'@ | ${launcher} -`);
+    } else {
+      const launcher = 'python3';
+      lines.push(os === 'macos'
+        ? '# Paste into a macOS terminal (bash/zsh). Sets env vars, installs deps, runs the snippet.'
+        : '# Paste into a Linux terminal (bash/zsh). Sets env vars, installs deps, runs the snippet.');
+      (setup.env || []).forEach((e) => {
+        const v = e.set ? e.value : `<your ${e.name}>`;
+        lines.push(`export ${e.name}=${_shellQuote(v, os)}`);
+      });
+      if (pkgs) lines.push(`${launcher} -m pip install --user ${pkgs}`);
+      // Quoted heredoc terminator disables shell expansion inside the
+      // body, so the snippet's $vars / backticks survive untouched.
+      lines.push(`${launcher} - <<'VIMA_SNIPPET_EOF'`);
+      lines.push(code.replace(/\r?\n$/, ''));
+      lines.push('VIMA_SNIPPET_EOF');
+    }
+    return lines.join('\n') + '\n';
+  }
+
+  function _snippetShowSetup(apiId) {
+    fetch(`/explorer/${encodeURIComponent(apiId)}/setup`)
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+      .then((data) => {
+        const osList = ['windows', 'macos', 'linux'];
+        const initialOs = _detectOs();
+        const missing = (data.env || []).filter((e) => !e.set).map((e) => e.name);
+        const warning = missing.length
+          ? `<div class="apis-setup-warning">${escapeHtml('Not set locally: ' + missing.join(', ') + ' \u2014 placeholders inserted.')}</div>`
+          : '';
+        const tabs = osList.map((o) => {
+          const label = o === 'windows' ? 'Windows (PowerShell)' : (o === 'macos' ? 'macOS' : 'Linux');
+          return `<button class="apis-setup-tab${o === initialOs ? ' apis-setup-tab--active' : ''}" data-setup-os="${o}" type="button">${label}</button>`;
+        }).join('');
+        const html = `
+          <div class="tc-modal-backdrop apis-setup-backdrop" id="apis-setup-backdrop">
+            <div class="tc-modal apis-setup-modal" role="dialog" aria-modal="true" aria-label="Setup commands">
+              <div class="tc-modal-header">
+                <div class="tc-modal-title">Setup commands <span class="apis-snippets-modal-chip">${escapeHtml(apiId)}</span></div>
+                <button class="tc-modal-close" data-setup-close aria-label="Close">&times;</button>
+              </div>
+              <div class="apis-setup-body">
+                <div class="apis-setup-tabs">${tabs}</div>
+                ${warning}
+                <pre class="apis-snippets-code apis-setup-code"><code></code></pre>
+                <div class="apis-setup-actions">
+                  <button class="apis-snippets-copy" type="button" data-setup-copy>Copy</button>
+                </div>
+              </div>
+            </div>
+          </div>`;
+        const wrap = document.createElement('div');
+        wrap.innerHTML = html.trim();
+        const backdrop = wrap.firstChild;
+        document.body.appendChild(backdrop);
+        const codeEl = backdrop.querySelector('.apis-setup-code code');
+        const render = (os) => {
+          const script = _buildSetupScript(data, os);
+          codeEl.textContent = script;
+          codeEl.dataset.script = script;
+        };
+        render(initialOs);
+        requestAnimationFrame(() => backdrop.classList.add('tc-modal-backdrop--open'));
+        const close = () => {
+          backdrop.classList.remove('tc-modal-backdrop--open');
+          setTimeout(() => backdrop.remove(), 200);
+        };
+        backdrop.querySelector('[data-setup-close]').addEventListener('click', close);
+        backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+        backdrop.querySelectorAll('[data-setup-os]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            backdrop.querySelectorAll('[data-setup-os]').forEach((b) => b.classList.remove('apis-setup-tab--active'));
+            btn.classList.add('apis-setup-tab--active');
+            render(btn.dataset.setupOs);
+          });
+        });
+        const copyBtn = backdrop.querySelector('[data-setup-copy]');
+        copyBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(codeEl.dataset.script || '').then(() => {
+            copyBtn.textContent = 'Copied';
+            copyBtn.classList.add('apis-snippets-copy--copied');
+            setTimeout(() => {
+              copyBtn.textContent = 'Copy';
+              copyBtn.classList.remove('apis-snippets-copy--copied');
+            }, 1400);
+          });
+        });
+      })
+      .catch((err) => {
+        alert('Unable to build setup commands: ' + (err && err.message || err));
+      });
+  }
+
+  function apisSnippetsShow(apiId) {
+    const active = APIS.find((a) => a.id === apiId)
+                || APIS.find((a) => a.id === currentApiId)
+                || APIS[0];
+    APIS_SNIPPETS_ACTIVE = active ? active.id : null;
+    const groupChip = $('apis-snippets-group');
+    if (groupChip) groupChip.textContent = active ? active.name : '';
+    _snippetRenderBody(active);
+  }
+
+  function apisSnippetsOpen() {
+    APIS_SNIPPETS_VISIBLE = true;
+    const backdrop = $('apis-snippets-backdrop');
+    if (backdrop) {
+      backdrop.classList.remove('hidden');
+      // Force a reflow so the opacity/transform transition runs.
+      // eslint-disable-next-line no-unused-expressions
+      backdrop.offsetHeight;
+      requestAnimationFrame(() => backdrop.classList.add('tc-modal-backdrop--open'));
+    }
+    const fab = $('apis-snippets-fab');
+    if (fab) {
+      fab.classList.add('api-calls-fab--active');
+      const lbl = fab.querySelector('.api-calls-fab-label');
+      if (lbl) lbl.textContent = 'Hide snippet';
+    }
+    apisSnippetsShow(currentApiId);
+  }
+
+  function apisSnippetsClose() {
+    APIS_SNIPPETS_VISIBLE = false;
+    const backdrop = $('apis-snippets-backdrop');
+    if (backdrop) {
+      backdrop.classList.remove('tc-modal-backdrop--open');
+      // Match the 0.2s transition before hiding so we keep the fade-out.
+      setTimeout(() => { backdrop.classList.add('hidden'); }, 200);
+    }
+    const fab = $('apis-snippets-fab');
+    if (fab) {
+      fab.classList.remove('api-calls-fab--active');
+      const lbl = fab.querySelector('.api-calls-fab-label');
+      if (lbl) lbl.textContent = 'Python snippet';
+    }
+  }
+
   function updateUcSidebar(uc) {
     const container = $('uc-sidebar-apis');
     const list = $('uc-sidebar-apis-list');
@@ -298,14 +702,19 @@
       if (hdr) hdr.classList.toggle('header--home', tab === 'home');
       $("panel-home").classList.toggle("hidden", tab !== "home");
       $("panel-apis").classList.toggle("hidden", tab !== "apis");
+      const bp = $("panel-bundles");
+      if (bp) bp.classList.toggle("hidden", tab !== "bundles");
       $("panel-usecases").classList.toggle("hidden", tab !== "usecases");
       const fab = $('api-calls-fab');
       if (fab) fab.classList.toggle('hidden', tab !== 'usecases');
+      const snipFab = $('apis-snippets-fab');
+      if (snipFab) snipFab.classList.toggle('hidden', tab !== 'apis');
       // ViMA chat edit is only available on Use Cases
       const editBtnTop = $('global-edit-btn');
       if (editBtnTop) editBtnTop.classList.toggle('hidden', tab !== 'usecases' || SERVER_MODE);
       if (tab !== 'usecases') { apiCallsClose(); _stopPolling(); }
       else _startPolling();
+      if (tab !== 'apis') apisSnippetsClose();
     });
   });
 
@@ -317,16 +726,131 @@
     });
   });
 
-  // Honour ?tab=apis / ?tab=usecases from home page CTAs
-  const _urlTab = new URLSearchParams(location.search).get('tab');
-  if (_urlTab === 'usecases' || _urlTab === 'apis') {
-    const btn = document.querySelector(`.top-tab[data-top-tab="${_urlTab}"]`);
-    if (btn) btn.click();
-  } else {
-    document.body.style.overflow = 'hidden'; // home is the default tab
-    const hdr = document.querySelector('.header');
-    if (hdr) hdr.classList.add('header--home');
+  // ---------------------------------------------------------------------
+  // Browser history integration (Back / Forward buttons)
+  // ---------------------------------------------------------------------
+  // Every in-app navigation already happens via clicks on a known set of
+  // elements (top tabs, sidebar items, bundle/API/use-case rows). We listen
+  // for those clicks on the document AFTER the original handlers have run
+  // and push the resulting state to the URL via the History API. A popstate
+  // listener replays the click-driven handlers when the user goes Back /
+  // Forward, guarded by ``_applyingHistory`` so the synthetic clicks don't
+  // loop back through this same recorder.
+  // ---------------------------------------------------------------------
+  let _applyingHistory = false;
+  let _navState = { tab: 'home' };
+
+  function _stateToUrl(state) {
+    const params = new URLSearchParams();
+    if (state.tab && state.tab !== 'home') params.set('tab', state.tab);
+    if (state.bundle) params.set('bundle', state.bundle);
+    if (state.api) params.set('api', state.api);
+    if (state.uc) params.set('uc', state.uc);
+    const qs = params.toString();
+    return location.pathname + (qs ? '?' + qs : '');
   }
+
+  function _pushNavState(patch, { replace = false } = {}) {
+    if (_applyingHistory) return;
+    // Merge; clearing tab also clears tab-scoped selections.
+    const next = Object.assign({}, _navState, patch);
+    // Stringified comparison — avoids duplicate entries when the user
+    // clicks the same row twice.
+    if (!replace && _stateToUrl(next) === _stateToUrl(_navState)) return;
+    _navState = next;
+    const url = _stateToUrl(next);
+    try {
+      history[replace ? 'replaceState' : 'pushState'](next, '', url);
+    } catch (_) { /* ignore — some sandboxed contexts disallow pushState */ }
+  }
+
+  function _applyNavState(state) {
+    _applyingHistory = true;
+    try {
+      const tab = state.tab || 'home';
+      const tabBtn = document.querySelector(`.top-tab[data-top-tab="${tab}"]`);
+      if (tabBtn) tabBtn.click();
+      if (state.bundle) {
+        const bBtn = document.querySelector(`[data-bundle-id="${state.bundle}"]`);
+        if (bBtn) bBtn.click();
+      }
+      if (state.api) {
+        const aBtn = document.querySelector(`[data-api-id="${state.api}"]`);
+        if (aBtn) aBtn.click();
+      }
+      if (state.uc) {
+        const uBtn = document.querySelector(`[data-uc-id="${state.uc}"]`);
+        if (uBtn) uBtn.click();
+      }
+    } finally {
+      _applyingHistory = false;
+      _navState = Object.assign({ tab: 'home' }, state);
+    }
+  }
+
+  // Bubble-phase document recorder — fires after element handlers complete.
+  document.addEventListener('click', (e) => {
+    if (_applyingHistory) return;
+    const t = e.target.closest('.top-tab, [data-bundle-id], [data-api-id], [data-uc-id]');
+    if (!t) return;
+    // Programmatic clicks (e.g. an "open this API" chip that synthesises a
+    // tab click + a row click in one user gesture) come through with
+    // ``isTrusted = false``. Collapse them into the same history entry as
+    // the genuine user gesture so Back skips the intermediate hops.
+    const replace = !e.isTrusted;
+    if (t.matches('.top-tab')) {
+      const tab = t.dataset.topTab;
+      // Switching tabs clears the in-tab selection so Back goes to the bare tab.
+      _pushNavState({ tab, bundle: null, api: null, uc: null }, { replace });
+    } else if (t.matches('[data-bundle-id]')) {
+      _pushNavState({ tab: 'bundles', bundle: t.dataset.bundleId }, { replace });
+    } else if (t.matches('[data-api-id]')) {
+      _pushNavState({ tab: 'apis', api: t.dataset.apiId }, { replace });
+    } else if (t.matches('[data-uc-id]')) {
+      _pushNavState({ tab: 'usecases', uc: t.dataset.ucId }, { replace });
+    }
+  });
+
+  window.addEventListener('popstate', (e) => {
+    const state = e.state || (function () {
+      const p = new URLSearchParams(location.search);
+      return {
+        tab: p.get('tab') || 'home',
+        bundle: p.get('bundle'),
+        api: p.get('api'),
+        uc: p.get('uc'),
+      };
+    })();
+    _applyNavState(state);
+  });
+
+  // Honour ?tab=apis / ?tab=usecases / ?bundle=… / ?api=… / ?uc=… from
+  // shared links or home-page CTAs. Replace (not push) so the first Back
+  // press lands on the previous site, not on an empty home view.
+  (function _bootstrapNavFromUrl() {
+    const p = new URLSearchParams(location.search);
+    const initial = {
+      tab: p.get('tab'),
+      bundle: p.get('bundle'),
+      api: p.get('api'),
+      uc: p.get('uc'),
+    };
+    // Infer tab from a deep-link selection if no explicit ?tab=.
+    if (!initial.tab) {
+      if (initial.bundle) initial.tab = 'bundles';
+      else if (initial.api) initial.tab = 'apis';
+      else if (initial.uc) initial.tab = 'usecases';
+      else initial.tab = 'home';
+    }
+    if (initial.tab !== 'home' || initial.bundle || initial.api || initial.uc) {
+      _applyNavState(initial);
+    } else {
+      document.body.style.overflow = 'hidden'; // home is the default tab
+      const hdr = document.querySelector('.header');
+      if (hdr) hdr.classList.add('header--home');
+    }
+    _pushNavState(initial, { replace: true });
+  })();
   startUsIpStatusPolling();
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') refreshUsIpStatus();
@@ -382,7 +906,10 @@
     // "Keys & Config" shortcut inside the about panel
     const keysLink = document.getElementById('aap-open-keys');
     if (keysLink) keysLink.addEventListener('click', () => {
-      const cfgBtn = document.getElementById('cfg-btn');
+      // The header button was renamed cfg-btn -> cfg-trigger-btn; fall
+      // back to the legacy id so older templates still work.
+      const cfgBtn = document.getElementById('cfg-trigger-btn')
+                  || document.getElementById('cfg-btn');
       if (cfgBtn) cfgBtn.click();
     });
 
@@ -479,8 +1006,573 @@
       currentOpId = null;
       if (window._showApiWorkbench) window._showApiWorkbench();
       renderApi();
+      // If the Python snippets drawer is open, follow the selection so
+      // it shows the snippet for the API the user just picked.
+      if (typeof APIS_SNIPPETS_VISIBLE !== 'undefined' && APIS_SNIPPETS_VISIBLE) {
+        apisSnippetsShow(currentApiId);
+      }
     });
   });
+
+  // ---------------------------------------------------------------------
+  // API Bundles tab — sidebar entries open a rich detail panel in the
+  // content area. Mirrors the APIs / Use Cases tab layout. Each bundle's
+  // detail includes "What you can do", a numbered "How the APIs fit
+  // together" journey, end-to-end walkthroughs and the API roster.
+  // ---------------------------------------------------------------------
+  let _bundlesCache = null;
+  function loadBundles() {
+    if (_bundlesCache) return Promise.resolve(_bundlesCache);
+    return fetch('/catalog/bundles', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d) => { _bundlesCache = d.bundles || []; return _bundlesCache; })
+      .catch(() => []);
+  }
+  loadBundles();
+
+  function _bundleApiTileHtml(bundle, a) {
+    const isAnchor = a.id === bundle.anchor;
+    const cls = 'bundle-api-tile' + (a.configured ? ' configured' : '') + (isAnchor ? ' anchor' : '');
+    return `<button class="${cls}" data-bundle-api="${escapeHtml(a.id)}"
+              title="${isAnchor ? 'Anchor \u00b7 ' : ''}${escapeHtml(a.group || '')} \u00b7 ${a.configured ? 'Configured' : 'Not configured'}">
+        <span class="bundle-api-dot ${a.configured ? 'ok' : 'off'}"></span>
+        <span class="bundle-api-meta">
+          <span class="bundle-api-name">${escapeHtml(a.name)}</span>
+          <span class="bundle-api-group">${escapeHtml(a.group || '')}</span>
+        </span>
+        ${isAnchor ? '<span class="bundle-anchor-pill">anchor</span>' : ''}
+      </button>`;
+  }
+
+  // Per-bundle hero visualization — each bundle gets a unique thematic SVG
+  // that summarises what it does at a glance. The bundle's accent colour is
+  // inherited via CSS so the artwork tints itself.
+  function _bundleHeroVisual(bundleId) {
+    const visuals = {
+      pfm_stack: `
+        <svg viewBox="0 0 320 160" class="bhv-svg bhv-pfm" preserveAspectRatio="xMidYMid meet">
+          <!-- Phone frame -->
+          <rect x="18" y="14" width="110" height="132" rx="14" fill="#0f0f12" stroke="currentColor" stroke-width="1.2" opacity="0.85"/>
+          <rect x="40" y="18" width="40" height="3" rx="1.5" fill="#1a1a1f"/>
+          <!-- Donut of categories -->
+          <g transform="translate(73 80)">
+            <circle r="34" fill="none" stroke="#1f1f24" stroke-width="10"/>
+            <circle r="34" fill="none" stroke="currentColor" stroke-width="10"
+                    stroke-dasharray="60 153" transform="rotate(-90)"/>
+            <circle r="34" fill="none" stroke="#f37338" stroke-width="10"
+                    stroke-dasharray="42 171" stroke-dashoffset="-60" transform="rotate(-90)"/>
+            <circle r="34" fill="none" stroke="#ffcb05" stroke-width="10"
+                    stroke-dasharray="30 183" stroke-dashoffset="-102" transform="rotate(-90)"/>
+            <text y="4" text-anchor="middle" fill="rgba(255,230,180,0.95)" font-size="11" font-weight="700" font-family="JetBrains Mono, monospace">£2.4k</text>
+          </g>
+          <text x="73" y="135" text-anchor="middle" fill="rgba(255,180,100,0.6)" font-size="7" font-weight="700" letter-spacing="1">THIS MONTH</text>
+          <!-- Insights card -->
+          <g transform="translate(146 22)">
+            <rect width="160" height="120" rx="10" fill="#15151a" stroke="currentColor" stroke-width="1" opacity="0.9"/>
+            <text x="14" y="20" fill="rgba(255,200,140,0.6)" font-size="7" font-weight="700" letter-spacing="1">CATEGORIES</text>
+            <g font-size="8.5" font-family="JetBrains Mono, monospace">
+              <g transform="translate(14 38)"><circle cx="4" cy="-3" r="3" fill="currentColor"/><text x="14" y="0" fill="rgba(255,230,180,0.9)">Groceries</text><text x="140" y="0" text-anchor="end" fill="currentColor" font-weight="700">£612</text></g>
+              <g transform="translate(14 56)"><circle cx="4" cy="-3" r="3" fill="#f37338"/><text x="14" y="0" fill="rgba(255,230,180,0.9)">Transport</text><text x="140" y="0" text-anchor="end" fill="#f37338" font-weight="700">£428</text></g>
+              <g transform="translate(14 74)"><circle cx="4" cy="-3" r="3" fill="#ffcb05"/><text x="14" y="0" fill="rgba(255,230,180,0.9)">Dining</text><text x="140" y="0" text-anchor="end" fill="#ffcb05" font-weight="700">£305</text></g>
+            </g>
+            <rect x="14" y="90" width="132" height="18" rx="5" fill="rgba(255,203,5,0.12)" stroke="rgba(255,203,5,0.35)"/>
+            <text x="80" y="102" text-anchor="middle" fill="#ffcb05" font-size="8" font-weight="700">Budget on track ✓</text>
+          </g>
+        </svg>`,
+
+      subscriptions: `
+        <svg viewBox="0 0 320 160" class="bhv-svg bhv-subs" preserveAspectRatio="xMidYMid meet">
+          <!-- Calendar -->
+          <g transform="translate(18 18)">
+            <rect width="124" height="124" rx="10" fill="#15151a" stroke="currentColor" stroke-width="1" opacity="0.9"/>
+            <rect width="124" height="22" rx="10" fill="currentColor" opacity="0.25"/>
+            <text x="62" y="15" text-anchor="middle" fill="currentColor" font-size="9" font-weight="700" letter-spacing="1">JUNE 2026</text>
+            <g font-size="7" font-family="JetBrains Mono, monospace" fill="rgba(255,210,160,0.6)">
+              ${[0,1,2,3,4,5,6].map((d,i)=>`<text x="${10+i*15}" y="36" text-anchor="middle">${'SMTWTFS'[i]}</text>`).join('')}
+            </g>
+            <g font-size="8" font-family="JetBrains Mono, monospace" fill="rgba(255,230,180,0.85)">
+              ${Array.from({length:28}, (_,i)=>{
+                const col = i%7, row = Math.floor(i/7);
+                const d = i+1;
+                const isHit = [5,12,19,26].includes(d);
+                return `<g transform="translate(${10+col*15} ${52+row*18})">
+                  ${isHit?`<circle cx="0" cy="-3" r="8" fill="currentColor" opacity="0.85"/>`:''}
+                  <text text-anchor="middle" fill="${isHit?'#0a0a0a':'rgba(255,230,180,0.7)'}" font-weight="${isHit?'700':'400'}">${d}</text>
+                </g>`;
+              }).join('')}
+            </g>
+          </g>
+          <!-- Subscription cards stack -->
+          <g transform="translate(150 28)">
+            <rect width="158" height="34" rx="7" fill="#1a1a1f" stroke="currentColor" stroke-width="1" opacity="0.6" transform="translate(8 8)"/>
+            <rect width="158" height="34" rx="7" fill="#1a1a1f" stroke="currentColor" stroke-width="1" opacity="0.8" transform="translate(4 4)"/>
+            <rect width="158" height="34" rx="7" fill="#15151a" stroke="currentColor" stroke-width="1.2"/>
+            <circle cx="20" cy="17" r="9" fill="currentColor" opacity="0.25"/>
+            <text x="20" y="20" text-anchor="middle" fill="currentColor" font-size="11" font-weight="700">N</text>
+            <text x="36" y="15" fill="rgba(255,230,180,0.92)" font-size="8.5" font-weight="600">Netflix</text>
+            <text x="36" y="26" fill="rgba(255,180,100,0.55)" font-size="6.5" letter-spacing="0.3">Next 26 Jun · monthly</text>
+            <text x="148" y="20" text-anchor="end" fill="currentColor" font-size="10" font-weight="700" font-family="JetBrains Mono, monospace">£10.99</text>
+          </g>
+          <g transform="translate(150 90)">
+            <rect width="158" height="44" rx="7" fill="rgba(255,203,5,0.08)" stroke="currentColor" stroke-width="1"/>
+            <text x="10" y="14" fill="rgba(255,200,140,0.55)" font-size="6.5" font-weight="700" letter-spacing="1">PRICE CHANGE</text>
+            <text x="10" y="28" fill="rgba(255,230,180,0.9)" font-size="8">Spotify £9.99 → £11.99</text>
+            <text x="148" y="38" text-anchor="end" fill="currentColor" font-size="8" font-weight="700">+£2.00 / mo</text>
+          </g>
+        </svg>`,
+
+      loyalty_stack: `
+        <svg viewBox="0 0 320 160" class="bhv-svg bhv-loyalty" preserveAspectRatio="xMidYMid meet">
+          <!-- Coupons/offers fan -->
+          <g transform="translate(50 80)">
+            <g transform="rotate(-18) translate(-55 -38)">
+              <rect width="110" height="76" rx="10" fill="#15151a" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+              <circle cx="0" cy="38" r="6" fill="#0a0a0a"/><circle cx="110" cy="38" r="6" fill="#0a0a0a"/>
+            </g>
+            <g transform="rotate(-6) translate(-55 -38)">
+              <rect width="110" height="76" rx="10" fill="#15151a" stroke="currentColor" stroke-width="1" opacity="0.85"/>
+              <circle cx="0" cy="38" r="6" fill="#0a0a0a"/><circle cx="110" cy="38" r="6" fill="#0a0a0a"/>
+            </g>
+            <g transform="rotate(8) translate(-55 -38)">
+              <rect width="110" height="76" rx="10" fill="#15151a" stroke="currentColor" stroke-width="1.4"/>
+              <circle cx="0" cy="38" r="6" fill="#0a0a0a"/><circle cx="110" cy="38" r="6" fill="#0a0a0a"/>
+              <line x1="55" y1="6" x2="55" y2="70" stroke="currentColor" stroke-width="1" stroke-dasharray="2 3" opacity="0.4"/>
+              <text x="30" y="22" text-anchor="middle" fill="rgba(255,200,140,0.55)" font-size="6" font-weight="700" letter-spacing="1">OFFER</text>
+              <text x="30" y="42" text-anchor="middle" fill="currentColor" font-size="18" font-weight="800" font-family="JetBrains Mono, monospace">15%</text>
+              <text x="30" y="56" text-anchor="middle" fill="rgba(255,230,180,0.7)" font-size="7">cashback</text>
+              <text x="83" y="34" text-anchor="middle" fill="rgba(255,230,180,0.85)" font-size="8" font-weight="600">Coffee</text>
+              <text x="83" y="46" text-anchor="middle" fill="rgba(255,180,100,0.5)" font-size="6.5">Shops</text>
+            </g>
+          </g>
+          <!-- Wallet -->
+          <g transform="translate(158 24)">
+            <rect width="150" height="112" rx="10" fill="#15151a" stroke="currentColor" stroke-width="1" opacity="0.9"/>
+            <text x="12" y="20" fill="rgba(255,200,140,0.6)" font-size="7" font-weight="700" letter-spacing="1">PUBLISHED TO USER</text>
+            <g transform="translate(12 30)">
+              <rect width="126" height="22" rx="6" fill="rgba(255,203,5,0.10)" stroke="currentColor" stroke-width="0.8"/>
+              <circle cx="13" cy="11" r="6" fill="currentColor" opacity="0.3"/>
+              <text x="13" y="14" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">★</text>
+              <text x="24" y="14" fill="rgba(255,230,180,0.9)" font-size="7.5">Pret · 10% off</text>
+              <text x="120" y="14" text-anchor="end" fill="currentColor" font-size="6.5" font-weight="700">NEW</text>
+            </g>
+            <g transform="translate(12 58)">
+              <rect width="126" height="22" rx="6" fill="rgba(255,203,5,0.06)" stroke="currentColor" stroke-width="0.8" opacity="0.7"/>
+              <circle cx="13" cy="11" r="6" fill="currentColor" opacity="0.2"/>
+              <text x="13" y="14" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">★</text>
+              <text x="24" y="14" fill="rgba(255,230,180,0.75)" font-size="7.5">BP · 5p/litre</text>
+            </g>
+            <g transform="translate(12 92)" font-size="7" font-family="JetBrains Mono, monospace">
+              <text fill="rgba(255,180,100,0.55)">Eligible offers</text>
+              <text x="126" text-anchor="end" fill="currentColor" font-weight="700">12</text>
+            </g>
+          </g>
+        </svg>`,
+
+      merchant_resolution: `
+        <svg viewBox="0 0 320 160" class="bhv-svg bhv-merch" preserveAspectRatio="xMidYMid meet">
+          <!-- Raw transaction -->
+          <g transform="translate(14 20)">
+            <rect width="124" height="120" rx="8" fill="#15151a" stroke="rgba(255,90,90,0.4)" stroke-width="1"/>
+            <text x="12" y="18" fill="rgba(255,140,140,0.65)" font-size="7" font-weight="700" letter-spacing="1">RAW DESCRIPTOR</text>
+            <text x="12" y="38" fill="rgba(255,230,180,0.85)" font-size="8.5" font-family="JetBrains Mono, monospace">SQ *ACME COFFEE</text>
+            <text x="12" y="50" fill="rgba(255,230,180,0.65)" font-size="8.5" font-family="JetBrains Mono, monospace">LON GB 0078432</text>
+            <line x1="12" y1="62" x2="112" y2="62" stroke="rgba(255,90,90,0.2)" stroke-dasharray="2 3"/>
+            <text x="12" y="76" fill="rgba(255,140,140,0.55)" font-size="7" font-family="JetBrains Mono, monospace">? unknown brand</text>
+            <text x="12" y="88" fill="rgba(255,140,140,0.55)" font-size="7" font-family="JetBrains Mono, monospace">? no category</text>
+            <text x="12" y="100" fill="rgba(255,140,140,0.55)" font-size="7" font-family="JetBrains Mono, monospace">? no logo</text>
+            <text x="12" y="112" fill="rgba(255,140,140,0.55)" font-size="7" font-family="JetBrains Mono, monospace">? no location</text>
+          </g>
+          <!-- Arrow -->
+          <g transform="translate(148 80)" fill="currentColor">
+            <path d="M 0 -6 L 14 -6 L 14 -12 L 26 0 L 14 12 L 14 6 L 0 6 Z" opacity="0.85"/>
+            <text x="13" y="-18" text-anchor="middle" fill="currentColor" font-size="7" font-weight="700" letter-spacing="1">ENRICH</text>
+          </g>
+          <!-- Clean transaction -->
+          <g transform="translate(184 20)">
+            <rect width="122" height="120" rx="8" fill="#15151a" stroke="currentColor" stroke-width="1.4"/>
+            <g transform="translate(10 14)">
+              <rect width="22" height="22" rx="6" fill="currentColor"/>
+              <text x="11" y="16" text-anchor="middle" fill="#0a0a0a" font-size="13" font-weight="800">☕</text>
+            </g>
+            <text x="38" y="22" fill="rgba(255,230,180,0.95)" font-size="9.5" font-weight="700">Acme Coffee</text>
+            <text x="38" y="33" fill="rgba(255,200,140,0.55)" font-size="6.5" letter-spacing="0.2">COFFEE SHOPS</text>
+            <line x1="10" y1="46" x2="112" y2="46" stroke="currentColor" stroke-dasharray="2 3" opacity="0.3"/>
+            <g font-size="7" font-family="JetBrains Mono, monospace">
+              <g transform="translate(10 60)"><text fill="rgba(255,180,100,0.55)">MCC</text><text x="104" text-anchor="end" fill="rgba(255,230,180,0.85)">5814</text></g>
+              <g transform="translate(10 74)"><text fill="rgba(255,180,100,0.55)">Brand</text><text x="104" text-anchor="end" fill="rgba(255,230,180,0.85)">Acme</text></g>
+              <g transform="translate(10 88)"><text fill="rgba(255,180,100,0.55)">Postcode</text><text x="104" text-anchor="end" fill="rgba(255,230,180,0.85)">EC2A 4DP</text></g>
+              <g transform="translate(10 102)"><text fill="rgba(255,180,100,0.55)">Logo</text><text x="104" text-anchor="end" fill="currentColor" font-weight="700">✓</text></g>
+            </g>
+          </g>
+        </svg>`,
+
+      issuer_toolkit: `
+        <svg viewBox="0 0 320 160" class="bhv-svg bhv-issuer" preserveAspectRatio="xMidYMid meet">
+          <!-- Credit card -->
+          <g transform="translate(30 30)">
+            <rect width="170" height="106" rx="12" fill="url(#issuer-card-grad)" stroke="currentColor" stroke-width="1.2"/>
+            <defs>
+              <linearGradient id="issuer-card-grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#1c1c24"/>
+                <stop offset="100%" stop-color="#0a0a0e"/>
+              </linearGradient>
+            </defs>
+            <!-- Chip -->
+            <rect x="16" y="22" width="22" height="18" rx="3" fill="currentColor" opacity="0.85"/>
+            <line x1="16" y1="28" x2="38" y2="28" stroke="#0a0a0e" stroke-width="0.6"/>
+            <line x1="16" y1="34" x2="38" y2="34" stroke="#0a0a0e" stroke-width="0.6"/>
+            <line x1="27" y1="22" x2="27" y2="40" stroke="#0a0a0e" stroke-width="0.6"/>
+            <!-- Number -->
+            <text x="16" y="64" fill="rgba(255,230,180,0.9)" font-size="11" font-weight="700" font-family="JetBrains Mono, monospace" letter-spacing="2">5412 ••••</text>
+            <text x="16" y="80" fill="rgba(255,180,100,0.55)" font-size="6.5" letter-spacing="1.5">CARDHOLDER</text>
+            <text x="16" y="90" fill="rgba(255,230,180,0.85)" font-size="8" font-weight="600">ALEX MORGAN</text>
+            <!-- Mastercard circles -->
+            <circle cx="142" cy="82" r="11" fill="#eb001b" opacity="0.95"/>
+            <circle cx="156" cy="82" r="11" fill="#ffcb05" opacity="0.85"/>
+            <!-- BIN tag -->
+            <g transform="translate(118 16)">
+              <rect width="44" height="18" rx="5" fill="rgba(255,203,5,0.18)" stroke="currentColor" stroke-width="0.8"/>
+              <text x="22" y="12" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700" font-family="JetBrains Mono, monospace">BIN 541</text>
+            </g>
+          </g>
+          <!-- Benefit badges stack -->
+          <g transform="translate(204 22)">
+            <rect width="106" height="22" rx="6" fill="rgba(255,203,5,0.10)" stroke="currentColor" stroke-width="0.8"/>
+            <circle cx="13" cy="11" r="6" fill="currentColor" opacity="0.25"/>
+            <text x="13" y="14" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">✓</text>
+            <text x="24" y="14" fill="rgba(255,230,180,0.9)" font-size="7.5">Travel insurance</text>
+          </g>
+          <g transform="translate(204 50)">
+            <rect width="106" height="22" rx="6" fill="rgba(255,203,5,0.10)" stroke="currentColor" stroke-width="0.8"/>
+            <circle cx="13" cy="11" r="6" fill="currentColor" opacity="0.25"/>
+            <text x="13" y="14" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">✓</text>
+            <text x="24" y="14" fill="rgba(255,230,180,0.9)" font-size="7.5">Purchase cover</text>
+          </g>
+          <g transform="translate(204 78)">
+            <rect width="106" height="22" rx="6" fill="rgba(255,203,5,0.10)" stroke="currentColor" stroke-width="0.8"/>
+            <circle cx="13" cy="11" r="6" fill="currentColor" opacity="0.25"/>
+            <text x="13" y="14" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">✓</text>
+            <text x="24" y="14" fill="rgba(255,230,180,0.9)" font-size="7.5">Lounge access</text>
+          </g>
+          <g transform="translate(204 110)">
+            <rect width="106" height="22" rx="6" fill="rgba(120,200,140,0.10)" stroke="rgba(120,200,140,0.55)" stroke-width="0.8"/>
+            <text x="53" y="14" text-anchor="middle" fill="rgba(120,200,140,0.95)" font-size="7.5" font-weight="700" letter-spacing="0.5">CONSENT GRANTED</text>
+          </g>
+        </svg>`,
+
+      acquirer_risk: `
+        <svg viewBox="0 0 320 160" class="bhv-svg bhv-risk" preserveAspectRatio="xMidYMid meet">
+          <!-- Shield -->
+          <g transform="translate(30 24)">
+            <path d="M 50 0 L 100 18 L 100 60 C 100 88 78 108 50 116 C 22 108 0 88 0 60 L 0 18 Z"
+                  fill="rgba(160,16,16,0.15)" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M 30 58 L 44 72 L 72 42" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="50" y="100" text-anchor="middle" fill="rgba(255,180,180,0.7)" font-size="7" font-weight="700" letter-spacing="1">PROTECTED</text>
+          </g>
+          <!-- Transaction stream + alert -->
+          <g transform="translate(150 18)">
+            <text x="0" y="10" fill="rgba(255,180,180,0.6)" font-size="7" font-weight="700" letter-spacing="1">LIVE TRANSACTION RISK</text>
+            <!-- Heartbeat line -->
+            <g transform="translate(0 24)">
+              <rect width="160" height="38" rx="6" fill="#15151a" stroke="currentColor" stroke-width="0.8" opacity="0.85"/>
+              <polyline points="6,22 22,22 26,10 32,32 38,16 48,22 64,22 68,8 74,34 80,22 100,22 106,14 112,28 118,22 154,22"
+                        fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/>
+              <circle cx="68" cy="8" r="2.5" fill="currentColor"/>
+              <circle cx="74" cy="34" r="2.5" fill="currentColor"/>
+            </g>
+            <!-- Risk rows -->
+            <g transform="translate(0 70)" font-family="JetBrains Mono, monospace" font-size="7.5">
+              <rect width="160" height="20" rx="5" fill="rgba(120,200,140,0.08)" stroke="rgba(120,200,140,0.4)" stroke-width="0.6"/>
+              <circle cx="10" cy="10" r="3" fill="rgba(120,200,140,0.95)"/>
+              <text x="20" y="13" fill="rgba(255,230,180,0.85)">£42.10 Fuel</text>
+              <text x="152" y="13" text-anchor="end" fill="rgba(120,200,140,0.95)" font-weight="700">OK</text>
+            </g>
+            <g transform="translate(0 94)" font-family="JetBrains Mono, monospace" font-size="7.5">
+              <rect width="160" height="20" rx="5" fill="rgba(255,90,90,0.10)" stroke="currentColor" stroke-width="0.6"/>
+              <circle cx="10" cy="10" r="3" fill="currentColor"/>
+              <text x="20" y="13" fill="rgba(255,230,180,0.85)">£2,990 Crypto</text>
+              <text x="152" y="13" text-anchor="end" fill="currentColor" font-weight="700">BLOCKED</text>
+            </g>
+            <g transform="translate(0 118)" font-family="JetBrains Mono, monospace" font-size="7.5">
+              <rect width="160" height="20" rx="5" fill="rgba(255,203,5,0.08)" stroke="rgba(255,203,5,0.45)" stroke-width="0.6"/>
+              <circle cx="10" cy="10" r="3" fill="#ffcb05"/>
+              <text x="20" y="13" fill="rgba(255,230,180,0.85)">£780 Online</text>
+              <text x="152" y="13" text-anchor="end" fill="#ffcb05" font-weight="700">REVIEW</text>
+            </g>
+          </g>
+        </svg>`,
+
+      sustainability: `
+        <svg viewBox="0 0 320 160" class="bhv-svg bhv-sust" preserveAspectRatio="xMidYMid meet">
+          <!-- Leaf -->
+          <g transform="translate(28 24)">
+            <path d="M 0 110 C 0 50 50 0 110 0 C 110 60 60 110 0 110 Z"
+                  fill="rgba(120,200,140,0.18)" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M 8 100 C 40 70 70 50 100 22" fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+            <path d="M 18 96 C 30 90 38 88 46 88 M 32 84 C 44 78 52 76 62 76 M 50 70 C 60 64 70 62 80 62" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.5"/>
+            <circle cx="55" cy="60" r="14" fill="#0a0a0a" stroke="currentColor" stroke-width="1"/>
+            <text x="55" y="58" text-anchor="middle" fill="currentColor" font-size="11" font-weight="800" font-family="JetBrains Mono, monospace">CO₂</text>
+            <text x="55" y="68" text-anchor="middle" fill="rgba(255,230,180,0.7)" font-size="6" font-weight="600">tracked</text>
+          </g>
+          <!-- Footprint card -->
+          <g transform="translate(166 22)">
+            <rect width="138" height="116" rx="10" fill="#15151a" stroke="currentColor" stroke-width="1" opacity="0.9"/>
+            <text x="12" y="18" fill="rgba(180,230,200,0.6)" font-size="7" font-weight="700" letter-spacing="1">YOUR FOOTPRINT</text>
+            <text x="12" y="38" fill="currentColor" font-size="20" font-weight="800" font-family="JetBrains Mono, monospace">82.4</text>
+            <text x="58" y="38" fill="rgba(255,230,180,0.7)" font-size="9">kg CO₂e</text>
+            <text x="12" y="50" fill="rgba(180,230,200,0.5)" font-size="7">vs 91.2 last month · ↓ 10%</text>
+            <!-- Trending bars -->
+            <g transform="translate(12 62)">
+              ${[55,62,48,70,58,46,38].map((h,i)=>`<rect x="${i*18}" y="${44-h*0.6}" width="12" height="${h*0.6}" rx="2" fill="currentColor" opacity="${0.4 + i*0.08}"/>`).join('')}
+            </g>
+            <!-- Offset CTA -->
+            <g transform="translate(12 104)">
+              <rect width="114" height="0" />
+            </g>
+          </g>
+        </svg>`,
+    };
+    return visuals[bundleId] || '';
+  }
+
+  function _bundleJourneyStepHtml(step, idx, byId) {
+    const api = byId[step.api_id];
+    const apiName = api ? api.name : step.api_id;
+    return `<li class="bundle-journey-step">
+      <span class="bundle-journey-num">${idx + 1}</span>
+      <div class="bundle-journey-body">
+        <div class="bundle-journey-head">
+          <span class="bundle-journey-title">${escapeHtml(step.title)}</span>
+          <button class="bundle-journey-api" data-bundle-api="${escapeHtml(step.api_id)}" title="Open ${escapeHtml(apiName)}">${escapeHtml(apiName)}</button>
+        </div>
+        <p class="bundle-journey-detail">${escapeHtml(step.detail)}</p>
+      </div>
+    </li>`;
+  }
+
+  function renderBundleDetail(bundle) {
+    const aboutPanel = document.getElementById('bundle-about-panel');
+    const detail = document.getElementById('bundle-detail');
+    if (aboutPanel) aboutPanel.classList.add('hidden');
+    if (!detail) return;
+    detail.classList.remove('hidden');
+    detail.style.setProperty('--bundle-accent', bundle.accent || '#ffcb05');
+
+    const pct = bundle.total ? Math.round((bundle.configured / bundle.total) * 100) : 0;
+    const byId = {};
+    (bundle.apis || []).forEach((a) => { byId[a.id] = a; });
+
+    const valueProps = (bundle.value_props || []).map((v) =>
+      `<li class="bundle-value-prop"><span class="bundle-value-tick">✓</span>${escapeHtml(v)}</li>`
+    ).join('');
+
+    const journey = (bundle.journey || [])
+      .map((step, idx) => _bundleJourneyStepHtml(step, idx, byId))
+      .join('');
+
+    const walkthroughs = (bundle.walkthroughs || []).map((w) =>
+      `<article class="bundle-walkthrough">
+        <h4 class="bundle-walkthrough-title">${escapeHtml(w.title)}</h4>
+        <p class="bundle-walkthrough-body">${escapeHtml(w.body)}</p>
+      </article>`
+    ).join('');
+
+    const apiTiles = (bundle.apis || []).map((a) => _bundleApiTileHtml(bundle, a)).join('');
+
+    const examplesChips = (bundle.examples || []).map((ex) =>
+      `<span class="bundle-example-chip">${escapeHtml(ex)}</span>`
+    ).join('');
+
+    const bundleApiSet = new Set((bundle.apis || []).map((a) => a.id));
+    const relevantUseCases = (USE_CASES || []).filter((uc) => {
+      const ucApis = Array.isArray(uc.apis) ? uc.apis.filter((a) => typeof a === 'string' && a) : [];
+      if (!ucApis.length) return false;
+      return ucApis.every((a) => bundleApiSet.has(a));
+    });
+    const useCaseChips = relevantUseCases.map((uc) => {
+      const blocked = _isNonUsBlockedUseCaseById(uc.id);
+      const cls = 'bundle-use-case-chip' + (blocked ? ' blocked' : '');
+      const title = blocked
+        ? `${uc.name} — not available in your region`
+        : `Open ${uc.name}`;
+      return `<button class="${cls}" data-bundle-use-case="${escapeHtml(uc.id)}" title="${escapeHtml(title)}"${blocked ? ' disabled' : ''}>
+        <span class="bundle-use-case-chip-arrow" aria-hidden="true">→</span>${escapeHtml(uc.name)}
+      </button>`;
+    }).join('');
+
+    const heroVisual = _bundleHeroVisual(bundle.id);
+
+    detail.innerHTML = `
+      <header class="bundle-detail-header">
+        <div class="bundle-detail-header-main">
+          <span class="bundle-detail-icon" aria-hidden="true">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="${escapeHtml(bundle.icon_path || '')}"></path>
+            </svg>
+          </span>
+          <div>
+            <div class="bundle-detail-eyebrow">Solution bundle</div>
+            <h1 class="bundle-detail-title">${escapeHtml(bundle.name)}</h1>
+            <p class="bundle-detail-tagline">${escapeHtml(bundle.tagline || '')}</p>
+          </div>
+        </div>
+        <div class="bundle-detail-progress" title="${bundle.configured} of ${bundle.total} APIs configured">
+          <span class="bundle-progress-text">${bundle.configured}<span class="bundle-progress-sep">/</span>${bundle.total}</span>
+          <span class="bundle-progress-label">configured</span>
+          <div class="bundle-progress-bar"><div class="bundle-progress-fill" style="width:${pct}%;"></div></div>
+        </div>
+      </header>
+
+      ${heroVisual ? `<div class="bundle-hero-visual">${heroVisual}</div>` : ''}
+
+      <p class="bundle-detail-desc">${escapeHtml(bundle.description || '')}</p>
+
+      ${valueProps ? `<section class="bundle-section">
+        <h3 class="bundle-section-title">What you can do with this bundle</h3>
+        <ul class="bundle-value-props">${valueProps}</ul>
+      </section>` : ''}
+
+      ${journey ? `<section class="bundle-section">
+        <h3 class="bundle-section-title">How the APIs fit together</h3>
+        <ol class="bundle-journey">${journey}</ol>
+      </section>` : ''}
+
+      ${walkthroughs ? `<section class="bundle-section">
+        <h3 class="bundle-section-title">Walkthroughs</h3>
+        <div class="bundle-walkthroughs">${walkthroughs}</div>
+      </section>` : ''}
+
+      <section class="bundle-section">
+        <h3 class="bundle-section-title">APIs in this bundle</h3>
+        <div class="bundle-api-grid">${apiTiles}</div>
+      </section>
+
+      ${useCaseChips ? `<section class="bundle-section">
+        <h3 class="bundle-section-title">Try it in these use cases</h3>
+        <div class="bundle-use-cases-row">${useCaseChips}</div>
+      </section>` : ''}
+
+      ${examplesChips ? `<section class="bundle-section bundle-section--examples">
+        <h3 class="bundle-section-title">Other example experiences</h3>
+        <div class="bundle-examples-row">${examplesChips}</div>
+      </section>` : ''}
+    `;
+
+    detail.querySelectorAll('[data-bundle-api]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const apiId = btn.dataset.bundleApi;
+        const apisTabBtn = document.querySelector('.top-tab[data-top-tab="apis"]');
+        if (apisTabBtn) apisTabBtn.click();
+        setTimeout(() => {
+          const apiBtn = document.querySelector(`[data-api-id="${apiId}"]`);
+          if (apiBtn) apiBtn.click();
+        }, 0);
+      });
+    });
+
+    detail.querySelectorAll('[data-bundle-use-case]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const ucId = btn.dataset.bundleUseCase;
+        if (_isNonUsBlockedUseCaseById(ucId)) return;
+        const ucTabBtn = document.querySelector('.top-tab[data-top-tab="usecases"]');
+        if (ucTabBtn) ucTabBtn.click();
+        setTimeout(() => {
+          const ucBtn = document.querySelector(`[data-uc-id="${ucId}"]`);
+          if (ucBtn) ucBtn.click();
+        }, 0);
+      });
+    });
+
+    detail.scrollTop = 0;
+  }
+
+  function showBundleAbout() {
+    const aboutPanel = document.getElementById('bundle-about-panel');
+    const detail = document.getElementById('bundle-detail');
+    if (aboutPanel) aboutPanel.classList.remove('hidden');
+    if (detail) detail.classList.add('hidden');
+    document.querySelectorAll('[data-bundle-id]').forEach((b) => b.classList.remove('active'));
+    const aboutBtn = document.getElementById('bundle-about-btn');
+    if (aboutBtn) aboutBtn.classList.add('active');
+  }
+
+  function selectBundle(id) {
+    document.querySelectorAll('[data-bundle-id]').forEach((b) =>
+      b.classList.toggle('active', b.dataset.bundleId === id)
+    );
+    const aboutBtn = document.getElementById('bundle-about-btn');
+    if (aboutBtn) aboutBtn.classList.remove('active');
+    loadBundles().then((bundles) => {
+      const b = bundles.find((x) => x.id === id);
+      if (b) renderBundleDetail(b);
+    });
+  }
+
+  document.querySelectorAll('[data-bundle-id]').forEach((btn) => {
+    btn.addEventListener('click', () => selectBundle(btn.dataset.bundleId));
+  });
+  document.querySelectorAll('[data-bundle-link]').forEach((btn) => {
+    btn.addEventListener('click', () => selectBundle(btn.dataset.bundleLink));
+  });
+  const _bundleAboutBtn = document.getElementById('bundle-about-btn');
+  if (_bundleAboutBtn) _bundleAboutBtn.addEventListener('click', showBundleAbout);
+
+  function renderApiPairs(api) {
+    const el = document.getElementById('api-pairs');
+    if (!el) return;
+    const complements = Array.isArray(api.complements) ? api.complements : [];
+    const requires = Array.isArray(api.requires) ? api.requires : [];
+    const bundles = Array.isArray(api.bundles) ? api.bundles : [];
+    if (!complements.length && !requires.length && !bundles.length) {
+      el.hidden = true;
+      el.innerHTML = '';
+      return;
+    }
+    function chip(id, kind) {
+      const ref = APIS.find((a) => a.id === id);
+      if (!ref) return '';
+      const cls = 'api-pair-chip api-pair-chip--' + kind + (ref.configured ? ' configured' : '');
+      return `<button class="${cls}" data-pair-api="${escapeHtml(id)}" title="${kind === 'requires' ? 'Required' : 'APIs often paired with'} — ${ref.configured ? 'configured' : 'not configured'}">
+        <span class="api-pair-dot ${ref.configured ? 'ok' : 'off'}"></span>${escapeHtml(ref.name)}
+      </button>`;
+    }
+    let html = '';
+    if (requires.length) {
+      html += '<div class="api-pairs-row"><span class="api-pairs-label">Requires</span>' +
+        requires.map((id) => chip(id, 'requires')).join('') + '</div>';
+    }
+    if (complements.length) {
+      html += '<div class="api-pairs-row"><span class="api-pairs-label">APIs often paired with</span>' +
+        complements.map((id) => chip(id, 'complement')).join('') + '</div>';
+    }
+    if (bundles.length) {
+      const bundleChips = bundles.map((bid) => {
+        const cached = (_bundlesCache || []).find((b) => b.id === bid);
+        const label = cached ? cached.name : bid;
+        const accent = (cached && cached.accent) || '#ffcb05';
+        return `<button class="api-pair-chip api-pair-chip--bundle" data-pair-bundle="${escapeHtml(bid)}" style="--bundle-accent: ${escapeHtml(accent)};"><span class="api-pair-chip-dot"></span>${escapeHtml(label)}</button>`;
+      }).join('');
+      html += '<div class="api-pairs-row"><span class="api-pairs-label">Part of bundles</span>' + bundleChips + '</div>';
+    }
+    el.hidden = false;
+    el.innerHTML = html;
+    el.querySelectorAll('[data-pair-api]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const btn = document.querySelector(`[data-api-id="${b.dataset.pairApi}"]`);
+        if (btn) btn.click();
+      });
+    });
+    el.querySelectorAll('[data-pair-bundle]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const bundlesTabBtn = document.querySelector('.top-tab[data-top-tab="bundles"]');
+        if (bundlesTabBtn) bundlesTabBtn.click();
+        setTimeout(() => {
+          const sideBtn = document.querySelector(`[data-bundle-id="${b.dataset.pairBundle}"]`);
+          if (sideBtn) sideBtn.click();
+        }, 0);
+      });
+    });
+  }
 
   // ---------------------------------------------------------------------
   // Simulator toggle
@@ -540,12 +1632,19 @@
 
     // Simulator toggle — fetch current status for this API
     fetchSimStatus(api.id);
-    if (api.docs_url) {
-      docs.href = api.docs_url;
-      docs.style.display = "inline-flex";
-    } else {
-      docs.style.display = "none";
+    if (docs) {
+      if (api.docs_url) {
+        docs.href = api.docs_url;
+        docs.style.display = "inline-flex";
+      } else {
+        docs.style.display = "none";
+      }
     }
+
+    // "Often paired with" — render complement chips and a small "part of N
+    // solution bundles" hint, sourced from the manifest fields shipped by
+    // /catalog (apis.complements + apis.bundles).
+    renderApiPairs(api);
 
     // Operations list grouped by category
     const cats = {};
@@ -4204,6 +5303,21 @@
   if (_acClose) _acClose.addEventListener('click', apiCallsClose);
   const _acClear = $('api-calls-clear');
   if (_acClear) _acClear.addEventListener('click', () => { API_CALL_LOG.length = 0; apiCallsRefresh(); });
+
+  // Wire APIs tab Python snippets FAB and modal.
+  const _snipFab = $('apis-snippets-fab');
+  if (_snipFab) _snipFab.addEventListener('click', () => { if (APIS_SNIPPETS_VISIBLE) apisSnippetsClose(); else apisSnippetsOpen(); });
+  const _snipClose = $('apis-snippets-close');
+  if (_snipClose) _snipClose.addEventListener('click', apisSnippetsClose);
+  // Click on the dimmed area outside the modal closes it.
+  const _snipBackdrop = $('apis-snippets-backdrop');
+  if (_snipBackdrop) _snipBackdrop.addEventListener('click', (e) => {
+    if (e.target === _snipBackdrop) apisSnippetsClose();
+  });
+  // Escape closes when the modal is open.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && APIS_SNIPPETS_VISIBLE) apisSnippetsClose();
+  });
 
   if (currentApiId) renderApi();
   if (USE_CASES.length) {

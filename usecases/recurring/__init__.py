@@ -19,7 +19,7 @@ MANIFEST: Dict[str, Any] = {
         "recurrence frequency, average amount, and the next expected date — giving consumers "
         "full visibility and empowering them to take control of their financial commitments."
     ),
-    "apis": ["open_finance"],
+    "apis": ["open_finance", "automatic_billing_updater", "transaction_notifications", "consent_management"],
     "render": "recurring",
 }
 

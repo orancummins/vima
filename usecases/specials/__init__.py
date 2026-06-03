@@ -28,7 +28,7 @@ MANIFEST: Dict[str, Any] = {
         "programs available in your destination. Pick your card and where "
         "you're going — the concierge does the rest."
     ),
-    "apis": ["Priceless Specials"],
+    "apis": ["priceless_cities"],
     "render": "specials",
     "defaults": {
         "eligible_markets": "US",
