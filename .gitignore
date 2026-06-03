@@ -5,6 +5,8 @@ venv/
 __pycache__/
 *.pyc
 .DS_Store
+open_finance_state.json
+open_finance.db
 
 # Signing keys / certificates
 config/keys/
