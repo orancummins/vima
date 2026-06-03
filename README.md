@@ -94,7 +94,7 @@ This is useful when you want to go from "the API works in the explorer" to
 "show me the exact Python I would run on a machine" without manually wiring
 env vars or package installs.
 
-![Run Python in terminal](docs/screenshots/MastercardSolutionStudio-RunInTerminal.svg)
+![Run Python in terminal](docs/screenshots/MastercardSolutionStudio-RunInTerminal.png)
 
 ### Built-in simulator
 
