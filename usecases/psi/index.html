@@ -45,9 +45,20 @@ const PSI_FACTOR_LABELS = {
 };
 
 function renderPsi() {
-  fetch("/explorer/ofin/state").then(r => r.json()).then(d => {
-    PSI.cid = (d.state || {}).customer_id || PSI.cid;
-    psiRender();
+  // Boot from the shared Open Finance STATE so PSI inherits whoever the
+  // user last connected \u2014 across sessions, thanks to the on-disk
+  // persistence layer in apis/open_finance/api.py.
+  fetch("/explorer/open_finance/state").then(r => r.json()).then(d => {
+    const cid = (d.state || {}).customer_id;
+    if (cid) {
+      PSI.cid = String(cid);
+      psiRender();
+      // Auto-load accounts so a returning user sees their bank data
+      // immediately instead of having to click "Load Accounts" again.
+      psiLoadAccounts();
+    } else {
+      psiRender();
+    }
   }).catch(() => psiRender());
 }
 
@@ -70,6 +81,14 @@ function psiRender() {
             <input id="psi-cid" value="${escapeHtml(PSI.cid)}" placeholder="Enter customer ID" />
           </div>
           <button class="btn" id="psi-load-btn">Load Accounts</button>
+        </div>
+        <div class="psi-or-divider" aria-hidden="true">
+          <span class="psi-or-line"></span>
+          <span class="psi-or-text">OR</span>
+          <span class="psi-or-line"></span>
+        </div>
+        <div class="psi-controls-row">
+          <button class="btn" id="psi-connect-btn" style="flex:1" title="Create a new sandbox customer and link a bank account via the Mastercard Open Finance Connect popup">Connect New Bank Account</button>
         </div>
         ${PSI.accounts.length ? `
         <div class="psi-controls-row">
@@ -332,6 +351,10 @@ function psiWire() {
       psiLoadAccounts();
     });
   }
+  const connectBtn = $("psi-connect-btn");
+  if (connectBtn) {
+    connectBtn.addEventListener("click", () => psiStartConnect());
+  }
   const cidInput = $("psi-cid");
   if (cidInput) {
     cidInput.addEventListener("keydown", e => {
@@ -365,6 +388,121 @@ function psiWire() {
       });
     });
   }
+}
+
+// ─── Connect New Bank Account flow (mirrors PFM) ─────────────────────────────
+// Creates a sandbox customer, opens the Mastercard Open Finance Connect
+// popup, then polls for accounts. The new customer_id is auto-promoted to
+// the shared Open Finance STATE (and persisted to disk) by the
+// /usecases/<uc_id>/action route, so PFM / Recurring / Use Cases inherit
+// the same active customer and the link survives a restart.
+
+const PSI_CONNECT = { pollStop: false, connectWin: null, connectWatcher: null };
+
+function psiStartConnect() {
+  // Don't mutate the visible Customer ID until the connect flow successfully
+  // links accounts — if the user cancels mid-flow they keep their original
+  // CID. We track the pending CID locally and only commit on success.
+  let pendingCid = null;
+  const area = $("psi-result-area");
+  if (area) area.innerHTML = `<div class="psi-loading-state"><div class="psi-spinner psi-spinner--lg"></div><p>Preparing Connect…</p></div>`;
+
+  fetch("/usecases/psi/action", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "create_customer", params: {} }),
+  }).then((r) => r.json())
+    .then((res) => {
+      if (!res || res.error || !res.customer_id) {
+        throw new Error((res && res.error) || "Could not create customer");
+      }
+      pendingCid = String(res.customer_id);
+      return fetch("/usecases/psi/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "connect_url", params: { customer_id: pendingCid } }),
+      }).then((r) => r.json());
+    })
+    .then((res) => {
+      if (!res || res.error || !res.connect_url) {
+        throw new Error((res && res.error) || "Could not generate Connect URL");
+      }
+      psiOpenConnectPopup(res.connect_url, pendingCid);
+      const area2 = $("psi-result-area");
+      if (area2) {
+        area2.innerHTML = `
+          <div class="psi-loading-state">
+            <div class="psi-spinner psi-spinner--lg"></div>
+            <p>New customer <strong>${escapeHtml(pendingCid)}</strong> created. Select your bank in the popup, then return here.</p>
+            <p style="font-size:12px;color:#71717a;margin-top:4px">Your Customer ID will switch to the new one once accounts are linked.</p>
+          </div>
+        `;
+      }
+      psiPollForAccounts(pendingCid);
+    })
+    .catch((e) => {
+      const area2 = $("psi-result-area");
+      if (area2) area2.innerHTML = `<div class="psi-error-card"><span class="psi-error-icon">⚠</span><div><strong>Connect error</strong><p>${escapeHtml(e.message)}</p></div></div>`;
+    });
+}
+
+function psiOpenConnectPopup(url, pendingCid) {
+  try {
+    const w = 480, h = 760;
+    const left = Math.max(0, window.screenX + (window.outerWidth - w) / 2);
+    const top  = Math.max(0, window.screenY + (window.outerHeight - h) / 2);
+    const features = [
+      "popup=yes", `width=${w}`, `height=${h}`, `left=${left}`, `top=${top}`,
+      "resizable=yes", "scrollbars=yes", "menubar=no", "toolbar=no",
+      "location=no", "status=no", "noopener=no",
+    ].join(",");
+    const win = window.open(url, "vima-connect", features);
+    if (!win) return null;
+    try { win.focus(); } catch (_) {}
+    PSI_CONNECT.connectWin = win;
+    const watch = setInterval(() => {
+      try {
+        if (win.closed) {
+          clearInterval(watch);
+          setTimeout(() => psiPollForAccounts(pendingCid || PSI.cid), 1500);
+        }
+      } catch (_) { clearInterval(watch); }
+    }, 800);
+    PSI_CONNECT.connectWatcher = watch;
+    return win;
+  } catch (_) { return null; }
+}
+
+function psiPollForAccounts(cid) {
+  PSI_CONNECT.pollStop = false;
+  const started = Date.now();
+  const tick = () => {
+    if (PSI_CONNECT.pollStop) return;
+    if (Date.now() - started > 5 * 60 * 1000) return;
+    fetch("/usecases/psi/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "get_accounts", params: { customer_id: cid } }),
+    }).then((r) => r.json()).then((d) => {
+      if (PSI_CONNECT.pollStop) return;
+      if (d && Array.isArray(d.accounts) && d.accounts.length > 0) {
+        // Connect succeeded — NOW commit the new customer_id to state and
+        // the visible input. If the user cancelled, their original CID is
+        // left intact.
+        PSI.cid = String(cid);
+        const cidInput = $("psi-cid");
+        if (cidInput) cidInput.value = PSI.cid;
+        PSI.accounts = d.accounts;
+        PSI.selectedAccountId = d.accounts[0].id;
+        PSI.result = null;
+        PSI.selectedDay = 0;
+        psiRender();
+        return;
+      }
+      setTimeout(tick, 4000);
+    }).catch(() => setTimeout(tick, 6000));
+  };
+  setTimeout(tick, 2500);
 }
 
 function psiLoadAccounts() {

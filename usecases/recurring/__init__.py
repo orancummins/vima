@@ -73,6 +73,41 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
     client = _client()
 
     # ------------------------------------------------------------------
+    # create_customer / connect_url — powers the in-app "Connect New
+    # Bank Account" flow. Mirrors the PFM use case so the same Finicity
+    # Connect popup pattern is available here. The returned customer_id
+    # is auto-propagated to the shared Open Finance STATE by the
+    # /usecases/<uc_id>/action route, so the next session resumes with
+    # this customer already linked.
+    # ------------------------------------------------------------------
+    if action == "create_customer":
+        if client is None:
+            return {"error": "Open Finance API is not configured."}
+        import secrets
+        username = params.get("username") or f"vima_{secrets.token_hex(4)}"
+        data, status = client.add_testing_customer(username)
+        if status >= 400 or not isinstance(data, dict):
+            return {"error": "Could not create customer", "status": status, "detail": data}
+        return {
+            "customer_id": str(data.get("id")),
+            "username": data.get("username") or username,
+        }
+
+    if action == "connect_url":
+        if client is None:
+            return {"error": "Open Finance API is not configured."}
+        customer_id = params.get("customer_id")
+        if not customer_id:
+            return {"error": "'customer_id' is required"}
+        data, status = client.generate_connect_url(str(customer_id))
+        if status >= 400 or not isinstance(data, dict):
+            return {"error": "Could not generate Connect URL", "status": status, "detail": data}
+        return {
+            "link": data.get("link"),
+            "connect_url": data.get("link"),
+        }
+
+    # ------------------------------------------------------------------
     # get_accounts — return checking/savings accounts for a customer
     # ------------------------------------------------------------------
     if action == "get_accounts":

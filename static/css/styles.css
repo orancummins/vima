@@ -89,6 +89,36 @@ body {
   padding: 16px 12px;
   overflow-y: auto;
   min-height: 0;
+
+  /* Slim, subtle scrollbar that matches the light sidebar chrome.
+     On macOS the OS already hides overlay scrollbars until the user
+     scrolls, so these rules only kick in when the bar is visible \u2014
+     when it does appear, it's a soft grey pill instead of the
+     default chunky chrome track. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+}
+.sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.16);
+  border-radius: 999px;
+  /* Transparent border creates inset padding around the thumb so it
+     reads as a thin pill rather than filling the full gutter. */
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.sidebar:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.28);
+  background-clip: content-box;
+}
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.42);
+  background-clip: content-box;
 }
 .sidebar-title {
   text-transform: uppercase; font-size: 11px; font-weight: 700;
@@ -365,7 +395,46 @@ body {
   overflow: hidden;
   padding: 0 28px 22px;
 }
-.ops { grid-area: ops; background: white; border: 1px solid var(--line); border-radius: 8px; padding: 12px; overflow-y: auto; min-height: 0; }
+.ops {
+  grid-area: ops;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  /* Container itself no longer scrolls \u2014 the inner list does. That
+     keeps the "Operations" title fixed at the top with no scrollbar
+     running behind it. */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+/* Inner scroller \u2014 same soft pill scrollbar as the API sidebar. */
+#op-categories {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Gentle inset so the rounded-pill thumb doesn't kiss the card border. */
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+}
+#op-categories::-webkit-scrollbar { width: 8px; }
+#op-categories::-webkit-scrollbar-track { background: transparent; }
+#op-categories::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.16);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.ops:hover #op-categories::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.28);
+  background-clip: content-box;
+}
+#op-categories::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.42);
+  background-clip: content-box;
+}
 .op-panel { grid-area: oppanel; background: white; border: 1px solid var(--line); border-radius: 8px; padding: 0; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
 .op-panel-scroll { padding: 12px 16px 16px; overflow-y: auto; flex: 1; }
 .io-panel {
@@ -374,10 +443,12 @@ body {
 }
 
 .ops-title {
-  position: sticky; top: 0; z-index: 1;
+  /* Title is now a fixed header above the inner scroller \u2014 no sticky
+     needed, so the list never bleeds underneath it on scroll. */
   background: white;
   text-transform: uppercase; font-size: 11px; font-weight: 700;
   color: var(--muted); letter-spacing: 1px; padding-bottom: 8px; margin-bottom: 0;
+  flex-shrink: 0;
 }
 .op-cat-name {
   font-size: 11px; font-weight: 700; text-transform: uppercase;
@@ -1209,11 +1280,10 @@ body {
    api-calls-drawer chrome but swaps the body for a code-viewer.
    ---------------------------------------------------------------- */
 .apis-snippets-fab {
-  /* Stack to the left of the API Calls FAB. The api-calls-fab is at
-     right: 28px; this FAB at right: 200px keeps them clear of each
-     other even when both labels are expanded. They are never both
-     visible today (one per tab) but the spacing future-proofs that. */
-  right: 200px;
+  /* Same position as the API Calls FAB — they live on different
+     tabs and are never visible together, so they can occupy the
+     same bottom-right slot. */
+  right: 28px;
   background: #1a1a2e;
 }
 .apis-snippets-fab:hover { background: #2a2a3e; }
@@ -1324,15 +1394,71 @@ body {
   font-size: 12px;
   line-height: 1.55;
   color: #d8d9df;
-  overflow-x: auto;
-  white-space: pre;
+  overflow-x: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
   tab-size: 4;
+}
+
+/* Dark, near-invisible scrollbar that blends into the snippet panel. */
+.apis-snippets-modal .apis-snippets-code,
+.apis-snippets-modal .apis-snippets-body {
+  scrollbar-width: thin;
+  scrollbar-color: #1a1b20 #0a0b0e;
+}
+.apis-snippets-modal .apis-snippets-code::-webkit-scrollbar,
+.apis-snippets-modal .apis-snippets-body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-track,
+.apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-track {
+  background: #0a0b0e;
+}
+.apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-thumb,
+.apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-thumb {
+  background: #1a1b20;
+  border-radius: 6px;
+  border: 2px solid #0a0b0e;
+}
+.apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-thumb:hover,
+.apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-thumb:hover {
+  background: #2a2b32;
+}
+.apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-corner,
+.apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-corner {
+  background: #0a0b0e;
 }
 .apis-snippets-code .apis-snippets-tok-kw      { color: #c792ea; }
 .apis-snippets-code .apis-snippets-tok-str     { color: #9be3b1; }
 .apis-snippets-code .apis-snippets-tok-com     { color: #5a6079; font-style: italic; }
 .apis-snippets-code .apis-snippets-tok-num     { color: #ffb878; }
 .apis-snippets-code .apis-snippets-tok-fn      { color: #82aaff; }
+
+/* Editable snippet body: visible caret, subtle focus ring, no native
+   browser outline gap. The snippet pane is the source-of-truth that
+   gets sent back to /run when the user clicks the Run button. */
+.apis-snippets-code > code[contenteditable] {
+  outline: none;
+  caret-color: #82aaff;
+  cursor: text;
+  display: block;
+  min-height: 1.4em;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.apis-snippets-code > code[contenteditable]:focus {
+  box-shadow: inset 0 0 0 1px rgba(130, 170, 255, 0.35);
+  border-radius: 4px;
+}
+/* Use the brand orange for text selection inside the editable snippet
+   instead of the browser default blue. */
+.apis-snippets-code > code[contenteditable] ::selection,
+.apis-snippets-code > code[contenteditable]::selection {
+  background: rgba(255, 140, 0, 0.45);
+  color: #fff;
+}
 
 /* Section action cluster (Copy + Commands) */
 .apis-snippets-section-actions { display: flex; gap: 6px; align-items: center; }
@@ -5343,15 +5469,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 18px 16px 16px;
-  border-radius: 20px;
-  background:
-    radial-gradient(120% 80% at 50% -10%, rgba(255,140,50,0.10) 0%, rgba(255,140,50,0) 60%),
-    linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%);
-  border: 1px solid rgba(255,255,255,0.07);
-  box-shadow:
-    0 24px 60px -28px rgba(0,0,0,0.65),
-    inset 0 1px 0 rgba(255,255,255,0.05);
+  padding: 18px 4px 4px;
+  /* No surround \u2014 pillars + funnel float on the page background. */
+  border-radius: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
 }
 .aap-prism-stage {
   position: relative;

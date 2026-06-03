@@ -440,7 +440,7 @@
       <div class="sidebar-title">API Bundles</div>
       <div class="api-list" id="bundle-list">
         <button class="api-item api-item--about active" id="bundle-about-btn">
-          <span class="api-item-name">About bundles</span>
+          <span class="api-item-name">About</span>
           <span class="api-item-about-icon">✦</span>
         </button>
         {% for sol in solutions %}
@@ -953,13 +953,13 @@
        Studio's /explorer/<api_id>/execute proxy. One snippet per API
        in the currently-selected API's group, so users can see how to
        drive every related API from their own code. -->
-  <button id="apis-snippets-fab" class="api-calls-fab apis-snippets-fab hidden" aria-label="Show Python snippets">
+  <button id="apis-snippets-fab" class="api-calls-fab apis-snippets-fab hidden" aria-label="View code">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="6 7 2 10 6 13"/>
       <polyline points="14 7 18 10 14 13"/>
       <line x1="11" y1="4" x2="9" y2="16"/>
     </svg>
-    <span class="api-calls-fab-label">Python snippets</span>
+    <span class="api-calls-fab-label">View Code</span>
   </button>
 
   <div id="api-calls-drawer" class="api-calls-drawer hidden" role="dialog" aria-label="API Calls log">
@@ -986,7 +986,7 @@
        Python snippet for the currently-selected API; selecting a
        different API in the sidebar updates the snippet. -->
   <div id="apis-snippets-backdrop" class="tc-modal-backdrop apis-snippets-backdrop hidden" role="presentation">
-    <div id="apis-snippets-modal" class="tc-modal apis-snippets-modal" role="dialog" aria-modal="true" aria-label="Python snippet">
+    <div id="apis-snippets-modal" class="tc-modal apis-snippets-modal" role="dialog" aria-modal="true" aria-label="View code">
       <div class="tc-modal-header">
         <div class="tc-modal-title apis-snippets-modal-title">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0;vertical-align:-2px;margin-right:6px">
@@ -994,13 +994,13 @@
             <polyline points="14 7 18 10 14 13"/>
             <line x1="11" y1="4" x2="9" y2="16"/>
           </svg>
-          Python snippet
+          View Code
           <span id="apis-snippets-group" class="apis-snippets-modal-chip"></span>
         </div>
         <button id="apis-snippets-close" class="tc-modal-close" aria-label="Close">&times;</button>
       </div>
       <div class="apis-snippets-modal-body apis-snippets-body" id="apis-snippets-body">
-        <p class="api-calls-empty">Select an API to see a Python snippet.</p>
+        <p class="api-calls-empty">Select an API to view code.</p>
       </div>
     </div>
   </div>
