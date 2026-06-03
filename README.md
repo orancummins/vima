@@ -78,6 +78,24 @@ configured.
 
 ![Open Finance API](docs/screenshots/MastercardSolutionStudio-API-OpenFinance.png)
 
+### Authentic Python snippets
+
+Every API operation can render an authentic Python snippet sourced from the
+same request model Solution Studio uses internally. Open the **View code**
+drawer from the APIs tab to:
+
+- inspect the live Python example for the selected operation
+- copy the snippet source directly
+- click **Run in terminal** to launch a local terminal window that exports the
+   required credentials, installs the snippet dependencies, runs the code, and
+   pauses so you can inspect the output
+
+This is useful when you want to go from "the API works in the explorer" to
+"show me the exact Python I would run on a machine" without manually wiring
+env vars or package installs.
+
+![Run Python in terminal](docs/screenshots/MastercardSolutionStudio-RunInTerminal.svg)
+
 ### Built-in simulator
 
 Every wired API has a matching handler under `simulator/handlers/` and
@@ -220,6 +238,14 @@ Hit **Provision Selected APIs** and the automation:
 4. Updates `config/.env` **incrementally — one API at a time** as each provisioning completes (so a failure half-way doesn't lose the keys you already have)
 
 No manual portal steps required — just wait ~60 seconds per API.
+
+For OAuth 1.0a + JWE APIs such as **Consent Management**, the provisioner now
+captures both the signing key material and the client-encryption PEM required
+for live request flows.
+
+Provisioned keys are usable immediately. If an API still returns
+`Unauthorized`, treat that as a credential or entitlement issue rather than a
+"wait a few minutes" activation delay.
 
 ![Select APIs to Provision](docs/screenshots/MastercardSolutionStudio-APIProvisioning.png)
 
