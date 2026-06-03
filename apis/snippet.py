@@ -155,30 +155,46 @@ def _capture_requests() -> Iterator[Dict[str, Any]]:
 # Helpers
 # ----------------------------------------------------------------------------
 
-def _sample_params(op: Dict[str, Any]) -> Dict[str, Any]:
+def _sample_params(op: Dict[str, Any], mod: Any = None) -> Dict[str, Any]:
     """Build a sample params dict from operation defaults.
 
     Mirrors the UI's behaviour: optional params left blank are omitted
     so the module's ``if value:`` guards skip them, rather than passing
     placeholder text that turns into a real (and bogus) filter value.
+
+    When the module exposes ``get_state()`` and a param name matches a
+    state key (e.g. ``customer_id``, ``account_id``, ``consumer_id``),
+    the live value is used instead of a ``<your ...>`` placeholder so
+    the rendered snippet has a real, runnable URL when possible.
     """
+    state: Dict[str, Any] = {}
+    if mod is not None:
+        try:
+            state = dict(getattr(mod, "get_state", lambda: {})() or {})
+        except Exception:
+            state = {}
     out: Dict[str, Any] = {}
     for p in op.get("params") or []:
+        name = p["name"]
         default = p.get("default")
         required = bool(p.get("required"))
         if default not in (None, ""):
-            out[p["name"]] = default
+            out[name] = default
         elif p.get("options"):
-            out[p["name"]] = p["options"][0].get("value")
+            out[name] = p["options"][0].get("value")
+        elif state.get(name) not in (None, ""):
+            # Prefer a live state value (e.g. customer_id) so the
+            # captured URL works as-is when the user runs the snippet.
+            out[name] = state[name]
         elif not required:
             # Optional + no default → leave blank, just like the UI.
-            out[p["name"]] = ""
+            out[name] = ""
         elif p.get("type") == "number":
-            out[p["name"]] = 0
+            out[name] = 0
         elif p.get("type") == "boolean":
-            out[p["name"]] = False
+            out[name] = False
         else:
-            out[p["name"]] = f"<your {p['name']}>"
+            out[name] = f"<your {name}>"
     return out
 
 
@@ -217,6 +233,14 @@ def _ensure_env_set(env_prefix: str) -> Dict[str, str]:
         f"{env_prefix}_CONSUMER_KEY": "snippet-dry-run",
         f"{env_prefix}_SIGNING_KEY_PATH": "/tmp/snippet-dry-run.p12",
     }
+    # Open Finance / Finicity uses OAuth2-style partner credentials
+    # instead of OAuth1, so stub those too when relevant.
+    if env_prefix.startswith("OPEN_FINANCE"):
+        placeholders.update({
+            f"{env_prefix}_PARTNER_ID":     "snippet-dry-run-partner",
+            f"{env_prefix}_PARTNER_SECRET": "snippet-dry-run-secret",
+            f"{env_prefix}_APP_KEY":        "snippet-dry-run-appkey",
+        })
     for name, val in placeholders.items():
         if name not in os.environ:
             saved[name] = ""  # marker: was unset
@@ -256,7 +280,26 @@ def _capture_call(
     os.environ["VIMA_SIMULATE"] = "off"
 
     saved_creds = _ensure_env_set(env_prefix)
-    sample = _sample_params(op)
+    sample = _sample_params(op, mod)
+
+    # For Open Finance we also need to (a) reset the module's cached
+    # client so it picks up the placeholder credentials we just stubbed,
+    # and (b) bypass the real partner-authentication call so the op's
+    # actual HTTP request is what gets captured (not the auth fetch).
+    of_client_cls = None
+    saved_get_token = None
+    saved_cached_client = None
+    if env_prefix.startswith("OPEN_FINANCE"):
+        try:
+            from apis.open_finance.client import OpenFinanceClient as of_client_cls  # type: ignore
+        except Exception:
+            of_client_cls = None
+        if of_client_cls is not None:
+            saved_get_token = of_client_cls._get_token
+            of_client_cls._get_token = lambda self: "snippet-dry-run-token"
+        if hasattr(mod, "_client"):
+            saved_cached_client = getattr(mod, "_client")
+            mod._client = None
 
     try:
         with _stub_oauth(), _capture_requests() as captured:
@@ -277,6 +320,10 @@ def _capture_call(
             os.environ.pop("VIMA_SIMULATE", None)
         else:
             os.environ["VIMA_SIMULATE"] = saved_sim
+        if of_client_cls is not None and saved_get_token is not None:
+            of_client_cls._get_token = saved_get_token
+        if hasattr(mod, "_client") and saved_cached_client is not None:
+            mod._client = saved_cached_client
 
 
 # ----------------------------------------------------------------------------
@@ -339,6 +386,23 @@ def _oauth1_snippet_runnable(
     method = captured.get("method") or (op.get("method") or "POST").upper()
     url = captured.get("url") or ""
     base, path = _split_base_and_path(url, mod)
+    placeholders = _extract_placeholders(path)
+    todo_block = ""
+    path_literal: str
+    if placeholders:
+        for name in placeholders:
+            path = path.replace(f"<your {name}>", "{" + name.upper() + "}")
+        const_lines = "\n".join(
+            f'{name.upper()} = "<your {name}>"  # TODO: replace with a real {name}'
+            for name in placeholders
+        )
+        todo_block = (
+            "# --- TODO: fill in the inputs this operation needs --------\n"
+            f"{const_lines}\n\n"
+        )
+        path_literal = f"f{json.dumps(path)}"
+    else:
+        path_literal = json.dumps(path)
     body_section, requests_kwarg = _render_body_block(captured)
     op_name = op.get("name") or op.get("id") or "operation"
     op_id_str = op.get("id", "call")
@@ -377,8 +441,9 @@ def _oauth1_snippet_runnable(
         f"signing_key  = authutils.load_signing_key(key_path, key_password)\n"
         f"\n"
         f"# --- Endpoint (sandbox) ---\n"
+        f"{todo_block}"
         f"BASE_URL = {json.dumps(base)}\n"
-        f"PATH     = {json.dumps(path)}\n"
+        f"PATH     = {path_literal}\n"
         f'METHOD   = "{method}"\n'
         f'url      = f"{{BASE_URL}}{{PATH}}"\n'
         f"\n"
@@ -421,7 +486,21 @@ def _oauth1_snippet_runnable(
     )
 
 
+def _extract_placeholders(s: str) -> list:
+    """Return ordered, de-duplicated ``<your foo>`` placeholders in ``s``."""
+    import re as _re
+    seen: list = []
+    for m in _re.finditer(r"<your ([a-zA-Z_][a-zA-Z0-9_]*)>", s):
+        name = m.group(1)
+        if name not in seen:
+            seen.append(name)
+    return seen
+
+
 def _open_finance_snippet(api_id: str, op: Dict[str, Any], docs_url: str) -> str:
+    """Fallback static template — used only when capture fails.
+    Shows the partner-authentication token-exchange step.
+    """
     op_name = op.get("name") or op.get("id") or "operation"
     return (
         f'"""\n'
@@ -470,6 +549,138 @@ def _open_finance_snippet(api_id: str, op: Dict[str, Any], docs_url: str) -> str
     )
 
 
+def _open_finance_snippet_runnable(
+    api_id: str,
+    op: Dict[str, Any],
+    captured: Dict[str, Any],
+    docs_url: str,
+) -> str:
+    """Render a runnable Finicity Bearer-token snippet around a captured call.
+
+    Same idea as ``_oauth1_snippet_runnable`` but for Finicity's
+    Partner-ID/Partner-Secret/App-Key authentication: fetch an App
+    token, then invoke the operation's endpoint with the captured
+    URL/method/body/params.
+    """
+    method = (captured.get("method") or op.get("method") or "GET").upper()
+    url = captured.get("url") or ""
+    try:
+        scheme, rest = url.split("://", 1)
+        host, _, path = rest.partition("/")
+        base = f"{scheme}://{host}"
+        path = f"/{path}"
+    except ValueError:
+        base, path = "https://api.finicity.com", url
+    # Lift any `<your foo>` placeholders out of the captured path into
+    # TODO constants so the user sees them clearly at the top of the
+    # script rather than being baked into a URL that 404s.
+    placeholders = _extract_placeholders(path)
+    todo_block = ""
+    path_literal: str
+    if placeholders:
+        for name in placeholders:
+            path = path.replace(f"<your {name}>", "{" + name.upper() + "}")
+        const_lines = "\n".join(
+            f'{name.upper()} = "<your {name}>"  # TODO: replace with a real {name}'
+            for name in placeholders
+        )
+        todo_block = (
+            "# --- TODO: fill in the inputs this operation needs --------\n"
+            f"{const_lines}\n\n"
+        )
+        path_literal = f"f{json.dumps(path)}"
+    else:
+        path_literal = json.dumps(path)
+    body_section, requests_kwarg = _render_body_block(captured)
+    op_name = op.get("name") or op.get("id") or "operation"
+    op_id_str = op.get("id", "call")
+
+    return (
+        f'"""\n'
+        f'{api_id} — {op_name}\n'
+        f'\n'
+        f'Runnable Python that calls the Mastercard Open Banking\n'
+        f'(Finicity) {api_id} API directly with App-Token auth — captured\n'
+        f'from the actual Solution Studio implementation, so URL, body\n'
+        f'and headers match exactly.\n'
+        f'\n'
+        f'Docs: {docs_url}\n'
+        f'\n'
+        f'Install:\n'
+        f'    pip install requests\n'
+        f'\n'
+        f'Run:\n'
+        f'    export OPEN_FINANCE_PARTNER_ID="..."\n'
+        f'    export OPEN_FINANCE_PARTNER_SECRET="..."\n'
+        f'    export OPEN_FINANCE_APP_KEY="..."\n'
+        f'    python {api_id}_{op_id_str}.py\n'
+        f'"""\n'
+        f"import json\n"
+        f"import os\n"
+        f"\n"
+        f"import requests\n"
+        f"\n"
+        f"# --- Credentials (same env vars Solution Studio reads) ----\n"
+        f'PARTNER_ID     = os.environ["OPEN_FINANCE_PARTNER_ID"]\n'
+        f'PARTNER_SECRET = os.environ["OPEN_FINANCE_PARTNER_SECRET"]\n'
+        f'APP_KEY        = os.environ["OPEN_FINANCE_APP_KEY"]\n'
+        f'BASE_URL       = os.environ.get("OPEN_FINANCE_API_BASE_URL", {json.dumps(base)})\n'
+        f"\n"
+        f"# --- 1. Exchange partner credentials for a 2-hour App token ---\n"
+        f"auth_resp = requests.post(\n"
+        f'    f"{{BASE_URL}}/aggregation/v2/partners/authentication",\n'
+        f"    headers={{\n"
+        f'        "Finicity-App-Key": APP_KEY,\n'
+        f'        "Content-Type":     "application/json",\n'
+        f'        "Accept":           "application/json",\n'
+        f"    }},\n"
+        f'    json={{"partnerId": PARTNER_ID, "partnerSecret": PARTNER_SECRET}},\n'
+        f"    timeout=30,\n"
+        f")\n"
+        f"auth_resp.raise_for_status()\n"
+        f'APP_TOKEN = auth_resp.json()["token"]\n'
+        f'print("App token acquired:", APP_TOKEN[:10] + "\u2026")\n'
+        f"\n"
+        f"# --- 2. Call the operation endpoint ---\n"
+        f"{todo_block}"
+        f"PATH    = {path_literal}\n"
+        f'METHOD  = "{method}"\n'
+        f'url     = f"{{BASE_URL}}{{PATH}}"\n'
+        f"headers = {{\n"
+        f'    "Finicity-App-Key":   APP_KEY,\n'
+        f'    "Finicity-App-Token": APP_TOKEN,\n'
+        f'    "Content-Type":       "application/json",\n'
+        f'    "Accept":             "application/json",\n'
+        f"}}\n"
+        f"\n"
+        f"# --- Request ---\n"
+        f"{body_section}"
+        f"\n"
+        f"resp = requests.request(METHOD, url, {(requests_kwarg + ', ') if requests_kwarg else ''}headers=headers, timeout=30)\n"
+        f"\n"
+        f"# --- Show what we sent and what we got back ---\n"
+        f'print("=" * 72)\n'
+        f'print(f"REQUEST  {{METHOD}} {{url}}")\n'
+        f'print("-" * 72)\n'
+        f'print("Headers:")\n'
+        f"for k, v in headers.items():\n"
+        f'    shown = (v[:80] + "\\u2026") if k.endswith("-Token") and len(v) > 80 else v\n'
+        f'    print(f"  {{k}}: {{shown}}")\n'
+        f"if body:\n"
+        f'    print("Body:")\n'
+        f"    print(body if len(body) < 2000 else body[:2000] + '\\u2026')\n"
+        f'print("=" * 72)\n'
+        f'print(f"RESPONSE {{resp.status_code}} {{resp.reason}}")\n'
+        f'print("-" * 72)\n'
+        f"try:\n"
+        f"    print(json.dumps(resp.json(), indent=2))\n"
+        f"except ValueError:\n"
+        f"    print(resp.text)\n"
+        f'print("=" * 72)\n'
+        f"resp.raise_for_status()\n"
+    )
+
+
 def build_snippet(
     api_id: str,
     op_id: str,
@@ -491,7 +702,20 @@ def build_snippet(
 
     runnable = False
     if api_id.startswith("open_finance"):
-        snippet = _open_finance_snippet(api_id, op, docs_url)
+        # For create_token the module never calls _make_request — it just
+        # invokes the internal _get_token() helper — so capture would be
+        # empty. Fall back to the static token-exchange template, which
+        # *is* exactly what create_token would do at the HTTP layer.
+        if op_id == "create_token":
+            snippet = _open_finance_snippet(api_id, op, docs_url)
+            runnable = True
+        else:
+            captured = _capture_call(mod, op_id, op, env_prefix)
+            if captured and captured.get("url"):
+                snippet = _open_finance_snippet_runnable(api_id, op, captured, docs_url)
+                runnable = True
+            else:
+                snippet = _open_finance_snippet(api_id, op, docs_url)
     else:
         captured = _capture_call(mod, op_id, op, env_prefix)
         if captured and captured.get("url"):

@@ -3,18 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Personal Finance Manager — vima</title>
+  <title>Personal Finance Manager — Mastercard Solution Studio</title>
   <link rel="stylesheet" href="/pfm/style.css">
 </head>
 <body>
-  <!-- Description text — pfmRender() reads this, then clears it -->
-  <p id="uc-desc" style="display:none">Transform raw transaction data into a rich,
-    real-time money management experience. By connecting a customer's accounts through
-    the Open Finance API, this use case delivers live balances, intelligent spend
-    categorisation across dozens of merchant types, and a full scrollable transaction
-    history — the complete building blocks of a world-class personal finance app,
-    powered by a single Mastercard integration.</p>
-
   <!-- pfmRender() fills this container -->
   <div id="uc-body"></div>
 
@@ -147,16 +139,9 @@ const PFM = {
 // ─── Entry point ──────────────────────────────────────────────────────────────
 function pfmRender(initialCustomerId) {
   const body = $("uc-body");
-  const descEl = $("uc-desc");
-  const descText = descEl ? descEl.textContent.trim() : "";
-  if (descEl) descEl.textContent = "";
   body.innerHTML = `
     <div class="pfm-stage">
       <div class="pfm-info">
-        <div>
-          <h1 style="font-size: 22px; font-weight: 700; margin: 0 0 10px; color: #18181b; letter-spacing: -0.02em;">Personal Finance Manager</h1>
-          <p class="pfm-info-desc">${escapeHtml(descText)}</p>
-        </div>
         <div class="pfm-controlbar">
           <div>
             <div class="label">Customer ID</div>

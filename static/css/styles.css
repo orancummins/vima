@@ -1640,6 +1640,33 @@ body {
   display: flex; align-items: center; gap: 7px;
   padding: 6px 9px; border-radius: 7px;
   font-size: 12px; font-weight: 500; margin-bottom: 4px;
+  border: 1px solid transparent;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.uc-sidebar-api-badge:hover {
+  border-color: rgba(255,150,60,0.45);
+  box-shadow: 0 2px 8px rgba(255,95,0,0.18);
+  transform: translateY(-1px);
+}
+.uc-sidebar-api-badge:active { transform: translateY(0); }
+.uc-sidebar-api-badge:focus-visible {
+  outline: 2px solid var(--mc-orange);
+  outline-offset: 2px;
+}
+.uc-sidebar-api-badge.disabled,
+.uc-sidebar-api-badge[disabled] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.uc-sidebar-api-badge.disabled:hover,
+.uc-sidebar-api-badge[disabled]:hover {
+  border-color: transparent;
+  box-shadow: none;
+  transform: none;
 }
 .uc-sidebar-api-badge.configured   { background: #d1fae5; color: #065f46; }
 .uc-sidebar-api-badge.unconfigured { background: #f3f4f6; color: var(--muted); }
@@ -3225,11 +3252,14 @@ body {
   flex-direction: column;
   width: min(47vw, 557px);
   height: min(85vh, 820px);
-  background: #0f0f0f;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(170deg, #161310 0%, #0f0f0f 60%);
+  border: 1px solid rgba(255, 150, 60, 0.22);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 150, 60, 0.08),
+    inset 0 1px 0 rgba(255, 200, 140, 0.06);
   transform: translateY(12px) scale(0.98);
   transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -3242,15 +3272,32 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 150, 60, 0.18);
+  background: linear-gradient(180deg, rgba(255, 95, 0, 0.10) 0%, rgba(255, 95, 0, 0) 100%);
   flex-shrink: 0;
 }
 .tc-modal-title {
   font-size: 13px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.9);
   letter-spacing: 0.02em;
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Pulsing orange dot prefix — matches the .aotd-modal-eyebrow-dot so
+   Edit-with-Claude reads as the same family as API of the Day. */
+.tc-modal-title::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff6a00;
+  box-shadow: 0 0 10px rgba(255, 106, 0, 0.85);
+  animation: aotdPulse 2.4s ease-in-out infinite;
+  flex-shrink: 0;
 }
 .tc-modal-close {
   display: flex;
@@ -3265,7 +3312,10 @@ body {
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
-.tc-modal-close:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.tc-modal-close:hover {
+  background: rgba(255, 95, 0, 0.14);
+  color: #ffb070;
+}
 
 .tc-modal-iframe {
   flex: 1;
@@ -3969,6 +4019,11 @@ body {
 }
 .home-uc-card-tag--usecase {}
 .home-uc-card-tag--api {}
+.home-uc-card-tag--bundle {
+  background: rgba(255, 150, 60, 0.12);
+  color: #ffb070;
+  border-color: rgba(255, 150, 60, 0.35);
+}
 .home-uc-card-name {
   font-size: 26px;
   font-weight: 800;
@@ -4065,6 +4120,15 @@ body {
 
 #global-edit-btn {
   animation: edit-btn-pulse 2.4s ease-in-out infinite;
+}
+/* Keep the button's slot in the header even when it's hidden, so the
+   centered `.top-tabs` doesn't shift each time the user enters/leaves
+   the Use Cases tab. Overrides the global `.hidden { display: none }`. */
+#global-edit-btn.hidden {
+  display: inline-flex !important;
+  visibility: hidden;
+  pointer-events: none;
+  animation: none;
 }
 @keyframes edit-btn-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(255,95,0,0); border-color: rgba(255,255,255,0.12); }
@@ -4279,6 +4343,186 @@ body {
   100% { background: transparent; }
 }
 .cfg-field.saved { animation: cfgFlash 1s ease forwards; }
+
+/* --------------------------------------------------------------------
+   API Config UI — dark theme (matches the API of the Day modal).
+   These rules override the light defaults above with the same warm
+   black/orange palette used by `.aotd-modal`. Kept as a single block
+   so the light scheme remains the source of truth for layout.
+   -------------------------------------------------------------------- */
+.cfg-overlay {
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(3px);
+}
+.cfg-panel {
+  background: linear-gradient(170deg, #161310 0%, #0f0f0f 60%);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 150, 60, 0.22);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 150, 60, 0.08),
+    inset 0 1px 0 rgba(255, 200, 140, 0.06);
+}
+.cfg-panel-header {
+  background: linear-gradient(180deg, rgba(255, 95, 0, 0.10) 0%, rgba(255, 95, 0, 0) 100%);
+  border-bottom: 1px solid rgba(255, 150, 60, 0.18);
+}
+.cfg-panel-title { color: #fff; }
+.cfg-mc-link {
+  color: #ffb070;
+  border-color: rgba(255, 150, 60, 0.45);
+}
+.cfg-mc-link:hover { background: rgba(255, 95, 0, 0.14); color: #ffd0a8; }
+
+.cfg-lock-btn, .cfg-close-btn, .cfg-icon-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.65);
+}
+.cfg-lock-btn:hover, .cfg-close-btn:hover, .cfg-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 150, 60, 0.45);
+  color: #fff;
+}
+.cfg-lock-btn.unlocked {
+  color: #ffb070;
+  border-color: rgba(255, 95, 0, 0.55);
+  background: rgba(255, 95, 0, 0.14);
+}
+
+.cfg-autogen-btn {
+  background: rgba(255, 95, 0, 0.16);
+  border-color: rgba(255, 95, 0, 0.55);
+  color: #ffb070;
+}
+.cfg-autogen-btn:hover {
+  background: rgba(255, 95, 0, 0.28);
+  border-color: #ff8a3a;
+  color: #fff;
+}
+
+.cfg-autogen-banner {
+  border-color: rgba(255, 95, 0, 0.4);
+  background: rgba(255, 95, 0, 0.08);
+}
+.cfg-autogen-banner-icon { color: #ff8a3a; }
+.cfg-autogen-banner-body strong { color: #fff; }
+.cfg-autogen-banner-body p { color: rgba(255, 220, 180, 0.75); }
+
+.cfg-loading { color: rgba(255, 255, 255, 0.55); }
+
+.cfg-group { border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.cfg-group-title { color: #fff; }
+.cfg-group-subtitle { color: rgba(255, 255, 255, 0.55); }
+.cfg-group-docs { color: #ffb070; }
+
+.cfg-field-label {
+  color: rgba(255, 180, 100, 0.85);
+}
+.cfg-field-val { color: rgba(255, 255, 255, 0.9); }
+.cfg-field-val.empty { color: rgba(255, 255, 255, 0.4); }
+
+.cfg-input {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.cfg-input::placeholder { color: rgba(255, 255, 255, 0.35); }
+.cfg-input:focus {
+  border-color: #ff8a3a;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 3px rgba(255, 95, 0, 0.18);
+}
+
+.cfg-file-name { color: rgba(255, 255, 255, 0.6); }
+.cfg-file-name.set { color: #5dd49a; }
+.cfg-upload-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.85);
+}
+.cfg-upload-btn:hover {
+  background: rgba(255, 95, 0, 0.16);
+  border-color: rgba(255, 150, 60, 0.55);
+  color: #fff;
+}
+
+.cfg-info-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.55);
+}
+.cfg-info-btn:hover {
+  color: #ffb070;
+  border-color: rgba(255, 150, 60, 0.55);
+  background: rgba(255, 95, 0, 0.10);
+}
+
+.cfg-tooltip {
+  background: #0a0808;
+  color: #ffe0c8;
+  border: 1px solid rgba(255, 150, 60, 0.25);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.6);
+}
+
+.cfg-panel-footer {
+  background: linear-gradient(0deg, rgba(255, 95, 0, 0.06) 0%, rgba(255, 95, 0, 0) 100%);
+  border-top: 1px solid rgba(255, 150, 60, 0.18);
+}
+.cfg-restart-note { color: rgba(255, 255, 255, 0.55); }
+
+.cfg-save-btn {
+  background: linear-gradient(180deg, #ff8a3a 0%, #ff6a00 100%);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(255, 95, 0, 0.35);
+}
+.cfg-save-btn:hover { opacity: 1; filter: brightness(1.08); }
+.cfg-save-btn:disabled {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.35);
+  box-shadow: none;
+}
+
+/* Slightly tweak the saved flash so it reads on the dark surface. */
+@keyframes cfgFlashDark {
+  0%   { background: rgba(93, 212, 154, 0.16); }
+  100% { background: transparent; }
+}
+.cfg-panel .cfg-field.saved { animation: cfgFlashDark 1s ease forwards; }
+
+/* Dark scrollbar inside the API Config panel \u2014 same idiom as the
+   Snippets modal so all dark dialogs share the look. Firefox uses the
+   `scrollbar-*` properties; Chromium/Safari use the webkit pseudos. */
+.cfg-panel,
+.cfg-panel-body {
+  scrollbar-width: thin;
+  scrollbar-color: #2a1f17 transparent;
+}
+.cfg-panel::-webkit-scrollbar,
+.cfg-panel-body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.cfg-panel::-webkit-scrollbar-track,
+.cfg-panel-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cfg-panel::-webkit-scrollbar-thumb,
+.cfg-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 150, 60, 0.18);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.cfg-panel::-webkit-scrollbar-thumb:hover,
+.cfg-panel-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 150, 60, 0.4);
+  background-clip: padding-box;
+}
+.cfg-panel::-webkit-scrollbar-corner,
+.cfg-panel-body::-webkit-scrollbar-corner {
+  background: transparent;
+}
 
 /* ==========================================================================
    Online Identity Verification Use Case (idv-*)
@@ -6126,7 +6370,168 @@ body {
   overflow-y: auto;
   line-height: 1.6;
 }
-.prov-log-line { white-space: pre-wrap; word-break: break-all; }
+/* ===========================================================================
+   Auto-Provision Modal — dark theme override (matches Vima Chat / AOTD).
+   Keeps all the layout rules above; just re-skins surfaces & text to the
+   same warm-black + orange palette used by .tc-modal and .aotd-modal so
+   the welcome / API-selection / progress screens look like part of the
+   same family.
+   =========================================================================== */
+.prov-overlay {
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.prov-panel {
+  background: linear-gradient(170deg, #161310 0%, #0f0f0f 60%);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 150, 60, 0.22);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 150, 60, 0.08),
+    inset 0 1px 0 rgba(255, 200, 140, 0.06);
+}
+.prov-title { color: #fff; }
+.prov-subtitle { color: rgba(255, 255, 255, 0.65); }
+
+/* Welcome — choice cards */
+.prov-choice-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
+}
+.prov-choice-card:hover {
+  background: rgba(255, 95, 0, 0.10);
+  border-color: rgba(255, 150, 60, 0.55);
+  box-shadow: 0 4px 18px rgba(255, 95, 0, 0.18);
+}
+.prov-choice-icon {
+  background: rgba(255, 95, 0, 0.10);
+  color: #ffb070;
+}
+.prov-choice-text strong { color: #fff; }
+.prov-choice-text span { color: rgba(255, 255, 255, 0.62); }
+.prov-choice-arrow { color: rgba(255, 255, 255, 0.4); }
+
+.prov-skip { color: rgba(255, 255, 255, 0.5); }
+.prov-skip:hover { color: #fff; }
+
+.prov-register-note { color: rgba(255, 255, 255, 0.6); }
+.prov-register-note a { color: #ffb070; }
+
+/* Select-all row */
+.prov-select-all { color: rgba(255, 255, 255, 0.75); }
+.prov-select-all label { color: rgba(255, 255, 255, 0.85); }
+.prov-select-all input[type="checkbox"] { accent-color: #ff6a00; }
+
+/* API selection grid */
+.prov-api-grid::-webkit-scrollbar { width: 8px; }
+.prov-api-grid::-webkit-scrollbar-track { background: transparent; }
+.prov-api-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 4px;
+}
+.prov-api-grid::-webkit-scrollbar-thumb:hover { background: rgba(255, 150, 60, 0.35); }
+
+.prov-api-item {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.82);
+}
+.prov-api-item:hover {
+  background: rgba(255, 95, 0, 0.10);
+  border-color: rgba(255, 150, 60, 0.45);
+}
+.prov-api-cb { accent-color: #ff6a00; }
+.prov-api-name { color: rgba(255, 255, 255, 0.88); }
+.prov-api-note { color: #ffb070; }
+
+.prov-api-item--manual {
+  background: rgba(255, 255, 255, 0.025);
+  border-color: rgba(255, 255, 255, 0.07);
+  opacity: 0.7;
+}
+.prov-api-item--manual:hover { background: rgba(255, 255, 255, 0.025); }
+.prov-api-item--manual .prov-api-name { color: rgba(255, 255, 255, 0.55); }
+.prov-api-badge {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.prov-api-item--configured .prov-api-cb { accent-color: #5dd49a; }
+.prov-api-item--configured .prov-api-name-text { color: #86efac; }
+.prov-api-link { color: rgba(255, 255, 255, 0.65); }
+.prov-api-link:hover { color: #ffb070; }
+
+/* Notes — borrow Vima Chat banner colors so info/warn read on dark */
+.prov-note--info {
+  background: rgba(255, 95, 0, 0.10);
+  color: #ffd0a0;
+  border-color: rgba(255, 150, 60, 0.35);
+}
+.prov-note--warn {
+  background: rgba(20, 83, 45, 0.30);
+  color: #86efac;
+  border-color: rgba(20, 83, 45, 0.6);
+}
+
+/* Primary button — match AOTD save-button style */
+.prov-btn-primary {
+  background: linear-gradient(180deg, #ff8a3a 0%, #ff6a00 100%);
+  box-shadow: 0 4px 14px rgba(255, 95, 0, 0.35);
+}
+.prov-btn-primary:hover { opacity: 1; filter: brightness(1.08); }
+
+/* Secondary outline button used as "Back" */
+.prov-screen .btn-outline,
+.prov-footer .btn-outline {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.8);
+}
+.prov-screen .btn-outline:hover,
+.prov-footer .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 150, 60, 0.55);
+  color: #fff;
+}
+
+/* Status cards on progress screen */
+.prov-status-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.85);
+}
+.prov-status-name { color: rgba(255, 255, 255, 0.88); }
+.prov-status-label { color: rgba(255, 255, 255, 0.55); }
+
+.prov-status-pending .prov-status-dot { background: rgba(255, 255, 255, 0.25); }
+.prov-status-running {
+  border-color: rgba(255, 150, 60, 0.55);
+  background: rgba(255, 95, 0, 0.10);
+}
+.prov-status-running .prov-status-label { color: #ffb070; }
+.prov-status-done {
+  border-color: rgba(20, 83, 45, 0.6);
+  background: rgba(20, 83, 45, 0.18);
+}
+.prov-status-done .prov-status-label { color: #86efac; }
+.prov-status-failed {
+  border-color: rgba(127, 29, 29, 0.65);
+  background: rgba(58, 26, 26, 0.5);
+}
+.prov-status-failed .prov-status-label { color: #fca5a5; }
+
+/* Log terminal — already dark, just tighten the border to match */
+.prov-log-wrap {
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Globe logo glow tinted toward warm orange */
+.prov-logo canvas {
+  filter: drop-shadow(0 0 14px rgba(255, 140, 50, 0.55));
+}
 
 /* Progress screen — keep the action button always in view.
  *
@@ -6182,11 +6587,53 @@ body {
 .asp-api-status { font-size: 12px; color: #555; min-width: 110px; text-align: right; }
 .asp-api-row.configured .asp-api-status { color: var(--ok); font-weight: 600; }
 
-.api-pairs { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.api-pairs { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; min-width: 0; }
 .api-pairs[hidden] { display: none; }
-.api-pairs-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.api-pairs-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px; }
-.api-pair-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 12px; border: 1px solid #d6d8dd; background: white; font-size: 12px; cursor: pointer; color: var(--ink); transition: border-color 120ms, background 120ms; font-family: inherit; }
+/* Single-line row: label stays put, chips strip scrolls horizontally if it
+   overflows so the page below never gets pushed down by a wrapped row. */
+.api-pairs-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.api-pairs-label {
+  font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-right: 0;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+/* The horizontally-scrolling chip strip. The chips themselves render
+   side-by-side and the row overflows into a discreet horizontal scroller
+   with a subtle right-edge fade hinting at more content. */
+.api-pairs-chips {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.18) transparent;
+  /* Soft fade at the right edge so users notice the strip continues. */
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 18px), transparent 100%);
+          mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 18px), transparent 100%);
+  padding: 2px 18px 6px 0;  /* room for the fade + scrollbar */
+  scroll-snap-type: x proximity;
+}
+.api-pairs-chips::-webkit-scrollbar { height: 6px; }
+.api-pairs-chips::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.18);
+  border-radius: 3px;
+}
+.api-pairs-chips::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.32); }
+.api-pairs-chips::-webkit-scrollbar-track { background: transparent; }
+.api-pairs-chips > .api-pair-chip { flex: 0 0 auto; scroll-snap-align: start; }
+.api-pair-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 12px; border: 1px solid #d6d8dd; background: white; font-size: 12px; cursor: pointer; color: var(--ink); transition: border-color 120ms, background 120ms; font-family: inherit; white-space: nowrap; }
 .api-pair-chip:hover { border-color: #999; background: #f6f7fa; }
 .api-pair-chip.configured { border-color: #b6dcc0; background: #f0faf3; }
 .api-pair-chip--requires { border-color: #f0c0c0; background: #fff5f5; }
@@ -6209,6 +6656,37 @@ body {
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--bundle-accent);
   box-shadow: 0 0 6px color-mix(in srgb, var(--bundle-accent) 70%, transparent);
+}
+.api-pair-chip--usecase {
+  --bundle-accent: #ff6a00;
+  background: color-mix(in srgb, var(--bundle-accent) 12%, white);
+  border-color: color-mix(in srgb, var(--bundle-accent) 45%, white);
+  color: var(--ink);
+  font-weight: 500;
+}
+.api-pair-chip--usecase:hover {
+  background: color-mix(in srgb, var(--bundle-accent) 24%, white);
+  border-color: var(--bundle-accent);
+}
+.api-pair-chip--usecase .api-pair-chip-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--bundle-accent);
+  box-shadow:
+    0 0 6px color-mix(in srgb, var(--bundle-accent) 80%, transparent),
+    0 0 14px color-mix(in srgb, var(--bundle-accent) 60%, transparent);
+  animation: api-pair-usecase-glow 1.8s ease-in-out infinite;
+}
+@keyframes api-pair-usecase-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 4px color-mix(in srgb, var(--bundle-accent) 70%, transparent),
+      0 0 10px color-mix(in srgb, var(--bundle-accent) 45%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 8px color-mix(in srgb, var(--bundle-accent) 95%, transparent),
+      0 0 20px color-mix(in srgb, var(--bundle-accent) 70%, transparent);
+  }
 }
 .api-pair-dot { width: 7px; height: 7px; border-radius: 50%; }
 .api-pair-dot.ok { background: var(--ok); }

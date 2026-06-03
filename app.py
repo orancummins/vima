@@ -330,6 +330,7 @@ def index():
         apis=api_registry.manifests(),
         api_groups=api_registry.manifests_grouped(),
         solutions=api_registry.solutions(),
+        bundles=api_registry.solutions(),
         use_cases=usecase_registry.manifests(),
         spotlight=_build_spotlight(api_registry.manifests()),
         runtime_mode={
@@ -650,7 +651,7 @@ def explorer_run(api_id: str):
 
         lines = [
             "$ErrorActionPreference = 'Continue'",
-            "Write-Host 'Vima Solution Studio - running snippet for " + api_id + "' -ForegroundColor Cyan",
+            "Write-Host 'Mastercard Solution Studio - running snippet for " + api_id + "' -ForegroundColor Cyan",
             "Write-Host ''",
         ]
         for name, val in env_pairs:
@@ -678,7 +679,7 @@ def explorer_run(api_id: str):
         ]
         try:
             subprocess.Popen(
-                ["wt.exe", "new-tab", "--title", f"Vima: {api_id}", *powershell_args],
+                ["wt.exe", "new-tab", "--title", f"Mastercard Solution Studio: {api_id}", *powershell_args],
                 close_fds=True,
             )
             launcher = "wt"
@@ -695,7 +696,7 @@ def explorer_run(api_id: str):
         py_path = tmpdir / f"{api_id}_{op_id}.py"
         py_path.write_text(code, encoding="utf-8")
         lines = ["#!/bin/bash", "set +e",
-                 f"echo 'Vima Solution Studio - running snippet for {api_id}'", ""]
+                 f"echo 'Mastercard Solution Studio - running snippet for {api_id}'", ""]
         for name, val in env_pairs:
             lines.append(f"export {name}={shlex.quote(val)}")
         if packages:
@@ -713,7 +714,7 @@ def explorer_run(api_id: str):
         py_path = tmpdir / f"{api_id}_{op_id}.py"
         py_path.write_text(code, encoding="utf-8")
         lines = ["#!/bin/bash", "set +e",
-                 f"echo 'Vima Solution Studio - running snippet for {api_id}'", ""]
+                 f"echo 'Mastercard Solution Studio - running snippet for {api_id}'", ""]
         for name, val in env_pairs:
             lines.append(f"export {name}={shlex.quote(val)}")
         if packages:
@@ -1272,11 +1273,14 @@ def usecase_data(uc_id: str):
         if ofin_mod is not None:
             state = getattr(ofin_mod, "get_state", lambda: {})()
             customer_id = state.get("customer_id")
-    if not customer_id:
+    # Use cases can opt out of the customer-required gate (curated/offline demos)
+    # by exposing ``REQUIRES_CUSTOMER = False`` at module level.
+    requires_customer = getattr(mod, "REQUIRES_CUSTOMER", True)
+    if not customer_id and requires_customer:
         return jsonify({"error": "No customer linked. Use the Open Finance tab "
                                  "to create or select a customer first."}), 400
     try:
-        return jsonify(mod.get_data(customer_id))
+        return jsonify(mod.get_data(customer_id or ""))
     except Exception as e:  # pragma: no cover
         return jsonify({"error": str(e)}), 500
 
@@ -2594,7 +2598,7 @@ if __name__ == "__main__":
     host = _RUNTIME_FLAGS.host
     apis = api_registry.manifests()
     print("\n" + "=" * 60)
-    print("Vima - Mastercard API explorer")
+    print("Solution Studio")
     print("=" * 60)
     for a in apis:
         flag = "+" if a.get("configured") else "-"
