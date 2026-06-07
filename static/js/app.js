@@ -5526,6 +5526,7 @@
     const autogenBanner     = document.getElementById('cfg-autogen-banner');
     const autogenCancel     = document.getElementById('cfg-autogen-cancel');
     const autogenConfirm    = document.getElementById('cfg-autogen-confirm');
+    let activeTooltipTarget = null;
 
     function autogenShowBanner() {
       if (autogenBanner) autogenBanner.classList.remove('cfg-hidden');
@@ -5930,6 +5931,7 @@
 
     // ── Tooltip ──────────────────────────────────────────────────────────────
     function cfgTooltipShow(text, e) {
+      if (!text) return;
       tooltip.textContent = text;
       tooltip.classList.remove('cfg-hidden');
       cfgTooltipPos(e);
@@ -5943,10 +5945,99 @@
       tooltip.style.top  = (ty + th > window.innerHeight - 8 ? ty - th - 28 : ty) + 'px';
     }
     function cfgTooltipHide() { tooltip.classList.add('cfg-hidden'); }
+
+    function cfgTooltipRestoreTitle(el) {
+      if (!el) return;
+      const storedTitle = el.getAttribute('data-tooltip-title');
+      if (storedTitle != null) {
+        el.setAttribute('title', storedTitle);
+        el.removeAttribute('data-tooltip-title');
+      }
+    }
+
+    function cfgTooltipTextFor(el) {
+      if (!el) return '';
+      return el.getAttribute('data-tooltip')
+        || el.getAttribute('data-tooltip-title')
+        || el.getAttribute('title')
+        || '';
+    }
+
+    function cfgTooltipShowForTarget(target, e) {
+      if (!target) return;
+      const text = cfgTooltipTextFor(target);
+      if (!text) return;
+      if (target.hasAttribute('title')) {
+        target.setAttribute('data-tooltip-title', target.getAttribute('title'));
+        target.removeAttribute('title');
+      }
+      activeTooltipTarget = target;
+      cfgTooltipShow(text, e);
+    }
+
+    function cfgTooltipHideForTarget(target) {
+      if (!target) return;
+      cfgTooltipRestoreTitle(target);
+      if (activeTooltipTarget === target) activeTooltipTarget = null;
+      cfgTooltipHide();
+    }
+
+    function cfgTooltipReset() {
+      if (activeTooltipTarget) {
+        cfgTooltipHideForTarget(activeTooltipTarget);
+        return;
+      }
+      cfgTooltipHide();
+    }
+
     document.addEventListener('mousemove', function (e) {
       if (!tooltip.classList.contains('cfg-hidden')) cfgTooltipPos(e);
     });
-    document.addEventListener('click', function () { cfgTooltipHide(); });
+    document.addEventListener('click', function () { cfgTooltipReset(); });
+    document.addEventListener('scroll', cfgTooltipReset, true);
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) cfgTooltipReset();
+    });
+    window.addEventListener('blur', cfgTooltipReset);
+
+    document.addEventListener('mouseover', function (e) {
+      const target = e.target.closest('[data-tooltip], [title]');
+      if (!target || target === tooltip || tooltip.contains(target)) return;
+      if (activeTooltipTarget && activeTooltipTarget !== target) {
+        cfgTooltipHideForTarget(activeTooltipTarget);
+      }
+      if (activeTooltipTarget === target) return;
+      cfgTooltipShowForTarget(target, e);
+    });
+
+    document.addEventListener('mouseout', function (e) {
+      if (!activeTooltipTarget) return;
+      const related = e.relatedTarget;
+      if (related && activeTooltipTarget.contains(related)) return;
+      if (e.target === activeTooltipTarget || activeTooltipTarget.contains(e.target)) {
+        cfgTooltipHideForTarget(activeTooltipTarget);
+      }
+    });
+
+    document.addEventListener('focusin', function (e) {
+      const target = e.target.closest('[data-tooltip], [title]');
+      if (!target) return;
+      if (activeTooltipTarget && activeTooltipTarget !== target) {
+        cfgTooltipHideForTarget(activeTooltipTarget);
+      }
+      const rect = target.getBoundingClientRect();
+      cfgTooltipShowForTarget(target, {
+        clientX: rect.left + Math.min(rect.width / 2, 24),
+        clientY: rect.bottom,
+      });
+    });
+
+    document.addEventListener('focusout', function (e) {
+      if (!activeTooltipTarget) return;
+      if (e.target === activeTooltipTarget || activeTooltipTarget.contains(e.target)) {
+        cfgTooltipHideForTarget(activeTooltipTarget);
+      }
+    });
 
     function escHtml(s) {
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
