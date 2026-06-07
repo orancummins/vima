@@ -195,16 +195,20 @@ html.theme-light .header:not(.header--home) .top-tab.active:hover {
     0 0 0 3px rgba(255, 95, 0, 0.22);
 }
 
-html.theme-light .theme-toggle-track {
+html.theme-light .header:not(.header--home) .theme-toggle-track {
   background: rgba(20, 20, 20, 0.08);
   border-color: rgba(20, 20, 20, 0.12);
 }
-html.theme-light .theme-toggle-option {
+html.theme-light .header:not(.header--home) .theme-toggle-option {
   color: rgba(20, 20, 20, 0.72);
 }
 html.theme-light .theme-toggle-thumb {
   transform: translateX(calc(100% - 4px));
   background: linear-gradient(180deg, #ffb070 0%, #ff7a26 100%);
+}
+
+html.theme-light .header.header--home .theme-toggle-option {
+  color: rgba(255, 255, 255, 0.72);
 }
 
 /* -------- Panel layout -------- */
@@ -7387,16 +7391,13 @@ html.theme-light .home-api-ticker .ticker-method {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
   color: var(--muted);
   cursor: pointer;
   list-style: none;
   user-select: none;
   padding: 4px 0;
   width: fit-content;
+  max-width: min(100%, 900px);
 }
 .api-context-toggle::-webkit-details-marker { display: none; }
 .api-context-toggle:hover { color: var(--ink); }
@@ -7406,6 +7407,27 @@ html:not(.theme-light) .api-context-toggle:hover { color: rgba(255,255,255,0.85)
   transform: rotate(-90deg);
   transition: transform 0.18s ease;
   color: currentColor;
+}
+.api-context-toggle-copy {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.api-context-toggle-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  flex-shrink: 0;
+}
+.api-context-toggle-desc {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.2;
+  opacity: 0.88;
 }
 .api-context-body {
   padding-top: 6px;
