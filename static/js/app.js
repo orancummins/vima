@@ -7,8 +7,74 @@
   const OPEN_FINANCE_US_API_ID = 'open_finance';
   const SERVER_MODE_TOOLTIP = 'server mode';
   const NON_US_TOOLTIP = 'Disabled in non-us mode. If running on US IP, this would be enabled.';
+  const THEME_STORAGE_KEY = 'vima:theme';
+  const SCRIPT_ROOT = (document.body?.dataset?.scriptRoot || '').replace(/\/$/, '');
+  const ROOT_EL = document.documentElement;
 
   const $ = (id) => document.getElementById(id);
+
+  function _currentThemeMode() {
+    return ROOT_EL.classList.contains('theme-light') ? 'light' : 'dark';
+  }
+
+  function _postThemeToEmbeddedFrame(frame, mode) {
+    if (!frame || !frame.contentWindow) return;
+    const theme = mode === 'light' ? 'light' : 'dark';
+    try {
+      frame.contentWindow.postMessage({ type: 'vima:theme', theme }, window.location.origin);
+    } catch (e) {}
+  }
+
+  function _syncEmbeddedUseCaseTheme(mode) {
+    const theme = mode === 'light' ? 'light' : 'dark';
+    document.querySelectorAll('.sonic-webview-frame').forEach((frame) => {
+      _postThemeToEmbeddedFrame(frame, theme);
+    });
+    _postThemeToEmbeddedFrame($('global-edit-modal-iframe'), theme);
+  }
+
+  function _applyThemeMode(mode) {
+    const theme = mode === 'light' ? 'light' : 'dark';
+    const isLight = theme === 'light';
+    ROOT_EL.classList.toggle('theme-light', isLight);
+    document.body?.setAttribute('data-theme', theme);
+    _syncEmbeddedUseCaseTheme(theme);
+    const nextTheme = isLight ? 'dark' : 'light';
+    const label = `Switch to ${nextTheme} theme`;
+    document.querySelectorAll('.theme-toggle').forEach((toggle) => {
+      toggle.setAttribute('aria-pressed', String(isLight));
+      toggle.setAttribute('aria-label', label);
+      toggle.title = label;
+    });
+  }
+
+  function _toggleThemeMode() {
+    const nextTheme = _currentThemeMode() === 'light' ? 'dark' : 'light';
+    _applyThemeMode(nextTheme);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    } catch (e) {}
+  }
+
+  _applyThemeMode(_currentThemeMode());
+  $('theme-toggle')?.addEventListener('click', _toggleThemeMode);
+
+  function _appPath(path) {
+    if (typeof path !== 'string') return path;
+    if (!path.startsWith('/')) return path;
+    if (!SCRIPT_ROOT) return path;
+    return `${SCRIPT_ROOT}${path}`;
+  }
+
+  const _nativeFetch = (resource, init) => {
+    if (typeof resource === 'string') {
+      return window.fetch(_appPath(resource), init);
+    }
+    if (resource instanceof Request) {
+      return window.fetch(new Request(_appPath(resource.url), resource), init);
+    }
+    return window.fetch(resource, init);
+  };
 
   function _isNonUsBlockedApiId(apiId) {
     return NON_US_MODE && apiId === OPEN_FINANCE_US_API_ID;
@@ -76,9 +142,6 @@
       })
       .catch(() => {});
   }
-
-  // Keep native fetch reference for internal use
-  const _nativeFetch = window.fetch.bind(window);
 
   let _ipStatusTimer = null;
   let _lastUsIpStatus = null;
@@ -430,7 +493,7 @@
           const original = runBtnEl.textContent;
           runBtnEl.disabled = true;
           runBtnEl.textContent = 'Launching\u2026';
-          fetch(`/explorer/${encodeURIComponent(api.id)}/run`, {
+          _nativeFetch(`/explorer/${encodeURIComponent(api.id)}/run`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ operation: opId, code: getCurrentCode() }),
@@ -570,7 +633,7 @@
   }
 
   function _snippetShowSetup(apiId) {
-    fetch(`/explorer/${encodeURIComponent(apiId)}/setup`)
+    _nativeFetch(`/explorer/${encodeURIComponent(apiId)}/setup`)
       .then((r) => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
       .then((data) => {
         const osList = ['windows', 'macos', 'linux'];
@@ -1809,7 +1872,7 @@
   function refreshState() {
     const api = currentApi();
     if (!api) return;
-    fetch(`/explorer/${api.id}/state`)
+    _nativeFetch(`/explorer/${api.id}/state`)
       .then((r) => r.json())
       .then((d) => {
         currentState = d.state || {};
@@ -2082,7 +2145,7 @@
     const _dots = '<div class="sending-dots"><span></span><span></span><span></span></div>';
     $('resp-body').innerHTML = _dots;
     try {
-      const r = await fetch(`/explorer/${api.id}/execute`, {
+      const r = await _nativeFetch(`/explorer/${api.id}/execute`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ operation: op.id, params }),
@@ -2106,20 +2169,15 @@
       $("op-hint").innerHTML = "";
       if (data.hints && data.hints.note) {
         const n = document.createElement("div");
-        n.className = "muted";
-        n.style.padding = "10px";
-        n.style.background = "#fff7ed";
-        n.style.border = "1px solid #fbd9a8";
-        n.style.borderRadius = "6px";
+        n.className = "muted op-hint-card op-hint-card--note";
         n.textContent = data.hints.note;
         $("op-hint").appendChild(n);
       }
       if (data.hints && data.hints.open_link) {
         const wrap = document.createElement("div");
-        wrap.style.cssText = "margin-top:10px;padding:12px 14px;background:#fff7ed;border:1px solid #fbd9a8;border-radius:6px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;";
+        wrap.className = "op-hint-card op-hint-card--launch";
         const note = document.createElement("span");
-        note.className = "muted";
-        note.style.cssText = "font-size:13px;flex:1;min-width:220px;";
+        note.className = "muted op-hint-text";
         note.textContent = data.hints.open_link_note
           || "Open in a new tab, complete the bank login flow, then run the next step.";
         const btn = document.createElement("a");
@@ -2127,7 +2185,7 @@
         btn.target = "_blank";
         btn.rel = "noopener";
         btn.textContent = data.hints.open_link_label || "Launch Connect ↗";
-        btn.style.cssText = "flex-shrink:0;padding:10px 18px;background:#ff5f00;color:#fff;border-radius:6px;text-decoration:none;font-size:14px;font-weight:700;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.12);";
+        btn.className = "op-hint-btn op-hint-btn--launch";
         wrap.appendChild(note);
         wrap.appendChild(btn);
         $("op-hint").appendChild(wrap);
@@ -2141,17 +2199,16 @@
           || "Browser interaction required — complete the flow, then proceed to the next step.";
         if (launchUrl) {
           const wrap = document.createElement("div");
-          wrap.style.cssText = "margin-top:10px;padding:10px 12px;background:#f0f7ff;border:1px solid #b6d4f7;border-radius:6px;display:flex;align-items:center;gap:12px;";
+          wrap.className = "op-hint-card op-hint-card--browser";
           const noteEl = document.createElement("span");
-          noteEl.className = "muted";
-          noteEl.style.fontSize = "13px";
+          noteEl.className = "muted op-hint-text";
           noteEl.textContent = launchNote;
           const btn = document.createElement("a");
           btn.href = launchUrl;
           btn.target = "_blank";
           btn.rel = "noopener";
           btn.textContent = "Launch 3DS Method ↗";
-          btn.style.cssText = "flex-shrink:0;padding:7px 14px;background:#005b99;color:#fff;border-radius:5px;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap;";
+          btn.className = "op-hint-btn op-hint-btn--browser";
           wrap.appendChild(noteEl);
           wrap.appendChild(btn);
           $("op-hint").appendChild(wrap);
@@ -2308,6 +2365,7 @@
     if (_wvRefresh) _wvRefresh.remove();
     const _popoutBtn = document.getElementById('uc-popout-btn');
     if (_popoutBtn) _popoutBtn.hidden = false;
+    _parkActiveWebview();
 
     _currentUcId = uc.id;
     updateUcSidebar(uc);
@@ -2385,10 +2443,7 @@
   const ENRICH = { enriched: new Set(), data: [] };
 
   function renderEnrichment() {
-    const body = $("uc-body");
-    if (!body) return;
-    body.innerHTML = `<iframe id="enrichment-webview-frame" class="sonic-webview-frame" src="/enrichment/index.html" title="Data Enrichment"></iframe>`;
-    _attachWebviewRefresh('enrichment-webview-frame');
+    _renderCachedWebview('enrichment', 'enrichment-webview-frame', _appPath('/enrichment/index.html'), 'Data Enrichment');
   }
 
   function enrichRender() {
@@ -2662,10 +2717,7 @@
   // All Recurring UI lives in usecases/recurring/ — edit there to change the look.
 
   function renderRecurring() {
-    const body = $("uc-body");
-    if (!body) return;
-    body.innerHTML = `<iframe id="recurring-webview-frame" class="sonic-webview-frame" src="/recurring/index.html" title="Recurring Transactions"></iframe>`;
-    _attachWebviewRefresh('recurring-webview-frame');
+    _renderCachedWebview('recurring', 'recurring-webview-frame', _appPath('/recurring/index.html'), 'Recurring Transactions');
   }
 
   // ===================== Payment Success Indicator Use Case =====================
@@ -2673,10 +2725,7 @@
   // All PSI UI lives in usecases/psi/ — edit there to change the look.
 
   function renderPsi() {
-    const body = $("uc-body");
-    if (!body) return;
-    body.innerHTML = `<iframe id="psi-webview-frame" class="sonic-webview-frame" src="/psi/index.html" title="Payment Success Indicator"></iframe>`;
-    _attachWebviewRefresh('psi-webview-frame');
+    _renderCachedWebview('psi', 'psi-webview-frame', _appPath('/psi/index.html'), 'Payment Success Indicator');
   }
 
   // ===================== BIN Lookup Use Case =====================
@@ -2696,10 +2745,7 @@
   ];
 
   function renderBinLookup() {
-    const body = $("uc-body");
-    if (!body) return;
-    body.innerHTML = `<iframe id="binlookup-webview-frame" class="sonic-webview-frame" src="/bin_lookup/index.html" title="BIN Lookup"></iframe>`;
-    _attachWebviewRefresh('binlookup-webview-frame');
+    _renderCachedWebview('bin_lookup', 'binlookup-webview-frame', _appPath('/bin_lookup/index.html'), 'BIN Lookup');
   }
 
   function _binLookupPanelHtml() {
@@ -3189,7 +3235,7 @@
             BIN Ranges Database
           </div>
           <div class="bin-db-panel-actions">
-            <a class="bin-db-csv-btn" href="/usecases/binlookup/download-bins" download="bin_ranges.csv"
+            <a class="bin-db-csv-btn" href="${_appPath('/usecases/binlookup/download-bins')}" download="bin_ranges.csv"
                title="Download all BIN ranges as CSV${loaded ? " (" + BIN_DB.count.toLocaleString() + " rows)" : ""}">
               <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 3v10M6 9l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 17h14" stroke-linecap="round"/></svg>
               CSV
@@ -3544,10 +3590,7 @@
   }
 
   function renderClarity() {
-    const body = $("uc-body");
-    if (!body) return;
-    body.innerHTML = `<iframe id="clarity-webview-frame" class="sonic-webview-frame" src="/consumer_clarity/index.html" title="Consumer Clarity"></iframe>`;
-    _attachWebviewRefresh('clarity-webview-frame');
+    _renderCachedWebview('consumer_clarity', 'clarity-webview-frame', _appPath('/consumer_clarity/index.html'), 'Consumer Clarity');
   }
 
   function clarityRender() {
@@ -3788,6 +3831,51 @@
   // Rendered as a sandboxed iframe pointing to /pfm/index.html.
   // All PFM UI lives in usecases/pfm/ — edit there to change the look.
 
+  const _cachedUsecaseWebviews = new Map();
+
+  function _getWebviewCacheHost() {
+    let host = document.getElementById('uc-webview-cache-host');
+    if (host) return host;
+    host = document.createElement('div');
+    host.id = 'uc-webview-cache-host';
+    host.hidden = true;
+    document.body.appendChild(host);
+    return host;
+  }
+
+  function _parkActiveWebview() {
+    const body = document.getElementById('uc-body');
+    if (!body) return;
+    const ucId = body.dataset.webviewUcId;
+    const frame = body.querySelector('iframe.sonic-webview-frame');
+    if (!ucId || !frame) return;
+    _cachedUsecaseWebviews.set(ucId, frame);
+    _getWebviewCacheHost().appendChild(frame);
+    delete body.dataset.webviewUcId;
+  }
+
+  function _renderCachedWebview(ucId, frameId, src, title) {
+    const body = $('uc-body');
+    if (!body) return;
+
+    let frame = _cachedUsecaseWebviews.get(ucId);
+    if (!frame) {
+      frame = document.createElement('iframe');
+      frame.id = frameId;
+      frame.className = 'sonic-webview-frame';
+      frame.src = src;
+      frame.title = title;
+      _cachedUsecaseWebviews.set(ucId, frame);
+    } else {
+      frame.id = frameId;
+      frame.title = title;
+    }
+
+    body.replaceChildren(frame);
+    body.dataset.webviewUcId = ucId;
+    _attachWebviewRefresh(frameId);
+  }
+
   // Shared helper: hides the Full Screen button and injects a Refresh button
   // in its place in the uc-header. Call after setting uc-body innerHTML.
   function _attachWebviewRefresh(frameId) {
@@ -3802,6 +3890,11 @@
     popout.insertAdjacentElement('afterend', btn);
     const frame = document.getElementById(frameId);
     if (frame) {
+      if (!frame.dataset.themeBridgeBound) {
+        frame.addEventListener('load', () => _postThemeToEmbeddedFrame(frame, _currentThemeMode()));
+        frame.dataset.themeBridgeBound = '1';
+      }
+      _postThemeToEmbeddedFrame(frame, _currentThemeMode());
       btn.addEventListener('click', () => {
         btn.classList.add('sonic-refresh--spinning');
         frame.src = frame.src;
@@ -3811,10 +3904,7 @@
   }
 
   function renderPfm() {
-    const body = $("uc-body");
-    if (!body) return;
-    body.innerHTML = `<iframe id="pfm-webview-frame" class="sonic-webview-frame" src="/pfm/index.html" title="Personal Finance Manager"></iframe>`;
-    _attachWebviewRefresh('pfm-webview-frame');
+    _renderCachedWebview('pfm', 'pfm-webview-frame', _appPath('/pfm/index.html'), 'Personal Finance Manager');
   }
 
   // ===================== Easy Savings Use Case =====================
@@ -3835,10 +3925,7 @@
   function _esManifest() { return USE_CASES.find(u => u.id === "easy_savings"); }
 
   function renderEasySavings() {
-    const body = $("uc-body");
-    if (!body) return;
-    body.innerHTML = `<iframe id="easysavings-webview-frame" class="sonic-webview-frame" src="/easy_savings/index.html" title="Easy Savings"></iframe>`;
-    _attachWebviewRefresh('easysavings-webview-frame');
+    _renderCachedWebview('easy_savings', 'easysavings-webview-frame', _appPath('/easy_savings/index.html'), 'Easy Savings');
   }
 
   function esRender() {
@@ -4087,10 +4174,7 @@
   // All Places UI lives in usecases/places/ — edit there to change the look.
 
   function renderPlaces() {
-    const body = $("uc-body");
-    if (!body) return;
-    body.innerHTML = `<iframe id="places-webview-frame" class="sonic-webview-frame" src="/places/index.html" title="Places"></iframe>`;
-    _attachWebviewRefresh('places-webview-frame');
+    _renderCachedWebview('places', 'places-webview-frame', _appPath('/places/index.html'), 'Places');
   }
 
 
@@ -4320,10 +4404,7 @@
   }
 
   function renderIdentity() {
-    const body = $("uc-body");
-    if (!body) return;
-    body.innerHTML = `<iframe id="identity-webview-frame" class="sonic-webview-frame" src="/identity/index.html" title="Online Identity Verification"></iframe>`;
-    _attachWebviewRefresh('identity-webview-frame');
+    _renderCachedWebview('identity', 'identity-webview-frame', _appPath('/identity/index.html'), 'Online Identity Verification');
   }
 
   function idvOpenModal() {
@@ -5178,12 +5259,7 @@
   // ===================== Priceless Concierge (Specials) Use Case =====================
 
   function renderSpecials() {
-    const body = $("uc-body");
-    if (!body) return;
-    body.innerHTML = `
-      <iframe id="specials-webview-frame" class="sonic-webview-frame" src="/specials/index.html" title="Priceless Concierge"></iframe>
-    `;
-    _attachWebviewRefresh('specials-webview-frame');
+    _renderCachedWebview('specials', 'specials-webview-frame', _appPath('/specials/index.html'), 'Priceless Concierge');
   }
 
   // ===================== Find A Card Use Case =====================
@@ -5191,10 +5267,7 @@
   // All Find A Card UI lives in usecases/findacard/ — edit there to change the look.
 
   function renderFindACard() {
-    const body = $("uc-body");
-    if (!body) return;
-    body.innerHTML = `<iframe id="findacard-webview-frame" class="sonic-webview-frame" src="/findacard/index.html" title="Find A Card"></iframe>`;
-    _attachWebviewRefresh('findacard-webview-frame');
+    _renderCachedWebview('findacard', 'findacard-webview-frame', _appPath('/findacard/index.html'), 'Find A Card');
   }
 
   // ===================== The Wire Use Case =====================
@@ -5202,10 +5275,7 @@
   // All The Wire UI lives in usecases/the_wire/ — edit there to change the look.
 
   function renderTheWire() {
-    const body = $("uc-body");
-    if (!body) return;
-    body.innerHTML = `<iframe id="the-wire-webview-frame" class="sonic-webview-frame" src="/the_wire/index.html" title="The Wire"></iframe>`;
-    _attachWebviewRefresh('the-wire-webview-frame');
+    _renderCachedWebview('the_wire', 'the-wire-webview-frame', _appPath('/the_wire/index.html'), 'The Wire');
   }
 
   // ===================== Sonic Branding Use Case =====================
@@ -5213,10 +5283,7 @@
   // All sonic UI lives in usecases/sonic/ — edit there to change the look.
 
   function renderSonic() {
-    const body = $('uc-body');
-    if (!body) return;
-    body.innerHTML = `<iframe id="sonic-webview-frame" class="sonic-webview-frame" src="/sonic/index.html" title="Sonic Branding"></iframe>`;
-    _attachWebviewRefresh('sonic-webview-frame');
+    _renderCachedWebview('sonic', 'sonic-webview-frame', _appPath('/sonic/index.html'), 'Sonic Branding');
   }
 
   function escapeHtml(s) {
@@ -5338,8 +5405,8 @@
   document.querySelectorAll("[data-uc-id]").forEach((btn) => {
     btn.addEventListener("click", () => {
       if (_isNonUsBlockedUseCaseById(btn.dataset.ucId)) return;
-      // Close fullscreen overlay if open so #uc-body returns to normal position
-      document.getElementById('uc-fullscreen-overlay')?.querySelector('.uc-fullscreen-reduce-btn')?.click();
+      // Close fullscreen mode before switching use cases.
+      document.querySelector('.uc-fullscreen-reduce-btn')?.click();
       if (window._showUcWorkbench) window._showUcWorkbench();
       document.querySelectorAll("[data-uc-id]").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
@@ -5355,51 +5422,49 @@
     if (!popoutBtn) return;
 
     let _onKey = null;
-    let _placeholder = null; // comment node that marks where uc-body lives
 
     function ucOpenFullscreen() {
-      if (document.getElementById('uc-fullscreen-overlay')) return;
-      const ucBody = document.getElementById('uc-body');
-      if (!ucBody) return;
+      const workbench = document.getElementById('uc-workbench');
+      if (!workbench || document.getElementById('uc-fullscreen-topbar')) return;
 
-      // Mark the original position
-      _placeholder = document.createComment('uc-body-placeholder');
-      ucBody.parentNode.insertBefore(_placeholder, ucBody);
-
-      // Build overlay
-      const overlay = document.createElement('div');
-      overlay.id = 'uc-fullscreen-overlay';
-      overlay.className = 'uc-fullscreen-overlay';
+      const topbar = document.createElement('div');
+      topbar.id = 'uc-fullscreen-topbar';
+      topbar.className = 'uc-fullscreen-topbar';
       const titleText = (document.getElementById('uc-title') || {}).textContent || 'Use Case';
-      overlay.innerHTML = `
-        <div class="uc-fullscreen-topbar">
-          <span class="uc-fullscreen-title">${escapeHtml(titleText)}</span>
+      topbar.innerHTML = `
+        <span class="uc-fullscreen-title">${escapeHtml(titleText)}</span>
+        <div class="uc-fullscreen-actions">
+          <button class="theme-toggle uc-fullscreen-theme-toggle" type="button" aria-pressed="false" aria-label="Switch to light theme" title="Switch to light theme">
+            <span class="theme-toggle-track" aria-hidden="true">
+              <span class="theme-toggle-option theme-toggle-option--dark">Dark</span>
+              <span class="theme-toggle-option theme-toggle-option--light">Light</span>
+              <span class="theme-toggle-thumb"></span>
+            </span>
+          </button>
           <button class="uc-fullscreen-reduce-btn">
             <svg width="14" height="14" viewBox="0 0 15 15" fill="none"><path d="M5 10L1 14M1 14h4M1 14v-4M10 5l4-4M14 4V1M14 1h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Reduce
           </button>
         </div>
-        <div class="uc-fullscreen-body" id="uc-fullscreen-body"></div>
       `;
-      document.body.appendChild(overlay);
-      overlay.querySelector('#uc-fullscreen-body').appendChild(ucBody);
+      workbench.classList.add('uc-workbench--fullscreen');
+      workbench.insertBefore(topbar, workbench.firstChild);
+      topbar.querySelector('.uc-fullscreen-theme-toggle')?.addEventListener('click', _toggleThemeMode);
+      _applyThemeMode(_currentThemeMode());
 
       // Dismiss handlers
       const dismiss = ucCloseFullscreen;
-      overlay.querySelector('.uc-fullscreen-reduce-btn').addEventListener('click', dismiss);
+      topbar.querySelector('.uc-fullscreen-reduce-btn').addEventListener('click', dismiss);
       _onKey = (e) => { if (e.key === 'Escape') dismiss(); };
       document.addEventListener('keydown', _onKey);
     }
 
     function ucCloseFullscreen() {
-      const overlay = document.getElementById('uc-fullscreen-overlay');
-      if (!overlay) return;
-      const ucBody = document.getElementById('uc-body');
-      if (ucBody && _placeholder && _placeholder.parentNode) {
-        _placeholder.parentNode.insertBefore(ucBody, _placeholder);
-        _placeholder.parentNode.removeChild(_placeholder);
-      }
-      overlay.remove();
+      const workbench = document.getElementById('uc-workbench');
+      const topbar = document.getElementById('uc-fullscreen-topbar');
+      if (!workbench || !topbar) return;
+      topbar.remove();
+      workbench.classList.remove('uc-workbench--fullscreen');
       if (_onKey) { document.removeEventListener('keydown', _onKey); _onKey = null; }
     }
 
@@ -5485,7 +5550,7 @@
       exportBtn.disabled = true;
       exportBtn.textContent = 'Exporting…';
       const a = document.createElement('a');
-      a.href = '/config/export';
+      a.href = _appPath('/config/export');
       a.download = 'vima-config.zip';
       document.body.appendChild(a);
       a.click();
@@ -5567,7 +5632,7 @@
         // Note: Vima Chat runs on 127.0.0.1:3333 (loopback only) and is
         // proxied through this app at /chat/* so it is never accessible as
         // a standalone web service.
-        let url = '/chat/';
+        let url = _appPath('/chat/');
         const activeTab = document.querySelector('.top-tab.active')?.dataset?.topTab;
         if (activeTab === 'usecases' && _currentUcId) {
           const uc = USE_CASES.find(u => u.id === _currentUcId);
@@ -5583,6 +5648,9 @@
           }
         }
 
+        editIframe.addEventListener('load', () => {
+          _postThemeToEmbeddedFrame(editIframe, _currentThemeMode());
+        }, { once: true });
         editIframe.src = url;
         editModal.style.display = 'flex';
         requestAnimationFrame(() => editModal.classList.add('tc-modal-backdrop--open'));
@@ -5890,10 +5958,7 @@
   // All Test Chat UI lives in usecases/testchat/ — edit there to change the look.
 
   function renderTestChat() {
-    const body = $('uc-body');
-    if (!body) return;
-    body.innerHTML = `<iframe id="testchat-webview-frame" class="sonic-webview-frame" src="/testchat/testchat.html" title="Test Chat"></iframe>`;
-    _attachWebviewRefresh('testchat-webview-frame');
+    _renderCachedWebview('testchat', 'testchat-webview-frame', _appPath('/testchat/testchat.html'), 'Test Chat');
   }
 
 })();
@@ -6182,7 +6247,7 @@
   }
 
   function streamJob(jobId, selectedIds) {
-    var es = new EventSource('/provision/stream/' + jobId);
+    var es = new EventSource(_appPath('/provision/stream/' + jobId));
     var _provDone = false;
     var _provFailed = false;
     var _provFailMessage = '';

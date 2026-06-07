@@ -1,0 +1,274 @@
+html.theme-light {
+  color-scheme: light;
+}
+
+html:not(.theme-light) {
+  color-scheme: dark;
+  --ink: #f1ede8;
+  --ink-2: #d6cfc7;
+  --muted: #a59c93;
+  --line: rgba(255, 255, 255, 0.08);
+  --bg: #0a0a0a;
+  --surface: #111111;
+  --surface-2: #171717;
+  --surface-3: #1d1d1d;
+  --ok: #34d399;
+  --err: #f87171;
+}
+
+html:not(.theme-light) body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+html:not(.theme-light) a {
+  color: #ffbe8a;
+}
+
+html:not(.theme-light) input,
+html:not(.theme-light) select,
+html:not(.theme-light) textarea {
+  background: var(--surface-2) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+}
+
+html:not(.theme-light) select {
+  color-scheme: dark;
+}
+
+html:not(.theme-light) option,
+html:not(.theme-light) optgroup {
+  background-color: var(--surface-2);
+  color: var(--ink);
+}
+
+html.theme-light select {
+  color-scheme: light;
+}
+
+html.theme-light option,
+html.theme-light optgroup {
+  background-color: #ffffff;
+  color: #141414;
+}
+
+html:not(.theme-light) input::placeholder,
+html:not(.theme-light) textarea::placeholder {
+  color: rgba(203, 213, 225, 0.46);
+}
+
+html:not(.theme-light) pre,
+html:not(.theme-light) code,
+html:not(.theme-light) .api-log-pane,
+html:not(.theme-light) .enrich-error-detail {
+  background: #0b0b0b;
+  color: #e7e0d7;
+}
+
+html:not(.theme-light) .bin-db-panel,
+html:not(.theme-light) .bin-cap-chip,
+html:not(.theme-light) .bin-chip,
+html:not(.theme-light) .clarity-form-card,
+html:not(.theme-light) .clarity-hero,
+html:not(.theme-light) .clarity-raw-card,
+html:not(.theme-light) .clarity-merchant-card,
+html:not(.theme-light) .clarity-details,
+html:not(.theme-light) .clarity-media-card,
+html:not(.theme-light) .enrich-row,
+html:not(.theme-light) .enrich-error-state,
+html:not(.theme-light) .es-form-card,
+html:not(.theme-light) .es-summary-strip,
+html:not(.theme-light) .es-offer-card,
+html:not(.theme-light) .es-hero,
+html:not(.theme-light) .fic-header,
+html:not(.theme-light) .fic-card,
+html:not(.theme-light) .fic-section,
+html:not(.theme-light) .pfm-controlbar,
+html:not(.theme-light) .pfm-phone,
+html:not(.theme-light) .pfm-sheet,
+html:not(.theme-light) .pfm-section,
+html:not(.theme-light) .pl-card,
+html:not(.theme-light) .pl-form,
+html:not(.theme-light) .pl-summary,
+html:not(.theme-light) .pl-detail,
+html:not(.theme-light) .psi-controlbar,
+html:not(.theme-light) .psi-hero,
+html:not(.theme-light) .psi-gauge-card,
+html:not(.theme-light) .psi-details-card,
+html:not(.theme-light) .psi-timeline,
+html:not(.theme-light) .psi-factors,
+html:not(.theme-light) .sonic-cue-card,
+html:not(.theme-light) .sonic-modal,
+html:not(.theme-light) .wire-picker,
+html:not(.theme-light) .wire-detail,
+html:not(.theme-light) .wire-rail,
+html:not(.theme-light) .med-page,
+html:not(.theme-light) .med-card,
+html:not(.theme-light) .med-record,
+html:not(.theme-light) .med-tile,
+html:not(.theme-light) .med-login,
+html:not(.theme-light) .med-topbar,
+html:not(.theme-light) .idv-card,
+html:not(.theme-light) .idv-screen,
+html:not(.theme-light) .idv-modal,
+html:not(.theme-light) .idv-toolbar,
+html:not(.theme-light) .idv-bank-card,
+html:not(.theme-light) .fac-card,
+html:not(.theme-light) .fac-offline,
+html:not(.theme-light) .specials-card,
+html:not(.theme-light) .specials-hero {
+  background: var(--surface) !important;
+  border-color: var(--line) !important;
+  color: var(--ink);
+}
+
+html:not(.theme-light) .bin-db-panel-header,
+html:not(.theme-light) .bin-db-status-row,
+html:not(.theme-light) .bin-db-search-row,
+html:not(.theme-light) .bin-db-pagination,
+html:not(.theme-light) .bin-db-table thead th,
+html:not(.theme-light) .bin-db-expand-body,
+html:not(.theme-light) .clarity-merchant-card--empty,
+html:not(.theme-light) .clarity-empty-icon,
+html:not(.theme-light) .clarity-map-box,
+html:not(.theme-light) .clarity-industry-logo-box,
+html:not(.theme-light) .clarity-merchant-logo,
+html:not(.theme-light) .enrich-row--raw,
+html:not(.theme-light) .enrich-row-raw-label,
+html:not(.theme-light) .enrich-raw-big,
+html:not(.theme-light) .es-offer-logo,
+html:not(.theme-light) .es-summary-item code,
+html:not(.theme-light) .es-hero-chip,
+html:not(.theme-light) .fic-cat-bar,
+html:not(.theme-light) .pfm-screen,
+html:not(.theme-light) .pfm-settings,
+html:not(.theme-light) .pfm-recurring,
+html:not(.theme-light) .pl-map,
+html:not(.theme-light) .pl-popup,
+html:not(.theme-light) .psi-amount-dollar,
+html:not(.theme-light) .psi-day:hover,
+html:not(.theme-light) .psi-day--selected,
+html:not(.theme-light) .wire-picker-footer,
+html:not(.theme-light) .med-footer,
+html:not(.theme-light) .idv-progress,
+html:not(.theme-light) .idv-step,
+html:not(.theme-light) .api-log-row:hover {
+  background: var(--surface-2) !important;
+  border-color: var(--line) !important;
+}
+
+html:not(.theme-light) .bin-db-row:hover td {
+  background: rgba(255, 140, 74, 0.08) !important;
+}
+
+html:not(.theme-light) .bin-db-row--open td {
+  background: rgba(255, 115, 28, 0.12) !important;
+}
+
+html:not(.theme-light) .psi-error-card,
+html:not(.theme-light) .clarity-error,
+html:not(.theme-light) .enrich-row-error,
+html:not(.theme-light) .es-error,
+html:not(.theme-light) .bin-error-msg,
+html:not(.theme-light) .fic-error,
+html:not(.theme-light) .wire-error,
+html:not(.theme-light) .idv-error,
+html:not(.theme-light) .fac-offline,
+html:not(.theme-light) .specials-error,
+html:not(.theme-light) .api-log-row--err {
+  background: rgba(127, 29, 29, 0.28) !important;
+  border-color: rgba(248, 113, 113, 0.32) !important;
+  color: #fecaca !important;
+}
+
+html:not(.theme-light) .bin-notfound-msg,
+html:not(.theme-light) .psi-disclaimer,
+html:not(.theme-light) .fic-trend-badge.rising,
+html:not(.theme-light) .psi-ibadge--medium,
+html:not(.theme-light) .psi-badge--medium {
+  background: rgba(146, 64, 14, 0.24) !important;
+  border-color: rgba(251, 191, 36, 0.28) !important;
+  color: #fde68a !important;
+}
+
+html:not(.theme-light) .enrich-header-text h2,
+html:not(.theme-light) .enrich-row-name,
+html:not(.theme-light) .enrich-stat-val,
+html:not(.theme-light) .psi-verdict-title,
+html:not(.theme-light) .psi-detail-value,
+html:not(.theme-light) .psi-day-conf,
+html:not(.theme-light) .bin-db-panel-title,
+html:not(.theme-light) .bin-db-cell,
+html:not(.theme-light) .bin-callout-value,
+html:not(.theme-light) .bin-cap-value,
+html:not(.theme-light) .bin-chip-value,
+html:not(.theme-light) .clarity-form-title,
+html:not(.theme-light) .clarity-hero h3,
+html:not(.theme-light) .clarity-raw-name,
+html:not(.theme-light) .clarity-empty-title,
+html:not(.theme-light) .clarity-merchant-name,
+html:not(.theme-light) .clarity-details-val,
+html:not(.theme-light) .es-form-title,
+html:not(.theme-light) .es-summary-item span,
+html:not(.theme-light) .es-offer-merchant,
+html:not(.theme-light) .es-offer-title,
+html:not(.theme-light) .fic-title,
+html:not(.theme-light) .fic-card .fic-value,
+html:not(.theme-light) .fic-section h2,
+html:not(.theme-light) .fic-cat-name,
+html:not(.theme-light) .sonic-section-title,
+html:not(.theme-light) .sonic-cue-label,
+html:not(.theme-light) .wire-picker-title,
+html:not(.theme-light) .wire-detail-title,
+html:not(.theme-light) .med-welcome,
+html:not(.theme-light) .idv-result,
+html:not(.theme-light) .fac-title {
+  color: var(--ink) !important;
+}
+
+html:not(.theme-light) .enrich-header-text p,
+html:not(.theme-light) .enrich-pipeline-legend,
+html:not(.theme-light) .enrich-row-meta,
+html:not(.theme-light) .enrich-label-raw,
+html:not(.theme-light) .enrich-raw-text,
+html:not(.theme-light) .enrich-confidence-label,
+html:not(.theme-light) .enrich-stat-lbl,
+html:not(.theme-light) .pfm-info-desc,
+html:not(.theme-light) .pl-meta,
+html:not(.theme-light) .psi-hint,
+html:not(.theme-light) .psi-detail-label,
+html:not(.theme-light) .psi-section-sub,
+html:not(.theme-light) .psi-day-date,
+html:not(.theme-light) .bin-field label,
+html:not(.theme-light) .bin-db-detail-label,
+html:not(.theme-light) .bin-callout-label,
+html:not(.theme-light) .bin-cap-label,
+html:not(.theme-light) .bin-chip-label,
+html:not(.theme-light) .bin-empty-hint,
+html:not(.theme-light) .clarity-form-sub,
+html:not(.theme-light) .clarity-field label,
+html:not(.theme-light) .clarity-hero p,
+html:not(.theme-light) .clarity-details-key,
+html:not(.theme-light) .clarity-media-label,
+html:not(.theme-light) .clarity-merchant-addr,
+html:not(.theme-light) .es-form-sub,
+html:not(.theme-light) .es-field label,
+html:not(.theme-light) .es-offer-cat,
+html:not(.theme-light) .es-offer-desc,
+html:not(.theme-light) .es-offer-dates,
+html:not(.theme-light) .es-hero p,
+html:not(.theme-light) .fic-sub,
+html:not(.theme-light) .fic-card label,
+html:not(.theme-light) .fic-card .fic-sub2,
+html:not(.theme-light) .fic-legend,
+html:not(.theme-light) .sonic-section-sub,
+html:not(.theme-light) .sonic-cue-desc,
+html:not(.theme-light) .wire-picker-sub,
+html:not(.theme-light) .wire-picker-eyebrow,
+html:not(.theme-light) .med-pill,
+html:not(.theme-light) .idv-step,
+html:not(.theme-light) .fac-sub,
+html:not(.theme-light) .api-log-row {
+  color: var(--muted) !important;
+}

@@ -277,6 +277,12 @@ body {
   border: 1px solid var(--line); border-radius: 8px;
   font-size: 14px; font-family: inherit;
   background: #fff; color: var(--ink); cursor: pointer;
+  color-scheme: light;
+}
+.bin-field select option,
+.bin-field select optgroup {
+  background: #ffffff;
+  color: var(--ink);
 }
 .bin-lookup-btn {
   display: inline-flex; align-items: center; gap: 7px;

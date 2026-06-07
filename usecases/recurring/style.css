@@ -71,6 +71,12 @@ body {
   background: var(--bg); color: var(--ink);
   outline: none; transition: border-color 0.15s;
   height: 40px; box-sizing: border-box;
+  color-scheme: light;
+}
+.rec-field select option,
+.rec-field select optgroup {
+  background: #ffffff;
+  color: var(--ink);
 }
 .rec-field input:focus, .rec-field select:focus {
   border-color: var(--mc-orange); box-shadow: 0 0 0 3px rgba(255,95,0,0.12);
@@ -375,3 +381,162 @@ body {
 @media (max-width: 700px) {
   .rec-grid { grid-template-columns: 1fr; }
   .rec-summary-strip { gap: 8px; }
+}
+
+
+html:not(.theme-light) .rec-controlbar,
+html:not(.theme-light) .rec-hero,
+html:not(.theme-light) .rec-summary-card,
+html:not(.theme-light) .rec-txn-list {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+html:not(.theme-light) .rec-field input,
+html:not(.theme-light) .rec-field select,
+html:not(.theme-light) .rec-btn--secondary {
+  background: var(--surface-2);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--ink);
+}
+
+html:not(.theme-light) .rec-field select {
+  color-scheme: dark;
+}
+
+html:not(.theme-light) .rec-field select option,
+html:not(.theme-light) .rec-field select optgroup {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+html:not(.theme-light) .rec-field input:focus,
+html:not(.theme-light) .rec-field select:focus {
+  background: var(--surface-3);
+  border-color: rgba(255, 140, 74, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 115, 28, 0.18);
+}
+
+html:not(.theme-light) .rec-btn--secondary:hover {
+  background: rgba(255, 140, 74, 0.14);
+  border-color: rgba(255, 140, 74, 0.45);
+  color: #ffd4b5;
+}
+
+html:not(.theme-light) .rec-hero-chip,
+html:not(.theme-light) .rec-txn-freq,
+html:not(.theme-light) .rec-chip--freq-monthly,
+html:not(.theme-light) .rec-chip--freq-bimonthly,
+html:not(.theme-light) .rec-days-badge--future {
+  background: rgba(255, 140, 74, 0.16);
+  border-color: rgba(255, 140, 74, 0.34);
+  color: #ffd4b5;
+}
+
+html:not(.theme-light) .rec-chip--freq-weekly,
+html:not(.theme-light) .rec-chip--freq-biweekly,
+html:not(.theme-light) .rec-days-badge--soon {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: rgba(251, 191, 36, 0.34);
+  color: #fde68a;
+}
+
+html:not(.theme-light) .rec-chip--freq-quarterly,
+html:not(.theme-light) .rec-chip--freq-annual {
+  background: rgba(234, 88, 12, 0.2);
+  border-color: rgba(249, 115, 22, 0.34);
+  color: #fed7aa;
+}
+
+html:not(.theme-light) .rec-chip--freq-unknown,
+html:not(.theme-light) .rec-days-badge--past,
+html:not(.theme-light) .rec-chip--cat {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+}
+
+html:not(.theme-light) .rec-chip--reg,
+html:not(.theme-light) .rec-section-badge--credit {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(52, 211, 153, 0.26);
+  color: #a7f3d0;
+}
+
+html:not(.theme-light) .rec-chip--irreg,
+html:not(.theme-light) .rec-section-badge--debit {
+  background: rgba(249, 115, 22, 0.16);
+  border-color: rgba(251, 146, 60, 0.28);
+  color: #fdba74;
+}
+
+html:not(.theme-light) .rec-txn-row {
+  background: var(--surface);
+}
+
+html:not(.theme-light) .rec-txn-row:not(:last-child) {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+html:not(.theme-light) .rec-txn-row.rec-txn--debit-stream {
+  background: linear-gradient(to right, rgba(255, 140, 74, 0.12) 0%, rgba(255, 140, 74, 0.04) 45%, rgba(17, 17, 17, 0.98) 100%);
+  border-left-color: rgba(255, 140, 74, 0.8);
+}
+
+html:not(.theme-light) .rec-txn-row.rec-txn--credit-stream {
+  background: linear-gradient(to right, rgba(16, 185, 129, 0.14) 0%, rgba(16, 185, 129, 0.05) 45%, rgba(17, 17, 17, 0.98) 100%);
+  border-left-color: rgba(52, 211, 153, 0.8);
+}
+
+html:not(.theme-light) .rec-txn-row.rec-txn--debit-stream:hover,
+html:not(.theme-light) .rec-txn-row.rec-txn--credit-stream:hover {
+  background: var(--surface-2);
+}
+
+html:not(.theme-light) .rec-card {
+  background: linear-gradient(180deg, rgba(255, 140, 74, 0.08) 0%, rgba(17, 17, 17, 1) 26%);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
+}
+
+html:not(.theme-light) .rec-card:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+html:not(.theme-light) .rec-card-logo {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+html:not(.theme-light) .rec-card-footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+html:not(.theme-light) .rec-hero h3,
+html:not(.theme-light) .rec-summary-card span,
+html:not(.theme-light) .rec-section-head h3,
+html:not(.theme-light) .rec-card-name,
+html:not(.theme-light) .rec-next-date span,
+html:not(.theme-light) .rec-txn-name,
+html:not(.theme-light) .rec-txn-amt--debit {
+  color: var(--ink);
+}
+
+html:not(.theme-light) .rec-hero p,
+html:not(.theme-light) .rec-hint,
+html:not(.theme-light) .rec-txn-legend,
+html:not(.theme-light) .rec-txn-date,
+html:not(.theme-light) .rec-txn-cat,
+html:not(.theme-light) .rec-section-subtitle,
+html:not(.theme-light) .rec-next-date label,
+html:not(.theme-light) .rec-last-date,
+html:not(.theme-light) .rec-field label,
+html:not(.theme-light) .rec-or-text,
+html:not(.theme-light) .rec-summary-card label,
+html:not(.theme-light) .rec-card-desc {
+  color: var(--muted);
+}
+
+html:not(.theme-light) .rec-loading-state {
+  color: var(--ink);
+}
