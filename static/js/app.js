@@ -6003,6 +6003,7 @@
     document.addEventListener('mouseover', function (e) {
       const target = e.target.closest('[data-tooltip], [title]');
       if (!target || target === tooltip || tooltip.contains(target)) return;
+      if (target.closest('#uc-body')) return;
       if (activeTooltipTarget && activeTooltipTarget !== target) {
         cfgTooltipHideForTarget(activeTooltipTarget);
       }
@@ -6022,6 +6023,7 @@
     document.addEventListener('focusin', function (e) {
       const target = e.target.closest('[data-tooltip], [title]');
       if (!target) return;
+      if (target.closest('#uc-body')) return;
       if (activeTooltipTarget && activeTooltipTarget !== target) {
         cfgTooltipHideForTarget(activeTooltipTarget);
       }

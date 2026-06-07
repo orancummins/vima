@@ -1665,6 +1665,106 @@ html.theme-light .theme-toggle-thumb {
 .apis-snippets-code .apis-snippets-tok-num     { color: #ffb878; }
 .apis-snippets-code .apis-snippets-tok-fn      { color: #82aaff; }
 
+html.theme-light .apis-snippets-fab {
+  background: #ffffff;
+  color: #141414;
+  border: 1px solid rgba(20, 20, 20, 0.10);
+  box-shadow: 0 16px 40px rgba(20, 20, 20, 0.12);
+}
+
+html.theme-light .apis-snippets-fab:hover {
+  background: #fff5ec;
+  color: #141414;
+}
+
+html.theme-light .apis-snippets-backdrop {
+  background: rgba(250, 247, 242, 0.76);
+}
+
+html.theme-light .apis-snippets-modal {
+  background: #ffffff;
+  border-color: rgba(20, 20, 20, 0.10);
+  box-shadow: 0 24px 80px rgba(20, 20, 20, 0.14);
+}
+
+html.theme-light .apis-snippets-modal .tc-modal-header {
+  background: #f8f6f2;
+  border-bottom-color: rgba(20, 20, 20, 0.08);
+}
+
+html.theme-light .apis-snippets-modal-title {
+  color: #141414;
+}
+
+html.theme-light .apis-snippets-modal-chip {
+  background: rgba(255, 95, 0, 0.10);
+  color: #b74c00;
+}
+
+html.theme-light .apis-snippets-modal-body,
+html.theme-light .apis-snippets-body,
+html.theme-light .apis-snippets-modal .apis-snippets-section-meta {
+  background: #ffffff;
+}
+
+html.theme-light .apis-snippets-modal .api-calls-empty,
+html.theme-light .apis-snippets-section-label {
+  color: #6b6b6b;
+}
+
+html.theme-light .apis-snippets-copy {
+  background: #ffffff;
+  border-color: rgba(20, 20, 20, 0.12);
+  color: #2a2a2a;
+}
+
+html.theme-light .apis-snippets-copy:hover {
+  background: #fff2e8;
+  border-color: rgba(255, 95, 0, 0.28);
+  color: #8f3d00;
+}
+
+html.theme-light .apis-snippets-copy--copied {
+  background: rgba(16, 185, 129, 0.10);
+  border-color: rgba(16, 185, 129, 0.28);
+  color: #0f7050;
+}
+
+html.theme-light .apis-snippets-code {
+  background: #fbfaf8;
+  border-color: rgba(20, 20, 20, 0.08);
+  color: #1f2937;
+}
+
+html.theme-light .apis-snippets-modal .apis-snippets-code,
+html.theme-light .apis-snippets-modal .apis-snippets-body {
+  scrollbar-color: #cfc6bb #f3efea;
+}
+
+html.theme-light .apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-track,
+html.theme-light .apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-track,
+html.theme-light .apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-corner,
+html.theme-light .apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-corner {
+  background: #f3efea;
+}
+
+html.theme-light .apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-thumb,
+html.theme-light .apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-thumb {
+  background: #cfc6bb;
+  border-color: #f3efea;
+}
+
+html.theme-light .apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-thumb:hover,
+html.theme-light .apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-thumb:hover {
+  background: #b8aea2;
+}
+
+html.theme-light .apis-snippets-code .apis-snippets-tok-kw      { color: #7c3aed; }
+html.theme-light .apis-snippets-code .apis-snippets-tok-str     { color: #047857; }
+html.theme-light .apis-snippets-code .apis-snippets-tok-com     { color: #6b7280; }
+html.theme-light .apis-snippets-code .apis-snippets-tok-num     { color: #c2410c; }
+html.theme-light .apis-snippets-code .apis-snippets-tok-fn      { color: #1d4ed8; }
+
 /* Editable snippet body: visible caret, subtle focus ring, no native
    browser outline gap. The snippet pane is the source-of-truth that
    gets sent back to /run when the user clicks the Run button. */
