@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>McLaren F1 Theme — VIMA Preview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ──────────────────────────────────────────────
+       McLaren F1 Theme Variables
+       Papaya Orange  : #FF8000
+       Carbon Dark    : #0D0D0D  (background)
+       Surface layers : #161616, #1E1E1E, #262626
+       Teal accent    : #00D2BE  (McLaren F1 brake-glow teal, used for success)
+       Warm white     : #F5F0EA  (primary text)
+    ────────────────────────────────────────────── */
+    :root {
+      --papaya:    #FF8000;
+      --papaya-d:  #CC6600;
+      --papaya-l:  #FF9933;
+      --teal:      #00D2BE;
+      --gold:      #C9A84C;
+
+      --ink:       #F5F0EA;
+      --ink-2:     #C8C0B8;
+      --muted:     #7A7470;
+      --line:      rgba(255, 128, 0, 0.12);
+      --bg:        #0D0D0D;
+      --surface:   #161616;
+      --surface-2: #1E1E1E;
+      --surface-3: #262626;
+      --card:      #161616;
+
+      --ok:        #00D2BE;
+      --warn:      #FF8000;
+      --err:       #E63946;
+
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Inter", -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: #000;
+      border-bottom: 2px solid var(--papaya);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-marks {
+      position: relative;
+      width: 44px; height: 28px;
+      display: flex; align-items: center;
+    }
+    /* Two overlapping McLaren-papaya circles */
+    .dot {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      position: absolute;
+    }
+    .dot-orange { background: var(--papaya); left: 0; }
+    .dot-dark   { background: var(--papaya-d); left: 12px; mix-blend-mode: multiply; }
+    .brand-title {
+      font-size: 15px; font-weight: 700;
+      color: #fff; letter-spacing: -0.01em;
+    }
+    .brand-sub {
+      font-size: 10px; color: var(--muted);
+      margin-top: 2px; letter-spacing: 0.02em;
+    }
+
+    /* ── Top Nav Tabs ── */
+    .top-tabs {
+      display: flex; gap: 4px; align-items: center;
+    }
+    .top-tab {
+      padding: 6px 14px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .top-tab:hover { color: var(--ink-2); background: var(--surface-2); }
+    .top-tab.active {
+      color: var(--papaya);
+      border-color: var(--papaya);
+      background: rgba(255, 128, 0, 0.08);
+    }
+
+    /* ── Three-way Theme Toggle ── */
+    .theme-toggle-3 {
+      display: flex;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .theme-option {
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      transition: all 0.2s;
+      letter-spacing: 0.03em;
+    }
+    .theme-option:hover { color: var(--ink-2); }
+    .theme-option.active {
+      background: var(--papaya);
+      color: #000;
+    }
+
+    /* ── Main Layout ── */
+    .layout {
+      display: flex;
+      height: calc(100vh - 53px);
+    }
+    .sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--line);
+      overflow-y: auto;
+      padding: 16px 0;
+    }
+    .sidebar-section {
+      padding: 0 12px 8px;
+    }
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding: 8px 8px 4px;
+    }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--ink-2);
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+    .sidebar-item:hover { background: var(--surface-2); color: var(--ink); }
+    .sidebar-item.active {
+      background: rgba(255, 128, 0, 0.1);
+      border-color: rgba(255, 128, 0, 0.25);
+      color: var(--papaya);
+    }
+    .sidebar-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+    }
+    .dot-ok   { background: var(--ok); }
+    .dot-warn { background: var(--warn); }
+    .dot-err  { background: var(--err); }
+    .dot-muted { background: var(--muted); }
+
+    /* ── Content ── */
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .content-header {
+      padding: 20px 28px 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+    .content-title {
+      font-size: 18px; font-weight: 700;
+      color: var(--ink); letter-spacing: -0.02em;
+    }
+    .content-sub {
+      font-size: 12px; color: var(--muted); margin-top: 3px;
+    }
+
+    /* ── Stat Cards Row ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 20px 28px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .stat-card.orange::before { background: var(--papaya); }
+    .stat-card.teal::before   { background: var(--teal); }
+    .stat-card.gold::before   { background: var(--gold); }
+    .stat-card.err::before    { background: var(--err); }
+
+    .stat-label {
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .stat-value {
+      font-size: 26px; font-weight: 700;
+      color: var(--ink); margin-top: 4px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.03em;
+    }
+    .stat-delta {
+      font-size: 11px; margin-top: 2px;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .delta-up   { color: var(--ok); }
+    .delta-down { color: var(--err); }
+
+    /* ── Table ── */
+    .table-wrap {
+      margin: 0 28px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .table-head {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .table-title { font-size: 13px; font-weight: 600; color: var(--ink); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead th {
+      padding: 9px 16px;
+      text-align: left;
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--muted);
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--line);
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--line);
+      transition: background 0.12s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface-2); }
+    tbody td {
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--ink-2);
+    }
+    .td-primary { color: var(--ink); font-weight: 500; }
+    .mono { font-family: var(--mono); font-size: 12px; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge-ok   { background: rgba(0, 210, 190, 0.12); color: var(--teal); }
+    .badge-warn { background: rgba(255, 128, 0, 0.12); color: var(--papaya); }
+    .badge-err  { background: rgba(230, 57, 70, 0.12); color: var(--err); }
+    .badge-muted { background: rgba(122, 116, 112, 0.12); color: var(--muted); }
+
+    /* ── Right Panel ── */
+    .right-panel {
+      width: 300px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-left: 1px solid var(--line);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+    }
+    .panel-section-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--muted); margin-bottom: 8px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-label { font-size: 12px; font-weight: 500; color: var(--ink-2); }
+    .form-input, .form-select {
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 13px;
+      color: var(--ink);
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--papaya);
+      box-shadow: 0 0 0 3px rgba(255, 128, 0, 0.15);
+    }
+    .form-select { appearance: none; cursor: pointer; }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .btn-primary {
+      background: var(--papaya);
+      color: #000;
+    }
+    .btn-primary:hover { background: var(--papaya-l); transform: translateY(-1px); }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--ink-2);
+    }
+    .btn-ghost:hover { border-color: var(--papaya); color: var(--papaya); }
+    .btn-row { display: flex; gap: 8px; }
+
+    /* ── Code / Pre ── */
+    .code-block {
+      background: #0a0a0a;
+      border: 1px solid rgba(255,128,0,0.15);
+      border-left: 3px solid var(--papaya);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      color: #C8C0B8;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+    .code-key   { color: var(--papaya); }
+    .code-str   { color: var(--teal); }
+    .code-num   { color: var(--gold); }
+
+    /* ── Divider ── */
+    hr {
+      border: none;
+      border-top: 1px solid var(--line);
+      margin: 4px 0;
+    }
+
+    /* ── Annotations strip ── */
+    .annotation {
+      margin: 0 28px 0;
+      padding: 10px 14px;
+      background: rgba(255,128,0,0.06);
+      border: 1px solid rgba(255,128,0,0.18);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--ink-2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .annotation-icon { color: var(--papaya); font-size: 16px; flex-shrink: 0; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,128,0,0.25); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,128,0,0.45); }
+
+    /* ── Color Palette Swatches (for labeling) ── */
+    .palette { display: flex; gap: 6px; flex-wrap: wrap; }
+    .swatch {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+    .swatch-color {
+      width: 36px; height: 36px; border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .swatch-name { font-size: 9px; color: var(--muted); text-align: center; }
+
+    /* ── Gap / scroll helper ── */
+    .content-scroll {
+      flex: 1; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 16px;
+      padding-bottom: 28px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ HEADER ═══════════════════════════════ -->
+<header class="header">
+  <div class="brand">
+    <div class="brand-marks">
+      <span class="dot dot-orange"></span>
+      <span class="dot dot-dark" style="left:14px;background:#CC5500;opacity:0.8"></span>
+    </div>
+    <div class="brand-text">
+      <div class="brand-title">Mastercard Solution Studio</div>
+      <div class="brand-sub">Exploring, Showcasing &amp; Innovating Across Mastercard Platforms</div>
+    </div>
+  </div>
+
+  <nav class="top-tabs">
+    <button class="top-tab active">Home</button>
+    <button class="top-tab">APIs</button>
+    <button class="top-tab">API Bundles</button>
+    <button class="top-tab">Use Cases</button>
+  </nav>
+
+  <div style="display:flex;align-items:center;gap:12px;">
+    <!-- Three-way theme toggle — new for McLaren mode -->
+    <div class="theme-toggle-3">
+      <button class="theme-option">Dark</button>
+      <button class="theme-option">Light</button>
+      <button class="theme-option active">F1</button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════ MAIN LAYOUT ═══════════════════════════════ -->
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Categories</div>
+      <div class="sidebar-item active">
+        <span class="sidebar-dot dot-ok"></span>
+        Open Banking
+      </div>
+      <div class="sidebar-item">
+        <span class="sidebar-dot dot-warn"></span>
+        Identity &amp; Auth
+      </div>
+      <div class="sidebar-item">
+        <span class="sidebar-dot dot-muted"></span>
+        Data Services
+      </div>
+      <div class="sidebar-item">
+        <span class="sidebar-dot dot-muted"></span>
+        Payments
+      </div>
+      <div class="sidebar-item">
+        <span class="sidebar-dot dot-muted"></span>
+        Fraud &amp; Risk
+      </div>
+    </div>
+    <hr style="margin:8px 12px;border-color:rgba(255,128,0,0.1)">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Filters</div>
+      <div class="sidebar-item">
+        <span class="sidebar-dot dot-ok"></span>
+        Active APIs
+      </div>
+      <div class="sidebar-item">
+        <span class="sidebar-dot dot-err"></span>
+        Deprecated
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main Content ── -->
+  <main class="content">
+    <div class="content-header">
+      <div>
+        <div class="content-title">Open Banking APIs</div>
+        <div class="content-sub">12 APIs · Last refreshed 2 min ago</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost">Export</button>
+        <button class="btn btn-primary">+ New Request</button>
+      </div>
+    </div>
+
+    <div class="content-scroll">
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card orange">
+          <div class="stat-label">Total Requests</div>
+          <div class="stat-value">48,291</div>
+          <div class="stat-delta delta-up">↑ 12.4% vs last week</div>
+        </div>
+        <div class="stat-card teal">
+          <div class="stat-label">Success Rate</div>
+          <div class="stat-value">99.6%</div>
+          <div class="stat-delta delta-up">↑ 0.2 pp</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-label">Avg Latency</div>
+          <div class="stat-value">142 ms</div>
+          <div class="stat-delta delta-down">↓ 8 ms faster</div>
+        </div>
+        <div class="stat-card err">
+          <div class="stat-label">Error Count</div>
+          <div class="stat-value">193</div>
+          <div class="stat-delta delta-down">↓ 31 from last week</div>
+        </div>
+      </div>
+
+      <!-- Info banner -->
+      <div class="annotation">
+        <span class="annotation-icon">◈</span>
+        <span>McLaren F1 theme active — papaya orange accent, carbon-dark surfaces, teal success indicators.</span>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <div class="table-head">
+          <span class="table-title">API Endpoints</span>
+          <span class="badge badge-ok">● Live</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Method</th>
+              <th>Latency</th>
+              <th>Status</th>
+              <th>Last Hit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-primary mono">/v2/accounts</td>
+              <td><span class="badge badge-ok">GET</span></td>
+              <td class="mono">84 ms</td>
+              <td><span class="badge badge-ok">200 OK</span></td>
+              <td class="muted" style="color:var(--muted)">2s ago</td>
+            </tr>
+            <tr>
+              <td class="td-primary mono">/v2/transactions</td>
+              <td><span class="badge badge-ok">GET</span></td>
+              <td class="mono">142 ms</td>
+              <td><span class="badge badge-ok">200 OK</span></td>
+              <td class="muted" style="color:var(--muted)">14s ago</td>
+            </tr>
+            <tr>
+              <td class="td-primary mono">/v1/auth/token</td>
+              <td><span class="badge badge-warn">POST</span></td>
+              <td class="mono">310 ms</td>
+              <td><span class="badge badge-warn">429 Rate</span></td>
+              <td class="muted" style="color:var(--muted)">1m ago</td>
+            </tr>
+            <tr>
+              <td class="td-primary mono">/v2/payments/initiate</td>
+              <td><span class="badge badge-warn">POST</span></td>
+              <td class="mono">198 ms</td>
+              <td><span class="badge badge-ok">201 Created</span></td>
+              <td class="muted" style="color:var(--muted)">3m ago</td>
+            </tr>
+            <tr>
+              <td class="td-primary mono">/v1/consent/revoke</td>
+              <td><span class="badge badge-err">DELETE</span></td>
+              <td class="mono">66 ms</td>
+              <td><span class="badge badge-err">500 Error</span></td>
+              <td class="muted" style="color:var(--muted)">7m ago</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- ── Right Panel ── -->
+  <aside class="right-panel">
+    <div>
+      <div class="panel-section-title">Request Builder</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="form-group">
+          <label class="form-label">Environment</label>
+          <select class="form-select">
+            <option>Sandbox</option>
+            <option>Production</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Base URL</label>
+          <input class="form-input" type="text" value="https://sandbox.api.mastercard.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Consumer Key</label>
+          <input class="form-input" type="text" placeholder="Paste your key…" />
+        </div>
+        <button class="btn btn-primary" style="width:100%">Run Request</button>
+      </div>
+    </div>
+
+    <hr />
+
+    <div>
+      <div class="panel-section-title">Response</div>
+      <div class="code-block">
+{<br>
+&nbsp;&nbsp;<span class="code-key">"status"</span>: <span class="code-num">200</span>,<br>
+&nbsp;&nbsp;<span class="code-key">"account_id"</span>: <span class="code-str">"acc_f1_8000"</span>,<br>
+&nbsp;&nbsp;<span class="code-key">"balance"</span>: <span class="code-num">142.50</span>,<br>
+&nbsp;&nbsp;<span class="code-key">"currency"</span>: <span class="code-str">"GBP"</span>,<br>
+&nbsp;&nbsp;<span class="code-key">"theme"</span>: <span class="code-str">"papaya"</span><br>
+}
+      </div>
+    </div>
+
+    <hr />
+
+    <div>
+      <div class="panel-section-title">Theme Palette</div>
+      <div class="palette">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#FF8000"></div>
+          <div class="swatch-name">Papaya</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#00D2BE"></div>
+          <div class="swatch-name">Teal</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#C9A84C"></div>
+          <div class="swatch-name">Gold</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#E63946"></div>
+          <div class="swatch-name">Error</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#0D0D0D;border:1px solid #333"></div>
+          <div class="swatch-name">BG</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#161616;border:1px solid #333"></div>
+          <div class="swatch-name">Surface</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#1E1E1E;border:1px solid #333"></div>
+          <div class="swatch-name">Surface 2</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#F5F0EA"></div>
+          <div class="swatch-name">Ink</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+</body>
+</html>
