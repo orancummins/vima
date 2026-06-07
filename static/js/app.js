@@ -1663,9 +1663,17 @@
     const complements = Array.isArray(api.complements) ? api.complements : [];
     const requires = Array.isArray(api.requires) ? api.requires : [];
     const bundles = Array.isArray(api.bundles) ? api.bundles : [];
+    function _updateContextSection() {
+      const section = document.getElementById('api-context-section');
+      if (!section) return;
+      const strip = document.getElementById('state-strip');
+      const hasStrip = strip && strip.children.length > 0;
+      section.hidden = !hasStrip && el.hidden;
+    }
     if (!complements.length && !requires.length && !bundles.length) {
       el.hidden = true;
       el.innerHTML = '';
+      _updateContextSection();
       return;
     }
     function chip(id, kind) {
@@ -1712,6 +1720,7 @@
       });
     }
     el.hidden = false;
+    _updateContextSection();
     el.innerHTML = html;
     el.querySelectorAll('[data-pair-api]').forEach((b) => {
       b.addEventListener('click', () => {
@@ -1892,6 +1901,7 @@
     const strip = $("state-strip");
     strip.innerHTML = "";
     const schema = api.state_schema || [];
+    const hasContent = !api.configured || schema.length > 0;
     if (!api.configured) {
       const w = document.createElement("div");
       w.className = "state-pill";
@@ -1907,6 +1917,18 @@
       pill.innerHTML = `<span class="k">${s.label}:</span><span class="v">${v || "—"}</span>`;
       strip.appendChild(pill);
     });
+    // Show or hide the whole context section depending on whether there is
+    // state content — the api-pairs visibility is handled separately.
+    const section = document.getElementById('api-context-section');
+    if (section) {
+      const pairsEl = document.getElementById('api-pairs');
+      const pairsHasContent = pairsEl && !pairsEl.hidden;
+      if (!hasContent && !pairsHasContent) {
+        section.hidden = true;
+      } else {
+        section.hidden = false;
+      }
+    }
   }
 
   // ---------------------------------------------------------------------

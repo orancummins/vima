@@ -397,8 +397,18 @@
           </div>
         </div>
 
-        <div class="state-strip" id="state-strip"></div>
-        <div class="api-pairs" id="api-pairs" hidden></div>
+        <details class="api-context-section" id="api-context-section" hidden>
+          <summary class="api-context-toggle">
+            <svg class="api-context-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            API Context
+          </summary>
+          <div class="api-context-body">
+            <div class="state-strip" id="state-strip"></div>
+            <div class="api-pairs" id="api-pairs" hidden></div>
+          </div>
+        </details>
       </div>
 
       <div class="workbench">
@@ -1053,16 +1063,30 @@
         last = ts;
         ctx.clearRect(0, 0, SIZE, SIZE);
 
+        const isLight = document.documentElement.classList.contains('theme-light');
+        const gridR = isLight ? '0' : '255';
+        const gridG = isLight ? '0' : '120';
+        const gridB = isLight ? '0' : '0';
+        const dotR  = isLight ? '20'  : '255';
+        const dotG  = isLight ? '20'  : '160';
+        const dotB  = isLight ? '20'  : '40';
+        const glowColor = isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,140,0,0.95)';
+
         const grd = ctx.createRadialGradient(CX, CY, RADIUS*0.2, CX, CY, RADIUS);
-        grd.addColorStop(0, 'rgba(255,140,0,0.18)');
-        grd.addColorStop(0.45, 'rgba(255,94,0,0.10)');
+        if (isLight) {
+          grd.addColorStop(0, 'rgba(0,0,0,0.06)');
+          grd.addColorStop(0.45, 'rgba(0,0,0,0.03)');
+        } else {
+          grd.addColorStop(0, 'rgba(255,140,0,0.18)');
+          grd.addColorStop(0.45, 'rgba(255,94,0,0.10)');
+        }
         grd.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = grd;
         ctx.beginPath();
         ctx.arc(CX, CY, RADIUS*1.35, 0, Math.PI*2);
         ctx.fill();
 
-        const gOpacity = 0.18;
+        const gOpacity = isLight ? 0.22 : 0.18;
         ctx.lineWidth = 0.8;
         for (let lat = -80; lat <= 80; lat += 20) {
           const lR = lat * Math.PI / 180;
@@ -1072,7 +1096,7 @@
             const a = gOpacity * Math.max(0, Math.min(1, ((z0+z1)/2+0.4)/0.8));
             if (a < 0.005) continue;
             const s0 = 1/(1.8-z0), s1 = 1/(1.8-z1);
-            ctx.strokeStyle = `rgba(255,120,0,${a})`;
+            ctx.strokeStyle = `rgba(${gridR},${gridG},${gridB},${a})`;
             ctx.beginPath();
             ctx.moveTo(CX+Math.cos(lR)*Math.cos(l0)*RADIUS*s0, CY+Math.sin(lR)*RADIUS*s0);
             ctx.lineTo(CX+Math.cos(lR)*Math.cos(l1)*RADIUS*s1, CY+Math.sin(lR)*RADIUS*s1);
@@ -1087,7 +1111,7 @@
             const a = gOpacity * Math.max(0, Math.min(1, ((z0+z1)/2+0.4)/0.8));
             if (a < 0.005) continue;
             const s0 = 1/(1.8-z0), s1 = 1/(1.8-z1);
-            ctx.strokeStyle = `rgba(255,120,0,${a})`;
+            ctx.strokeStyle = `rgba(${gridR},${gridG},${gridB},${a})`;
             ctx.beginPath();
             ctx.moveTo(CX+Math.cos(l0)*Math.cos(lR)*RADIUS*s0, CY+Math.sin(l0)*RADIUS*s0);
             ctx.lineTo(CX+Math.cos(l1)*Math.cos(lR)*RADIUS*s1, CY+Math.sin(l1)*RADIUS*s1);
@@ -1104,9 +1128,9 @@
         });
         projected.filter(p => p.rz > -0.18).sort((a,b) => a.rz-b.rz).forEach(p => {
           ctx.save();
-          ctx.shadowColor = 'rgba(255,140,0,0.95)';
+          ctx.shadowColor = glowColor;
           ctx.shadowBlur = 8*p.sc;
-          ctx.fillStyle = `rgba(255,160,40,${p.alpha})`;
+          ctx.fillStyle = `rgba(${dotR},${dotG},${dotB},${p.alpha})`;
           ctx.beginPath();
           ctx.arc(p.px, p.py, 2.5*p.sc, 0, Math.PI*2);
           ctx.fill();
