@@ -207,3 +207,93 @@ html, body {
   background: #fef2f2; border: 1px solid #fca5a5; border-radius: 10px;
   padding: 16px 20px; color: #991b1b; font-size: 13px;
 }
+
+html:not(.theme-light) .sonic-section-sub code,
+html:not(.theme-light) .sonic-ctx-tag,
+html:not(.theme-light) .sonic-variant-btn,
+html:not(.theme-light) .sonic-iframe-wrap,
+html:not(.theme-light) .sonic-demo-unavailable,
+html:not(.theme-light) .sonic-rule,
+html:not(.theme-light) .sonic-spinner {
+  background: var(--surface-2);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html:not(.theme-light) .sonic-hero {
+  background: linear-gradient(135deg, #0b0b0b 0%, #18110f 100%);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.34);
+}
+
+html:not(.theme-light) .sonic-hero-sub {
+  color: rgba(241, 237, 232, 0.7);
+}
+
+html:not(.theme-light) .sonic-section-sub code,
+html:not(.theme-light) .sonic-ctx-tag,
+html:not(.theme-light) .sonic-vbtn-text strong,
+html:not(.theme-light) .sonic-demo-unavailable,
+html:not(.theme-light) .sonic-rule-list li {
+  color: var(--ink);
+}
+
+html:not(.theme-light) .sonic-ctx-tag,
+html:not(.theme-light) .sonic-btn-light,
+html:not(.theme-light) .sonic-btn-dark,
+html:not(.theme-light) .sonic-btn-sound {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+html:not(.theme-light) .sonic-variant-btn {
+  color: var(--ink);
+}
+
+html:not(.theme-light) .sonic-variant-btn:hover {
+  background: rgba(255, 140, 74, 0.12);
+  border-color: rgba(255, 140, 74, 0.4);
+}
+
+html:not(.theme-light) .sonic-vbtn-text span,
+html:not(.theme-light) .sonic-demo-unavailable p,
+html:not(.theme-light) .sonic-rule-list li,
+html:not(.theme-light) .sonic-section-sub code {
+  color: var(--muted);
+}
+
+html:not(.theme-light) .sonic-demo-unavailable {
+  background: #171717;
+}
+
+html:not(.theme-light) .sonic-demo-unavailable a {
+  color: #ffbe8a;
+}
+
+html:not(.theme-light) .sonic-rule--always {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(52, 211, 153, 0.28);
+}
+
+html:not(.theme-light) .sonic-rule--careful {
+  background: rgba(249, 115, 22, 0.12);
+  border-color: rgba(251, 146, 60, 0.28);
+}
+
+html:not(.theme-light) .sonic-rule--never {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(248, 113, 113, 0.28);
+}
+
+html:not(.theme-light) .sonic-rule--always .sonic-rule-head {
+  color: #86efac;
+}
+
+html:not(.theme-light) .sonic-rule--careful .sonic-rule-head {
+  color: #fdba74;
+}
+
+html:not(.theme-light) .sonic-rule--never .sonic-rule-head {
+  color: #fca5a5;
+}
+
+html:not(.theme-light) .sonic-spinner {
+  border-top-color: var(--mc-orange);
+}

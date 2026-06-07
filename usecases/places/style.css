@@ -65,6 +65,12 @@ body {
   outline: none;
   transition: border-color 0.15s;
   font-family: inherit;
+  color-scheme: light;
+}
+.pl-field select option,
+.pl-field select optgroup {
+  background: #fafbfc;
+  color: var(--ink);
 }
 .pl-field input { width: 110px; }
 .pl-field input:focus, .pl-field select:focus { border-color: var(--mc-orange); }
@@ -421,3 +427,123 @@ body {
   .pl-map-frame { height: 200px; }
   .pl-detail-panel { width: 100%; }
 }
+
+html:not(.theme-light) .pl-form-card,
+html:not(.theme-light) .pl-summary-strip,
+html:not(.theme-light) .pl-map-wrap,
+html:not(.theme-light) .pl-card,
+html:not(.theme-light) .pl-detail-panel,
+html:not(.theme-light) .pl-hero {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+html:not(.theme-light) .pl-field input,
+html:not(.theme-light) .pl-field select,
+html:not(.theme-light) .pl-card-detail-btn,
+html:not(.theme-light) .pl-meta-chip,
+html:not(.theme-light) .pl-hero-chip,
+html:not(.theme-light) .pl-map-count,
+html:not(.theme-light) .pl-popup-chip,
+html:not(.theme-light) .pl-popup-cap,
+html:not(.theme-light) .pl-detail-cap,
+html:not(.theme-light) .pl-detail-map {
+  background: var(--surface-2);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--ink);
+}
+
+html:not(.theme-light) .pl-field select {
+  color-scheme: dark;
+}
+
+html:not(.theme-light) .pl-field select option,
+html:not(.theme-light) .pl-field select optgroup {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+html:not(.theme-light) .pl-field input:focus,
+html:not(.theme-light) .pl-field select:focus {
+  border-color: rgba(255, 140, 74, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 115, 28, 0.18);
+}
+
+html:not(.theme-light) .pl-card:hover {
+  border-color: rgba(255, 140, 74, 0.24);
+}
+
+html:not(.theme-light) .pl-card-detail-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink);
+}
+
+html:not(.theme-light) .pl-status--open,
+html:not(.theme-light) .pl-popup-chip--ok,
+html:not(.theme-light) .pl-cap-badge--nfc {
+  background: rgba(16, 185, 129, 0.16);
+  color: #a7f3d0;
+}
+
+html:not(.theme-light) .pl-status--closed,
+html:not(.theme-light) .pl-popup-chip--off {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+}
+
+html:not(.theme-light) .pl-new-badge,
+html:not(.theme-light) .pl-cap-badge,
+html:not(.theme-light) .pl-popup-cap {
+  background: rgba(255, 140, 74, 0.14);
+  color: #ffd4b5;
+}
+
+html:not(.theme-light) .pl-hero-icon {
+  background: rgba(255, 140, 74, 0.14);
+  color: #ffd4b5;
+}
+
+html:not(.theme-light) .pl-popup,
+html:not(.theme-light) .leaflet-popup-content-wrapper,
+html:not(.theme-light) .leaflet-popup-tip {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+html:not(.theme-light) .pl-popup-name,
+html:not(.theme-light) .pl-form-title,
+html:not(.theme-light) .pl-summary-item span,
+html:not(.theme-light) .pl-card-name,
+html:not(.theme-light) .pl-detail-name,
+html:not(.theme-light) .pl-detail-val,
+html:not(.theme-light) .pl-hero h3 {
+  color: var(--ink);
+}
+
+html:not(.theme-light) .pl-form-sub,
+html:not(.theme-light) .pl-field label,
+html:not(.theme-light) .pl-loading,
+html:not(.theme-light) .pl-summary-item label,
+html:not(.theme-light) .pl-card-addr,
+html:not(.theme-light) .pl-card-phone,
+html:not(.theme-light) .pl-detail-addr,
+html:not(.theme-light) .pl-detail-key,
+html:not(.theme-light) .pl-hero p,
+html:not(.theme-light) .pl-hero-chip,
+html:not(.theme-light) .pl-popup-addr,
+html:not(.theme-light) .pl-popup-row,
+html:not(.theme-light) .pl-map-count {
+  color: var(--muted);
+}
+
+html:not(.theme-light) .pl-card-link,
+html:not(.theme-light) .pl-popup-row a {
+  color: #ffbe8a;
+}
+
+html:not(.theme-light) .pl-map-frame,
+html:not(.theme-light) .pl-detail-map .pl-map-frame {
+  background: #161616;
+}
+

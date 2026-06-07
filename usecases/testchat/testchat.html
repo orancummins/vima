@@ -4,16 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Globe</title>
+  <script src="/static/js/usecase-theme.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       width: 100%; height: 100%;
       background: #ffffff;
-      display: flex; align-items: center; justify-content: center;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
     }
-    canvas { display: block; }
+    canvas {
+      display: block;
+      position: absolute;
+    }
     
     /* Settings Panel */
     .settings-panel {
@@ -169,6 +172,70 @@
     }
 
     canvas { cursor: pointer; }
+
+    html:not(.theme-light),
+    html:not(.theme-light) body {
+      background: #0a0a0a;
+      color: #f1ede8;
+    }
+
+    html:not(.theme-light) .settings-panel {
+      background: rgba(17, 17, 17, 0.94);
+      border-color: rgba(255, 255, 255, 0.08);
+      color: #f1ede8;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+    }
+
+    html:not(.theme-light) .settings-header {
+      color: #f1ede8;
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    html:not(.theme-light) .setting-label {
+      color: #d6cfc7;
+    }
+
+    html:not(.theme-light) .setting-value {
+      color: #a59c93;
+    }
+
+    html:not(.theme-light) input[type="range"] {
+      background: #2a2a2a;
+    }
+
+    html:not(.theme-light) input[type="color"],
+    html:not(.theme-light) select,
+    html:not(.theme-light) .reset-btn {
+      background: #171717;
+      border-color: rgba(255, 255, 255, 0.1);
+      color: #f1ede8;
+    }
+
+    html:not(.theme-light) select option {
+      background: #111111;
+      color: #f1ede8;
+    }
+
+    html:not(.theme-light) .reset-btn:hover {
+      background: #1d1d1d;
+      border-color: rgba(255, 140, 74, 0.35);
+    }
+
+    html:not(.theme-light) .setting-label[style] {
+      border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    html:not(.theme-light) ::-webkit-scrollbar-track {
+      background: #151515;
+    }
+
+    html:not(.theme-light) ::-webkit-scrollbar-thumb {
+      background: #3a3a3a;
+    }
+
+    html:not(.theme-light) ::-webkit-scrollbar-thumb:hover {
+      background: #4a4a4a;
+    }
 
   </style>
 </head>
@@ -360,6 +427,27 @@
       <button class="reset-btn" id="reverseBtn">&#x27F2; Reverse Spin</button>
     </div>
 
+    <!-- Sphere Positioning -->
+    <div class="setting-group">
+      <label class="setting-label" style="font-size:14px;font-weight:700;border-bottom:1px solid #e8e8e8;padding-bottom:6px;display:block;margin-bottom:12px;">Sphere Positioning</label>
+
+      <label class="setting-label">
+        Horizontal Offset <span class="setting-value" id="sphereXValue">0</span>
+      </label>
+      <input type="range" id="sphereOffsetX" min="-400" max="400" step="5" value="0">
+    </div>
+
+    <div class="setting-group">
+      <label class="setting-label">
+        Vertical Offset <span class="setting-value" id="sphereYValue">0</span>
+      </label>
+      <input type="range" id="sphereOffsetY" min="-400" max="400" step="5" value="0">
+    </div>
+
+    <div class="setting-group">
+      <button class="reset-btn" id="resetPositionBtn">&#x2316; Reset Position</button>
+    </div>
+
     <div class="setting-group">
       <button class="reset-btn" id="resetBtn">Reset to Defaults</button>
     </div>
@@ -391,10 +479,35 @@
         wobbleMode: false,
         rainbowMode: false,
         rainbowSpeed: 1,
-        spinDir: 1
+        spinDir: 1,
+        sphereOffsetX: 0,
+        sphereOffsetY: 0
       };
       
       const defaults = { ...settings };
+      const SETTINGS_STORAGE_KEY = 'vima:testchat:settings';
+
+      function persistSettings() {
+        try {
+          localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+        } catch (_) {}
+      }
+
+      function restoreSettings() {
+        try {
+          const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== 'object') return;
+          Object.keys(defaults).forEach((key) => {
+            if (Object.prototype.hasOwnProperty.call(parsed, key)) {
+              settings[key] = parsed[key];
+            }
+          });
+        } catch (_) {}
+      }
+
+      restoreSettings();
       
       // Settings panel (always visible — no toggle)
       
@@ -421,6 +534,11 @@
       const rainbowSpeedInput = document.getElementById('rainbowSpeed');
       const rainbowValue = document.getElementById('rainbowValue');
       const reverseBtn = document.getElementById('reverseBtn');
+      const sphereOffsetXInput = document.getElementById('sphereOffsetX');
+      const sphereOffsetYInput = document.getElementById('sphereOffsetY');
+      const sphereXValue = document.getElementById('sphereXValue');
+      const sphereYValue = document.getElementById('sphereYValue');
+      const resetPositionBtn = document.getElementById('resetPositionBtn');
       const presetSwatches = document.querySelectorAll('.preset-swatch');
       
       // Value displays
@@ -431,21 +549,61 @@
       const pointValue = document.getElementById('pointValue');
       const pointSizeValue = document.getElementById('pointSizeValue');
       const lineWidthValue = document.getElementById('lineWidthValue');
+
+      function syncControlsFromSettings() {
+        globeColorInput.value = settings.color;
+        bgStyleInput.value = settings.bgStyle;
+        spinRateInput.value = (settings.speed / 0.003).toFixed(1);
+        globeSizeInput.value = String(Math.round(settings.size * 100));
+        glowIntensityInput.value = String(Math.round(settings.glow * 100));
+        gridOpacityInput.value = String(Math.round(settings.gridOpacity * 100));
+        gridDensityInput.value = String(settings.gridDensity);
+        pointCountInput.value = String(settings.pointCount);
+        pointSizeInput.value = String(settings.pointSize);
+        lineWidthInput.value = String(settings.lineWidth);
+        rotationAxisInput.value = settings.rotationAxis;
+        autoRotateInput.checked = settings.autoRotate;
+        showPointsInput.checked = settings.showPoints;
+        showGridInput.checked = settings.showGrid;
+        showGlowInput.checked = settings.showGlow;
+        pulseModeInput.checked = settings.pulseMode;
+        wobbleModeInput.checked = settings.wobbleMode;
+        rainbowModeInput.checked = settings.rainbowMode;
+        rainbowSpeedInput.value = String(settings.rainbowSpeed);
+
+        spinValue.textContent = (settings.speed / 0.003).toFixed(1) + 'x';
+        sizeValue.textContent = Math.round(settings.size * 100) + '%';
+        glowValue.textContent = Math.round(settings.glow * 100) + '%';
+        gridValue.textContent = Math.round(settings.gridOpacity * 100) + '%';
+        pointValue.textContent = String(settings.pointCount);
+        pointSizeValue.textContent = Number(settings.pointSize).toFixed(1).replace(/\.0$/, '.0');
+        lineWidthValue.textContent = Number(settings.lineWidth).toFixed(1).replace(/\.0$/, '.0');
+        rainbowValue.textContent = Number(settings.rainbowSpeed).toFixed(1) + 'x';
+        sphereOffsetXInput.value = String(settings.sphereOffsetX);
+        sphereOffsetYInput.value = String(settings.sphereOffsetY);
+        sphereXValue.textContent = (settings.sphereOffsetX >= 0 ? '+' : '') + settings.sphereOffsetX + 'px';
+        sphereYValue.textContent = (settings.sphereOffsetY >= 0 ? '+' : '') + settings.sphereOffsetY + 'px';
+      }
+
+      syncControlsFromSettings();
       
       // Event listeners
       globeColorInput.addEventListener('input', (e) => {
         settings.color = e.target.value;
+        persistSettings();
       });
       
       bgStyleInput.addEventListener('change', (e) => {
         settings.bgStyle = e.target.value;
         updateBackground();
+        persistSettings();
       });
       
       spinRateInput.addEventListener('input', (e) => {
         const value = parseFloat(e.target.value);
         settings.speed = 0.003 * value;
         spinValue.textContent = value.toFixed(1) + 'x';
+        persistSettings();
       });
       
       globeSizeInput.addEventListener('input', (e) => {
@@ -453,22 +611,26 @@
         settings.size = value / 100;
         sizeValue.textContent = value + '%';
         resize();
+        persistSettings();
       });
       
       glowIntensityInput.addEventListener('input', (e) => {
         const value = parseInt(e.target.value);
         settings.glow = value / 100;
         glowValue.textContent = value + '%';
+        persistSettings();
       });
       
       gridOpacityInput.addEventListener('input', (e) => {
         const value = parseInt(e.target.value);
         settings.gridOpacity = value / 100;
         gridValue.textContent = value + '%';
+        persistSettings();
       });
       
       gridDensityInput.addEventListener('change', (e) => {
         settings.gridDensity = parseInt(e.target.value);
+        persistSettings();
       });
       
       pointCountInput.addEventListener('input', (e) => {
@@ -476,57 +638,94 @@
         settings.pointCount = value;
         pointValue.textContent = value;
         generatePoints();
+        persistSettings();
       });
       
       pointSizeInput.addEventListener('input', (e) => {
         const value = parseFloat(e.target.value);
         settings.pointSize = value;
         pointSizeValue.textContent = value.toFixed(1);
+        persistSettings();
       });
       
       lineWidthInput.addEventListener('input', (e) => {
         const value = parseFloat(e.target.value);
         settings.lineWidth = value;
         lineWidthValue.textContent = value.toFixed(1);
+        persistSettings();
       });
       
       rotationAxisInput.addEventListener('change', (e) => {
         settings.rotationAxis = e.target.value;
+        persistSettings();
       });
       
       autoRotateInput.addEventListener('change', (e) => {
         settings.autoRotate = e.target.checked;
+        persistSettings();
       });
       
       showPointsInput.addEventListener('change', (e) => {
         settings.showPoints = e.target.checked;
+        persistSettings();
       });
       
       showGridInput.addEventListener('change', (e) => {
         settings.showGrid = e.target.checked;
+        persistSettings();
       });
       
       showGlowInput.addEventListener('change', (e) => {
         settings.showGlow = e.target.checked;
+        persistSettings();
       });
       
       // New creative controls
       pulseModeInput.addEventListener('change', (e) => {
         settings.pulseMode = e.target.checked;
+        persistSettings();
       });
       wobbleModeInput.addEventListener('change', (e) => {
         settings.wobbleMode = e.target.checked;
+        persistSettings();
       });
       rainbowModeInput.addEventListener('change', (e) => {
         settings.rainbowMode = e.target.checked;
+        persistSettings();
       });
       rainbowSpeedInput.addEventListener('input', (e) => {
         const v = parseFloat(e.target.value);
         settings.rainbowSpeed = v;
         rainbowValue.textContent = v.toFixed(1) + 'x';
+        persistSettings();
       });
       reverseBtn.addEventListener('click', () => {
         settings.spinDir *= -1;
+        persistSettings();
+      });
+      sphereOffsetXInput.addEventListener('input', (e) => {
+        const v = parseInt(e.target.value);
+        settings.sphereOffsetX = v;
+        sphereXValue.textContent = (v >= 0 ? '+' : '') + v + 'px';
+        resize();
+        persistSettings();
+      });
+      sphereOffsetYInput.addEventListener('input', (e) => {
+        const v = parseInt(e.target.value);
+        settings.sphereOffsetY = v;
+        sphereYValue.textContent = (v >= 0 ? '+' : '') + v + 'px';
+        resize();
+        persistSettings();
+      });
+      resetPositionBtn.addEventListener('click', () => {
+        settings.sphereOffsetX = 0;
+        settings.sphereOffsetY = 0;
+        sphereOffsetXInput.value = '0';
+        sphereOffsetYInput.value = '0';
+        sphereXValue.textContent = '+0px';
+        sphereYValue.textContent = '+0px';
+        resize();
+        persistSettings();
       });
       presetSwatches.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -536,6 +735,7 @@
           // Turn off rainbow if user picks manual color
           settings.rainbowMode = false;
           rainbowModeInput.checked = false;
+          persistSettings();
         });
       });
 
@@ -554,42 +754,17 @@
 
       resetBtn.addEventListener('click', () => {
         Object.assign(settings, defaults);
-        
-        // Reset UI
-        globeColorInput.value = defaults.color;
-        bgStyleInput.value = defaults.bgStyle;
-        spinRateInput.value = 1;
-        globeSizeInput.value = 95;
-        glowIntensityInput.value = 90;
-        gridOpacityInput.value = 18;
-        gridDensityInput.value = 20;
-        pointCountInput.value = 80;
-        pointSizeInput.value = 2.5;
-        lineWidthInput.value = 0.8;
-        rotationAxisInput.value = 'y';
-        autoRotateInput.checked = true;
-        showPointsInput.checked = true;
-        showGridInput.checked = true;
-        showGlowInput.checked = true;
-        pulseModeInput.checked = false;
-        wobbleModeInput.checked = false;
-        rainbowModeInput.checked = false;
-        rainbowSpeedInput.value = 1;
-        rainbowValue.textContent = '1.0x';
-
-        spinValue.textContent = '1.0x';
-        sizeValue.textContent = '95%';
-        glowValue.textContent = '90%';
-        gridValue.textContent = '18%';
-        pointValue.textContent = '80';
-        pointSizeValue.textContent = '2.5';
-        lineWidthValue.textContent = '0.8';
-        
+        syncControlsFromSettings();
         updateBackground();
         generatePoints();
+        persistSettings();
       });
       
       function updateBackground() {
+        if (!document.documentElement.classList.contains('theme-light')) {
+          document.body.style.background = '#000000';
+          return;
+        }
         const gradients = {
           purple: '#ffffff',
           blue: '#ffffff',
@@ -601,15 +776,26 @@
       }
 
       function resize() {
-        // Leave room for the 320px settings panel on the right
-        const availW = window.innerWidth - 360;
-        const availH = window.innerHeight;
+        // Account for the use-case menu on the left (~280px) and settings panel on the right (320px wide + 20px gap = 340px)
+        const menuW     = 280;
+        const panelW    = 340;
+        const padding   = 16; // breathing room on each side
+        const leftEdge  = menuW + padding;
+        const rightEdge = window.innerWidth - panelW - padding;
+        const availW    = rightEdge - leftEdge;
+        const availH    = window.innerHeight;
         const s = Math.min(availW, availH) * settings.size;
         canvas.width  = s;
         canvas.height = s;
+        // Centre the canvas in the gap between menu and panel
+        canvas.style.left = (leftEdge + (availW - s) / 2 + settings.sphereOffsetX) + 'px';
+        canvas.style.top  = ((availH - s) / 2 + settings.sphereOffsetY) + 'px';
       }
       resize();
+      updateBackground();
       window.addEventListener('resize', resize);
+      new MutationObserver(() => updateBackground())
+        .observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
       // Fibonacci lattice points
       let pts = [];

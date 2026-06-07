@@ -4,13 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mastercard Solution Studio</title>
+  <script>
+    (() => {
+      try {
+        if (localStorage.getItem('vima:theme') === 'light') {
+          document.documentElement.classList.add('theme-light');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ css_bust }}" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 </head>
-<body>
+<body data-script-root="{{ request.script_root or '' }}">
   <header class="header">
     <div class="brand" id="header-brand">
       <div class="brand-marks">
@@ -29,7 +38,14 @@
       <button class="top-tab" data-top-tab="bundles">API Bundles</button>
       <button class="top-tab" data-top-tab="usecases">Use Cases</button>
     </nav>
-    <div style="display:flex;align-items:center;gap:4px">
+    <div class="header-actions">
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to light theme" title="Switch to light theme">
+        <span class="theme-toggle-track" aria-hidden="true">
+          <span class="theme-toggle-option theme-toggle-option--dark">Dark</span>
+          <span class="theme-toggle-option theme-toggle-option--light">Light</span>
+          <span class="theme-toggle-thumb"></span>
+        </span>
+      </button>
       {% if spotlight %}
       <button class="aotd-trigger-btn"
               id="aotd-trigger-btn"

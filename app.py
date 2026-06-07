@@ -23,7 +23,7 @@ truststore.inject_into_ssl()
 
 import requests as _requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template, request, redirect, send_from_directory
+from flask import Flask, jsonify, render_template, request, redirect, send_from_directory, url_for
 
 _CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
 load_dotenv(os.path.join(_CONFIG_DIR, ".env"))
@@ -38,7 +38,7 @@ from simulator.switcher import is_simulated  # noqa: E402
 
 app = Flask(__name__)
 from werkzeug.middleware.proxy_fix import ProxyFix
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # Suppress Werkzeug's per-request stdout log lines ("GET /... 200")
 import logging as _logging
@@ -320,7 +320,7 @@ def _fetch_geo_payload(client_ip: str) -> dict:
 
 @app.route("/")
 def home():
-    return redirect("/app")
+    return redirect(url_for("index"))
 
 
 @app.route("/app")
@@ -1151,14 +1151,14 @@ def consent_3ds_flow():
 def testchat_files(filename: str):
     """Serve files from the self-contained testchat use-case directory."""
     directory = os.path.join(os.path.dirname(__file__), "usecases", "testchat")
-    return send_from_directory(directory, filename)
+    return _serve_prefixed_static(directory, filename)
 
 
 @app.route("/sonic/<path:filename>")
 def sonic_files(filename: str):
     """Serve files from the self-contained sonic use-case directory."""
     directory = os.path.join(os.path.dirname(__file__), "usecases", "sonic")
-    return send_from_directory(directory, filename)
+    return _serve_prefixed_static(directory, filename)
 
 
 # ---------------------------------------------------------------------------
@@ -1167,6 +1167,38 @@ def sonic_files(filename: str):
 # ``/<folder>/<path:filename>``.  Adding a new usecase only requires creating
 # the folder — no edits here.
 # ---------------------------------------------------------------------------
+
+def _script_root_prefix() -> str:
+    return (request.script_root or "").rstrip("/")
+
+
+def _prefix_html_routes(html: str) -> str:
+    prefix = _script_root_prefix()
+    if not prefix:
+        return html
+    replacements = (
+        ('href="/', f'href="{prefix}/'),
+        ("href='/", f"href='{prefix}/"),
+        ('src="/', f'src="{prefix}/'),
+        ("src='/", f"src='{prefix}/"),
+        ('action="/', f'action="{prefix}/'),
+        ("action='/", f"action='{prefix}/"),
+        ('fetch("/', f'fetch("{prefix}/'),
+        ("fetch('/", f"fetch('{prefix}/"),
+    )
+    for old, new in replacements:
+        html = html.replace(old, new)
+    return html
+
+
+def _serve_prefixed_static(directory: str, filename: str):
+    if filename.lower().endswith('.html'):
+        path = os.path.join(directory, filename)
+        if os.path.isfile(path):
+            with open(path, 'r', encoding='utf-8') as f:
+                html = f.read()
+            return _prefix_html_routes(html), 200, {"Content-Type": "text/html; charset=utf-8"}
+    return send_from_directory(directory, filename)
 
 def _register_usecase_static_routes() -> None:
     usecases_dir = os.path.join(os.path.dirname(__file__), "usecases")
@@ -1183,7 +1215,7 @@ def _register_usecase_static_routes() -> None:
 
         def _make_view(_dir: str):
             def _view(filename: str):
-                return send_from_directory(_dir, filename)
+                return _serve_prefixed_static(_dir, filename)
             return _view
 
         app.add_url_rule(
