@@ -89,6 +89,30 @@ body {
   border-radius: 10px;
   justify-content: center;
 }
+.pfm-divider {
+  position: relative;
+  margin: 8px 0;
+}
+.pfm-divider-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--line);
+}
+.pfm-divider-content {
+  position: relative;
+  text-align: center;
+}
+.pfm-divider-label {
+  display: inline-block;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  background: #fff;
+}
 
 .pfm-phone-wrap {
   flex: 0 0 auto;
@@ -918,4 +942,8 @@ html:not(.theme-light) .pfm-connect-frame,
 html:not(.theme-light) .pfm-connect-frame iframe,
 html:not(.theme-light) .pfm-connect-frame .topbar {
   background: #0f0f0f;
+}
+
+html:not(.theme-light) .pfm-divider-label {
+  background: var(--surface);
 }

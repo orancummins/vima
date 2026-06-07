@@ -496,6 +496,9 @@ body {
   border: 0;
   display: block;
 }
+.clarity-map-box .leaflet-control-container { z-index: auto; }
+.clarity-map-box .leaflet-top,
+.clarity-map-box .leaflet-bottom { z-index: auto; }
 .clarity-map-link { font-size: 12px; align-self: flex-start; }
 .clarity-industry-logo-box {
   width: 100%;
@@ -570,6 +573,12 @@ html:not(.theme-light) .clarity-empty-icon {
   background: var(--surface-2);
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: none;
+}
+
+html:not(.theme-light) .leaflet-popup-content-wrapper,
+html:not(.theme-light) .leaflet-popup-tip {
+  background: var(--surface);
+  color: var(--ink);
 }
 
 html:not(.theme-light) .clarity-raw-card {

@@ -116,6 +116,14 @@
     customElements.whenDefined('mc-sonic').then(() => setTimeout(() => el.play(), 80));
   }
 
+  function dismissSonicModal(modal) {
+    if (!modal) return;
+    if (modal._sonicEscHandler) {
+      document.removeEventListener('keydown', modal._sonicEscHandler);
+    }
+    if (modal.parentNode) modal.remove();
+  }
+
   /* ------------------------------------------------------------------ */
   /*  Modal                                                              */
   /* ------------------------------------------------------------------ */
@@ -130,12 +138,13 @@
       '</div>';
     document.body.appendChild(modal);
 
-    const dismiss = () => { if (modal.parentNode) modal.remove(); };
+    const dismiss = () => dismissSonicModal(modal);
     modal.querySelector('.sonic-modal-close').addEventListener('click', dismiss);
     modal.addEventListener('click', e => { if (e.target === modal) dismiss(); });
-    document.addEventListener('keydown', function onKey(e) {
-      if (e.key === 'Escape') { dismiss(); document.removeEventListener('keydown', onKey); }
-    });
+    modal._sonicEscHandler = (e) => {
+      if (e.key === 'Escape') dismiss();
+    };
+    document.addEventListener('keydown', modal._sonicEscHandler);
 
     const body = modal.querySelector('.sonic-modal-body');
 
@@ -164,6 +173,33 @@
     playWhenReady(el);
     el.addEventListener('sonicCompletion', dismiss, { once: true });
     setTimeout(dismiss, 3500);
+  }
+
+  function openKicksDemo() {
+    const modal = document.createElement('div');
+    modal.className = 'sonic-modal-backdrop sonic-modal-backdrop--demo';
+    modal.innerHTML =
+      '<div class="sonic-modal sonic-modal--demo" role="dialog" aria-modal="true" aria-label="KICKS Checkout (from Mastercard)">' +
+        '<div class="sonic-demo-modal-head">' +
+          '<div>' +
+            '<p class="sonic-demo-modal-eyebrow">Interactive Demo</p>' +
+            '<h4 class="sonic-demo-modal-title">KICKS Checkout (from Mastercard)</h4>' +
+          '</div>' +
+          '<button class="sonic-modal-close" aria-label="Close">✕</button>' +
+        '</div>' +
+        '<div class="sonic-demo-modal-frame-wrap">' +
+          '<iframe class="sonic-demo-modal-frame" src="/sonic/kicks/index.html" title="KICKS Checkout (from Mastercard)" loading="eager"></iframe>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+
+    const dismiss = () => dismissSonicModal(modal);
+    modal.querySelector('.sonic-modal-close').addEventListener('click', dismiss);
+    modal.addEventListener('click', (e) => { if (e.target === modal) dismiss(); });
+    modal._sonicEscHandler = (e) => {
+      if (e.key === 'Escape') dismiss();
+    };
+    document.addEventListener('keydown', modal._sonicEscHandler);
   }
 
   /* ------------------------------------------------------------------ */
@@ -239,21 +275,10 @@
 
         <section class="sonic-section">
           <h3 class="sonic-section-title">Interactive Demo — KICKS Checkout</h3>
-          <p class="sonic-section-sub">The reference implementation. Select Mastercard (4444) as payment method and confirm the order to trigger the real acceptance sound and animation.</p>
-          <div class="sonic-iframe-wrap">
-            <iframe
-              class="sonic-demo-frame"
-              src="/sonic/kicks/index.html"
-              title="Sonic Branding KICKS Demo"
-              loading="lazy"
-            ></iframe>
-            <div class="sonic-demo-unavailable" id="sonic-demo-fallback" style="display:none">
-              <span>🎵</span>
-              <p>
-                Unable to load the embedded KICKS demo.
-                <a href="/sonic/kicks/index.html" target="_blank" rel="noopener">Open in a new tab ↗</a>
-              </p>
-            </div>
+          <p class="sonic-section-sub">Launch the Mastercard reference checkout flow in a modal, then select Mastercard (4444) and confirm the order to trigger the real acceptance sound and animation.</p>
+          <div class="sonic-demo-launch">
+            <button type="button" class="sonic-demo-link" id="sonic-demo-launch-btn">KICKS Checkout (from Mastercard)</button>
+            <p class="sonic-demo-link-note">Opens the original KICKS interactive demo in a modal dialog without leaving the Sonic Branding showcase.</p>
           </div>
         </section>
 
@@ -271,15 +296,8 @@
       sonicLaunch(btn.dataset.cue, btn.dataset.type, btn.dataset.bg || null);
     });
 
-    /* KICKS iframe fallback */
-    const demoFrame = document.querySelector('.sonic-demo-frame');
-    const demoFallback = document.getElementById('sonic-demo-fallback');
-    if (demoFrame && demoFallback) {
-      demoFrame.addEventListener('error', () => {
-        demoFrame.style.display = 'none';
-        demoFallback.style.display = 'flex';
-      });
-    }
+    const kicksLaunchBtn = document.getElementById('sonic-demo-launch-btn');
+    if (kicksLaunchBtn) kicksLaunchBtn.addEventListener('click', openKicksDemo);
   }
 
   /* ------------------------------------------------------------------ */
