@@ -857,8 +857,67 @@ html.theme-light .header.header--home .theme-toggle-option {
   font-family: var(--mono); font-size: 12px;
 }
 .modal-body a { color: var(--mc-orange); font-weight: 600; }
+.modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+html:not(.theme-light) .modal {
+  background: #121212;
+  color: rgba(244, 240, 234, 0.92);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+html:not(.theme-light) .modal-header {
+  border-bottom-color: rgba(255,255,255,0.08);
+}
+html:not(.theme-light) .modal-header h2 {
+  color: rgba(255, 244, 232, 0.96);
+}
+html:not(.theme-light) .modal-close {
+  color: rgba(255,255,255,0.55);
+}
+html:not(.theme-light) .modal-close:hover {
+  color: rgba(255,255,255,0.88);
+}
+html:not(.theme-light) .modal-body {
+  color: rgba(244, 240, 234, 0.82);
+}
+html:not(.theme-light) .modal-body code {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,244,232,0.95);
+}
+html:not(.theme-light) .modal-footer {
+  border-top-color: rgba(255,255,255,0.08);
+}
 
 /* Open Finance setup guide */
+.ofin-setup-modal {
+  max-width: 560px;
+}
+.ofin-setup-intro {
+  margin: 0 0 16px;
+}
+.ofin-setup-footer {
+  justify-content: flex-end;
+}
+.ofin-suppress-label {
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+.ofin-suppress-label input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--mc-orange);
+}
 .ofin-setup-steps {
   margin: 0; padding: 0; list-style: none; counter-reset: step;
 }
@@ -887,6 +946,31 @@ html.theme-light .header.header--home .theme-toggle-option {
 }
 .ofin-setup-hint a { color: var(--mc-orange); font-weight: 600; font-size: 12.5px; }
 .ofin-setup-hint code { font-size: 12px; }
+html:not(.theme-light) .ofin-suppress-label {
+  color: rgba(244, 240, 234, 0.72);
+}
+html:not(.theme-light) .ofin-setup-intro {
+  color: rgba(244, 240, 234, 0.9);
+}
+html:not(.theme-light) .ofin-setup-steps li strong {
+  color: rgba(255, 244, 232, 0.96);
+}
+html:not(.theme-light) .ofin-setup-steps li span {
+  color: rgba(244, 240, 234, 0.84);
+}
+html:not(.theme-light) .ofin-setup-hint {
+  background: rgba(255, 95, 0, 0.08);
+  color: rgba(244, 240, 234, 0.82);
+}
+html:not(.theme-light) .ofin-setup-hint strong {
+  color: rgba(255, 244, 232, 0.96);
+}
+html:not(.theme-light) .ofin-setup-hint a {
+  color: #ffb070;
+}
+html:not(.theme-light) .ofin-setup-steps li {
+  border-bottom-color: rgba(255,255,255,0.08);
+}
 
 /* =================================================================
    Use case: Data Enrichment
