@@ -363,8 +363,14 @@ body {
   border-radius: 8px;
   background: #fff;
   color: var(--ink);
+  color-scheme: light;
 }
 .idv-select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%), linear-gradient(135deg, #6b7280 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 32px; cursor: pointer; }
+.idv-select option,
+.idv-select optgroup {
+  background: #ffffff;
+  color: var(--ink);
+}
 .idv-visa-block {
   background: #f4f7ff;
   border: 1px solid #d6def0;
@@ -1174,6 +1180,253 @@ body {
   .mcc-body { padding: 20px 18px 4px; }
   .mcc-stepper { padding: 10px 14px; gap: 3px; overflow-x: auto; }
   .mcc-pair { font-size: 11px; }
+}
+
+html:not(.theme-light) .btn-outline,
+html:not(.theme-light) .btn-mini,
+html:not(.theme-light) .idv-popout-btn,
+html:not(.theme-light) .idv-modal-reduce-btn {
+  background: var(--surface-2);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--ink);
+}
+
+html:not(.theme-light) .btn-mini.active {
+  background: var(--surface-3);
+  border-color: rgba(255, 140, 74, 0.45);
+  color: #ffd4b5;
+}
+
+html:not(.theme-light) .idv-step-active {
+  border-color: rgba(255, 140, 74, 0.55);
+  color: var(--ink);
+}
+
+html:not(.theme-light) .idv-step-done {
+  color: #a7f3d0;
+}
+
+html:not(.theme-light) .idv-toggle,
+html:not(.theme-light) .idv-modal-title,
+html:not(.theme-light) .idv-screen-title,
+html:not(.theme-light) .idv-brand h2,
+html:not(.theme-light) .idv-avs-head,
+html:not(.theme-light) .idv-modal-body h4,
+html:not(.theme-light) .idv-result-row,
+html:not(.theme-light) .med-welcome-text h1,
+html:not(.theme-light) .med-login h2,
+html:not(.theme-light) .med-passkey h2,
+html:not(.theme-light) .mcc-passkey-body h2,
+html:not(.theme-light) .med-record-head h2,
+html:not(.theme-light) .med-card h3 {
+  color: var(--ink);
+}
+
+html:not(.theme-light) .idv-brand p,
+html:not(.theme-light) .idv-grid label,
+html:not(.theme-light) .idv-hint,
+html:not(.theme-light) .idv-bank-card-body label,
+html:not(.theme-light) .idv-field .muted,
+html:not(.theme-light) .idv-visa-note,
+html:not(.theme-light) .idv-avs-body,
+html:not(.theme-light) .idv-check,
+html:not(.theme-light) .idv-vli,
+html:not(.theme-light) .idv-result-row span,
+html:not(.theme-light) .idv-modal-list,
+html:not(.theme-light) .idv-modal-fine,
+html:not(.theme-light) .med-login .muted,
+html:not(.theme-light) .med-login-form label,
+html:not(.theme-light) .med-remember,
+html:not(.theme-light) .med-login-fine,
+html:not(.theme-light) .med-passkey > .muted,
+html:not(.theme-light) .mcc-passkey-body > .muted,
+html:not(.theme-light) .med-record-head .muted,
+html:not(.theme-light) .med-dl dt,
+html:not(.theme-light) .med-table th,
+html:not(.theme-light) .med-mc-text span,
+html:not(.theme-light) .mcc-foot {
+  color: var(--muted);
+}
+
+html:not(.theme-light) .idv-browser,
+html:not(.theme-light) .idv-page,
+html:not(.theme-light) .idv-bank,
+html:not(.theme-light) .idv-bank-card,
+html:not(.theme-light) .idv-result-card,
+html:not(.theme-light) .idv-card-progress,
+html:not(.theme-light) .idv-modal,
+html:not(.theme-light) .med-login,
+html:not(.theme-light) .med-passkey,
+html:not(.theme-light) .med-card,
+html:not(.theme-light) .mcc-shell,
+html:not(.theme-light) .mcc-body {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.2);
+}
+
+html:not(.theme-light) .idv-browser-chrome,
+html:not(.theme-light) .idv-url,
+html:not(.theme-light) .idv-grid input:disabled,
+html:not(.theme-light) .idv-bank-card-body input,
+html:not(.theme-light) .idv-field input,
+html:not(.theme-light) .idv-select,
+html:not(.theme-light) .idv-visa-block,
+html:not(.theme-light) .idv-card-note,
+html:not(.theme-light) .idv-avs,
+html:not(.theme-light) .med-account-pill,
+html:not(.theme-light) .med-list li,
+html:not(.theme-light) .med-passkey-list li,
+html:not(.theme-light) .mcc-stepper,
+html:not(.theme-light) .mcc-step,
+html:not(.theme-light) .mcc-foot,
+html:not(.theme-light) .med-mc-connect,
+html:not(.theme-light) .med-btn-outline {
+  background: var(--surface-2);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html:not(.theme-light) .idv-grid input,
+html:not(.theme-light) .idv-bank-card-body input,
+html:not(.theme-light) .idv-field input,
+html:not(.theme-light) .idv-select,
+html:not(.theme-light) .med-login-form input,
+html:not(.theme-light) .med-search input {
+  background: var(--surface-2);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--ink);
+}
+
+html:not(.theme-light) .idv-select {
+  color-scheme: dark;
+}
+
+html:not(.theme-light) .idv-select option,
+html:not(.theme-light) .idv-select optgroup {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+html:not(.theme-light) .idv-grid input:focus,
+html:not(.theme-light) .idv-field input:focus,
+html:not(.theme-light) .idv-select:focus,
+html:not(.theme-light) .med-login-form input:focus,
+html:not(.theme-light) .med-search input:focus {
+  outline: none;
+  background: var(--surface-3);
+  border-color: rgba(255, 140, 74, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 115, 28, 0.18);
+}
+
+html:not(.theme-light) .idv-bank:hover,
+html:not(.theme-light) .med-mc-connect:hover,
+html:not(.theme-light) .med-btn-outline:hover {
+  border-color: rgba(255, 140, 74, 0.45);
+  background: rgba(255, 140, 74, 0.1);
+}
+
+html:not(.theme-light) .idv-bank-sel {
+  border-color: rgba(255, 140, 74, 0.65);
+  box-shadow: 0 0 0 2px rgba(255, 115, 28, 0.16);
+}
+
+html:not(.theme-light) .idv-page:has(.med-page),
+html:not(.theme-light) .med-page,
+html:not(.theme-light) .med-page-home,
+html:not(.theme-light) .med-page-verify,
+html:not(.theme-light) .med-page-narrow,
+html:not(.theme-light) .idv-fullscreen-modal {
+  background: #0a0a0a;
+}
+
+html:not(.theme-light) .med-welcome {
+  background: linear-gradient(180deg, #111111 0%, #171717 100%);
+}
+
+html:not(.theme-light) .med-topbar,
+html:not(.theme-light) .med-topbar-slim,
+html:not(.theme-light) .med-topbar-clean,
+html:not(.theme-light) .med-nav,
+html:not(.theme-light) .med-footer {
+  background: #111111;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html:not(.theme-light) .med-logo-text,
+html:not(.theme-light) .med-mc-text strong,
+html:not(.theme-light) .med-dl dd,
+html:not(.theme-light) .med-table td,
+html:not(.theme-light) .med-passkey-brand strong {
+  color: var(--ink);
+}
+
+html:not(.theme-light) .med-top-links a,
+html:not(.theme-light) .med-nav a,
+html:not(.theme-light) .med-login-extras a,
+html:not(.theme-light) .med-login-fine a {
+  color: #ffbe8a;
+}
+
+html:not(.theme-light) .med-nav a.active,
+html:not(.theme-light) .med-nav a:hover {
+  color: #ffd4b5;
+  border-bottom-color: rgba(255, 140, 74, 0.7);
+}
+
+html:not(.theme-light) .med-login-btn,
+html:not(.theme-light) .med-btn-primary {
+  background: var(--mc-orange);
+}
+
+html:not(.theme-light) .med-login-btn:hover,
+html:not(.theme-light) .med-btn-primary:hover:not(:disabled) {
+  background: #e15600;
+}
+
+html:not(.theme-light) .med-btn-primary:disabled {
+  background: rgba(255, 95, 0, 0.45);
+}
+
+html:not(.theme-light) .med-btn-outline {
+  color: #ffd4b5;
+  border-color: rgba(255, 140, 74, 0.45);
+}
+
+html:not(.theme-light) .med-passkey-icon {
+  background: rgba(255, 140, 74, 0.14);
+  color: #ffd4b5;
+}
+
+html:not(.theme-light) .med-pill-ok,
+html:not(.theme-light) .med-badge-ok {
+  background: rgba(16, 185, 129, 0.16);
+  color: #a7f3d0;
+}
+
+html:not(.theme-light) .med-pill-warn,
+html:not(.theme-light) .med-badge-dim {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+}
+
+html:not(.theme-light) .med-table th,
+html:not(.theme-light) .med-table td,
+html:not(.theme-light) .med-login-or::before,
+html:not(.theme-light) .med-login-or::after,
+html:not(.theme-light) .mcc-stepper,
+html:not(.theme-light) .mcc-foot {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html:not(.theme-light) .mcc-step-active {
+  color: var(--ink);
+  border-color: rgba(255, 140, 74, 0.55);
+}
+
+html:not(.theme-light) .mcc-step-done {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(52, 211, 153, 0.28);
+  color: #a7f3d0;
 }
 
 /* =================================================================

@@ -4,7 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Personal Finance Manager — Mastercard Solution Studio</title>
+  <script src="/static/js/usecase-theme.js"></script>
   <link rel="stylesheet" href="/pfm/style.css">
+  <link rel="stylesheet" href="/static/css/usecase-theme.css">
 </head>
 <body>
   <!-- pfmRender() fills this container -->
@@ -148,10 +150,10 @@ function pfmRender(initialCustomerId) {
             <input id="pfm-cid" placeholder="e.g. 9013023139" value="${escapeHtml(initialCustomerId || "")}" />
           </div>
           <button class="btn btn-primary" id="pfm-load">Load Customer Data</button>
-          <div style="position: relative; margin: 8px 0;">
-            <div style="position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line);"></div>
-            <div style="position: relative; text-align: center;">
-              <span style="background: white; padding: 0 12px; font-size: 12px; color: var(--muted); font-weight: 500;">OR</span>
+          <div class="pfm-divider">
+            <div class="pfm-divider-line"></div>
+            <div class="pfm-divider-content">
+              <span class="pfm-divider-label" style="background: var(--surface, #fff); color: var(--muted);">OR</span>
             </div>
           </div>
           <button class="btn" id="pfm-connect-btn">Connect New Bank Account</button>

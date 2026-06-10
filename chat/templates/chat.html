@@ -7,19 +7,70 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script>
+    (() => {
+      try {
+        if (localStorage.getItem('vima:theme') === 'light') {
+          document.documentElement.classList.add('theme-light');
+        }
+      } catch (_) {}
+    })();
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --orange: #ff5f00;
       --green:  #2ea043;
-      --ink:    #141414;
-      --bg:     #f7f7f8;
-      --card:   #ffffff;
-      --line:   #e5e5e5;
-      --muted:  #767676;
+      --ink:    #f1ede8;
+      --bg:     #0b0b0d;
+      --card:   #151516;
+      --line:   rgba(255, 255, 255, 0.08);
+      --muted:  #a59c93;
       --radius: 8px;
       --mono:   "JetBrains Mono", monospace;
+      --surface-soft: #101011;
+      --surface-hover: #1b1b1d;
+      --surface-warm: rgba(255, 95, 0, 0.12);
+      --surface-warm-text: #ffbe8a;
+      --surface-warm-line: rgba(255, 173, 120, 0.22);
+      --placeholder: #7f756b;
+      --code-inline: rgba(255, 255, 255, 0.08);
+      --pre-bg: #050505;
+      --success-bg: rgba(46, 160, 67, 0.16);
+      --success-line: rgba(46, 160, 67, 0.42);
+      --success-text: #8ee5a6;
+      --danger-bg: rgba(196, 68, 68, 0.14);
+      --danger-line: rgba(196, 68, 68, 0.36);
+      --danger-text: #ff9b9b;
+      --modal-card: #161617;
+      --modal-copy: #d8d0c7;
+      color-scheme: dark;
+    }
+
+    html.theme-light {
+      --ink: #141414;
+      --bg: #f7f7f8;
+      --card: #ffffff;
+      --line: #e5e5e5;
+      --muted: #767676;
+      --surface-soft: #f7f7f8;
+      --surface-hover: #333333;
+      --surface-warm: #fffbf8;
+      --surface-warm-text: #7a3c00;
+      --surface-warm-line: #ffd9be;
+      --placeholder: #999999;
+      --code-inline: rgba(0, 0, 0, 0.07);
+      --pre-bg: #1a1a1a;
+      --success-bg: #edfaf3;
+      --success-line: #22a562;
+      --success-text: #1a7a47;
+      --danger-bg: color-mix(in srgb, #c44 8%, transparent);
+      --danger-line: color-mix(in srgb, #c44 40%, transparent);
+      --danger-text: #c44;
+      --modal-card: #ffffff;
+      --modal-copy: #3f3f46;
+      color-scheme: light;
     }
 
     html, body { height: 100%; font-family: Inter, system-ui, sans-serif; font-size: 14px; color: var(--ink); background: var(--bg); overflow: hidden; }
@@ -73,7 +124,7 @@
     /* type switcher */
     .type-switcher {
       display: flex;
-      background: var(--bg);
+      background: var(--surface-soft);
       border-radius: 20px;
       padding: 2px;
       flex-shrink: 0;
@@ -113,8 +164,14 @@
       -webkit-appearance: none;
       outline: none;
       transition: border-color .15s;
+      color-scheme: inherit;
     }
     .model-picker select:hover, .model-picker select:focus { border-color: var(--orange); }
+    .model-picker select option,
+    .model-picker select optgroup {
+      background-color: var(--card);
+      color: var(--ink);
+    }
     .model-cost {
       font-family: var(--mono);
       font-size: 10.5px;
@@ -235,11 +292,11 @@
     .msg.assistant .msg-bubble { background: var(--card); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
     .msg.done { align-items: center; justify-content: center; }
     .msg.done .msg-role { display: none; }
-    .msg.done .msg-bubble { background: #edfaf3; border: 1.5px solid #22a562; color: #1a7a47; font-weight: 600; font-size: 13px; padding: 7px 18px; border-radius: 20px; text-align: center; }
+    .msg.done .msg-bubble { background: var(--success-bg); border: 1.5px solid var(--success-line); color: var(--success-text); font-weight: 600; font-size: 13px; padding: 7px 18px; border-radius: 20px; text-align: center; }
     .msg-bubble p { margin-bottom: 6px; } .msg-bubble p:last-child { margin-bottom: 0; }
-    .msg-bubble code { font-family: var(--mono); font-size: .83em; background: rgba(0,0,0,.07); padding: 1px 5px; border-radius: 4px; }
+    .msg-bubble code { font-family: var(--mono); font-size: .83em; background: var(--code-inline); padding: 1px 5px; border-radius: 4px; }
     .msg.user .msg-bubble code { background: rgba(255,255,255,.15); }
-    .msg-bubble pre { background: #1a1a1a; color: #e4e4e4; font-family: var(--mono); font-size: .80em; padding: 11px 13px; border-radius: 8px; overflow-x: auto; margin: 8px 0; }
+    .msg-bubble pre { background: var(--pre-bg); color: #e4e4e4; font-family: var(--mono); font-size: .80em; padding: 11px 13px; border-radius: 8px; overflow-x: auto; margin: 8px 0; }
     .msg-bubble pre code { background: none; padding: 0; color: inherit; }
     .msg-bubble strong { font-weight: 600; }
     .msg-bubble ul, .msg-bubble ol { padding-left: 18px; margin: 4px 0; }
@@ -262,14 +319,14 @@
     .tool-name { color: var(--orange); font-weight: 600; flex-shrink: 0; }
     .tool-args { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tool-row.failed {
-      background: color-mix(in srgb, #c44 8%, transparent);
-      border-color: color-mix(in srgb, #c44 40%, transparent);
+      background: var(--danger-bg);
+      border-color: var(--danger-line);
     }
-    .tool-row.failed .tool-name { color: #c44; }
+    .tool-row.failed .tool-name { color: var(--danger-text); }
     .tool-row .tool-error {
       width: 100%;
       flex-basis: 100%;
-      color: #c44;
+      color: var(--danger-text);
       white-space: pre-wrap;
       font-size: 11px;
       margin-top: 4px;
@@ -278,8 +335,8 @@
     /* ── Done summary ── */
     .done-summary {
       align-self: flex-start;
-      background: color-mix(in srgb, var(--green) 8%, transparent);
-      border: 1px solid color-mix(in srgb, var(--green) 30%, transparent);
+      background: var(--success-bg);
+      border: 1px solid var(--success-line);
       border-radius: 8px;
       padding: 8px 14px;
       margin-top: 4px;
@@ -343,9 +400,9 @@
       border-bottom: 1px solid var(--line);
       transition: background .2s, color .2s;
     }
-    .compose-prefix-bar.has-item { background: #fff7f2; color: #7a3c00; border-bottom-color: #ffd9be; }
+    .compose-prefix-bar.has-item { background: var(--surface-warm); color: var(--surface-warm-text); border-bottom-color: var(--surface-warm-line); }
     .compose-prefix-bar.has-item strong { color: var(--orange); font-weight: 600; }
-    .compose-prefix-bar.placeholder { color: #bbb; background: var(--bg); font-style: italic; }
+    .compose-prefix-bar.placeholder { color: var(--placeholder); background: var(--bg); font-style: italic; }
 
     /* Inputs */
     textarea.compose-input {
@@ -362,8 +419,8 @@
       outline: none;
       transition: background .15s;
     }
-    textarea.compose-input:focus { background: #fffbf8; }
-    textarea.compose-input::placeholder { color: #c8c8c8; }
+    textarea.compose-input:focus { background: var(--surface-warm); }
+    textarea.compose-input::placeholder { color: var(--placeholder); }
 
 
     /* Preview */
@@ -384,7 +441,7 @@
       font-family: var(--mono);
       font-size: 11px;
       line-height: 1.55;
-      color: #999;
+      color: var(--placeholder);
       white-space: pre-wrap;
       word-break: break-word;
       max-height: 160px;
@@ -440,29 +497,30 @@
     }
     .modal-backdrop.show { display: flex; }
     .modal-card {
-      background: #fff; border-radius: 12px; max-width: 480px; width: calc(100% - 40px);
+      background: var(--modal-card); border-radius: 12px; max-width: 480px; width: calc(100% - 40px);
       padding: 24px 26px 20px; box-shadow: 0 12px 40px rgba(0,0,0,.18);
       font-size: 13px; line-height: 1.55; color: var(--ink);
+      border: 1px solid var(--line);
     }
     .modal-card h2 {
       margin: 0 0 10px; font-size: 16px; font-weight: 700; letter-spacing: -.01em;
     }
-    .modal-card p { margin: 0 0 10px; color: #3f3f46; }
-    .modal-card ul { margin: 0 0 12px 18px; padding: 0; color: #3f3f46; }
+    .modal-card p { margin: 0 0 10px; color: var(--modal-copy); }
+    .modal-card ul { margin: 0 0 12px 18px; padding: 0; color: var(--modal-copy); }
     .modal-card li { margin: 2px 0; }
     .modal-foot {
       display: flex; align-items: center; justify-content: space-between;
       margin-top: 14px; gap: 16px;
     }
     .modal-foot label {
-      display: flex; align-items: center; gap: 7px; font-size: 12px; color: #52525b;
+      display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--modal-copy);
       cursor: pointer; user-select: none;
     }
     .modal-foot button {
-      padding: 7px 16px; background: var(--ink); color: #fff; border: none;
+      padding: 7px 16px; background: var(--orange); color: #fff; border: none;
       border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
     }
-    .modal-foot button:hover { background: #000; }
+    .modal-foot button:hover { opacity: .9; }
   </style>
 </head>
 <body>
@@ -541,6 +599,26 @@
   let currentItem = null;
   let currentType = 'usecases';  // always use cases; APIs not permitted
   let allItems    = { usecases: [], apis: [] };
+
+  function applyThemeMode(theme) {
+    const resolvedTheme = theme === 'light' ? 'light' : 'dark';
+    const isLight = resolvedTheme === 'light';
+    document.documentElement.classList.toggle('theme-light', isLight);
+    document.body?.setAttribute('data-theme', resolvedTheme);
+  }
+
+  applyThemeMode(document.documentElement.classList.contains('theme-light') ? 'light' : 'dark');
+
+  window.addEventListener('message', (event) => {
+    if (event.origin !== window.location.origin) return;
+    if (!event.data || event.data.type !== 'vima:theme') return;
+    applyThemeMode(event.data.theme);
+  });
+
+  window.addEventListener('storage', (event) => {
+    if (event.key !== 'vima:theme') return;
+    applyThemeMode(event.newValue === 'light' ? 'light' : 'dark');
+  });
 
   /* ── DOM refs ── */
   const messagesEl   = document.getElementById('messages');

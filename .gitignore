@@ -7,6 +7,7 @@ __pycache__/
 .DS_Store
 open_finance_state.json
 open_finance.db
+simulator/db/bin_lookup.db
 
 # Signing keys / certificates
 config/keys/
