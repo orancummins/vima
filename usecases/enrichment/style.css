@@ -270,6 +270,154 @@ body {
   white-space: pre-wrap; word-break: break-word;
 }
 
+html:not(.theme-light) #uc-body {
+  background: #0a0a0a;
+}
+
+html:not(.theme-light) .enrich-header-text h2,
+html:not(.theme-light) .enrich-row-name,
+html:not(.theme-light) .enrich-stat-val {
+  color: rgba(245, 239, 231, 0.96);
+}
+
+html:not(.theme-light) .enrich-header-text p,
+html:not(.theme-light) .enrich-pipeline-legend,
+html:not(.theme-light) .enrich-row-meta,
+html:not(.theme-light) .enrich-confidence-label,
+html:not(.theme-light) .enrich-stat-lbl {
+  color: rgba(197, 188, 177, 0.72);
+}
+
+html:not(.theme-light) .enrich-legend-dot.raw {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+html:not(.theme-light) .enrich-legend-arrow {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+html:not(.theme-light) .enrich-btn-all {
+  background: linear-gradient(180deg, #ff7f32 0%, #ff5f00 100%);
+  box-shadow: 0 12px 24px rgba(255, 95, 0, 0.2);
+}
+
+html:not(.theme-light) .enrich-btn-reset {
+  background: #181818;
+  color: rgba(233, 226, 216, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html:not(.theme-light) .enrich-row {
+  background: linear-gradient(180deg, rgba(24, 24, 24, 0.98) 0%, rgba(15, 15, 15, 0.98) 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.24);
+}
+
+html:not(.theme-light) .enrich-row--done {
+  border-color: rgba(52, 211, 153, 0.26);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(52, 211, 153, 0.08);
+}
+
+html:not(.theme-light) .enrich-row--raw {
+  background: linear-gradient(180deg, rgba(19, 19, 19, 0.98) 0%, rgba(12, 12, 12, 0.98) 100%);
+}
+
+html:not(.theme-light) .enrich-row--loading::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+}
+
+html:not(.theme-light) .enrich-logo-img {
+  background: #191919;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html:not(.theme-light) .enrich-row-logo--blank {
+  opacity: 0.72;
+}
+
+html:not(.theme-light) .enrich-raw-big {
+  color: rgba(224, 215, 204, 0.84);
+  background: #171717;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+html:not(.theme-light) .enrich-row-amount.neg {
+  color: rgba(233, 226, 216, 0.88);
+}
+
+html:not(.theme-light) .enrich-row-amount.pos,
+html:not(.theme-light) .enrich-confidence-pct {
+  color: #6ee7b7;
+}
+
+html:not(.theme-light) .enrich-chip--cat {
+  background: color-mix(in srgb, var(--chip-color) 18%, rgba(17, 17, 17, 0.92));
+  color: color-mix(in srgb, var(--chip-color) 78%, white);
+  border: 1px solid color-mix(in srgb, var(--chip-color) 42%, rgba(255, 255, 255, 0.14));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+html:not(.theme-light) .enrich-chip--sub,
+html:not(.theme-light) .enrich-chip--unknown {
+  background: #191919;
+  color: rgba(197, 188, 177, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+html:not(.theme-light) .enrich-chip--mcc {
+  background: rgba(99, 102, 241, 0.14);
+  color: #c7d2fe;
+}
+
+html:not(.theme-light) .enrich-chip--flag {
+  background: rgba(16, 185, 129, 0.14);
+  color: #9ae6b4;
+  border-color: rgba(52, 211, 153, 0.22);
+}
+
+html:not(.theme-light) .enrich-meta-website {
+  color: #ffbe8a;
+}
+
+html:not(.theme-light) .enrich-row-raw-label {
+  background: #171717;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html:not(.theme-light) .enrich-label-raw,
+html:not(.theme-light) .enrich-raw-text {
+  color: rgba(197, 188, 177, 0.74);
+}
+
+html:not(.theme-light) .enrich-confidence-bar,
+html:not(.theme-light) .enrich-progress-bar {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html:not(.theme-light) .enrich-btn-row {
+  background: #141414;
+  color: #ff8d4a;
+  border-color: rgba(255, 95, 0, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+html:not(.theme-light) .enrich-btn-row:hover {
+  background: var(--mc-orange);
+  color: white;
+}
+
+html:not(.theme-light) .enrich-btn-row:disabled {
+  background: #151515;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(197, 188, 177, 0.5);
+}
+
+html:not(.theme-light) .enrich-row-error {
+  background: rgba(127, 29, 29, 0.28);
+  border-color: rgba(248, 113, 113, 0.32);
+  color: #fecaca;
+}
+
 @media (max-width: 1080px) {
   .enrich-stage  { padding: 0 0 32px; }
   .enrich-header { flex-direction: column; gap: 12px; }

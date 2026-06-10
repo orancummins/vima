@@ -94,6 +94,12 @@ body {
   color: var(--ink);
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
+  color-scheme: light;
+}
+.clarity-field select option,
+.clarity-field select optgroup {
+  background: #ffffff;
+  color: var(--ink);
 }
 .clarity-field select:focus {
   outline: none;
@@ -490,6 +496,9 @@ body {
   border: 0;
   display: block;
 }
+.clarity-map-box .leaflet-control-container { z-index: auto; }
+.clarity-map-box .leaflet-top,
+.clarity-map-box .leaflet-bottom { z-index: auto; }
 .clarity-map-link { font-size: 12px; align-self: flex-start; }
 .clarity-industry-logo-box {
   width: 100%;
@@ -507,4 +516,101 @@ body {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+}
+
+html:not(.theme-light) .clarity-form-card,
+html:not(.theme-light) .clarity-hero,
+html:not(.theme-light) .clarity-merchant-card,
+html:not(.theme-light) .clarity-details,
+html:not(.theme-light) .clarity-media-card {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+html:not(.theme-light) .clarity-field select {
+  background: var(--surface-2);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--ink);
+  color-scheme: dark;
+}
+
+html:not(.theme-light) .clarity-field select option,
+html:not(.theme-light) .clarity-field select optgroup {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+html:not(.theme-light) .clarity-field select:focus {
+  border-color: rgba(255, 140, 74, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 115, 28, 0.18);
+}
+
+html:not(.theme-light) .clarity-hero-icon,
+html:not(.theme-light) .clarity-merchant-logo,
+html:not(.theme-light) .clarity-hero-chip,
+html:not(.theme-light) .clarity-chip--cat {
+  background: rgba(255, 140, 74, 0.14);
+  border-color: rgba(255, 140, 74, 0.3);
+  color: #ffd4b5;
+}
+
+html:not(.theme-light) .clarity-chip--ok {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(52, 211, 153, 0.28);
+  color: #a7f3d0;
+}
+
+html:not(.theme-light) .clarity-arrow {
+  color: rgba(255, 255, 255, 0.18);
+}
+
+html:not(.theme-light) .clarity-raw-card,
+html:not(.theme-light) .clarity-merchant-card--empty,
+html:not(.theme-light) .clarity-map-box,
+html:not(.theme-light) .clarity-industry-logo-box,
+html:not(.theme-light) .clarity-empty-icon {
+  background: var(--surface-2);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+}
+
+html:not(.theme-light) .leaflet-popup-content-wrapper,
+html:not(.theme-light) .leaflet-popup-tip {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+html:not(.theme-light) .clarity-raw-card {
+  border-style: solid;
+}
+
+html:not(.theme-light) .clarity-merchant-logo-fallback,
+html:not(.theme-light) .clarity-merchant-tag,
+html:not(.theme-light) .clarity-link {
+  color: #ffbe8a;
+}
+
+html:not(.theme-light) .clarity-form-title,
+html:not(.theme-light) .clarity-hero h3,
+html:not(.theme-light) .clarity-raw-name,
+html:not(.theme-light) .clarity-empty-title,
+html:not(.theme-light) .clarity-merchant-name,
+html:not(.theme-light) .clarity-details-val {
+  color: var(--ink);
+}
+
+html:not(.theme-light) .clarity-form-sub,
+html:not(.theme-light) .clarity-field label,
+html:not(.theme-light) .clarity-hero p,
+html:not(.theme-light) .clarity-loading,
+html:not(.theme-light) .clarity-raw-label,
+html:not(.theme-light) .clarity-raw-sub,
+html:not(.theme-light) .clarity-raw-tag,
+html:not(.theme-light) .clarity-empty-sub,
+html:not(.theme-light) .clarity-merchant-addr,
+html:not(.theme-light) .clarity-details-title,
+html:not(.theme-light) .clarity-details-key,
+html:not(.theme-light) .clarity-media-label {
+  color: var(--muted);
 }

@@ -89,6 +89,30 @@ body {
   border-radius: 10px;
   justify-content: center;
 }
+.pfm-divider {
+  position: relative;
+  margin: 8px 0;
+}
+.pfm-divider-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--line);
+}
+.pfm-divider-content {
+  position: relative;
+  text-align: center;
+}
+.pfm-divider-label {
+  display: inline-block;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  background: #fff;
+}
 
 .pfm-phone-wrap {
   flex: 0 0 auto;
@@ -743,4 +767,183 @@ body {
   .iphone {
     transform: scale(0.85);
   }
+}
+
+html:not(.theme-light) .pfm-controlbar,
+html:not(.theme-light) .pfm-hero,
+html:not(.theme-light) .pfm-card,
+html:not(.theme-light) .pfm-kpi,
+html:not(.theme-light) .pfm-isection,
+html:not(.theme-light) .pfm-settings-card,
+html:not(.theme-light) .pfm-sheet,
+html:not(.theme-light) .pfm-connect-frame .topbar,
+html:not(.theme-light) .pfm-connect-frame iframe {
+  background: var(--surface);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+html:not(.theme-light) .iphone-screen,
+html:not(.theme-light) .pfm-app,
+html:not(.theme-light) .pfm-connect-frame,
+html:not(.theme-light) .pfm-screen,
+html:not(.theme-light) .pfm-recurring {
+  background: #0f0f0f;
+  color: var(--ink);
+}
+
+html:not(.theme-light) .iphone-status {
+  background: rgba(10, 10, 10, 0.84);
+  color: var(--ink);
+}
+
+html:not(.theme-light) .iphone-status .battery,
+html:not(.theme-light) .iphone-status .battery::after,
+html:not(.theme-light) .iphone-status .battery > span,
+html:not(.theme-light) .iphone-home-indicator {
+  background: rgba(241, 237, 232, 0.82);
+  border-color: rgba(241, 237, 232, 0.82);
+}
+
+html:not(.theme-light) .pfm-controlbar input,
+html:not(.theme-light) .pfm-txn-search,
+html:not(.theme-light) .pfm-sub-card,
+html:not(.theme-light) .pfm-setting-row .ic,
+html:not(.theme-light) .pfm-connect .ic-wrap,
+html:not(.theme-light) .pfm-sheet-logo,
+html:not(.theme-light) .pfm-txn-logo-img,
+html:not(.theme-light) .pfm-merchant .rank,
+html:not(.theme-light) .pfm-quick button,
+html:not(.theme-light) .pfm-quick .ic,
+html:not(.theme-light) .pfm-tabbar,
+html:not(.theme-light) .pfm-tip,
+html:not(.theme-light) .pfm-stack,
+html:not(.theme-light) .pfm-heatmap .day {
+  background: var(--surface-2);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html:not(.theme-light) .pfm-controlbar input,
+html:not(.theme-light) .pfm-txn-search input {
+  color: var(--ink);
+}
+
+html:not(.theme-light) .pfm-controlbar input:focus,
+html:not(.theme-light) .pfm-txn-search {
+  box-shadow: 0 0 0 3px rgba(255, 115, 28, 0.12);
+}
+
+html:not(.theme-light) .pfm-txn-search {
+  box-shadow: none;
+}
+
+html:not(.theme-light) .pfm-txn-search .pfm-i,
+html:not(.theme-light) .pfm-txn-search input::placeholder,
+html:not(.theme-light) .pfm-tabbar button,
+html:not(.theme-light) .pfm-heatmap .dow,
+html:not(.theme-light) .pfm-heatmap .day,
+html:not(.theme-light) .pfm-merchant .ct,
+html:not(.theme-light) .pfm-sub-freq,
+html:not(.theme-light) .pfm-enriching-label {
+  color: var(--muted);
+}
+
+html:not(.theme-light) .pfm-tabbar button.active,
+html:not(.theme-light) .pfm-greet h3,
+html:not(.theme-light) .pfm-screen-title,
+html:not(.theme-light) .pfm-hero .amount,
+html:not(.theme-light) .pfm-section-title .link,
+html:not(.theme-light) .pfm-acct .name,
+html:not(.theme-light) .pfm-acct .bal.neg,
+html:not(.theme-light) .pfm-legend-row .name,
+html:not(.theme-light) .pfm-legend-row .amt,
+html:not(.theme-light) .pfm-txn .info .name,
+html:not(.theme-light) .pfm-txn .amt.neg,
+html:not(.theme-light) .pfm-sub-name,
+html:not(.theme-light) .pfm-sheet h3,
+html:not(.theme-light) .pfm-sheet-row .v,
+html:not(.theme-light) .pfm-kpi .v,
+html:not(.theme-light) .pfm-isection h5,
+html:not(.theme-light) .pfm-merchant .nm,
+html:not(.theme-light) .pfm-tip .body strong,
+html:not(.theme-light) .pfm-setting-row .label,
+html:not(.theme-light) .pfm-connect h3,
+html:not(.theme-light) .pfm-connect-frame .topbar h4 {
+  color: var(--ink);
+}
+
+html:not(.theme-light) .pfm-greet .hello,
+html:not(.theme-light) .pfm-info-desc,
+html:not(.theme-light) .pfm-controlbar .label,
+html:not(.theme-light) .pfm-hero .label,
+html:not(.theme-light) .pfm-section-title h4,
+html:not(.theme-light) .pfm-acct .meta,
+html:not(.theme-light) .pfm-legend-row .pct,
+html:not(.theme-light) .pfm-txn .info .meta,
+html:not(.theme-light) .pfm-sheet-row .k,
+html:not(.theme-light) .pfm-kpi .k,
+html:not(.theme-light) .pfm-kpi .sub,
+html:not(.theme-light) .pfm-isection .desc,
+html:not(.theme-light) .pfm-connect p,
+html:not(.theme-light) .pfm-connect-frame .loading,
+html:not(.theme-light) .pfm-setting-row .val,
+html:not(.theme-light) .pfm-sub-scroll .muted {
+  color: var(--muted);
+}
+
+html:not(.theme-light) .pfm-acct,
+html:not(.theme-light) .pfm-legend-row,
+html:not(.theme-light) .pfm-txn,
+html:not(.theme-light) .pfm-sheet-row,
+html:not(.theme-light) .pfm-setting-row,
+html:not(.theme-light) .pfm-merchant {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+html:not(.theme-light) .pfm-acct:hover,
+html:not(.theme-light) .pfm-txn:hover,
+html:not(.theme-light) .pfm-setting-row:active {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+html:not(.theme-light) .pfm-acct-icon.checking   { background: rgba(59, 130, 246, 0.16); color: #93c5fd; }
+html:not(.theme-light) .pfm-acct-icon.savings    { background: rgba(16, 185, 129, 0.16); color: #a7f3d0; }
+html:not(.theme-light) .pfm-acct-icon.creditCard { background: rgba(236, 72, 153, 0.16); color: #f9a8d4; }
+html:not(.theme-light) .pfm-acct-icon.loan       { background: rgba(249, 115, 22, 0.16); color: #fdba74; }
+html:not(.theme-light) .pfm-acct-icon.mortgage   { background: rgba(139, 92, 246, 0.16); color: #c4b5fd; }
+html:not(.theme-light) .pfm-acct-icon.investment { background: rgba(20, 184, 166, 0.16); color: #99f6e4; }
+html:not(.theme-light) .pfm-acct-icon.other      { background: rgba(255, 255, 255, 0.08); color: var(--muted); }
+
+html:not(.theme-light) .pfm-hero {
+  background: linear-gradient(180deg, #141414 0%, #101010 100%);
+}
+
+html:not(.theme-light) .pfm-hero .trend.neg { color: #fdba74; background: rgba(249, 115, 22, 0.12); }
+html:not(.theme-light) .pfm-hero .trend.pos { color: #a7f3d0; background: rgba(16, 185, 129, 0.12); }
+
+html:not(.theme-light) .pfm-sheet-backdrop {
+  background: rgba(0, 0, 0, 0.56);
+}
+
+html:not(.theme-light) .pfm-sheet-handle {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+html:not(.theme-light) .pfm-toggle.off {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+html:not(.theme-light) .pfm-tip {
+  border: 1px solid rgba(255, 140, 74, 0.18);
+  background: linear-gradient(135deg, rgba(255, 140, 74, 0.14) 0%, rgba(255, 95, 0, 0.08) 100%);
+}
+
+html:not(.theme-light) .pfm-connect-frame,
+html:not(.theme-light) .pfm-connect-frame iframe,
+html:not(.theme-light) .pfm-connect-frame .topbar {
+  background: #0f0f0f;
+}
+
+html:not(.theme-light) .pfm-divider-label {
+  background: var(--surface);
 }

@@ -4,13 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mastercard Solution Studio</title>
+  <script>
+    (() => {
+      try {
+        if (localStorage.getItem('vima:theme') === 'light') {
+          document.documentElement.classList.add('theme-light');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ css_bust }}" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 </head>
-<body>
+<body data-script-root="{{ request.script_root or '' }}">
   <header class="header">
     <div class="brand" id="header-brand">
       <div class="brand-marks">
@@ -29,7 +38,14 @@
       <button class="top-tab" data-top-tab="bundles">API Bundles</button>
       <button class="top-tab" data-top-tab="usecases">Use Cases</button>
     </nav>
-    <div style="display:flex;align-items:center;gap:4px">
+    <div class="header-actions">
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to light theme" title="Switch to light theme">
+        <span class="theme-toggle-track" aria-hidden="true">
+          <span class="theme-toggle-option theme-toggle-option--dark">Dark</span>
+          <span class="theme-toggle-option theme-toggle-option--light">Light</span>
+          <span class="theme-toggle-thumb"></span>
+        </span>
+      </button>
       {% if spotlight %}
       <button class="aotd-trigger-btn"
               id="aotd-trigger-btn"
@@ -381,8 +397,21 @@
           </div>
         </div>
 
-        <div class="state-strip" id="state-strip"></div>
-        <div class="api-pairs" id="api-pairs" hidden></div>
+        <details class="api-context-section" id="api-context-section" hidden>
+          <summary class="api-context-toggle">
+            <svg class="api-context-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="api-context-toggle-copy">
+              <span class="api-context-toggle-title">API Context</span>
+              <span class="api-context-toggle-desc">Key values shared across calls, plus references to complementary APIs and use cases</span>
+            </span>
+          </summary>
+          <div class="api-context-body">
+            <div class="state-strip" id="state-strip"></div>
+            <div class="api-pairs" id="api-pairs" hidden></div>
+          </div>
+        </details>
       </div>
 
       <div class="workbench">
@@ -737,13 +766,13 @@
 
   <!-- ====================== Open Finance Setup Guide Modal ====================== -->
   <div id="ofin-setup-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="ofin-setup-title">
-    <div class="modal" style="max-width:560px">
+    <div class="modal ofin-setup-modal">
       <div class="modal-header">
         <h2 id="ofin-setup-title">🏦 Open Finance — First-Time Setup</h2>
         <button class="modal-close" id="ofin-setup-close" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <p style="margin:0 0 16px">Before running <strong>Refresh Accounts</strong> you need a connected test customer. Follow these three steps in the <strong>Open Finance API</strong> workbench:</p>
+        <p class="ofin-setup-intro">Before running <strong>Refresh Accounts</strong> you need a connected test customer. Follow these three steps in the <strong>Open Finance API</strong> workbench:</p>
         <ol class="ofin-setup-steps">
           <li>
             <strong>Create Testing User</strong>
@@ -764,9 +793,9 @@
           </li>
         </ol>
       </div>
-      <div class="modal-footer" style="padding:14px 20px;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:10px">
-        <label class="ofin-suppress-label" style="margin-right:auto;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none">
-          <input type="checkbox" id="ofin-setup-suppress" style="cursor:pointer;accent-color:var(--mc-orange)">
+      <div class="modal-footer ofin-setup-footer">
+        <label class="ofin-suppress-label">
+          <input type="checkbox" id="ofin-setup-suppress">
           Don't show again
         </label>
         <button class="btn btn-outline" id="ofin-setup-go-create">Go to Create Testing User</button>
@@ -1037,16 +1066,30 @@
         last = ts;
         ctx.clearRect(0, 0, SIZE, SIZE);
 
+        const isLight = document.documentElement.classList.contains('theme-light');
+        const gridR = isLight ? '0' : '255';
+        const gridG = isLight ? '0' : '120';
+        const gridB = isLight ? '0' : '0';
+        const dotR  = isLight ? '20'  : '255';
+        const dotG  = isLight ? '20'  : '160';
+        const dotB  = isLight ? '20'  : '40';
+        const glowColor = isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,140,0,0.95)';
+
         const grd = ctx.createRadialGradient(CX, CY, RADIUS*0.2, CX, CY, RADIUS);
-        grd.addColorStop(0, 'rgba(255,140,0,0.18)');
-        grd.addColorStop(0.45, 'rgba(255,94,0,0.10)');
+        if (isLight) {
+          grd.addColorStop(0, 'rgba(0,0,0,0.06)');
+          grd.addColorStop(0.45, 'rgba(0,0,0,0.03)');
+        } else {
+          grd.addColorStop(0, 'rgba(255,140,0,0.18)');
+          grd.addColorStop(0.45, 'rgba(255,94,0,0.10)');
+        }
         grd.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = grd;
         ctx.beginPath();
         ctx.arc(CX, CY, RADIUS*1.35, 0, Math.PI*2);
         ctx.fill();
 
-        const gOpacity = 0.18;
+        const gOpacity = isLight ? 0.22 : 0.18;
         ctx.lineWidth = 0.8;
         for (let lat = -80; lat <= 80; lat += 20) {
           const lR = lat * Math.PI / 180;
@@ -1056,7 +1099,7 @@
             const a = gOpacity * Math.max(0, Math.min(1, ((z0+z1)/2+0.4)/0.8));
             if (a < 0.005) continue;
             const s0 = 1/(1.8-z0), s1 = 1/(1.8-z1);
-            ctx.strokeStyle = `rgba(255,120,0,${a})`;
+            ctx.strokeStyle = `rgba(${gridR},${gridG},${gridB},${a})`;
             ctx.beginPath();
             ctx.moveTo(CX+Math.cos(lR)*Math.cos(l0)*RADIUS*s0, CY+Math.sin(lR)*RADIUS*s0);
             ctx.lineTo(CX+Math.cos(lR)*Math.cos(l1)*RADIUS*s1, CY+Math.sin(lR)*RADIUS*s1);
@@ -1071,7 +1114,7 @@
             const a = gOpacity * Math.max(0, Math.min(1, ((z0+z1)/2+0.4)/0.8));
             if (a < 0.005) continue;
             const s0 = 1/(1.8-z0), s1 = 1/(1.8-z1);
-            ctx.strokeStyle = `rgba(255,120,0,${a})`;
+            ctx.strokeStyle = `rgba(${gridR},${gridG},${gridB},${a})`;
             ctx.beginPath();
             ctx.moveTo(CX+Math.cos(l0)*Math.cos(lR)*RADIUS*s0, CY+Math.sin(l0)*RADIUS*s0);
             ctx.lineTo(CX+Math.cos(l1)*Math.cos(lR)*RADIUS*s1, CY+Math.sin(l1)*RADIUS*s1);
@@ -1088,9 +1131,9 @@
         });
         projected.filter(p => p.rz > -0.18).sort((a,b) => a.rz-b.rz).forEach(p => {
           ctx.save();
-          ctx.shadowColor = 'rgba(255,140,0,0.95)';
+          ctx.shadowColor = glowColor;
           ctx.shadowBlur = 8*p.sc;
-          ctx.fillStyle = `rgba(255,160,40,${p.alpha})`;
+          ctx.fillStyle = `rgba(${dotR},${dotG},${dotB},${p.alpha})`;
           ctx.beginPath();
           ctx.arc(p.px, p.py, 2.5*p.sc, 0, Math.PI*2);
           ctx.fill();

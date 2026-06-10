@@ -448,3 +448,78 @@ body {
   flex-direction: column;
   gap: 16px;
 }
+
+html:not(.theme-light) .es-form-card,
+html:not(.theme-light) .es-summary-strip,
+html:not(.theme-light) .es-offer-card,
+html:not(.theme-light) .es-hero {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+html:not(.theme-light) .es-field input,
+html:not(.theme-light) .es-btn--redeem,
+html:not(.theme-light) .es-summary-item code,
+html:not(.theme-light) .es-offer-logo,
+html:not(.theme-light) .es-hero-chip {
+  background: var(--surface-2);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--ink);
+}
+
+html:not(.theme-light) .es-field input:focus {
+  border-color: rgba(255, 140, 74, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 115, 28, 0.18);
+}
+
+html:not(.theme-light) .es-btn--redeem {
+  color: #ffd4b5;
+}
+
+html:not(.theme-light) .es-btn--redeem:hover:not(:disabled) {
+  background: rgba(255, 140, 74, 0.14);
+}
+
+html:not(.theme-light) .es-offer-discount,
+html:not(.theme-light) .es-redemption-banner,
+html:not(.theme-light) .es-redemption-icon,
+html:not(.theme-light) .es-voucher-code {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(52, 211, 153, 0.28);
+  color: #a7f3d0;
+}
+
+html:not(.theme-light) .es-hero-icon {
+  background: rgba(255, 140, 74, 0.14);
+  color: #ffd4b5;
+}
+
+html:not(.theme-light) .es-form-title,
+html:not(.theme-light) .es-summary-item span,
+html:not(.theme-light) .es-offer-merchant,
+html:not(.theme-light) .es-offer-title,
+html:not(.theme-light) .es-hero h3 {
+  color: var(--ink);
+}
+
+html:not(.theme-light) .es-form-sub,
+html:not(.theme-light) .es-field label,
+html:not(.theme-light) .es-loading,
+html:not(.theme-light) .es-summary-item label,
+html:not(.theme-light) .es-offer-cat,
+html:not(.theme-light) .es-offer-desc,
+html:not(.theme-light) .es-offer-dates,
+html:not(.theme-light) .es-terms-link,
+html:not(.theme-light) .es-hero p,
+html:not(.theme-light) .es-hero-chip,
+html:not(.theme-light) .es-redemption-title,
+html:not(.theme-light) .es-redemption-detail,
+html:not(.theme-light) .es-detail-label {
+  color: var(--muted);
+}
+
+html:not(.theme-light) .es-link,
+html:not(.theme-light) .es-banner-close {
+  color: #ffbe8a;
+}

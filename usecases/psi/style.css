@@ -36,6 +36,24 @@ body {
 .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-primary { background: var(--mc-orange); color: #fff; border-color: transparent; }
 
+#psi-connect-btn {
+  background: #141414;
+  color: #ffffff;
+  border-color: #141414;
+  box-shadow: 0 10px 22px rgba(20, 20, 20, 0.12);
+}
+
+#psi-connect-btn:hover:not(:disabled) {
+  background: #000000;
+  border-color: #000000;
+  opacity: 1;
+}
+
+#psi-connect-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 95, 0, 0.18), 0 10px 22px rgba(20, 20, 20, 0.12);
+}
+
 .psi-stage {
   max-width: 900px; margin: 0 auto;
   display: flex; flex-direction: column; gap: 16px;
@@ -76,6 +94,12 @@ body {
   outline: none; transition: border-color 0.15s;
   height: 40px; box-sizing: border-box;
   font-family: inherit;
+  color-scheme: light;
+}
+.psi-field select option,
+.psi-field select optgroup {
+  background: #ffffff;
+  color: var(--ink);
 }
 .psi-field input:focus, .psi-field select:focus {
   border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
@@ -554,4 +578,180 @@ body {
   .api-log-detail { grid-template-columns: 1fr; }
   .api-log-pane   { border-right: none; border-bottom: 1px solid var(--line); }
   .api-log-pane:last-child { border-bottom: none; }
+}
+
+html:not(.theme-light) .psi-controlbar,
+html:not(.theme-light) .psi-hero,
+html:not(.theme-light) .psi-gauge-card,
+html:not(.theme-light) .psi-details-card,
+html:not(.theme-light) .psi-timeline,
+html:not(.theme-light) .psi-factors,
+html:not(.theme-light) .api-log-panel {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+html:not(.theme-light) .api-log-header,
+html:not(.theme-light) .api-log-detail,
+html:not(.theme-light) .api-log-row--open .api-log-row-summary {
+  background: var(--surface-2);
+  border-color: var(--line);
+}
+
+html:not(.theme-light) .api-log-row-summary:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+html:not(.theme-light) .api-log-pre {
+  background: #0b0b0b;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #e7e0d7;
+}
+
+html:not(.theme-light) .psi-field input,
+html:not(.theme-light) .psi-field select,
+html:not(.theme-light) .psi-amount-wrap,
+html:not(.theme-light) .btn:not(.btn-primary),
+html:not(.theme-light) .api-log-clear-btn {
+  background: var(--surface-2);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--ink);
+}
+
+html:not(.theme-light) #psi-connect-btn {
+  background: rgba(255, 95, 0, 0.14);
+  border-color: rgba(255, 140, 74, 0.46);
+  color: #ffcfab;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+}
+
+html:not(.theme-light) #psi-connect-btn:hover:not(:disabled) {
+  background: rgba(255, 95, 0, 0.2);
+  border-color: rgba(255, 176, 112, 0.62);
+  color: #ffe3cc;
+  opacity: 1;
+}
+
+html:not(.theme-light) #psi-connect-btn:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 115, 28, 0.22), 0 10px 22px rgba(0, 0, 0, 0.24);
+}
+
+html:not(.theme-light) .psi-field select {
+  color-scheme: dark;
+}
+
+html:not(.theme-light) .psi-field select option,
+html:not(.theme-light) .psi-field select optgroup {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+html:not(.theme-light) .psi-field input:focus,
+html:not(.theme-light) .psi-field select:focus,
+html:not(.theme-light) .psi-amount-wrap:focus-within {
+  background: var(--surface-3);
+  border-color: rgba(255, 140, 74, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 115, 28, 0.18);
+}
+
+html:not(.theme-light) .psi-amount-dollar,
+html:not(.theme-light) .psi-day:hover,
+html:not(.theme-light) .psi-day--selected {
+  background: var(--surface-2);
+}
+
+html:not(.theme-light) .psi-hero-chip,
+html:not(.theme-light) .api-log-method,
+html:not(.theme-light) .api-log-count {
+  background: rgba(255, 140, 74, 0.16);
+  border-color: rgba(255, 140, 74, 0.34);
+  color: #ffd4b5;
+}
+
+html:not(.theme-light) .psi-verdict {
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.22);
+}
+
+html:not(.theme-light) .psi-verdict--low {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(17, 17, 17, 0.98) 100%);
+  border-color: rgba(52, 211, 153, 0.36);
+}
+
+html:not(.theme-light) .psi-verdict--medium {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(17, 17, 17, 0.98) 100%);
+  border-color: rgba(251, 191, 36, 0.34);
+}
+
+html:not(.theme-light) .psi-verdict--high {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(17, 17, 17, 0.98) 100%);
+  border-color: rgba(248, 113, 113, 0.34);
+}
+
+html:not(.theme-light) .psi-day--selected {
+  outline-color: rgba(255, 140, 74, 0.8);
+}
+
+html:not(.theme-light) .psi-day--best {
+  border-top-color: rgba(52, 211, 153, 0.9);
+}
+
+html:not(.theme-light) .psi-badge--low,
+html:not(.theme-light) .psi-ibadge--low,
+html:not(.theme-light) .api-log-badge--ok,
+html:not(.theme-light) .api-log-action {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(52, 211, 153, 0.28);
+  color: #a7f3d0;
+}
+
+html:not(.theme-light) .psi-badge--high,
+html:not(.theme-light) .psi-ibadge--high,
+html:not(.theme-light) .api-log-badge--err {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(248, 113, 113, 0.28);
+  color: #fecaca;
+}
+
+html:not(.theme-light) .api-log-badge--pending {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+}
+
+html:not(.theme-light) .psi-factor-track {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html:not(.theme-light) .psi-timeline-legend {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+html:not(.theme-light) .psi-hero h3,
+html:not(.theme-light) .psi-verdict-title,
+html:not(.theme-light) .psi-verdict-sub,
+html:not(.theme-light) .psi-detail-value,
+html:not(.theme-light) .psi-section-title,
+html:not(.theme-light) .psi-day-conf,
+html:not(.theme-light) .api-log-title,
+html:not(.theme-light) .api-log-endpoint,
+html:not(.theme-light) .api-log-pre {
+  color: var(--ink);
+}
+
+html:not(.theme-light) .psi-hero p,
+html:not(.theme-light) .psi-hint,
+html:not(.theme-light) .psi-detail-label,
+html:not(.theme-light) .psi-section-sub,
+html:not(.theme-light) .psi-day-date,
+html:not(.theme-light) .psi-card-sub,
+html:not(.theme-light) .psi-card-desc,
+html:not(.theme-light) .psi-factor-label,
+html:not(.theme-light) .psi-factors-date,
+html:not(.theme-light) .api-log-clear-btn,
+html:not(.theme-light) .api-log-empty,
+html:not(.theme-light) .api-log-dur,
+html:not(.theme-light) .api-log-time,
+html:not(.theme-light) .api-log-chevron,
+html:not(.theme-light) .api-log-pane-label {
+  color: var(--muted);
 }
