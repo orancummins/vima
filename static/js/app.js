@@ -6087,6 +6087,14 @@
   const RUNTIME_MODE = window.__RUNTIME_MODE__ || {};
   const SERVER_MODE = !!RUNTIME_MODE.server_mode;
   const NON_US_MODE = !!RUNTIME_MODE.non_us_mode;
+  const SCRIPT_ROOT = (document.body?.dataset?.scriptRoot || '').replace(/\/$/, '');
+
+  function _appPath(path) {
+    if (typeof path !== 'string') return path;
+    if (!path.startsWith('/')) return path;
+    if (!SCRIPT_ROOT) return path;
+    return `${SCRIPT_ROOT}${path}`;
+  }
 
   let APIS = [];
   let legacyToId = {};
