@@ -509,15 +509,18 @@ def explorer_setup(api_id: str):
 
     env_prefix = manifest.get("env_prefix") or api_id.upper()
     # Standard Mastercard OAuth1 credential triple. Open Finance uses a
-    # different shape — we still surface what's set so the operator can
-    # see which vars are populated.
-    if api_id.startswith("open_finance"):
-        var_names = [
-            f"{env_prefix}_PARTNER_ID",
-            f"{env_prefix}_PARTNER_SECRET",
-            f"{env_prefix}_APP_KEY",
-        ]
-        packages = ["requests"]
+    # different shape per variant (US/AU = Finicity Partner+App; EU =
+    # OAuth2/JWT client_credentials) — defer to the shared variant table
+    # in apis.snippet so /setup, /run and snippet rendering stay in sync.
+    from apis import snippet as api_snippet
+    of_runtime = (
+        api_snippet.of_runtime_for_prefix(env_prefix)
+        if api_id.startswith("open_finance")
+        else None
+    )
+    if of_runtime:
+        var_names = of_runtime["env_var_names"]
+        packages = of_runtime["packages"]
     else:
         var_names = [
             f"{env_prefix}_CONSUMER_KEY",
@@ -603,13 +606,14 @@ def explorer_run(api_id: str):
     # Build the env-var list using the same logic as /setup so the
     # spawned terminal sees what the local server sees.
     env_prefix = manifest.get("env_prefix") or api_id.upper()
-    if api_id.startswith("open_finance"):
-        var_names = [
-            f"{env_prefix}_PARTNER_ID",
-            f"{env_prefix}_PARTNER_SECRET",
-            f"{env_prefix}_APP_KEY",
-        ]
-        packages = ["requests"]
+    of_runtime = (
+        api_snippet.of_runtime_for_prefix(env_prefix)
+        if api_id.startswith("open_finance")
+        else None
+    )
+    if of_runtime:
+        var_names = of_runtime["env_var_names"]
+        packages = of_runtime["packages"]
     else:
         var_names = [
             f"{env_prefix}_CONSUMER_KEY",
@@ -653,6 +657,16 @@ def explorer_run(api_id: str):
             "$ErrorActionPreference = 'Continue'",
             "Write-Host 'Mastercard Solution Studio - running snippet for " + api_id + "' -ForegroundColor Cyan",
             "Write-Host ''",
+            # The Flask process that launched this terminal may itself be
+            # running inside a venv (e.g. tools/mcd-key-automation/.venv).
+            # That venv leaks via VIRTUAL_ENV/PYTHONHOME into the child
+            # shell, which makes `pip install --user` fail with
+            # "User site-packages are not visible in this virtualenv".
+            # Scrub the venv env vars so `py` picks the system Python
+            # cleanly and --user installs into the user site as intended.
+            "Remove-Item Env:VIRTUAL_ENV    -ErrorAction SilentlyContinue",
+            "Remove-Item Env:PYTHONHOME     -ErrorAction SilentlyContinue",
+            "Remove-Item Env:VIRTUAL_ENV_PROMPT -ErrorAction SilentlyContinue",
         ]
         for name, val in env_pairs:
             lines.append(f"$env:{name} = {_ps_quote(val)}")
@@ -695,8 +709,16 @@ def explorer_run(api_id: str):
         sh_path = tmpdir / f"{api_id}_{op_id}.sh"
         py_path = tmpdir / f"{api_id}_{op_id}.py"
         py_path.write_text(code, encoding="utf-8")
-        lines = ["#!/bin/bash", "set +e",
-                 f"echo 'Mastercard Solution Studio - running snippet for {api_id}'", ""]
+        lines = [
+            "#!/bin/bash",
+            "set +e",
+            f"echo 'Mastercard Solution Studio - running snippet for {api_id}'",
+            # See the Windows branch for why we scrub these — the Flask
+            # process may have been launched inside a venv, and that
+            # makes `pip install --user` refuse to run.
+            "unset VIRTUAL_ENV PYTHONHOME VIRTUAL_ENV_PROMPT",
+            "",
+        ]
         for name, val in env_pairs:
             lines.append(f"export {name}={shlex.quote(val)}")
         if packages:
@@ -713,8 +735,14 @@ def explorer_run(api_id: str):
         sh_path = tmpdir / f"{api_id}_{op_id}.sh"
         py_path = tmpdir / f"{api_id}_{op_id}.py"
         py_path.write_text(code, encoding="utf-8")
-        lines = ["#!/bin/bash", "set +e",
-                 f"echo 'Mastercard Solution Studio - running snippet for {api_id}'", ""]
+        lines = [
+            "#!/bin/bash",
+            "set +e",
+            f"echo 'Mastercard Solution Studio - running snippet for {api_id}'",
+            # See the Windows branch for why we scrub these.
+            "unset VIRTUAL_ENV PYTHONHOME VIRTUAL_ENV_PROMPT",
+            "",
+        ]
         for name, val in env_pairs:
             lines.append(f"export {name}={shlex.quote(val)}")
         if packages:
@@ -1800,6 +1828,7 @@ def _build_config_schema() -> list[dict]:
         AUTH_OAUTH1,
         AUTH_OAUTH1_ENC,
         AUTH_OAUTH2,
+        AUTH_JWT_RS256,
     )
 
     groups: list[dict] = []
@@ -1825,6 +1854,22 @@ def _build_config_schema() -> list[dict]:
                 {"key": f"{p}_APP_KEY",        "label": "App Key",        "type": "password", "info": "Application key for your project, alongside the Partner ID in the portal."},
                 {"key": f"{p}_API_BASE_URL",   "label": "API Base URL",   "type": "text",     "info": "Base URL for the API. Use https://api.finicity.com for production or the sandbox URL for testing."},
                 {"key": f"{p}_SIG_KEY_PATH",   "label": "Signature Verification Key", "type": "file", "info": "Optional public key (.pem) used to verify webhook signatures from the platform."},
+            ]
+        elif entry.auth == AUTH_JWT_RS256:
+            # Mastercard Open Finance Europe (Aiia) — OAuth 2.0 client_credentials
+            # with an RS256-signed JWT client assertion. Manual onboarding only:
+            # generate an RSA-4096 keypair, email the public PEM to
+            # openbankingeu_support@mastercard.com, then paste the returned
+            # clientId below.
+            fields = [
+                {"key": f"{p}_CLIENT_ID",        "label": "Client ID",        "type": "text",     "info": f"{entry.display_name} clientId issued by Mastercard's EU onboarding officer after they add your public RSA cert to the sandbox trust list. UUID format."},
+                {"key": f"{p}_APPLICATION_ID",   "label": "Application ID",   "type": "text",     "info": f"{entry.display_name} applicationId. Sent on every consent / data call as the X-Application-Id header. Issued by the EU onboarding officer alongside the clientId. UUID format."},
+                {"key": f"{p}_USE_CASE_ID",      "label": "Use Case Configuration ID", "type": "text", "info": "useCaseConfigurationId provisioned by Mastercard onboarding. Sent as the request body field `useCaseConfigurationId` on Create Consent. UUID format."},
+                {"key": f"{p}_REDIRECT_URL",     "label": "Redirect URL",     "type": "text",     "info": "Whitelisted return URL for the hosted Aiia Flow. Pre-configured on the use-case configuration by Mastercard onboarding (not sent per request). Example: https://httpbun.com/any/*"},
+                {"key": f"{p}_PRIVATE_KEY_PATH", "label": "Private Key File", "type": "file",     "info": "RSA private key (.key / .pem). Generate locally with: openssl req -x509 -sha256 -nodes -newkey rsa:4096 -keyout private.key -days 730 -out public.pem"},
+                {"key": f"{p}_PUBLIC_CERT_PATH", "label": "Public Certificate", "type": "file",    "info": "Public X.509 certificate (.pem) matching the private key. Email this file to openbankingeu_support@mastercard.com to be added to the trust list — the JWT kid is its SHA-256 thumbprint."},
+                {"key": f"{p}_AUTH_BASE_URL",    "label": "Auth Base URL",    "type": "text",     "info": "OAuth token endpoint host. Sandbox: https://mtf.auth.openbanking.mastercard.eu"},
+                {"key": f"{p}_API_BASE_URL",     "label": "API Base URL",     "type": "text",     "info": "Open Finance API host. Sandbox: https://mtf.api.openbanking.mastercard.eu"},
             ]
         groups.append({
             "id": entry.id,
@@ -2244,8 +2289,8 @@ def config_upload_key():
     if not fname:
         return jsonify({"error": "Empty filename"}), 400
     ext = os.path.splitext(fname)[1].lower()
-    if ext not in (".p12", ".pkcs12", ".pem"):
-        return jsonify({"error": "Only .p12, .pkcs12, or .pem files are accepted"}), 400
+    if ext not in (".p12", ".pkcs12", ".pem", ".key"):
+        return jsonify({"error": "Only .p12, .pkcs12, .pem, or .key files are accepted"}), 400
     # Use only basename to prevent path traversal
     safe_name = os.path.basename(fname)
     os.makedirs(_KEYS_DIR, exist_ok=True)

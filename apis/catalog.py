@@ -36,6 +36,8 @@ from typing import Iterable, Optional
 AUTH_OAUTH1 = "oauth1"            # PKCS#12 signing key only
 AUTH_OAUTH1_ENC = "oauth1_enc"    # PKCS#12 + client encryption PEM
 AUTH_OAUTH2 = "oauth2"            # Partner ID / Secret / App Key (Finicity)
+AUTH_JWT_RS256 = "jwt_rs256"      # OAuth 2.0 client_credentials with RS256-
+                                  # signed JWT client assertion (Aiia / EU)
 
 
 # ---------------------------------------------------------------------------
@@ -182,7 +184,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         # trust list. No portal-wizard provisioning slug at this time.
         portal_slug="ofin-eu",
         display_name="Open Finance Europe",
-        auth=AUTH_OAUTH2,
+        auth=AUTH_JWT_RS256,
         categories=("Auth", "Providers", "Consent", "Accounts",
                     "Transactions", "Balances", "Insights"),
         docs_url="https://developer.mastercard.com/open-finance-data/documentation/",
@@ -504,6 +506,7 @@ __all__ = [
     "AUTH_OAUTH1",
     "AUTH_OAUTH1_ENC",
     "AUTH_OAUTH2",
+    "AUTH_JWT_RS256",
     "ApiCatalogEntry",
     "CATALOG",
     "LEGACY_TO_ID",

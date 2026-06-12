@@ -31,7 +31,70 @@ from __future__ import annotations
 import json
 import os
 from contextlib import contextmanager
-from typing import Any, Dict, Iterator, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
+
+
+# ----------------------------------------------------------------------------
+# Open Finance variant config
+# ----------------------------------------------------------------------------
+# The three Open Finance APIs share a "Bearer token + per-vendor headers"
+# shape but differ in env-var names, auth URL, header names and (for EU)
+# the entire auth flow. Centralised here so snippet rendering, env-var
+# stubbing during capture, and the /explorer/<api>/setup + /run endpoints
+# in app.py all stay in sync.
+
+_OF_VARIANTS: Dict[str, Dict[str, Any]] = {
+    "OPEN_FINANCE": {
+        "kind":         "finicity",
+        "default_base": "https://api.finicity.com",
+        "auth_path":    "/aggregation/v2/partners/authentication",
+        "key_header":   "Finicity-App-Key",
+        "token_header": "Finicity-App-Token",
+        "env_vars":     ("PARTNER_ID", "PARTNER_SECRET", "APP_KEY"),
+        "packages":     ("requests",),
+        "label":        "Mastercard Open Banking (Finicity, US)",
+    },
+    "OPEN_FINANCE_AU": {
+        "kind":         "finicity",
+        "default_base": "https://api.openbanking.mastercard.com.au",
+        "auth_path":    "/aggregation/v2/partners/authentication",
+        "key_header":   "App-Key",
+        "token_header": "App-Token",
+        "env_vars":     ("PARTNER_ID", "PARTNER_SECRET", "APP_KEY"),
+        "packages":     ("requests",),
+        "label":        "Mastercard Open Finance Australia",
+    },
+    "OPEN_FINANCE_EU": {
+        "kind":              "jwt_oauth2",
+        "default_auth_base": "https://mtf.auth.openbanking.mastercard.eu",
+        "default_api_base":  "https://mtf.api.openbanking.mastercard.eu",
+        "jwt_audience":      "auth.mastercard.com",
+        "env_vars":          ("CLIENT_ID", "PRIVATE_KEY_PATH", "PUBLIC_CERT_PATH"),
+        "packages":          ("requests", "cryptography"),
+        "label":             "Mastercard Open Finance Europe (Aiia)",
+    },
+}
+
+
+def _of_variant(env_prefix: str) -> Optional[Dict[str, Any]]:
+    return _OF_VARIANTS.get(env_prefix)
+
+
+def of_runtime_for_prefix(env_prefix: str) -> Optional[Dict[str, Any]]:
+    """Public helper used by ``/explorer/<api>/setup`` and ``/run`` in
+    ``app.py`` so they advertise / export the right env vars and pip
+    packages for each Open Finance variant.
+
+    Returns ``None`` for non-Open-Finance APIs (caller should fall back
+    to the standard OAuth1 credential triple).
+    """
+    v = _of_variant(env_prefix)
+    if not v:
+        return None
+    return {
+        "env_var_names": [f"{env_prefix}_{n}" for n in v["env_vars"]],
+        "packages":      list(v["packages"]),
+    }
 
 
 # ----------------------------------------------------------------------------
@@ -233,14 +296,28 @@ def _ensure_env_set(env_prefix: str) -> Dict[str, str]:
         f"{env_prefix}_CONSUMER_KEY": "snippet-dry-run",
         f"{env_prefix}_SIGNING_KEY_PATH": "/tmp/snippet-dry-run.p12",
     }
-    # Open Finance / Finicity uses OAuth2-style partner credentials
-    # instead of OAuth1, so stub those too when relevant.
-    if env_prefix.startswith("OPEN_FINANCE"):
-        placeholders.update({
-            f"{env_prefix}_PARTNER_ID":     "snippet-dry-run-partner",
-            f"{env_prefix}_PARTNER_SECRET": "snippet-dry-run-secret",
-            f"{env_prefix}_APP_KEY":        "snippet-dry-run-appkey",
-        })
+    # Open Finance variants use vendor-specific credentials rather than
+    # OAuth1, so stub those too when relevant.
+    variant = _of_variant(env_prefix)
+    if variant:
+        if variant["kind"] == "finicity":
+            # US (Finicity) and AU (Mastercard Open Banking AU) both use
+            # Partner ID / Partner Secret / App Key.
+            placeholders.update({
+                f"{env_prefix}_PARTNER_ID":     "snippet-dry-run-partner",
+                f"{env_prefix}_PARTNER_SECRET": "snippet-dry-run-secret",
+                f"{env_prefix}_APP_KEY":        "snippet-dry-run-appkey",
+            })
+        elif variant["kind"] == "jwt_oauth2":
+            # EU (Aiia) uses an OAuth2 client_credentials grant with a
+            # JWT client assertion. The key/cert files don't have to
+            # exist because _capture_call short-circuits _get_token
+            # before _load_private_key()/_compute_kid() ever runs.
+            placeholders.update({
+                f"{env_prefix}_CLIENT_ID":        "snippet-dry-run-client",
+                f"{env_prefix}_PRIVATE_KEY_PATH": "/tmp/snippet-dry-run-key.pem",
+                f"{env_prefix}_PUBLIC_CERT_PATH": "/tmp/snippet-dry-run-cert.pem",
+            })
     for name, val in placeholders.items():
         if name not in os.environ:
             saved[name] = ""  # marker: was unset
@@ -284,19 +361,27 @@ def _capture_call(
 
     # For Open Finance we also need to (a) reset the module's cached
     # client so it picks up the placeholder credentials we just stubbed,
-    # and (b) bypass the real partner-authentication call so the op's
-    # actual HTTP request is what gets captured (not the auth fetch).
-    of_client_cls = None
-    saved_get_token = None
+    # and (b) bypass the real auth call so the op's actual HTTP request
+    # is what gets captured (not the token-exchange fetch). We patch
+    # _get_token on every available OF client class because we don't
+    # know up front which one ``mod`` will instantiate.
+    of_client_restore: List[Tuple[Any, Any]] = []
     saved_cached_client = None
     if env_prefix.startswith("OPEN_FINANCE"):
-        try:
-            from apis.open_finance.client import OpenFinanceClient as of_client_cls  # type: ignore
-        except Exception:
-            of_client_cls = None
-        if of_client_cls is not None:
-            saved_get_token = of_client_cls._get_token
-            of_client_cls._get_token = lambda self: "snippet-dry-run-token"
+        for _mod_path, _cls_name in (
+            ("apis.open_finance.client",    "OpenFinanceClient"),
+            ("apis.open_finance_au.client", "OpenFinanceAUClient"),
+            ("apis.open_finance_eu.client", "OpenFinanceEUClient"),
+        ):
+            try:
+                _m = __import__(_mod_path, fromlist=[_cls_name])
+                _cls = getattr(_m, _cls_name, None)
+            except Exception:
+                _cls = None
+            if _cls is not None and hasattr(_cls, "_get_token"):
+                _orig = _cls._get_token
+                _cls._get_token = lambda self, *a, **kw: "snippet-dry-run-token"
+                of_client_restore.append((_cls, _orig))
         if hasattr(mod, "_client"):
             saved_cached_client = getattr(mod, "_client")
             mod._client = None
@@ -320,8 +405,8 @@ def _capture_call(
             os.environ.pop("VIMA_SIMULATE", None)
         else:
             os.environ["VIMA_SIMULATE"] = saved_sim
-        if of_client_cls is not None and saved_get_token is not None:
-            of_client_cls._get_token = saved_get_token
+        for _cls, _orig in of_client_restore:
+            _cls._get_token = _orig
         if hasattr(mod, "_client") and saved_cached_client is not None:
             mod._client = saved_cached_client
 
@@ -497,19 +582,53 @@ def _extract_placeholders(s: str) -> list:
     return seen
 
 
-def _open_finance_snippet(api_id: str, op: Dict[str, Any], docs_url: str) -> str:
-    """Fallback static template — used only when capture fails.
-    Shows the partner-authentication token-exchange step.
-    """
+def _open_finance_snippet(api_id: str, op: Dict[str, Any], env_prefix: str, docs_url: str) -> str:
+    """Fallback / `create_token` template. Dispatches by variant kind."""
+    variant = _of_variant(env_prefix) or _OF_VARIANTS["OPEN_FINANCE"]
+    if variant["kind"] == "jwt_oauth2":
+        return _eu_create_token_snippet(api_id, op, env_prefix, docs_url, variant)
+    return _finicity_create_token_snippet(api_id, op, env_prefix, docs_url, variant)
+
+
+def _open_finance_snippet_runnable(
+    api_id: str,
+    op: Dict[str, Any],
+    env_prefix: str,
+    captured: Dict[str, Any],
+    docs_url: str,
+) -> str:
+    """Render a runnable snippet around a captured call. Dispatches by variant."""
+    variant = _of_variant(env_prefix) or _OF_VARIANTS["OPEN_FINANCE"]
+    if variant["kind"] == "jwt_oauth2":
+        return _eu_snippet_runnable(api_id, op, env_prefix, captured, docs_url, variant)
+    return _finicity_snippet_runnable(api_id, op, env_prefix, captured, docs_url, variant)
+
+
+# ----------------------------------------------------------------------------
+# Finicity-flavoured renderers (US + AU)
+# ----------------------------------------------------------------------------
+
+def _finicity_create_token_snippet(
+    api_id: str,
+    op: Dict[str, Any],
+    env_prefix: str,
+    docs_url: str,
+    variant: Dict[str, Any],
+) -> str:
+    """Static `create_token` template for US (Finicity) + AU."""
     op_name = op.get("name") or op.get("id") or "operation"
+    base = variant["default_base"]
+    auth_path = variant["auth_path"]
+    key_hdr = variant["key_header"]
+    label = variant.get("label", "Mastercard Open Banking")
     return (
         f'"""\n'
         f'{api_id} — {op_name}\n'
         f'\n'
-        f'Open Finance (Finicity) uses partner-scoped App + Customer\n'
-        f'Bearer tokens rather than OAuth1 signing. This snippet shows\n'
-        f'the token-exchange step — see the docs for the per-endpoint\n'
-        f'paths and Customer-scoped flows:\n'
+        f'{label} uses partner-scoped App + Customer Bearer tokens rather\n'
+        f'than OAuth1 signing. This snippet performs the token-exchange\n'
+        f'step — see the docs for per-endpoint paths and Customer-scoped\n'
+        f'flows:\n'
         f'\n'
         f'    {docs_url}\n'
         f'\n'
@@ -517,25 +636,27 @@ def _open_finance_snippet(api_id: str, op: Dict[str, Any], docs_url: str) -> str
         f'    pip install requests\n'
         f'\n'
         f'Run:\n'
-        f'    export OPEN_FINANCE_PARTNER_ID="..."\n'
-        f'    export OPEN_FINANCE_PARTNER_SECRET="..."\n'
-        f'    export OPEN_FINANCE_APP_KEY="..."\n'
+        f'    export {env_prefix}_PARTNER_ID="..."\n'
+        f'    export {env_prefix}_PARTNER_SECRET="..."\n'
+        f'    export {env_prefix}_APP_KEY="..."\n'
         f'    python {api_id}_token.py\n'
         f'"""\n'
         f"import os\n"
         f"import requests\n"
         f"\n"
+        f'BASE_URL = os.environ.get("{env_prefix}_API_BASE_URL", {json.dumps(base)})\n'
+        f"\n"
         f"# 1. Exchange partner credentials for a 2-hour App token.\n"
         f"app_resp = requests.post(\n"
-        f'    "https://api.finicity.com/aggregation/v2/partners/authentication",\n'
+        f'    f"{{BASE_URL}}{auth_path}",\n'
         f"    headers={{\n"
-        f'        "Finicity-App-Key": os.environ["OPEN_FINANCE_APP_KEY"],\n'
+        f'        "{key_hdr}": os.environ["{env_prefix}_APP_KEY"],\n'
         f'        "Content-Type": "application/json",\n'
-        f'        "Accept": "application/json",\n'
+        f'        "Accept":       "application/json",\n'
         f"    }},\n"
         f"    json={{\n"
-        f'        "partnerId":     os.environ["OPEN_FINANCE_PARTNER_ID"],\n'
-        f'        "partnerSecret": os.environ["OPEN_FINANCE_PARTNER_SECRET"],\n'
+        f'        "partnerId":     os.environ["{env_prefix}_PARTNER_ID"],\n'
+        f'        "partnerSecret": os.environ["{env_prefix}_PARTNER_SECRET"],\n'
         f"    }},\n"
         f"    timeout=30,\n"
         f")\n"
@@ -544,23 +665,23 @@ def _open_finance_snippet(api_id: str, op: Dict[str, Any], docs_url: str) -> str
         f'print("App token acquired:", app_token[:12] + "\u2026")\n'
         f"\n"
         f"# 2. Use the App token in subsequent requests via the\n"
-        f"#    'Finicity-App-Token' header alongside 'Finicity-App-Key'.\n"
+        f"#    '{variant['token_header']}' header alongside '{key_hdr}'.\n"
         f"#    See docs for per-endpoint paths and Customer flows.\n"
     )
 
 
-def _open_finance_snippet_runnable(
+def _finicity_snippet_runnable(
     api_id: str,
     op: Dict[str, Any],
+    env_prefix: str,
     captured: Dict[str, Any],
     docs_url: str,
+    variant: Dict[str, Any],
 ) -> str:
-    """Render a runnable Finicity Bearer-token snippet around a captured call.
+    """Render a runnable Bearer-token snippet around a captured call.
 
-    Same idea as ``_oauth1_snippet_runnable`` but for Finicity's
-    Partner-ID/Partner-Secret/App-Key authentication: fetch an App
-    token, then invoke the operation's endpoint with the captured
-    URL/method/body/params.
+    Used by both US (Finicity) and AU (Mastercard Open Banking AU) —
+    only the env-var prefix, base URL and header names differ.
     """
     method = (captured.get("method") or op.get("method") or "GET").upper()
     url = captured.get("url") or ""
@@ -570,10 +691,7 @@ def _open_finance_snippet_runnable(
         base = f"{scheme}://{host}"
         path = f"/{path}"
     except ValueError:
-        base, path = "https://api.finicity.com", url
-    # Lift any `<your foo>` placeholders out of the captured path into
-    # TODO constants so the user sees them clearly at the top of the
-    # script rather than being baked into a URL that 404s.
+        base, path = variant["default_base"], url
     placeholders = _extract_placeholders(path)
     todo_block = ""
     path_literal: str
@@ -594,15 +712,18 @@ def _open_finance_snippet_runnable(
     body_section, requests_kwarg = _render_body_block(captured)
     op_name = op.get("name") or op.get("id") or "operation"
     op_id_str = op.get("id", "call")
+    auth_path = variant["auth_path"]
+    key_hdr = variant["key_header"]
+    tok_hdr = variant["token_header"]
+    label = variant.get("label", "Mastercard Open Banking")
 
     return (
         f'"""\n'
         f'{api_id} — {op_name}\n'
         f'\n'
-        f'Runnable Python that calls the Mastercard Open Banking\n'
-        f'(Finicity) {api_id} API directly with App-Token auth — captured\n'
-        f'from the actual Solution Studio implementation, so URL, body\n'
-        f'and headers match exactly.\n'
+        f'Runnable Python that calls the {label} {api_id} API directly\n'
+        f'with App-Token auth — captured from the actual Solution Studio\n'
+        f'implementation, so URL, body and headers match exactly.\n'
         f'\n'
         f'Docs: {docs_url}\n'
         f'\n'
@@ -610,9 +731,9 @@ def _open_finance_snippet_runnable(
         f'    pip install requests\n'
         f'\n'
         f'Run:\n'
-        f'    export OPEN_FINANCE_PARTNER_ID="..."\n'
-        f'    export OPEN_FINANCE_PARTNER_SECRET="..."\n'
-        f'    export OPEN_FINANCE_APP_KEY="..."\n'
+        f'    export {env_prefix}_PARTNER_ID="..."\n'
+        f'    export {env_prefix}_PARTNER_SECRET="..."\n'
+        f'    export {env_prefix}_APP_KEY="..."\n'
         f'    python {api_id}_{op_id_str}.py\n'
         f'"""\n'
         f"import json\n"
@@ -621,18 +742,18 @@ def _open_finance_snippet_runnable(
         f"import requests\n"
         f"\n"
         f"# --- Credentials (same env vars Solution Studio reads) ----\n"
-        f'PARTNER_ID     = os.environ["OPEN_FINANCE_PARTNER_ID"]\n'
-        f'PARTNER_SECRET = os.environ["OPEN_FINANCE_PARTNER_SECRET"]\n'
-        f'APP_KEY        = os.environ["OPEN_FINANCE_APP_KEY"]\n'
-        f'BASE_URL       = os.environ.get("OPEN_FINANCE_API_BASE_URL", {json.dumps(base)})\n'
+        f'PARTNER_ID     = os.environ["{env_prefix}_PARTNER_ID"]\n'
+        f'PARTNER_SECRET = os.environ["{env_prefix}_PARTNER_SECRET"]\n'
+        f'APP_KEY        = os.environ["{env_prefix}_APP_KEY"]\n'
+        f'BASE_URL       = os.environ.get("{env_prefix}_API_BASE_URL", {json.dumps(base)})\n'
         f"\n"
         f"# --- 1. Exchange partner credentials for a 2-hour App token ---\n"
         f"auth_resp = requests.post(\n"
-        f'    f"{{BASE_URL}}/aggregation/v2/partners/authentication",\n'
+        f'    f"{{BASE_URL}}{auth_path}",\n'
         f"    headers={{\n"
-        f'        "Finicity-App-Key": APP_KEY,\n'
-        f'        "Content-Type":     "application/json",\n'
-        f'        "Accept":           "application/json",\n'
+        f'        "{key_hdr}":   APP_KEY,\n'
+        f'        "Content-Type": "application/json",\n'
+        f'        "Accept":       "application/json",\n'
         f"    }},\n"
         f'    json={{"partnerId": PARTNER_ID, "partnerSecret": PARTNER_SECRET}},\n'
         f"    timeout=30,\n"
@@ -647,10 +768,10 @@ def _open_finance_snippet_runnable(
         f'METHOD  = "{method}"\n'
         f'url     = f"{{BASE_URL}}{{PATH}}"\n'
         f"headers = {{\n"
-        f'    "Finicity-App-Key":   APP_KEY,\n'
-        f'    "Finicity-App-Token": APP_TOKEN,\n'
-        f'    "Content-Type":       "application/json",\n'
-        f'    "Accept":             "application/json",\n'
+        f'    "{key_hdr}":   APP_KEY,\n'
+        f'    "{tok_hdr}":   APP_TOKEN,\n'
+        f'    "Content-Type": "application/json",\n'
+        f'    "Accept":       "application/json",\n'
         f"}}\n"
         f"\n"
         f"# --- Request ---\n"
@@ -665,6 +786,255 @@ def _open_finance_snippet_runnable(
         f'print("Headers:")\n'
         f"for k, v in headers.items():\n"
         f'    shown = (v[:80] + "\\u2026") if k.endswith("-Token") and len(v) > 80 else v\n'
+        f'    print(f"  {{k}}: {{shown}}")\n'
+        f"if body:\n"
+        f'    print("Body:")\n'
+        f"    print(body if len(body) < 2000 else body[:2000] + '\\u2026')\n"
+        f'print("=" * 72)\n'
+        f'print(f"RESPONSE {{resp.status_code}} {{resp.reason}}")\n'
+        f'print("-" * 72)\n'
+        f"try:\n"
+        f"    print(json.dumps(resp.json(), indent=2))\n"
+        f"except ValueError:\n"
+        f"    print(resp.text)\n"
+        f'print("=" * 72)\n'
+        f"resp.raise_for_status()\n"
+    )
+
+
+# ----------------------------------------------------------------------------
+# Open Finance EU renderer (RS256-signed JWT + OAuth2 client_credentials)
+# ----------------------------------------------------------------------------
+
+_EU_AUTH_BLOCK = '''\
+# --- 1. Build a one-shot client-assertion JWT signed by the partner key ---
+def _b64url(raw: bytes) -> str:
+    return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
+
+with open(PUBLIC_CERT_PATH, "rb") as _f:
+    _cert_pem = _f.read()
+load_pem_x509_certificate(_cert_pem)  # validates cert is well-formed
+_cert_body = (
+    _cert_pem.decode("ascii")
+    .replace("-----BEGIN CERTIFICATE-----", "")
+    .replace("-----END CERTIFICATE-----", "")
+)
+_der = base64.b64decode("".join(_cert_body.split()))
+KID = _b64url(hashlib.sha256(_der).digest())
+
+with open(PRIVATE_KEY_PATH, "rb") as _f:
+    _priv = serialization.load_pem_private_key(_f.read(), password=None)
+if not isinstance(_priv, rsa.RSAPrivateKey):
+    raise SystemExit("Open Finance EU private key must be RSA")
+
+_now = int(time.time())
+_header = {"alg": "RS256", "typ": "JWT", "kid": KID}
+_claims = {
+    "sub": CLIENT_ID,
+    "iss": CLIENT_ID,
+    "aud": JWT_AUDIENCE,
+    "exp": _now + 300,
+    "iat": _now,
+    "jti": str(uuid.uuid4()),
+}
+_h = _b64url(json.dumps(_header,  separators=(",", ":")).encode("utf-8"))
+_p = _b64url(json.dumps(_claims, separators=(",", ":")).encode("utf-8"))
+_signing_input = f"{_h}.{_p}".encode("ascii")
+_signature = _priv.sign(_signing_input, padding.PKCS1v15(), hashes.SHA256())
+ASSERTION = f"{_h}.{_p}.{_b64url(_signature)}"
+
+# --- 2. Exchange the assertion for an access token ---
+# NB: Mastercard's /oauth2/token expects a JSON body (not the standard
+# OAuth 2.0 application/x-www-form-urlencoded). Form-encoded returns
+#   FORMAT_ERROR — Content-Type ... does not match ... [application/json]
+auth_resp = requests.post(
+    f"{AUTH_BASE}/oauth2/token",
+    headers={
+        "Content-Type": "application/json",
+        "Accept":       "application/json",
+    },
+    json={
+        "grant_type":            "client_credentials",
+        "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+        "client_assertion":      ASSERTION,
+        "scope":                 SCOPES,
+    },
+    timeout=30,
+)
+auth_resp.raise_for_status()
+ACCESS_TOKEN = auth_resp.json()["access_token"]
+print("Access token acquired:", ACCESS_TOKEN[:12] + "\u2026")
+'''
+
+
+def _eu_create_token_snippet(
+    api_id: str,
+    op: Dict[str, Any],
+    env_prefix: str,
+    docs_url: str,
+    variant: Dict[str, Any],
+) -> str:
+    """Static `create_token` template for EU (Aiia, RS256+OAuth2)."""
+    op_name = op.get("name") or op.get("id") or "operation"
+    auth_base = variant["default_auth_base"]
+    aud = variant["jwt_audience"]
+    label = variant.get("label", "Mastercard Open Finance Europe")
+    return (
+        f'"""\n'
+        f'{api_id} — {op_name}\n'
+        f'\n'
+        f'{label} uses OAuth 2.0 client_credentials with a JWT client\n'
+        f'assertion (RS256) instead of partner Bearer tokens.\n'
+        f'\n'
+        f'Docs: {docs_url}\n'
+        f'\n'
+        f'Install:\n'
+        f'    pip install requests cryptography\n'
+        f'\n'
+        f'Run:\n'
+        f'    export {env_prefix}_CLIENT_ID="..."\n'
+        f'    export {env_prefix}_PRIVATE_KEY_PATH="/path/to/private.pem"\n'
+        f'    export {env_prefix}_PUBLIC_CERT_PATH="/path/to/public.pem"\n'
+        f'    python {api_id}_token.py\n'
+        f'"""\n'
+        f"import base64\n"
+        f"import hashlib\n"
+        f"import json\n"
+        f"import os\n"
+        f"import time\n"
+        f"import uuid\n"
+        f"\n"
+        f"import requests\n"
+        f"from cryptography.hazmat.primitives import hashes, serialization\n"
+        f"from cryptography.hazmat.primitives.asymmetric import padding, rsa\n"
+        f"from cryptography.x509 import load_pem_x509_certificate\n"
+        f"\n"
+        f"# --- Credentials (same env vars Solution Studio reads) ----\n"
+        f'CLIENT_ID        = os.environ["{env_prefix}_CLIENT_ID"]\n'
+        f'PRIVATE_KEY_PATH = os.environ["{env_prefix}_PRIVATE_KEY_PATH"]\n'
+        f'PUBLIC_CERT_PATH = os.environ["{env_prefix}_PUBLIC_CERT_PATH"]\n'
+        f'AUTH_BASE        = os.environ.get("{env_prefix}_AUTH_BASE_URL", {json.dumps(auth_base)})\n'
+        f'JWT_AUDIENCE     = {json.dumps(aud)}\n'
+        f'SCOPES           = "ob_data ob_providers"\n'
+        f"\n"
+        f"{_EU_AUTH_BLOCK}"
+    )
+
+
+def _eu_snippet_runnable(
+    api_id: str,
+    op: Dict[str, Any],
+    env_prefix: str,
+    captured: Dict[str, Any],
+    docs_url: str,
+    variant: Dict[str, Any],
+) -> str:
+    """Render a runnable EU snippet around a captured call."""
+    method = (captured.get("method") or op.get("method") or "GET").upper()
+    url = captured.get("url") or ""
+    try:
+        scheme, rest = url.split("://", 1)
+        host, _, path = rest.partition("/")
+        base = f"{scheme}://{host}"
+        path = f"/{path}"
+    except ValueError:
+        base, path = variant["default_api_base"], url
+    placeholders = _extract_placeholders(path)
+    todo_block = ""
+    path_literal: str
+    if placeholders:
+        for name in placeholders:
+            path = path.replace(f"<your {name}>", "{" + name.upper() + "}")
+        const_lines = "\n".join(
+            f'{name.upper()} = "<your {name}>"  # TODO: replace with a real {name}'
+            for name in placeholders
+        )
+        todo_block = (
+            "# --- TODO: fill in the inputs this operation needs --------\n"
+            f"{const_lines}\n\n"
+        )
+        path_literal = f"f{json.dumps(path)}"
+    else:
+        path_literal = json.dumps(path)
+    body_section, requests_kwarg = _render_body_block(captured)
+    op_name = op.get("name") or op.get("id") or "operation"
+    op_id_str = op.get("id", "call")
+    auth_base = variant["default_auth_base"]
+    aud = variant["jwt_audience"]
+    label = variant.get("label", "Mastercard Open Finance Europe")
+
+    return (
+        f'"""\n'
+        f'{api_id} — {op_name}\n'
+        f'\n'
+        f'Runnable Python that calls the {label} {api_id} API directly.\n'
+        f'Signs an RS256 JWT assertion with the partner private key,\n'
+        f'exchanges it for an OAuth 2.0 access token, then invokes the\n'
+        f'captured operation URL with Bearer auth. URL, body and headers\n'
+        f'are captured from the Solution Studio implementation.\n'
+        f'\n'
+        f'Docs: {docs_url}\n'
+        f'\n'
+        f'Install:\n'
+        f'    pip install requests cryptography\n'
+        f'\n'
+        f'Run:\n'
+        f'    export {env_prefix}_CLIENT_ID="..."\n'
+        f'    export {env_prefix}_PRIVATE_KEY_PATH="/path/to/private.pem"\n'
+        f'    export {env_prefix}_PUBLIC_CERT_PATH="/path/to/public.pem"\n'
+        f'    python {api_id}_{op_id_str}.py\n'
+        f'"""\n'
+        f"import base64\n"
+        f"import hashlib\n"
+        f"import json\n"
+        f"import os\n"
+        f"import time\n"
+        f"import uuid\n"
+        f"\n"
+        f"import requests\n"
+        f"from cryptography.hazmat.primitives import hashes, serialization\n"
+        f"from cryptography.hazmat.primitives.asymmetric import padding, rsa\n"
+        f"from cryptography.x509 import load_pem_x509_certificate\n"
+        f"\n"
+        f"# --- Credentials (same env vars Solution Studio reads) ----\n"
+        f'CLIENT_ID        = os.environ["{env_prefix}_CLIENT_ID"]\n'
+        f'PRIVATE_KEY_PATH = os.environ["{env_prefix}_PRIVATE_KEY_PATH"]\n'
+        f'PUBLIC_CERT_PATH = os.environ["{env_prefix}_PUBLIC_CERT_PATH"]\n'
+        f'APPLICATION_ID   = os.environ.get("{env_prefix}_APPLICATION_ID", "")\n'
+        f'AUTH_BASE        = os.environ.get("{env_prefix}_AUTH_BASE_URL", {json.dumps(auth_base)})\n'
+        f'API_BASE         = os.environ.get("{env_prefix}_API_BASE_URL",  {json.dumps(base)})\n'
+        f'JWT_AUDIENCE     = {json.dumps(aud)}\n'
+        f'SCOPES           = "ob_data ob_providers"\n'
+        f"\n"
+        f"{_EU_AUTH_BLOCK}"
+        f"\n"
+        f"# --- 3. Call the operation endpoint ---\n"
+        f"{todo_block}"
+        f"PATH    = {path_literal}\n"
+        f'METHOD  = "{method}"\n'
+        f'url     = f"{{API_BASE}}{{PATH}}"\n'
+        f"headers = {{\n"
+        f'    "Accept":        "application/json",\n'
+        f'    "Authorization": f"Bearer {{ACCESS_TOKEN}}",\n'
+        f"}}\n"
+        f"# Consent Machine + downstream APIs require X-Application-Id on every call.\n"
+        f"if APPLICATION_ID:\n"
+        f'    headers["X-Application-Id"] = APPLICATION_ID\n'
+        f"\n"
+        f"# --- Request ---\n"
+        f"{body_section}"
+        f'if body:\n'
+        f'    headers["Content-Type"] = "application/json"\n'
+        f"\n"
+        f"resp = requests.request(METHOD, url, {(requests_kwarg + ', ') if requests_kwarg else ''}headers=headers, timeout=30)\n"
+        f"\n"
+        f"# --- Show what we sent and what we got back ---\n"
+        f'print("=" * 72)\n'
+        f'print(f"REQUEST  {{METHOD}} {{url}}")\n'
+        f'print("-" * 72)\n'
+        f'print("Headers:")\n'
+        f"for k, v in headers.items():\n"
+        f'    shown = (v[:80] + "\\u2026") if k == "Authorization" and len(v) > 80 else v\n'
         f'    print(f"  {{k}}: {{shown}}")\n'
         f"if body:\n"
         f'    print("Body:")\n'
@@ -707,15 +1077,15 @@ def build_snippet(
         # empty. Fall back to the static token-exchange template, which
         # *is* exactly what create_token would do at the HTTP layer.
         if op_id == "create_token":
-            snippet = _open_finance_snippet(api_id, op, docs_url)
+            snippet = _open_finance_snippet(api_id, op, env_prefix, docs_url)
             runnable = True
         else:
             captured = _capture_call(mod, op_id, op, env_prefix)
             if captured and captured.get("url"):
-                snippet = _open_finance_snippet_runnable(api_id, op, captured, docs_url)
+                snippet = _open_finance_snippet_runnable(api_id, op, env_prefix, captured, docs_url)
                 runnable = True
             else:
-                snippet = _open_finance_snippet(api_id, op, docs_url)
+                snippet = _open_finance_snippet(api_id, op, env_prefix, docs_url)
     else:
         captured = _capture_call(mod, op_id, op, env_prefix)
         if captured and captured.get("url"):

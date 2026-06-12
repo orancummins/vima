@@ -814,6 +814,650 @@
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") modal.classList.add("hidden"); });
 
   // ---------------------------------------------------------------------
+  // API Guide — persistent floating step-by-step call sequence panel.
+  //
+  // Renders an ordered checklist of operations the user should call to walk
+  // through a typical scenario for the selected API. Steps come from
+  // `api.guide` if provided by the manifest, otherwise we derive a sensible
+  // ordering from the operations list. Steps support badges for launching an
+  // external experience and for requiring sandbox test credentials.
+  //
+  // Public surface:
+  //   ApiGuide.show()    — open the panel for the currently-selected API
+  //   ApiGuide.hide()    — close the panel
+  //   ApiGuide.toggle()  — toggle visibility
+  //   ApiGuide.markOpDone(opId)  — called by the send-handler on 2xx
+  //   ApiGuide.refresh() — re-render after API switch
+  //   ApiGuide.syncCurrentOp()   — highlight the active op
+  // ---------------------------------------------------------------------
+  const ApiGuide = (function () {
+    try {
+    const LS_KEY      = 'vima:apiGuide:v1';
+    const LS_DONE_KEY = 'vima:apiGuide:done:v1';
+    const panel  = $("api-guide-panel");
+    const pill   = $("api-guide-pill");
+    if (!panel || !pill) {
+      return { show(){}, hide(){}, toggle(){}, markOpDone(){}, refresh(){}, syncCurrentOp(){} };
+    }
+    const handle      = $("api-guide-drag-handle");
+    const titleEl     = $("api-guide-title");
+    const stepsEl     = $("api-guide-steps");
+    const progressFill = $("api-guide-progress-fill");
+    const metaText    = $("api-guide-meta-text");
+    const pillLabel   = $("api-guide-pill-label");
+    const pillCounter = $("api-guide-pill-counter");
+    const btnMin   = $("api-guide-minimize");
+    const btnClose = $("api-guide-close");
+    const btnReset = $("api-guide-reset");
+    const btnOpen  = $("btn-api-guide");
+    // Footer + send mirror.
+    const autoNextCb   = $("api-guide-autonext");
+    const countdownEl  = $("api-guide-countdown");
+    const countdownNum = $("api-guide-countdown-num");
+    const countdownFill = $("api-guide-countdown-fill");
+    const sendBtn    = $("api-guide-send");
+    const sendLabel  = sendBtn ? sendBtn.querySelector('.api-guide-send-btn-label') : null;
+    // Resize handles.
+    const resizeCorner = $("api-guide-resize-corner");
+    const resizeLeft   = $("api-guide-resize-left");
+
+    // ---- State -----------------------------------------------------------
+    // Visibility + minimised + position survive across sessions.
+    // `done` is keyed by api id → { opId: true }.
+    function loadState() {
+      try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {}; }
+      catch (e) { return {}; }
+    }
+    function saveState(st) {
+      try { localStorage.setItem(LS_KEY, JSON.stringify(st)); } catch (e) {}
+    }
+    function loadDone() {
+      try { return JSON.parse(localStorage.getItem(LS_DONE_KEY) || '{}') || {}; }
+      catch (e) { return {}; }
+    }
+    function saveDone(d) {
+      try { localStorage.setItem(LS_DONE_KEY, JSON.stringify(d)); } catch (e) {}
+    }
+
+    let state = loadState();
+    let done  = loadDone();
+    if (typeof state.visible    !== 'boolean') state.visible    = false;
+    if (typeof state.minimized  !== 'boolean') state.minimized  = false;
+
+    // ---- Position + size helpers ---------------------------------------
+    // Clamp into the viewport so a stale localStorage entry can't push the
+    // panel off-screen on a smaller display. `applySize` is separate so we
+    // can call it independently when the user resizes.
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+    const MIN_W = 260;
+    const MIN_H = 200;
+    // Default dimensions when localStorage has no saved size.
+    const DEFAULT_W = 300;
+    const DEFAULT_H = 380;
+    function applySize() {
+      const maxW = Math.max(MIN_W, window.innerWidth  - 16);
+      const maxH = Math.max(MIN_H, window.innerHeight - 80);
+      if (typeof state.w === 'number') {
+        panel.style.width = clamp(state.w, MIN_W, maxW) + 'px';
+      } else {
+        panel.style.width = DEFAULT_W + 'px';
+      }
+      if (typeof state.h === 'number') {
+        panel.style.height = clamp(state.h, MIN_H, maxH) + 'px';
+      } else {
+        panel.style.height = DEFAULT_H + 'px';
+      }
+    }
+    function applyPosition() {
+      applySize();
+      const w = panel.offsetWidth  || 340;
+      const h = panel.offsetHeight || 200;
+      const pad = 8;
+      const maxX = Math.max(pad, window.innerWidth  - w - pad);
+      const maxY = Math.max(pad, window.innerHeight - h - pad);
+      let x = (typeof state.x === 'number')
+        ? clamp(state.x, pad, maxX)
+        : maxX;            // default: right edge
+      let y = (typeof state.y === 'number')
+        ? clamp(state.y, pad, maxY)
+        : Math.max(pad, window.innerHeight - h - 140); // default: above FABs
+      panel.style.left = x + 'px';
+      panel.style.top  = y + 'px';
+      state.x = x; state.y = y;
+    }
+
+    // ---- Guide data resolution -----------------------------------------
+    // Prefer the manifest's `guide` field. Fall back to an auto-derived
+    // sequence using the operations array order, skipping deprecated ones.
+    function resolveGuide(api) {
+      if (!api) return [];
+      const opMap = {};
+      (api.operations || []).forEach((op) => { opMap[op.id] = op; });
+
+      if (Array.isArray(api.guide) && api.guide.length) {
+        return api.guide
+          .map((g) => {
+            const op = opMap[g.op];
+            if (!op) return null;
+            return {
+              opId:    op.id,
+              opName:  op.name,
+              method:  op.method || 'POST',
+              summary: g.summary || op.description || '',
+              launch:      !!g.launch,
+              credentials: !!g.credentials,
+            };
+          })
+          .filter(Boolean);
+      }
+
+      // Fallback: derive from operations in manifest order. Skip ops in
+      // deprecated categories so the suggested path stays current. Also
+      // skip any operation that deletes / revokes / removes data — these
+      // can break a successful flow if they're called mid-sequence (e.g.
+      // revoking the consent you just created).
+      const depr = new Set(api.deprecated_categories || []);
+      const DESTRUCTIVE_RE = /\b(delete|deletion|destroy|remove|removal|revoke|revocation|cancel|cancellation|disconnect|expire|invalidate|wipe|purge|drop|reset|undo|unlink)\b/i;
+      function isDestructive(op) {
+        if (op.method && op.method.toUpperCase() === 'DELETE') return true;
+        const text = (op.id || '') + ' ' + (op.name || '');
+        return DESTRUCTIVE_RE.test(text);
+      }
+      return (api.operations || [])
+        .filter((op) => !depr.has(op.category) && !isDestructive(op))
+        .map((op) => ({
+          opId:    op.id,
+          opName:  op.name,
+          method:  op.method || 'POST',
+          summary: op.description || '',
+          launch:      false,
+          credentials: false,
+        }));
+    }
+
+    // ---- Rendering ------------------------------------------------------
+    function render() {
+      const api   = currentApi();
+      const guide = resolveGuide(api);
+      stepsEl.innerHTML = '';
+      titleEl.textContent = api ? api.name : '—';
+      if (!api || !guide.length) {
+        const empty = document.createElement('li');
+        empty.className = 'api-guide-empty';
+        empty.textContent = api
+          ? 'No call sequence defined for this API yet.'
+          : 'Select an API to see its call sequence.';
+        stepsEl.appendChild(empty);
+        updateProgress(0, 0);
+        return;
+      }
+      const apiDone = done[api.id] || {};
+      let completedCount = 0;
+      guide.forEach((step, idx) => {
+        const isDone    = !!apiDone[step.opId];
+        const isCurrent = step.opId === currentOpId;
+        if (isDone) completedCount++;
+        const li = document.createElement('li');
+        li.className = 'api-guide-step'
+          + (isDone    ? ' api-guide-step--done'    : '')
+          + (isCurrent ? ' api-guide-step--current' : '');
+        li.style.setProperty('--i', String(idx));
+        li.dataset.opId = step.opId;
+
+        // Step number / check medallion.
+        const num = document.createElement('span');
+        num.className = 'api-guide-step-num';
+        num.setAttribute('aria-hidden', 'true');
+        if (isDone) {
+          num.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 8.5 6.5 12 13 4"/></svg>';
+        } else {
+          num.textContent = String(idx + 1);
+        }
+        li.appendChild(num);
+
+        // Step body — name + summary + badges.
+        const body = document.createElement('div');
+        body.className = 'api-guide-step-body';
+
+        const head = document.createElement('div');
+        head.className = 'api-guide-step-head';
+        const name = document.createElement('span');
+        name.className = 'api-guide-step-name';
+        name.textContent = step.opName;
+        head.appendChild(name);
+
+        if (step.launch || step.credentials) {
+          const badges = document.createElement('span');
+          badges.className = 'api-guide-badges';
+          if (step.launch) {
+            const b = document.createElement('span');
+            b.className = 'api-guide-badge api-guide-badge--launch';
+            b.title = 'This step returns a URL you need to open in a new tab';
+            b.textContent = '↗ launch';
+            badges.appendChild(b);
+          }
+          if (step.credentials) {
+            const b = document.createElement('span');
+            b.className = 'api-guide-badge api-guide-badge--creds';
+            b.title = 'Sandbox test PSU credentials needed to complete the flow';
+            b.textContent = '🔑 test creds';
+            badges.appendChild(b);
+          }
+          head.appendChild(badges);
+        }
+        body.appendChild(head);
+
+        const sum = document.createElement('p');
+        sum.className = 'api-guide-step-summary';
+        sum.textContent = step.summary || '';
+        body.appendChild(sum);
+
+        li.appendChild(body);
+
+        li.addEventListener('click', () => {
+          // Jump to the operation in the workbench.
+          if (typeof selectOp === 'function') selectOp(step.opId);
+          const btn = document.querySelector('.op-btn[data-op-id="' + CSS.escape(step.opId) + '"]');
+          if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          // Brief visual pop on the clicked card.
+          li.classList.remove('api-guide-step--pulse');
+          // Force a reflow so we can re-trigger the animation.
+          void li.offsetWidth;
+          li.classList.add('api-guide-step--pulse');
+        });
+
+        stepsEl.appendChild(li);
+      });
+      updateProgress(completedCount, guide.length);
+    }
+
+    function updateProgress(done, total) {
+      const pct = total > 0 ? (done / total) * 100 : 0;
+      progressFill.style.width = pct + '%';
+      metaText.textContent = done + ' / ' + total + ' steps complete';
+      pillCounter.textContent = done + '/' + total;
+    }
+
+    // ---- Visibility / minimise -----------------------------------------
+    function applyVisibility() {
+      panel.classList.toggle('hidden', !state.visible || state.minimized);
+      panel.setAttribute('aria-hidden', (!state.visible || state.minimized) ? 'true' : 'false');
+      pill.classList.toggle('hidden',  !state.visible || !state.minimized);
+      if (btnOpen) btnOpen.setAttribute('aria-pressed', state.visible ? 'true' : 'false');
+      if (btnOpen) btnOpen.classList.toggle('btn-api-guide--active', state.visible);
+      if (state.visible && !state.minimized) {
+        // Defer to next frame so the layout settles before clamping.
+        requestAnimationFrame(applyPosition);
+      }
+    }
+
+    function show() {
+      state.visible   = true;
+      state.minimized = false;
+      saveState(state);
+      render();
+      applyVisibility();
+      // Trigger entrance animation.
+      panel.classList.remove('api-guide--enter');
+      void panel.offsetWidth;
+      panel.classList.add('api-guide--enter');
+    }
+    function hide() {
+      state.visible = false;
+      saveState(state);
+      applyVisibility();
+    }
+    function toggle() { state.visible ? hide() : show(); }
+    function minimize() {
+      state.minimized = true;
+      saveState(state);
+      const api = currentApi();
+      pillLabel.textContent = api ? api.name : 'API Guide';
+      applyVisibility();
+    }
+    function unminimize() {
+      state.minimized = false;
+      state.visible   = true;
+      saveState(state);
+      applyVisibility();
+      render();
+    }
+    function resetProgress() {
+      const api = currentApi();
+      if (!api) return;
+      done[api.id] = {};
+      saveDone(done);
+      render();
+    }
+    function markOpDone(opId) {
+      const api = currentApi();
+      if (!api) return;
+      done[api.id] = done[api.id] || {};
+      if (done[api.id][opId]) return;
+      done[api.id][opId] = true;
+      saveDone(done);
+      if (state.visible && !state.minimized) render();
+      else if (state.minimized) {
+        const guide = resolveGuide(api);
+        const apiDone = done[api.id] || {};
+        const count = guide.filter((s) => apiDone[s.opId]).length;
+        updateProgress(count, guide.length);
+      }
+      // Auto-next: if the toggle is on, schedule advancing to the next step.
+      if (autoNextCb && autoNextCb.checked) {
+        _scheduleAutoNext(opId);
+      }
+    }
+
+    // ---- Auto-next countdown ------------------------------------------
+    // After a successful 2xx, wait AUTO_NEXT_MS then select the next undone
+    // step in the guide. A visible countdown ring shows the user how long
+    // they have to cancel (clicking the ring or toggling Auto Next cancels).
+    const AUTO_NEXT_MS   = 5000;
+    const AUTO_NEXT_TICK = 100; // ms between ticks
+    let _autoNextTimer = null;
+    let _autoNextStart = 0;
+
+    const CIRCUMFERENCE = 2 * Math.PI * 8; // r=8 from SVG
+    if (countdownFill) {
+      countdownFill.style.strokeDasharray  = CIRCUMFERENCE + ' ' + CIRCUMFERENCE;
+      countdownFill.style.strokeDashoffset = CIRCUMFERENCE;
+    }
+
+    function _cancelAutoNext() {
+      if (_autoNextTimer) { clearInterval(_autoNextTimer); _autoNextTimer = null; }
+      if (countdownEl) countdownEl.classList.remove('api-guide-countdown--active');
+    }
+
+    function _scheduleAutoNext(fromOpId) {
+      _cancelAutoNext();
+      const api = currentApi();
+      if (!api) return;
+      const guide = resolveGuide(api);
+      const idx = guide.findIndex((s) => s.opId === fromOpId);
+      if (idx === -1 || idx >= guide.length - 1) return; // last step — nothing to advance to
+      // Don't auto-next if the current step requires a browser launch (Connect
+      // flow). The user needs to open the URL and complete the flow manually
+      // before the next step makes sense.
+      const currentStep = guide[idx];
+      if (currentStep.launch) return;
+      // Belt-and-braces: also skip if the workbench is showing a live Launch
+      // banner (e.g. auto-derived guide where launch flag isn't set but the
+      // response returned a hosted Connect URL).
+      const launchBanner = $("op-launch-banner");
+      if (launchBanner && !launchBanner.hidden) return;
+      const nextStep = guide[idx + 1];
+
+      _autoNextStart = Date.now();
+      if (countdownEl)  countdownEl.classList.add('api-guide-countdown--active');
+
+      _autoNextTimer = setInterval(() => {
+        const elapsed = Date.now() - _autoNextStart;
+        const remaining = Math.max(0, AUTO_NEXT_MS - elapsed);
+        const secs = Math.ceil(remaining / 1000);
+        if (countdownNum)  countdownNum.textContent = secs;
+        if (countdownFill) {
+          const pct = remaining / AUTO_NEXT_MS;
+          countdownFill.style.strokeDashoffset = CIRCUMFERENCE * (1 - pct);
+        }
+        if (elapsed >= AUTO_NEXT_MS) {
+          _cancelAutoNext();
+          // Only advance if the user hasn't already moved to a different op.
+          if (typeof selectOp === 'function' && currentOpId === fromOpId) {
+            selectOp(nextStep.opId);
+            // Scroll it into view in the guide steps list.
+            const li = stepsEl.querySelector('[data-op-id="' + CSS.escape(nextStep.opId) + '"]');
+            if (li) li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+      }, AUTO_NEXT_TICK);
+    }
+
+    // Cancel auto-next if the user manually changes op before the timer fires.
+    // This hook is called by syncCurrentOp which runs on every selectOp.
+    function _cancelAutoNextIfMoved(newOpId) {
+      if (_autoNextTimer) _cancelAutoNext();
+    }
+
+    // Persist auto-next preference.
+    if (autoNextCb) {
+      try {
+        const saved = localStorage.getItem('vima:apiGuide:autoNext');
+        if (saved === '1') autoNextCb.checked = true;
+      } catch (e) {}
+      autoNextCb.addEventListener('change', () => {
+        try { localStorage.setItem('vima:apiGuide:autoNext', autoNextCb.checked ? '1' : '0'); }
+        catch (e) {}
+        if (!autoNextCb.checked) _cancelAutoNext();
+      });
+    }
+    // Clicking the countdown ring cancels the timer.
+    if (countdownEl) {
+      countdownEl.addEventListener('click', function (e) {
+        e.stopPropagation();
+        _cancelAutoNext();
+      });
+    }
+
+    // ---- Drag ----------------------------------------------------------
+    let drag = null;
+    function onDragStart(e) {
+      // Don't start a drag if the user clicked a header button.
+      if (e.target.closest('.api-guide-icon-btn')) return;
+      const pt = (e.touches && e.touches[0]) || e;
+      drag = {
+        startX: pt.clientX,
+        startY: pt.clientY,
+        origX:  state.x || panel.offsetLeft,
+        origY:  state.y || panel.offsetTop,
+        moved:  false,
+      };
+      panel.classList.add('api-guide--dragging');
+      document.addEventListener('mousemove', onDragMove);
+      document.addEventListener('mouseup',   onDragEnd);
+      document.addEventListener('touchmove', onDragMove, { passive: false });
+      document.addEventListener('touchend',  onDragEnd);
+      if (e.cancelable) e.preventDefault();
+    }
+    function onDragMove(e) {
+      if (!drag) return;
+      const pt = (e.touches && e.touches[0]) || e;
+      const dx = pt.clientX - drag.startX;
+      const dy = pt.clientY - drag.startY;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) drag.moved = true;
+      const w = panel.offsetWidth;
+      const h = panel.offsetHeight;
+      const pad = 8;
+      const x = clamp(drag.origX + dx, pad, window.innerWidth  - w - pad);
+      const y = clamp(drag.origY + dy, pad, window.innerHeight - h - pad);
+      state.x = x;
+      state.y = y;
+      panel.style.left = x + 'px';
+      panel.style.top  = y + 'px';
+      if (e.cancelable) e.preventDefault();
+    }
+    function onDragEnd() {
+      if (!drag) return;
+      panel.classList.remove('api-guide--dragging');
+      document.removeEventListener('mousemove', onDragMove);
+      document.removeEventListener('mouseup',   onDragEnd);
+      document.removeEventListener('touchmove', onDragMove);
+      document.removeEventListener('touchend',  onDragEnd);
+      if (drag.moved) saveState(state);
+      drag = null;
+    }
+
+    // ---- Wiring --------------------------------------------------------
+    handle.addEventListener('mousedown',  onDragStart);
+    handle.addEventListener('touchstart', onDragStart, { passive: false });
+    btnMin.addEventListener('click',   minimize);
+    btnClose.addEventListener('click', hide);
+    btnReset.addEventListener('click', resetProgress);
+    pill.addEventListener('click', unminimize);
+    if (btnOpen) btnOpen.addEventListener('click', toggle);
+    window.addEventListener('resize', () => {
+      if (state.visible && !state.minimized) applyPosition();
+    });
+
+    // Restore visibility on load. Hidden by default until user opens it.
+    // Deferred to the next tick because `currentApi()` references the
+    // `APIS` array which is declared with `let` further down in this file
+    // (temporal dead zone). Without the defer, a stale localStorage entry
+    // with visible=true would throw a ReferenceError here and halt the
+    // rest of the script load — including the top-tabs click handlers.
+    setTimeout(function () {
+      try {
+        if (state.visible) {
+          const api = (typeof currentApi === 'function') ? currentApi() : null;
+          if (api) pillLabel.textContent = api.name;
+          render();
+          applyVisibility();
+        }
+      } catch (err) {
+        // Never let the guide break the rest of the page.
+        // eslint-disable-next-line no-console
+        if (window.console) console.warn('[ApiGuide] init failed:', err);
+      }
+    }, 0);
+
+    function syncCurrentOp() {
+      // Cancel any pending auto-next if the user navigated manually.
+      _cancelAutoNextIfMoved(currentOpId);
+      // Always keep the footer in sync.
+      syncFooter();
+      if (!state.visible || state.minimized) return;
+      const items = stepsEl.querySelectorAll('.api-guide-step');
+      items.forEach((li) => {
+        li.classList.toggle('api-guide-step--current', li.dataset.opId === currentOpId);
+      });
+    }
+
+    // ---- Footer / Send mirror ------------------------------------------
+    function syncFooter() {
+      if (!sendBtn) return;
+      const mainBtn = $("op-send");
+      const mainDisabled = !mainBtn || mainBtn.disabled;
+      const mainText = (mainBtn && mainBtn.textContent && mainBtn.textContent.trim()) || 'Send';
+      sendBtn.disabled = mainDisabled;
+      if (sendLabel) sendLabel.textContent = /send/i.test(mainText) ? mainText : 'Send';
+    }
+    if (sendBtn) {
+      sendBtn.addEventListener('click', function () {
+        const mainBtn = $("op-send");
+        if (!mainBtn || mainBtn.disabled) return;
+        // Visual: pulse our own button, and animate the workbench button
+        // as if a user just pressed it. Scroll it into view first so the
+        // animation isn't off-screen.
+        sendBtn.classList.remove('api-guide-send-btn--press');
+        void sendBtn.offsetWidth;
+        sendBtn.classList.add('api-guide-send-btn--press');
+
+        try { mainBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        catch (e) {}
+        mainBtn.classList.remove('op-send--ghost-press');
+        void mainBtn.offsetWidth;
+        mainBtn.classList.add('op-send--ghost-press');
+        // Trigger the real click after the visual press settles.
+        setTimeout(() => {
+          mainBtn.classList.remove('op-send--ghost-press');
+          mainBtn.click();
+        }, 220);
+      });
+    }
+    // Mirror disabled-state changes from the main button (sending… / done).
+    const mainSendBtn = $("op-send");
+    if (mainSendBtn && window.MutationObserver) {
+      new MutationObserver(syncFooter).observe(mainSendBtn, {
+        attributes: true,
+        attributeFilter: ['disabled'],
+        childList: true,
+        characterData: true,
+        subtree: true,
+      });
+    }
+
+    // ---- Resize --------------------------------------------------------
+    // Bottom-right corner = width + height. Left edge = width-only.
+    function startResize(mode) {
+      return function (e) {
+        const pt = (e.touches && e.touches[0]) || e;
+        const startX = pt.clientX;
+        const startY = pt.clientY;
+        const startW = panel.offsetWidth;
+        const startH = panel.offsetHeight;
+        const startLeft = panel.offsetLeft;
+        panel.classList.add('api-guide--resizing');
+        document.body.style.cursor = (mode === 'corner') ? 'nwse-resize' : 'ew-resize';
+
+        function onMove(ev) {
+          const p = (ev.touches && ev.touches[0]) || ev;
+          const dx = p.clientX - startX;
+          const dy = p.clientY - startY;
+          let newW = startW;
+          let newH = startH;
+          let newLeft = startLeft;
+          const maxW = Math.max(MIN_W, window.innerWidth  - 16);
+          const maxH = Math.max(MIN_H, window.innerHeight - 80);
+          if (mode === 'corner') {
+            newW = clamp(startW + dx, MIN_W, maxW);
+            newH = clamp(startH + dy, MIN_H, maxH);
+          } else if (mode === 'left') {
+            // Dragging left edge: grow width while keeping right edge fixed.
+            newW = clamp(startW - dx, MIN_W, maxW);
+            newLeft = startLeft + (startW - newW);
+          }
+          panel.style.width  = newW + 'px';
+          panel.style.height = (mode === 'corner') ? (newH + 'px') : panel.style.height;
+          if (mode === 'left') panel.style.left = newLeft + 'px';
+          state.w = newW;
+          if (mode === 'corner') state.h = newH;
+          if (mode === 'left')   state.x = newLeft;
+          if (ev.cancelable) ev.preventDefault();
+        }
+        function onEnd() {
+          panel.classList.remove('api-guide--resizing');
+          document.body.style.cursor = '';
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup',   onEnd);
+          document.removeEventListener('touchmove', onMove);
+          document.removeEventListener('touchend',  onEnd);
+          saveState(state);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup',   onEnd);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend',  onEnd);
+        if (e.cancelable) e.preventDefault();
+        e.stopPropagation();
+      };
+    }
+    if (resizeCorner) {
+      resizeCorner.addEventListener('mousedown',  startResize('corner'));
+      resizeCorner.addEventListener('touchstart', startResize('corner'), { passive: false });
+    }
+    if (resizeLeft) {
+      resizeLeft.addEventListener('mousedown',  startResize('left'));
+      resizeLeft.addEventListener('touchstart', startResize('left'), { passive: false });
+    }
+
+    return {
+      show, hide, toggle,
+      markOpDone,
+      refresh: () => { if (state.visible) { render(); applyVisibility(); } },
+      syncCurrentOp,
+    };
+    } catch (err) {
+      // ApiGuide failed to initialise — return a no-op surface so the
+      // rest of the page (top tab handlers etc.) still loads.
+      if (window.console) console.warn('[ApiGuide] disabled:', err);
+      return { show(){}, hide(){}, toggle(){}, markOpDone(){}, refresh(){}, syncCurrentOp(){} };
+    }
+  })();
+  window.ApiGuide = ApiGuide;
+
+  // ---------------------------------------------------------------------
   // Top tabs
   // ---------------------------------------------------------------------
   document.querySelectorAll(".top-tab").forEach((btn) => {
@@ -1134,6 +1778,8 @@
       currentOpId = null;
       if (window._showApiWorkbench) window._showApiWorkbench();
       renderApi();
+      // Refresh the floating API Guide to reflect the newly-selected API.
+      if (window.ApiGuide) ApiGuide.refresh();
       // If the Python snippets drawer is open, follow the selection so
       // it shows the snippet for the API the user just picked.
       if (typeof APIS_SNIPPETS_VISIBLE !== 'undefined' && APIS_SNIPPETS_VISIBLE) {
@@ -1860,6 +2506,7 @@
     $("op-note").innerHTML = "";
     $("op-params").innerHTML = "";
     $("op-hint").innerHTML = "";
+    _resetLaunchBanner();
     $("op-send").disabled = true;
     $("req-body").textContent = "—";
     $("resp-body").textContent = "—";
@@ -2009,6 +2656,8 @@
     $("op-send").disabled = false;
     $("op-hint").innerHTML = "";
     renderParams();    restoreIo();
+    // Keep the floating API Guide's "current step" highlight in sync.
+    if (window.ApiGuide) ApiGuide.syncCurrentOp();
     // If the View Code panel is open for this API, refresh it so the
     // snippet tracks whichever operation the user has chosen.
     if (typeof APIS_SNIPPETS_VISIBLE !== 'undefined' && APIS_SNIPPETS_VISIBLE
@@ -2037,15 +2686,126 @@
       } else {
         setStatus(null);
       }
-      $('op-hint').innerHTML = cached.hintHtml || '';    } else {
+      $('op-hint').innerHTML = cached.hintHtml || '';
+      if (cached.launch) {
+        _showLaunchBanner(cached.launch);
+      } else {
+        _resetLaunchBanner();
+      }
+    } else {
       lastIoData.request = null;
       lastIoData.response = null;
       $("req-body").textContent = "—";
       $("resp-body").textContent = "—";
       $("resp-status").textContent = "";
       $("resp-status").className = "status-pill";      $('resp-status').title = "";      $("op-hint").innerHTML = "";
+      _resetLaunchBanner();
       previewRequest();
     }
+  }
+
+  // ----- Sticky launch banner ---------------------------------------------
+  // When an operation returns hints.open_link (Open Finance EU / AU / US
+  // managed-flow handoff), render the Launch button into a sticky banner at
+  // the top of the op-panel scroll so the user doesn't have to scroll past
+  // the params list to find it.
+  function _resetLaunchBanner() {
+    const el = $("op-launch-banner");
+    if (!el) return;
+    el.innerHTML = "";
+    el.hidden = true;
+    el.removeAttribute("data-url");
+  }
+  function _showLaunchBanner({ url, label, note, testCredentials }) {
+    const el = $("op-launch-banner");
+    if (!el) return;
+    el.innerHTML = "";
+    const text = document.createElement("div");
+    text.className = "op-launch-banner-text";
+    const title = document.createElement("strong");
+    title.className = "op-launch-banner-title";
+    title.textContent = "Browser action required";
+    const desc = document.createElement("span");
+    desc.textContent = note;
+    text.appendChild(title);
+    text.appendChild(desc);
+    const btn = document.createElement("a");
+    btn.className = "op-launch-banner-btn";
+    btn.href = url;
+    btn.target = "_blank";
+    btn.rel = "noopener";
+    btn.textContent = label;
+    el.appendChild(text);
+    el.appendChild(btn);
+    if (testCredentials && Array.isArray(testCredentials.rows) && testCredentials.rows.length) {
+      el.appendChild(_buildTestCredentialsBlock(testCredentials));
+    }
+    el.hidden = false;
+    el.dataset.url = url;
+  }
+
+  // Render a compact sandbox-test-users credentials table inside the launch
+  // banner. Highlights the recommended starter user and links to the official
+  // docs page so reviewers can cross-check.
+  function _buildTestCredentialsBlock(creds) {
+    const wrap = document.createElement("div");
+    wrap.className = "op-launch-banner-creds";
+    const header = document.createElement("div");
+    header.className = "op-launch-banner-creds-header";
+    const h = document.createElement("strong");
+    h.textContent = creds.title || "Sandbox test users";
+    header.appendChild(h);
+    if (creds.docs_url) {
+      const a = document.createElement("a");
+      a.href = creds.docs_url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.textContent = creds.docs_label || "View in docs ↗";
+      a.className = "op-launch-banner-creds-docs";
+      header.appendChild(a);
+    }
+    wrap.appendChild(header);
+    if (creds.providers_note) {
+      const p = document.createElement("div");
+      p.className = "op-launch-banner-creds-note";
+      p.textContent = creds.providers_note;
+      wrap.appendChild(p);
+    }
+    const table = document.createElement("table");
+    table.className = "op-launch-banner-creds-table";
+    if (Array.isArray(creds.columns)) {
+      const thead = document.createElement("thead");
+      const tr = document.createElement("tr");
+      creds.columns.forEach((c) => {
+        const th = document.createElement("th");
+        th.textContent = c;
+        tr.appendChild(th);
+      });
+      thead.appendChild(tr);
+      table.appendChild(thead);
+    }
+    const tbody = document.createElement("tbody");
+    const rec = creds.recommended || "";
+    creds.rows.forEach((row) => {
+      const tr = document.createElement("tr");
+      if (row[0] === rec) tr.className = "is-recommended";
+      row.forEach((cell, idx) => {
+        const td = document.createElement("td");
+        // First three columns are short identifiers — render as <code>.
+        if (idx < 3) {
+          const code = document.createElement("code");
+          code.textContent = cell;
+          td.appendChild(code);
+        } else {
+          td.textContent = cell;
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    return wrap;
   }
 
   function resolveDefault(def) {
@@ -2111,6 +2871,50 @@
             if (String(a.id) === String(value)) opt.selected = true;
             input.appendChild(opt);
           });
+        }
+      } else if (p.type === "provider_select") {
+        // Populated by Open Finance EU → Get Providers. Items: {id, name, country}.
+        input = document.createElement("select");
+        const providers = currentState.providers || [];
+        if (!providers.length) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "— no providers loaded — run Get Providers first —";
+          opt.disabled = true;
+          opt.selected = true;
+          input.appendChild(opt);
+        } else {
+          providers.forEach((pr) => {
+            const opt = document.createElement("option");
+            opt.value = pr.id;
+            const country = pr.country ? ` [${pr.country}]` : "";
+            opt.textContent = `${pr.name || pr.id}${country}`;
+            if (String(pr.id) === String(value)) opt.selected = true;
+            input.appendChild(opt);
+          });
+        }
+      } else if (p.type === "redirect_url_select") {
+        // Editable dropdown: pick a known redirect URL or type a custom one.
+        // Implemented as <input list="..."> + <datalist> so the user can both
+        // pick from the seeded list and free-text a different value.
+        input = document.createElement("input");
+        input.type = "text";
+        input.value = value;
+        input.placeholder = "https://...";
+        const urls = currentState.redirect_urls || [];
+        if (urls.length) {
+          const listId = `redirect-urls-${p.name}-${Math.random().toString(36).slice(2, 8)}`;
+          const dl = document.createElement("datalist");
+          dl.id = listId;
+          urls.forEach((u) => {
+            const o = document.createElement("option");
+            o.value = u;
+            dl.appendChild(o);
+          });
+          input.setAttribute("list", listId);
+          row.appendChild(dl);
+          // Default to the first known URL if the field is empty.
+          if (!value) input.value = urls[0];
         }
       } else {
         input = document.createElement("input");
@@ -2187,8 +2991,13 @@
       if (s != null) {
         setStatus(s);
       }
+      // Mark the step done in the floating API Guide on any 2xx response.
+      if (s != null && s >= 200 && s < 300 && window.ApiGuide) {
+        ApiGuide.markOpDone(op.id);
+      }
       // Hints
       $("op-hint").innerHTML = "";
+      _resetLaunchBanner();
       if (data.hints && data.hints.note) {
         const n = document.createElement("div");
         n.className = "muted op-hint-card op-hint-card--note";
@@ -2196,21 +3005,22 @@
         $("op-hint").appendChild(n);
       }
       if (data.hints && data.hints.open_link) {
-        const wrap = document.createElement("div");
-        wrap.className = "op-hint-card op-hint-card--launch";
-        const note = document.createElement("span");
-        note.className = "muted op-hint-text";
-        note.textContent = data.hints.open_link_note
-          || "Open in a new tab, complete the bank login flow, then run the next step.";
-        const btn = document.createElement("a");
-        btn.href = data.hints.open_link;
-        btn.target = "_blank";
-        btn.rel = "noopener";
-        btn.textContent = data.hints.open_link_label || "Launch Connect ↗";
-        btn.className = "op-hint-btn op-hint-btn--launch";
-        wrap.appendChild(note);
-        wrap.appendChild(btn);
-        $("op-hint").appendChild(wrap);
+        _showLaunchBanner({
+          url: data.hints.open_link,
+          label: data.hints.open_link_label || "Launch Connect ↗",
+          note: data.hints.open_link_note
+            || "Open in a new tab, complete the bank login flow, then run the next step.",
+          testCredentials: data.hints.test_credentials || null,
+        });
+      } else if (data.hints && data.hints.test_credentials) {
+        // No launch URL yet (call hasn't been made or returned an error),
+        // but we still want to surface the sandbox test PSU credentials
+        // so the user knows what to log in with. Render as a standalone
+        // card in the op-hint area.
+        const card = document.createElement("div");
+        card.className = "op-hint-card op-hint-card--creds";
+        card.appendChild(_buildTestCredentialsBlock(data.hints.test_credentials));
+        $("op-hint").appendChild(card);
       }      // Browser-action button: shown when op.browser_action is true.
       // Prefers hints.browser_launch_url; falls back to first URL found in response body.
       if (op.browser_action) {
@@ -2262,6 +3072,13 @@
         response: data.response,
         statusCode: s,
         hintHtml: $('op-hint').innerHTML,
+        launch: (data.hints && data.hints.open_link) ? {
+          url: data.hints.open_link,
+          label: data.hints.open_link_label || "Launch Connect ↗",
+          note: data.hints.open_link_note
+            || "Open in a new tab, complete the bank login flow, then run the next step.",
+          testCredentials: data.hints.test_credentials || null,
+        } : null,
         headersVisible: { ...headersVisible },
       };
       // Update state

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from .client import OpenFinanceAUClient
 
@@ -63,6 +63,77 @@ STATE: Dict[str, Any] = {
     "consent_receipt_id": None,
     "connect_url": None,
 }
+
+
+# ---------------------------------------------------------------------------
+# Sandbox test credentials (Mastercard Open Finance AU / CDR)
+# ---------------------------------------------------------------------------
+# Reference: https://developer.mastercard.com/open-finance-au/documentation/
+#            integration-and-testing/test-the-apis/
+# Three OAuth-enabled FinBank test institutions are available. Consumer
+# profiles `profile_4110` – `profile_4115` (password == username) cover
+# personal scenarios; business profiles `profile_4116` – `profile_4118`
+# cover business banking. `profile_4110` is the most data-rich default.
+
+TEST_USERS_DOCS_URL = (
+    "https://developer.mastercard.com/open-finance-au/documentation/"
+    "integration-and-testing/test-the-apis/"
+)
+
+TEST_USERS: List[Dict[str, Any]] = [
+    {"username": "profile_4110", "password": "profile_4110",
+     "kind": "Consumer",
+     "scenario": "Default rich consumer profile (savings + transaction accounts)",
+     "recommended": True},
+    {"username": "profile_4111", "password": "profile_4111",
+     "kind": "Consumer", "scenario": "Joint-account consumer profile"},
+    {"username": "profile_4112", "password": "profile_4112",
+     "kind": "Consumer", "scenario": "Loan + credit-card consumer profile"},
+    {"username": "profile_4113", "password": "profile_4113",
+     "kind": "Consumer", "scenario": "Single transaction-account consumer"},
+    {"username": "profile_4114", "password": "profile_4114",
+     "kind": "Consumer", "scenario": "Term-deposit + savings consumer"},
+    {"username": "profile_4115", "password": "profile_4115",
+     "kind": "Consumer", "scenario": "Multi-account high-balance consumer"},
+    {"username": "profile_4116", "password": "profile_4116",
+     "kind": "Business", "scenario": "Sole-trader business profile"},
+    {"username": "profile_4117", "password": "profile_4117",
+     "kind": "Business", "scenario": "Trust + business account profile"},
+    {"username": "profile_4118", "password": "profile_4118",
+     "kind": "Business", "scenario": "Company business profile (multi-entity)"},
+]
+
+TEST_PROVIDERS_NOTE = (
+    "Pick one of the three OAuth FinBank sandbox institutions in Connect: "
+    "Finbank Aus OAuth (200003), FinBank Aus B OAuth (2002119), or "
+    "FinBank Outh Aus C (2002120). All three accept the profile credentials "
+    "below and walk you through the CDR consent flow."
+)
+
+
+def _test_credentials_payload() -> Dict[str, Any]:
+    """Compact representation of the AU CDR sandbox test profiles.
+
+    Returned as a hint on Generate Connect URL so the UI can surface the
+    profile usernames + the three test institutions next to the Launch
+    Connect button. Emitted on both success and error responses so it
+    stays visible while debugging sandbox issues.
+    """
+    return {
+        "title": "AU CDR sandbox profiles (username = password for all)",
+        "docs_url": TEST_USERS_DOCS_URL,
+        "docs_label": "Mastercard Open Finance AU — Test Profiles docs",
+        "providers_note": TEST_PROVIDERS_NOTE,
+        "columns": ["Username", "Password", "Type", "Scenario"],
+        "rows": [
+            [u["username"], u["password"], u["kind"], u["scenario"]]
+            for u in TEST_USERS
+        ],
+        "recommended": next(
+            (u["username"] for u in TEST_USERS if u.get("recommended")),
+            None,
+        ),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -410,14 +481,14 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
                 webhook_url=p.get("webhook_url", ""),
             )
             state = {}
-            hints: Dict[str, Any] = {}
+            hints: Dict[str, Any] = {"test_credentials": _test_credentials_payload()}
             if isinstance(data, dict) and data.get("link"):
                 state["connect_url"] = data["link"]
                 hints["open_link"] = data["link"]
                 hints["open_link_label"] = "Launch Connect ↗"
                 hints["open_link_note"] = (
-                    "Open in a new tab, search for Finbank Aus OAuth, sign in with "
-                    "profile_4110 / profile_4110, then run Get Data Sharing Consents."
+                    "Open in a new tab, search for one of the FinBank Aus OAuth "
+                    "institutions, then sign in with one of the sandbox profiles below."
                 )
             return _ok(data, code, state, hints)
 

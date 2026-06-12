@@ -34,6 +34,7 @@ from apis.catalog import (
     AUTH_OAUTH1,
     AUTH_OAUTH1_ENC,
     AUTH_OAUTH2,
+    AUTH_JWT_RS256,
     ApiCatalogEntry,
     get as get_catalog_entry,
 )
@@ -46,6 +47,7 @@ _SENTINEL_PLACEHOLDERS = {
     "your_api_key_here",
     "your_app_key_here",
     "your_partner_secret_here",
+    "your_client_id_here",
 }
 
 
@@ -100,6 +102,23 @@ def load_credentials(api_id: str | ApiCatalogEntry, *, instance: str | None = No
             "sig_key_path":   _get(f"{prefix}_SIG_KEY_PATH"),
         }
 
+    if entry.auth == AUTH_JWT_RS256:
+        # OAuth 2.0 client_credentials with an RS256-signed JWT client
+        # assertion (Mastercard Aiia / Open Finance Europe). Onboarding is
+        # manual — an officer adds the partner's public RSA cert to a trust
+        # list and returns a ``client_id``; nothing is provisionable from
+        # the developer portal.
+        return {
+            "client_id":                 _get(f"{prefix}_CLIENT_ID"),
+            "private_key_path":          _get(f"{prefix}_PRIVATE_KEY_PATH"),
+            "public_cert_path":          _get(f"{prefix}_PUBLIC_CERT_PATH"),
+            "application_id":            _get(f"{prefix}_APPLICATION_ID"),
+            "use_case_configuration_id": _get(f"{prefix}_USE_CASE_ID"),
+            "redirect_url":              _get(f"{prefix}_REDIRECT_URL"),
+            "auth_base_url":             _get(f"{prefix}_AUTH_BASE_URL"),
+            "api_base_url":              _get(f"{prefix}_API_BASE_URL"),
+        }
+
     raise ValueError(f"Unknown auth scheme {entry.auth!r} for {entry.id}")
 
 
@@ -117,6 +136,11 @@ def is_configured(api_id: str | ApiCatalogEntry, *, instance: str | None = None)
         return all(
             creds[k] not in _SENTINEL_PLACEHOLDERS
             for k in ("partner_id", "partner_secret", "app_key")
+        )
+    if entry.auth == AUTH_JWT_RS256:
+        return all(
+            creds[k] not in _SENTINEL_PLACEHOLDERS
+            for k in ("client_id", "private_key_path", "public_cert_path")
         )
     return False
 
