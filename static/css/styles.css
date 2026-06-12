@@ -12267,6 +12267,16 @@ html:not(.theme-light) .op-launch-banner-creds-table code {
   color: rgba(255, 255, 255, 0.7);
 }
 .sdk-terminal-replay:hover { color: #fff; background: rgba(255, 255, 255, 0.12); }
+.sdk-code-run {
+  margin-left: auto; font: inherit; font-size: 11.5px; font-weight: 700;
+  padding: 5px 14px; border-radius: 7px; cursor: pointer;
+  background: linear-gradient(180deg, #ffcb05, #f79e1b); border: 0;
+  color: #1a1300; letter-spacing: 0.2px;
+}
+.sdk-code-run:hover { filter: brightness(1.06); }
+.sdk-code-run:disabled { opacity: 0.6; cursor: default; filter: none; }
+.sdk-code-run--ok { background: linear-gradient(180deg, #27c93f, #1ea233); color: #04230b; }
+.sdk-code-run--err { background: linear-gradient(180deg, #ff6b5e, #eb001b); color: #fff; }
 .sdk-terminal-body {
   font-family: var(--mono); font-size: 13px; line-height: 1.7;
   padding: 20px 22px; overflow-y: auto;
@@ -12438,7 +12448,15 @@ html:not(.theme-light) .op-launch-banner-creds-table code {
   margin: 0; padding: 20px 22px; flex: 1;
   font-family: var(--mono); font-size: 13px; line-height: 1.7;
   color: rgba(230, 237, 243, 0.92); white-space: pre; overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 }
+.sdk-code-body::-webkit-scrollbar { height: 6px; }
+.sdk-code-body::-webkit-scrollbar-track { background: transparent; }
+.sdk-code-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12); border-radius: 999px;
+}
+.sdk-code-body:hover::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.22); }
 .sdk-c-kw { color: #ff9e7a; }
 .sdk-c-str { color: #9ece6a; }
 .sdk-c-cm { color: rgba(230, 237, 243, 0.4); }

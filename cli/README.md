@@ -32,20 +32,20 @@ pip install requests cryptography
 
 ### 0. Root launcher scripts (easiest)
 
-From the repo root, use the `cli` launcher for your platform:
+From the repo root, use the `ofin` launcher for your platform:
 
 ```bash
 # macOS / Linux
-./cli.sh                      # no args -> welcome screen (config + quickstart)
-./cli.sh us auth token        # run any command
-./cli.sh build                # build the portable bundle into cli/dist/
-./cli.sh help
+./ofin.sh                     # no args -> welcome screen (config + quickstart)
+./ofin.sh us auth token       # run any command
+./ofin.sh build               # build the portable bundle into cli/dist/
+./ofin.sh help
 
 # Windows
-cli.bat
-cli.bat us auth token
-cli.bat build
-cli.bat help
+ofin.bat
+ofin.bat us auth token
+ofin.bat build
+ofin.bat help
 ```
 
 Running with no command prints a welcome screen showing where credentials were
@@ -232,17 +232,16 @@ ofin eu balance --max-age PT0S
 ## Using the SDK directly
 
 ```python
-from ofin.config import Config
-from ofin.sdk import OfinClient
+from ofin import OfinClient
 
-client = OfinClient(Config.resolve())
+client = OfinClient.from_env()          # credentials auto-loaded from config/.env
 res = client.eu.list_providers(country="DK")
 print(res.ok, res.status)
 print(res.body)
 ```
 
-Every call returns a `Result` with `.ok`, `.status`, `.body`, `.request`,
-`.response`, `.state_updates`, and `.hints`.
+Every call returns a `Result` with `.ok`, `.status`, `.token`, `.body`,
+`.request`, `.response`, `.state_updates`, and `.hints`.
 
 ---
 

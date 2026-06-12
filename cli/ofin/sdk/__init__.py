@@ -36,6 +36,16 @@ class OfinClient:
         self._au: Optional[AUClient] = None
         self._eu: Optional[EUClient] = None
 
+    @classmethod
+    def from_env(cls, env_file: Optional[str] = None, timeout: Optional[int] = None) -> "OfinClient":
+        """Build a client with credentials auto-discovered from the environment.
+
+        Resolves the same way the CLI does: OS env vars, then an optional
+        ``env_file``, then the repo's ``config/.env``, then any bundled config.
+        """
+        from ..config import Config
+        return cls(Config.resolve(env_file), timeout=timeout)
+
     @property
     def us(self) -> USClient:
         if self._us is None:

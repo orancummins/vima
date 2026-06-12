@@ -2742,6 +2742,39 @@
       });
       const replay = document.getElementById('sdk-terminal-replay');
       if (replay) replay.addEventListener('click', () => window.__sdkDemo.replay());
+      const codeRun = document.getElementById('sdk-code-run');
+      if (codeRun) codeRun.addEventListener('click', () => {
+        const original = '▶ Run Code';
+        codeRun.disabled = true;
+        codeRun.textContent = 'Launching…';
+        codeRun.classList.remove('sdk-code-run--ok', 'sdk-code-run--err');
+        _nativeFetch('/sdk/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        })
+          .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+          .then(({ ok, d }) => {
+            codeRun.disabled = false;
+            if (!ok || d.error) {
+              codeRun.textContent = 'Failed';
+              codeRun.classList.add('sdk-code-run--err');
+              alert('Could not launch terminal: ' + (d.error || 'unknown error'));
+            } else {
+              codeRun.textContent = 'Launched ✓';
+              codeRun.classList.add('sdk-code-run--ok');
+            }
+            setTimeout(() => {
+              codeRun.textContent = original;
+              codeRun.classList.remove('sdk-code-run--ok', 'sdk-code-run--err');
+            }, 2400);
+          })
+          .catch((err) => {
+            codeRun.disabled = false;
+            codeRun.textContent = original;
+            alert('Could not launch terminal: ' + (err && err.message || err));
+          });
+      });
       document.querySelectorAll('[data-sdk-scroll]').forEach((btn) => {
         btn.addEventListener('click', () => {
           const target = document.getElementById(btn.dataset.sdkScroll);
