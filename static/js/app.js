@@ -2837,6 +2837,7 @@
     eu: { flag: LD_FLAG_SVG.eu, name: 'Europe', accent: '#2d6cdf' },
   };
   const _ldPolls = {}; // region -> interval id
+  const _ldExpanded = {}; // region -> Set of expanded account ids
 
   function _ldFmtMoney(amount, currency) {
     if (amount === null || amount === undefined || isNaN(amount)) return '—';
@@ -2881,30 +2882,59 @@
     if (pending) {
       body = `<p class="ld-conn-hint"><span class="ld-spinner"></span>Complete the sandbox bank login in the new tab. We'll pull your accounts automatically.</p>`;
     } else if (connected && accounts.length) {
-      const acctRows = accounts.map((a) => `
-        <div class="ld-acct">
-          <div>
-            <div class="ld-acct-name">${escapeHtml(a.name || 'Account')}</div>
-            <div class="ld-acct-sub">${escapeHtml([a.type, a.mask].filter(Boolean).join(' · '))}</div>
-          </div>
-          <div class="ld-acct-bal">${escapeHtml(_ldFmtMoney(a.balance, a.currency))}<small>${escapeHtml((a.currency || '').toUpperCase())}</small></div>
-        </div>`).join('');
-      let txnBlock = '';
-      if (txns.length) {
-        const rows = txns.slice(0, 8).map((t) => {
-          const amt = (t.amount === null || t.amount === undefined) ? null : Number(t.amount);
-          const cls = amt === null ? '' : (amt < 0 ? 'ld-neg' : 'ld-pos');
-          return `<div class="ld-txn">
-            <span class="ld-txn-date">${escapeHtml(t.date || '')}</span>
-            <span class="ld-txn-desc">${escapeHtml(t.description || '')}</span>
-            <span class="ld-txn-amt ${cls}">${escapeHtml(_ldFmtMoney(t.amount, t.currency))}</span>
-          </div>`;
-        }).join('');
-        txnBlock = `<div class="ld-txn-title">Recent transactions</div><div class="ld-txns">${rows}</div>`;
-      } else {
-        txnBlock = `<p class="ld-empty-note">No transactions available for this region.</p>`;
+      const expanded = _ldExpanded[region] || (_ldExpanded[region] = new Set());
+      const txnRow = (t) => {
+        const amt = (t.amount === null || t.amount === undefined) ? null : Number(t.amount);
+        const cls = amt === null ? '' : (amt < 0 ? 'ld-neg' : 'ld-pos');
+        return `<div class="ld-txn">
+          <span class="ld-txn-date">${escapeHtml(t.date || '')}</span>
+          <span class="ld-txn-desc">${escapeHtml(t.description || '')}</span>
+          <span class="ld-txn-amt ${cls}">${escapeHtml(_ldFmtMoney(t.amount, t.currency))}</span>
+        </div>`;
+      };
+      // Bucket transactions by their owning account; anything we can't match
+      // falls into an "Other" group so no data is ever dropped.
+      const byAcct = {};
+      const matchedIds = new Set(accounts.map((a) => String(a.id)));
+      (txns || []).forEach((t) => {
+        const k = (t.account_id !== undefined && t.account_id !== null && matchedIds.has(String(t.account_id)))
+          ? String(t.account_id) : '__other__';
+        (byAcct[k] = byAcct[k] || []).push(t);
+      });
+      const groupHtml = (key, headHtml, list) => {
+        const isOpen = expanded.has(key);
+        const inner = (list && list.length)
+          ? `<div class="ld-txns">${list.slice(0, 25).map(txnRow).join('')}</div>`
+          : `<p class="ld-empty-note">No transactions for this account.</p>`;
+        const count = (list && list.length) ? list.length : 0;
+        return `<div class="ld-acct-group${isOpen ? ' is-open' : ''}">
+          <button type="button" class="ld-acct" data-ld-acct="${escapeHtml(key)}" aria-expanded="${isOpen ? 'true' : 'false'}">
+            ${headHtml}
+            <span class="ld-acct-toggle">
+              <span class="ld-acct-count">${count}</span>
+              <svg class="ld-acct-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+          </button>
+          <div class="ld-acct-txns">${inner}</div>
+        </div>`;
+      };
+      const acctBlocks = accounts.map((a) => {
+        const head = `<span class="ld-acct-info">
+            <span class="ld-acct-name">${escapeHtml(a.name || 'Account')}</span>
+            <span class="ld-acct-sub">${escapeHtml([a.type, a.mask].filter(Boolean).join(' · '))}</span>
+          </span>
+          <span class="ld-acct-bal">${escapeHtml(_ldFmtMoney(a.balance, a.currency))}<small>${escapeHtml((a.currency || '').toUpperCase())}</small></span>`;
+        return groupHtml(String(a.id), head, byAcct[String(a.id)] || []);
+      }).join('');
+      let otherBlock = '';
+      if ((byAcct.__other__ || []).length) {
+        const head = `<span class="ld-acct-info">
+            <span class="ld-acct-name">Other transactions</span>
+            <span class="ld-acct-sub">Not linked to a listed account</span>
+          </span>`;
+        otherBlock = groupHtml('__other__', head, byAcct.__other__);
       }
-      body = `<div class="ld-accts">${acctRows}</div>${txnBlock}`;
+      body = `<div class="ld-accts">${acctBlocks}${otherBlock}</div>`;
     } else if (opts.error) {
       body = `<p class="ld-conn-hint">${escapeHtml(opts.error)}</p>`;
     } else {
@@ -3067,6 +3097,20 @@
     });
     document.querySelectorAll('[data-ld-refresh]').forEach((b) => {
       b.onclick = () => _ldRefreshData(b.dataset.ldRefresh);
+    });
+    document.querySelectorAll('[data-ld-card]').forEach((card) => {
+      const region = card.dataset.ldCard;
+      const set = _ldExpanded[region] || (_ldExpanded[region] = new Set());
+      card.querySelectorAll('[data-ld-acct]').forEach((btn) => {
+        btn.onclick = () => {
+          const key = btn.dataset.ldAcct;
+          const group = btn.closest('.ld-acct-group');
+          const open = !(group && group.classList.contains('is-open'));
+          if (group) group.classList.toggle('is-open', open);
+          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          if (open) set.add(key); else set.delete(key);
+        };
+      });
     });
   }
 

@@ -197,34 +197,60 @@ def _norm_account(region: str, a: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _norm_txn(region: str, t: Dict[str, Any]) -> Dict[str, Any]:
+def _norm_txn(region: str, t: Dict[str, Any],
+              default_account_id: Optional[str] = None) -> Dict[str, Any]:
     if not isinstance(t, dict):
-        return {"date": "", "description": "", "amount": None, "currency": ""}
+        return {"date": "", "description": "", "amount": None,
+                "currency": "", "account_id": default_account_id}
     amount = _num(
         t.get("amount"),
         ((t.get("amount") or {}).get("value") if isinstance(t.get("amount"), dict) else None),
         ((t.get("transactionAmount") or {}).get("amount") if isinstance(t.get("transactionAmount"), dict) else None),
     )
+    # Open Finance Europe (Aiia) reports a positive amount plus a
+    # creditDebitIndicator rather than a signed value — fold that into a
+    # signed amount so debits render negative like the other regions.
+    indicator = str(_first(t, "creditDebitIndicator", "credit_debit_indicator") or "").upper()
+    if amount is not None and indicator in ("DEBIT", "DBIT") and amount > 0:
+        amount = -amount
     currency = ""
     if isinstance(t.get("amount"), dict):
         currency = t["amount"].get("currency") or ""
+    if not currency and isinstance(t.get("transactionAmount"), dict):
+        currency = t["transactionAmount"].get("currency") or ""
     currency = currency or _first(t, "currency", "currencyCode") or ""
-    date = _first(t, "date", "postedDate", "transactionDate", "bookingDate", "valueDate") or ""
+    date = _first(
+        t, "date", "postedDate", "transactionDate", "bookingDate", "valueDate",
+        "bookingDateTime", "valueDateTime", "executionDateTime",
+    ) or ""
     # Finicity uses epoch seconds for postedDate / transactionDate.
     if isinstance(date, (int, float)) or (isinstance(date, str) and date.isdigit()):
         try:
             date = time.strftime("%Y-%m-%d", time.gmtime(int(date)))
         except (ValueError, OSError):
             date = str(date)
+    # EU returns ISO 8601 timestamps (e.g. 2026-05-26T00:00:00Z) — keep the
+    # calendar date only.
+    if isinstance(date, str) and "T" in date:
+        date = date.split("T", 1)[0]
     desc = _first(
         t, "description", "text", "memo", "originalDescription",
         "normalizedPayeeName", "merchantName", "reference",
-    ) or ""
+        "remittanceInformationUnstructured", "remittanceInformation",
+        "transactionInformation", "creditorName", "debtorName",
+        "proprietaryBankTransactionCode",
+    )
+    # transactionInformation / remittanceInformation may arrive as a list.
+    if isinstance(desc, list):
+        desc = " ".join(str(x) for x in desc if x)
+    desc = desc or ""
+    account_id = _first(t, "accountId", "account_id", "accountKey") or default_account_id
     return {
         "date": str(date),
         "description": str(desc),
         "amount": amount,
         "currency": str(currency),
+        "account_id": str(account_id) if account_id else None,
     }
 
 
@@ -240,7 +266,8 @@ def _extract_accounts(region: str, data: Any) -> List[Dict[str, Any]]:
     return [_norm_account(region, a) for a in raw]
 
 
-def _extract_txns(region: str, data: Any) -> List[Dict[str, Any]]:
+def _extract_txns(region: str, data: Any,
+                  default_account_id: Optional[str] = None) -> List[Dict[str, Any]]:
     if not isinstance(data, dict):
         return []
     raw = data.get("transactions") or data.get("items")
@@ -249,7 +276,7 @@ def _extract_txns(region: str, data: Any) -> List[Dict[str, Any]]:
     raw = raw or []
     if not isinstance(raw, list):
         return []
-    return [_norm_txn(region, t) for t in raw]
+    return [_norm_txn(region, t, default_account_id) for t in raw]
 
 
 # ---------------------------------------------------------------------------
@@ -424,16 +451,17 @@ def _pull_eu(conn: Dict[str, Any]) -> Tuple[bool, List, List, Optional[str]]:
     accounts = _extract_accounts("eu", res.get("data"))
     if not accounts:
         return False, [], [], None
-    account_id = (res.get("state_updates") or {}).get("account_id") or (
-        accounts[0].get("id") if accounts else None
-    )
-    conn["account_id"] = account_id
+    conn["account_id"] = accounts[0].get("id")
+    # Pull transactions for every account so the UI can show them per-account.
     txns: List = []
-    if account_id:
+    for acct in accounts:
+        aid = acct.get("id")
+        if not aid:
+            continue
         res_t = _exec("eu", "get_transactions", {
-            "consent_id": consent_id, "account_id": account_id, "limit": 50,
+            "consent_id": consent_id, "account_id": aid, "limit": 50,
         })
-        txns = _extract_txns("eu", res_t.get("data"))
+        txns.extend(_extract_txns("eu", res_t.get("data"), default_account_id=aid))
     return True, accounts, txns, None
 
 
