@@ -129,12 +129,15 @@ class CreateProjectPage:
             if await self.page.locator(ProjectCreatedSelectors.open_project_button).count() > 0:
                 logger.info("Confirmation page (OAuth 2.0, open-project button only) — {}", url)
                 return "open_project"
-            # Step 2: wizard advanced to Project credentials (key alias + password)
-            if await self.page.locator("[data-testid='key-alias-input']").count() > 0:
+            # Step 2: wizard advanced to Project credentials (key alias + password).
+            # Use :visible to avoid firing when the input is pre-rendered (hidden) behind an
+            # intermediate service-details form (e.g. Carbon Calculator Step 2).
+            if await self.page.locator("[data-testid='key-alias-input']:visible").count() > 0:
                 logger.info("Wizard advanced to Step 2 (Project credentials) — {}", url)
                 return "step2_credentials"
 
-            # Open Finance "Service details" intermediate step — just click Proceed to continue.
+            # Open Finance / Carbon Calculator "Service details" intermediate step.
+            # Auto-fills required fields (e.g. CID for Carbon Calculator) then clicks Proceed.
             if not _service_details_clicked:
                 service_heading = await self.page.locator(
                     "h1:has-text('Service details'), h2:has-text('Service details'), "
@@ -142,11 +145,45 @@ class CreateProjectPage:
                     "div:has-text('Open Finance Sandbox API Credentials')"
                 ).count()
                 if service_heading > 0:
-                    logger.info("Open Finance 'Service details' step detected — clicking Proceed")
+                    logger.info("Service details step detected — filling required fields then clicking Proceed")
                     await screenshot(self.page, "ofin_service_details")
                     # Scroll to bottom to expose the button on this step.
                     await self.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
                     await asyncio.sleep(0.5)
+                    # Fill any visible required-like inputs by placeholder text.
+                    # Carbon Calculator Step 2 has Customer ID(CID)* with placeholder 'Enter Numeric value'.
+                    filled = await self.page.evaluate("""
+                        () => {
+                            const inputs = Array.from(document.querySelectorAll(
+                                'input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"])'
+                            )).filter(i => {
+                                const visible = i.offsetParent !== null &&
+                                                getComputedStyle(i).display !== 'none';
+                                return visible && !i.value;
+                            });
+                            const setter = Object.getOwnPropertyDescriptor(
+                                window.HTMLInputElement.prototype, 'value').set;
+                            let count = 0;
+                            for (const inp of inputs) {
+                                const ph = (inp.placeholder || '').toLowerCase();
+                                const id_ = (inp.id || '').toLowerCase();
+                                const name_ = (inp.name || '').toLowerCase();
+                                // Fill numeric fields (e.g. CID) with '1', text fields with 'sandbox'
+                                if (ph.includes('numeric') || id_.includes('cid') || name_.includes('cid')) {
+                                    setter.call(inp, '1');
+                                    inp.dispatchEvent(new Event('input', { bubbles: true }));
+                                    inp.dispatchEvent(new Event('change', { bubbles: true }));
+                                    count++;
+                                }
+                            }
+                            return count;
+                        }
+                    """)
+                    if filled:
+                        logger.info("Service details — filled {} numeric input(s); waiting for button to enable", filled)
+                        await asyncio.sleep(1.5)  # React re-render / validation
+                    else:
+                        logger.info("Service details — no numeric inputs to fill; button may already be enabled")
                     # JS-click the form's action button (not Exit/navigation buttons).
                     clicked = await self.page.evaluate("""
                         () => {
@@ -766,6 +803,7 @@ class CreateProjectPage:
         poll_interval = 0.5
         elapsed = 0.0
         _step3_clicked = False  # guard against re-clicking step 3 button in rapid succession
+        _creds_resubmitted = False  # guard for re-detection of credentials form (separate from step3)
         _match_form_submit_attempts = 0
 
         while elapsed < deadline:
@@ -799,12 +837,36 @@ class CreateProjectPage:
                     )
                 continue
 
+            # Re-detection: some APIs (e.g. Carbon Calculator) have an intermediate
+            # "Service details" step before the credentials form. The wizard may have
+            # advanced us to Step 3 (Project credentials) without us clicking Create project
+            # on it. Detect this and submit the credentials form using a native pointer click.
+            # Use a separate flag so _step3_clicked (for Step 4 detection) is not blocked.
+            if not _creds_resubmitted and elapsed >= 1.0:
+                key_alias_visible = await self.page.locator("[data-testid='key-alias-input']:visible").count() > 0
+                if key_alias_visible:
+                    logger.info(
+                        "Re-detected credentials form during polling "
+                        "(elapsed={:.1f}s) — clicking 'Create project'", elapsed
+                    )
+                    await self._wait_for_create_button_enabled(max_wait_s=5.0)
+                    await self.page.locator("button:has-text('Create project')").first.click()
+                    logger.info("Clicked 'Create project' on re-detected credentials form")
+                    _creds_resubmitted = True
+                    await asyncio.sleep(2.0)
+                    continue
+
             # MATCH/portal variant: final wizard step can expose a visible
             # "Skip this step" button and "Create project" CTA without the
             # literal "Additional credentials" heading.
             skip_btn_visible = await self.page.locator("button:has-text('Skip this step')").count()
             create_btn_visible = await self.page.locator("button:has-text('Create project')").count()
-            if skip_btn_visible > 0 and create_btn_visible > 0 and not _step3_clicked:
+            # Guard: Step 3 "Project credentials" form also has "Skip this step" (CSR path)
+            # and "Create project". Do NOT fire this detection while that form is still on
+            # screen. Use the key-alias-input's visibility to detect whether we're on the
+            # credentials step (True on Step 3; False once wizard advances to Step 4+).
+            on_creds_step = await self.page.locator("[data-testid='key-alias-input']:visible").count() > 0
+            if skip_btn_visible > 0 and create_btn_visible > 0 and not _step3_clicked and not on_creds_step:
                 logger.info("Final key step detected via visible 'Skip this step' + 'Create project' buttons")
                 await screenshot(self.page, "step3_detected_via_skip")
 
@@ -813,6 +875,29 @@ class CreateProjectPage:
                     # so the portal lands on the project page without downloading the cert.
                     logger.info("skip_step3=True — clicking 'Skip this step'")
                     await self.page.locator("button:has-text('Skip this step')").first.click()
+                    # Some portals (e.g. Carbon Calculator) show a confirmation dialog
+                    # "Are you sure you want to add your project credential later?"
+                    # after clicking 'Skip this step'. Accept it.
+                    await asyncio.sleep(0.5)
+                    _dialog = self.page.locator(
+                        "[role='dialog']:visible, [role='alertdialog']:visible"
+                    )
+                    if await _dialog.count() > 0:
+                        for _ct in ("Skip", "Yes", "Confirm", "Continue", "OK"):
+                            _cb = _dialog.first.locator(f"button:has-text('{_ct}')")
+                            if await _cb.count() > 0:
+                                logger.info("Skip confirmation dialog — clicking {!r}", _ct)
+                                await _cb.first.click()
+                                break
+                    else:
+                        # No role=dialog — also check for standalone buttons that appeared
+                        # after the skip click (excluding 'Skip this step' itself).
+                        for _ct in ("Yes", "Confirm", "Continue", "OK"):
+                            _cb = self.page.locator(f"button:has-text('{_ct}'):visible")
+                            if await _cb.count() > 0:
+                                logger.info("Skip confirmation (no dialog role) — clicking {!r}", _ct)
+                                await _cb.first.click()
+                                break
                 else:
                     # MATCH-specific behavior: proceed with "Create project".
                     await self._wait_for_create_button_enabled(max_wait_s=8.0)
@@ -824,8 +909,11 @@ class CreateProjectPage:
                 continue
 
             # Step 3 detection: check if "Additional credentials" step is visible.
+            # Guard: sidebar shows "Additional credentials" label even when on Step 3 (Project
+            # credentials). Only fire when the key-alias-input form is no longer visible.
             step3_heading = await self.page.locator("text=Additional credentials").count()
-            if step3_heading > 0 and not _step3_clicked:
+            on_creds_step = await self.page.locator("[data-testid='key-alias-input']:visible").count() > 0
+            if step3_heading > 0 and not _step3_clicked and not on_creds_step:
                 logger.info("Step 3 (Additional credentials) detected")
                 await screenshot(self.page, "step3_detected")
 
@@ -850,18 +938,52 @@ class CreateProjectPage:
                     await asyncio.sleep(0.5)
                     continue
 
-                # Per-API override: skip filling encryption-key fields and just
-                # click "Create project" on Step 3, then let the wizard land on
-                # the project page so the caller can provision a signing key via
-                # the sandbox "Add project key" flow (e.g. Transaction
-                # Notifications).
+                # Per-API override: skip filling encryption-key fields on the Additional
+                # credentials step. If "Create project" exists on this step, click it without
+                # filling. If there is no "Create project" (e.g. Carbon Calculator Step 4 only
+                # shows "Skip this step"), click "Skip this step" and handle the confirmation
+                # dialog so the wizard lands on the project page.
                 if skip_step3:
-                    logger.info(
-                        "Step 3 has skip_step3=True — clicking 'Create project' without filling encryption fields"
-                    )
-                    await self._wait_for_create_button_enabled(max_wait_s=5.0)
-                    clicked = await self._js_click_create_project()
-                    logger.info("Clicked 'Create project' on Step 3 (skip_step3) — found={}", clicked)
+                    _create_count = await self.page.locator("button:has-text('Create project')").count()
+                    if _create_count > 0:
+                        logger.info(
+                            "Step 3 has skip_step3=True — clicking 'Create project' without filling encryption fields"
+                        )
+                        await self._wait_for_create_button_enabled(max_wait_s=5.0)
+                        clicked = await self._js_click_create_project()
+                        logger.info("Clicked 'Create project' on Step 3 (skip_step3) — found={}", clicked)
+                    else:
+                        # No 'Create project' — fall back to 'Skip this step' + confirm dialog.
+                        _skip_loc = self.page.locator("button:has-text('Skip this step')")
+                        if await _skip_loc.count() > 0:
+                            logger.info(
+                                "Step 3 skip_step3=True, no 'Create project' — clicking 'Skip this step'"
+                            )
+                            await _skip_loc.first.click()
+                            await asyncio.sleep(0.5)
+                            _dialog = self.page.locator(
+                                "[role='dialog']:visible, [role='alertdialog']:visible"
+                            )
+                            if await _dialog.count() > 0:
+                                for _ct in ("Skip", "Yes", "Confirm", "Continue", "OK"):
+                                    _cb = _dialog.first.locator(f"button:has-text('{_ct}')")
+                                    if await _cb.count() > 0:
+                                        logger.info(
+                                            "Skip confirmation dialog (step3_heading) — clicking {!r}", _ct
+                                        )
+                                        await _cb.first.click()
+                                        break
+                            else:
+                                for _ct in ("Yes", "Confirm", "Continue", "OK"):
+                                    _cb = self.page.locator(f"button:has-text('{_ct}'):visible")
+                                    if await _cb.count() > 0:
+                                        logger.info(
+                                            "Skip confirmation (no dialog role, step3_heading) — clicking {!r}", _ct
+                                        )
+                                        await _cb.first.click()
+                                        break
+                        else:
+                            logger.warning("skip_step3=True but neither 'Create project' nor 'Skip this step' found on Step 3")
                     _step3_clicked = True
                     await asyncio.sleep(1.0)
                     continue

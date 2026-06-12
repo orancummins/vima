@@ -33,6 +33,8 @@ const PSI = {
   result: null,
   loading: false,
   selectedDay: 0,
+  simulated: false,
+  modeLoading: false,
 };
 
 const PSI_FACTOR_LABELS = {
@@ -47,6 +49,7 @@ const PSI_FACTOR_LABELS = {
 };
 
 function renderPsi() {
+  psiLoadSimStatus();
   // Boot from the shared Open Finance STATE so PSI inherits whoever the
   // user last connected \u2014 across sessions, thanks to the on-disk
   // persistence layer in apis/open_finance/api.py.
@@ -77,6 +80,17 @@ function psiRender() {
   body.innerHTML = `
     <div class="psi-stage">
       <div class="psi-controlbar">
+        <div class="psi-mode-row">
+          <div>
+            <div class="psi-mode-title">Open Finance source</div>
+            <div class="psi-mode-sub">${PSI.simulated ? "Using local simulator responses" : "Using real Mastercard sandbox APIs"}</div>
+          </div>
+          <label class="psi-sim-toggle" title="Switch PSI between real Open Finance sandbox APIs and the local simulator">
+            <input type="checkbox" id="psi-sim-toggle" ${PSI.simulated ? "checked" : ""} ${PSI.modeLoading ? "disabled" : ""}>
+            <span class="psi-sim-toggle-track"><span class="psi-sim-toggle-thumb"></span></span>
+            <span class="psi-sim-toggle-label">${PSI.simulated ? "Simulator" : "Real API"}</span>
+          </label>
+        </div>
         <div class="psi-controls-row">
           <div class="psi-field psi-field--grow">
             <label>Customer ID</label>
@@ -191,15 +205,12 @@ function psiResultHtml(r) {
   const selDay = daily[PSI.selectedDay] || daily[0] || {};
   const unauth = r.unauthorizedReturnRisk;
 
-  let bestIdx = 0;
-  daily.forEach((d, i) => { if (d.nsfScore < daily[bestIdx].nsfScore) bestIdx = i; });
-
-  const verdictLevel = (daily[0] || {}).riskLevel || (unauth || {}).riskLevel || "low";
+  const verdictLevel = selDay.riskLevel || (unauth || {}).riskLevel || "low";
   const VERDICT = {
     low:    { icon: "✓", title: "Low Risk · Ready to Send",
               sub: "Confidence is high that this payment will clear successfully." },
     medium: { icon: "⚠", title: "Moderate Risk · Proceed with Caution",
-              sub: "Consider settling on the recommended date to reduce NSF return risk." },
+              sub: "This settlement date has moderate NSF risk. Review the factors below before sending." },
     high:   { icon: "✗", title: "High Return Risk · Consider Delaying",
               sub: "This account shows elevated NSF risk. Consider alternative payment methods or wait for improved account conditions." },
   };
@@ -219,24 +230,19 @@ function psiResultHtml(r) {
           <div class="psi-verdict-title">${verdict.title}</div>
           <div class="psi-verdict-sub">${verdict.sub}</div>
         </div>
-        ${hasNsf && verdictLevel !== 'high' ? `
-        <div class="psi-verdict-recommend">
-          <span class="psi-verdict-rec-label">Recommended settlement</span>
-          <span class="psi-verdict-rec-date">${escapeHtml(psiShortDate(daily[bestIdx].date))}</span>
-        </div>` : ""}
       </div>
 
       <div class="psi-main-grid">
 
         ${hasNsf ? `
         <div class="psi-gauge-card">
-          <div class="psi-card-label">NSF Return Risk</div>
+          <div class="psi-card-label">Payment Success Score</div>
           ${psiGaugeSvg(Math.round(selDay.nsfScore ?? 0), selDay.riskLevel || verdictLevel)}
           <div class="psi-gauge-meta">
             <span class="psi-indicator-badge psi-ibadge--${selDay.riskLevel}">${escapeHtml(selDay.indicator || "")}</span>
-            <span class="psi-card-sub">${selDay.riskLevel === 'high' ? `Return probability: <strong>${Math.round(selDay.nsfScore ?? 0)}%</strong>` : `Success confidence: <strong>${Math.round(selDay.confidence ?? 0)}%</strong>`}</span>
+            <span class="psi-card-sub">Success confidence: <strong>${Math.round(selDay.confidence ?? selDay.nsfScore ?? 0)}%</strong></span>
           </div>
-          <p class="psi-card-desc">Return probability (0–100). Lower score = higher confidence. Click a day in the timeline to compare dates.</p>
+          <p class="psi-card-desc">Payment success score (0–100). Higher score = lower NSF return risk. Click a day in the timeline to compare dates.</p>
         </div>` : ""}
 
         <div class="psi-details-card">
@@ -271,7 +277,7 @@ function psiResultHtml(r) {
             <div class="psi-unauth-score psi-score--${unauth.riskLevel}">${Math.round(unauth.score ?? 0)}</div>
             <div>
               <span class="psi-indicator-badge psi-ibadge--${unauth.riskLevel}">${escapeHtml(unauth.indicator || "")}</span>
-              <div class="psi-card-sub" style="margin-top:5px">First/third-party fraud signal.<br>Score 0–100 — lower is better.</div>
+              <div class="psi-card-sub" style="margin-top:5px">First/third-party fraud signal.<br>Score 0–100 — higher is safer.</div>
             </div>
           </div>` : ""}
         </div>
@@ -282,19 +288,16 @@ function psiResultHtml(r) {
         <div class="psi-timeline-head">
           <div>
             <div class="psi-section-title">${daily.length}-Day Settlement Window</div>
-            <div class="psi-section-sub">NSF risk by settlement date — shorter bars are safer. Click any day to inspect risk factors.</div>
+            <div class="psi-section-sub">Payment success score by settlement date — taller bars are safer. Click any day to inspect risk factors.</div>
           </div>
         </div>
         <div class="psi-timeline-bars" id="psi-bars">
           ${(() => {
             const maxScore = Math.max(...daily.map(d => d.nsfScore), 1);
             return daily.map((d, i) => {
-              const isBest   = i === bestIdx;
-              const isLocked = d.riskLevel === "medium" || d.riskLevel === "high";
-              const isSel    = i === PSI.selectedDay && !isLocked;
+              const isSel    = i === PSI.selectedDay;
               const barPct   = Math.max(2, Math.round((d.nsfScore / maxScore) * 100));
-              return `<div class="psi-day ${isBest ? "psi-day--best" : ""} ${isSel ? "psi-day--selected" : ""} ${isLocked ? "psi-day--locked" : ""}" data-day-idx="${i}" data-locked="${isLocked}">
-              ${isBest ? `<div class="psi-day-best-label">Best</div>` : ""}
+              return `<div class="psi-day ${isSel ? "psi-day--selected" : ""}" data-day-idx="${i}">
               <div class="psi-day-conf">${Math.round(d.nsfScore)}</div>
               <div class="psi-day-bar-wrap">
                 <div class="psi-day-bar psi-bar--${d.riskLevel}" style="height:${barPct}%"></div>
@@ -309,7 +312,6 @@ function psiResultHtml(r) {
           <span class="psi-legend-item psi-legend--low">Low risk</span>
           <span class="psi-legend-item psi-legend--medium">Moderate</span>
           <span class="psi-legend-item psi-legend--high">High risk</span>
-          <span class="psi-legend-best">★ Best settlement day</span>
         </div>
       </div>
       ` : r.nsfError ? `<div class="psi-error-card"><span class="psi-error-icon">⚠</span><div><strong>NSF score unavailable</strong><p>${escapeHtml((r.nsfError.message || r.nsfError.title || JSON.stringify(r.nsfError)))}</p></div></div>` : ""}
@@ -346,6 +348,11 @@ function psiFactorColor(v) {
 function psiWire() {
   const loadBtn = $("psi-load-btn");
   const runBtn  = $("psi-run-btn");
+  const simToggle = $("psi-sim-toggle");
+
+  if (simToggle) {
+    simToggle.addEventListener("change", () => psiSetSimulated(simToggle.checked));
+  }
 
   if (loadBtn) {
     loadBtn.addEventListener("click", () => {
@@ -383,13 +390,54 @@ function psiWire() {
   const barsEl = $("psi-bars");
   if (barsEl) {
     barsEl.querySelectorAll("[data-day-idx]").forEach(el => {
-      if (el.dataset.locked === "true") return;
       el.addEventListener("click", () => {
         PSI.selectedDay = parseInt(el.dataset.dayIdx, 10);
         psiRender();
       });
     });
   }
+}
+
+function psiLoadSimStatus() {
+  fetch("/api-sim/admin/status", { cache: "no-store" })
+    .then(r => r.json())
+    .then(data => {
+      const next = !!(data.open_finance && data.open_finance.simulated);
+      if (PSI.simulated !== next) {
+        PSI.simulated = next;
+        psiRender();
+      }
+    })
+    .catch(() => {});
+}
+
+function psiSetSimulated(simulated) {
+  PSI.modeLoading = true;
+  psiRender();
+  fetch("/api-sim/admin/toggle", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ api: "open_finance", simulated }),
+  })
+    .then(r => {
+      if (!r.ok) throw new Error("Could not switch Open Finance source");
+      return r.json();
+    })
+    .then(() => {
+      PSI.simulated = simulated;
+      PSI.modeLoading = false;
+      PSI.accounts = [];
+      PSI.selectedAccountId = null;
+      PSI.result = null;
+      PSI.selectedDay = 0;
+      psiRender();
+      psiLoadAccounts();
+    })
+    .catch(err => {
+      PSI.modeLoading = false;
+      PSI.result = { error: err.message || "Could not switch Open Finance source" };
+      psiRender();
+    });
 }
 
 // ─── Connect New Bank Account flow (mirrors PFM) ─────────────────────────────
@@ -555,9 +603,7 @@ function psiRunAssessment() {
     return r.json();
   }).then(d => {
     PSI.loading = false;
-    const daily = (d.result || {}).dailyResults || [];
-    const firstSelectable = daily.findIndex(day => day.riskLevel === "low");
-    PSI.selectedDay = firstSelectable >= 0 ? firstSelectable : 0;
+    PSI.selectedDay = 0;
     PSI.result = d.result || (d.error ? { error: d.error } : { error: "No result returned" });
     psiRender();
   }).catch(err => {

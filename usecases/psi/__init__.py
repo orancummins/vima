@@ -141,7 +141,7 @@ def _shape_result(raw: Dict[str, Any]) -> Dict[str, Any]:
     daily: List[Dict[str, Any]] = []
     for d in daily_raw:
         nsf_score  = d.get("score", 0)
-        confidence = round(100 - nsf_score, 1)
+        confidence = round(nsf_score, 1)
         indicator  = d.get("indicator", "")
         risk_level = _indicator_level(indicator)
         reasons    = d.get("reasons") or {}

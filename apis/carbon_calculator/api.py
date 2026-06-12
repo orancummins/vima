@@ -1,7 +1,7 @@
 """Mastercard Carbon Calculator API (carbon).
 
 OAuth 1.0a one-legged signing. Payment-card registration operations
-require JWE payload encryption (RSA-OAEP-256 + A256GCM) on the PAN.
+require Field Level Encryption (FLE / RSA-OAEP-256 + AES-128-CBC) on the PAN.
 
 Sandbox base: ``https://sandbox.api.mastercard.com/carbon``
 Docs:         https://developer.mastercard.com/carbon-calculator/documentation/
@@ -65,56 +65,74 @@ def get_state() -> Dict[str, Any]:
 
 
 _HOW_TO = (
-    "<p><strong>Carbon Calculator</strong> lets issuers surface the carbon "
-    "footprint of cardholder transactions. Three integration options exist:</p>"
-    "<ul>"
-    "<li><strong>Option 1</strong> — Mastercard processes the transactions: "
-    "register the consumer's PAN with the API and receive near real-time "
-    "transaction footprint notifications.</li>"
-    "<li><strong>Option 2.a</strong> — Issuer-processed transactions sent to "
-    "<code>POST /transaction-footprints</code> for instant carbon scoring.</li>"
-    "<li><strong>Option 2.b</strong> — Bulk file-based scoring through "
-    "Mastercard File Exchange.</li>"
-    "</ul>"
-    "<h3>Operations</h3>"
+    "<p><strong>Carbon Calculator</strong> surfaces the estimated carbon footprint of "
+    "payment card transactions so issuers can show cardholders their environmental "
+    "impact in real time.</p>"
+    "<h3>How to use</h3>"
     "<ol>"
-    "<li><strong>Service Provider</strong> — <code>GET / PUT /service-providers</code>: "
-    "view and update issuer onboarding details. The GET op is the recommended "
-    "sandbox smoke test once your CID is provisioned.</li>"
-    "<li><strong>Transaction Footprints</strong> — <code>POST /transaction-footprints</code>: "
-    "compute carbon scores for a batch of payment transactions (no PAN required).</li>"
-    "<li><strong>Aggregates</strong> — <code>POST /payment-cards/transaction-footprints/aggregates</code>: "
-    "weekly / monthly aggregates for registered cards.</li>"
-    "<li><strong>Historical footprints</strong> — <code>GET /payment-cards/{id}/transaction-footprints</code>.</li>"
-    "<li><strong>Bulk register cards</strong> — <code>POST /service-providers/payment-cards</code> "
-    "<em>(JWE-encrypted; not implemented in this client yet)</em>.</li>"
-    "<li><strong>Delete card</strong> — <code>DELETE /service-providers/payment-cards/{id}</code>.</li>"
-    "<li><strong>Supported reference data</strong> — <code>GET /supported-currencies</code> "
-    "and <code>GET /supported-merchant-categories</code>.</li>"
+    "<li>Start with <strong>Reference &rarr; Supported merchant categories</strong> "
+    "(no parameters). Returns every MCC the API scores — e.g. "
+    "<code>5411</code> = Grocery, <code>5812</code> = Restaurant, "
+    "<code>4111</code> = Transit, <code>5541</code> = Fuel.</li>"
+    "<li>Select <strong>Environmental Impact &rarr; Calculate transaction footprint</strong>. "
+    "Enter:<br>"
+    "&nbsp;&nbsp;<strong>Amount</strong>: <code>42.50</code><br>"
+    "&nbsp;&nbsp;<strong>Currency</strong>: <code>USD</code><br>"
+    "&nbsp;&nbsp;<strong>MCC</strong>: <code>5411</code> (grocery)<br>"
+    "Click <strong>Send</strong>. The response returns <code>carbonEmissionInGrams</code> "
+    "— e.g. ~12 750 g CO&#8322; for a $42.50 grocery spend.</li>"
+    "<li>Once your service provider is provisioned with a Mastercard Customer ID (CID), "
+    "try <strong>Service Provider &rarr; View service provider</strong> to confirm your "
+    "CID and registered BIN ranges.</li>"
+    "<li>To register cards for near real-time scoring, use "
+    "<strong>Payment Cards &rarr; Bulk register payment cards</strong> and enter one or more "
+    "sandbox PANs (BIN prefixes <code>534403</code>, <code>518145</code>, <code>518152</code>, "
+    "<code>5403</code>, <code>5424</code>). "
+    "Requires <code>CARBON_CALCULATOR_ENCRYPTION_KEY_PATH</code> set to your "
+    "downloaded client encryption certificate.</li>"
     "</ol>"
-    "<h3>Manual onboarding required</h3>"
-    "<p class='muted'>Live sandbox access requires a Mastercard-issued Customer "
-    "ID (CID), Legal Name, and BIN range. Until those are supplied at project "
-    "creation, live calls will return 401/403 — use the simulator for local "
-    "development.</p>"
+    "<h3>What you get back</h3>"
+    "<ul>"
+    "<li><strong>carbonEmissionInGrams</strong> — estimated CO&#8322; equivalent in grams.</li>"
+    "<li><strong>transactionId</strong> — echoed back for correlation.</li>"
+    "<li><strong>paymentCardId</strong> — assigned ID after successful card registration.</li>"
+    "<li><strong>legalName / binRanges</strong> — your service-provider onboarding details.</li>"
+    "</ul>"
+    "<h3>Test data &amp; references</h3>"
+    "<ul>"
+    "<li>Sandbox base URL: <code>https://sandbox.api.mastercard.com/carbon</code></li>"
+    "<li>Reference MCCs: <code>5411</code> (grocery), <code>5812</code> (restaurant), "
+    "<code>4111</code> (transit), <code>5541</code> (fuel)</li>"
+    "<li>Tutorial test BIN prefixes: <code>534403</code>, <code>518145</code>, "
+    "<code>518152</code>, <code>5403</code>, <code>5424</code></li>"
+    "<li><a href='https://developer.mastercard.com/carbon-calculator/documentation/' "
+    "target='_blank' rel='noopener'>API documentation</a></li>"
+    "<li><a href='https://developer.mastercard.com/carbon-calculator/documentation/api-reference/' "
+    "target='_blank' rel='noopener'>Try It console</a></li>"
+    "<li><a href='https://developer.mastercard.com/carbon-calculator/tutorial/api-testing/' "
+    "target='_blank' rel='noopener'>Test cases tutorial</a></li>"
+    "</ul>"
+    "<p><em>Live sandbox access requires a Mastercard-issued Customer ID (CID), "
+    "Legal Name, and BIN range — contact "
+    "<a href='mailto:carboncalculator@mastercard.com'>carboncalculator@mastercard.com</a>. "
+    "The <strong>Reference</strong> and <strong>Environmental Impact</strong> operations "
+    "work without CID provisioning once your signing key is configured.</em></p>"
     "<p>"
     "<a href='https://developer.mastercard.com/create-project/carbon-calculator?services=carbon-calculator' "
-    "target='_blank' rel='noopener'><strong>Create a sandbox project ↗</strong></a> "
-    "&nbsp;·&nbsp; "
+    "target='_blank' rel='noopener'><strong>Create a sandbox project &#8599;</strong></a> "
+    "&nbsp;&middot;&nbsp; "
     "<a href='https://developer.mastercard.com/carbon-calculator/documentation/quick-start-guide/' "
-    "target='_blank' rel='noopener'>Quick start guide ↗</a> "
-    "&nbsp;·&nbsp; "
-    "<a href='mailto:carboncalculator@mastercard.com'>"
-    "Email carboncalculator@mastercard.com</a>"
+    "target='_blank' rel='noopener'>Quick start guide &#8599;</a> "
+    "&nbsp;&middot;&nbsp; "
+    "<a href='mailto:carboncalculator@mastercard.com'>Email carboncalculator@mastercard.com</a>"
     "</p>"
 )
 
 
-_ENC_NOTE = (
-    "PAN registration requires JWE payload encryption "
-    "(RSA-OAEP-256 + A256GCM). The Mastercard client-encryption library is "
-    "not wired in for Carbon Calculator yet — use the simulator for local "
-    "development."
+_ENC_KEY_MISSING = (
+    "CARBON_CALCULATOR_ENCRYPTION_KEY_PATH is not set. "
+    "Download the client encryption certificate (.pem) from your sandbox project on "
+    "developer.mastercard.com and set this environment variable to its path."
 )
 
 
@@ -196,7 +214,7 @@ MANIFEST: Dict[str, Any] = {
             "name": "Bulk register payment cards",
             "category": "Payment Cards",
             "method": "POST",
-            "description": "Register one or more PANs for near real-time transaction footprint notifications. PANs are JWE-encrypted.",
+            "description": "Register one or more PANs for near real-time transaction footprint notifications. PANs are field-level encrypted (FLE). Requires CARBON_CALCULATOR_ENCRYPTION_KEY_PATH.",
             "params": _BULK_CARDS_PARAMS,
             "encryption_required": True,
         },
@@ -301,14 +319,73 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     if op_id == "supported_mccs":
         return _signed_request("GET", "/supported-merchant-categories")
     if op_id == "bulk_register_cards":
-        return {
-            "success": False,
-            "error": _ENC_NOTE,
-            "request":  {"method": "POST", "url": f"{_base()}/service-providers/payment-cards", "body": params},
-            "response": {"status_code": None, "body": None},
-            "state_updates": {},
-        }
+        pans_raw = params.get("primaryAccountNumbers", "")
+        if isinstance(pans_raw, str):
+            pans = [p.strip() for p in pans_raw.split(",") if p.strip()]
+        else:
+            pans = [str(p).strip() for p in pans_raw if str(p).strip()]
+        if not pans:
+            return {"success": False, "error": "Provide at least one PAN."}
+        return _bulk_register_live(pans)
     return {"success": False, "error": f"Unknown operation: {op_id}"}
+
+
+# ---------------------------------------------------------------------------
+# FLE (field-level encryption) helper for PAN-bearing operations
+# ---------------------------------------------------------------------------
+
+_FLE_CONFIG_DICT = {
+    "paths": {
+        "$": {
+            "toEncrypt": {"$": "$"},
+            "toDecrypt": {"encryptedData": "$"},
+        }
+    },
+    # encryptionCertificate is injected at call time from env
+    "encryptedValueFieldName":             "encryptedData",
+    "encryptedKeyFieldName":               "encryptedKey",
+    "oaepPaddingDigestAlgorithm":          "SHA256",
+    "oaepPaddingDigestAlgorithmFieldName": "oaepHashingAlgorithm",
+    "encryptionKeyFingerprintFieldName":   "publicKeyFingerprint",
+    "ivFieldName":                         "iv",
+    "dataEncoding":                        "HEX",
+}
+
+
+def _bulk_register_live(pans: List[str]) -> Dict[str, Any]:
+    """POST /service-providers/payment-cards with FLE-encrypted PAN list.
+
+    In simulator mode the body is sent unencrypted (the simulator does not
+    enforce encryption). In live mode the PANs are encrypted using Mastercard
+    Field Level Encryption before OAuth signing.
+    """
+    from simulator.switcher import is_simulated
+    if is_simulated("carbon_calculator"):
+        return _signed_request("POST", "/service-providers/payment-cards",
+                               body={"primaryAccountNumbers": pans})
+
+    enc_path = os.environ.get("CARBON_CALCULATOR_ENCRYPTION_KEY_PATH", "")
+    if not enc_path:
+        return {"success": False, "error": _ENC_KEY_MISSING}
+
+    if not os.path.isabs(enc_path):
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        enc_path = os.path.join(project_root, enc_path)
+
+    try:
+        from client_encryption.field_level_encryption_config import FieldLevelEncryptionConfig
+        from client_encryption.field_level_encryption import encrypt_payload
+    except ImportError:
+        return {"success": False, "error": "client_encryption library not installed."}
+
+    try:
+        cfg = dict(_FLE_CONFIG_DICT, encryptionCertificate=enc_path)
+        fle_config = FieldLevelEncryptionConfig(cfg)
+        body = encrypt_payload({"primaryAccountNumbers": pans}, fle_config)
+    except Exception as e:
+        return {"success": False, "error": f"Field-level encryption failed: {e}"}
+
+    return _signed_request("POST", "/service-providers/payment-cards", body=body)
 
 
 # ---------------------------------------------------------------------------

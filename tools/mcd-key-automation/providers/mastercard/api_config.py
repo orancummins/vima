@@ -96,6 +96,17 @@ _SPECIAL_BY_ID: dict[str, dict] = {
     "business_payment_controls": {
         "provision_type": "playbook",
     },
+    # Carbon Calculator has a 4-step wizard:
+    #   Step 1: Project details
+    #   Step 2: Service details   (proceeded automatically)
+    #   Step 3: Project credentials  → downloads signing .p12
+    #   Step 4: Additional credentials → informational only
+    #     ("The Encryption Key will be generated when your project is created")
+    # We skip Step 4 ('Skip this step'), then add a signing key via the
+    # sandbox 'Add project key' flow — identical to oauth1_skip_step3.
+    "carbon_calculator": {
+        "provision_type": "oauth1_skip_step3",
+    },
 }
 
 
