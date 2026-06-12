@@ -784,6 +784,161 @@ def explorer_run(api_id: str):
     })
 
 
+@app.route("/sdk/run", methods=["POST"])
+@_require_not_server_mode
+def sdk_run():
+    """Write the Open Finance SDK snippet to a temp script and launch the
+    host OS's native terminal so the user can watch it install deps and run.
+
+    Mirrors /explorer/<api_id>/run, but for the standalone ofin SDK: it
+    pip-installs requests + cryptography, then runs the snippet. The repo's
+    cli/ directory is injected onto sys.path (absolute) so the script works
+    from the temp dir, and credentials are auto-discovered from config/.env.
+
+    Disabled in server mode — spawning a terminal on the host only ever
+    makes sense for the local demo workflow.
+    """
+    import platform
+    import shlex
+    import subprocess
+    import tempfile
+    from pathlib import Path
+
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    cli_dir = os.path.join(project_root, "cli")
+    packages = ["requests", "cryptography"]
+
+    body = request.get_json(silent=True) or {}
+    override_code = body.get("code")
+    default_code = (
+        "from ofin import OfinClient\n\n"
+        "# Credentials auto-loaded from config/.env - one client, three continents\n"
+        "client = OfinClient.from_env()\n\n"
+        'for region in ("us", "au", "eu"):\n'
+        "    res = client.region(region).auth_token(); "
+        'print(f"{region}  ->  {res.status}  -  {res.token}")\n'
+    )
+    snippet = override_code if isinstance(override_code, str) and override_code.strip() else default_code
+
+    # Always inject the absolute cli/ path first so the script imports the
+    # ofin SDK regardless of the temp dir it runs from.
+    code = (
+        "import sys\n"
+        f"sys.path.insert(0, {json.dumps(cli_dir)})\n\n"
+        + snippet
+    )
+
+    system = platform.system().lower()
+    tmpdir = Path(tempfile.gettempdir()) / "vima-snippets"
+    tmpdir.mkdir(parents=True, exist_ok=True)
+
+    if system == "windows":
+        py_path = tmpdir / "ofin_sdk.py"
+        ps1_path = tmpdir / "ofin_sdk.ps1"
+        py_path.write_text(code, encoding="utf-8")
+        lines = [
+            "$ErrorActionPreference = 'Continue'",
+            "Write-Host 'Mastercard Solution Studio - Open Finance SDK' -ForegroundColor Cyan",
+            "Write-Host ''",
+            "Remove-Item Env:VIRTUAL_ENV    -ErrorAction SilentlyContinue",
+            "Remove-Item Env:PYTHONHOME     -ErrorAction SilentlyContinue",
+            "Remove-Item Env:VIRTUAL_ENV_PROMPT -ErrorAction SilentlyContinue",
+            "Write-Host 'Installing dependencies...' -ForegroundColor DarkGray",
+            f"py -m pip install --user --quiet {' '.join(packages)}",
+            "Write-Host ''",
+            "py '" + str(py_path).replace("'", "''") + "'",
+            "$code = $LASTEXITCODE",
+            "Write-Host ''",
+            "Write-Host ('Exit code: ' + $code) -ForegroundColor Cyan",
+            "Write-Host 'Press Enter to close...' -ForegroundColor DarkGray",
+            "Read-Host | Out-Null",
+        ]
+        ps1_path.write_text("\r\n".join(lines), encoding="utf-8")
+        powershell_args = [
+            "powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass",
+            "-File", str(ps1_path),
+        ]
+        try:
+            subprocess.Popen(
+                ["wt.exe", "new-tab", "--title", "Mastercard Solution Studio: Open Finance SDK", *powershell_args],
+                close_fds=True,
+            )
+            launcher = "wt"
+        except FileNotFoundError:
+            subprocess.Popen(
+                powershell_args,
+                creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0),
+                close_fds=True,
+            )
+            launcher = "powershell"
+
+    elif system == "darwin":
+        sh_path = tmpdir / "ofin_sdk.sh"
+        py_path = tmpdir / "ofin_sdk.py"
+        py_path.write_text(code, encoding="utf-8")
+        lines = [
+            "#!/bin/bash",
+            "set +e",
+            "echo 'Mastercard Solution Studio - Open Finance SDK'",
+            "unset VIRTUAL_ENV PYTHONHOME VIRTUAL_ENV_PROMPT",
+            "echo 'Installing dependencies...'",
+            f"python3 -m pip install --user --quiet {' '.join(packages)}",
+            "echo",
+            f"python3 {shlex.quote(str(py_path))}",
+            "echo", "echo 'Press Enter to close...'", "read",
+        ]
+        sh_path.write_text("\n".join(lines), encoding="utf-8")
+        sh_path.chmod(0o755)
+        subprocess.Popen(["open", "-a", "Terminal", str(sh_path)], close_fds=True)
+        launcher = "Terminal.app"
+
+    else:  # Linux + other POSIX
+        sh_path = tmpdir / "ofin_sdk.sh"
+        py_path = tmpdir / "ofin_sdk.py"
+        py_path.write_text(code, encoding="utf-8")
+        lines = [
+            "#!/bin/bash",
+            "set +e",
+            "echo 'Mastercard Solution Studio - Open Finance SDK'",
+            "unset VIRTUAL_ENV PYTHONHOME VIRTUAL_ENV_PROMPT",
+            "echo 'Installing dependencies...'",
+            f"python3 -m pip install --user --quiet {' '.join(packages)}",
+            "echo",
+            f"python3 {shlex.quote(str(py_path))}",
+            "echo", "echo 'Press Enter to close...'", "read",
+        ]
+        sh_path.write_text("\n".join(lines), encoding="utf-8")
+        sh_path.chmod(0o755)
+        spawned = False
+        for term, args in [
+            ("x-terminal-emulator", ["-e", "bash", str(sh_path)]),
+            ("gnome-terminal", ["--", "bash", str(sh_path)]),
+            ("konsole", ["-e", "bash", str(sh_path)]),
+            ("xterm", ["-e", "bash", str(sh_path)]),
+        ]:
+            try:
+                subprocess.Popen([term, *args], close_fds=True)
+                launcher = term
+                spawned = True
+                break
+            except FileNotFoundError:
+                continue
+        if not spawned:
+            return jsonify({
+                "error": (
+                    "No supported terminal emulator found "
+                    "(tried x-terminal-emulator, gnome-terminal, konsole, xterm)."
+                ),
+                "script": str(sh_path),
+            }), 500
+
+    return jsonify({
+        "ok": True,
+        "launcher": launcher,
+        "platform": system,
+    })
+
+
 @app.route("/explorer/<api_id>/execute", methods=["POST"])
 def explorer_execute(api_id: str):
     if _is_non_us_blocked_api(api_id):

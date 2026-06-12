@@ -3,12 +3,12 @@
 #  ofin - Open Finance CLI launcher / builder  (macOS / Linux)
 # ----------------------------------------------------------------------------
 #  Usage:
-#    ./cli.sh                 Run the CLI from this repo (dev mode). With no
+#    ./ofin.sh                Run the CLI from this repo (dev mode). With no
 #                             extra args it prints the ofin welcome screen.
-#    ./cli.sh <args...>       Run an ofin command, e.g.  ./cli.sh us auth token
-#    ./cli.sh build           Build a self-contained bundle in cli/dist/ that
+#    ./ofin.sh <args...>      Run an ofin command, e.g.  ./ofin.sh us auth token
+#    ./ofin.sh build          Build a self-contained bundle in cli/dist/ that
 #                             you can copy and run on any machine with Python.
-#    ./cli.sh help            Show this help.
+#    ./ofin.sh help           Show this help.
 #
 #  Requirements: Python 3.9+ with 'requests' and 'cryptography' installed
 #                (pip install requests cryptography)
@@ -33,10 +33,10 @@ usage() {
     cat <<'EOF'
 ofin - Open Finance CLI launcher (macOS / Linux)
 
-  ./cli.sh                Run the CLI (dev mode); no args shows the welcome screen
-  ./cli.sh <args...>      Run a command, e.g.  ./cli.sh us auth token
-  ./cli.sh build          Build a portable bundle in cli/dist/ (run anywhere)
-  ./cli.sh help           Show this help
+  ./ofin.sh               Run the CLI (dev mode); no args shows the welcome screen
+  ./ofin.sh <args...>     Run a command, e.g.  ./ofin.sh us auth token
+  ./ofin.sh build         Build a portable bundle in cli/dist/ (run anywhere)
+  ./ofin.sh help          Show this help
 
 Requirements: Python 3.9+ with 'requests' and 'cryptography'.
 Config is auto-discovered from config/.env; see cli/README.md for details.

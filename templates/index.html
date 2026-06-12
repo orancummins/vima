@@ -687,15 +687,15 @@
               <span class="sdk-howto-num">2</span>
               <div class="sdk-howto-body">
                 <span class="sdk-howto-label">Run any command from the repo root</span>
-                <code class="sdk-howto-cmd">./cli.sh us auth token<span class="sdk-howto-os"># macOS / Linux</span></code>
-                <code class="sdk-howto-cmd">cli.bat us auth token<span class="sdk-howto-os"># Windows</span></code>
+                <code class="sdk-howto-cmd">./ofin.sh us auth token<span class="sdk-howto-os"># macOS / Linux</span></code>
+                <code class="sdk-howto-cmd">ofin.bat us auth token<span class="sdk-howto-os"># Windows</span></code>
               </div>
             </div>
             <div class="sdk-howto-step">
               <span class="sdk-howto-num">3</span>
               <div class="sdk-howto-body">
                 <span class="sdk-howto-label">Or build a portable bundle &mdash; no install, no <code>.exe</code></span>
-                <code class="sdk-howto-cmd">./cli.sh build<span class="sdk-howto-os"># → cli/dist/ofin.pyz</span></code>
+                <code class="sdk-howto-cmd">./ofin.sh build<span class="sdk-howto-os"># → cli/dist/ofin.pyz</span></code>
               </div>
             </div>
           </div>
@@ -734,7 +734,7 @@
           </div>
           <p class="sdk-cli-foot">
             Runs on Windows, macOS &amp; Linux. Build a portable bundle with
-            <code>./cli.sh build</code> &mdash; no install, no <code>.exe</code>.
+            <code>./ofin.sh build</code> &mdash; no install, no <code>.exe</code>.
           </p>
         </section>
 
@@ -752,19 +752,19 @@
                 <span class="sdk-terminal-dot sdk-terminal-dot--y"></span>
                 <span class="sdk-terminal-dot sdk-terminal-dot--g"></span>
                 <span class="sdk-terminal-title">app.py — Open Finance SDK</span>
+                <button class="sdk-code-run" id="sdk-code-run" title="Run in a terminal (installs deps &amp; executes)">▶ Run Code</button>
               </div>
-              <pre class="sdk-code-body"><span class="sdk-c-kw">from</span> ofin.config <span class="sdk-c-kw">import</span> Config
-<span class="sdk-c-kw">from</span> ofin.sdk <span class="sdk-c-kw">import</span> OfinClient
+              <pre class="sdk-code-body"><span class="sdk-c-cm"># Open Finance SDK — one client, three continents.</span>
+<span class="sdk-c-cm"># Run:  python app.py    (deps: pip install requests cryptography)</span>
+<span class="sdk-c-kw">import</span> sys, pathlib
+sys.path.insert(<span class="sdk-c-str">0</span>, <span class="sdk-c-fn">next</span>(<span class="sdk-c-fn">str</span>(p / <span class="sdk-c-str">"cli"</span>) <span class="sdk-c-kw">for</span> p <span class="sdk-c-kw">in</span> [pathlib.Path.cwd(), *pathlib.Path.cwd().parents] <span class="sdk-c-kw">if</span> (p / <span class="sdk-c-str">"cli/ofin"</span>).is_dir()))
 
-client = OfinClient(Config.resolve())
+<span class="sdk-c-kw">from</span> ofin <span class="sdk-c-kw">import</span> OfinClient
 
-<span class="sdk-c-cm"># One client, three continents — authenticate everywhere</span>
-us = client.us.get_token()
-au = client.au.get_token()
-eu = client.eu.get_token()
+client = OfinClient.from_env()          <span class="sdk-c-cm"># credentials auto-loaded from config/.env</span>
 
-<span class="sdk-c-fn">for</span> r <span class="sdk-c-kw">in</span> (us, au, eu):
-    <span class="sdk-c-fn">print</span>(r.ok, r.status, r.body[<span class="sdk-c-str">"token"</span>])</pre>
+<span class="sdk-c-fn">for</span> region <span class="sdk-c-kw">in</span> (<span class="sdk-c-str">"us"</span>, <span class="sdk-c-str">"au"</span>, <span class="sdk-c-str">"eu"</span>):
+    res = client.region(region).auth_token(); <span class="sdk-c-fn">print</span>(<span class="sdk-c-str">f"{region}  →  {res.status}  ·  {res.token}"</span>)</pre>
             </div>
             <div class="sdk-result" id="sdk-result" aria-hidden="true">
               <div class="sdk-result-head">
@@ -775,8 +775,9 @@ eu = client.eu.get_token()
             </div>
           </div>
           <p class="sdk-cli-foot">
-            Install with <code>pip install -e cli</code>, then import <code>OfinClient</code> &mdash;
-            credentials are auto-discovered from <code>config/.env</code>.
+            No install needed &mdash; <code>OfinClient.from_env()</code> finds <code>cli/</code> and
+            <code>config/.env</code> for you. Just <code>pip install requests cryptography</code> and run
+            <code>python app.py</code>, or hit <strong>▶ Run Code</strong> above.
           </p>
         </section>
 
@@ -1719,7 +1720,7 @@ eu = client.eu.get_token()
           ctx.fillText(labelText, m.px, m.py - 14 * m.sc);
         });
 
-        rot += SPEED * delta;
+        rot -= SPEED * delta;
         requestAnimationFrame(render);
       }
       requestAnimationFrame(render);

@@ -28,6 +28,16 @@ class Result:
     def ok(self) -> bool:
         return 200 <= int(self.status) < 300
 
+    @property
+    def token(self) -> Optional[str]:
+        """The access token from an auth call, regardless of region.
+
+        US/AU return it as ``token``; EU as ``access_token``.
+        """
+        if isinstance(self.body, dict):
+            return self.body.get("token") or self.body.get("access_token")
+        return None
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "ok": self.ok,
