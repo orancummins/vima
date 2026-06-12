@@ -7509,23 +7509,36 @@
       const wrap = document.createElement('div');
       wrap.className = 'cfg-file-row';
 
-      const nameEl = document.createElement('span');
       const currentPath = _pending[f.key] !== undefined ? _pending[f.key] : f.value;
+      const nameEl = document.createElement(_unlocked ? 'input' : 'span');
       nameEl.className = 'cfg-file-name' + (currentPath ? ' set' : '');
-      nameEl.textContent = currentPath
-        ? currentPath
-        : 'No file set';
+
+      if (_unlocked) {
+        nameEl.type = 'text';
+        nameEl.value = currentPath || '';
+        nameEl.placeholder = 'config/keys/your-key-file.key';
+        nameEl.addEventListener('input', function () {
+          const v = (nameEl.value || '').trim();
+          _pending[f.key] = v;
+          nameEl.classList.toggle('set', !!v);
+        });
+      } else {
+        nameEl.textContent = currentPath
+          ? currentPath
+          : 'No file set';
+      }
+
       wrap.appendChild(nameEl);
 
       if (_unlocked) {
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
-        fileInput.accept = '.p12,.pkcs12,.pem';
+        fileInput.accept = '.p12,.pkcs12,.pem,.key';
         fileInput.className = 'cfg-file-input';
 
         const uploadBtn = document.createElement('button');
         uploadBtn.className = 'cfg-upload-btn';
-        uploadBtn.textContent = currentPath ? 'Replace' : 'Upload .p12';
+        uploadBtn.textContent = currentPath ? 'Replace' : 'Upload key file';
         uploadBtn.addEventListener('click', function () { fileInput.click(); });
 
         fileInput.addEventListener('change', function () {
@@ -7542,8 +7555,13 @@
                 alert('Upload failed: ' + data.error);
               } else {
                 _pending[f.key] = data.path;
-                nameEl.textContent = data.path;
-                nameEl.className = 'cfg-file-name set';
+                if (_unlocked) {
+                  nameEl.value = data.path;
+                  nameEl.classList.add('set');
+                } else {
+                  nameEl.textContent = data.path;
+                  nameEl.className = 'cfg-file-name set';
+                }
               }
             })
             .catch(function () { alert('Upload failed.'); })

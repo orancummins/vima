@@ -2459,7 +2459,7 @@ def config_import():
                         if not fname:
                             continue
                         ext = os.path.splitext(fname)[1].lower()
-                        if ext not in (".p12", ".pkcs12", ".pem"):
+                        if ext not in (".p12", ".pkcs12", ".pem", ".key"):
                             continue
                         dest = os.path.join(_KEYS_DIR, fname)
                         _atomic_write_bytes(dest, zf2.read(orig))
@@ -2717,7 +2717,7 @@ projects:
                     elif name.startswith("config/keys/") and not name.endswith("/"):
                         fname = name.split("/")[-1]
                         ext = os.path.splitext(fname)[1].lower()
-                        if ext in (".p12", ".pkcs12", ".pem"):
+                        if ext in (".p12", ".pkcs12", ".pem", ".key"):
                             dest = os.path.join(_KEYS_DIR, fname)
                             _atomic_write_bytes(dest, zf.read(orig))
                             updated_apis.add(os.path.splitext(fname)[0])
