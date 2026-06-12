@@ -1,0 +1,48 @@
+{
+  "enabled": {
+    "us": true,
+    "au": true,
+    "eu": true
+  },
+  "connections": {
+    "us": {
+      "connected": false,
+      "bank_name": null,
+      "connected_at": null,
+      "customer_id": "9021942728",
+      "consent_receipt_id": null,
+      "consent_id": null,
+      "end_user_id": null,
+      "account_id": null,
+      "flow_url": "https://connect2.finicity.com?customerId=9021942728&origin=url&partnerId=2445585270703&signature=2350089c53a9d93959aaf36f1bc8ebec70a3bad6d352e0efc87cf4041682081b&timestamp=1781269779110&ttl=1781276979110",
+      "accounts": [],
+      "transactions": []
+    },
+    "au": {
+      "connected": false,
+      "bank_name": null,
+      "connected_at": null,
+      "customer_id": "3984452",
+      "consent_receipt_id": null,
+      "consent_id": null,
+      "end_user_id": null,
+      "account_id": null,
+      "flow_url": "https://connect2.openbanking.mastercard.com.au?customerId=3984452&origin=url&partnerId=2445585258178&signature=1fa996479db5f5552f8f50f5dd49aa5785bdaacef091531ed215fab80ff4be7c&timestamp=1781269983099&ttl=1781277183099",
+      "accounts": [],
+      "transactions": []
+    },
+    "eu": {
+      "connected": false,
+      "bank_name": null,
+      "connected_at": null,
+      "customer_id": null,
+      "consent_receipt_id": null,
+      "consent_id": "a3f8e28a-f059-45c8-902a-62dc6920b01a",
+      "end_user_id": "9e8963a2-3923-4187-9347-d50b241c8fe1",
+      "account_id": null,
+      "flow_url": "https://mtf.connect.openbanking.mastercard.eu/start/eu-data-flows/3408dc86-ed20-487b-873f-68dcac167b16",
+      "accounts": [],
+      "transactions": []
+    }
+  }
+}

@@ -495,6 +495,18 @@
           <span class="bundle-sidebar-count" title="{{ sol.configured }} of {{ sol.total }} APIs configured">{{ sol.configured }}/{{ sol.total }}</span>
         </button>
         {% endfor %}
+
+        <div class="api-group-heading">SDK</div>
+        <button class="api-item sdk-sidebar-item" data-sdk-id="global_open_finance"
+                title="Global Open Finance — one SDK across the US, Australia and Europe">
+          <span class="bundle-sidebar-icon" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20z"/>
+            </svg>
+          </span>
+          <span class="api-item-name">Global Open Finance</span>
+          <span class="sdk-sidebar-badge">SDK</span>
+        </button>
       </div>
     </aside>
 
@@ -567,6 +579,245 @@
 
       <!-- Bundle detail (populated by JS) -->
       <div id="bundle-detail" class="bundle-detail hidden"></div>
+
+      <!-- ============ Global Open Finance SDK ============ -->
+      <div id="sdk-panel" class="sdk-panel hidden" aria-label="Global Open Finance SDK">
+        <!-- Hero -->
+        <header class="sdk-hero">
+          <div class="sdk-hero-copy">
+            <div class="sdk-eyebrow">
+              <span class="sdk-eyebrow-dot"></span>
+              Mastercard Open Finance &middot; SDK
+            </div>
+            <h1 class="sdk-title">One integration.<br><span class="sdk-title-accent">Three continents.</span></h1>
+            <p class="sdk-lede">
+              Mastercard is the most global Open Finance provider in the world today.
+              Through a <strong>single integration</strong> you can activate connected
+              account data, payments and insights across <strong>Europe</strong>,
+              <strong>Australia</strong> and the <strong>United States</strong> &mdash;
+              with one consistent SDK and one command-line tool.
+            </p>
+            <div class="sdk-hero-stats">
+              <div class="sdk-stat"><span class="sdk-stat-num">3</span><span class="sdk-stat-label">regions, one SDK</span></div>
+              <div class="sdk-stat"><span class="sdk-stat-num">1</span><span class="sdk-stat-label">integration to maintain</span></div>
+              <div class="sdk-stat"><span class="sdk-stat-num">100%</span><span class="sdk-stat-label">consistent surface</span></div>
+            </div>
+            <div class="sdk-hero-actions">
+              <button class="sdk-btn sdk-btn--primary" data-sdk-scroll="sdk-cli">Watch the CLI</button>
+              <button class="sdk-btn sdk-btn--ghost" data-sdk-scroll="sdk-regions">Explore regions</button>
+            </div>
+          </div>
+
+          <!-- Globe — reuses the home-screen revolving globe, with the
+               three Open Finance regions drawn as continents + markers. -->
+          <div class="sdk-globe" aria-hidden="true">
+            <div class="sdk-globe-glow"></div>
+            <canvas id="sdk-globe-canvas" width="1024" height="1024"></canvas>
+          </div>
+        </header>
+
+        <!-- Region cards -->
+        <section class="sdk-section" id="sdk-regions">
+          <h3 class="sdk-section-title">Activate across the globe</h3>
+          <p class="sdk-section-sub">The same SDK, the same commands &mdash; the region is just a switch.</p>
+          <div class="sdk-region-grid">
+            <article class="sdk-region-card" data-sdk-region-card="eu" style="--sdk-accent:#2d6cdf;">
+              <div class="sdk-region-flagrow">
+                <span class="sdk-region-flag">🇪🇺</span>
+                <div>
+                  <h4 class="sdk-region-name">Europe</h4>
+                  <span class="sdk-region-tag">Aiia &middot; PSD2</span>
+                </div>
+                <span class="sdk-region-chip" data-sdk-status="eu">●</span>
+              </div>
+              <p class="sdk-region-desc">3,000+ connected banks across the EU, secured with signed JWT client assertions.</p>
+              <div class="sdk-region-links">
+                <button type="button" class="sdk-region-link sdk-region-link--api" data-sdk-api="open_finance_eu" title="Open the Open Finance Europe API">API</button>
+                <button type="button" class="sdk-region-link sdk-region-link--cli" data-sdk-cli="eu" title="View CLI install &amp; run instructions">CLI</button>
+              </div>
+            </article>
+            <article class="sdk-region-card" data-sdk-region-card="au" style="--sdk-accent:#00843d;">
+              <div class="sdk-region-flagrow">
+                <span class="sdk-region-flag">🇦🇺</span>
+                <div>
+                  <h4 class="sdk-region-name">Australia</h4>
+                  <span class="sdk-region-tag">CDR &middot; Open Banking</span>
+                </div>
+                <span class="sdk-region-chip" data-sdk-status="au">●</span>
+              </div>
+              <p class="sdk-region-desc">Consumer Data Right accredited access to accounts, consents and institutions.</p>
+              <div class="sdk-region-links">
+                <button type="button" class="sdk-region-link sdk-region-link--api" data-sdk-api="open_finance_au" title="Open the Open Finance Australia API">API</button>
+                <button type="button" class="sdk-region-link sdk-region-link--cli" data-sdk-cli="au" title="View CLI install &amp; run instructions">CLI</button>
+              </div>
+            </article>
+            <article class="sdk-region-card" data-sdk-region-card="us" style="--sdk-accent:#eb001b;">
+              <div class="sdk-region-flagrow">
+                <span class="sdk-region-flag">🇺🇸</span>
+                <div>
+                  <h4 class="sdk-region-name">United States</h4>
+                  <span class="sdk-region-tag">Finicity</span>
+                </div>
+                <span class="sdk-region-chip" data-sdk-status="us">●</span>
+              </div>
+              <p class="sdk-region-desc">Connectivity to 95%+ of US deposit accounts &mdash; account aggregation, balances, transactions and VOA/VOI reports.</p>
+              <div class="sdk-region-links">
+                <button type="button" class="sdk-region-link sdk-region-link--api" data-sdk-api="open_finance" title="Open the Open Finance US API">API</button>
+                <button type="button" class="sdk-region-link sdk-region-link--cli" data-sdk-cli="us" title="View CLI install &amp; run instructions">CLI</button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Animated CLI demo -->
+        <section class="sdk-section" id="sdk-cli">
+          <h3 class="sdk-section-title">See the CLI in action</h3>
+          <p class="sdk-section-sub">One tool, every region. Pick a region and watch a real session play out.</p>
+
+          <!-- How to install &amp; run -->
+          <div class="sdk-howto">
+            <div class="sdk-howto-step">
+              <span class="sdk-howto-num">1</span>
+              <div class="sdk-howto-body">
+                <span class="sdk-howto-label">Install the two dependencies</span>
+                <code class="sdk-howto-cmd">pip install requests cryptography</code>
+              </div>
+            </div>
+            <div class="sdk-howto-step">
+              <span class="sdk-howto-num">2</span>
+              <div class="sdk-howto-body">
+                <span class="sdk-howto-label">Run any command from the repo root</span>
+                <code class="sdk-howto-cmd">./cli.sh us auth token<span class="sdk-howto-os"># macOS / Linux</span></code>
+                <code class="sdk-howto-cmd">cli.bat us auth token<span class="sdk-howto-os"># Windows</span></code>
+              </div>
+            </div>
+            <div class="sdk-howto-step">
+              <span class="sdk-howto-num">3</span>
+              <div class="sdk-howto-body">
+                <span class="sdk-howto-label">Or build a portable bundle &mdash; no install, no <code>.exe</code></span>
+                <code class="sdk-howto-cmd">./cli.sh build<span class="sdk-howto-os"># → cli/dist/ofin.pyz</span></code>
+              </div>
+            </div>
+          </div>
+
+          <div class="sdk-cli-tabs" role="tablist">
+            <button class="sdk-cli-tab active" data-sdk-region="all" role="tab">★ All commands</button>
+            <button class="sdk-cli-tab" data-sdk-region="us" role="tab">🇺🇸 United States</button>
+            <button class="sdk-cli-tab" data-sdk-region="au" role="tab">🇦🇺 Australia</button>
+            <button class="sdk-cli-tab" data-sdk-region="eu" role="tab">🇪🇺 Europe</button>
+          </div>
+          <div class="sdk-cli-stage">
+            <div class="sdk-terminal" id="sdk-terminal">
+              <div class="sdk-terminal-bar">
+                <span class="sdk-terminal-dot sdk-terminal-dot--r"></span>
+                <span class="sdk-terminal-dot sdk-terminal-dot--y"></span>
+                <span class="sdk-terminal-dot sdk-terminal-dot--g"></span>
+                <span class="sdk-terminal-title">ofin — Open Finance CLI</span>
+                <button class="sdk-terminal-replay" id="sdk-terminal-replay" title="Replay">↻ Replay</button>
+              </div>
+              <div class="sdk-terminal-body" id="sdk-terminal-body"></div>
+            </div>
+
+            <!-- Mock hosted bank-login screen that the Connect URL opens -->
+            <div class="sdk-bank" id="sdk-bank" aria-hidden="true">
+              <div class="sdk-bank-chrome">
+                <span class="sdk-bank-lock">🔒</span>
+                <span class="sdk-bank-url" id="sdk-bank-url">connect.openbanking.mastercard.com</span>
+              </div>
+              <div class="sdk-bank-screen" id="sdk-bank-screen">
+                <div class="sdk-bank-idle" id="sdk-bank-idle">
+                  <div class="sdk-bank-idle-icon">🏦</div>
+                  <p>Generate a Connect URL to launch the secure bank login</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="sdk-cli-foot">
+            Runs on Windows, macOS &amp; Linux. Build a portable bundle with
+            <code>./cli.sh build</code> &mdash; no install, no <code>.exe</code>.
+          </p>
+        </section>
+
+        <!-- SDK — use it directly in code -->
+        <section class="sdk-section" id="sdk-sdk">
+          <h3 class="sdk-section-title">Use the SDK in your code</h3>
+          <p class="sdk-section-sub">
+            The same coverage, embedded directly in your Python app. One client,
+            three regions &mdash; every call returns a typed <code>Result</code>.
+          </p>
+          <div class="sdk-code-stage">
+            <div class="sdk-code">
+              <div class="sdk-terminal-bar">
+                <span class="sdk-terminal-dot sdk-terminal-dot--r"></span>
+                <span class="sdk-terminal-dot sdk-terminal-dot--y"></span>
+                <span class="sdk-terminal-dot sdk-terminal-dot--g"></span>
+                <span class="sdk-terminal-title">app.py — Open Finance SDK</span>
+              </div>
+              <pre class="sdk-code-body"><span class="sdk-c-kw">from</span> ofin.config <span class="sdk-c-kw">import</span> Config
+<span class="sdk-c-kw">from</span> ofin.sdk <span class="sdk-c-kw">import</span> OfinClient
+
+client = OfinClient(Config.resolve())
+
+<span class="sdk-c-cm"># One client, three continents — authenticate everywhere</span>
+us = client.us.get_token()
+au = client.au.get_token()
+eu = client.eu.get_token()
+
+<span class="sdk-c-fn">for</span> r <span class="sdk-c-kw">in</span> (us, au, eu):
+    <span class="sdk-c-fn">print</span>(r.ok, r.status, r.body[<span class="sdk-c-str">"token"</span>])</pre>
+            </div>
+            <div class="sdk-result" id="sdk-result" aria-hidden="true">
+              <div class="sdk-result-head">
+                <span class="sdk-result-status" id="sdk-result-status">idle</span>
+                <span class="sdk-result-title">Result</span>
+              </div>
+              <div class="sdk-result-body" id="sdk-result-body"></div>
+            </div>
+          </div>
+          <p class="sdk-cli-foot">
+            Install with <code>pip install -e cli</code>, then import <code>OfinClient</code> &mdash;
+            credentials are auto-discovered from <code>config/.env</code>.
+          </p>
+        </section>
+
+        <!-- Live Demo — real Open Finance bank linking -->
+        <section class="sdk-section" id="live-demo">
+          <h3 class="sdk-section-title">Live Demo</h3>
+          <p class="sdk-section-sub">
+            Enable Open Finance per continent on the left, then connect a real
+            sandbox bank on the right. Account &amp; transaction data is pulled
+            live and persists across sessions &mdash; reconnect or refresh anytime.
+          </p>
+          <div class="ld-stage">
+            <!-- Admin console -->
+            <aside class="ld-admin" id="ld-admin">
+              <div class="ld-panel-head">
+                <span class="ld-panel-badge ld-panel-badge--admin">ADMIN</span>
+                <span class="ld-panel-title">Solution Studio Console</span>
+              </div>
+              <p class="ld-admin-intro">Enable Open Finance coverage by region.</p>
+              <div class="ld-admin-rows" id="ld-admin-rows">
+                <!-- region toggle rows injected by JS -->
+              </div>
+            </aside>
+
+            <!-- End-user demo app -->
+            <div class="ld-app" id="ld-app">
+              <div class="ld-app-chrome">
+                <span class="ld-app-dot"></span><span class="ld-app-dot"></span><span class="ld-app-dot"></span>
+                <span class="ld-app-url">app.myfinances.example</span>
+              </div>
+              <div class="ld-app-body" id="ld-app-body">
+                <div class="ld-app-empty" id="ld-app-empty">
+                  <div class="ld-app-empty-icon">🏦</div>
+                  <p>No regions enabled yet.<br />Toggle a continent in the admin console to let customers connect a bank.</p>
+                </div>
+                <div class="ld-app-cards" id="ld-app-cards"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
     </section>
   </main>
 
@@ -1280,6 +1531,202 @@
         requestAnimationFrame(render);
       }
       requestAnimationFrame(render);
+    })();
+  </script>
+
+  <script>
+    /* SDK panel globe — reuses the home-screen revolving globe style and
+       overlays the three Open Finance regions as dotted continents, glowing
+       markers and connecting arcs ("one integration, three continents"). */
+    (function () {
+      const canvas = document.getElementById('sdk-globe-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const SIZE = canvas.width;
+      const RADIUS = SIZE * 0.34;
+      const CX = SIZE / 2, CY = SIZE / 2;
+      const SPEED = 0.0026;
+      const DEG = Math.PI / 180;
+
+      // Ambient sphere dots (same Fibonacci distribution as the home globe).
+      const TOTAL_DOTS = 64;
+      const ambient = [];
+      for (let i = 0; i < TOTAL_DOTS; i++) {
+        const phi = Math.acos(-1 + (2 * i) / TOTAL_DOTS);
+        const theta = Math.sqrt(TOTAL_DOTS * Math.PI) * phi;
+        ambient.push({ x: Math.cos(theta) * Math.sin(phi), y: Math.sin(theta) * Math.sin(phi), z: Math.cos(phi) });
+      }
+
+      // Deterministic scatter so the continents look the same every load.
+      let seed = 1337;
+      function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+      function scatter(latMin, latMax, lonMin, lonMax, n) {
+        const a = [];
+        for (let i = 0; i < n; i++) {
+          a.push({
+            lat: latMin + rnd() * (latMax - latMin),
+            lon: lonMin + rnd() * (lonMax - lonMin),
+            // per-dot twinkle phase + speed so usage "sparkles" asynchronously
+            ph: rnd() * Math.PI * 2,
+            sp: 0.06 + rnd() * 0.10,
+            sz: 0.8 + rnd() * 0.9,
+          });
+        }
+        return a;
+      }
+
+      // US = red, Europe = blue, Australia = green — activity sparkles per region.
+      const REGIONS = [
+        { id: 'us', color: [235, 0, 27],   label: 'United States', lat: 39, lon: -98, dots: scatter(12, 62, -128, -64, 320) },
+        { id: 'eu', color: [45, 120, 245], label: 'Europe',        lat: 48, lon: 15,  dots: scatter(20, 66, -12, 46, 300) },
+        { id: 'au', color: [0, 190, 110],  label: 'Australia',     lat: -25, lon: 134, dots: scatter(-39, -11, 113, 154, 80) },
+      ];
+      const PAIRS = [['us', 'eu'], ['eu', 'au'], ['au', 'us']];
+      const byId = {}; REGIONS.forEach((r) => { byId[r.id] = r; });
+      let active = 'us';
+
+      function project(lat, lon, rot, rMul) {
+        rMul = rMul || 1;
+        const la = lat * DEG, lo = lon * DEG + rot;
+        const x = Math.cos(la) * Math.cos(lo) * rMul;
+        const z = Math.cos(la) * Math.sin(lo) * rMul;
+        const y = -Math.sin(la) * rMul;
+        const sc = 1 / (1.8 - z);
+        return { px: CX + x * RADIUS * sc, py: CY + y * RADIUS * sc, rz: z, sc };
+      }
+
+      let rot = 0, last = null, t = 0;
+      function render(ts) {
+        const delta = last ? Math.min((ts - last) / 16.667, 2) : 1;
+        last = ts; t += delta;
+        ctx.clearRect(0, 0, SIZE, SIZE);
+
+        const isLight = document.documentElement.classList.contains('theme-light');
+        // Grid + ambient-dot palette — identical to the home-page globe.
+        const gc = isLight ? '0,0,0' : '255,120,0';
+        const dotR = isLight ? '20' : '255', dotG = isLight ? '20' : '160', dotB = isLight ? '20' : '40';
+        const glowColor = isLight ? 'rgba(0,0,0,0.22)' : 'rgba(255,140,0,0.95)';
+
+        // Soft radial glow behind the sphere (matches the home globe).
+        const grd = ctx.createRadialGradient(CX, CY, RADIUS * 0.2, CX, CY, RADIUS);
+        if (isLight) {
+          grd.addColorStop(0, 'rgba(0,0,0,0.06)');
+          grd.addColorStop(0.45, 'rgba(0,0,0,0.03)');
+        } else {
+          grd.addColorStop(0, 'rgba(255,140,0,0.18)');
+          grd.addColorStop(0.45, 'rgba(255,94,0,0.10)');
+        }
+        grd.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grd;
+        ctx.beginPath(); ctx.arc(CX, CY, RADIUS * 1.35, 0, Math.PI * 2); ctx.fill();
+
+        // Lat/long grid (same perspective + colors as the home globe).
+        const gOp = isLight ? 0.22 : 0.18; ctx.lineWidth = 0.8;
+        for (let lat = -80; lat <= 80; lat += 20) {
+          const lR = lat * DEG;
+          for (let seg = 0; seg < 360; seg += 6) {
+            const l0 = seg * DEG + rot, l1 = (seg + 6) * DEG + rot;
+            const z0 = Math.cos(lR) * Math.sin(l0), z1 = Math.cos(lR) * Math.sin(l1);
+            const a = gOp * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
+            if (a < 0.005) continue;
+            const s0 = 1 / (1.8 - z0), s1 = 1 / (1.8 - z1);
+            ctx.strokeStyle = `rgba(${gc},${a})`;
+            ctx.beginPath();
+            ctx.moveTo(CX + Math.cos(lR) * Math.cos(l0) * RADIUS * s0, CY - Math.sin(lR) * RADIUS * s0);
+            ctx.lineTo(CX + Math.cos(lR) * Math.cos(l1) * RADIUS * s1, CY - Math.sin(lR) * RADIUS * s1);
+            ctx.stroke();
+          }
+        }
+        for (let lon = 0; lon < 360; lon += 20) {
+          for (let seg = -88; seg < 90; seg += 6) {
+            const l0 = seg * DEG, l1 = (seg + 6) * DEG;
+            const lR = lon * DEG + rot;
+            const z0 = Math.cos(l0) * Math.sin(lR), z1 = Math.cos(l1) * Math.sin(lR);
+            const a = gOp * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
+            if (a < 0.005) continue;
+            const s0 = 1 / (1.8 - z0), s1 = 1 / (1.8 - z1);
+            ctx.strokeStyle = `rgba(${gc},${a})`;
+            ctx.beginPath();
+            ctx.moveTo(CX + Math.cos(l0) * Math.cos(lR) * RADIUS * s0, CY - Math.sin(l0) * RADIUS * s0);
+            ctx.lineTo(CX + Math.cos(l1) * Math.cos(lR) * RADIUS * s1, CY - Math.sin(l1) * RADIUS * s1);
+            ctx.stroke();
+          }
+        }
+
+        // Ambient sphere dots — the glowing dot-sphere from the home globe.
+        ambient.map((p) => {
+          const rx = p.x * Math.cos(rot) - p.z * Math.sin(rot);
+          const rz = p.x * Math.sin(rot) + p.z * Math.cos(rot);
+          const sc = 1 / (1.8 - rz);
+          const fade = Math.max(0, Math.min(1, (rz + 0.2) / 0.4));
+          return { px: CX + rx * RADIUS * sc, py: CY + p.y * RADIUS * sc, rz, sc, alpha: 0.15 + fade * 0.85 };
+        }).filter((p) => p.rz > -0.18).sort((a, b) => a.rz - b.rz).forEach((p) => {
+          ctx.save();
+          ctx.shadowColor = glowColor;
+          ctx.shadowBlur = 8 * p.sc;
+          ctx.fillStyle = `rgba(${dotR},${dotG},${dotB},${p.alpha})`;
+          ctx.beginPath(); ctx.arc(p.px, p.py, 2.5 * p.sc, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+        });
+
+        // Region continents + markers.
+        REGIONS.forEach((r) => {
+          const [cr, cg, cb] = r.color;
+          const isActive = active === r.id;
+          // dotted continent — each dot sparkles independently to indicate live activity
+          r.dots.forEach((d) => {
+            const q = project(d.lat, d.lon, rot);
+            if (q.rz < -0.05) return;
+            const fade = Math.max(0, Math.min(1, (q.rz + 0.1) / 0.5));
+            const tw = 0.5 + 0.5 * Math.sin(t * d.sp + d.ph);   // 0..1 sparkle
+            const base = isActive ? 0.30 : 0.16;
+            const al = Math.min(1, (base + fade * 0.25) * (0.35 + tw * 0.65));
+            const rad = d.sz * (isActive ? 1.5 : 1.25) * q.sc * (0.6 + tw * 0.8);
+            if (tw > 0.8) {
+              ctx.save();
+              ctx.shadowColor = `rgba(${cr},${cg},${cb},0.95)`;
+              ctx.shadowBlur = 7 * q.sc;
+              ctx.fillStyle = `rgba(${cr},${cg},${cb},${al})`;
+              ctx.beginPath(); ctx.arc(q.px, q.py, rad, 0, Math.PI * 2); ctx.fill();
+              ctx.restore();
+            } else {
+              ctx.fillStyle = `rgba(${cr},${cg},${cb},${al})`;
+              ctx.beginPath(); ctx.arc(q.px, q.py, rad, 0, Math.PI * 2); ctx.fill();
+            }
+          });
+          // marker
+          const m = project(r.lat, r.lon, rot, 1.02);
+          if (m.rz < -0.05) return;
+          if (isActive) {
+            const ring = 8 + 5 * (0.5 + 0.5 * Math.sin(t * 0.12));
+            ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.5)`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.arc(m.px, m.py, ring * m.sc, 0, Math.PI * 2); ctx.stroke();
+          }
+          ctx.save();
+          ctx.shadowColor = `rgba(${cr},${cg},${cb},0.9)`;
+          ctx.shadowBlur = (isActive ? 16 : 9) * m.sc;
+          ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
+          ctx.beginPath(); ctx.arc(m.px, m.py, (isActive ? 5 : 3.6) * m.sc, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+          // label
+          const labelText = m.sc > 0 ? r.label.toUpperCase() : '';
+          ctx.font = `700 ${Math.round(17 * m.sc)}px Inter, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillStyle = isLight
+            ? (isActive ? 'rgba(10,10,10,0.95)' : 'rgba(20,20,20,0.55)')
+            : (isActive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.7)');
+          ctx.fillText(labelText, m.px, m.py - 14 * m.sc);
+        });
+
+        rot += SPEED * delta;
+        requestAnimationFrame(render);
+      }
+      requestAnimationFrame(render);
+
+      window.__sdkGlobe = {
+        setRegion(r) { if (byId[r]) active = r; },
+      };
     })();
   </script>
 
