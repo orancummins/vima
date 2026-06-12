@@ -1,0 +1,11 @@
+# Build artifacts
+dist/
+
+# Vendored clients are generated at build time from apis/*/client.py
+ofin/sdk/_vendor/*_client.py
+
+# Local bundled config (if ever generated into the package)
+ofin/_bundled_config.env
+
+__pycache__/
+*.pyc

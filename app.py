@@ -31,6 +31,7 @@ load_dotenv(os.path.join(_CONFIG_DIR, ".env"))
 from apis import registry as api_registry  # noqa: E402
 from apis import spotlights as api_spotlights  # noqa: E402
 from usecases import registry as usecase_registry  # noqa: E402
+import live_demo  # noqa: E402
 from simulator.blueprint import sim_bp  # noqa: E402
 from simulator.capture import capture_response  # noqa: E402
 from simulator.switcher import is_simulated  # noqa: E402
@@ -879,6 +880,43 @@ def explorer_execute(api_id: str):
     # Merge in latest state snapshot for the UI
     result["state"] = getattr(mod, "get_state", lambda: {})()
     return jsonify(result)
+
+
+# ---------------------------------------------------------------------------
+# Live Demo — real Open Finance bank linking across US / AU / EU
+# ---------------------------------------------------------------------------
+@app.route("/live-demo/state")
+def live_demo_state():
+    return jsonify(live_demo.get_public_state())
+
+
+@app.route("/live-demo/enable", methods=["POST"])
+def live_demo_enable():
+    body = request.get_json(silent=True) or {}
+    region = str(body.get("region") or "")
+    enabled = bool(body.get("enabled"))
+    return jsonify(live_demo.set_enabled(region, enabled))
+
+
+@app.route("/live-demo/connect", methods=["POST"])
+def live_demo_connect():
+    body = request.get_json(silent=True) or {}
+    region = str(body.get("region") or "")
+    return jsonify(live_demo.start_connect(region))
+
+
+@app.route("/live-demo/poll", methods=["POST"])
+def live_demo_poll():
+    body = request.get_json(silent=True) or {}
+    region = str(body.get("region") or "")
+    return jsonify(live_demo.poll_connect(region))
+
+
+@app.route("/live-demo/refresh", methods=["POST"])
+def live_demo_refresh():
+    body = request.get_json(silent=True) or {}
+    region = str(body.get("region") or "")
+    return jsonify(live_demo.refresh(region))
 
 
 @app.route("/explorer/consent/3ds-flow")

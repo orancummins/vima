@@ -29,5 +29,9 @@ chat/.env
 # Config zip bundles
 vima-config*
 
+# ofin CLI portable build output (assembled by cli/build.py)
+cli/dist/
+cli/ofin/sdk/_vendor/*_client.py
+
 # Local-only docs / plans (not for commit)
 *.local.md
