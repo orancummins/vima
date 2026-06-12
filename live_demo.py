@@ -231,11 +231,10 @@ def _norm_txn(region: str, t: Dict[str, Any]) -> Dict[str, Any]:
 def _extract_accounts(region: str, data: Any) -> List[Dict[str, Any]]:
     if not isinstance(data, dict):
         return []
-    raw = (
-        data.get("accounts")
-        or data.get("items")
-        or (data.get("data") or {}).get("accounts") if isinstance(data.get("data"), dict) else None
-    ) or []
+    raw = data.get("accounts") or data.get("items")
+    if not raw and isinstance(data.get("data"), dict):
+        raw = data["data"].get("accounts")
+    raw = raw or []
     if not isinstance(raw, list):
         return []
     return [_norm_account(region, a) for a in raw]
@@ -244,11 +243,10 @@ def _extract_accounts(region: str, data: Any) -> List[Dict[str, Any]]:
 def _extract_txns(region: str, data: Any) -> List[Dict[str, Any]]:
     if not isinstance(data, dict):
         return []
-    raw = (
-        data.get("transactions")
-        or data.get("items")
-        or (data.get("data") or {}).get("transactions") if isinstance(data.get("data"), dict) else None
-    ) or []
+    raw = data.get("transactions") or data.get("items")
+    if not raw and isinstance(data.get("data"), dict):
+        raw = data["data"].get("transactions")
+    raw = raw or []
     if not isinstance(raw, list):
         return []
     return [_norm_txn(region, t) for t in raw]
@@ -380,8 +378,16 @@ def _pull_us(conn: Dict[str, Any]) -> Tuple[bool, List, List, Optional[str]]:
     cid = conn.get("customer_id")
     if not cid:
         return False, [], [], "No customer linked yet"
-    res = _exec("us", "get_accounts", {"customer_id": cid})
+    # Finicity test customers only expose their accounts after a refresh
+    # triggers aggregation — a plain GET returns an empty list until then.
+    # Mirror the Finance In Colour use case: refresh first, then read.
+    res = _exec("us", "refresh_accounts", {"customer_id": cid})
     accounts = _extract_accounts("us", res.get("data"))
+    if not accounts:
+        # Fall back to a plain GET in case aggregation already completed
+        # on a prior poll (refresh can intermittently 4xx mid-aggregation).
+        res = _exec("us", "get_accounts", {"customer_id": cid})
+        accounts = _extract_accounts("us", res.get("data"))
     if not accounts:
         return False, [], [], None
     txns: List = []

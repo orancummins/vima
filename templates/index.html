@@ -61,6 +61,13 @@
         <span class="aotd-trigger-pulse" aria-hidden="true"></span>
       </button>
       {% endif %}
+      <button class="cfg-trigger-btn" id="info-trigger-btn" title="How to install &amp; run" aria-label="How to install and run">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+      </button>
       <button class="cfg-trigger-btn{% if runtime_mode.server_mode %} cfg-trigger-btn--locked{% endif %}" id="cfg-trigger-btn" title="{% if runtime_mode.server_mode %}server mode{% else %}API Configuration{% endif %}" {% if runtime_mode.server_mode %}aria-disabled="true"{% endif %}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
@@ -1150,6 +1157,156 @@ client = OfinClient.from_env()          <span class="sdk-c-cm"># credentials aut
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ====================== Info / How-to-run Modal ====================== -->
+  <div id="info-modal" class="info-modal info-hidden" role="dialog" aria-modal="true" aria-labelledby="info-modal-title">
+    <div class="info-overlay" id="info-overlay"></div>
+    <div class="info-panel">
+      <div class="info-panel-head">
+        <div class="info-head-brand">
+          <span class="info-head-marks"><span class="info-dot info-dot-red"></span><span class="info-dot info-dot-yellow"></span></span>
+          <div>
+            <h2 class="info-title" id="info-modal-title">Install &amp; Run Solution Studio</h2>
+            <p class="info-sub">Four steps from zero to a fully-provisioned local instance.</p>
+          </div>
+        </div>
+        <button class="info-close" id="info-close" title="Close" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="info-panel-body">
+
+        <!-- Step 1 — Mastercard Developers account -->
+        <section class="info-step">
+          <div class="info-step-aside">
+            <span class="info-step-num">1</span>
+            <span class="info-step-rail"></span>
+          </div>
+          <div class="info-step-main">
+            <h3 class="info-step-title">Sign up to Mastercard Developers</h3>
+            <p class="info-step-desc">Create a free account — you'll use it to generate the API keys that power every use case.</p>
+            <div class="info-graphic">
+              <div class="info-browser">
+                <div class="info-browser-bar">
+                  <span class="info-browser-dot"></span><span class="info-browser-dot"></span><span class="info-browser-dot"></span>
+                  <span class="info-browser-url"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>developer.mastercard.com/account/sign-up</span>
+                </div>
+                <div class="info-browser-screen">
+                  <div class="info-mc-logo"><span class="info-mc-red"></span><span class="info-mc-yellow"></span></div>
+                  <div class="info-login-title">Mastercard Developers</div>
+                  <div class="info-login-field"></div>
+                  <div class="info-login-field"></div>
+                  <a class="info-login-cta" href="https://developer.mastercard.com/account/sign-up" target="_blank" rel="noopener">Sign up free</a>
+                  <div class="info-login-alt">Already have an account? <a href="https://developer.mastercard.com/account/log-in" target="_blank" rel="noopener">Log in</a></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Step 2 — Prerequisites -->
+        <section class="info-step">
+          <div class="info-step-aside">
+            <span class="info-step-num">2</span>
+            <span class="info-step-rail"></span>
+          </div>
+          <div class="info-step-main">
+            <h3 class="info-step-title">Install Git &amp; Python</h3>
+            <p class="info-step-desc">You'll need both on your machine. Check they're available:</p>
+            <div class="info-graphic info-tools">
+              <div class="info-tool">
+                <svg class="info-tool-logo" viewBox="0 0 24 24" width="34" height="34" aria-hidden="true"><path fill="#F05133" d="M23.5 11.2 12.8.5a1.7 1.7 0 0 0-2.4 0L8.2 2.7l2.8 2.8a2 2 0 0 1 2.5 2.6l2.7 2.7a2 2 0 1 1-1.2 1.1l-2.5-2.5v6.6a2 2 0 1 1-1.6 0V9.3a2 2 0 0 1-1.1-2.6L7.1 3.9.5 10.4a1.7 1.7 0 0 0 0 2.4l10.7 10.7a1.7 1.7 0 0 0 2.4 0l10.6-10.6a1.7 1.7 0 0 0-.2-2.4z"/></svg>
+                <div class="info-tool-meta">
+                  <strong>Git</strong>
+                  <a href="https://git-scm.com/downloads" target="_blank" rel="noopener">git-scm.com/downloads</a>
+                </div>
+                <code class="info-tool-cmd">git --version</code>
+              </div>
+              <div class="info-tool">
+                <svg class="info-tool-logo" viewBox="0 0 24 24" width="34" height="34" aria-hidden="true"><path fill="#3776AB" d="M11.9.5c-1 0-1.9.1-2.7.2-2.4.4-2.8 1.3-2.8 3v2.2h5.6v.7H4.3c-1.7 0-3.2 1-3.7 3-.5 2.2-.5 3.6 0 5.9.4 1.7 1.4 3 3.1 3h1.9v-2.6c0-1.9 1.7-3.6 3.7-3.6h5.6c1.6 0 2.9-1.4 2.9-3V3.7c0-1.6-1.4-2.8-3-3.1-1-.1-2-.2-2.9-.1zM8.8 2.2c.6 0 1 .5 1 1.1 0 .6-.4 1-1 1-.6 0-1-.4-1-1 0-.6.4-1.1 1-1.1z"/><path fill="#FFD43B" d="M19.1 7.1v2.5c0 2-1.7 3.6-3.7 3.6H9.8c-1.5 0-2.9 1.3-2.9 3v5.2c0 1.6 1.4 2.5 2.9 3 1.8.5 3.5.6 5.6 0 1.4-.4 2.9-1.2 2.9-3v-2.2h-5.6v-.7h8.4c1.7 0 2.3-1.2 2.9-3 .6-1.9.6-3.7 0-5.9-.4-1.6-1.2-3-2.9-3h-2zM15.2 19.6c.6 0 1 .5 1 1.1 0 .6-.4 1-1 1-.5 0-1-.4-1-1 0-.6.5-1.1 1-1.1z"/></svg>
+                <div class="info-tool-meta">
+                  <strong>Python 3.9+</strong>
+                  <a href="https://www.python.org/downloads/" target="_blank" rel="noopener">python.org/downloads</a>
+                </div>
+                <code class="info-tool-cmd">python --version</code>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Step 3 — Clone & run -->
+        <section class="info-step">
+          <div class="info-step-aside">
+            <span class="info-step-num">3</span>
+            <span class="info-step-rail"></span>
+          </div>
+          <div class="info-step-main">
+            <h3 class="info-step-title">Clone the repo &amp; run</h3>
+            <p class="info-step-desc">Pull the project and launch it — the run script sets up the virtual env and installs dependencies for you.</p>
+            <div class="info-graphic">
+              <div class="info-term">
+                <div class="info-term-bar">
+                  <span class="info-term-dot info-term-dot--r"></span>
+                  <span class="info-term-dot info-term-dot--y"></span>
+                  <span class="info-term-dot info-term-dot--g"></span>
+                  <span class="info-term-title" id="info-term-title">PowerShell — Windows</span>
+                  <div class="info-term-copy">
+                    <button class="info-copy-btn is-active" id="info-copy-win" data-platform="win">⧉ Copy for Windows</button>
+                    <button class="info-copy-btn" id="info-copy-nix" data-platform="nix">⧉ Copy for macOS / Linux</button>
+                  </div>
+                </div>
+                <div class="info-term-body" id="info-term-body"></div>
+              </div>
+              <p class="info-term-foot">Opens at <a href="http://localhost:9021" target="_blank" rel="noopener">localhost:9021</a> once it boots.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Step 4 — Provision keys -->
+        <section class="info-step info-step--last">
+          <div class="info-step-aside">
+            <span class="info-step-num">4</span>
+          </div>
+          <div class="info-step-main">
+            <h3 class="info-step-title">Provision your API keys</h3>
+            <p class="info-step-desc">On first launch a welcome window appears. Choose <strong>Auto-provision Keys</strong> — a browser opens, you log in to Mastercard Developers, and Solution Studio creates the projects and downloads every key for you.</p>
+            <div class="info-graphic">
+              <div class="info-prov-mock">
+                <div class="info-prov-head">
+                  <div class="info-prov-logo"></div>
+                  <div class="info-prov-titles">
+                    <strong>Welcome to Mastercard Solution Studio</strong>
+                    <span>Choose how you'd like to set up your API keys.</span>
+                  </div>
+                </div>
+                <div class="info-prov-card info-prov-card--hl">
+                  <div class="info-prov-card-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                  </div>
+                  <div class="info-prov-card-text">
+                    <strong>Auto-provision Keys</strong>
+                    <span>Log in once — we create projects &amp; download all your keys automatically.</span>
+                  </div>
+                  <span class="info-prov-pick">Recommended</span>
+                </div>
+                <div class="info-prov-card">
+                  <div class="info-prov-card-icon info-prov-card-icon--muted">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                  </div>
+                  <div class="info-prov-card-text">
+                    <strong>Configure Manually</strong>
+                    <span>Enter existing credentials by hand.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
     </div>
   </div>
 
