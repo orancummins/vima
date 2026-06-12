@@ -41,6 +41,9 @@ From the repo root, use the `ofin` launcher for your platform:
 ./ofin.sh build               # build the portable bundle into cli/dist/
 ./ofin.sh help
 
+# If the script is not executable on your machine, run it via bash:
+bash ./ofin.sh config show
+
 # Windows
 ofin.bat
 ofin.bat us auth token
@@ -92,6 +95,9 @@ dist\ofin.cmd config show
 
 # macOS / Linux
 ./dist/ofin config show
+
+# If needed, run through bash:
+bash ./dist/ofin config show
 
 # or directly
 python dist/ofin.pyz --env-file dist/ofin.env us auth token
