@@ -83,7 +83,6 @@ GROUP_ORDER: tuple[str, ...] = (
 
 DISABLED_API_IDS: frozenset[str] = frozenset({
     "flight_delay_pass",
-    "carbon_calculator",
 })
 
 
