@@ -165,6 +165,77 @@ def _trigger_background_seed() -> None:
 #   ui_hint: optional hint, e.g., "open_link" if response contains a link
 
 
+# ---------------------------------------------------------------------------
+# Sandbox test credentials (Mastercard Open Finance US / Finicity)
+# ---------------------------------------------------------------------------
+# Reference: https://developer.mastercard.com/open-banking-us/documentation/
+#            connect/testing-with-finbank-profiles/
+# In the Finicity sandbox the customer searches for an institution by name in
+# the Connect flow. The most common test institutions are FinBank variants
+# (institution IDs below). For most FinBank institutions any non-empty
+# username + password unlocks a generic account set; specific profile
+# usernames drive deterministic scenarios used in QA (good balance, NSF,
+# OAuth, MFA-required, etc.).
+
+TEST_USERS_DOCS_URL = (
+    "https://developer.mastercard.com/open-banking-us/documentation/"
+    "connect/testing-with-finbank-profiles/"
+)
+
+TEST_USERS: List[Dict[str, Any]] = [
+    {"username": "demo",                "password": "go",
+     "institution": "FinBank (102105)",
+     "scenario": "Generic happy path — accepts anywhere a username is required",
+     "recommended": True},
+    {"username": "profile_03",          "password": "profile_03",
+     "institution": "FinBank Profiles A (102176)",
+     "scenario": "Multi-account consumer profile (checking + savings)"},
+    {"username": "profile_06",          "password": "profile_06",
+     "institution": "FinBank Profiles A (102176)",
+     "scenario": "Cash-flow-rich profile for VOA / VOI reports"},
+    {"username": "profile_oauth",       "password": "profile_oauth",
+     "institution": "FinBank OAuth (102179)",
+     "scenario": "Full OAuth redirect flow (use to test refresh + revoke)"},
+    {"username": "tfa_text_profile",    "password": "tfa_text_profile",
+     "institution": "FinBank Personal MFA (102197)",
+     "scenario": "MFA via SMS code — code is always 1234567"},
+    {"username": "nsf_profile",         "password": "nsf_profile",
+     "institution": "FinBank Profiles A (102176)",
+     "scenario": "Triggers NSF / overdraft transactions (for Cash Flow report)"},
+]
+
+TEST_PROVIDERS_NOTE = (
+    "In Connect's bank-search box, type \"FinBank\" to see the sandbox "
+    "institutions. The institution ID in parentheses below is what the "
+    "Generate Connect URL operation routes to when you pass institution_id."
+)
+
+
+def _test_credentials_payload() -> Dict[str, Any]:
+    """Compact representation of the Finicity sandbox PSU credentials table.
+
+    Returned as a hint on the Generate Data Connect URL operations so the UI
+    can surface common test users + institutions without making the user
+    leave the explorer. Emitted on both success and error responses so it
+    stays visible while debugging sandbox issues.
+    """
+    return {
+        "title": "Finicity sandbox test users (username = password unless noted)",
+        "docs_url": TEST_USERS_DOCS_URL,
+        "docs_label": "Mastercard Open Banking US — FinBank profiles docs",
+        "providers_note": TEST_PROVIDERS_NOTE,
+        "columns": ["Username", "Password", "Institution", "Scenario"],
+        "rows": [
+            [u["username"], u["password"], u["institution"], u["scenario"]]
+            for u in TEST_USERS
+        ],
+        "recommended": next(
+            (u["username"] for u in TEST_USERS if u.get("recommended")),
+            None,
+        ),
+    }
+
+
 MANIFEST: Dict[str, Any] = {
     "id": "open_finance",
     "name": "Open Finance US",
@@ -1238,27 +1309,42 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
             data, status = client.generate_connect_url(
                 p["customer_id"], os.environ.get("OPEN_FINANCE_PARTNER_ID", "")
             )
-            hints = {}
+            hints: Dict[str, Any] = {"test_credentials": _test_credentials_payload()}
             if isinstance(data, dict) and data.get("link"):
                 hints["open_link"] = data["link"]
+                hints["open_link_label"] = "Launch Data Connect ↗"
+                hints["open_link_note"] = (
+                    "Open in a new tab, search for FinBank, then sign in with "
+                    "the sandbox credentials below."
+                )
             return _wrap(client, data, status, hints=hints)
 
         if op_id == "generate_lite_connect_url":
             data, status = client.generate_lite_connect_url(
                 p["customer_id"], p["institution_id"]
             )
-            hints = {}
+            hints: Dict[str, Any] = {"test_credentials": _test_credentials_payload()}
             if isinstance(data, dict) and data.get("link"):
                 hints["open_link"] = data["link"]
+                hints["open_link_label"] = "Launch Data Connect Lite ↗"
+                hints["open_link_note"] = (
+                    "Open in a new tab and sign in with the FinBank sandbox "
+                    "credentials below for the institution you targeted."
+                )
             return _wrap(client, data, status, hints=hints)
 
         if op_id == "generate_fix_connect_url":
             data, status = client.generate_fix_connect_url(
                 p["customer_id"], p["institution_login_id"]
             )
-            hints = {}
+            hints: Dict[str, Any] = {"test_credentials": _test_credentials_payload()}
             if isinstance(data, dict) and data.get("link"):
                 hints["open_link"] = data["link"]
+                hints["open_link_label"] = "Launch Connect Fix ↗"
+                hints["open_link_note"] = (
+                    "Open in a new tab and re-authenticate with the sandbox "
+                    "credentials below to repair the broken institution login."
+                )
             return _wrap(client, data, status, hints=hints)
 
         if op_id in ("refresh_accounts", "get_accounts"):

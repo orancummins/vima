@@ -38,7 +38,7 @@ class OpenFinanceEUClient:
     """Client for Mastercard Open Finance Europe (Aiia) APIs."""
 
     DEFAULT_AUTH_BASE = "https://mtf.auth.openbanking.mastercard.eu"
-    DEFAULT_API_BASE = "https://mtf.api.openbanking.mastercard.com"
+    DEFAULT_API_BASE = "https://mtf.api.openbanking.mastercard.eu"
     JWT_AUDIENCE = "auth.mastercard.com"
 
     def __init__(
@@ -48,12 +48,17 @@ class OpenFinanceEUClient:
         public_cert_path: str,
         auth_base_url: str = DEFAULT_AUTH_BASE,
         api_base_url: str = DEFAULT_API_BASE,
+        application_id: str = "",
     ) -> None:
         self.client_id = client_id
         self.private_key_path = private_key_path
         self.public_cert_path = public_cert_path
         self.auth_base_url = auth_base_url.rstrip("/")
         self.api_base_url = api_base_url.rstrip("/")
+        # Required by the Mastercard Consent Machine API as the
+        # ``X-Application-Id`` request header on every consent / data call.
+        # Issued by the EU onboarding officer alongside the clientId.
+        self.application_id = application_id
 
         self._private_key: Optional[rsa.RSAPrivateKey] = None
         self._kid: Optional[str] = None
@@ -157,7 +162,11 @@ class OpenFinanceEUClient:
             "client_assertion": assertion,
             "scope": " ".join(scopes or ["ob_data", "ob_providers"]),
         }
-        headers = {"Content-Type": "application/x-www-form-urlencoded",
+        # NB: Mastercard's /oauth2/token expects a JSON body, not the
+        # standard OAuth 2.0 ``application/x-www-form-urlencoded``. Sending
+        # form-encoded yields:
+        #   FORMAT_ERROR — Content-Type ... does not match ... [application/json]
+        headers = {"Content-Type": "application/json",
                    "Accept": "application/json"}
 
         # Mask the JWT assertion in the captured request for UI display.
@@ -166,7 +175,7 @@ class OpenFinanceEUClient:
         self._last_request = {"method": "POST", "url": url,
                               "headers": dict(headers), "body": masked}
 
-        resp = requests.post(url, headers=headers, data=form, timeout=30)
+        resp = requests.post(url, headers=headers, json=form, timeout=30)
         try:
             body = resp.json()
         except ValueError:
@@ -199,6 +208,7 @@ class OpenFinanceEUClient:
         data: Optional[Dict[str, Any]] = None,
         params: Optional[Dict[str, Any]] = None,
         scopes: Optional[List[str]] = None,
+        extra_headers: Optional[Dict[str, str]] = None,
     ) -> Tuple[Any, int]:
         token = self._get_token(scopes=scopes)
         url = f"{self.api_base_url}{endpoint}"
@@ -208,6 +218,14 @@ class OpenFinanceEUClient:
         }
         if data is not None:
             headers["Content-Type"] = "application/json"
+        # Consent Machine + downstream APIs require X-Application-Id on every
+        # call. Missing this returns:
+        #   BAD_REQUEST — Required request header 'X-Application-Id' for
+        #   method parameter type UUID is not present
+        if self.application_id:
+            headers["X-Application-Id"] = self.application_id
+        if extra_headers:
+            headers.update(extra_headers)
 
         masked = dict(headers)
         masked["Authorization"] = f"Bearer {token[:10]}..."
@@ -251,19 +269,34 @@ class OpenFinanceEUClient:
         return self._request("GET", "/provider-groups", params=params,
                              scopes=["ob_providers"])
 
-    def create_consent(self, provider_id: str,
-                       user_id: Optional[str] = None,
-                       scopes: Optional[List[str]] = None,
-                       redirect_url: str = "") -> Tuple[Any, int]:
+    def create_consent(
+        self,
+        use_case_configuration_id: str,
+        end_user_id: str,
+        end_user_email: str,
+        idempotency_key: Optional[str] = None,
+    ) -> Tuple[Any, int]:
+        """POST /consents per the Mastercard Open Finance Europe docs.
+
+        Body shape (verified from the Account Opening Guide cURL sample
+        and the live sandbox 400 response, which rejects payloads without
+        an email on each end user):
+            {"useCaseConfigurationId": "...",
+             "endUsers": [{"identifier": "...", "email": "..."}]}
+
+        The provider/bank is chosen later by the End User inside the Aiia
+        managed flow UI — it is *not* part of the consent creation body.
+        """
         body: Dict[str, Any] = {
-            "provider_id": provider_id,
-            "scopes": scopes or ["accounts", "transactions", "balances"],
+            "useCaseConfigurationId": use_case_configuration_id,
+            "endUsers": [{
+                "identifier": end_user_id,
+                "email": end_user_email,
+            }],
         }
-        if user_id:
-            body["user_id"] = user_id
-        if redirect_url:
-            body["redirect_url"] = redirect_url
-        return self._request("POST", "/consents", data=body, scopes=["ob_data"])
+        headers = {"Idempotency-Key": idempotency_key or str(uuid.uuid4())}
+        return self._request("POST", "/consents", data=body,
+                             scopes=["ob_data"], extra_headers=headers)
 
     def get_consent(self, consent_id: str) -> Tuple[Any, int]:
         return self._request("GET", f"/consents/{consent_id}", scopes=["ob_data"])
@@ -272,25 +305,57 @@ class OpenFinanceEUClient:
         return self._request("DELETE", f"/consents/{consent_id}",
                              scopes=["ob_data"])
 
-    def create_managed_flow(self, consent_id: str,
-                            redirect_url: str = "",
-                            language: str = "en") -> Tuple[Any, int]:
-        body: Dict[str, Any] = {"language": language}
-        if redirect_url:
-            body["redirect_url"] = redirect_url
+    def create_managed_flow(
+        self,
+        consent_id: str,
+        end_user_id: str,
+        flow_type: str = "CONNECT_ACCOUNTS",
+        language: str = "en",
+        provider_id: str = "",
+    ) -> Tuple[Any, int]:
+        """POST /consents/{consent_id}/managed-flows per the official docs.
+
+        Body shape (verified):
+            {"type": "CONNECT_ACCOUNTS",
+             "endUser": {"identifier": "..."},
+             "language": "en"}
+
+        Redirect URLs are configured at app-onboarding time by Mastercard
+        (the URL the partner emails alongside the public cert), not per-call.
+        ``provider_id`` is sent as a soft hint when supplied — Aiia may use
+        it to skip the bank-selection step, but it is silently ignored if
+        not supported by the current tenant configuration.
+        """
+        body: Dict[str, Any] = {
+            "type": flow_type,
+            "endUser": {"identifier": end_user_id},
+            "language": language,
+        }
+        if provider_id:
+            body["providerId"] = provider_id
         return self._request(
             "POST", f"/consents/{consent_id}/managed-flows",
             data=body, scopes=["ob_data"],
         )
 
-    def get_accounts(self, consent_id: Optional[str] = None) -> Tuple[Any, int]:
-        params = {"consent_id": consent_id} if consent_id else None
-        return self._request("GET", "/accounts", params=params, scopes=["ob_data"])
+    def get_accounts(self, consent_id: str,
+                     include: str = "balances,holders,identifiers,additionalInformation",
+                     limit: int = 10, offset: int = 0) -> Tuple[Any, int]:
+        """GET /data/accounts — the X-Consent-Id header scopes the call to
+        the End User who granted the consent. The ``include`` query expands
+        the response with optional sub-resources.
+        """
+        params: Dict[str, Any] = {"include": include, "limit": limit, "offset": offset}
+        return self._request("GET", "/data/accounts", params=params,
+                             scopes=["ob_data"],
+                             extra_headers={"X-Consent-Id": consent_id})
 
-    def get_account(self, account_id: str) -> Tuple[Any, int]:
-        return self._request("GET", f"/accounts/{account_id}", scopes=["ob_data"])
+    def get_account(self, account_id: str, consent_id: str) -> Tuple[Any, int]:
+        return self._request("GET", f"/data/accounts/{account_id}",
+                             scopes=["ob_data"],
+                             extra_headers={"X-Consent-Id": consent_id})
 
-    def get_transactions(self, account_id: str,
+    def get_transactions(self, account_id: str, consent_id: str,
                          from_date: str = "", to_date: str = "",
                          limit: int = 50) -> Tuple[Any, int]:
         params: Dict[str, Any] = {"limit": limit}
@@ -298,17 +363,42 @@ class OpenFinanceEUClient:
             params["from"] = from_date
         if to_date:
             params["to"] = to_date
-        return self._request("GET", f"/accounts/{account_id}/transactions",
-                             params=params, scopes=["ob_data"])
+        return self._request("GET", f"/data/accounts/{account_id}/transactions",
+                             params=params, scopes=["ob_data"],
+                             extra_headers={"X-Consent-Id": consent_id})
 
-    def check_balance(self, account_id: str) -> Tuple[Any, int]:
-        return self._request("POST", f"/accounts/{account_id}/balance-checks",
-                             data={}, scopes=["ob_data"])
+    def check_balance(self, account_id: str, consent_id: str,
+                      max_age: str = "PT15M") -> Tuple[Any, int]:
+        # The Accounts API requires a freshness policy. ``PT0S`` forces a live
+        # provider call; any other ISO 8601 duration (e.g. ``PT15M``) lets the
+        # service return the cached balance if it is fresher than ``maxAge``.
+        body = {"freshness": {"maxAge": max_age or "PT15M"}}
+        headers = {
+            "X-Consent-Id": consent_id,
+            "Idempotency-Key": str(uuid.uuid4()),
+        }
+        return self._request("POST", f"/data/accounts/{account_id}/balance-checks",
+                             data=body, scopes=["ob_data"],
+                             extra_headers=headers)
 
-    def verify_account_ownership(self, account_id: str,
-                                 expected_name: str = "") -> Tuple[Any, int]:
-        body: Dict[str, Any] = {"account_id": account_id}
-        if expected_name:
-            body["expected_name"] = expected_name
-        return self._request("POST", "/account-ownership-verifications",
-                             data=body, scopes=["ob_data"])
+    def verify_account_ownership(self, consent_id: str, customer_name: str,
+                                 account_ids: Optional[List[str]] = None
+                                 ) -> Tuple[Any, int]:
+        # The Insights API lives under the ``/insights`` server prefix and
+        # expects ``customerName`` (string) plus optional ``accountIds``
+        # (array of UUIDs). Omitting ``accountIds`` matches against every
+        # authorized account on the consent.
+        body: Dict[str, Any] = {"customerName": customer_name}
+        if account_ids:
+            body["accountIds"] = [a for a in account_ids if a]
+        return self._request("POST", "/insights/account-ownership-verifications",
+                             data=body, scopes=["ob_data"],
+                             extra_headers={"X-Consent-Id": consent_id})
+
+    def get_account_ownership_verification(self, verification_id: str,
+                                           consent_id: str
+                                           ) -> Tuple[Any, int]:
+        return self._request("GET",
+                             f"/insights/account-ownership-verifications/{verification_id}",
+                             scopes=["ob_data"],
+                             extra_headers={"X-Consent-Id": consent_id})
