@@ -3015,6 +3015,14 @@
   }
 
   function _ldConnect(region) {
+    // Open the bank-login tab synchronously inside the click handler. The
+    // flow URL only arrives after the async fetch below, but calling
+    // window.open() from within a .then() callback is treated as a
+    // non-user-initiated popup and gets blocked by the browser. Opening a
+    // blank tab now (on the user gesture) and navigating it once the URL
+    // returns avoids the popup blocker.
+    let popup = window.open('', '_blank');
+    if (popup) { try { popup.opener = null; } catch (e) {} }
     const card = document.querySelector(`[data-ld-card="${region}"]`);
     if (card) {
       card.outerHTML = _ldRenderConnection(region, null, { pending: true });
@@ -3025,15 +3033,18 @@
       body: JSON.stringify({ region }),
     }).then((r) => r.json()).then((data) => {
       if (data && data.success && data.flow_url) {
-        window.open(data.flow_url, '_blank', 'noopener');
+        if (popup && !popup.closed) { popup.location.href = data.flow_url; }
+        else { window.open(data.flow_url, '_blank', 'noopener'); }
         _ldStartPolling(region);
       } else {
+        if (popup && !popup.closed) popup.close();
         const c = document.querySelector(`[data-ld-card="${region}"]`);
         if (c) c.outerHTML = _ldRenderConnection(region, null,
           { error: (data && data.error) || 'Could not start the bank connection.' });
         _ldWireCards();
       }
     }).catch(() => {
+      if (popup && !popup.closed) popup.close();
       const c = document.querySelector(`[data-ld-card="${region}"]`);
       if (c) c.outerHTML = _ldRenderConnection(region, null, { error: 'Network error starting connection.' });
       _ldWireCards();
