@@ -20,7 +20,7 @@ export function initApisSnippets(opts) {
   if (opts.getCurrentOpId) _getCurrentOpId = opts.getCurrentOpId;
 }
   // -------------------------------------------------------------------
-  // APIs tab Ã¢â‚¬â€ Python snippets drawer
+  // APIs tab — Python snippets drawer
   // Renders a copy-able Python snippet for the currently-selected API,
   // calling /explorer/<api_id>/snippet for the authoritative server-
   // rendered code. Selecting a different API in the sidebar updates
@@ -30,7 +30,7 @@ export function initApisSnippets(opts) {
   let APIS_SNIPPETS_ACTIVE = null; // api_id of currently shown snippet
 
   function _snippetHighlight(code) {
-    // Very small Python-ish syntax highlighter Ã¢â‚¬â€ order matters: strings
+    // Very small Python-ish syntax highlighter — order matters: strings
     // first (to swallow keyword-like content), then comments, then
     // keywords/numbers. We tokenise into a flat list so we never wrap a
     // span that already contains another span.
@@ -94,7 +94,7 @@ export function initApisSnippets(opts) {
     }).join('');
   }
 
-  function _snippetRenderTabs() { /* removed Ã¢â‚¬â€ only one snippet shown at a time */ }
+  function _snippetRenderTabs() { /* removed — only one snippet shown at a time */ }
 
   function _snippetRenderBody(api) {
     const body = $('apis-snippets-body');
@@ -119,7 +119,7 @@ export function initApisSnippets(opts) {
     const opId = op ? op.id : '';
     const url = `/explorer/${encodeURIComponent(api.id)}/snippet`
               + (opId ? `?op=${encodeURIComponent(opId)}` : '');
-    // Guard against rapid tab switches Ã¢â‚¬â€ only render if this fetch is
+    // Guard against rapid tab switches — only render if this fetch is
     // still the latest one for the active API.
     const requestForApi = api.id;
     fetch(url)

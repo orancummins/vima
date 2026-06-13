@@ -1,30 +1,93 @@
-import {
-  APIS, USE_CASES, RUNTIME_MODE, SERVER_MODE, NON_US_MODE,
-  OPEN_FINANCE_US_API_ID, SERVER_MODE_TOOLTIP, NON_US_TOOLTIP,
-  THEME_STORAGE_KEY, SCRIPT_ROOT, ROOT_EL,
-} from './core/env.js';
-import { $ } from './core/dom.js';
-import { _appPath, _nativeFetch } from './core/net.js';
-import { escapeHtml } from './core/html.js';
-import {
-  _currentThemeMode, _postThemeToEmbeddedFrame, _syncEmbeddedUseCaseTheme,
-  _applyThemeMode, _toggleThemeMode, initTheme,
-} from './core/theme.js';
-import {
-  apiCallsOpen, apiCallsClose, apiCallsToggle, apiCallsClear,
-  _startPolling, _stopPolling,
-} from './features/apiCallLog.js';
-import { startUsIpStatusPolling, refreshUsIpStatus } from './features/usIpStatus.js';
-import {
-  initApisSnippets, apisSnippetsClose, apisSnippetsToggle,
-  apisSnippetsIsVisible, apisSnippetsFollowApi, apisSnippetsRefreshOp,
-} from './features/apiSnippets.js';
-import { _initSdkDemo, _initLiveDemo } from './features/openFinanceSdk.js';
-import './features/autoProvision.js';
-import './features/infoModal.js';
-
+"use strict";
 (() => {
-  initTheme();
+  const APIS = window.__APIS__ || [];
+  const USE_CASES = window.__USE_CASES__ || [];
+  const RUNTIME_MODE = window.__RUNTIME_MODE__ || {};
+  const SERVER_MODE = !!RUNTIME_MODE.server_mode;
+  const NON_US_MODE = !!RUNTIME_MODE.non_us_mode;
+  const OPEN_FINANCE_US_API_ID = 'open_finance';
+  const SERVER_MODE_TOOLTIP = 'server mode';
+  const NON_US_TOOLTIP = 'Disabled in non-us mode. If running on US IP, this would be enabled.';
+  const THEME_STORAGE_KEY = 'vima:theme';
+  const SCRIPT_ROOT = (document.body?.dataset?.scriptRoot || '').replace(/\/$/, '');
+  const ROOT_EL = document.documentElement;
+
+  const $ = (id) => document.getElementById(id);
+
+  function _currentThemeMode() {
+    return ROOT_EL.classList.contains('theme-light') ? 'light' : 'dark';
+  }
+
+  function _postThemeToEmbeddedFrame(frame, mode) {
+    if (!frame || !frame.contentWindow) return;
+    const theme = mode === 'light' ? 'light' : 'dark';
+    try {
+      frame.contentWindow.postMessage({ type: 'vima:theme', theme }, window.location.origin);
+    } catch (e) {}
+  }
+
+  function _syncEmbeddedUseCaseTheme(mode) {
+    const theme = mode === 'light' ? 'light' : 'dark';
+    document.querySelectorAll('.sonic-webview-frame').forEach((frame) => {
+      _postThemeToEmbeddedFrame(frame, theme);
+    });
+    _postThemeToEmbeddedFrame($('global-edit-modal-iframe'), theme);
+  }
+
+  function _applyThemeMode(mode) {
+    const theme = mode === 'light' ? 'light' : 'dark';
+    const isLight = theme === 'light';
+    ROOT_EL.classList.toggle('theme-light', isLight);
+    document.body?.setAttribute('data-theme', theme);
+    _syncEmbeddedUseCaseTheme(theme);
+    const nextTheme = isLight ? 'dark' : 'light';
+    const label = `Switch to ${nextTheme} theme`;
+    document.querySelectorAll('.theme-toggle').forEach((toggle) => {
+      toggle.setAttribute('aria-pressed', String(isLight));
+      toggle.setAttribute('aria-label', label);
+      toggle.title = label;
+    });
+  }
+
+  function _toggleThemeMode() {
+    const nextTheme = _currentThemeMode() === 'light' ? 'dark' : 'light';
+    _applyThemeMode(nextTheme);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    } catch (e) {}
+  }
+
+  _applyThemeMode(_currentThemeMode());
+  $('theme-toggle')?.addEventListener('click', _toggleThemeMode);
+
+  function _appPath(path) {
+    if (typeof path !== 'string') return path;
+    if (!SCRIPT_ROOT) return path;
+    if (!path.startsWith('/') && !/^https?:\/\//i.test(path)) return path;
+    try {
+      const url = new URL(path, window.location.href);
+      if (url.origin !== window.location.origin) return path;
+      if (url.pathname === SCRIPT_ROOT || url.pathname.startsWith(`${SCRIPT_ROOT}/`)) {
+        return path;
+      }
+      url.pathname = `${SCRIPT_ROOT}${url.pathname.startsWith('/') ? '' : '/'}${url.pathname}`;
+      return /^https?:\/\//i.test(path) ? url.href : `${url.pathname}${url.search}${url.hash}`;
+    } catch (_) {
+      return path;
+    }
+  }
+
+  const _nativeFetch = (resource, init) => {
+    if (typeof resource === 'string') {
+      return window.fetch(_appPath(resource), init);
+    }
+    if (resource instanceof Request) {
+      const rewrittenUrl = _appPath(resource.url);
+      if (rewrittenUrl === resource.url) return window.fetch(resource, init);
+      return window.fetch(new Request(rewrittenUrl, resource), init);
+    }
+    return window.fetch(resource, init);
+  };
 
   function _isNonUsBlockedApiId(apiId) {
     return NON_US_MODE && apiId === OPEN_FINANCE_US_API_ID;
@@ -57,9 +120,648 @@ import './features/infoModal.js';
 
   _markRuntimeBlockedMenuItems();
 
-  // Current use-case id (tracked here; API Calls Logger lives in
-  // features/apiCallLog.js).
+  // -------------------------------------------------------------------
+  // API Calls Logger — polls /api-call-log for outbound Mastercard calls
+  // -------------------------------------------------------------------
+  let API_CALLS_VISIBLE = false;
+  const API_CALL_LOG = [];
+  let _lastSeq = 0;
+  let _pollTimer = null;
   let _currentUcId = null;
+
+  function _startPolling() {
+    if (_pollTimer) return;
+    _pollTimer = setInterval(_pollApiLog, 1500);
+    _pollApiLog(); // immediate first fetch
+  }
+
+  function _stopPolling() {
+    if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+  }
+
+  function _pollApiLog() {
+    _nativeFetch(`/api-call-log?since=${_lastSeq}`)
+      .then(r => r.json())
+      .then(d => {
+        const newCalls = d.calls || [];
+        if (newCalls.length) {
+          newCalls.forEach(e => {
+            API_CALL_LOG.unshift(e);
+            if (e.seq > _lastSeq) _lastSeq = e.seq;
+          });
+          if (API_CALL_LOG.length > 50) API_CALL_LOG.length = 50;
+          apiCallsRefresh();
+        }
+      })
+      .catch(() => {});
+  }
+
+  let _ipStatusTimer = null;
+  let _lastUsIpStatus = null;
+
+  function _applyUsIpStatus(payload) {
+    const statusOk = !!(payload && payload.success);
+    const isUs = !!(payload && payload.is_us);
+    const country = (payload && payload.country_code) ? String(payload.country_code).toUpperCase() : '';
+    const ip = (payload && payload.ip) ? String(payload.ip) : '';
+    const source = (payload && payload.source) ? String(payload.source) : 'server';
+
+    const statusText = statusOk && isUs
+      ? `US IP detected${ip ? ` (${ip})` : ''} via ${source}`
+      : `Non-US or unverified${country ? ` (${country})` : ''}${ip ? ` - ${ip}` : ''} via ${source}`;
+    const lightClass = statusOk && isUs ? 'of-ip-light--green' : 'of-ip-light--red';
+    const pillClass = statusOk && isUs ? 'of-ip-pill--green' : 'of-ip-pill--red';
+    const shortLabel = statusOk && isUs ? 'US IP' : 'Non-US IP used';
+    const tooltip = `${statusText}\nUS Open Finance APIs require a US VPN connection.`;
+
+    document.querySelectorAll('[data-us-ip-warning]').forEach((card) => {
+      const light = card.querySelector('[data-us-ip-light]');
+      const label = card.querySelector('[data-us-ip-text]');
+      if (light) {
+        light.classList.remove('of-ip-light--green', 'of-ip-light--red', 'of-ip-light--unknown');
+        light.classList.add(lightClass);
+      }
+      if (label) label.textContent = shortLabel;
+      card.classList.remove('of-ip-pill--green', 'of-ip-pill--red', 'of-ip-pill--unknown');
+      card.classList.add(pillClass);
+      card.setAttribute('title', tooltip);
+      card.setAttribute('data-tooltip', tooltip);
+    });
+
+    _lastUsIpStatus = { success: statusOk, is_us: isUs, country_code: country, ip, source };
+  }
+
+  function refreshUsIpStatus() {
+    const applyFailure = (source) => {
+      if (_lastUsIpStatus && _lastUsIpStatus.success) {
+        _applyUsIpStatus(Object.assign({}, _lastUsIpStatus, { source: _lastUsIpStatus.source || source || 'cached' }));
+        return;
+      }
+      _applyUsIpStatus({
+        success: false,
+        is_us: false,
+        country_code: '',
+        ip: '',
+        source: source || 'unverified',
+      });
+    };
+
+    _nativeFetch('/diagnostics/us-ip-status', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((data) => {
+        const payload = data || {};
+        if (payload.success) {
+          _applyUsIpStatus(payload);
+        } else {
+          applyFailure('diagnostics-unavailable');
+        }
+      })
+      .catch(() => applyFailure('diagnostics-unavailable'));
+  }
+
+  function startUsIpStatusPolling() {
+    if (_ipStatusTimer) return;
+    refreshUsIpStatus();
+    _ipStatusTimer = setInterval(refreshUsIpStatus, 15000);
+  }
+
+  function apiCallsRefresh() {
+    const badge = $('api-calls-fab-badge');
+    if (badge) {
+      badge.textContent = API_CALL_LOG.length;
+      badge.classList.toggle('hidden', API_CALL_LOG.length === 0);
+    }
+    const countEl = $('api-calls-count');
+    if (countEl) countEl.textContent = API_CALL_LOG.length || '';
+    if (!API_CALLS_VISIBLE) return;
+    const body = $('api-calls-body');
+    if (!body) return;
+    if (!API_CALL_LOG.length) {
+      body.innerHTML = `<p class="api-calls-empty">No API calls yet. Perform an action to see calls here.</p>`;
+      return;
+    }
+    body.innerHTML = API_CALL_LOG.map((e, idx) => apiCallEntryHtml(e, idx)).join('');
+    // Auto-expand the most recent (first) entry
+    const firstEntry = body.querySelector('.api-calls-entry');
+    if (firstEntry) firstEntry.classList.add('api-calls-entry--open');
+    body.querySelectorAll('[data-expand-call]').forEach(el => {
+      el.addEventListener('click', () => el.closest('.api-calls-entry').classList.toggle('api-calls-entry--open'));
+    });
+    body.querySelectorAll('[data-copy-call]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const entry = API_CALL_LOG[+btn.dataset.copyCall];
+        if (!entry) return;
+        navigator.clipboard.writeText(JSON.stringify({
+          request: entry.requestBody, response: entry.responseBody,
+        }, null, 2));
+        btn.textContent = 'Copied';
+        setTimeout(() => btn.textContent = 'Copy', 900);
+      });
+    });
+  }
+
+  function apiCallEntryHtml(e, idx) {
+    // Show just the path+host portion nicely
+    let displayUrl = e.url || '';
+    try {
+      const u = new URL(displayUrl);
+      displayUrl = u.host + u.pathname + (u.search || '');
+    } catch(_) {}
+    const statusCls = e.status === null ? 'pending'
+      : e.status === 'ERR' ? 'err'
+      : e.status >= 200 && e.status < 300 ? 'ok' : 'bad';
+    const elapsed = e.elapsed_ms != null ? `${e.elapsed_ms}ms` : '';
+    const time = e.ts || '';
+    return `
+      <div class="api-calls-entry" data-seq="${e.seq}">
+        <div class="api-calls-entry-head" data-expand-call>
+          <span class="api-calls-method api-calls-method--${e.method.toLowerCase()}">${escapeHtml(e.method)}</span>
+          <span class="api-calls-url" title="${escapeHtml(e.url)}">${escapeHtml(displayUrl)}</span>
+          <span class="api-calls-status api-calls-status--${statusCls}">${e.status == null ? '…' : escapeHtml(String(e.status))}</span>
+          <span class="api-calls-time">${escapeHtml(elapsed || time)}</span>
+          <span class="api-calls-chevron">▾</span>
+        </div>
+        <div class="api-calls-entry-body">
+          ${e.requestBody != null ? `<div class="api-calls-section"><div class="api-calls-section-label">Request body</div><pre class="api-calls-pre">${escapeHtml(JSON.stringify(e.requestBody, null, 2))}</pre></div>` : ''}
+          <div class="api-calls-section">
+            <div class="api-calls-section-label">Response${e.status ? ' · ' + e.status : ''}</div>
+            ${e.responseBody !== null && e.responseBody !== undefined
+              ? `<pre class="api-calls-pre">${escapeHtml(JSON.stringify(e.responseBody, null, 2))}</pre>`
+              : `<p class="api-calls-pending">Waiting for response…</p>`}
+          </div>
+          <div class="api-calls-copy-row"><button class="api-calls-copy-btn" data-copy-call="${idx}">Copy</button></div>
+        </div>
+      </div>`;
+  }
+
+  function apiCallsOpen() {
+    API_CALLS_VISIBLE = true;
+    _startPolling();
+    const drawer = $('api-calls-drawer');
+    if (drawer) drawer.classList.remove('hidden');
+    const fab = $('api-calls-fab');
+    if (fab) {
+      fab.classList.add('api-calls-fab--active');
+      const lbl = fab.querySelector('.api-calls-fab-label');
+      if (lbl) lbl.textContent = 'Hide Calls';
+    }
+    apiCallsRefresh();
+  }
+
+  function apiCallsClose() {
+    API_CALLS_VISIBLE = false;
+    // Keep polling for badge updates even when drawer is closed
+    const drawer = $('api-calls-drawer');
+    if (drawer) drawer.classList.add('hidden');
+    const fab = $('api-calls-fab');
+    if (fab) {
+      fab.classList.remove('api-calls-fab--active');
+      const lbl = fab.querySelector('.api-calls-fab-label');
+      if (lbl) lbl.textContent = 'Show API Calls';
+    }
+  }
+
+  // -------------------------------------------------------------------
+  // APIs tab — Python snippets drawer
+  // Renders a copy-able Python snippet for the currently-selected API,
+  // calling /explorer/<api_id>/snippet for the authoritative server-
+  // rendered code. Selecting a different API in the sidebar updates
+  // the snippet shown here.
+  // -------------------------------------------------------------------
+  let APIS_SNIPPETS_VISIBLE = false;
+  let APIS_SNIPPETS_ACTIVE = null; // api_id of currently shown snippet
+
+  function _snippetHighlight(code) {
+    // Very small Python-ish syntax highlighter — order matters: strings
+    // first (to swallow keyword-like content), then comments, then
+    // keywords/numbers. We tokenise into a flat list so we never wrap a
+    // span that already contains another span.
+    const KEYWORDS = ['import', 'from', 'as', 'def', 'return', 'if', 'else', 'for', 'in', 'True', 'False', 'None', 'print', 'with'];
+    const tokens = [];
+    let i = 0;
+    while (i < code.length) {
+      const ch = code[i];
+      if (ch === '#') {
+        const end = code.indexOf('\n', i);
+        const stop = end === -1 ? code.length : end;
+        tokens.push({ t: 'com', v: code.slice(i, stop) });
+        i = stop;
+        continue;
+      }
+      if (ch === '"' || ch === "'") {
+        // Triple-quoted strings
+        if (code.slice(i, i + 3) === ch + ch + ch) {
+          const end = code.indexOf(ch + ch + ch, i + 3);
+          const stop = end === -1 ? code.length : end + 3;
+          tokens.push({ t: 'str', v: code.slice(i, stop) });
+          i = stop;
+          continue;
+        }
+        // Single-line string
+        let j = i + 1;
+        while (j < code.length && code[j] !== ch) {
+          if (code[j] === '\\' && j + 1 < code.length) j += 2;
+          else j += 1;
+        }
+        tokens.push({ t: 'str', v: code.slice(i, j + 1) });
+        i = j + 1;
+        continue;
+      }
+      // Word
+      if (/[A-Za-z_]/.test(ch)) {
+        let j = i;
+        while (j < code.length && /[A-Za-z0-9_]/.test(code[j])) j += 1;
+        const word = code.slice(i, j);
+        if (KEYWORDS.indexOf(word) !== -1) tokens.push({ t: 'kw', v: word });
+        else if (code[j] === '(') tokens.push({ t: 'fn', v: word });
+        else tokens.push({ t: 'raw', v: word });
+        i = j;
+        continue;
+      }
+      // Number
+      if (/[0-9]/.test(ch)) {
+        let j = i;
+        while (j < code.length && /[0-9.]/.test(code[j])) j += 1;
+        tokens.push({ t: 'num', v: code.slice(i, j) });
+        i = j;
+        continue;
+      }
+      tokens.push({ t: 'raw', v: ch });
+      i += 1;
+    }
+    return tokens.map((tok) => {
+      const v = escapeHtml(tok.v);
+      if (tok.t === 'raw') return v;
+      return `<span class="apis-snippets-tok-${tok.t}">${v}</span>`;
+    }).join('');
+  }
+
+  function _snippetRenderTabs() { /* removed — only one snippet shown at a time */ }
+
+  function _snippetRenderBody(api) {
+    const body = $('apis-snippets-body');
+    if (!body) return;
+    if (!api) {
+      body.innerHTML = `<p class="api-calls-empty">No API in this group.</p>`;
+      return;
+    }
+    // Show a loading state immediately, then fetch the authoritative
+    // server-rendered snippet (which knows the upstream URL, the env
+    // vars from the catalog, and the OAuth1 signing pattern). This
+    // replaces the previous client-only "call the proxy" stub.
+    body.innerHTML = `
+      <div class="apis-snippets-section">
+        <div class="apis-snippets-section-meta">
+          <span class="apis-snippets-section-label">Loading\u2026</span>
+        </div>
+        <pre class="apis-snippets-code"><code>${escapeHtml('# Building authentic snippet\u2026')}</code></pre>
+      </div>`;
+    const op = (api.operations || []).find((o) => o.id === currentOpId)
+             || (api.operations || [])[0];
+    const opId = op ? op.id : '';
+    const url = `/explorer/${encodeURIComponent(api.id)}/snippet`
+              + (opId ? `?op=${encodeURIComponent(opId)}` : '');
+    // Guard against rapid tab switches — only render if this fetch is
+    // still the latest one for the active API.
+    const requestForApi = api.id;
+    fetch(url)
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+      .then((data) => {
+        if (APIS_SNIPPETS_ACTIVE !== requestForApi) return;
+        const code = data.snippet || '';
+        const summary = data.summary || (op ? `${op.method || 'POST'} \u00b7 ${op.name}` : 'No operations');
+        const runBtn = SERVER_MODE
+          ? ''
+          : `<button class="apis-snippets-copy apis-snippets-run" type="button" data-snippet-run title="Open a terminal on this machine and run the snippet">\u25b6 Run in terminal</button>`;
+        body.innerHTML = `
+          <div class="apis-snippets-section">
+            <div class="apis-snippets-section-meta">
+              <span class="apis-snippets-section-label">${escapeHtml(summary)}</span>
+              <div class="apis-snippets-section-actions">
+                <button class="apis-snippets-codeonly" type="button" data-snippet-copy title="Copy the Python source">Copy code</button>
+                ${runBtn}
+              </div>
+            </div>
+            <pre class="apis-snippets-code"><code contenteditable="plaintext-only" spellcheck="false" autocorrect="off" autocapitalize="off" data-snippet-code>${_snippetHighlight(code)}</code></pre>
+          </div>`;
+        const codeEl = body.querySelector('[data-snippet-code]');
+        const getCurrentCode = () => (codeEl ? codeEl.innerText : code);
+        // First edit strips syntax highlighting so the user sees plain
+        // editable text instead of fighting nested <span> elements.
+        let flattened = false;
+        if (codeEl) {
+          const flatten = () => {
+            if (flattened) return;
+            flattened = true;
+            const txt = codeEl.innerText;
+            codeEl.textContent = txt;
+          };
+          codeEl.addEventListener('focus', flatten, { once: true });
+          codeEl.addEventListener('beforeinput', flatten, { once: true });
+          // Tab inserts 4 spaces instead of moving focus out of the
+          // editor. Shift+Tab still escapes so keyboard users aren't
+          // trapped. Works with multi-line selections by indenting
+          // every selected line.
+          codeEl.addEventListener('keydown', (ev) => {
+            if (ev.key !== 'Tab' || ev.shiftKey) return;
+            ev.preventDefault();
+            flatten();
+            const sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) return;
+            const range = sel.getRangeAt(0);
+            const INDENT = '    ';
+            if (range.collapsed) {
+              range.insertNode(document.createTextNode(INDENT));
+              range.collapse(false);
+            } else {
+              const text = range.toString();
+              const replaced = text.includes('\n')
+                ? text.split('\n').map((ln) => INDENT + ln).join('\n')
+                : INDENT + text;
+              range.deleteContents();
+              const node = document.createTextNode(replaced);
+              range.insertNode(node);
+              range.setStartAfter(node);
+              range.collapse(true);
+            }
+            sel.removeAllRanges();
+            sel.addRange(range);
+          });
+        }
+        const flashCopied = (btn, label) => {
+          const original = btn.textContent;
+          btn.textContent = label || 'Copied';
+          btn.classList.add('apis-snippets-copy--copied');
+          setTimeout(() => {
+            btn.textContent = original;
+            btn.classList.remove('apis-snippets-copy--copied');
+          }, 1600);
+        };
+        const copyBtn = body.querySelector('[data-snippet-copy]');
+        if (copyBtn) copyBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(getCurrentCode()).then(() => flashCopied(copyBtn, 'Copied \u2713'));
+        });
+        const runBtnEl = body.querySelector('[data-snippet-run]');
+        if (runBtnEl) runBtnEl.addEventListener('click', () => {
+          const original = runBtnEl.textContent;
+          runBtnEl.disabled = true;
+          runBtnEl.textContent = 'Launching\u2026';
+          _nativeFetch(`/explorer/${encodeURIComponent(api.id)}/run`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ operation: opId, code: getCurrentCode() }),
+          })
+            .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+            .then(({ ok, d }) => {
+              runBtnEl.disabled = false;
+              if (!ok || d.error) {
+                runBtnEl.textContent = 'Failed';
+                runBtnEl.classList.add('apis-snippets-run--err');
+                alert('Could not launch terminal: ' + (d.error || 'unknown error'));
+                setTimeout(() => {
+                  runBtnEl.textContent = original;
+                  runBtnEl.classList.remove('apis-snippets-run--err');
+                }, 2400);
+              } else {
+                runBtnEl.textContent = 'Launched \u2713';
+                runBtnEl.classList.add('apis-snippets-copy--copied');
+                setTimeout(() => {
+                  runBtnEl.textContent = original;
+                  runBtnEl.classList.remove('apis-snippets-copy--copied');
+                }, 2400);
+              }
+            })
+            .catch((err) => {
+              runBtnEl.disabled = false;
+              runBtnEl.textContent = original;
+              alert('Could not launch terminal: ' + (err && err.message || err));
+            });
+        });
+      })
+      .catch((err) => {
+        if (APIS_SNIPPETS_ACTIVE !== requestForApi) return;
+        body.innerHTML = `
+          <div class="apis-snippets-section">
+            <div class="apis-snippets-section-meta">
+              <span class="apis-snippets-section-label">Snippet unavailable</span>
+            </div>
+            <pre class="apis-snippets-code"><code>${escapeHtml('# Unable to build snippet: ' + (err && err.message || err))}</code></pre>
+          </div>`;
+      });
+  }
+
+  // ---- "Commands" sub-modal --------------------------------------
+  // Builds a one-shot install + env-var script for the user's OS using
+  // values pulled from the local Solution Studio config. Disabled in
+  // server mode (the button isn't rendered, and the endpoint 403s).
+  function _detectOs() {
+    const p = (navigator.userAgentData && navigator.userAgentData.platform)
+      || navigator.platform || navigator.userAgent || '';
+    const s = String(p).toLowerCase();
+    if (s.indexOf('win') !== -1) return 'windows';
+    if (s.indexOf('mac') !== -1) return 'macos';
+    return 'linux';
+  }
+
+  function _shellQuote(val, os) {
+    if (val === null || val === undefined) val = '';
+    const s = String(val);
+    if (os === 'windows') {
+      // PowerShell single-quoted: double any embedded single quotes.
+      return "'" + s.replace(/'/g, "''") + "'";
+    }
+    // POSIX single-quoted: close, escape, reopen.
+    return "'" + s.replace(/'/g, "'\\''") + "'";
+  }
+
+  function _buildSetupScript(data, os) {
+    const pkgs = (data.packages || []).join(' ');
+    const lines = [];
+    if (os === 'windows') {
+      lines.push('# Windows PowerShell \u2014 uses `py -m pip` so it works even if pip.exe is blocked.');
+      if (pkgs) lines.push(`py -m pip install --user ${pkgs}`);
+      lines.push('');
+      (data.env || []).forEach((e) => {
+        const v = e.set ? e.value : `<your ${e.name}>`;
+        lines.push(`$env:${e.name} = ${_shellQuote(v, os)}`);
+      });
+    } else {
+      lines.push(os === 'macos' ? '# macOS (bash/zsh)' : '# Linux (bash/zsh)');
+      if (pkgs) lines.push(`python3 -m pip install --user ${pkgs}`);
+      lines.push('');
+      (data.env || []).forEach((e) => {
+        const v = e.set ? e.value : `<your ${e.name}>`;
+        lines.push(`export ${e.name}=${_shellQuote(v, os)}`);
+      });
+    }
+    return lines.join('\n') + '\n';
+  }
+
+  // Build a single, paste-and-run command for the user's OS:
+  //   * exports the credentials (real values where set locally, placeholders otherwise)
+  //   * pip-installs the dependencies (via `<launcher> -m pip` so it
+  //     works even if pip.exe is blocked by AV/EDR, which is common on
+  //     locked-down corporate Windows machines)
+  //   * pipes the snippet into the Python launcher via stdin so no .py
+  //     file is needed
+  // Uses `py` on Windows (the launcher is installed by every Python
+  // distribution, while `python.exe` is often the WindowsApps store
+  // stub) and `python3` on POSIX. `--user` avoids permission errors
+  // when site-packages isn't writable.
+  function _buildRunCommand(setup, code, os) {
+    const pkgs = (setup.packages || []).join(' ');
+    const lines = [];
+    if (os === 'windows') {
+      const launcher = 'py';
+      lines.push('# Paste into PowerShell. Sets env vars, installs deps, runs the snippet.');
+      lines.push('# Uses the `py` launcher + `py -m pip` so it works even if pip.exe / python.exe');
+      lines.push('# are blocked by corporate AV or shadowed by the Windows Store stub.');
+      (setup.env || []).forEach((e) => {
+        const v = e.set ? e.value : `<your ${e.name}>`;
+        lines.push(`$env:${e.name} = ${_shellQuote(v, os)}`);
+      });
+      if (pkgs) lines.push(`${launcher} -m pip install --user ${pkgs}`);
+      // Single-quoted PowerShell here-string: opaque literal, no
+      // variable expansion, no escaping needed for $ or quotes inside.
+      lines.push("@'");
+      lines.push(code.replace(/\r?\n$/, ''));
+      lines.push(`'@ | ${launcher} -`);
+    } else {
+      const launcher = 'python3';
+      lines.push(os === 'macos'
+        ? '# Paste into a macOS terminal (bash/zsh). Sets env vars, installs deps, runs the snippet.'
+        : '# Paste into a Linux terminal (bash/zsh). Sets env vars, installs deps, runs the snippet.');
+      (setup.env || []).forEach((e) => {
+        const v = e.set ? e.value : `<your ${e.name}>`;
+        lines.push(`export ${e.name}=${_shellQuote(v, os)}`);
+      });
+      if (pkgs) lines.push(`${launcher} -m pip install --user ${pkgs}`);
+      // Quoted heredoc terminator disables shell expansion inside the
+      // body, so the snippet's $vars / backticks survive untouched.
+      lines.push(`${launcher} - <<'VIMA_SNIPPET_EOF'`);
+      lines.push(code.replace(/\r?\n$/, ''));
+      lines.push('VIMA_SNIPPET_EOF');
+    }
+    return lines.join('\n') + '\n';
+  }
+
+  function _snippetShowSetup(apiId) {
+    _nativeFetch(`/explorer/${encodeURIComponent(apiId)}/setup`)
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+      .then((data) => {
+        const osList = ['windows', 'macos', 'linux'];
+        const initialOs = _detectOs();
+        const missing = (data.env || []).filter((e) => !e.set).map((e) => e.name);
+        const warning = missing.length
+          ? `<div class="apis-setup-warning">${escapeHtml('Not set locally: ' + missing.join(', ') + ' \u2014 placeholders inserted.')}</div>`
+          : '';
+        const tabs = osList.map((o) => {
+          const label = o === 'windows' ? 'Windows (PowerShell)' : (o === 'macos' ? 'macOS' : 'Linux');
+          return `<button class="apis-setup-tab${o === initialOs ? ' apis-setup-tab--active' : ''}" data-setup-os="${o}" type="button">${label}</button>`;
+        }).join('');
+        const html = `
+          <div class="tc-modal-backdrop apis-setup-backdrop" id="apis-setup-backdrop">
+            <div class="tc-modal apis-setup-modal" role="dialog" aria-modal="true" aria-label="Setup commands">
+              <div class="tc-modal-header">
+                <div class="tc-modal-title">Setup commands <span class="apis-snippets-modal-chip">${escapeHtml(apiId)}</span></div>
+                <button class="tc-modal-close" data-setup-close aria-label="Close">&times;</button>
+              </div>
+              <div class="apis-setup-body">
+                <div class="apis-setup-tabs">${tabs}</div>
+                ${warning}
+                <pre class="apis-snippets-code apis-setup-code"><code></code></pre>
+                <div class="apis-setup-actions">
+                  <button class="apis-snippets-copy" type="button" data-setup-copy>Copy</button>
+                </div>
+              </div>
+            </div>
+          </div>`;
+        const wrap = document.createElement('div');
+        wrap.innerHTML = html.trim();
+        const backdrop = wrap.firstChild;
+        document.body.appendChild(backdrop);
+        const codeEl = backdrop.querySelector('.apis-setup-code code');
+        const render = (os) => {
+          const script = _buildSetupScript(data, os);
+          codeEl.textContent = script;
+          codeEl.dataset.script = script;
+        };
+        render(initialOs);
+        requestAnimationFrame(() => backdrop.classList.add('tc-modal-backdrop--open'));
+        const close = () => {
+          backdrop.classList.remove('tc-modal-backdrop--open');
+          setTimeout(() => backdrop.remove(), 200);
+        };
+        backdrop.querySelector('[data-setup-close]').addEventListener('click', close);
+        backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+        backdrop.querySelectorAll('[data-setup-os]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            backdrop.querySelectorAll('[data-setup-os]').forEach((b) => b.classList.remove('apis-setup-tab--active'));
+            btn.classList.add('apis-setup-tab--active');
+            render(btn.dataset.setupOs);
+          });
+        });
+        const copyBtn = backdrop.querySelector('[data-setup-copy]');
+        copyBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(codeEl.dataset.script || '').then(() => {
+            copyBtn.textContent = 'Copied';
+            copyBtn.classList.add('apis-snippets-copy--copied');
+            setTimeout(() => {
+              copyBtn.textContent = 'Copy';
+              copyBtn.classList.remove('apis-snippets-copy--copied');
+            }, 1400);
+          });
+        });
+      })
+      .catch((err) => {
+        alert('Unable to build setup commands: ' + (err && err.message || err));
+      });
+  }
+
+  function apisSnippetsShow(apiId) {
+    const active = APIS.find((a) => a.id === apiId)
+                || APIS.find((a) => a.id === currentApiId)
+                || APIS[0];
+    APIS_SNIPPETS_ACTIVE = active ? active.id : null;
+    const groupChip = $('apis-snippets-group');
+    if (groupChip) groupChip.textContent = active ? active.name : '';
+    _snippetRenderBody(active);
+  }
+
+  function apisSnippetsOpen() {
+    APIS_SNIPPETS_VISIBLE = true;
+    const backdrop = $('apis-snippets-backdrop');
+    if (backdrop) {
+      backdrop.classList.remove('hidden');
+      // Force a reflow so the opacity/transform transition runs.
+      // eslint-disable-next-line no-unused-expressions
+      backdrop.offsetHeight;
+      requestAnimationFrame(() => backdrop.classList.add('tc-modal-backdrop--open'));
+    }
+    const fab = $('apis-snippets-fab');
+    if (fab) {
+      fab.classList.add('api-calls-fab--active');
+      const lbl = fab.querySelector('.api-calls-fab-label');
+      if (lbl) lbl.textContent = 'Hide snippet';
+    }
+    apisSnippetsShow(currentApiId);
+  }
+
+  function apisSnippetsClose() {
+    APIS_SNIPPETS_VISIBLE = false;
+    const backdrop = $('apis-snippets-backdrop');
+    if (backdrop) {
+      backdrop.classList.remove('tc-modal-backdrop--open');
+      // Match the 0.2s transition before hiding so we keep the fade-out.
+      setTimeout(() => { backdrop.classList.add('hidden'); }, 200);
+    }
+    const fab = $('apis-snippets-fab');
+    if (fab) {
+      fab.classList.remove('api-calls-fab--active');
+      const lbl = fab.querySelector('.api-calls-fab-label');
+      if (lbl) lbl.textContent = 'View Code';
+    }
+  }
 
   function updateUcSidebar(uc) {
     const container = $('uc-sidebar-apis');
@@ -835,7 +1537,9 @@ import './features/infoModal.js';
       if (window.ApiGuide) ApiGuide.refresh();
       // If the Python snippets drawer is open, follow the selection so
       // it shows the snippet for the API the user just picked.
-      apisSnippetsFollowApi(currentApiId);
+      if (typeof APIS_SNIPPETS_VISIBLE !== 'undefined' && APIS_SNIPPETS_VISIBLE) {
+        apisSnippetsShow(currentApiId);
+      }
     });
   });
 
@@ -1386,6 +2090,792 @@ import './features/infoModal.js';
   const _bundleAboutBtn = document.getElementById('bundle-about-btn');
   if (_bundleAboutBtn) _bundleAboutBtn.addEventListener('click', showBundleAbout);
 
+  /* ============ Global Open Finance SDK panel ============ */
+  const SDK_BANKS = {
+    us: { name: 'First Platypus Bank', host: 'connect2.finicity.com', initial: 'P', accent: '#eb001b' },
+    au: { name: 'Regional Australia Bank', host: 'connect.openbanking.mastercard.com.au', initial: 'R', accent: '#00843d' },
+    eu: { name: 'Nordea', host: 'connect.openbanking.mastercard.eu', initial: 'N', accent: '#2d6cdf' },
+  };
+  const SDK_SCRIPTS = {
+    us: [
+      { cmd: 'ofin us auth token', out: [
+        ['ok', '● 200  HTTP status'],
+        ['dim', '{'],
+        ['key', '  "token": "g3gT34fZtZ...",'],
+        ['dim', '  "message": "Token created successfully"'],
+        ['dim', '}'],
+      ] },
+      { cmd: 'ofin us customers add-testing --username demo1', out: [
+        ['ok', '● 201  HTTP status'],
+        ['dim', 'saved: customer_id=9021936662'],
+      ] },
+      { cmd: 'ofin us connect generate --open', out: [
+        ['ok', '● 200  HTTP status'],
+        ['key', '  link → https://connect2.finicity.com/?ticket=a1b2c3'],
+        ['dim', '↗ opening secure bank login…'],
+      ], bank: true },
+      { cmd: 'ofin us transactions list --from-date 1748649600 --to-date 1749513600', out: [
+        ['ok', '● 200  HTTP status'],
+        ['dim', '{ "transactions": ['],
+        ['dim', '  {'],
+        ['key', '    "id": 8645213782,'],
+        ['dim', '    "amount": -42.18,'],
+        ['dim', '    "accountId": 7045123456,'],
+        ['dim', '    "description": "BLUE BOTTLE COFFEE",'],
+        ['dim', '    "status": "active",'],
+        ['dim', '    "postedDate": 1749081600,'],
+        ['dim', '    "transactionDate": 1748995200,'],
+        ['dim', '    "categorization": { "category": "Restaurants" }'],
+        ['dim', '  },'],
+        ['key', '    "id": 8645213655,'],
+        ['dim', '    "amount": 2350.00,  "description": "PAYROLL DEPOSIT" …'],
+        ['dim', '] }  (32 transactions)'],
+      ] },
+    ],
+    au: [
+      { cmd: 'ofin au auth token', out: [
+        ['ok', '● 200  HTTP status'],
+        ['dim', '{'],
+        ['key', '  "token": "q5HmLWuu7u...",'],
+        ['dim', '  "message": "Token created successfully"'],
+        ['dim', '}'],
+      ] },
+      { cmd: 'ofin au connect generate --open', out: [
+        ['ok', '● 200  HTTP status'],
+        ['key', '  link → https://connect.openbanking.mastercard.com.au/?id=9f2a'],
+        ['dim', '↗ opening secure bank login…'],
+      ], bank: true },
+      { cmd: 'ofin au transactions list', out: [
+        ['ok', '● 200  HTTP status'],
+        ['dim', '{ "data": { "transactions": ['],
+        ['dim', '  {'],
+        ['key', '    "transactionId": "4f9c1a7e-22b0-4f6a-9d1e-7c8b",'],
+        ['dim', '    "accountId": "0a3f8d21-5e44-4b9c-aa12",'],
+        ['dim', '    "type": "PAYMENT",  "status": "POSTED",'],
+        ['dim', '    "description": "WOOLWORTHS 1234 SYDNEY",'],
+        ['dim', '    "postingDateTime": "2026-06-10T08:14:22Z",'],
+        ['dim', '    "amount": "-58.40",  "currency": "AUD"'],
+        ['dim', '  },'],
+        ['key', '    "amount": "-12.90",  "description": "OPAL TRANSPORT" …'],
+        ['dim', '] } }  (18 transactions)'],
+      ] },
+    ],
+    eu: [
+      { cmd: 'ofin eu auth token', out: [
+        ['ok', '● 200  HTTP status'],
+        ['dim', '{'],
+        ['key', '  "access_token": "eyJhbGciOiJS...",'],
+        ['dim', '  "token_type": "bearer",'],
+        ['dim', '  "message": "Token created successfully"'],
+        ['dim', '}'],
+      ] },
+      { cmd: 'ofin eu flow create --open', out: [
+        ['ok', '● 200  HTTP status'],
+        ['key', '  flowUrl → https://connect.openbanking.mastercard.eu/?flow=7c1d'],
+        ['dim', '↗ opening secure bank login…'],
+      ], bank: true },
+      { cmd: 'ofin eu transactions list', out: [
+        ['ok', '● 200  HTTP status'],
+        ['dim', '{ "transactions": ['],
+        ['dim', '  {'],
+        ['key', '    "id": "f1e2d3c4-9a8b-4c7d-8e6f",'],
+        ['dim', '    "date": "2026-06-10",'],
+        ['dim', '    "text": "Netto Supermarked",'],
+        ['dim', '    "amount": -124.50,  "currency": "DKK",'],
+        ['dim', '    "type": "Debit",  "state": "Booked"'],
+        ['dim', '  },'],
+        ['key', '    "amount": 18500.00,  "text": "LØN — SALARY" …'],
+        ['dim', '] }  (24 transactions)'],
+      ] },
+    ],
+  };
+  // "All commands" lists the full operation catalog spanning all three
+  // continents — exactly what `ofin ops` prints (US + AU + EU).
+  SDK_SCRIPTS.all = [
+    { cmd: 'ofin ops', out: [
+      ['dim', 'Open Finance — all operations across 3 continents'],
+      ['dim', ''],
+      ['ok', '🇺🇸  UNITED STATES  (Finicity)'],
+      ['key', '  ofin us auth token'],
+      ['key', '  ofin us customers add-testing --username demo1'],
+      ['key', '  ofin us customers list [--search foo] [--limit 25]'],
+      ['key', '  ofin us customers get [--customer-id ID]'],
+      ['key', '  ofin us customers use <CUSTOMER_ID>'],
+      ['key', '  ofin us connect generate [--customer-id ID] [--experience EXP] [--open]'],
+      ['key', '  ofin us accounts list [--customer-id ID]'],
+      ['key', '  ofin us accounts refresh [--customer-id ID]'],
+      ['key', '  ofin us balance [--customer-id ID] [--account-id ID]'],
+      ['key', '  ofin us transactions list --from-date <epoch> --to-date <epoch> [--limit N]'],
+      ['key', '  ofin us reports voa [--account-ids a,b]'],
+      ['key', '  ofin us reports voi [--account-ids a,b]'],
+      ['dim', ''],
+      ['ok', '🇦🇺  AUSTRALIA  (CDR)'],
+      ['key', '  ofin au auth token'],
+      ['key', '  ofin au customers add-testing --username demo1'],
+      ['key', '  ofin au customers list'],
+      ['key', '  ofin au institutions list [--search foo]'],
+      ['key', '  ofin au connect generate [--customer-id ID] [--webhook-url URL] [--open]'],
+      ['key', '  ofin au consents list [--customer-id ID] [--status ACTIVE]'],
+      ['key', '  ofin au accounts list [--customer-id ID] [--consent-receipt-id ID]'],
+      ['dim', ''],
+      ['ok', '🇪🇺  EUROPE  (Aiia)'],
+      ['key', '  ofin eu auth token'],
+      ['key', '  ofin eu providers list [--country DK] [--limit 25]'],
+      ['key', '  ofin eu consent create --email you@example.com [--use-case-id ID] [--end-user-id ID]'],
+      ['key', '  ofin eu consent get [--consent-id ID]'],
+      ['key', '  ofin eu consent revoke [--consent-id ID] --yes'],
+      ['key', '  ofin eu flow create [--consent-id ID] [--end-user-id ID] [--provider-id ID] [--open]'],
+      ['key', '  ofin eu accounts list [--consent-id ID]'],
+      ['key', '  ofin eu account get [--account-id ID] [--consent-id ID]'],
+      ['key', '  ofin eu transactions list [--account-id ID] [--consent-id ID] [--from-date D] [--to-date D]'],
+      ['key', '  ofin eu balance [--account-id ID] [--consent-id ID] [--max-age PT0S]'],
+      ['key', '  ofin eu verify-ownership --customer-name "Jane Doe" [--account-ids a,b]'],
+      ['dim', ''],
+      ['dim', '30 operations · 3 regions · one consistent tool'],
+    ] },
+  ];
+
+  function _sdkMakeBank() {
+    const screen = document.getElementById('sdk-bank-screen');
+    const urlEl = document.getElementById('sdk-bank-url');
+    const wrap = document.getElementById('sdk-bank');
+    let timers = [];
+    function clear() { timers.forEach((t) => clearTimeout(t)); timers = []; }
+    function wait(ms) { return new Promise((res) => { timers.push(setTimeout(res, ms)); }); }
+
+    function reset(region) {
+      clear();
+      const b = SDK_BANKS[region] || SDK_BANKS.us;
+      if (urlEl) urlEl.textContent = b.host;
+      if (wrap) wrap.classList.remove('sdk-bank--live');
+      if (screen) {
+        screen.innerHTML =
+          '<div class="sdk-bank-idle">' +
+            '<div class="sdk-bank-idle-icon">🏦</div>' +
+            '<p>Generate a Connect URL to launch the secure bank login</p>' +
+          '</div>';
+      }
+    }
+
+    async function launch(region) {
+      const b = SDK_BANKS[region] || SDK_BANKS.us;
+      if (!screen) return;
+      clear();
+      if (wrap) wrap.classList.add('sdk-bank--live');
+      if (urlEl) urlEl.textContent = b.host + '/?session=' + Math.random().toString(16).slice(2, 8);
+
+      // 1) loading spinner
+      screen.innerHTML = '<div class="sdk-bank-loading"><span class="sdk-bank-spinner"></span><p>Connecting to ' + b.name + '…</p></div>';
+      await wait(900);
+
+      // 2) login form
+      screen.innerHTML =
+        '<div class="sdk-bank-login" style="--bank-accent:' + b.accent + ';">' +
+          '<div class="sdk-bank-brand"><span class="sdk-bank-logo">' + b.initial + '</span><span class="sdk-bank-name">' + b.name + '</span></div>' +
+          '<div class="sdk-bank-secure">🔒 Secured by Mastercard Open Banking</div>' +
+          '<label class="sdk-bank-field"><span>Username</span><div class="sdk-bank-input" id="sdk-bank-user"></div></label>' +
+          '<label class="sdk-bank-field"><span>Password</span><div class="sdk-bank-input" id="sdk-bank-pass"></div></label>' +
+          '<button class="sdk-bank-btn" id="sdk-bank-btn">Log in</button>' +
+        '</div>';
+      await wait(420);
+
+      const userEl = document.getElementById('sdk-bank-user');
+      const passEl = document.getElementById('sdk-bank-pass');
+      async function typeInto(el, text, mask) {
+        if (!el) return;
+        el.classList.add('typing');
+        for (let i = 0; i < text.length; i++) {
+          el.textContent = mask ? '•'.repeat(i + 1) : text.slice(0, i + 1);
+          await wait(70 + Math.random() * 60);
+        }
+        el.classList.remove('typing');
+      }
+      await typeInto(userEl, 'demo.user', false);
+      await wait(180);
+      await typeInto(passEl, 'open-finance', true);
+      await wait(360);
+
+      // 3) submit → authorising
+      const btn = document.getElementById('sdk-bank-btn');
+      if (btn) btn.classList.add('pressed');
+      await wait(500);
+      screen.innerHTML = '<div class="sdk-bank-loading"><span class="sdk-bank-spinner"></span><p>Authorising access…</p></div>';
+      await wait(1000);
+
+      // 4) consent granted — success is always green (never the region accent)
+      screen.innerHTML =
+        '<div class="sdk-bank-done">' +
+          '<div class="sdk-bank-check">✓</div>' +
+          '<h4>Consent granted</h4>' +
+          '<p>' + b.name + ' securely shared the selected accounts.</p>' +
+          '<div class="sdk-bank-redirect">↩ returning to your app…</div>' +
+        '</div>';
+      await wait(900);
+    }
+
+    return { reset, launch, stop: clear };
+  }
+
+  function _sdkMakeDemo() {
+    const body = document.getElementById('sdk-terminal-body');
+    const bank = _sdkMakeBank();
+    let region = 'us';
+    let timers = [];
+    let running = false;
+
+    function clearTimers() { timers.forEach((t) => clearTimeout(t)); timers = []; }
+    function wait(ms) { return new Promise((res) => { timers.push(setTimeout(res, ms)); }); }
+
+    function addLine(cls, text) {
+      const div = document.createElement('div');
+      div.className = 'sdk-line ' + (cls ? 'sdk-line-' + cls : '');
+      div.textContent = text;
+      body.appendChild(div);
+      body.scrollTop = body.scrollHeight;
+      return div;
+    }
+
+    async function typeCmd(text) {
+      const line = document.createElement('div');
+      line.className = 'sdk-line';
+      const prompt = document.createElement('span');
+      prompt.className = 'sdk-line-prompt';
+      prompt.innerHTML = '<span class="sdk-region-mark">' + region + '</span>:~$ ';
+      const cmd = document.createElement('span');
+      cmd.className = 'sdk-line-cmd';
+      const caret = document.createElement('span');
+      caret.className = 'sdk-caret';
+      line.appendChild(prompt); line.appendChild(cmd); line.appendChild(caret);
+      body.appendChild(line);
+      body.scrollTop = body.scrollHeight;
+      for (let i = 0; i < text.length; i++) {
+        if (!running) return;
+        cmd.textContent += text[i];
+        await wait(28 + Math.random() * 40);
+      }
+      caret.remove();
+    }
+
+    async function run() {
+      running = true;
+      clearTimers();
+      bank.stop();
+      bank.reset(region);
+      body.innerHTML = '';
+      const script = SDK_SCRIPTS[region] || [];
+      await wait(250);
+      for (const step of script) {
+        if (!running) return;
+        await typeCmd(step.cmd);
+        await wait(360);
+        for (const ln of step.out) {
+          if (!running) return;
+          if (Array.isArray(ln)) addLine(ln[0], ln[1]);
+          await wait(120);
+        }
+        if (step.bank && running) {
+          await bank.launch(region);
+        }
+        if (!running) return;
+        await wait(720);
+      }
+      // Final idle prompt with blinking caret.
+      const line = document.createElement('div');
+      line.className = 'sdk-line';
+      line.innerHTML = '<span class="sdk-line-prompt"><span class="sdk-region-mark">' +
+        region + '</span>:~$ </span><span class="sdk-caret"></span>';
+      body.appendChild(line);
+      body.scrollTop = body.scrollHeight;
+      running = false;
+    }
+
+    return {
+      setRegion(r) { if (SDK_SCRIPTS[r]) { region = r; this.replay(); } },
+      replay() { running = false; clearTimers(); bank.stop(); requestAnimationFrame(() => run()); },
+      stop() { running = false; clearTimers(); bank.stop(); },
+    };
+  }
+
+  // Looping "watch it run" visualization for the SDK code section.
+  function _sdkMakeRunViz() {
+    const statusEl = document.getElementById('sdk-result-status');
+    const bodyEl = document.getElementById('sdk-result-body');
+    if (!statusEl || !bodyEl) return { start() {}, stop() {} };
+    let timers = [];
+    let running = false;
+    function clear() { timers.forEach((t) => clearTimeout(t)); timers = []; }
+    function wait(ms) { return new Promise((res) => { timers.push(setTimeout(res, ms)); }); }
+
+    async function loop() {
+      running = true;
+      while (running) {
+        statusEl.className = 'sdk-result-status';
+        statusEl.textContent = 'idle';
+        bodyEl.innerHTML = '<div class="sdk-result-row" style="color:var(--sdk-muted)">client.us.get_token() · au.get_token() · eu.get_token()</div>';
+        await wait(950); if (!running) return;
+
+        statusEl.className = 'sdk-result-status running';
+        statusEl.textContent = 'running';
+        bodyEl.innerHTML = '<div class="sdk-result-row"><span class="sdk-result-spinner"></span>authenticating across 3 continents…</div>';
+        await wait(1150); if (!running) return;
+
+        statusEl.className = 'sdk-result-status ok';
+        statusEl.textContent = '200 ok';
+        const rows = [
+          '<span class="sdk-r-str">🇺🇸 us</span>  <span class="sdk-r-key">ok</span>=<span class="sdk-r-true">True</span>  <span class="sdk-r-key">status</span>=<span class="sdk-r-num">200</span>  <span class="sdk-r-str">"g3gT34fZtZ…"</span>',
+          '<span class="sdk-r-str">🇦🇺 au</span>  <span class="sdk-r-key">ok</span>=<span class="sdk-r-true">True</span>  <span class="sdk-r-key">status</span>=<span class="sdk-r-num">200</span>  <span class="sdk-r-str">"q5HmLWuu7u…"</span>',
+          '<span class="sdk-r-str">🇪🇺 eu</span>  <span class="sdk-r-key">ok</span>=<span class="sdk-r-true">True</span>  <span class="sdk-r-key">status</span>=<span class="sdk-r-num">200</span>  <span class="sdk-r-str">"eyJhbGciOiJS…"</span>',
+          '',
+          '<span class="sdk-r-key">→ one client, three continents, zero glue code</span>',
+        ];
+        bodyEl.innerHTML = '';
+        rows.forEach((html, i) => {
+          const d = document.createElement('div');
+          d.className = 'sdk-result-row';
+          d.style.animationDelay = (i * 60) + 'ms';
+          d.innerHTML = html;
+          bodyEl.appendChild(d);
+        });
+        await wait(3400); if (!running) return;
+      }
+    }
+    return {
+      start() { if (running) return; clear(); loop(); },
+      stop() { running = false; clear(); },
+    };
+  }
+
+  let _sdkInited = false;
+  function _initSdkDemo() {
+    // Reflect Open Finance config status on region chips + pins.
+    const statusByRegion = {
+      us: (APIS.find((a) => a.id === 'open_finance') || {}).configured,
+      au: (APIS.find((a) => a.id === 'open_finance_au') || {}).configured,
+      eu: (APIS.find((a) => a.id === 'open_finance_eu') || {}).configured,
+    };
+    Object.keys(statusByRegion).forEach((r) => {
+      const chip = document.querySelector('[data-sdk-status="' + r + '"]');
+      if (chip) {
+        chip.classList.toggle('ok', !!statusByRegion[r]);
+        chip.classList.toggle('off', !statusByRegion[r]);
+        chip.title = statusByRegion[r] ? 'Configured' : 'Not configured';
+      }
+    });
+
+    if (!window.__sdkDemo) window.__sdkDemo = _sdkMakeDemo();
+    if (!_sdkInited) {
+      _sdkInited = true;
+      function setActiveRegion(r) {
+        document.querySelectorAll('.sdk-cli-tab').forEach((t) =>
+          t.classList.toggle('active', t.dataset.sdkRegion === r));
+        if (window.__sdkGlobe) window.__sdkGlobe.setRegion(r);
+        window.__sdkDemo.setRegion(r);
+      }
+      document.querySelectorAll('.sdk-cli-tab').forEach((el) => {
+        el.addEventListener('click', () => setActiveRegion(el.dataset.sdkRegion));
+      });
+      // Region card API links → open that API in the APIs tab.
+      document.querySelectorAll('[data-sdk-api]').forEach((el) => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const apisTab = document.querySelector('.top-tab[data-top-tab="apis"]');
+          if (apisTab) apisTab.click();
+          setTimeout(() => {
+            const btn = document.querySelector(`[data-api-id="${el.dataset.sdkApi}"]`);
+            if (btn) btn.click();
+          }, 0);
+        });
+      });
+      // Region card CLI links → scroll to the CLI section and focus that region.
+      document.querySelectorAll('[data-sdk-cli]').forEach((el) => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          setActiveRegion(el.dataset.sdkCli);
+          const target = document.getElementById('sdk-cli');
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+      const replay = document.getElementById('sdk-terminal-replay');
+      if (replay) replay.addEventListener('click', () => window.__sdkDemo.replay());
+      const codeRun = document.getElementById('sdk-code-run');
+      if (codeRun) codeRun.addEventListener('click', () => {
+        const original = '▶ Run Code';
+        codeRun.disabled = true;
+        codeRun.textContent = 'Launching…';
+        codeRun.classList.remove('sdk-code-run--ok', 'sdk-code-run--err');
+        _nativeFetch('/sdk/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        })
+          .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+          .then(({ ok, d }) => {
+            codeRun.disabled = false;
+            if (!ok || d.error) {
+              codeRun.textContent = 'Failed';
+              codeRun.classList.add('sdk-code-run--err');
+              alert('Could not launch terminal: ' + (d.error || 'unknown error'));
+            } else {
+              codeRun.textContent = 'Launched ✓';
+              codeRun.classList.add('sdk-code-run--ok');
+            }
+            setTimeout(() => {
+              codeRun.textContent = original;
+              codeRun.classList.remove('sdk-code-run--ok', 'sdk-code-run--err');
+            }, 2400);
+          })
+          .catch((err) => {
+            codeRun.disabled = false;
+            codeRun.textContent = original;
+            alert('Could not launch terminal: ' + (err && err.message || err));
+          });
+      });
+      document.querySelectorAll('[data-sdk-scroll]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const target = document.getElementById(btn.dataset.sdkScroll);
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+    }
+    const _initialTab = document.querySelector('.sdk-cli-tab.active');
+    const _initialRegion = _initialTab ? _initialTab.dataset.sdkRegion : 'us';
+    if (window.__sdkGlobe) window.__sdkGlobe.setRegion(_initialRegion);
+    window.__sdkDemo.setRegion(_initialRegion);
+    if (!window.__sdkRunViz) window.__sdkRunViz = _sdkMakeRunViz();
+    window.__sdkRunViz.start();
+  }
+
+  // ---------------------------------------------------------------------
+  // Live Demo — real Open Finance bank linking (admin + customer app)
+  // ---------------------------------------------------------------------
+  let _liveDemoInited = false;
+  // Inline SVG flags — regional-indicator emoji don't render as flags on
+  // Windows (they show as "US"/"AU"/"EU" letters), so we draw them ourselves.
+  const LD_FLAG_SVG = {
+    us: '<svg class="ld-flag-svg" viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<rect width="30" height="20" fill="#fff"/>' +
+        '<g fill="#b22234">' +
+        '<rect width="30" height="1.54" y="0"/><rect width="30" height="1.54" y="3.08"/>' +
+        '<rect width="30" height="1.54" y="6.15"/><rect width="30" height="1.54" y="9.23"/>' +
+        '<rect width="30" height="1.54" y="12.31"/><rect width="30" height="1.54" y="15.38"/>' +
+        '<rect width="30" height="1.54" y="18.46"/></g>' +
+        '<rect width="13" height="10.77" fill="#3c3b6e"/>' +
+        '<g fill="#fff">' +
+        '<circle cx="2.2" cy="2" r="0.7"/><circle cx="5.2" cy="2" r="0.7"/><circle cx="8.2" cy="2" r="0.7"/><circle cx="11.2" cy="2" r="0.7"/>' +
+        '<circle cx="3.7" cy="4" r="0.7"/><circle cx="6.7" cy="4" r="0.7"/><circle cx="9.7" cy="4" r="0.7"/>' +
+        '<circle cx="2.2" cy="6" r="0.7"/><circle cx="5.2" cy="6" r="0.7"/><circle cx="8.2" cy="6" r="0.7"/><circle cx="11.2" cy="6" r="0.7"/>' +
+        '<circle cx="3.7" cy="8" r="0.7"/><circle cx="6.7" cy="8" r="0.7"/><circle cx="9.7" cy="8" r="0.7"/></g>' +
+        '</svg>',
+    au: '<svg class="ld-flag-svg" viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<rect width="30" height="20" fill="#00247d"/>' +
+        '<g><path d="M0 0L12 8M12 0L0 8" stroke="#fff" stroke-width="1.8"/>' +
+        '<path d="M0 0L12 8M12 0L0 8" stroke="#cf142b" stroke-width="0.8"/>' +
+        '<rect x="5.1" width="1.8" height="8" fill="#fff"/><rect y="3.1" width="12" height="1.8" fill="#fff"/>' +
+        '<rect x="5.5" width="1" height="8" fill="#cf142b"/><rect y="3.5" width="12" height="1" fill="#cf142b"/></g>' +
+        '<g fill="#fff">' +
+        '<circle cx="6" cy="14.5" r="1.6"/>' +
+        '<circle cx="22" cy="4" r="0.9"/><circle cx="26" cy="8" r="0.9"/><circle cx="22" cy="12" r="0.9"/>' +
+        '<circle cx="18.5" cy="8.5" r="0.7"/><circle cx="24" cy="16" r="0.8"/></g>' +
+        '</svg>',
+    eu: '<svg class="ld-flag-svg" viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<rect width="30" height="20" fill="#003399"/>' +
+        '<g fill="#ffcc00">' +
+        '<circle cx="15" cy="4" r="1"/><circle cx="18" cy="4.8" r="1"/><circle cx="20.2" cy="7" r="1"/>' +
+        '<circle cx="21" cy="10" r="1"/><circle cx="20.2" cy="13" r="1"/><circle cx="18" cy="15.2" r="1"/>' +
+        '<circle cx="15" cy="16" r="1"/><circle cx="12" cy="15.2" r="1"/><circle cx="9.8" cy="13" r="1"/>' +
+        '<circle cx="9" cy="10" r="1"/><circle cx="9.8" cy="7" r="1"/><circle cx="12" cy="4.8" r="1"/></g>' +
+        '</svg>',
+  };
+  const LD_REGION_META = {
+    us: { flag: LD_FLAG_SVG.us, name: 'United States', accent: '#eb001b' },
+    au: { flag: LD_FLAG_SVG.au, name: 'Australia', accent: '#00843d' },
+    eu: { flag: LD_FLAG_SVG.eu, name: 'Europe', accent: '#2d6cdf' },
+  };
+  const _ldPolls = {}; // region -> interval id
+  const _ldExpanded = {}; // region -> Set of expanded account ids
+
+  function _ldFmtMoney(amount, currency) {
+    if (amount === null || amount === undefined || isNaN(amount)) return '—';
+    const cur = (currency || '').toUpperCase();
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: cur ? 'currency' : 'decimal', currency: cur || undefined,
+        minimumFractionDigits: 2, maximumFractionDigits: 2,
+      }).format(amount);
+    } catch (e) {
+      return (cur ? cur + ' ' : '') + Number(amount).toFixed(2);
+    }
+  }
+
+  function _ldRenderConnection(region, conn, opts) {
+    opts = opts || {};
+    const meta = LD_REGION_META[region];
+    const accounts = (conn && conn.accounts) || [];
+    const txns = (conn && conn.transactions) || [];
+    const connected = conn && conn.connected;
+    const pending = opts.pending;
+    let statusCls = 'ld-conn-status';
+    let statusText;
+    if (opts.error) { statusCls += ' ld-err'; statusText = opts.error; }
+    else if (pending) { statusCls += ' ld-pending'; statusText = 'Waiting for bank login…'; }
+    else if (connected) { statusCls += ' ld-ok'; statusText = 'Connected · ' + (conn.connected_at || ''); }
+    else { statusText = 'Not connected'; }
+
+    let actions = '';
+    if (pending) {
+      actions = `<button class="ld-btn" disabled><span class="ld-spinner"></span>Linking…</button>`;
+    } else if (connected) {
+      actions = `<div class="ld-conn-actions">
+        <button class="ld-btn ld-btn--ghost" data-ld-refresh="${region}">Refresh data</button>
+        <button class="ld-btn" data-ld-connect="${region}">Reconnect</button>
+      </div>`;
+    } else {
+      actions = `<button class="ld-btn" data-ld-connect="${region}">Connect a bank</button>`;
+    }
+
+    let body = '';
+    if (pending) {
+      body = `<p class="ld-conn-hint"><span class="ld-spinner"></span>Complete the sandbox bank login in the new tab. We'll pull your accounts automatically.</p>`;
+    } else if (connected && accounts.length) {
+      const expanded = _ldExpanded[region] || (_ldExpanded[region] = new Set());
+      const txnRow = (t) => {
+        const amt = (t.amount === null || t.amount === undefined) ? null : Number(t.amount);
+        const cls = amt === null ? '' : (amt < 0 ? 'ld-neg' : 'ld-pos');
+        return `<div class="ld-txn">
+          <span class="ld-txn-date">${escapeHtml(t.date || '')}</span>
+          <span class="ld-txn-desc">${escapeHtml(t.description || '')}</span>
+          <span class="ld-txn-amt ${cls}">${escapeHtml(_ldFmtMoney(t.amount, t.currency))}</span>
+        </div>`;
+      };
+      // Bucket transactions by their owning account; anything we can't match
+      // falls into an "Other" group so no data is ever dropped.
+      const byAcct = {};
+      const matchedIds = new Set(accounts.map((a) => String(a.id)));
+      (txns || []).forEach((t) => {
+        const k = (t.account_id !== undefined && t.account_id !== null && matchedIds.has(String(t.account_id)))
+          ? String(t.account_id) : '__other__';
+        (byAcct[k] = byAcct[k] || []).push(t);
+      });
+      const groupHtml = (key, headHtml, list) => {
+        const isOpen = expanded.has(key);
+        const inner = (list && list.length)
+          ? `<div class="ld-txns">${list.slice(0, 25).map(txnRow).join('')}</div>`
+          : `<p class="ld-empty-note">No transactions for this account.</p>`;
+        const count = (list && list.length) ? list.length : 0;
+        return `<div class="ld-acct-group${isOpen ? ' is-open' : ''}">
+          <button type="button" class="ld-acct" data-ld-acct="${escapeHtml(key)}" aria-expanded="${isOpen ? 'true' : 'false'}">
+            ${headHtml}
+            <span class="ld-acct-toggle">
+              <span class="ld-acct-count">${count}</span>
+              <svg class="ld-acct-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+          </button>
+          <div class="ld-acct-txns">${inner}</div>
+        </div>`;
+      };
+      const acctBlocks = accounts.map((a) => {
+        const head = `<span class="ld-acct-info">
+            <span class="ld-acct-name">${escapeHtml(a.name || 'Account')}</span>
+            <span class="ld-acct-sub">${escapeHtml([a.type, a.mask].filter(Boolean).join(' · '))}</span>
+          </span>
+          <span class="ld-acct-bal">${escapeHtml(_ldFmtMoney(a.balance, a.currency))}<small>${escapeHtml((a.currency || '').toUpperCase())}</small></span>`;
+        return groupHtml(String(a.id), head, byAcct[String(a.id)] || []);
+      }).join('');
+      let otherBlock = '';
+      if ((byAcct.__other__ || []).length) {
+        const head = `<span class="ld-acct-info">
+            <span class="ld-acct-name">Other transactions</span>
+            <span class="ld-acct-sub">Not linked to a listed account</span>
+          </span>`;
+        otherBlock = groupHtml('__other__', head, byAcct.__other__);
+      }
+      body = `<div class="ld-accts">${acctBlocks}${otherBlock}</div>`;
+    } else if (opts.error) {
+      body = `<p class="ld-conn-hint">${escapeHtml(opts.error)}</p>`;
+    } else {
+      body = `<p class="ld-conn-hint">Launch a secure sandbox bank login and we'll pull real account &amp; transaction data.</p>`;
+    }
+
+    return `<article class="ld-conn-card" data-ld-card="${region}" style="--ld-accent:${meta.accent};">
+      <div class="ld-conn-head">
+        <span class="ld-conn-flag">${meta.flag}</span>
+        <div class="ld-conn-meta">
+          <span class="ld-conn-name">${escapeHtml(meta.name)}</span>
+          <span class="${statusCls}">${escapeHtml(statusText)}</span>
+        </div>
+        ${actions}
+      </div>
+      <div class="ld-conn-body">${body}</div>
+    </article>`;
+  }
+
+  function _ldRenderApp(state) {
+    const empty = document.getElementById('ld-app-empty');
+    const cards = document.getElementById('ld-app-cards');
+    if (!cards) return;
+    const enabled = (state.regions || []).filter((r) => r.enabled);
+    if (!enabled.length) {
+      if (empty) empty.style.display = '';
+      cards.innerHTML = '';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    cards.innerHTML = enabled.map((r) =>
+      _ldRenderConnection(r.region, r.connection, { pending: !!_ldPolls[r.region] })
+    ).join('');
+    _ldWireCards();
+  }
+
+  function _ldRenderAdmin(state) {
+    const rows = document.getElementById('ld-admin-rows');
+    if (!rows) return;
+    rows.innerHTML = (state.regions || []).map((r) => {
+      const meta = LD_REGION_META[r.region];
+      const sub = r.configured
+        ? (r.connection && r.connection.connected ? 'Bank connected' : 'Ready')
+        : 'Credentials not configured';
+      const subCls = r.configured ? 'ld-row-sub' : 'ld-row-sub ld-unconfigured';
+      return `<div class="ld-admin-row" data-disabled="${r.configured ? 0 : 1}">
+        <span class="ld-row-flag">${meta.flag}</span>
+        <div class="ld-row-meta">
+          <span class="ld-row-name">${escapeHtml(meta.name)}</span>
+          <span class="${subCls}">${escapeHtml(sub)}</span>
+        </div>
+        <label class="ld-switch">
+          <input type="checkbox" data-ld-toggle="${r.region}" ${r.enabled ? 'checked' : ''} ${r.configured ? '' : 'disabled'} />
+          <span class="ld-switch-track"></span>
+        </label>
+      </div>`;
+    }).join('');
+    rows.querySelectorAll('[data-ld-toggle]').forEach((cb) => {
+      cb.addEventListener('change', () => {
+        const region = cb.dataset.ldToggle;
+        cb.disabled = true;
+        _nativeFetch('/live-demo/enable', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ region, enabled: cb.checked }),
+        }).then((r) => r.json()).then((data) => {
+          if (data && data.state) { _ldRenderAdmin(data.state); _ldRenderApp(data.state); }
+        }).catch(() => { cb.checked = !cb.checked; })
+          .finally(() => { cb.disabled = false; });
+      });
+    });
+  }
+
+  function _ldRefreshState() {
+    return _nativeFetch('/live-demo/state').then((r) => r.json()).then((state) => {
+      _ldRenderAdmin(state);
+      _ldRenderApp(state);
+      return state;
+    });
+  }
+
+  function _ldStartPolling(region) {
+    if (_ldPolls[region]) return;
+    let tries = 0;
+    const tick = () => {
+      tries += 1;
+      _nativeFetch('/live-demo/poll', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ region }),
+      }).then((r) => r.json()).then((data) => {
+        if (data && data.connected && data.connection) {
+          _ldStopPolling(region);
+          _ldRefreshState();
+        } else if (tries >= 40) { // ~3 min at 4.5s
+          _ldStopPolling(region);
+          const card = document.querySelector(`[data-ld-card="${region}"]`);
+          if (card) card.outerHTML = _ldRenderConnection(region, null,
+            { error: 'Timed out waiting for bank login. Click Connect to retry.' });
+          _ldWireCards();
+        }
+      }).catch(() => {});
+    };
+    _ldPolls[region] = setInterval(tick, 4500);
+    tick();
+  }
+
+  function _ldStopPolling(region) {
+    if (_ldPolls[region]) { clearInterval(_ldPolls[region]); delete _ldPolls[region]; }
+  }
+
+  function _ldConnect(region) {
+    // Open the bank-login tab synchronously inside the click handler. The
+    // flow URL only arrives after the async fetch below, but calling
+    // window.open() from within a .then() callback is treated as a
+    // non-user-initiated popup and gets blocked by the browser. Opening a
+    // blank tab now (on the user gesture) and navigating it once the URL
+    // returns avoids the popup blocker.
+    let popup = window.open('', '_blank');
+    if (popup) { try { popup.opener = null; } catch (e) {} }
+    const card = document.querySelector(`[data-ld-card="${region}"]`);
+    if (card) {
+      card.outerHTML = _ldRenderConnection(region, null, { pending: true });
+      _ldWireCards();
+    }
+    _nativeFetch('/live-demo/connect', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ region }),
+    }).then((r) => r.json()).then((data) => {
+      if (data && data.success && data.flow_url) {
+        if (popup && !popup.closed) { popup.location.href = data.flow_url; }
+        else { window.open(data.flow_url, '_blank', 'noopener'); }
+        _ldStartPolling(region);
+      } else {
+        if (popup && !popup.closed) popup.close();
+        const c = document.querySelector(`[data-ld-card="${region}"]`);
+        if (c) c.outerHTML = _ldRenderConnection(region, null,
+          { error: (data && data.error) || 'Could not start the bank connection.' });
+        _ldWireCards();
+      }
+    }).catch(() => {
+      if (popup && !popup.closed) popup.close();
+      const c = document.querySelector(`[data-ld-card="${region}"]`);
+      if (c) c.outerHTML = _ldRenderConnection(region, null, { error: 'Network error starting connection.' });
+      _ldWireCards();
+    });
+  }
+
+  function _ldRefreshData(region) {
+    const btn = document.querySelector(`[data-ld-refresh="${region}"]`);
+    if (btn) { btn.disabled = true; btn.textContent = 'Refreshing…'; }
+    _nativeFetch('/live-demo/refresh', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ region }),
+    }).then((r) => r.json()).then(() => _ldRefreshState())
+      .catch(() => _ldRefreshState());
+  }
+
+  function _ldWireCards() {
+    document.querySelectorAll('[data-ld-connect]').forEach((b) => {
+      b.onclick = () => _ldConnect(b.dataset.ldConnect);
+    });
+    document.querySelectorAll('[data-ld-refresh]').forEach((b) => {
+      b.onclick = () => _ldRefreshData(b.dataset.ldRefresh);
+    });
+    document.querySelectorAll('[data-ld-card]').forEach((card) => {
+      const region = card.dataset.ldCard;
+      const set = _ldExpanded[region] || (_ldExpanded[region] = new Set());
+      card.querySelectorAll('[data-ld-acct]').forEach((btn) => {
+        btn.onclick = () => {
+          const key = btn.dataset.ldAcct;
+          const group = btn.closest('.ld-acct-group');
+          const open = !(group && group.classList.contains('is-open'));
+          if (group) group.classList.toggle('is-open', open);
+          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          if (open) set.add(key); else set.delete(key);
+        };
+      });
+    });
+  }
+
+  function _initLiveDemo() {
+    if (!document.getElementById('live-demo')) return;
+    _ldRefreshState();
+    if (_liveDemoInited) return;
+    _liveDemoInited = true;
+  }
+
   function renderApiPairs(api) {
     const el = document.getElementById('api-pairs');
     if (!el) return;
@@ -1743,7 +3233,11 @@ import './features/infoModal.js';
     if (window.ApiGuide) ApiGuide.syncCurrentOp();
     // If the View Code panel is open for this API, refresh it so the
     // snippet tracks whichever operation the user has chosen.
-    apisSnippetsRefreshOp(currentApiId);
+    if (typeof APIS_SNIPPETS_VISIBLE !== 'undefined' && APIS_SNIPPETS_VISIBLE
+        && APIS_SNIPPETS_ACTIVE === currentApiId) {
+      const active = APIS.find((a) => a.id === currentApiId);
+      if (active) _snippetRenderBody(active);
+    }
   }
 
   function restoreIo() {
@@ -2300,7 +3794,7 @@ import './features/infoModal.js';
     if (!uc) return;
     // Clear log and close drawer when switching use cases
     if (uc.id !== _currentUcId) {
-      apiCallsClear();
+      API_CALL_LOG.length = 0;
       apiCallsClose();
     }
     // Restore Full Screen button (hidden when a webview use case is active)
@@ -5235,6 +6729,12 @@ import './features/infoModal.js';
     _renderCachedWebview('txnotify', 'txnotify-webview-frame', _appPath('/txnotify/index.html'), 'Transaction Notifications Live');
   }
 
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
   // ---------------------------------------------------------------------
   // Use Case About panel & globe
   // ---------------------------------------------------------------------
@@ -5419,15 +6919,15 @@ import './features/infoModal.js';
   // ---------------------------------------------------------------------
   // Wire API Calls FAB and drawer
   const _fabBtn = $('api-calls-fab');
-  if (_fabBtn) _fabBtn.addEventListener('click', () => { apiCallsToggle(); });
+  if (_fabBtn) _fabBtn.addEventListener('click', () => { if (API_CALLS_VISIBLE) apiCallsClose(); else apiCallsOpen(); });
   const _acClose = $('api-calls-close');
   if (_acClose) _acClose.addEventListener('click', apiCallsClose);
   const _acClear = $('api-calls-clear');
-  if (_acClear) _acClear.addEventListener('click', () => { apiCallsClear(); });
+  if (_acClear) _acClear.addEventListener('click', () => { API_CALL_LOG.length = 0; apiCallsRefresh(); });
 
   // Wire APIs tab Python snippets FAB and modal.
   const _snipFab = $('apis-snippets-fab');
-  if (_snipFab) _snipFab.addEventListener('click', () => { apisSnippetsToggle(); });
+  if (_snipFab) _snipFab.addEventListener('click', () => { if (APIS_SNIPPETS_VISIBLE) apisSnippetsClose(); else apisSnippetsOpen(); });
   const _snipClose = $('apis-snippets-close');
   if (_snipClose) _snipClose.addEventListener('click', apisSnippetsClose);
   // Click on the dimmed area outside the modal closes it.
@@ -5437,12 +6937,7 @@ import './features/infoModal.js';
   });
   // Escape closes when the modal is open.
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && apisSnippetsIsVisible()) apisSnippetsClose();
-  });
-  // Let the snippets drawer read the live workbench selection.
-  initApisSnippets({
-    getCurrentApiId: () => currentApiId,
-    getCurrentOpId: () => currentOpId,
+    if (e.key === 'Escape' && APIS_SNIPPETS_VISIBLE) apisSnippetsClose();
   });
 
   if (currentApiId) renderApi();
@@ -6020,4 +7515,631 @@ import './features/infoModal.js';
     _renderCachedWebview('testchat', 'testchat-webview-frame', _appPath('/testchat/testchat.html'), 'Test Chat');
   }
 
+})();
+
+// ===========================================================================
+// Auto-Provision Modal
+// ===========================================================================
+(function () {
+  'use strict';
+
+  const RUNTIME_MODE = window.__RUNTIME_MODE__ || {};
+  const SERVER_MODE = !!RUNTIME_MODE.server_mode;
+  const NON_US_MODE = !!RUNTIME_MODE.non_us_mode;
+  const SCRIPT_ROOT = (document.body?.dataset?.scriptRoot || '').replace(/\/$/, '');
+
+  function _appPath(path) {
+    if (typeof path !== 'string') return path;
+    if (!path.startsWith('/')) return path;
+    if (!SCRIPT_ROOT) return path;
+    return `${SCRIPT_ROOT}${path}`;
+  }
+
+  let APIS = [];
+  let legacyToId = {};
+  let _catalogPromise = null;
+
+  function _fallbackCatalogFromWindowApis() {
+    // Prefer the full provision catalog embedded at page load time.
+    if (Array.isArray(window.__PROVISION_CATALOG__) && window.__PROVISION_CATALOG__.length) {
+      return window.__PROVISION_CATALOG__;
+    }
+    // Last-resort: reconstruct minimal entries from the API manifest list.
+    const windowApis = Array.isArray(window.__APIS__) ? window.__APIS__ : [];
+    return windowApis.map(function (a) {
+      return {
+        id: a.id,
+        legacy_id: a.legacy_id,
+        name: a.name,
+        configured: a.configured || false,
+        docs_url: a.docs_url || '',
+        provision_note: '',
+        requires_owner_approval: false,
+        auto_provisionable: true,
+        manual_onboarding_url: '',
+        disabled_in_non_us: false,
+        disabled_reason: '',
+      };
+    });
+  }
+
+  function _setCatalog(apis) {
+    APIS = Array.isArray(apis) ? apis : [];
+    legacyToId = {};
+    APIS.forEach(function (a) {
+      if (a && a.legacy_id) legacyToId[a.legacy_id] = a.id;
+    });
+  }
+
+  function ensureCatalog() {
+    if (_catalogPromise) return _catalogPromise;
+    _catalogPromise = fetch('/provision/catalog', { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        const apis = data && Array.isArray(data.apis) ? data.apis : [];
+        if (!apis.length) throw new Error('Empty provisioning catalog');
+        _setCatalog(apis);
+        return APIS;
+      })
+      .catch(function () {
+        _setCatalog(_fallbackCatalogFromWindowApis());
+        return APIS;
+      });
+    return _catalogPromise;
+  }
+
+  const modal        = document.getElementById('prov-modal');
+  const overlay      = document.getElementById('prov-overlay');
+  const screenWelcome  = document.getElementById('prov-screen-welcome');
+  const screenSelect   = document.getElementById('prov-screen-select');
+  const screenProgress = document.getElementById('prov-screen-progress');
+  const apiGrid      = document.getElementById('prov-api-grid');
+  const selectAllCb  = document.getElementById('prov-select-all');
+  const statusGrid   = document.getElementById('prov-status-grid');
+  const logEl        = document.getElementById('prov-log');
+
+  if (!modal) return;
+  if (SERVER_MODE) {
+    modal.classList.add('prov-hidden');
+    return;
+  }
+
+  // ── Show/hide helpers ─────────────────────────────────────────────────────
+  function showScreen(screen) {
+    [screenWelcome, screenSelect, screenProgress].forEach(function (s) {
+      s && s.classList.add('prov-hidden');
+    });
+    screen && screen.classList.remove('prov-hidden');
+  }
+
+  function openModal() {
+    modal.classList.remove('prov-hidden');
+    document.body.style.overflow = 'hidden';
+    showScreen(screenWelcome);
+  }
+
+  function closeModal() {
+    modal.classList.add('prov-hidden');
+    document.body.style.overflow = '';
+  }
+
+  // ── API selection grid ────────────────────────────────────────────────────
+  function updateSelectAllState() {
+    if (!selectAllCb || !apiGrid) return;
+    var cbs = apiGrid.querySelectorAll('.prov-api-cb:not(:disabled)');
+    if (!cbs.length) {
+      selectAllCb.checked = false;
+      selectAllCb.indeterminate = false;
+      return;
+    }
+    var checked = Array.from(cbs).filter(function (cb) { return cb.checked; }).length;
+    selectAllCb.checked = checked === cbs.length;
+    selectAllCb.indeterminate = checked > 0 && checked < cbs.length;
+  }
+
+  function setAllApiSelections(checked) {
+    if (!apiGrid) return;
+    var cbs = apiGrid.querySelectorAll('.prov-api-cb:not(:disabled)');
+    cbs.forEach(function (cb) { cb.checked = checked; });
+    updateSelectAllState();
+  }
+
+  function _escAttr(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function buildApiGrid() {
+    if (!apiGrid) return;
+    apiGrid.innerHTML = '';
+    var autoProvisionable = 0;
+    var defaultChecked = 0;
+    APIS.forEach(function (api) {
+      var manual = api.auto_provisionable === false;
+      var blockedNonUs = NON_US_MODE && api.disabled_in_non_us === true;
+      var configured = api.configured === true;
+      // Default-select only APIs that don't yet have keys provisioned.
+      // Already-provisioned APIs render unchecked + green-tinted with a
+      // tooltip, but remain selectable so users can re-provision them.
+      var checked = !manual && !blockedNonUs && !configured;
+      var note = manual ? '' : (api.provision_note || api.note || '');
+      if (blockedNonUs) note = api.disabled_reason || NON_US_TOOLTIP;
+      var label = document.createElement('label');
+      var labelClass = 'prov-api-item';
+      if (manual) labelClass += ' prov-api-item--manual';
+      if (blockedNonUs) labelClass += ' prov-api-item--manual';
+      if (configured && !manual) labelClass += ' prov-api-item--configured';
+      label.className = labelClass;
+      if (blockedNonUs) label.title = note;
+      if (configured && !manual) label.title = 'Key already provisioned \u2014 select to re-provision';
+      var cbAttrs = 'class="prov-api-cb" data-id="' + _escAttr(api.id) + '"' +
+                    (manual || blockedNonUs ? ' disabled' : '') +
+                    (checked ? ' checked' : '');
+      var badges = '';
+      if (manual) badges += '<span class="prov-api-badge">Manual onboarding</span>';
+      if (blockedNonUs) badges += '<span class="prov-api-badge">Non-US mode</span>';
+      var nameHtml = '<span class="prov-api-name">' +
+                     '<span class="prov-api-name-text">' + _escAttr(api.name) + '</span>' +
+                     badges +
+                     '</span>';
+      var noteHtml = '';
+      if (note) {
+        noteHtml = '<span class="prov-api-note">' + _escAttr(note) + '</span>';
+      }
+      var linkHtml = '';
+      label.innerHTML =
+        '<input type="checkbox" ' + cbAttrs + '>' +
+        '<span class="prov-api-text">' + nameHtml + noteHtml + linkHtml + '</span>';
+      apiGrid.appendChild(label);
+      if (!manual && !blockedNonUs) autoProvisionable++;
+      if (checked) defaultChecked++;
+    });
+    if (selectAllCb) {
+      selectAllCb.checked = autoProvisionable > 0 && defaultChecked === autoProvisionable;
+      selectAllCb.indeterminate = defaultChecked > 0 && defaultChecked < autoProvisionable;
+    }
+  }
+
+  // ── Status grid (progress screen) ─────────────────────────────────────────
+  var _apiStatus = {};  // id → 'pending' | 'running' | 'done' | 'failed'
+
+  function buildStatusGrid(selectedIds) {
+    if (!statusGrid) return;
+    statusGrid.innerHTML = '';
+    _apiStatus = {};
+    selectedIds.forEach(function (id) {
+      var api = APIS.find(function (a) { return a.id === id; }) || { id: id, name: id };
+      _apiStatus[id] = 'pending';
+      var card = document.createElement('div');
+      card.className = 'prov-status-card prov-status-pending';
+      card.id = 'prov-status-' + id;
+      card.innerHTML =
+        '<span class="prov-status-dot"></span>' +
+        '<span class="prov-status-name">' + api.name + '</span>' +
+        '<span class="prov-status-label">Pending</span>';
+      statusGrid.appendChild(card);
+    });
+  }
+
+  function setApiStatus(id, status) {
+    _apiStatus[id] = status;
+    var card = document.getElementById('prov-status-' + id);
+    if (!card) return;
+    card.className = 'prov-status-card prov-status-' + status;
+    var labels = { pending: 'Pending', running: 'Provisioning…', done: 'Done ✓', failed: 'Failed ✗' };
+    var labelEl = card.querySelector('.prov-status-label');
+    if (labelEl) labelEl.textContent = labels[status] || status;
+  }
+
+  // ── Log line parser — extract per-API start events (best-effort) ──────────
+  function resolveApiId(rawId) {
+    // rawId may be a legacy id (e.g. 'binlookup') or canonical id (e.g. 'bin_lookup').
+    return legacyToId[rawId] || rawId;
+  }
+
+  function parseLogLine(line) {
+    // Mark cards as "running" when provisioning starts for an API.
+    var mStart = line.match(/Provisioning '([\w_-]+)'/);
+    if (mStart) {
+      var id = resolveApiId(mStart[1]);
+      if (_apiStatus[id] === 'pending') setApiStatus(id, 'running');
+      return;
+    }
+    // Mark as "done" when the orchestrator logs a per-API success.
+    var mDone = line.match(/Provisioned '([\w_-]+)'/);
+    if (mDone) {
+      setApiStatus(resolveApiId(mDone[1]), 'done');
+      return;
+    }
+    // Mark as "failed" when the orchestrator logs a per-API failure.
+    var mFail = line.match(/Failed to provision '([\w_-]+)'/);
+    if (mFail) {
+      setApiStatus(resolveApiId(mFail[1]), 'failed');
+      return;
+    }
+  }
+
+  // Fetch authoritative configured state for each selected API and update
+  // its card accordingly. Called after provisioning finishes. Cards that
+  // already have an authoritative log-derived status (done/failed) are left
+  // alone — only cards still showing pending/running are reconciled.
+  function refreshCardStates(selectedIds) {
+    return fetch('/provision/status', { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .catch(function () { return null; })
+      .then(function (data) {
+        if (!data || !Array.isArray(data.apis)) return;
+        var byId = {};
+        data.apis.forEach(function (a) { byId[a.id] = a; });
+        selectedIds.forEach(function (id) {
+          var current = _apiStatus[id];
+          if (current === 'done' || current === 'failed') return;
+          var entry = byId[id];
+          if (entry && entry.configured) {
+            setApiStatus(id, 'done');
+          } else {
+            setApiStatus(id, 'failed');
+          }
+        });
+      });
+  }
+
+  // ── Log append ─────────────────────────────────────────────────────────────
+  function appendLog(text) {
+    if (!logEl) return;
+    var line = document.createElement('div');
+    line.className = 'prov-log-line';
+    var clean = text.replace(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+ \| \w+\s+\| [^-]+ - /, '');
+    line.textContent = clean || text;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  // ── Start provisioning ─────────────────────────────────────────────────────
+  function startProvisioning(selectedIds) {
+    buildStatusGrid(selectedIds);
+    showScreen(screenProgress);
+
+    var body = { apis: selectedIds, password: 'foobar!!' };
+
+    fetch('/provision/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) {
+          onProvisionFailed(selectedIds, data.error);
+          return;
+        }
+        streamJob(data.job_id, selectedIds);
+      })
+      .catch(function (err) { onProvisionFailed(selectedIds, String(err)); });
+  }
+
+  function streamJob(jobId, selectedIds) {
+    var es = new EventSource(_appPath('/provision/stream/' + jobId));
+    var _provDone = false;
+    var _provFailed = false;
+    var _provFailMessage = '';
+
+    es.onmessage = function (e) {
+      var raw = e.data;
+      // Sentinels are sent unquoted; regular log lines are JSON-encoded strings
+      if (raw === '__DONE__') {
+        _provDone = true;
+        es.close();
+        if (_provFailed) onProvisionFailed(selectedIds, _provFailMessage);
+        else onProvisionDone(selectedIds);
+        return;
+      }
+      if (raw === '__IMPORT_COMPLETE__') { appendLog('✅ Keys imported — Mastercard Solution Studio is ready!'); return; }
+      if (raw.startsWith('__IMPORT_ERROR__')) {
+        _provFailed = true;
+        _provFailMessage = raw.replace('__IMPORT_ERROR__:', '').trim() || 'Could not import generated keys.';
+        appendLog('ERROR: ' + _provFailMessage);
+        return;
+      }
+      if (raw === '__NO_ZIP__') {
+        _provFailed = true;
+        _provFailMessage = 'Provisioning completed but no vima-config.zip was produced. Check the log above for errors, then import keys manually.';;
+        appendLog('ERROR: ' + _provFailMessage);
+        return;
+      }
+      if (raw.startsWith('__PROVISION_FAILED__:')) {
+        _provFailed = true;
+        _provFailMessage = raw.slice('__PROVISION_FAILED__:'.length) || 'Provisioning failed.';
+        appendLog('ERROR: ' + _provFailMessage);
+        return;
+      }
+      var line = raw;
+      try { line = JSON.parse(raw); } catch (_) {}
+      if (line) { parseLogLine(line); appendLog(line); }
+    };
+    es.onerror = function () {
+      es.close();
+      if (!_provDone) {
+        // Connection dropped before __DONE__ reached the browser — still refresh
+        // card states from the server so cards don't stay stuck orange.
+        if (_provFailed) onProvisionFailed(selectedIds, _provFailMessage);
+        else onProvisionDone(selectedIds);
+      }
+    };
+  }
+
+  function onProvisionFailed(selectedIds, message) {
+    (selectedIds || []).forEach(function (id) { setApiStatus(id, 'failed'); });
+    var titleEl = document.getElementById('prov-progress-title');
+    var subtitleEl = document.getElementById('prov-progress-subtitle');
+    var activationNote = document.getElementById('prov-activation-note');
+    var footer = document.getElementById('prov-progress-footer');
+    var reloadBtn = document.getElementById('prov-btn-reload');
+    var msg = message || 'Provisioning failed. Check the log below and try again.';
+    if (titleEl) titleEl.textContent = 'Provisioning Failed';
+    if (subtitleEl) subtitleEl.textContent = msg;
+    if (activationNote) activationNote.style.display = 'none';
+    if (reloadBtn) reloadBtn.textContent = 'Reload & Try Again';
+    if (footer) footer.style.display = '';
+    appendLog('');
+    appendLog('Provisioning failed. ' + msg);
+  }
+
+  function onProvisionDone(selectedIds) {
+    // Refresh card states from authoritative server status before showing
+    // the "Provisioning Complete!" UI.
+    refreshCardStates(selectedIds || []).then(function () {
+      var titleEl = document.getElementById('prov-progress-title');
+      var subtitleEl = document.getElementById('prov-progress-subtitle');
+      var activationNote = document.getElementById('prov-activation-note');
+      var footer = document.getElementById('prov-progress-footer');
+      if (titleEl) titleEl.textContent = 'Provisioning Complete!';
+      if (subtitleEl) subtitleEl.textContent = 'Your API keys have been provisioned and imported into Mastercard Solution Studio.';
+      if (activationNote) activationNote.style.display = '';
+      if (footer) footer.style.display = '';
+      appendLog('');
+      appendLog('🎉 Done! Click below to reload and start exploring.');
+    });
+  }
+
+  // ── Wire up buttons ────────────────────────────────────────────────────────
+  var btnAuto   = document.getElementById('prov-btn-auto');
+  var btnManual = document.getElementById('prov-btn-manual');
+  var btnSkip   = document.getElementById('prov-btn-skip');
+  var btnBack   = document.getElementById('prov-back-select');
+  var btnStart  = document.getElementById('prov-btn-start');
+  var btnReload = document.getElementById('prov-btn-reload');
+
+  btnAuto && btnAuto.addEventListener('click', function () {
+    ensureCatalog().then(function () {
+      buildApiGrid();
+      showScreen(screenSelect);
+    });
+  });
+
+  // Triggered by "Yes, Generate New Keys" in the config modal
+  document.addEventListener('prov:open-select', function () {
+    modal.classList.remove('prov-hidden');
+    document.body.style.overflow = 'hidden';
+    ensureCatalog().then(function () {
+      buildApiGrid();
+      showScreen(screenSelect);
+    });
+  });
+
+  btnManual && btnManual.addEventListener('click', function () {
+    closeModal();
+    var cfgTrigger = document.getElementById('cfg-trigger-btn');
+    if (cfgTrigger) cfgTrigger.click();
+  });
+
+  btnSkip && btnSkip.addEventListener('click', closeModal);
+  overlay && overlay.addEventListener('click', function () {
+    if (!screenProgress.classList.contains('prov-hidden')) return;
+    closeModal();
+  });
+
+  btnBack && btnBack.addEventListener('click', function () { showScreen(screenWelcome); });
+
+  selectAllCb && selectAllCb.addEventListener('change', function () {
+    setAllApiSelections(!!selectAllCb.checked);
+  });
+
+  apiGrid && apiGrid.addEventListener('change', function (e) {
+    var target = e.target;
+    if (target && target.classList && target.classList.contains('prov-api-cb')) {
+      updateSelectAllState();
+    }
+  });
+
+  btnStart && btnStart.addEventListener('click', function () {
+    var cbs = apiGrid ? apiGrid.querySelectorAll('.prov-api-cb:checked') : [];
+    var selectedIds = Array.from(cbs).map(function (cb) { return cb.dataset.id; });
+    if (selectedIds.length === 0) { alert('Please select at least one API.'); return; }
+    startProvisioning(selectedIds);
+  });
+
+  btnReload && btnReload.addEventListener('click', function () { location.reload(); });
+
+  // ── Auto-show on load if setup is needed ──────────────────────────────────
+  ensureCatalog();
+
+  fetch('/provision/status')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.needs_setup) openModal();
+    })
+    .catch(function () { /* ignore — don't block app */ });
+
+})();
+
+/* ====================== Info / How-to-run Modal ====================== */
+(function () {
+  var modal = document.getElementById('info-modal');
+  if (!modal) return;
+
+  var REPO = 'https://github.com/orancummins/vima';
+  var SCRIPTS = {
+    win: {
+      title: 'PowerShell — Windows',
+      prompt: 'PS C:\\>',
+      copy: 'git clone ' + REPO + '\ncd vima\n.\\run.bat',
+      steps: [
+        { cmd: 'git clone ' + REPO, out: ["Cloning into 'vima'... done."] },
+        { cmd: 'cd vima', out: [] },
+        { cmd: '.\\run.bat', out: ['Creating virtual environment...', 'Installing dependencies...', 'Serving on http://localhost:9021'] }
+      ]
+    },
+    nix: {
+      title: 'bash — macOS / Linux',
+      prompt: '$',
+      copy: 'git clone ' + REPO + '\ncd vima\n./run.sh',
+      steps: [
+        { cmd: 'git clone ' + REPO, out: ["Cloning into 'vima'... done."] },
+        { cmd: 'cd vima', out: [] },
+        { cmd: './run.sh', out: ['Creating virtual environment...', 'Installing dependencies...', 'Serving on http://localhost:9021'] }
+      ]
+    }
+  };
+
+  var overlay = document.getElementById('info-overlay');
+  var closeBtn = document.getElementById('info-close');
+  var trigger = document.getElementById('info-trigger-btn');
+  var termBody = document.getElementById('info-term-body');
+  var termTitle = document.getElementById('info-term-title');
+  var copyWin = document.getElementById('info-copy-win');
+  var copyNix = document.getElementById('info-copy-nix');
+
+  var platform = 'win';
+  var timers = [];
+  var running = false;
+
+  function clearTimers() { timers.forEach(function (t) { clearTimeout(t); }); timers = []; }
+  function wait(ms) { return new Promise(function (res) { timers.push(setTimeout(res, ms)); }); }
+
+  function addLine(cls, text) {
+    var div = document.createElement('div');
+    div.className = 'info-term-line' + (cls ? ' ' + cls : '');
+    div.textContent = text;
+    termBody.appendChild(div);
+    termBody.scrollTop = termBody.scrollHeight;
+    return div;
+  }
+
+  function typeCmd(prompt, text) {
+    var line = document.createElement('div');
+    line.className = 'info-term-line';
+    var p = document.createElement('span');
+    p.className = 'info-term-prompt';
+    p.textContent = prompt + ' ';
+    var cmd = document.createElement('span');
+    cmd.className = 'info-term-cmd';
+    var caret = document.createElement('span');
+    caret.className = 'info-term-caret';
+    line.appendChild(p); line.appendChild(cmd); line.appendChild(caret);
+    termBody.appendChild(line);
+    termBody.scrollTop = termBody.scrollHeight;
+    var i = 0;
+    return (function step() {
+      if (!running) { caret.remove(); return Promise.resolve(); }
+      if (i >= text.length) { caret.remove(); return Promise.resolve(); }
+      cmd.textContent += text[i++];
+      termBody.scrollTop = termBody.scrollHeight;
+      return wait(26 + Math.random() * 38).then(step);
+    })();
+  }
+
+  async function run() {
+    if (!termBody) return;
+    running = true;
+    clearTimers();
+    termBody.innerHTML = '';
+    var script = SCRIPTS[platform];
+    if (termTitle) termTitle.textContent = script.title;
+    await wait(260);
+    for (var s = 0; s < script.steps.length; s++) {
+      if (!running) return;
+      var st = script.steps[s];
+      await typeCmd(script.prompt, st.cmd);
+      await wait(300);
+      for (var o = 0; o < st.out.length; o++) {
+        if (!running) return;
+        addLine('info-term-out', st.out[o]);
+        await wait(260);
+      }
+      await wait(420);
+    }
+    if (!running) return;
+    var line = document.createElement('div');
+    line.className = 'info-term-line';
+    var p = document.createElement('span');
+    p.className = 'info-term-prompt';
+    p.textContent = script.prompt + ' ';
+    var caret = document.createElement('span');
+    caret.className = 'info-term-caret';
+    line.appendChild(p); line.appendChild(caret);
+    termBody.appendChild(line);
+    termBody.scrollTop = termBody.scrollHeight;
+    running = false;
+  }
+
+  function setPlatform(p) {
+    if (!SCRIPTS[p]) return;
+    platform = p;
+    if (copyWin) copyWin.classList.toggle('is-active', p === 'win');
+    if (copyNix) copyNix.classList.toggle('is-active', p === 'nix');
+    running = false;
+    clearTimers();
+    requestAnimationFrame(run);
+  }
+
+  function flashCopied(btn, label) {
+    var orig = btn.dataset.origLabel || btn.textContent;
+    btn.dataset.origLabel = orig;
+    btn.textContent = label;
+    btn.classList.add('is-copied');
+    setTimeout(function () {
+      btn.classList.remove('is-copied');
+      btn.textContent = btn.dataset.origLabel;
+    }, 1500);
+  }
+
+  function copyFor(p, btn) {
+    var text = SCRIPTS[p].copy;
+    var done = function () { flashCopied(btn, '✓ Copied'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(done);
+    } else {
+      done();
+    }
+  }
+
+  function open() {
+    modal.classList.remove('info-hidden');
+    document.body.style.overflow = 'hidden';
+    setPlatform(platform);
+  }
+  function close() {
+    modal.classList.add('info-hidden');
+    document.body.style.overflow = '';
+    running = false;
+    clearTimers();
+  }
+
+  trigger && trigger.addEventListener('click', open);
+  closeBtn && closeBtn.addEventListener('click', close);
+  overlay && overlay.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !modal.classList.contains('info-hidden')) close();
+  });
+
+  copyWin && copyWin.addEventListener('click', function () {
+    if (platform !== 'win') setPlatform('win');
+    copyFor('win', copyWin);
+  });
+  copyNix && copyNix.addEventListener('click', function () {
+    if (platform !== 'nix') setPlatform('nix');
+    copyFor('nix', copyNix);
+  });
 })();

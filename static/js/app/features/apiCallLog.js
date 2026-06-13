@@ -89,17 +89,17 @@ import { escapeHtml } from '../core/html.js';
         <div class="api-calls-entry-head" data-expand-call>
           <span class="api-calls-method api-calls-method--${e.method.toLowerCase()}">${escapeHtml(e.method)}</span>
           <span class="api-calls-url" title="${escapeHtml(e.url)}">${escapeHtml(displayUrl)}</span>
-          <span class="api-calls-status api-calls-status--${statusCls}">${e.status == null ? 'Ã¢â‚¬Â¦' : escapeHtml(String(e.status))}</span>
+          <span class="api-calls-status api-calls-status--${statusCls}">${e.status == null ? '…' : escapeHtml(String(e.status))}</span>
           <span class="api-calls-time">${escapeHtml(elapsed || time)}</span>
-          <span class="api-calls-chevron">Ã¢â€“Â¾</span>
+          <span class="api-calls-chevron">▾</span>
         </div>
         <div class="api-calls-entry-body">
           ${e.requestBody != null ? `<div class="api-calls-section"><div class="api-calls-section-label">Request body</div><pre class="api-calls-pre">${escapeHtml(JSON.stringify(e.requestBody, null, 2))}</pre></div>` : ''}
           <div class="api-calls-section">
-            <div class="api-calls-section-label">Response${e.status ? ' Ã‚Â· ' + e.status : ''}</div>
+            <div class="api-calls-section-label">Response${e.status ? ' · ' + e.status : ''}</div>
             ${e.responseBody !== null && e.responseBody !== undefined
               ? `<pre class="api-calls-pre">${escapeHtml(JSON.stringify(e.responseBody, null, 2))}</pre>`
-              : `<p class="api-calls-pending">Waiting for responseÃ¢â‚¬Â¦</p>`}
+              : `<p class="api-calls-pending">Waiting for response…</p>`}
           </div>
           <div class="api-calls-copy-row"><button class="api-calls-copy-btn" data-copy-call="${idx}">Copy</button></div>
         </div>
