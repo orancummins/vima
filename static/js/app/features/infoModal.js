@@ -6,7 +6,7 @@
   var REPO = 'https://github.com/orancummins/vima';
   var SCRIPTS = {
     win: {
-      title: 'PowerShell ÔÇö Windows',
+      title: 'PowerShell — Windows',
       prompt: 'PS C:\\>',
       copy: 'git clone ' + REPO + '\ncd vima\n.\\run.bat',
       steps: [
@@ -16,7 +16,7 @@
       ]
     },
     nix: {
-      title: 'bash ÔÇö macOS / Linux',
+      title: 'bash — macOS / Linux',
       prompt: '$',
       copy: 'git clone ' + REPO + '\ncd vima\n./run.sh',
       steps: [
@@ -131,7 +131,7 @@
 
   function copyFor(p, btn) {
     var text = SCRIPTS[p].copy;
-    var done = function () { flashCopied(btn, 'Ô£ô Copied'); };
+    var done = function () { flashCopied(btn, '✓ Copied'); };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(done).catch(done);
     } else {

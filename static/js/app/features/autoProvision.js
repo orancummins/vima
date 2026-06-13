@@ -85,7 +85,7 @@
     return;
   }
 
-  // ÔöÇÔöÇ Show/hide helpers ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ── Show/hide helpers ─────────────────────────────────────────────────────
   function showScreen(screen) {
     [screenWelcome, screenSelect, screenProgress].forEach(function (s) {
       s && s.classList.add('prov-hidden');
@@ -104,7 +104,7 @@
     document.body.style.overflow = '';
   }
 
-  // ÔöÇÔöÇ API selection grid ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ── API selection grid ────────────────────────────────────────────────────
   function updateSelectAllState() {
     if (!selectAllCb || !apiGrid) return;
     var cbs = apiGrid.querySelectorAll('.prov-api-cb:not(:disabled)');
@@ -182,8 +182,8 @@
     }
   }
 
-  // ÔöÇÔöÇ Status grid (progress screen) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
-  var _apiStatus = {};  // id ÔåÆ 'pending' | 'running' | 'done' | 'failed'
+  // ── Status grid (progress screen) ─────────────────────────────────────────
+  var _apiStatus = {};  // id → 'pending' | 'running' | 'done' | 'failed'
 
   function buildStatusGrid(selectedIds) {
     if (!statusGrid) return;
@@ -208,12 +208,12 @@
     var card = document.getElementById('prov-status-' + id);
     if (!card) return;
     card.className = 'prov-status-card prov-status-' + status;
-    var labels = { pending: 'Pending', running: 'ProvisioningÔÇª', done: 'Done Ô£ô', failed: 'Failed Ô£ù' };
+    var labels = { pending: 'Pending', running: 'Provisioning…', done: 'Done ✓', failed: 'Failed ✗' };
     var labelEl = card.querySelector('.prov-status-label');
     if (labelEl) labelEl.textContent = labels[status] || status;
   }
 
-  // ÔöÇÔöÇ Log line parser ÔÇö extract per-API start events (best-effort) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ── Log line parser — extract per-API start events (best-effort) ──────────
   function resolveApiId(rawId) {
     // rawId may be a legacy id (e.g. 'binlookup') or canonical id (e.g. 'bin_lookup').
     return legacyToId[rawId] || rawId;
@@ -244,7 +244,7 @@
   // Fetch authoritative configured state for each selected API and update
   // its card accordingly. Called after provisioning finishes. Cards that
   // already have an authoritative log-derived status (done/failed) are left
-  // alone ÔÇö only cards still showing pending/running are reconciled.
+  // alone — only cards still showing pending/running are reconciled.
   function refreshCardStates(selectedIds) {
     return fetch('/provision/status', { cache: 'no-store' })
       .then(function (r) { return r.json(); })
@@ -266,7 +266,7 @@
       });
   }
 
-  // ÔöÇÔöÇ Log append ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ── Log append ─────────────────────────────────────────────────────────────
   function appendLog(text) {
     if (!logEl) return;
     var line = document.createElement('div');
@@ -277,7 +277,7 @@
     logEl.scrollTop = logEl.scrollHeight;
   }
 
-  // ÔöÇÔöÇ Start provisioning ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ── Start provisioning ─────────────────────────────────────────────────────
   function startProvisioning(selectedIds) {
     buildStatusGrid(selectedIds);
     showScreen(screenProgress);
@@ -316,7 +316,7 @@
         else onProvisionDone(selectedIds);
         return;
       }
-      if (raw === '__IMPORT_COMPLETE__') { appendLog('Ô£à Keys imported ÔÇö Mastercard Solution Studio is ready!'); return; }
+      if (raw === '__IMPORT_COMPLETE__') { appendLog('✅ Keys imported — Mastercard Solution Studio is ready!'); return; }
       if (raw.startsWith('__IMPORT_ERROR__')) {
         _provFailed = true;
         _provFailMessage = raw.replace('__IMPORT_ERROR__:', '').trim() || 'Could not import generated keys.';
@@ -342,7 +342,7 @@
     es.onerror = function () {
       es.close();
       if (!_provDone) {
-        // Connection dropped before __DONE__ reached the browser ÔÇö still refresh
+        // Connection dropped before __DONE__ reached the browser — still refresh
         // card states from the server so cards don't stay stuck orange.
         if (_provFailed) onProvisionFailed(selectedIds, _provFailMessage);
         else onProvisionDone(selectedIds);
@@ -380,11 +380,11 @@
       if (activationNote) activationNote.style.display = '';
       if (footer) footer.style.display = '';
       appendLog('');
-      appendLog('­ƒÄë Done! Click below to reload and start exploring.');
+      appendLog('🎉 Done! Click below to reload and start exploring.');
     });
   }
 
-  // ÔöÇÔöÇ Wire up buttons ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ── Wire up buttons ────────────────────────────────────────────────────────
   var btnAuto   = document.getElementById('prov-btn-auto');
   var btnManual = document.getElementById('prov-btn-manual');
   var btnSkip   = document.getElementById('prov-btn-skip');
@@ -443,7 +443,7 @@
 
   btnReload && btnReload.addEventListener('click', function () { location.reload(); });
 
-  // ÔöÇÔöÇ Auto-show on load if setup is needed ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ── Auto-show on load if setup is needed ──────────────────────────────────
   ensureCatalog();
 
   fetch('/provision/status')
@@ -451,6 +451,6 @@
     .then(function (data) {
       if (data.needs_setup) openModal();
     })
-    .catch(function () { /* ignore ÔÇö don't block app */ });
+    .catch(function () { /* ignore — don't block app */ });
 
 })();

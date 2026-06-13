@@ -19,6 +19,7 @@ import {
   initApisSnippets, apisSnippetsClose, apisSnippetsToggle,
   apisSnippetsIsVisible, apisSnippetsFollowApi, apisSnippetsRefreshOp,
 } from './features/apiSnippets.js';
+import { _initSdkDemo, _initLiveDemo } from './features/openFinanceSdk.js';
 import './features/autoProvision.js';
 import './features/infoModal.js';
 
@@ -74,7 +75,7 @@ import './features/infoModal.js';
       const title = known ? `Open ${name} in APIs tab` : `${apiId} (not registered)`;
       return `<button type="button" class="uc-sidebar-api-badge ${configured ? 'configured' : 'unconfigured'}${known ? '' : ' disabled'}" data-uc-api-link="${escapeHtml(apiId)}" title="${escapeHtml(title)}"${known ? '' : ' disabled'}><span class="uc-sidebar-api-dot"></span>${escapeHtml(name)}</button>`;
     }).join('');
-    // Wire click Ã¢â€ â€™ switch to APIs tab and select the API.
+    // Wire click → switch to APIs tab and select the API.
     list.querySelectorAll('[data-uc-api-link]').forEach(btn => {
       btn.addEventListener('click', (ev) => {
         ev.preventDefault();
@@ -124,21 +125,21 @@ import './features/infoModal.js';
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") modal.classList.add("hidden"); });
 
   // ---------------------------------------------------------------------
-  // API Guide Ã¢â‚¬â€ compact single-step coach.
+  // API Guide — compact single-step coach.
   //
   // Shows ONE step at a time (no scrolling) for the selected API's curated
   // `guide` sequence. Progress dots, a step title + one-line hint, and a
   // single action button. Draggable; remembers position + per-API progress.
   //
   // Guide step schema (manifest `guide` array):
-  //   { op, title, summary }                              Ã¢â‚¬â€ api_call step
-  //   { type:"manual", id, title, summary, done_label }   Ã¢â‚¬â€ manual step
+  //   { op, title, summary }                              — api_call step
+  //   { type:"manual", id, title, summary, done_label }   — manual step
   //
   // Public surface:
   //   ApiGuide.show() / hide() / toggle()
-  //   ApiGuide.markOpDone(opId) Ã¢â‚¬â€ called by send-handler on 2xx; advances
-  //   ApiGuide.refresh()        Ã¢â‚¬â€ re-render after API switch
-  //   ApiGuide.syncCurrentOp()  Ã¢â‚¬â€ keep action button state in sync
+  //   ApiGuide.markOpDone(opId) — called by send-handler on 2xx; advances
+  //   ApiGuide.refresh()        — re-render after API switch
+  //   ApiGuide.syncCurrentOp()  — keep action button state in sync
   // -----------------------------------------------------------------------
   const ApiGuide = (function () {
     try {
@@ -208,7 +209,7 @@ import './features/infoModal.js';
             return {
               stepType,
               opId:      g.id || ('manual_' + idx),
-              opName:    g.title || g.id || 'Ã¢â‚¬â€',
+              opName:    g.title || g.id || '—',
               summary:   g.summary || '',
               doneLabel: g.done_label || 'Continue',
             };
@@ -275,7 +276,7 @@ import './features/infoModal.js';
 
       if (!api || !guide.length) {
         panel.classList.remove('ag--complete', 'ag--manual');
-        if (badgeNum)  badgeNum.textContent = 'Ã¢â‚¬â€œ';
+        if (badgeNum)  badgeNum.textContent = '–';
         if (eyebrowEl) eyebrowEl.textContent = '';
         if (titleEl)   titleEl.textContent = api ? 'No guide for this API' : 'Select an API';
         if (descEl)    descEl.textContent = '';
@@ -538,7 +539,7 @@ import './features/infoModal.js';
     });
   });
 
-  // Home panel CTA buttons Ã¢â‚¬â€ switch to APIs or Use Cases tab
+  // Home panel CTA buttons — switch to APIs or Use Cases tab
   document.querySelectorAll('.home-cta[data-switch-tab]').forEach(function(btn) {
     btn.addEventListener('click', function() {
       const tabBtn = document.querySelector('.top-tab[data-top-tab="' + btn.dataset.switchTab + '"]');
@@ -574,14 +575,14 @@ import './features/infoModal.js';
     if (_applyingHistory) return;
     // Merge; clearing tab also clears tab-scoped selections.
     const next = Object.assign({}, _navState, patch);
-    // Stringified comparison Ã¢â‚¬â€ avoids duplicate entries when the user
+    // Stringified comparison — avoids duplicate entries when the user
     // clicks the same row twice.
     if (!replace && _stateToUrl(next) === _stateToUrl(_navState)) return;
     _navState = next;
     const url = _stateToUrl(next);
     try {
       history[replace ? 'replaceState' : 'pushState'](next, '', url);
-    } catch (_) { /* ignore Ã¢â‚¬â€ some sandboxed contexts disallow pushState */ }
+    } catch (_) { /* ignore — some sandboxed contexts disallow pushState */ }
   }
 
   function _applyNavState(state) {
@@ -608,14 +609,14 @@ import './features/infoModal.js';
     }
   }
 
-  // Bubble-phase document recorder Ã¢â‚¬â€ fires after element handlers complete.
+  // Bubble-phase document recorder — fires after element handlers complete.
   document.addEventListener('click', (e) => {
     if (_applyingHistory) return;
     const t = e.target.closest('.top-tab, [data-bundle-id], [data-api-id], [data-uc-id]');
     if (!t) return;
-    // Every nav click Ã¢â‚¬â€ whether from a real user gesture or a synthetic
+    // Every nav click — whether from a real user gesture or a synthetic
     // ``.click()`` issued by another handler (e.g. a home-page CTA that
-    // switches tabs, or a chip that opens an API) Ã¢â‚¬â€ gets its own history
+    // switches tabs, or a chip that opens an API) — gets its own history
     // entry. Earlier we collapsed synthetic clicks via ``replace`` to
     // avoid "intermediate hops", but that ate the home entry whenever a
     // CTA jumped from home to a tab, leaving Back to exit the app.
@@ -625,7 +626,7 @@ import './features/infoModal.js';
       _pushNavState({ tab, bundle: null, api: null, uc: null });
     } else if (t.matches('[data-bundle-id]')) {
       // Each per-tab selection also clears the *other* tabs' selections,
-      // otherwise stale ?api=Ã¢â‚¬Â¦ / ?uc=Ã¢â‚¬Â¦ ride along in the URL and get
+      // otherwise stale ?api=… / ?uc=… ride along in the URL and get
       // re-applied when the user pops back to a different tab.
       _pushNavState({ tab: 'bundles', bundle: t.dataset.bundleId, api: null, uc: null });
     } else if (t.matches('[data-api-id]')) {
@@ -648,7 +649,7 @@ import './features/infoModal.js';
     _applyNavState(state);
   });
 
-  // Honour ?tab=apis / ?tab=usecases / ?bundle=Ã¢â‚¬Â¦ / ?api=Ã¢â‚¬Â¦ / ?uc=Ã¢â‚¬Â¦ from
+  // Honour ?tab=apis / ?tab=usecases / ?bundle=… / ?api=… / ?uc=… from
   // shared links or home-page CTAs. Replace (not push) so the first Back
   // press lands on the previous site, not on an empty home view.
   (function _bootstrapNavFromUrl() {
@@ -839,7 +840,7 @@ import './features/infoModal.js';
   });
 
   // ---------------------------------------------------------------------
-  // API Bundles tab Ã¢â‚¬â€ sidebar entries open a rich detail panel in the
+  // API Bundles tab — sidebar entries open a rich detail panel in the
   // content area. Mirrors the APIs / Use Cases tab layout. Each bundle's
   // detail includes "What you can do", a numbered "How the APIs fit
   // together" journey, end-to-end walkthroughs and the API roster.
@@ -854,7 +855,7 @@ import './features/infoModal.js';
   }
   loadBundles();
 
-  // Use-cases cache Ã¢â‚¬â€ used by the API detail panel to render a
+  // Use-cases cache — used by the API detail panel to render a
   // "See it working in use cases" row from each manifest's `apis: [...]`.
   let _useCasesCache = null;
   function loadUseCases() {
@@ -880,7 +881,7 @@ import './features/infoModal.js';
       </button>`;
   }
 
-  // Per-bundle hero visualization Ã¢â‚¬â€ each bundle gets a unique thematic SVG
+  // Per-bundle hero visualization — each bundle gets a unique thematic SVG
   // that summarises what it does at a glance. The bundle's accent colour is
   // inherited via CSS so the artwork tints itself.
   function _bundleHeroVisual(bundleId) {
@@ -899,7 +900,7 @@ import './features/infoModal.js';
                     stroke-dasharray="42 171" stroke-dashoffset="-60" transform="rotate(-90)"/>
             <circle r="34" fill="none" stroke="#ffcb05" stroke-width="10"
                     stroke-dasharray="30 183" stroke-dashoffset="-102" transform="rotate(-90)"/>
-            <text y="4" text-anchor="middle" fill="rgba(255,230,180,0.95)" font-size="11" font-weight="700" font-family="JetBrains Mono, monospace">Ã‚Â£2.4k</text>
+            <text y="4" text-anchor="middle" fill="rgba(255,230,180,0.95)" font-size="11" font-weight="700" font-family="JetBrains Mono, monospace">£2.4k</text>
           </g>
           <text x="73" y="135" text-anchor="middle" fill="rgba(255,180,100,0.6)" font-size="7" font-weight="700" letter-spacing="1">THIS MONTH</text>
           <!-- Insights card -->
@@ -907,12 +908,12 @@ import './features/infoModal.js';
             <rect width="160" height="120" rx="10" fill="#15151a" stroke="currentColor" stroke-width="1" opacity="0.9"/>
             <text x="14" y="20" fill="rgba(255,200,140,0.6)" font-size="7" font-weight="700" letter-spacing="1">CATEGORIES</text>
             <g font-size="8.5" font-family="JetBrains Mono, monospace">
-              <g transform="translate(14 38)"><circle cx="4" cy="-3" r="3" fill="currentColor"/><text x="14" y="0" fill="rgba(255,230,180,0.9)">Groceries</text><text x="140" y="0" text-anchor="end" fill="currentColor" font-weight="700">Ã‚Â£612</text></g>
-              <g transform="translate(14 56)"><circle cx="4" cy="-3" r="3" fill="#f37338"/><text x="14" y="0" fill="rgba(255,230,180,0.9)">Transport</text><text x="140" y="0" text-anchor="end" fill="#f37338" font-weight="700">Ã‚Â£428</text></g>
-              <g transform="translate(14 74)"><circle cx="4" cy="-3" r="3" fill="#ffcb05"/><text x="14" y="0" fill="rgba(255,230,180,0.9)">Dining</text><text x="140" y="0" text-anchor="end" fill="#ffcb05" font-weight="700">Ã‚Â£305</text></g>
+              <g transform="translate(14 38)"><circle cx="4" cy="-3" r="3" fill="currentColor"/><text x="14" y="0" fill="rgba(255,230,180,0.9)">Groceries</text><text x="140" y="0" text-anchor="end" fill="currentColor" font-weight="700">£612</text></g>
+              <g transform="translate(14 56)"><circle cx="4" cy="-3" r="3" fill="#f37338"/><text x="14" y="0" fill="rgba(255,230,180,0.9)">Transport</text><text x="140" y="0" text-anchor="end" fill="#f37338" font-weight="700">£428</text></g>
+              <g transform="translate(14 74)"><circle cx="4" cy="-3" r="3" fill="#ffcb05"/><text x="14" y="0" fill="rgba(255,230,180,0.9)">Dining</text><text x="140" y="0" text-anchor="end" fill="#ffcb05" font-weight="700">£305</text></g>
             </g>
             <rect x="14" y="90" width="132" height="18" rx="5" fill="rgba(255,203,5,0.12)" stroke="rgba(255,203,5,0.35)"/>
-            <text x="80" y="102" text-anchor="middle" fill="#ffcb05" font-size="8" font-weight="700">Budget on track Ã¢Å“â€œ</text>
+            <text x="80" y="102" text-anchor="middle" fill="#ffcb05" font-size="8" font-weight="700">Budget on track ✓</text>
           </g>
         </svg>`,
 
@@ -946,14 +947,14 @@ import './features/infoModal.js';
             <circle cx="20" cy="17" r="9" fill="currentColor" opacity="0.25"/>
             <text x="20" y="20" text-anchor="middle" fill="currentColor" font-size="11" font-weight="700">N</text>
             <text x="36" y="15" fill="rgba(255,230,180,0.92)" font-size="8.5" font-weight="600">Netflix</text>
-            <text x="36" y="26" fill="rgba(255,180,100,0.55)" font-size="6.5" letter-spacing="0.3">Next 26 Jun Ã‚Â· monthly</text>
-            <text x="148" y="20" text-anchor="end" fill="currentColor" font-size="10" font-weight="700" font-family="JetBrains Mono, monospace">Ã‚Â£10.99</text>
+            <text x="36" y="26" fill="rgba(255,180,100,0.55)" font-size="6.5" letter-spacing="0.3">Next 26 Jun · monthly</text>
+            <text x="148" y="20" text-anchor="end" fill="currentColor" font-size="10" font-weight="700" font-family="JetBrains Mono, monospace">£10.99</text>
           </g>
           <g transform="translate(150 90)">
             <rect width="158" height="44" rx="7" fill="rgba(255,203,5,0.08)" stroke="currentColor" stroke-width="1"/>
             <text x="10" y="14" fill="rgba(255,200,140,0.55)" font-size="6.5" font-weight="700" letter-spacing="1">PRICE CHANGE</text>
-            <text x="10" y="28" fill="rgba(255,230,180,0.9)" font-size="8">Spotify Ã‚Â£9.99 Ã¢â€ â€™ Ã‚Â£11.99</text>
-            <text x="148" y="38" text-anchor="end" fill="currentColor" font-size="8" font-weight="700">+Ã‚Â£2.00 / mo</text>
+            <text x="10" y="28" fill="rgba(255,230,180,0.9)" font-size="8">Spotify £9.99 → £11.99</text>
+            <text x="148" y="38" text-anchor="end" fill="currentColor" font-size="8" font-weight="700">+£2.00 / mo</text>
           </g>
         </svg>`,
 
@@ -987,15 +988,15 @@ import './features/infoModal.js';
             <g transform="translate(12 30)">
               <rect width="126" height="22" rx="6" fill="rgba(255,203,5,0.10)" stroke="currentColor" stroke-width="0.8"/>
               <circle cx="13" cy="11" r="6" fill="currentColor" opacity="0.3"/>
-              <text x="13" y="14" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">Ã¢Ëœâ€¦</text>
-              <text x="24" y="14" fill="rgba(255,230,180,0.9)" font-size="7.5">Pret Ã‚Â· 10% off</text>
+              <text x="13" y="14" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">★</text>
+              <text x="24" y="14" fill="rgba(255,230,180,0.9)" font-size="7.5">Pret · 10% off</text>
               <text x="120" y="14" text-anchor="end" fill="currentColor" font-size="6.5" font-weight="700">NEW</text>
             </g>
             <g transform="translate(12 58)">
               <rect width="126" height="22" rx="6" fill="rgba(255,203,5,0.06)" stroke="currentColor" stroke-width="0.8" opacity="0.7"/>
               <circle cx="13" cy="11" r="6" fill="currentColor" opacity="0.2"/>
-              <text x="13" y="14" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">Ã¢Ëœâ€¦</text>
-              <text x="24" y="14" fill="rgba(255,230,180,0.75)" font-size="7.5">BP Ã‚Â· 5p/litre</text>
+              <text x="13" y="14" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">★</text>
+              <text x="24" y="14" fill="rgba(255,230,180,0.75)" font-size="7.5">BP · 5p/litre</text>
             </g>
             <g transform="translate(12 92)" font-size="7" font-family="JetBrains Mono, monospace">
               <text fill="rgba(255,180,100,0.55)">Eligible offers</text>
@@ -1028,7 +1029,7 @@ import './features/infoModal.js';
             <rect width="122" height="120" rx="8" fill="#15151a" stroke="currentColor" stroke-width="1.4"/>
             <g transform="translate(10 14)">
               <rect width="22" height="22" rx="6" fill="currentColor"/>
-              <text x="11" y="16" text-anchor="middle" fill="#0a0a0a" font-size="13" font-weight="800">Ã¢Ëœâ€¢</text>
+              <text x="11" y="16" text-anchor="middle" fill="#0a0a0a" font-size="13" font-weight="800">☕</text>
             </g>
             <text x="38" y="22" fill="rgba(255,230,180,0.95)" font-size="9.5" font-weight="700">Acme Coffee</text>
             <text x="38" y="33" fill="rgba(255,200,140,0.55)" font-size="6.5" letter-spacing="0.2">COFFEE SHOPS</text>
@@ -1037,7 +1038,7 @@ import './features/infoModal.js';
               <g transform="translate(10 60)"><text fill="rgba(255,180,100,0.55)">MCC</text><text x="104" text-anchor="end" fill="rgba(255,230,180,0.85)">5814</text></g>
               <g transform="translate(10 74)"><text fill="rgba(255,180,100,0.55)">Brand</text><text x="104" text-anchor="end" fill="rgba(255,230,180,0.85)">Acme</text></g>
               <g transform="translate(10 88)"><text fill="rgba(255,180,100,0.55)">Postcode</text><text x="104" text-anchor="end" fill="rgba(255,230,180,0.85)">EC2A 4DP</text></g>
-              <g transform="translate(10 102)"><text fill="rgba(255,180,100,0.55)">Logo</text><text x="104" text-anchor="end" fill="currentColor" font-weight="700">Ã¢Å“â€œ</text></g>
+              <g transform="translate(10 102)"><text fill="rgba(255,180,100,0.55)">Logo</text><text x="104" text-anchor="end" fill="currentColor" font-weight="700">✓</text></g>
             </g>
           </g>
         </svg>`,
@@ -1059,7 +1060,7 @@ import './features/infoModal.js';
             <line x1="16" y1="34" x2="38" y2="34" stroke="#0a0a0e" stroke-width="0.6"/>
             <line x1="27" y1="22" x2="27" y2="40" stroke="#0a0a0e" stroke-width="0.6"/>
             <!-- Number -->
-            <text x="16" y="64" fill="rgba(255,230,180,0.9)" font-size="11" font-weight="700" font-family="JetBrains Mono, monospace" letter-spacing="2">5412 Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢</text>
+            <text x="16" y="64" fill="rgba(255,230,180,0.9)" font-size="11" font-weight="700" font-family="JetBrains Mono, monospace" letter-spacing="2">5412 ••••</text>
             <text x="16" y="80" fill="rgba(255,180,100,0.55)" font-size="6.5" letter-spacing="1.5">CARDHOLDER</text>
             <text x="16" y="90" fill="rgba(255,230,180,0.85)" font-size="8" font-weight="600">ALEX MORGAN</text>
             <!-- Mastercard circles -->
@@ -1075,19 +1076,19 @@ import './features/infoModal.js';
           <g transform="translate(204 22)">
             <rect width="106" height="22" rx="6" fill="rgba(255,203,5,0.10)" stroke="currentColor" stroke-width="0.8"/>
             <circle cx="13" cy="11" r="6" fill="currentColor" opacity="0.25"/>
-            <text x="13" y="14" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">Ã¢Å“â€œ</text>
+            <text x="13" y="14" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">✓</text>
             <text x="24" y="14" fill="rgba(255,230,180,0.9)" font-size="7.5">Travel insurance</text>
           </g>
           <g transform="translate(204 50)">
             <rect width="106" height="22" rx="6" fill="rgba(255,203,5,0.10)" stroke="currentColor" stroke-width="0.8"/>
             <circle cx="13" cy="11" r="6" fill="currentColor" opacity="0.25"/>
-            <text x="13" y="14" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">Ã¢Å“â€œ</text>
+            <text x="13" y="14" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">✓</text>
             <text x="24" y="14" fill="rgba(255,230,180,0.9)" font-size="7.5">Purchase cover</text>
           </g>
           <g transform="translate(204 78)">
             <rect width="106" height="22" rx="6" fill="rgba(255,203,5,0.10)" stroke="currentColor" stroke-width="0.8"/>
             <circle cx="13" cy="11" r="6" fill="currentColor" opacity="0.25"/>
-            <text x="13" y="14" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">Ã¢Å“â€œ</text>
+            <text x="13" y="14" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">✓</text>
             <text x="24" y="14" fill="rgba(255,230,180,0.9)" font-size="7.5">Lounge access</text>
           </g>
           <g transform="translate(204 110)">
@@ -1120,19 +1121,19 @@ import './features/infoModal.js';
             <g transform="translate(0 70)" font-family="JetBrains Mono, monospace" font-size="7.5">
               <rect width="160" height="20" rx="5" fill="rgba(120,200,140,0.08)" stroke="rgba(120,200,140,0.4)" stroke-width="0.6"/>
               <circle cx="10" cy="10" r="3" fill="rgba(120,200,140,0.95)"/>
-              <text x="20" y="13" fill="rgba(255,230,180,0.85)">Ã‚Â£42.10 Fuel</text>
+              <text x="20" y="13" fill="rgba(255,230,180,0.85)">£42.10 Fuel</text>
               <text x="152" y="13" text-anchor="end" fill="rgba(120,200,140,0.95)" font-weight="700">OK</text>
             </g>
             <g transform="translate(0 94)" font-family="JetBrains Mono, monospace" font-size="7.5">
               <rect width="160" height="20" rx="5" fill="rgba(255,90,90,0.10)" stroke="currentColor" stroke-width="0.6"/>
               <circle cx="10" cy="10" r="3" fill="currentColor"/>
-              <text x="20" y="13" fill="rgba(255,230,180,0.85)">Ã‚Â£2,990 Crypto</text>
+              <text x="20" y="13" fill="rgba(255,230,180,0.85)">£2,990 Crypto</text>
               <text x="152" y="13" text-anchor="end" fill="currentColor" font-weight="700">BLOCKED</text>
             </g>
             <g transform="translate(0 118)" font-family="JetBrains Mono, monospace" font-size="7.5">
               <rect width="160" height="20" rx="5" fill="rgba(255,203,5,0.08)" stroke="rgba(255,203,5,0.45)" stroke-width="0.6"/>
               <circle cx="10" cy="10" r="3" fill="#ffcb05"/>
-              <text x="20" y="13" fill="rgba(255,230,180,0.85)">Ã‚Â£780 Online</text>
+              <text x="20" y="13" fill="rgba(255,230,180,0.85)">£780 Online</text>
               <text x="152" y="13" text-anchor="end" fill="#ffcb05" font-weight="700">REVIEW</text>
             </g>
           </g>
@@ -1147,7 +1148,7 @@ import './features/infoModal.js';
             <path d="M 8 100 C 40 70 70 50 100 22" fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"/>
             <path d="M 18 96 C 30 90 38 88 46 88 M 32 84 C 44 78 52 76 62 76 M 50 70 C 60 64 70 62 80 62" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.5"/>
             <circle cx="55" cy="60" r="14" fill="#0a0a0a" stroke="currentColor" stroke-width="1"/>
-            <text x="55" y="58" text-anchor="middle" fill="currentColor" font-size="11" font-weight="800" font-family="JetBrains Mono, monospace">COÃ¢â€šâ€š</text>
+            <text x="55" y="58" text-anchor="middle" fill="currentColor" font-size="11" font-weight="800" font-family="JetBrains Mono, monospace">CO₂</text>
             <text x="55" y="68" text-anchor="middle" fill="rgba(255,230,180,0.7)" font-size="6" font-weight="600">tracked</text>
           </g>
           <!-- Footprint card -->
@@ -1155,8 +1156,8 @@ import './features/infoModal.js';
             <rect width="138" height="116" rx="10" fill="#15151a" stroke="currentColor" stroke-width="1" opacity="0.9"/>
             <text x="12" y="18" fill="rgba(180,230,200,0.6)" font-size="7" font-weight="700" letter-spacing="1">YOUR FOOTPRINT</text>
             <text x="12" y="38" fill="currentColor" font-size="20" font-weight="800" font-family="JetBrains Mono, monospace">82.4</text>
-            <text x="58" y="38" fill="rgba(255,230,180,0.7)" font-size="9">kg COÃ¢â€šâ€še</text>
-            <text x="12" y="50" fill="rgba(180,230,200,0.5)" font-size="7">vs 91.2 last month Ã‚Â· Ã¢â€ â€œ 10%</text>
+            <text x="58" y="38" fill="rgba(255,230,180,0.7)" font-size="9">kg CO₂e</text>
+            <text x="12" y="50" fill="rgba(180,230,200,0.5)" font-size="7">vs 91.2 last month · ↓ 10%</text>
             <!-- Trending bars -->
             <g transform="translate(12 62)">
               ${[55,62,48,70,58,46,38].map((h,i)=>`<rect x="${i*18}" y="${44-h*0.6}" width="12" height="${h*0.6}" rx="2" fill="currentColor" opacity="${0.4 + i*0.08}"/>`).join('')}
@@ -1199,7 +1200,7 @@ import './features/infoModal.js';
     (bundle.apis || []).forEach((a) => { byId[a.id] = a; });
 
     const valueProps = (bundle.value_props || []).map((v) =>
-      `<li class="bundle-value-prop"><span class="bundle-value-tick">Ã¢Å“â€œ</span>${escapeHtml(v)}</li>`
+      `<li class="bundle-value-prop"><span class="bundle-value-tick">✓</span>${escapeHtml(v)}</li>`
     ).join('');
 
     const journey = (bundle.journey || [])
@@ -1229,10 +1230,10 @@ import './features/infoModal.js';
       const blocked = _isNonUsBlockedUseCaseById(uc.id);
       const cls = 'bundle-use-case-chip' + (blocked ? ' blocked' : '');
       const title = blocked
-        ? `${uc.name} Ã¢â‚¬â€ not available in your region`
+        ? `${uc.name} — not available in your region`
         : `Open ${uc.name}`;
       return `<button class="${cls}" data-bundle-use-case="${escapeHtml(uc.id)}" title="${escapeHtml(title)}"${blocked ? ' disabled' : ''}>
-        <span class="bundle-use-case-chip-arrow" aria-hidden="true">Ã¢â€ â€™</span>${escapeHtml(uc.name)}
+        <span class="bundle-use-case-chip-arrow" aria-hidden="true">→</span>${escapeHtml(uc.name)}
       </button>`;
     }).join('');
 
@@ -1385,792 +1386,6 @@ import './features/infoModal.js';
   const _bundleAboutBtn = document.getElementById('bundle-about-btn');
   if (_bundleAboutBtn) _bundleAboutBtn.addEventListener('click', showBundleAbout);
 
-  /* ============ Global Open Finance SDK panel ============ */
-  const SDK_BANKS = {
-    us: { name: 'First Platypus Bank', host: 'connect2.finicity.com', initial: 'P', accent: '#eb001b' },
-    au: { name: 'Regional Australia Bank', host: 'connect.openbanking.mastercard.com.au', initial: 'R', accent: '#00843d' },
-    eu: { name: 'Nordea', host: 'connect.openbanking.mastercard.eu', initial: 'N', accent: '#2d6cdf' },
-  };
-  const SDK_SCRIPTS = {
-    us: [
-      { cmd: 'ofin us auth token', out: [
-        ['ok', 'Ã¢â€”Â 200  HTTP status'],
-        ['dim', '{'],
-        ['key', '  "token": "g3gT34fZtZ...",'],
-        ['dim', '  "message": "Token created successfully"'],
-        ['dim', '}'],
-      ] },
-      { cmd: 'ofin us customers add-testing --username demo1', out: [
-        ['ok', 'Ã¢â€”Â 201  HTTP status'],
-        ['dim', 'saved: customer_id=9021936662'],
-      ] },
-      { cmd: 'ofin us connect generate --open', out: [
-        ['ok', 'Ã¢â€”Â 200  HTTP status'],
-        ['key', '  link Ã¢â€ â€™ https://connect2.finicity.com/?ticket=a1b2c3'],
-        ['dim', 'Ã¢â€ â€” opening secure bank loginÃ¢â‚¬Â¦'],
-      ], bank: true },
-      { cmd: 'ofin us transactions list --from-date 1748649600 --to-date 1749513600', out: [
-        ['ok', 'Ã¢â€”Â 200  HTTP status'],
-        ['dim', '{ "transactions": ['],
-        ['dim', '  {'],
-        ['key', '    "id": 8645213782,'],
-        ['dim', '    "amount": -42.18,'],
-        ['dim', '    "accountId": 7045123456,'],
-        ['dim', '    "description": "BLUE BOTTLE COFFEE",'],
-        ['dim', '    "status": "active",'],
-        ['dim', '    "postedDate": 1749081600,'],
-        ['dim', '    "transactionDate": 1748995200,'],
-        ['dim', '    "categorization": { "category": "Restaurants" }'],
-        ['dim', '  },'],
-        ['key', '    "id": 8645213655,'],
-        ['dim', '    "amount": 2350.00,  "description": "PAYROLL DEPOSIT" Ã¢â‚¬Â¦'],
-        ['dim', '] }  (32 transactions)'],
-      ] },
-    ],
-    au: [
-      { cmd: 'ofin au auth token', out: [
-        ['ok', 'Ã¢â€”Â 200  HTTP status'],
-        ['dim', '{'],
-        ['key', '  "token": "q5HmLWuu7u...",'],
-        ['dim', '  "message": "Token created successfully"'],
-        ['dim', '}'],
-      ] },
-      { cmd: 'ofin au connect generate --open', out: [
-        ['ok', 'Ã¢â€”Â 200  HTTP status'],
-        ['key', '  link Ã¢â€ â€™ https://connect.openbanking.mastercard.com.au/?id=9f2a'],
-        ['dim', 'Ã¢â€ â€” opening secure bank loginÃ¢â‚¬Â¦'],
-      ], bank: true },
-      { cmd: 'ofin au transactions list', out: [
-        ['ok', 'Ã¢â€”Â 200  HTTP status'],
-        ['dim', '{ "data": { "transactions": ['],
-        ['dim', '  {'],
-        ['key', '    "transactionId": "4f9c1a7e-22b0-4f6a-9d1e-7c8b",'],
-        ['dim', '    "accountId": "0a3f8d21-5e44-4b9c-aa12",'],
-        ['dim', '    "type": "PAYMENT",  "status": "POSTED",'],
-        ['dim', '    "description": "WOOLWORTHS 1234 SYDNEY",'],
-        ['dim', '    "postingDateTime": "2026-06-10T08:14:22Z",'],
-        ['dim', '    "amount": "-58.40",  "currency": "AUD"'],
-        ['dim', '  },'],
-        ['key', '    "amount": "-12.90",  "description": "OPAL TRANSPORT" Ã¢â‚¬Â¦'],
-        ['dim', '] } }  (18 transactions)'],
-      ] },
-    ],
-    eu: [
-      { cmd: 'ofin eu auth token', out: [
-        ['ok', 'Ã¢â€”Â 200  HTTP status'],
-        ['dim', '{'],
-        ['key', '  "access_token": "eyJhbGciOiJS...",'],
-        ['dim', '  "token_type": "bearer",'],
-        ['dim', '  "message": "Token created successfully"'],
-        ['dim', '}'],
-      ] },
-      { cmd: 'ofin eu flow create --open', out: [
-        ['ok', 'Ã¢â€”Â 200  HTTP status'],
-        ['key', '  flowUrl Ã¢â€ â€™ https://connect.openbanking.mastercard.eu/?flow=7c1d'],
-        ['dim', 'Ã¢â€ â€” opening secure bank loginÃ¢â‚¬Â¦'],
-      ], bank: true },
-      { cmd: 'ofin eu transactions list', out: [
-        ['ok', 'Ã¢â€”Â 200  HTTP status'],
-        ['dim', '{ "transactions": ['],
-        ['dim', '  {'],
-        ['key', '    "id": "f1e2d3c4-9a8b-4c7d-8e6f",'],
-        ['dim', '    "date": "2026-06-10",'],
-        ['dim', '    "text": "Netto Supermarked",'],
-        ['dim', '    "amount": -124.50,  "currency": "DKK",'],
-        ['dim', '    "type": "Debit",  "state": "Booked"'],
-        ['dim', '  },'],
-        ['key', '    "amount": 18500.00,  "text": "LÃƒËœN Ã¢â‚¬â€ SALARY" Ã¢â‚¬Â¦'],
-        ['dim', '] }  (24 transactions)'],
-      ] },
-    ],
-  };
-  // "All commands" lists the full operation catalog spanning all three
-  // continents Ã¢â‚¬â€ exactly what `ofin ops` prints (US + AU + EU).
-  SDK_SCRIPTS.all = [
-    { cmd: 'ofin ops', out: [
-      ['dim', 'Open Finance Ã¢â‚¬â€ all operations across 3 continents'],
-      ['dim', ''],
-      ['ok', 'Ã°Å¸â€¡ÂºÃ°Å¸â€¡Â¸  UNITED STATES  (Finicity)'],
-      ['key', '  ofin us auth token'],
-      ['key', '  ofin us customers add-testing --username demo1'],
-      ['key', '  ofin us customers list [--search foo] [--limit 25]'],
-      ['key', '  ofin us customers get [--customer-id ID]'],
-      ['key', '  ofin us customers use <CUSTOMER_ID>'],
-      ['key', '  ofin us connect generate [--customer-id ID] [--experience EXP] [--open]'],
-      ['key', '  ofin us accounts list [--customer-id ID]'],
-      ['key', '  ofin us accounts refresh [--customer-id ID]'],
-      ['key', '  ofin us balance [--customer-id ID] [--account-id ID]'],
-      ['key', '  ofin us transactions list --from-date <epoch> --to-date <epoch> [--limit N]'],
-      ['key', '  ofin us reports voa [--account-ids a,b]'],
-      ['key', '  ofin us reports voi [--account-ids a,b]'],
-      ['dim', ''],
-      ['ok', 'Ã°Å¸â€¡Â¦Ã°Å¸â€¡Âº  AUSTRALIA  (CDR)'],
-      ['key', '  ofin au auth token'],
-      ['key', '  ofin au customers add-testing --username demo1'],
-      ['key', '  ofin au customers list'],
-      ['key', '  ofin au institutions list [--search foo]'],
-      ['key', '  ofin au connect generate [--customer-id ID] [--webhook-url URL] [--open]'],
-      ['key', '  ofin au consents list [--customer-id ID] [--status ACTIVE]'],
-      ['key', '  ofin au accounts list [--customer-id ID] [--consent-receipt-id ID]'],
-      ['dim', ''],
-      ['ok', 'Ã°Å¸â€¡ÂªÃ°Å¸â€¡Âº  EUROPE  (Aiia)'],
-      ['key', '  ofin eu auth token'],
-      ['key', '  ofin eu providers list [--country DK] [--limit 25]'],
-      ['key', '  ofin eu consent create --email you@example.com [--use-case-id ID] [--end-user-id ID]'],
-      ['key', '  ofin eu consent get [--consent-id ID]'],
-      ['key', '  ofin eu consent revoke [--consent-id ID] --yes'],
-      ['key', '  ofin eu flow create [--consent-id ID] [--end-user-id ID] [--provider-id ID] [--open]'],
-      ['key', '  ofin eu accounts list [--consent-id ID]'],
-      ['key', '  ofin eu account get [--account-id ID] [--consent-id ID]'],
-      ['key', '  ofin eu transactions list [--account-id ID] [--consent-id ID] [--from-date D] [--to-date D]'],
-      ['key', '  ofin eu balance [--account-id ID] [--consent-id ID] [--max-age PT0S]'],
-      ['key', '  ofin eu verify-ownership --customer-name "Jane Doe" [--account-ids a,b]'],
-      ['dim', ''],
-      ['dim', '30 operations Ã‚Â· 3 regions Ã‚Â· one consistent tool'],
-    ] },
-  ];
-
-  function _sdkMakeBank() {
-    const screen = document.getElementById('sdk-bank-screen');
-    const urlEl = document.getElementById('sdk-bank-url');
-    const wrap = document.getElementById('sdk-bank');
-    let timers = [];
-    function clear() { timers.forEach((t) => clearTimeout(t)); timers = []; }
-    function wait(ms) { return new Promise((res) => { timers.push(setTimeout(res, ms)); }); }
-
-    function reset(region) {
-      clear();
-      const b = SDK_BANKS[region] || SDK_BANKS.us;
-      if (urlEl) urlEl.textContent = b.host;
-      if (wrap) wrap.classList.remove('sdk-bank--live');
-      if (screen) {
-        screen.innerHTML =
-          '<div class="sdk-bank-idle">' +
-            '<div class="sdk-bank-idle-icon">Ã°Å¸ÂÂ¦</div>' +
-            '<p>Generate a Connect URL to launch the secure bank login</p>' +
-          '</div>';
-      }
-    }
-
-    async function launch(region) {
-      const b = SDK_BANKS[region] || SDK_BANKS.us;
-      if (!screen) return;
-      clear();
-      if (wrap) wrap.classList.add('sdk-bank--live');
-      if (urlEl) urlEl.textContent = b.host + '/?session=' + Math.random().toString(16).slice(2, 8);
-
-      // 1) loading spinner
-      screen.innerHTML = '<div class="sdk-bank-loading"><span class="sdk-bank-spinner"></span><p>Connecting to ' + b.name + 'Ã¢â‚¬Â¦</p></div>';
-      await wait(900);
-
-      // 2) login form
-      screen.innerHTML =
-        '<div class="sdk-bank-login" style="--bank-accent:' + b.accent + ';">' +
-          '<div class="sdk-bank-brand"><span class="sdk-bank-logo">' + b.initial + '</span><span class="sdk-bank-name">' + b.name + '</span></div>' +
-          '<div class="sdk-bank-secure">Ã°Å¸â€â€™ Secured by Mastercard Open Banking</div>' +
-          '<label class="sdk-bank-field"><span>Username</span><div class="sdk-bank-input" id="sdk-bank-user"></div></label>' +
-          '<label class="sdk-bank-field"><span>Password</span><div class="sdk-bank-input" id="sdk-bank-pass"></div></label>' +
-          '<button class="sdk-bank-btn" id="sdk-bank-btn">Log in</button>' +
-        '</div>';
-      await wait(420);
-
-      const userEl = document.getElementById('sdk-bank-user');
-      const passEl = document.getElementById('sdk-bank-pass');
-      async function typeInto(el, text, mask) {
-        if (!el) return;
-        el.classList.add('typing');
-        for (let i = 0; i < text.length; i++) {
-          el.textContent = mask ? 'Ã¢â‚¬Â¢'.repeat(i + 1) : text.slice(0, i + 1);
-          await wait(70 + Math.random() * 60);
-        }
-        el.classList.remove('typing');
-      }
-      await typeInto(userEl, 'demo.user', false);
-      await wait(180);
-      await typeInto(passEl, 'open-finance', true);
-      await wait(360);
-
-      // 3) submit Ã¢â€ â€™ authorising
-      const btn = document.getElementById('sdk-bank-btn');
-      if (btn) btn.classList.add('pressed');
-      await wait(500);
-      screen.innerHTML = '<div class="sdk-bank-loading"><span class="sdk-bank-spinner"></span><p>Authorising accessÃ¢â‚¬Â¦</p></div>';
-      await wait(1000);
-
-      // 4) consent granted Ã¢â‚¬â€ success is always green (never the region accent)
-      screen.innerHTML =
-        '<div class="sdk-bank-done">' +
-          '<div class="sdk-bank-check">Ã¢Å“â€œ</div>' +
-          '<h4>Consent granted</h4>' +
-          '<p>' + b.name + ' securely shared the selected accounts.</p>' +
-          '<div class="sdk-bank-redirect">Ã¢â€ Â© returning to your appÃ¢â‚¬Â¦</div>' +
-        '</div>';
-      await wait(900);
-    }
-
-    return { reset, launch, stop: clear };
-  }
-
-  function _sdkMakeDemo() {
-    const body = document.getElementById('sdk-terminal-body');
-    const bank = _sdkMakeBank();
-    let region = 'us';
-    let timers = [];
-    let running = false;
-
-    function clearTimers() { timers.forEach((t) => clearTimeout(t)); timers = []; }
-    function wait(ms) { return new Promise((res) => { timers.push(setTimeout(res, ms)); }); }
-
-    function addLine(cls, text) {
-      const div = document.createElement('div');
-      div.className = 'sdk-line ' + (cls ? 'sdk-line-' + cls : '');
-      div.textContent = text;
-      body.appendChild(div);
-      body.scrollTop = body.scrollHeight;
-      return div;
-    }
-
-    async function typeCmd(text) {
-      const line = document.createElement('div');
-      line.className = 'sdk-line';
-      const prompt = document.createElement('span');
-      prompt.className = 'sdk-line-prompt';
-      prompt.innerHTML = '<span class="sdk-region-mark">' + region + '</span>:~$ ';
-      const cmd = document.createElement('span');
-      cmd.className = 'sdk-line-cmd';
-      const caret = document.createElement('span');
-      caret.className = 'sdk-caret';
-      line.appendChild(prompt); line.appendChild(cmd); line.appendChild(caret);
-      body.appendChild(line);
-      body.scrollTop = body.scrollHeight;
-      for (let i = 0; i < text.length; i++) {
-        if (!running) return;
-        cmd.textContent += text[i];
-        await wait(28 + Math.random() * 40);
-      }
-      caret.remove();
-    }
-
-    async function run() {
-      running = true;
-      clearTimers();
-      bank.stop();
-      bank.reset(region);
-      body.innerHTML = '';
-      const script = SDK_SCRIPTS[region] || [];
-      await wait(250);
-      for (const step of script) {
-        if (!running) return;
-        await typeCmd(step.cmd);
-        await wait(360);
-        for (const ln of step.out) {
-          if (!running) return;
-          if (Array.isArray(ln)) addLine(ln[0], ln[1]);
-          await wait(120);
-        }
-        if (step.bank && running) {
-          await bank.launch(region);
-        }
-        if (!running) return;
-        await wait(720);
-      }
-      // Final idle prompt with blinking caret.
-      const line = document.createElement('div');
-      line.className = 'sdk-line';
-      line.innerHTML = '<span class="sdk-line-prompt"><span class="sdk-region-mark">' +
-        region + '</span>:~$ </span><span class="sdk-caret"></span>';
-      body.appendChild(line);
-      body.scrollTop = body.scrollHeight;
-      running = false;
-    }
-
-    return {
-      setRegion(r) { if (SDK_SCRIPTS[r]) { region = r; this.replay(); } },
-      replay() { running = false; clearTimers(); bank.stop(); requestAnimationFrame(() => run()); },
-      stop() { running = false; clearTimers(); bank.stop(); },
-    };
-  }
-
-  // Looping "watch it run" visualization for the SDK code section.
-  function _sdkMakeRunViz() {
-    const statusEl = document.getElementById('sdk-result-status');
-    const bodyEl = document.getElementById('sdk-result-body');
-    if (!statusEl || !bodyEl) return { start() {}, stop() {} };
-    let timers = [];
-    let running = false;
-    function clear() { timers.forEach((t) => clearTimeout(t)); timers = []; }
-    function wait(ms) { return new Promise((res) => { timers.push(setTimeout(res, ms)); }); }
-
-    async function loop() {
-      running = true;
-      while (running) {
-        statusEl.className = 'sdk-result-status';
-        statusEl.textContent = 'idle';
-        bodyEl.innerHTML = '<div class="sdk-result-row" style="color:var(--sdk-muted)">client.us.get_token() Ã‚Â· au.get_token() Ã‚Â· eu.get_token()</div>';
-        await wait(950); if (!running) return;
-
-        statusEl.className = 'sdk-result-status running';
-        statusEl.textContent = 'running';
-        bodyEl.innerHTML = '<div class="sdk-result-row"><span class="sdk-result-spinner"></span>authenticating across 3 continentsÃ¢â‚¬Â¦</div>';
-        await wait(1150); if (!running) return;
-
-        statusEl.className = 'sdk-result-status ok';
-        statusEl.textContent = '200 ok';
-        const rows = [
-          '<span class="sdk-r-str">Ã°Å¸â€¡ÂºÃ°Å¸â€¡Â¸ us</span>  <span class="sdk-r-key">ok</span>=<span class="sdk-r-true">True</span>  <span class="sdk-r-key">status</span>=<span class="sdk-r-num">200</span>  <span class="sdk-r-str">"g3gT34fZtZÃ¢â‚¬Â¦"</span>',
-          '<span class="sdk-r-str">Ã°Å¸â€¡Â¦Ã°Å¸â€¡Âº au</span>  <span class="sdk-r-key">ok</span>=<span class="sdk-r-true">True</span>  <span class="sdk-r-key">status</span>=<span class="sdk-r-num">200</span>  <span class="sdk-r-str">"q5HmLWuu7uÃ¢â‚¬Â¦"</span>',
-          '<span class="sdk-r-str">Ã°Å¸â€¡ÂªÃ°Å¸â€¡Âº eu</span>  <span class="sdk-r-key">ok</span>=<span class="sdk-r-true">True</span>  <span class="sdk-r-key">status</span>=<span class="sdk-r-num">200</span>  <span class="sdk-r-str">"eyJhbGciOiJSÃ¢â‚¬Â¦"</span>',
-          '',
-          '<span class="sdk-r-key">Ã¢â€ â€™ one client, three continents, zero glue code</span>',
-        ];
-        bodyEl.innerHTML = '';
-        rows.forEach((html, i) => {
-          const d = document.createElement('div');
-          d.className = 'sdk-result-row';
-          d.style.animationDelay = (i * 60) + 'ms';
-          d.innerHTML = html;
-          bodyEl.appendChild(d);
-        });
-        await wait(3400); if (!running) return;
-      }
-    }
-    return {
-      start() { if (running) return; clear(); loop(); },
-      stop() { running = false; clear(); },
-    };
-  }
-
-  let _sdkInited = false;
-  function _initSdkDemo() {
-    // Reflect Open Finance config status on region chips + pins.
-    const statusByRegion = {
-      us: (APIS.find((a) => a.id === 'open_finance') || {}).configured,
-      au: (APIS.find((a) => a.id === 'open_finance_au') || {}).configured,
-      eu: (APIS.find((a) => a.id === 'open_finance_eu') || {}).configured,
-    };
-    Object.keys(statusByRegion).forEach((r) => {
-      const chip = document.querySelector('[data-sdk-status="' + r + '"]');
-      if (chip) {
-        chip.classList.toggle('ok', !!statusByRegion[r]);
-        chip.classList.toggle('off', !statusByRegion[r]);
-        chip.title = statusByRegion[r] ? 'Configured' : 'Not configured';
-      }
-    });
-
-    if (!window.__sdkDemo) window.__sdkDemo = _sdkMakeDemo();
-    if (!_sdkInited) {
-      _sdkInited = true;
-      function setActiveRegion(r) {
-        document.querySelectorAll('.sdk-cli-tab').forEach((t) =>
-          t.classList.toggle('active', t.dataset.sdkRegion === r));
-        if (window.__sdkGlobe) window.__sdkGlobe.setRegion(r);
-        window.__sdkDemo.setRegion(r);
-      }
-      document.querySelectorAll('.sdk-cli-tab').forEach((el) => {
-        el.addEventListener('click', () => setActiveRegion(el.dataset.sdkRegion));
-      });
-      // Region card API links Ã¢â€ â€™ open that API in the APIs tab.
-      document.querySelectorAll('[data-sdk-api]').forEach((el) => {
-        el.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const apisTab = document.querySelector('.top-tab[data-top-tab="apis"]');
-          if (apisTab) apisTab.click();
-          setTimeout(() => {
-            const btn = document.querySelector(`[data-api-id="${el.dataset.sdkApi}"]`);
-            if (btn) btn.click();
-          }, 0);
-        });
-      });
-      // Region card CLI links Ã¢â€ â€™ scroll to the CLI section and focus that region.
-      document.querySelectorAll('[data-sdk-cli]').forEach((el) => {
-        el.addEventListener('click', (e) => {
-          e.stopPropagation();
-          setActiveRegion(el.dataset.sdkCli);
-          const target = document.getElementById('sdk-cli');
-          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-      });
-      const replay = document.getElementById('sdk-terminal-replay');
-      if (replay) replay.addEventListener('click', () => window.__sdkDemo.replay());
-      const codeRun = document.getElementById('sdk-code-run');
-      if (codeRun) codeRun.addEventListener('click', () => {
-        const original = 'Ã¢â€“Â¶ Run Code';
-        codeRun.disabled = true;
-        codeRun.textContent = 'LaunchingÃ¢â‚¬Â¦';
-        codeRun.classList.remove('sdk-code-run--ok', 'sdk-code-run--err');
-        _nativeFetch('/sdk/run', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
-        })
-          .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
-          .then(({ ok, d }) => {
-            codeRun.disabled = false;
-            if (!ok || d.error) {
-              codeRun.textContent = 'Failed';
-              codeRun.classList.add('sdk-code-run--err');
-              alert('Could not launch terminal: ' + (d.error || 'unknown error'));
-            } else {
-              codeRun.textContent = 'Launched Ã¢Å“â€œ';
-              codeRun.classList.add('sdk-code-run--ok');
-            }
-            setTimeout(() => {
-              codeRun.textContent = original;
-              codeRun.classList.remove('sdk-code-run--ok', 'sdk-code-run--err');
-            }, 2400);
-          })
-          .catch((err) => {
-            codeRun.disabled = false;
-            codeRun.textContent = original;
-            alert('Could not launch terminal: ' + (err && err.message || err));
-          });
-      });
-      document.querySelectorAll('[data-sdk-scroll]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const target = document.getElementById(btn.dataset.sdkScroll);
-          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-      });
-    }
-    const _initialTab = document.querySelector('.sdk-cli-tab.active');
-    const _initialRegion = _initialTab ? _initialTab.dataset.sdkRegion : 'us';
-    if (window.__sdkGlobe) window.__sdkGlobe.setRegion(_initialRegion);
-    window.__sdkDemo.setRegion(_initialRegion);
-    if (!window.__sdkRunViz) window.__sdkRunViz = _sdkMakeRunViz();
-    window.__sdkRunViz.start();
-  }
-
-  // ---------------------------------------------------------------------
-  // Live Demo Ã¢â‚¬â€ real Open Finance bank linking (admin + customer app)
-  // ---------------------------------------------------------------------
-  let _liveDemoInited = false;
-  // Inline SVG flags Ã¢â‚¬â€ regional-indicator emoji don't render as flags on
-  // Windows (they show as "US"/"AU"/"EU" letters), so we draw them ourselves.
-  const LD_FLAG_SVG = {
-    us: '<svg class="ld-flag-svg" viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-        '<rect width="30" height="20" fill="#fff"/>' +
-        '<g fill="#b22234">' +
-        '<rect width="30" height="1.54" y="0"/><rect width="30" height="1.54" y="3.08"/>' +
-        '<rect width="30" height="1.54" y="6.15"/><rect width="30" height="1.54" y="9.23"/>' +
-        '<rect width="30" height="1.54" y="12.31"/><rect width="30" height="1.54" y="15.38"/>' +
-        '<rect width="30" height="1.54" y="18.46"/></g>' +
-        '<rect width="13" height="10.77" fill="#3c3b6e"/>' +
-        '<g fill="#fff">' +
-        '<circle cx="2.2" cy="2" r="0.7"/><circle cx="5.2" cy="2" r="0.7"/><circle cx="8.2" cy="2" r="0.7"/><circle cx="11.2" cy="2" r="0.7"/>' +
-        '<circle cx="3.7" cy="4" r="0.7"/><circle cx="6.7" cy="4" r="0.7"/><circle cx="9.7" cy="4" r="0.7"/>' +
-        '<circle cx="2.2" cy="6" r="0.7"/><circle cx="5.2" cy="6" r="0.7"/><circle cx="8.2" cy="6" r="0.7"/><circle cx="11.2" cy="6" r="0.7"/>' +
-        '<circle cx="3.7" cy="8" r="0.7"/><circle cx="6.7" cy="8" r="0.7"/><circle cx="9.7" cy="8" r="0.7"/></g>' +
-        '</svg>',
-    au: '<svg class="ld-flag-svg" viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-        '<rect width="30" height="20" fill="#00247d"/>' +
-        '<g><path d="M0 0L12 8M12 0L0 8" stroke="#fff" stroke-width="1.8"/>' +
-        '<path d="M0 0L12 8M12 0L0 8" stroke="#cf142b" stroke-width="0.8"/>' +
-        '<rect x="5.1" width="1.8" height="8" fill="#fff"/><rect y="3.1" width="12" height="1.8" fill="#fff"/>' +
-        '<rect x="5.5" width="1" height="8" fill="#cf142b"/><rect y="3.5" width="12" height="1" fill="#cf142b"/></g>' +
-        '<g fill="#fff">' +
-        '<circle cx="6" cy="14.5" r="1.6"/>' +
-        '<circle cx="22" cy="4" r="0.9"/><circle cx="26" cy="8" r="0.9"/><circle cx="22" cy="12" r="0.9"/>' +
-        '<circle cx="18.5" cy="8.5" r="0.7"/><circle cx="24" cy="16" r="0.8"/></g>' +
-        '</svg>',
-    eu: '<svg class="ld-flag-svg" viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-        '<rect width="30" height="20" fill="#003399"/>' +
-        '<g fill="#ffcc00">' +
-        '<circle cx="15" cy="4" r="1"/><circle cx="18" cy="4.8" r="1"/><circle cx="20.2" cy="7" r="1"/>' +
-        '<circle cx="21" cy="10" r="1"/><circle cx="20.2" cy="13" r="1"/><circle cx="18" cy="15.2" r="1"/>' +
-        '<circle cx="15" cy="16" r="1"/><circle cx="12" cy="15.2" r="1"/><circle cx="9.8" cy="13" r="1"/>' +
-        '<circle cx="9" cy="10" r="1"/><circle cx="9.8" cy="7" r="1"/><circle cx="12" cy="4.8" r="1"/></g>' +
-        '</svg>',
-  };
-  const LD_REGION_META = {
-    us: { flag: LD_FLAG_SVG.us, name: 'United States', accent: '#eb001b' },
-    au: { flag: LD_FLAG_SVG.au, name: 'Australia', accent: '#00843d' },
-    eu: { flag: LD_FLAG_SVG.eu, name: 'Europe', accent: '#2d6cdf' },
-  };
-  const _ldPolls = {}; // region -> interval id
-  const _ldExpanded = {}; // region -> Set of expanded account ids
-
-  function _ldFmtMoney(amount, currency) {
-    if (amount === null || amount === undefined || isNaN(amount)) return 'Ã¢â‚¬â€';
-    const cur = (currency || '').toUpperCase();
-    try {
-      return new Intl.NumberFormat(undefined, {
-        style: cur ? 'currency' : 'decimal', currency: cur || undefined,
-        minimumFractionDigits: 2, maximumFractionDigits: 2,
-      }).format(amount);
-    } catch (e) {
-      return (cur ? cur + ' ' : '') + Number(amount).toFixed(2);
-    }
-  }
-
-  function _ldRenderConnection(region, conn, opts) {
-    opts = opts || {};
-    const meta = LD_REGION_META[region];
-    const accounts = (conn && conn.accounts) || [];
-    const txns = (conn && conn.transactions) || [];
-    const connected = conn && conn.connected;
-    const pending = opts.pending;
-    let statusCls = 'ld-conn-status';
-    let statusText;
-    if (opts.error) { statusCls += ' ld-err'; statusText = opts.error; }
-    else if (pending) { statusCls += ' ld-pending'; statusText = 'Waiting for bank loginÃ¢â‚¬Â¦'; }
-    else if (connected) { statusCls += ' ld-ok'; statusText = 'Connected Ã‚Â· ' + (conn.connected_at || ''); }
-    else { statusText = 'Not connected'; }
-
-    let actions = '';
-    if (pending) {
-      actions = `<button class="ld-btn" disabled><span class="ld-spinner"></span>LinkingÃ¢â‚¬Â¦</button>`;
-    } else if (connected) {
-      actions = `<div class="ld-conn-actions">
-        <button class="ld-btn ld-btn--ghost" data-ld-refresh="${region}">Refresh data</button>
-        <button class="ld-btn" data-ld-connect="${region}">Reconnect</button>
-      </div>`;
-    } else {
-      actions = `<button class="ld-btn" data-ld-connect="${region}">Connect a bank</button>`;
-    }
-
-    let body = '';
-    if (pending) {
-      body = `<p class="ld-conn-hint"><span class="ld-spinner"></span>Complete the sandbox bank login in the new tab. We'll pull your accounts automatically.</p>`;
-    } else if (connected && accounts.length) {
-      const expanded = _ldExpanded[region] || (_ldExpanded[region] = new Set());
-      const txnRow = (t) => {
-        const amt = (t.amount === null || t.amount === undefined) ? null : Number(t.amount);
-        const cls = amt === null ? '' : (amt < 0 ? 'ld-neg' : 'ld-pos');
-        return `<div class="ld-txn">
-          <span class="ld-txn-date">${escapeHtml(t.date || '')}</span>
-          <span class="ld-txn-desc">${escapeHtml(t.description || '')}</span>
-          <span class="ld-txn-amt ${cls}">${escapeHtml(_ldFmtMoney(t.amount, t.currency))}</span>
-        </div>`;
-      };
-      // Bucket transactions by their owning account; anything we can't match
-      // falls into an "Other" group so no data is ever dropped.
-      const byAcct = {};
-      const matchedIds = new Set(accounts.map((a) => String(a.id)));
-      (txns || []).forEach((t) => {
-        const k = (t.account_id !== undefined && t.account_id !== null && matchedIds.has(String(t.account_id)))
-          ? String(t.account_id) : '__other__';
-        (byAcct[k] = byAcct[k] || []).push(t);
-      });
-      const groupHtml = (key, headHtml, list) => {
-        const isOpen = expanded.has(key);
-        const inner = (list && list.length)
-          ? `<div class="ld-txns">${list.slice(0, 25).map(txnRow).join('')}</div>`
-          : `<p class="ld-empty-note">No transactions for this account.</p>`;
-        const count = (list && list.length) ? list.length : 0;
-        return `<div class="ld-acct-group${isOpen ? ' is-open' : ''}">
-          <button type="button" class="ld-acct" data-ld-acct="${escapeHtml(key)}" aria-expanded="${isOpen ? 'true' : 'false'}">
-            ${headHtml}
-            <span class="ld-acct-toggle">
-              <span class="ld-acct-count">${count}</span>
-              <svg class="ld-acct-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-            </span>
-          </button>
-          <div class="ld-acct-txns">${inner}</div>
-        </div>`;
-      };
-      const acctBlocks = accounts.map((a) => {
-        const head = `<span class="ld-acct-info">
-            <span class="ld-acct-name">${escapeHtml(a.name || 'Account')}</span>
-            <span class="ld-acct-sub">${escapeHtml([a.type, a.mask].filter(Boolean).join(' Ã‚Â· '))}</span>
-          </span>
-          <span class="ld-acct-bal">${escapeHtml(_ldFmtMoney(a.balance, a.currency))}<small>${escapeHtml((a.currency || '').toUpperCase())}</small></span>`;
-        return groupHtml(String(a.id), head, byAcct[String(a.id)] || []);
-      }).join('');
-      let otherBlock = '';
-      if ((byAcct.__other__ || []).length) {
-        const head = `<span class="ld-acct-info">
-            <span class="ld-acct-name">Other transactions</span>
-            <span class="ld-acct-sub">Not linked to a listed account</span>
-          </span>`;
-        otherBlock = groupHtml('__other__', head, byAcct.__other__);
-      }
-      body = `<div class="ld-accts">${acctBlocks}${otherBlock}</div>`;
-    } else if (opts.error) {
-      body = `<p class="ld-conn-hint">${escapeHtml(opts.error)}</p>`;
-    } else {
-      body = `<p class="ld-conn-hint">Launch a secure sandbox bank login and we'll pull real account &amp; transaction data.</p>`;
-    }
-
-    return `<article class="ld-conn-card" data-ld-card="${region}" style="--ld-accent:${meta.accent};">
-      <div class="ld-conn-head">
-        <span class="ld-conn-flag">${meta.flag}</span>
-        <div class="ld-conn-meta">
-          <span class="ld-conn-name">${escapeHtml(meta.name)}</span>
-          <span class="${statusCls}">${escapeHtml(statusText)}</span>
-        </div>
-        ${actions}
-      </div>
-      <div class="ld-conn-body">${body}</div>
-    </article>`;
-  }
-
-  function _ldRenderApp(state) {
-    const empty = document.getElementById('ld-app-empty');
-    const cards = document.getElementById('ld-app-cards');
-    if (!cards) return;
-    const enabled = (state.regions || []).filter((r) => r.enabled);
-    if (!enabled.length) {
-      if (empty) empty.style.display = '';
-      cards.innerHTML = '';
-      return;
-    }
-    if (empty) empty.style.display = 'none';
-    cards.innerHTML = enabled.map((r) =>
-      _ldRenderConnection(r.region, r.connection, { pending: !!_ldPolls[r.region] })
-    ).join('');
-    _ldWireCards();
-  }
-
-  function _ldRenderAdmin(state) {
-    const rows = document.getElementById('ld-admin-rows');
-    if (!rows) return;
-    rows.innerHTML = (state.regions || []).map((r) => {
-      const meta = LD_REGION_META[r.region];
-      const sub = r.configured
-        ? (r.connection && r.connection.connected ? 'Bank connected' : 'Ready')
-        : 'Credentials not configured';
-      const subCls = r.configured ? 'ld-row-sub' : 'ld-row-sub ld-unconfigured';
-      return `<div class="ld-admin-row" data-disabled="${r.configured ? 0 : 1}">
-        <span class="ld-row-flag">${meta.flag}</span>
-        <div class="ld-row-meta">
-          <span class="ld-row-name">${escapeHtml(meta.name)}</span>
-          <span class="${subCls}">${escapeHtml(sub)}</span>
-        </div>
-        <label class="ld-switch">
-          <input type="checkbox" data-ld-toggle="${r.region}" ${r.enabled ? 'checked' : ''} ${r.configured ? '' : 'disabled'} />
-          <span class="ld-switch-track"></span>
-        </label>
-      </div>`;
-    }).join('');
-    rows.querySelectorAll('[data-ld-toggle]').forEach((cb) => {
-      cb.addEventListener('change', () => {
-        const region = cb.dataset.ldToggle;
-        cb.disabled = true;
-        _nativeFetch('/live-demo/enable', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ region, enabled: cb.checked }),
-        }).then((r) => r.json()).then((data) => {
-          if (data && data.state) { _ldRenderAdmin(data.state); _ldRenderApp(data.state); }
-        }).catch(() => { cb.checked = !cb.checked; })
-          .finally(() => { cb.disabled = false; });
-      });
-    });
-  }
-
-  function _ldRefreshState() {
-    return _nativeFetch('/live-demo/state').then((r) => r.json()).then((state) => {
-      _ldRenderAdmin(state);
-      _ldRenderApp(state);
-      return state;
-    });
-  }
-
-  function _ldStartPolling(region) {
-    if (_ldPolls[region]) return;
-    let tries = 0;
-    const tick = () => {
-      tries += 1;
-      _nativeFetch('/live-demo/poll', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ region }),
-      }).then((r) => r.json()).then((data) => {
-        if (data && data.connected && data.connection) {
-          _ldStopPolling(region);
-          _ldRefreshState();
-        } else if (tries >= 40) { // ~3 min at 4.5s
-          _ldStopPolling(region);
-          const card = document.querySelector(`[data-ld-card="${region}"]`);
-          if (card) card.outerHTML = _ldRenderConnection(region, null,
-            { error: 'Timed out waiting for bank login. Click Connect to retry.' });
-          _ldWireCards();
-        }
-      }).catch(() => {});
-    };
-    _ldPolls[region] = setInterval(tick, 4500);
-    tick();
-  }
-
-  function _ldStopPolling(region) {
-    if (_ldPolls[region]) { clearInterval(_ldPolls[region]); delete _ldPolls[region]; }
-  }
-
-  function _ldConnect(region) {
-    // Open the bank-login tab synchronously inside the click handler. The
-    // flow URL only arrives after the async fetch below, but calling
-    // window.open() from within a .then() callback is treated as a
-    // non-user-initiated popup and gets blocked by the browser. Opening a
-    // blank tab now (on the user gesture) and navigating it once the URL
-    // returns avoids the popup blocker.
-    let popup = window.open('', '_blank');
-    if (popup) { try { popup.opener = null; } catch (e) {} }
-    const card = document.querySelector(`[data-ld-card="${region}"]`);
-    if (card) {
-      card.outerHTML = _ldRenderConnection(region, null, { pending: true });
-      _ldWireCards();
-    }
-    _nativeFetch('/live-demo/connect', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ region }),
-    }).then((r) => r.json()).then((data) => {
-      if (data && data.success && data.flow_url) {
-        if (popup && !popup.closed) { popup.location.href = data.flow_url; }
-        else { window.open(data.flow_url, '_blank', 'noopener'); }
-        _ldStartPolling(region);
-      } else {
-        if (popup && !popup.closed) popup.close();
-        const c = document.querySelector(`[data-ld-card="${region}"]`);
-        if (c) c.outerHTML = _ldRenderConnection(region, null,
-          { error: (data && data.error) || 'Could not start the bank connection.' });
-        _ldWireCards();
-      }
-    }).catch(() => {
-      if (popup && !popup.closed) popup.close();
-      const c = document.querySelector(`[data-ld-card="${region}"]`);
-      if (c) c.outerHTML = _ldRenderConnection(region, null, { error: 'Network error starting connection.' });
-      _ldWireCards();
-    });
-  }
-
-  function _ldRefreshData(region) {
-    const btn = document.querySelector(`[data-ld-refresh="${region}"]`);
-    if (btn) { btn.disabled = true; btn.textContent = 'RefreshingÃ¢â‚¬Â¦'; }
-    _nativeFetch('/live-demo/refresh', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ region }),
-    }).then((r) => r.json()).then(() => _ldRefreshState())
-      .catch(() => _ldRefreshState());
-  }
-
-  function _ldWireCards() {
-    document.querySelectorAll('[data-ld-connect]').forEach((b) => {
-      b.onclick = () => _ldConnect(b.dataset.ldConnect);
-    });
-    document.querySelectorAll('[data-ld-refresh]').forEach((b) => {
-      b.onclick = () => _ldRefreshData(b.dataset.ldRefresh);
-    });
-    document.querySelectorAll('[data-ld-card]').forEach((card) => {
-      const region = card.dataset.ldCard;
-      const set = _ldExpanded[region] || (_ldExpanded[region] = new Set());
-      card.querySelectorAll('[data-ld-acct]').forEach((btn) => {
-        btn.onclick = () => {
-          const key = btn.dataset.ldAcct;
-          const group = btn.closest('.ld-acct-group');
-          const open = !(group && group.classList.contains('is-open'));
-          if (group) group.classList.toggle('is-open', open);
-          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-          if (open) set.add(key); else set.delete(key);
-        };
-      });
-    });
-  }
-
-  function _initLiveDemo() {
-    if (!document.getElementById('live-demo')) return;
-    _ldRefreshState();
-    if (_liveDemoInited) return;
-    _liveDemoInited = true;
-  }
-
   function renderApiPairs(api) {
     const el = document.getElementById('api-pairs');
     if (!el) return;
@@ -2194,7 +1409,7 @@ import './features/infoModal.js';
       const ref = APIS.find((a) => a.id === id);
       if (!ref) return '';
       const cls = 'api-pair-chip api-pair-chip--' + kind + (ref.configured ? ' configured' : '');
-      return `<button class="${cls}" data-pair-api="${escapeHtml(id)}" title="${kind === 'requires' ? 'Required' : 'APIs often paired with'} Ã¢â‚¬â€ ${ref.configured ? 'configured' : 'not configured'}">
+      return `<button class="${cls}" data-pair-api="${escapeHtml(id)}" title="${kind === 'requires' ? 'Required' : 'APIs often paired with'} — ${ref.configured ? 'configured' : 'not configured'}">
         <span class="api-pair-dot ${ref.configured ? 'ok' : 'off'}"></span>${escapeHtml(ref.name)}
       </button>`;
     }
@@ -2216,7 +1431,7 @@ import './features/infoModal.js';
       }).join('');
       html += '<div class="api-pairs-row"><span class="api-pairs-label">Part of bundles</span><div class="api-pairs-chips">' + bundleChips + '</div></div>';
     }
-    // "See it working in use cases" Ã¢â‚¬â€ any use case whose manifest lists
+    // "See it working in use cases" — any use case whose manifest lists
     // this API id under `apis`.
     const matchingUseCases = (_useCasesCache || []).filter((uc) =>
       Array.isArray(uc.apis) && uc.apis.includes(api.id)
@@ -2228,7 +1443,7 @@ import './features/infoModal.js';
       }).join('');
       html += '<div class="api-pairs-row"><span class="api-pairs-label">See it working in use cases</span><div class="api-pairs-chips">' + ucChips + '</div></div>';
     } else if (!_useCasesCache) {
-      // Cache not loaded yet Ã¢â‚¬â€ re-render once it arrives.
+      // Cache not loaded yet — re-render once it arrives.
       loadUseCases().then(() => {
         if (currentApi() && currentApi().id === api.id) renderApiPairs(api);
       });
@@ -2322,7 +1537,7 @@ import './features/infoModal.js';
     $("api-desc").textContent = api.description || "";
     const docs = $("api-docs");
 
-    // Simulator toggle Ã¢â‚¬â€ fetch current status for this API
+    // Simulator toggle — fetch current status for this API
     fetchSimStatus(api.id);
     if (docs) {
       if (api.docs_url) {
@@ -2333,7 +1548,7 @@ import './features/infoModal.js';
       }
     }
 
-    // "Often paired with" Ã¢â‚¬â€ render complement chips and a small "part of N
+    // "Often paired with" — render complement chips and a small "part of N
     // solution bundles" hint, sourced from the manifest fields shipped by
     // /catalog (apis.complements + apis.bundles).
     renderApiPairs(api);
@@ -2367,7 +1582,7 @@ import './features/infoModal.js';
     });
 
     // Clear panels (will be repopulated from cache if a prior op exists)
-    $("op-method").textContent = "Ã¢â‚¬â€";
+    $("op-method").textContent = "—";
     $("op-method").className = "op-method";
     $("op-name").textContent = "Select an operation";
     $("op-desc").textContent = "";
@@ -2376,8 +1591,8 @@ import './features/infoModal.js';
     $("op-hint").innerHTML = "";
     _resetLaunchBanner();
     $("op-send").disabled = true;
-    $("req-body").textContent = "Ã¢â‚¬â€";
-    $("resp-body").textContent = "Ã¢â‚¬â€";
+    $("req-body").textContent = "—";
+    $("resp-body").textContent = "—";
     $("resp-status").textContent = "";
     $("resp-status").className = "status-pill";    $('resp-status').title = "";
     lastIoData.request = null;
@@ -2420,7 +1635,7 @@ import './features/infoModal.js';
     if (!api.configured) {
       const w = document.createElement("div");
       w.className = "state-pill";
-      w.innerHTML = `<span class="k">Ã¢Å¡Â </span><span class="v">Not configured Ã¢â‚¬â€ check .env</span>`;
+      w.innerHTML = `<span class="k">⚠</span><span class="v">Not configured — check .env</span>`;
       w.style.borderColor = "#eb001b";
       w.style.color = "#a01010";
       strip.appendChild(w);
@@ -2429,11 +1644,11 @@ import './features/infoModal.js';
       const v = currentState[s.key];
       const pill = document.createElement("div");
       pill.className = "state-pill" + (v ? "" : " empty");
-      pill.innerHTML = `<span class="k">${s.label}:</span><span class="v">${v || "Ã¢â‚¬â€"}</span>`;
+      pill.innerHTML = `<span class="k">${s.label}:</span><span class="v">${v || "—"}</span>`;
       strip.appendChild(pill);
     });
     // Show or hide the whole context section depending on whether there is
-    // state content Ã¢â‚¬â€ the api-pairs visibility is handled separately.
+    // state content — the api-pairs visibility is handled separately.
     const section = document.getElementById('api-context-section');
     if (section) {
       const pairsEl = document.getElementById('api-pairs');
@@ -2561,8 +1776,8 @@ import './features/infoModal.js';
     } else {
       lastIoData.request = null;
       lastIoData.response = null;
-      $("req-body").textContent = "Ã¢â‚¬â€";
-      $("resp-body").textContent = "Ã¢â‚¬â€";
+      $("req-body").textContent = "—";
+      $("resp-body").textContent = "—";
       $("resp-status").textContent = "";
       $("resp-status").className = "status-pill";      $('resp-status').title = "";      $("op-hint").innerHTML = "";
       if (currentOp() && currentOp().browser_action) {
@@ -2586,7 +1801,7 @@ import './features/infoModal.js';
     el.hidden = true;
     el.removeAttribute("data-url");
   }
-  // Show a placeholder banner before the call is made Ã¢â‚¬â€ prompts the user
+  // Show a placeholder banner before the call is made — prompts the user
   // to click Send first, then the real URL is injected once the card
   // reference is returned.
   function _showLaunchBannerPending() {
@@ -2651,7 +1866,7 @@ import './features/infoModal.js';
       a.href = creds.docs_url;
       a.target = "_blank";
       a.rel = "noopener";
-      a.textContent = creds.docs_label || "View in docs Ã¢â€ â€”";
+      a.textContent = creds.docs_label || "View in docs ↗";
       a.className = "op-launch-banner-creds-docs";
       header.appendChild(a);
     }
@@ -2682,7 +1897,7 @@ import './features/infoModal.js';
       if (row[0] === rec) tr.className = "is-recommended";
       row.forEach((cell, idx) => {
         const td = document.createElement("td");
-        // First three columns are short identifiers Ã¢â‚¬â€ render as <code>.
+        // First three columns are short identifiers — render as <code>.
         if (idx < 3) {
           const code = document.createElement("code");
           code.textContent = cell;
@@ -2722,7 +1937,7 @@ import './features/infoModal.js';
       }
       if (!value && p.default != null) value = resolveDefault(p.default);
       // Cross-API prefill: auto-fill card_reference / card_ref from the most
-      // recently returned cardReference (e.g. Consent Ã¢â€ â€™ Create Consent).
+      // recently returned cardReference (e.g. Consent → Create Consent).
       if (!value && (p.name === "card_reference" || p.name === "card_ref")) {
         try {
           const saved = localStorage.getItem("vima:cardReference");
@@ -2747,7 +1962,7 @@ import './features/infoModal.js';
         if (!accounts.length) {
           const opt = document.createElement("option");
           opt.value = "";
-          opt.textContent = "Ã¢â‚¬â€ no accounts loaded Ã¢â‚¬â€ run Refresh Accounts first Ã¢â‚¬â€";
+          opt.textContent = "— no accounts loaded — run Refresh Accounts first —";
           opt.disabled = true;
           opt.selected = true;
           input.appendChild(opt);
@@ -2755,22 +1970,22 @@ import './features/infoModal.js';
           accounts.forEach((a) => {
             const opt = document.createElement("option");
             opt.value = a.id;
-            const num = a.number ? `Ã¢â‚¬Â¢Ã¢â‚¬Â¢${String(a.number).slice(-4)}` : a.id;
-            const type = a.type ? ` Ã‚Â· ${a.type}` : "";
-            const name = a.name ? ` Ã¢â‚¬â€ ${a.name}` : "";
+            const num = a.number ? `••${String(a.number).slice(-4)}` : a.id;
+            const type = a.type ? ` · ${a.type}` : "";
+            const name = a.name ? ` — ${a.name}` : "";
             opt.textContent = `${num}${type}${name}`;
             if (String(a.id) === String(value)) opt.selected = true;
             input.appendChild(opt);
           });
         }
       } else if (p.type === "provider_select") {
-        // Populated by Open Finance EU Ã¢â€ â€™ Get Providers. Items: {id, name, country}.
+        // Populated by Open Finance EU → Get Providers. Items: {id, name, country}.
         input = document.createElement("select");
         const providers = currentState.providers || [];
         if (!providers.length) {
           const opt = document.createElement("option");
           opt.value = "";
-          opt.textContent = "Ã¢â‚¬â€ no providers loaded Ã¢â‚¬â€ run Get Providers first Ã¢â‚¬â€";
+          opt.textContent = "— no providers loaded — run Get Providers first —";
           opt.disabled = true;
           opt.selected = true;
           input.appendChild(opt);
@@ -2841,7 +2056,7 @@ import './features/infoModal.js';
       method: op.method || "POST",
       operation: op.id,
       params: collectParams(),
-      note: "Preview Ã¢â‚¬â€ click Send to execute. The actual upstream HTTP request will be shown here after sending.",
+      note: "Preview — click Send to execute. The actual upstream HTTP request will be shown here after sending.",
     };
     $("req-body").textContent = fmt(preview);
   }
@@ -2855,7 +2070,7 @@ import './features/infoModal.js';
     if (!api || !op) return;
     const params = collectParams();
     $("op-send").disabled = true;
-    $("op-send").textContent = "SendingÃ¢â‚¬Â¦";
+    $("op-send").textContent = "Sending…";
     $("resp-status").textContent = "";
     $('resp-status').className = "status-pill";
     $('resp-status').title = "";
@@ -2898,7 +2113,7 @@ import './features/infoModal.js';
       if (data.hints && data.hints.open_link) {
         _showLaunchBanner({
           url: data.hints.open_link,
-          label: data.hints.open_link_label || "Launch Connect Ã¢â€ â€”",
+          label: data.hints.open_link_label || "Launch Connect ↗",
           note: data.hints.open_link_note
             || "Open in a new tab, complete the bank login flow, then run the next step.",
           testCredentials: data.hints.test_credentials || null,
@@ -2919,13 +2134,13 @@ import './features/infoModal.js';
           ? data.hints.browser_launch_url
           : _findFirstUrl(data.response && data.response.body);
         const launchNote = (data.hints && data.hints.browser_launch_note)
-          || "Browser interaction required Ã¢â‚¬â€ complete the flow, then proceed to the next step.";
+          || "Browser interaction required — complete the flow, then proceed to the next step.";
         if (launchUrl) {
           // Update the top-of-panel banner with the real URL so it's
           // immediately visible without scrolling.
-          _showLaunchBanner({ url: launchUrl, label: "Launch 3DS Method Ã¢â€ â€”", note: launchNote });
+          _showLaunchBanner({ url: launchUrl, label: "Launch 3DS Method ↗", note: launchNote });
         } else {
-          // Call succeeded but no URL yet Ã¢â‚¬â€ keep the pending state.
+          // Call succeeded but no URL yet — keep the pending state.
           _showLaunchBannerPending();
         }
       }
@@ -2939,7 +2154,7 @@ import './features/infoModal.js';
         btn.href = blobUrl;
         btn.target = "_blank";
         btn.rel = "noopener";
-        btn.textContent = "View PDF Statement Ã¢â€ â€”";
+        btn.textContent = "View PDF Statement ↗";
         btn.style.cssText = "display:inline-block;margin-top:8px;padding:7px 14px;background:#005b99;color:#fff;border-radius:5px;text-decoration:none;font-size:13px;font-weight:600;";
         const dl = document.createElement("a");
         dl.href = blobUrl;
@@ -2957,15 +2172,15 @@ import './features/infoModal.js';
         hintHtml: $('op-hint').innerHTML,
         launch: (data.hints && data.hints.open_link) ? {
           url: data.hints.open_link,
-          label: data.hints.open_link_label || "Launch Connect Ã¢â€ â€”",
+          label: data.hints.open_link_label || "Launch Connect ↗",
           note: data.hints.open_link_note
             || "Open in a new tab, complete the bank login flow, then run the next step.",
           testCredentials: data.hints.test_credentials || null,
         } : (op.browser_action && data.hints && data.hints.browser_launch_url) ? {
           url: data.hints.browser_launch_url,
-          label: "Launch 3DS Method Ã¢â€ â€”",
+          label: "Launch 3DS Method ↗",
           note: data.hints.browser_launch_note
-            || "Browser interaction required Ã¢â‚¬â€ complete the flow, then proceed to the next step.",
+            || "Browser interaction required — complete the flow, then proceed to the next step.",
           testCredentials: null,
         } : null,
         headersVisible: { ...headersVisible },
@@ -3017,7 +2232,7 @@ import './features/infoModal.js';
   }
 
   function fmt(obj) {
-    if (obj == null) return "Ã¢â‚¬â€";
+    if (obj == null) return "—";
     try { return JSON.stringify(obj, null, 2); }
     catch { return String(obj); }
   }
@@ -3031,7 +2246,7 @@ import './features/infoModal.js';
   let lastIoData = { request: null, response: null };
 
   function fmtWithoutHeaders(obj) {
-    if (obj == null) return "Ã¢â‚¬â€";
+    if (obj == null) return "—";
     try {
       const copy = { ...obj };
       delete copy.headers;
@@ -3043,7 +2258,7 @@ import './features/infoModal.js';
     // panel = 'request' | 'response'
     const elId = panel === 'request' ? 'req-body' : 'resp-body';
     const el = $(elId);
-    if (!obj) { el.textContent = "Ã¢â‚¬â€"; return; }
+    if (!obj) { el.textContent = "—"; return; }
     el.textContent = headersVisible[panel] ? fmt(obj) : fmtWithoutHeaders(obj);
   }
 
@@ -3185,7 +2400,7 @@ import './features/infoModal.js';
         <div class="enrich-header">
           <div class="enrich-header-text">
             <h2>Transaction Enrichment</h2>
-            <p>Raw bank statement text is transformed into structured, human-readable merchant data Ã¢â‚¬â€ powering better UX, smarter categorisation, and richer insights.</p>
+            <p>Raw bank statement text is transformed into structured, human-readable merchant data — powering better UX, smarter categorisation, and richer insights.</p>
           </div>
           <div class="enrich-header-actions">
             ${allDone
@@ -3197,7 +2412,7 @@ import './features/infoModal.js';
 
         <div class="enrich-pipeline-legend">
           <div class="enrich-legend-item"><span class="enrich-legend-dot raw"></span>Raw input</div>
-          <div class="enrich-legend-arrow">Ã¢â€ â€™</div>
+          <div class="enrich-legend-arrow">→</div>
           <div class="enrich-legend-item"><span class="enrich-legend-dot enriched"></span>Enriched output</div>
         </div>
 
@@ -3338,7 +2553,7 @@ import './features/infoModal.js';
     // Loading shimmer
     row.classList.add("enrich-row--loading");
     const btn = row.querySelector("[data-enrich-id]");
-    if (btn) { btn.disabled = true; btn.textContent = "EnrichingÃ¢â‚¬Â¦"; }
+    if (btn) { btn.disabled = true; btn.textContent = "Enriching…"; }
 
     fetch("/usecases/enrichment/action", {
       method: "POST",
@@ -3358,7 +2573,7 @@ import './features/infoModal.js';
           return;
         }
         const errMsg = d.error
-          ? d.error + (d.detail ? " Ã¢â‚¬â€ " + (typeof d.detail === "string" ? d.detail : JSON.stringify(d.detail)) : "")
+          ? d.error + (d.detail ? " — " + (typeof d.detail === "string" ? d.detail : JSON.stringify(d.detail)) : "")
           : "No enrichment returned";
         throw new Error(errMsg);
       })
@@ -3384,7 +2599,7 @@ import './features/infoModal.js';
       if (row) {
         row.classList.add("enrich-row--loading");
         const btn = row.querySelector("[data-enrich-id]");
-        if (btn) { btn.disabled = true; btn.textContent = "EnrichingÃ¢â‚¬Â¦"; }
+        if (btn) { btn.disabled = true; btn.textContent = "Enriching…"; }
       }
     });
 
@@ -3399,7 +2614,7 @@ import './features/infoModal.js';
         (d.transactions || []).forEach(t => { byId[t.id] = t; });
         const failedIds = new Set(d.failedIds || []);
         const errMsg = d.error
-          ? d.error + (d.detail ? " Ã¢â‚¬â€ " + (typeof d.detail === "string" ? d.detail : JSON.stringify(d.detail)) : "")
+          ? d.error + (d.detail ? " — " + (typeof d.detail === "string" ? d.detail : JSON.stringify(d.detail)) : "")
           : null;
 
         pending.forEach((t, i) => {
@@ -3414,7 +2629,7 @@ import './features/infoModal.js';
             }, i * 150);
             return;
           }
-          // Row was not returned Ã¢â‚¬â€ surface the error inline
+          // Row was not returned — surface the error inline
           const row = document.querySelector(`[data-txn-id="${CSS.escape(t.id)}"]`);
           if (!row) return;
           row.classList.remove("enrich-row--loading");
@@ -3444,7 +2659,7 @@ import './features/infoModal.js';
 
   // ===================== Recurring Transactions Use Case =====================
   // Rendered as a sandboxed iframe pointing to /recurring/index.html.
-  // All Recurring UI lives in usecases/recurring/ Ã¢â‚¬â€ edit there to change the look.
+  // All Recurring UI lives in usecases/recurring/ — edit there to change the look.
 
   function renderRecurring() {
     _renderCachedWebview('recurring', 'recurring-webview-frame', _appPath('/recurring/index.html'), 'Recurring Transactions');
@@ -3452,7 +2667,7 @@ import './features/infoModal.js';
 
   // ===================== Payment Success Indicator Use Case =====================
   // Rendered as a sandboxed iframe pointing to /psi/index.html.
-  // All PSI UI lives in usecases/psi/ Ã¢â‚¬â€ edit there to change the look.
+  // All PSI UI lives in usecases/psi/ — edit there to change the look.
 
   function renderPsi() {
     _renderCachedWebview('psi', 'psi-webview-frame', _appPath('/psi/index.html'), 'Payment Success Indicator');
@@ -3467,11 +2682,11 @@ import './features/infoModal.js';
   let BIN_TAB = "lookup"; // "lookup" | "batch"
 
   const BIN_PRESET_OPTIONS = [
-    { value: "543210", label: "543210 Ã¢â‚¬â€ Buckeye State Credit Union (US)" },
-    { value: "111102", label: "111102 Ã¢â‚¬â€ Arab Bank PLC (JO)" },
-    { value: "356600", label: "356600 Ã¢â‚¬â€ Credencial Argentina SA (AR)" },
-    { value: "520000", label: "520000 Ã¢â‚¬â€ Orange Bank (FR)" },
-    { value: "541111", label: "541111 Ã¢â‚¬â€ Entropay Limited (CH)" },
+    { value: "543210", label: "543210 — Buckeye State Credit Union (US)" },
+    { value: "111102", label: "111102 — Arab Bank PLC (JO)" },
+    { value: "356600", label: "356600 — Credencial Argentina SA (AR)" },
+    { value: "520000", label: "520000 — Orange Bank (FR)" },
+    { value: "541111", label: "541111 — Entropay Limited (CH)" },
   ];
 
   function renderBinLookup() {
@@ -3491,7 +2706,7 @@ import './features/infoModal.js';
         </div>
         <button class="bin-lookup-btn" id="bin-lookup-btn"${BIN.loading ? " disabled" : ""}>
           ${BIN.loading
-            ? `<span class="psi-spinner"></span>Looking upÃ¢â‚¬Â¦`
+            ? `<span class="psi-spinner"></span>Looking up…`
             : `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>Look Up Card`}
         </button>
       </div>
@@ -3511,10 +2726,10 @@ import './features/infoModal.js';
               ${_binContactlessSvg()}
             </div>
             <div class="bin-chip-row">${_binChipSvg()}</div>
-            <div class="bin-number-row"><span class="bin-num-placeholder">Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢</span></div>
+            <div class="bin-number-row"><span class="bin-num-placeholder">•••• •••• •••• ••••</span></div>
             <div class="bin-card-footer-row">
               <div><div class="bin-card-sublabel">CARD HOLDER</div><div class="bin-card-name">VALUED CUSTOMER</div></div>
-              <div><div class="bin-card-sublabel">EXPIRES</div><div class="bin-card-expiry">Ã¢â‚¬Â¢Ã¢â‚¬Â¢/Ã¢â‚¬Â¢Ã¢â‚¬Â¢</div></div>
+              <div><div class="bin-card-sublabel">EXPIRES</div><div class="bin-card-expiry">••/••</div></div>
               <div class="bin-card-netlogo"></div>
             </div>
           </div>
@@ -3526,11 +2741,11 @@ import './features/infoModal.js';
   function binSceneHtml(card) {
     const grad = `linear-gradient(135deg, ${escapeHtml(card.color1)} 0%, ${escapeHtml(card.color2)} 100%)`;
     const funding = (card.fundingSource || "").toLowerCase();
-    const fundingLabel = { credit: "Credit", debit: "Debit", prepaid: "Prepaid", none: "None" }[funding] || card.fundingSource || "Ã¢â‚¬â€";
+    const fundingLabel = { credit: "Credit", debit: "Debit", prepaid: "Prepaid", none: "None" }[funding] || card.fundingSource || "—";
     const clipPath = _binCardClipPath(funding);
     return `
       <div class="bin-annotated-layout">
-        <!-- Left callouts: Issuer Ã‚Â· Brand Ã‚Â· ICA -->
+        <!-- Left callouts: Issuer · Brand · ICA -->
         <div class="bin-callouts bin-callouts--left">
           ${_binCallout("Issuer",   escapeHtml(card.issuerName),  "left",  0)}
           ${_binCallout("Brand",    escapeHtml(card.brandLabel),  "left",  1)}
@@ -3557,7 +2772,7 @@ import './features/infoModal.js';
           </div>
         </div>
 
-        <!-- Right callouts: Country Ã‚Â· Funding Ã‚Â· Segment -->
+        <!-- Right callouts: Country · Funding · Segment -->
         <div class="bin-callouts bin-callouts--right">
           ${_binCallout("Country",  (card.flagEmoji ? card.flagEmoji + " " : "") + escapeHtml(card.countryName), "right", 0)}
           ${_binCallout("Funding",  fundingLabel, "right", 1, funding ? "bin-callout-value--" + funding : "")}
@@ -3567,7 +2782,7 @@ import './features/infoModal.js';
 
       <!-- Capabilities grid -->
       <div class="bin-capability-grid" id="bin-cap-grid">
-        ${card.productCode ? _binCapChip("Product", card.productCode + " Ã¢â‚¬â€ " + card.product, "neutral") : _binCapChip("Product", card.product, "neutral")}
+        ${card.productCode ? _binCapChip("Product", card.productCode + " — " + card.product, "neutral") : _binCapChip("Product", card.product, "neutral")}
         ${card.billingCurrency ? _binCapChip("Billing Currency", card.billingCurrency, "neutral") : ""}
         ${_binCapChip("Local Use",   card.localUse        ? "Domestic Only"          : "International",  card.localUse        ? "warn" : "ok")}
         ${_binCapChip("MoneySend",   card.moneySend       ? "Enabled"                : "Not Enabled",    card.moneySend       ? "ok"   : "dim")}
@@ -3595,7 +2810,7 @@ import './features/infoModal.js';
     `;
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ HTML helpers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  // ─── HTML helpers ────────────────────────────────────────────────────────
 
   function _binCallout(label, value, side, idx, valueCls) {
     return `
@@ -3679,24 +2894,24 @@ import './features/infoModal.js';
   }
 
   function _binCardClipPath(funding) {
-    // Card dimensions: 342Ãƒâ€”215, border-radius 17
-    // 6mm Ã¢â€°Ë† 23px, 3mm Ã¢â€°Ë† 11.5px
+    // Card dimensions: 342×215, border-radius 17
+    // 6mm ≈ 23px, 3mm ≈ 11.5px
     const W = 342, H = 215, R = 17;
-    const ny = H / 2;     // 107.5 Ã¢â‚¬â€ notch centre Y
+    const ny = H / 2;     // 107.5 — notch centre Y
     const nh = 11.5;      // half-height of opening (3mm)
-    const nd = 5.75;      // depth into card (1.5mm Ã¢â‚¬â€ halved from 3mm)
+    const nd = 5.75;      // depth into card (1.5mm — halved from 3mm)
     const nr = 4;         // credit corner radius (1mm)
-    const yt = ny - nh;   // 96 Ã¢â‚¬â€ top of notch
-    const yb = ny + nh;   // 119 Ã¢â‚¬â€ bottom of notch
+    const yt = ny - nh;   // 96 — top of notch
+    const yb = ny + nh;   // 119 — bottom of notch
     const nx = W - nd;    // inner wall X
     const base = `M ${R} 0 L ${W-R} 0 Q ${W} 0 ${W} ${R} `;
     const tail = ` L ${W} ${H-R} Q ${W} ${H} ${W-R} ${H} L ${R} ${H} Q 0 ${H} 0 ${H-R} L 0 ${R} Q 0 0 ${R} 0 Z`;
     let notch = '';
     if (funding === 'debit') {
-      // Circular arc Ã¢â‚¬â€ same half-height (35.3px) but depth halved to 5.75px.
-      // dR derived from: depth = dR - sqrt(dRÃ‚Â²-hÃ‚Â²)  Ã¢â€ â€™  dR = (hÃ‚Â²+depthÃ‚Â²)/(2*depth)
+      // Circular arc — same half-height (35.3px) but depth halved to 5.75px.
+      // dR derived from: depth = dR - sqrt(dR²-h²)  →  dR = (h²+depth²)/(2*depth)
       const cy2 = 150, dHalf = 35.3, dDepth = 5.75;
-      const dR = (dHalf*dHalf + dDepth*dDepth) / (2*dDepth); // Ã¢â€°Ë† 111.3
+      const dR = (dHalf*dHalf + dDepth*dDepth) / (2*dDepth); // ≈ 111.3
       const dyt = (cy2 - dHalf).toFixed(1);
       const dyb = (cy2 + dHalf).toFixed(1);
       notch = `L ${W} ${dyt} A ${dR.toFixed(1)} ${dR.toFixed(1)} 0 0 0 ${W} ${dyb}`;
@@ -3731,10 +2946,10 @@ import './features/infoModal.js';
     </svg>`;
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Animation Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  // ─── Animation ───────────────────────────────────────────────────────────
 
   function binAnimateIn() {
-    // 1. Card glides smoothly into view Ã¢â‚¬â€ no spring overshoot
+    // 1. Card glides smoothly into view — no spring overshoot
     const wrap = document.getElementById("bin-card-wrap");
     if (wrap) {
       wrap.style.opacity = "0";
@@ -3811,7 +3026,7 @@ import './features/infoModal.js';
     });
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ BIN Ranges DB panel Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  // ─── BIN Ranges DB panel ─────────────────────────────────────────────────
 
   function binDbStatusHtml() {
     const s = BIN_DB.status;
@@ -3822,12 +3037,12 @@ import './features/infoModal.js';
         : "";
       return `<span class="bin-db-badge bin-db-badge--ok">
         <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#1f9d55"/></svg>
-        ${BIN_DB.count.toLocaleString()} ranges loaded${ago ? " Ã‚Â· " + ago : ""}
+        ${BIN_DB.count.toLocaleString()} ranges loaded${ago ? " · " + ago : ""}
       </span>${diskNote}`;
     }
     if (s === "loading") {
       return `<span class="bin-db-badge bin-db-badge--loading">
-        <span class="psi-spinner" style="width:10px;height:10px;border-width:1.5px"></span> LoadingÃ¢â‚¬Â¦
+        <span class="psi-spinner" style="width:10px;height:10px;border-width:1.5px"></span> Loading…
       </span>`;
     }
     if (s === "error") {
@@ -3845,7 +3060,7 @@ import './features/infoModal.js';
   function _binDbPaginationHtml() {
     if (BIN_DB.pages <= 1) return "";
     const p = BIN_DB.page, pp = BIN_DB.pages;
-    // Build page number buttons Ã¢â‚¬â€ always show first, last, and a window around current
+    // Build page number buttons — always show first, last, and a window around current
     const btns = [];
     const window = 2;
     let prev = null;
@@ -3858,7 +3073,7 @@ import './features/infoModal.js';
     }
     const pageNums = btns.map(i =>
       i === null
-        ? `<span class="bin-db-pg-ellipsis">Ã¢â‚¬Â¦</span>`
+        ? `<span class="bin-db-pg-ellipsis">…</span>`
         : `<button class="bin-db-pg-btn${i === p ? " bin-db-pg-btn--active" : ""}" data-pg="${i}">${i}</button>`
     ).join("");
     return `
@@ -3876,49 +3091,49 @@ import './features/infoModal.js';
 
   function binDbResultsHtml() {
     if (BIN_DB.searching) {
-      return `<div class="bin-db-results-placeholder"><span class="psi-spinner"></span> SearchingÃ¢â‚¬Â¦</div>`;
+      return `<div class="bin-db-results-placeholder"><span class="psi-spinner"></span> Searching…</div>`;
     }
     if (!BIN_DB.searchQuery) return "";
     if (!BIN_DB.results.length) {
       return `<div class="bin-db-results-placeholder">No results for <strong>${escapeHtml(BIN_DB.searchQuery)}</strong></div>`;
     }
     const rows = BIN_DB.results.map((r, i) => {
-      const country = r.country && typeof r.country === "object" ? r.country.name : String(r.country || "Ã¢â‚¬â€");
+      const country = r.country && typeof r.country === "object" ? r.country.name : String(r.country || "—");
       const expanded = BIN_DB.expandedIdx === i;
       const low = r.lowAccountRange || "";
       const high = r.highAccountRange || "";
-      const range = low === high ? low : `${low}Ã¢â‚¬â€œ${high.slice(-6)}`;
+      const range = low === high ? low : `${low}–${high.slice(-6)}`;
       return `
         <tr class="bin-db-row${expanded ? " bin-db-row--open" : ""}" data-idx="${i}">
           <td class="bin-db-cell bin-db-cell--bin">${escapeHtml(String(r.binNum || ""))}</td>
-          <td class="bin-db-cell">${escapeHtml(r.customerName || "Ã¢â‚¬â€")}</td>
+          <td class="bin-db-cell">${escapeHtml(r.customerName || "—")}</td>
           <td class="bin-db-cell">${escapeHtml(country)}</td>
-          <td class="bin-db-cell">${escapeHtml(r.acceptanceBrand || "Ã¢â‚¬â€")}</td>
-          <td class="bin-db-cell">${escapeHtml(r.fundingSource || "Ã¢â‚¬â€")}</td>
-          <td class="bin-db-cell bin-db-cell--expand">${expanded ? "Ã¢â€“Â²" : "Ã¢â€“Â¼"}</td>
+          <td class="bin-db-cell">${escapeHtml(r.acceptanceBrand || "—")}</td>
+          <td class="bin-db-cell">${escapeHtml(r.fundingSource || "—")}</td>
+          <td class="bin-db-cell bin-db-cell--expand">${expanded ? "▲" : "▼"}</td>
         </tr>
         ${expanded ? `<tr class="bin-db-expand-row">
           <td colspan="6">
             <div class="bin-db-expand-body">
               <div class="bin-db-expand-grid">
                 ${_binDbDetailPair("Range", escapeHtml(range))}
-                ${_binDbDetailPair("BIN Length", escapeHtml(String(r.binLength || "Ã¢â‚¬â€")))}
-                ${_binDbDetailPair("Product", escapeHtml(r.productDescription || "Ã¢â‚¬â€"))}
-                ${_binDbDetailPair("Product Code", escapeHtml(r.productCode || "Ã¢â‚¬â€"))}
-                ${_binDbDetailPair("ICA", escapeHtml(String(r.ica || "Ã¢â‚¬â€")))}
-                ${_binDbDetailPair("Country Code", escapeHtml(r.country && r.country.alpha3 ? r.country.alpha3 : "Ã¢â‚¬â€"))}
-                ${_binDbDetailPair("Funding", escapeHtml(r.fundingSource || "Ã¢â‚¬â€"))}
-                ${_binDbDetailPair("Consumer Type", escapeHtml(r.consumerType || "Ã¢â‚¬â€"))}
-                ${_binDbDetailPair("Prepaid", escapeHtml(r.anonymousPrepaidIndicator || "Ã¢â‚¬â€"))}
-                ${_binDbDetailPair("Smart Data", escapeHtml(String(r.smartDataEnabled ?? "Ã¢â‚¬â€")))}
-                ${_binDbDetailPair("Local Use", escapeHtml(String(r.localUse ?? "Ã¢â‚¬â€")))}
-                ${_binDbDetailPair("Auth Only", escapeHtml(String(r.authorizationOnly ?? "Ã¢â‚¬â€")))}
-                ${_binDbDetailPair("Govt Range", escapeHtml(String(r.governmentRange ?? "Ã¢â‚¬â€")))}
-                ${_binDbDetailPair("Program", escapeHtml(r.programName || "Ã¢â‚¬â€"))}
-                ${_binDbDetailPair("Vertical", escapeHtml(r.vertical || "Ã¢â‚¬â€"))}
+                ${_binDbDetailPair("BIN Length", escapeHtml(String(r.binLength || "—")))}
+                ${_binDbDetailPair("Product", escapeHtml(r.productDescription || "—"))}
+                ${_binDbDetailPair("Product Code", escapeHtml(r.productCode || "—"))}
+                ${_binDbDetailPair("ICA", escapeHtml(String(r.ica || "—")))}
+                ${_binDbDetailPair("Country Code", escapeHtml(r.country && r.country.alpha3 ? r.country.alpha3 : "—"))}
+                ${_binDbDetailPair("Funding", escapeHtml(r.fundingSource || "—"))}
+                ${_binDbDetailPair("Consumer Type", escapeHtml(r.consumerType || "—"))}
+                ${_binDbDetailPair("Prepaid", escapeHtml(r.anonymousPrepaidIndicator || "—"))}
+                ${_binDbDetailPair("Smart Data", escapeHtml(String(r.smartDataEnabled ?? "—")))}
+                ${_binDbDetailPair("Local Use", escapeHtml(String(r.localUse ?? "—")))}
+                ${_binDbDetailPair("Auth Only", escapeHtml(String(r.authorizationOnly ?? "—")))}
+                ${_binDbDetailPair("Govt Range", escapeHtml(String(r.governmentRange ?? "—")))}
+                ${_binDbDetailPair("Program", escapeHtml(r.programName || "—"))}
+                ${_binDbDetailPair("Vertical", escapeHtml(r.vertical || "—"))}
               </div>
               <div class="bin-db-expand-actions">
-                <button class="bin-db-visualize-btn" data-visualize-bin="${escapeHtml(String(r.binNum || ""))}" data-visualize-label="${escapeHtml((r.binNum ? String(r.binNum) : "") + (r.customerName ? " Ã¢â‚¬â€ " + r.customerName : "") + (r.country && r.country.alpha3 ? " (" + r.country.alpha3 + ")" : ""))}">
+                <button class="bin-db-visualize-btn" data-visualize-bin="${escapeHtml(String(r.binNum || ""))}" data-visualize-label="${escapeHtml((r.binNum ? String(r.binNum) : "") + (r.customerName ? " — " + r.customerName : "") + (r.country && r.country.alpha3 ? " (" + r.country.alpha3 + ")" : ""))}">
                   <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0"><rect x="2" y="5" width="16" height="11" rx="2"/><path d="M2 9h16" stroke-linecap="round"/><circle cx="6" cy="13" r="1" fill="currentColor" stroke="none"/></svg>
                   Visualize as Card
                 </button>
@@ -3972,7 +3187,7 @@ import './features/infoModal.js';
             </a>
             <button class="bin-db-load-btn" id="bin-db-load-btn"${loading ? " disabled" : ""}>
               ${loading
-                ? `<span class="psi-spinner" style="width:12px;height:12px;border-width:1.5px"></span> LoadingÃ¢â‚¬Â¦`
+                ? `<span class="psi-spinner" style="width:12px;height:12px;border-width:1.5px"></span> Loading…`
                 : loaded
                   ? `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/><path d="M4 10l-2-2 2-2"/></svg> Reload`
                   : `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/><path d="M4 10l-2-2 2-2"/></svg> Load into Studio`}
@@ -3985,9 +3200,9 @@ import './features/infoModal.js';
           <div class="bin-db-search-wrap">
             <svg class="bin-db-search-icon" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>
             <input class="bin-db-search-input" id="bin-db-search-input" type="text"
-              placeholder='Search BIN, issuer, countryÃ¢â‚¬Â¦ or "Exact Issuer Name"'
+              placeholder='Search BIN, issuer, country… or "Exact Issuer Name"'
               value="${escapeHtml(BIN_DB.searchQuery)}" autocomplete="off">
-            ${BIN_DB.searchQuery ? `<button class="bin-db-search-clear" id="bin-db-search-clear" title="Clear">Ã¢Å“â€¢</button>` : ""}
+            ${BIN_DB.searchQuery ? `<button class="bin-db-search-clear" id="bin-db-search-clear" title="Clear">✕</button>` : ""}
           </div>
         </div>
         <div class="bin-db-results" id="bin-db-results">${binDbResultsHtml()}</div>
@@ -4091,7 +3306,7 @@ import './features/infoModal.js';
       const loaded = BIN_DB.status === "loaded";
       loadBtn.disabled = loading;
       loadBtn.innerHTML = loading
-        ? `<span class="psi-spinner" style="width:12px;height:12px;border-width:1.5px"></span> LoadingÃ¢â‚¬Â¦`
+        ? `<span class="psi-spinner" style="width:12px;height:12px;border-width:1.5px"></span> Loading…`
         : loaded
           ? `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/><path d="M4 10l-2-2 2-2"/></svg> Reload`
           : `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/><path d="M4 10l-2-2 2-2"/></svg> Load into MSS`;
@@ -4187,7 +3402,7 @@ import './features/infoModal.js';
     } catch (_) {}
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Targeted refresh helpers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  // ─── Targeted refresh helpers ─────────────────────────────────────────────
 
   function _binRefreshLookupPanel() {
     // Refreshes only the tab content area without rebuilding the tabs
@@ -4197,7 +3412,7 @@ import './features/infoModal.js';
     binWire();
   }
 
-  // Visualize a batch row as the animated card Ã¢â‚¬â€ switches to the Lookup tab
+  // Visualize a batch row as the animated card — switches to the Lookup tab
   // and reuses the existing card visualization code path.
   async function _binVisualizeFromBatch(binNum, label) {
     // Ensure the BIN appears in the select dropdown so the user can see what's loaded
@@ -4243,7 +3458,7 @@ import './features/infoModal.js';
     }
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Wiring Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  // ─── Wiring ──────────────────────────────────────────────────────────────
 
   function binWire() {
     const sel = document.getElementById("bin-select");
@@ -4300,7 +3515,7 @@ import './features/infoModal.js';
 
   // ===================== Consumer Clarity Use Case =====================
   // Turns cryptic statement descriptors into rich merchant identities.
-  // Stripe-inspired before Ã¢â€ â€™ after card.
+  // Stripe-inspired before → after card.
 
   const CLARITY = {
     presetKey: null,
@@ -4345,7 +3560,7 @@ import './features/infoModal.js';
             </div>
             <button class="clarity-btn" id="clarity-btn"${CLARITY.loading ? " disabled" : ""}>
               ${CLARITY.loading
-                ? `<span class="clarity-spinner"></span>EnrichingÃ¢â‚¬Â¦`
+                ? `<span class="clarity-spinner"></span>Enriching…`
                 : `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>Enrich`}
             </button>
           </div>
@@ -4359,7 +3574,7 @@ import './features/infoModal.js';
 
   function clarityResultHtml() {
     if (CLARITY.loading) {
-      return `<div class="clarity-loading"><div class="clarity-spinner clarity-spinner--lg"></div><p>Calling Consumer Clarity APIÃ¢â‚¬Â¦</p></div>`;
+      return `<div class="clarity-loading"><div class="clarity-spinner clarity-spinner--lg"></div><p>Calling Consumer Clarity API…</p></div>`;
     }
     if (!CLARITY.result) {
       return clarityHeroHtml();
@@ -4369,9 +3584,9 @@ import './features/infoModal.js';
     }
 
     const raw = CLARITY.result.raw || {};
-    const rawText = (raw.cardAcceptorName || "Ã¢â‚¬â€").toUpperCase();
+    const rawText = (raw.cardAcceptorName || "—").toUpperCase();
     const rawSub = [raw.cardAcceptorLocation, raw.cardAcceptorRegionCode, raw.cardAcceptorCountryCode]
-      .filter(Boolean).join(" Ã‚Â· ");
+      .filter(Boolean).join(" · ");
 
     if (!CLARITY.result.found) {
       return `
@@ -4415,12 +3630,12 @@ import './features/infoModal.js';
       : `<div class="clarity-merchant-logo-fallback">${escapeHtml(initials)}</div>`;
     const addr = (m.addressLines || []).map(l => `<div class="clarity-addr-line">${escapeHtml(l)}</div>`).join("");
     const cat = m.categoryName
-      ? `<span class="clarity-chip clarity-chip--cat">${escapeHtml(m.categoryName)}${m.categoryCode ? ` Ã‚Â· MCC ${escapeHtml(String(m.categoryCode))}` : ""}</span>`
+      ? `<span class="clarity-chip clarity-chip--cat">${escapeHtml(m.categoryName)}${m.categoryCode ? ` · MCC ${escapeHtml(String(m.categoryCode))}` : ""}</span>`
       : "";
     const receipt = m.receiptStatus === "RECEIPT_FOUND" || m.receiptUrl
       ? `<span class="clarity-chip clarity-chip--ok">Digital receipt available</span>` : "";
     const website = m.websiteUrl
-      ? `<a class="clarity-link" href="${escapeHtml(m.websiteUrl)}" target="_blank" rel="noopener">Visit website Ã¢â€ â€”</a>`
+      ? `<a class="clarity-link" href="${escapeHtml(m.websiteUrl)}" target="_blank" rel="noopener">Visit website ↗</a>`
       : "";
     return `
       <div class="clarity-merchant-card">
@@ -4495,7 +3710,7 @@ import './features/infoModal.js';
         <div class="clarity-map-box">
           <iframe class="clarity-map-frame" src="${escapeHtml(src)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="${escapeHtml(name || 'Merchant location')}"></iframe>
         </div>
-        <a class="clarity-link clarity-map-link" href="${escapeHtml(link)}" target="_blank" rel="noopener">View larger map Ã¢â€ â€”</a>
+        <a class="clarity-link clarity-map-link" href="${escapeHtml(link)}" target="_blank" rel="noopener">View larger map ↗</a>
       </div>`;
   }
 
@@ -4509,7 +3724,7 @@ import './features/infoModal.js';
           </svg>
         </div>
         <h3>Turn cryptic statements into clear merchant identities</h3>
-        <p>Pick a sandbox transaction above and click <strong>Enrich</strong> to see a raw descriptor transformed into a recognisable merchant Ã¢â‚¬â€ complete with logo, address, category, and receipt link.</p>
+        <p>Pick a sandbox transaction above and click <strong>Enrich</strong> to see a raw descriptor transformed into a recognisable merchant — complete with logo, address, category, and receipt link.</p>
         <div class="clarity-hero-chips">
           <span class="clarity-hero-chip">Clean merchant name</span>
           <span class="clarity-hero-chip">Logo &amp; category</span>
@@ -4559,7 +3774,7 @@ import './features/infoModal.js';
 
   // ===================== Personal Finance Manager Use Case =====================
   // Rendered as a sandboxed iframe pointing to /pfm/index.html.
-  // All PFM UI lives in usecases/pfm/ Ã¢â‚¬â€ edit there to change the look.
+  // All PFM UI lives in usecases/pfm/ — edit there to change the look.
 
   const _cachedUsecaseWebviews = new Map();
 
@@ -4684,7 +3899,7 @@ import './features/infoModal.js';
             </div>
             <button class="es-btn es-btn--primary" id="es-browse-btn"${ES.loading ? " disabled" : ""}>
               ${ES.loading
-                ? '<span class="es-spinner"></span>SearchingÃ¢â‚¬Â¦'
+                ? '<span class="es-spinner"></span>Searching…'
                 : '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>Browse'}
             </button>
           </div>
@@ -4698,7 +3913,7 @@ import './features/infoModal.js';
 
   function esResultHtml() {
     if (ES.loading) {
-      return '<div class="es-loading"><div class="es-spinner es-spinner--lg"></div><p>Fetching offersÃ¢â‚¬Â¦</p></div>';
+      return '<div class="es-loading"><div class="es-spinner es-spinner--lg"></div><p>Fetching offers…</p></div>';
     }
     if (ES.error) {
       return '<div class="es-error">' + escapeHtml(String(ES.error)) + '</div>';
@@ -4721,9 +3936,9 @@ import './features/infoModal.js';
             ${r.orderId ? '<div class="es-redemption-detail"><span class="es-detail-label">Order ID</span> <code>' + escapeHtml(r.orderId) + '</code></div>' : ""}
             ${r.voucherCode ? '<div class="es-redemption-detail"><span class="es-detail-label">Voucher</span> <code class="es-voucher-code">' + escapeHtml(r.voucherCode) + '</code></div>' : ""}
             ${r.status ? '<div class="es-redemption-detail"><span class="es-detail-label">Status</span> ' + escapeHtml(r.status) + '</div>' : ""}
-            ${r.redemptionUrl ? '<a class="es-link" href="' + escapeHtml(r.redemptionUrl) + '" target="_blank" rel="noopener">Redeem at merchant Ã¢â€ â€”</a>' : ""}
+            ${r.redemptionUrl ? '<a class="es-link" href="' + escapeHtml(r.redemptionUrl) + '" target="_blank" rel="noopener">Redeem at merchant ↗</a>' : ""}
           </div>
-          <button class="es-banner-close" id="es-banner-close" title="Dismiss">Ã¢Å“â€¢</button>
+          <button class="es-banner-close" id="es-banner-close" title="Dismiss">✕</button>
         </div>`;
     }
 
@@ -4763,7 +3978,7 @@ import './features/infoModal.js';
     if (offer.startDate) dates.push("From " + escapeHtml(offer.startDate));
     if (offer.endDate) dates.push("Until " + escapeHtml(offer.endDate));
     const dateHtml = dates.length
-      ? '<div class="es-offer-dates">' + dates.join(" Ã‚Â· ") + '</div>'
+      ? '<div class="es-offer-dates">' + dates.join(" · ") + '</div>'
       : "";
 
     return `
@@ -4782,7 +3997,7 @@ import './features/infoModal.js';
         <div class="es-offer-actions">
           <button class="es-btn es-btn--redeem" data-redeem-id="${escapeHtml(offer.id)}"${isRedeeming ? " disabled" : ""}>
             ${isRedeeming
-              ? '<span class="es-spinner"></span>RedeemingÃ¢â‚¬Â¦'
+              ? '<span class="es-spinner"></span>Redeeming…'
               : '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;flex-shrink:0"><path d="M5 10h10M10 5v10"/></svg>Redeem'}
           </button>
           ${offer.termsUrl ? '<a class="es-terms-link" href="' + escapeHtml(offer.termsUrl) + '" target="_blank" rel="noopener">Terms</a>' : ""}
@@ -4801,7 +4016,7 @@ import './features/infoModal.js';
           </svg>
         </div>
         <h3>Discover card-linked merchant savings</h3>
-        <p>Enter a BIN and country above, then click <strong>Browse</strong> to explore available SME offers Ã¢â‚¬â€ discounts, vouchers, and promotions that cardholders can redeem instantly.</p>
+        <p>Enter a BIN and country above, then click <strong>Browse</strong> to explore available SME offers — discounts, vouchers, and promotions that cardholders can redeem instantly.</p>
         <div class="es-hero-chips">
           <span class="es-hero-chip">Local SME offers</span>
           <span class="es-hero-chip">Instant vouchers</span>
@@ -4901,7 +4116,7 @@ import './features/infoModal.js';
 
   // ===================== Places Use Case =====================
   // Rendered as a sandboxed iframe pointing to /places/index.html.
-  // All Places UI lives in usecases/places/ Ã¢â‚¬â€ edit there to change the look.
+  // All Places UI lives in usecases/places/ — edit there to change the look.
 
   function renderPlaces() {
     _renderCachedWebview('places', 'places-webview-frame', _appPath('/places/index.html'), 'Places');
@@ -4923,7 +4138,7 @@ import './features/infoModal.js';
     s.src = 'https://sonicsdk.mastercard.com/assets/js/latest/js/mc-sonic.min.js';
     s.setAttribute('data-mc-sonic', '1');
     s.onload = () => customElements.whenDefined('mc-sonic').then(cb);
-    s.onerror = () => {};   // silent Ã¢â‚¬â€ sonic is optional
+    s.onerror = () => {};   // silent — sonic is optional
     document.head.appendChild(s);
   }
 
@@ -4985,51 +4200,51 @@ import './features/infoModal.js';
     result: null,
   };
 
-  // Cards "pulled from Open Banking" Ã¢â‚¬â€ what we know about each. Keyed by bankId.
+  // Cards "pulled from Open Banking" — what we know about each. Keyed by bankId.
   const IDV_CARDS = [
     // Chase
     { id: "chase-mc",   bankId: "chase", brand: "Mastercard", network: "mc",
       issuer: "Chase Sapphire Preferred", last4: "9999", knownPan: true,
-      display: "Mastercard Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ 9999" },
+      display: "Mastercard •••• 9999" },
     { id: "chase-visa", bankId: "chase", brand: "Visa", network: "visa",
       issuer: "Chase Freedom Unlimited",  last4: "1042", knownPan: false, bin6: "414720",
-      display: "Visa Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ 1042" },
+      display: "Visa •••• 1042" },
     // Bank of America
     { id: "boa-visa",   bankId: "boa", brand: "Visa", network: "visa",
       issuer: "BoA Cash Rewards",        last4: "2207", knownPan: false, bin6: "424631",
-      display: "Visa Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ 2207" },
+      display: "Visa •••• 2207" },
     { id: "boa-mc",     bankId: "boa", brand: "Mastercard", network: "mc",
       issuer: "BoA Premium Rewards",     last4: "6611", knownPan: true,
-      display: "Mastercard Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ 6611" },
+      display: "Mastercard •••• 6611" },
     // Wells Fargo
     { id: "wells-visa", bankId: "wells", brand: "Visa", network: "visa",
       issuer: "Wells Fargo Active Cash", last4: "3380", knownPan: false, bin6: "446542",
-      display: "Visa Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ 3380" },
+      display: "Visa •••• 3380" },
     // Citi
     { id: "citi-mc",    bankId: "citi", brand: "Mastercard", network: "mc",
       issuer: "Citi Double Cash",        last4: "4418", knownPan: true,
-      display: "Mastercard Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ 4418" },
+      display: "Mastercard •••• 4418" },
     { id: "citi-visa",  bankId: "citi", brand: "Visa", network: "visa",
       issuer: "Citi Custom Cash",        last4: "7720", knownPan: false, bin6: "414709",
-      display: "Visa Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ 7720" },
+      display: "Visa •••• 7720" },
     // U.S. Bank
     { id: "usbank-visa", bankId: "usbank", brand: "Visa", network: "visa",
       issuer: "U.S. Bank Cash+",         last4: "8845", knownPan: false, bin6: "433228",
-      display: "Visa Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ 8845" },
+      display: "Visa •••• 8845" },
     // Capital One
     { id: "cap1-mc",    bankId: "capitalone", brand: "Mastercard", network: "mc",
       issuer: "Capital One Venture",     last4: "5031", knownPan: true,
-      display: "Mastercard Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ 5031" },
+      display: "Mastercard •••• 5031" },
     { id: "cap1-visa",  bankId: "capitalone", brand: "Visa", network: "visa",
       issuer: "Capital One Quicksilver", last4: "9912", knownPan: false, bin6: "414740",
-      display: "Visa Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ 9912" },
+      display: "Visa •••• 9912" },
   ];
 
   const IDV_STEPS = [
     { key: "bank",     label: "Connect bank" },
     { key: "personal", label: "Personal info" },
     { key: "card",     label: "Verify By Card" },
-    { key: "review",   label: "VerifyingÃ¢â‚¬Â¦" },
+    { key: "review",   label: "Verifying…" },
   ];
 
   const IDV_BANKS = [
@@ -5045,35 +4260,35 @@ import './features/infoModal.js';
   function idvSignals(step) {
     if (step === 0) {
       return {
-        title: "Step 1 Ã¢â‚¬â€ US Open Finance proves bank ownership",
+        title: "Step 1 — US Open Finance proves bank ownership",
         provider: "US Open Finance (Connect)",
         items: [
-          ["Connect URL",            "https://connect.openfinance.us/?session=Ã¢â‚¬Â¦"],
+          ["Connect URL",            "https://connect.openfinance.us/?session=…"],
           ["Customer ID",            "cust_91421"],
           ["Institution",            IDV.selectedBank ? IDV.selectedBank.name : "(awaiting selection)"],
           ["OAuth scope",            "accounts.read  owner.read"],
-          ["Account-owner returned", IDV.bankConnected ? "ALEX MORGAN Ã¢â‚¬â€ used to pre-fill next step" : "(pending consent)"],
+          ["Account-owner returned", IDV.bankConnected ? "ALEX MORGAN — used to pre-fill next step" : "(pending consent)"],
           ["Account funded > 90d",   IDV.bankConnected ? "true (KYC-passing)" : "(pending)"],
           ["AccountID stored",       IDV.bankConnected ? "acct_4192xxxx7733" : "(pending)"],
         ],
-        callout: "POST openfinance/v2/customers/{id}/accounts/owner  Ã¢â€ â€™  accountOwner.name returned & cached",
+        callout: "POST openfinance/v2/customers/{id}/accounts/owner  →  accountOwner.name returned & cached",
       };
     }
     if (step === 1) {
       return {
-        title: "Step 2 Ã¢â‚¬â€ Ekata silently scores the applicant",
+        title: "Step 2 — Ekata silently scores the applicant",
         provider: "Ekata Identity Verification",
         items: [
           ["Device fingerprint",  "d8b2-fa17-3c91-aa05  (canvas+webGL+UA)"],
           ["IP address",          "73.118.42.207 (US, residential, no proxy)"],
-          ["IP velocity",         "1 signup in last 24h Ã¢â‚¬â€ low"],
-          ["Email risk",          (IDV.form.email || "(empty)") + " Ã¢â‚¬â€ seen 4y, low risk"],
-          ["Phone-to-name match", (IDV.form.phone || "(empty)") + " Ã¢â€ â€ " + (IDV.form.firstName + ' ' + IDV.form.lastName).trim() + " Ã¢â‚¬â€ match"],
-          ["Address validity",    (IDV.form.address || "(empty)") + " Ã¢â‚¬â€ USPS deliverable"],
-          ["Name Ã¢â€ â€ DOB",          "consistent across public records"],
+          ["IP velocity",         "1 signup in last 24h — low"],
+          ["Email risk",          (IDV.form.email || "(empty)") + " — seen 4y, low risk"],
+          ["Phone-to-name match", (IDV.form.phone || "(empty)") + " ↔ " + (IDV.form.firstName + ' ' + IDV.form.lastName).trim() + " — match"],
+          ["Address validity",    (IDV.form.address || "(empty)") + " — USPS deliverable"],
+          ["Name ↔ DOB",          "consistent across public records"],
           ["Bank-owner agreement","applicant name == openfinance owner.name"],
         ],
-        callout: "POST identitycheck.api/v5/identity  Ã¢â€ â€™  confidenceScore: 612 / 1000",
+        callout: "POST identitycheck.api/v5/identity  →  confidenceScore: 612 / 1000",
       };
     }
     if (step === 2) {
@@ -5081,47 +4296,47 @@ import './features/infoModal.js';
       const isVisa = card.network === 'visa';
       const visaOk = (IDV.visaLast8 || '').length === 8;
       const items = [
-        ["Selected card",         `${card.brand} Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ ${card.last4} Ã¢â‚¬â€ ${card.issuer}`],
+        ["Selected card",         `${card.brand} •••• ${card.last4} — ${card.issuer}`],
         ["PAN source",            card.knownPan
             ? "Open Banking (full PAN previously shared by issuer)"
             : `Open Banking (BIN6 ${card.bin6} + last4 ${card.last4}; middle 8 collected from user)`],
-        ["Middle-8 challenge",    isVisa ? (visaOk ? "passed Ã¢â‚¬â€ proves possession of physical card" : "(awaiting 8 digits)") : "not required Ã¢â‚¬â€ full PAN known"],
+        ["Middle-8 challenge",    isVisa ? (visaOk ? "passed — proves possession of physical card" : "(awaiting 8 digits)") : "not required — full PAN known"],
         ["Network",               isVisa ? "Visa (VbV / EMV 3DS)" : "Mastercard (Identity Check / EMV 3DS)"],
-        ["3DS Method status",     "Y Ã¢â‚¬â€ device collection succeeded"],
+        ["3DS Method status",     "Y — device collection succeeded"],
         ["ACS flow",              "Frictionless (transStatus = Y)"],
-        ["Cardholder name match", `${(IDV.form.firstName + ' ' + IDV.form.lastName).toUpperCase()} Ã¢â€ â€ issuer-on-file Ã¢â‚¬â€ match`],
+        ["Cardholder name match", `${(IDV.form.firstName + ' ' + IDV.form.lastName).toUpperCase()} ↔ issuer-on-file — match`],
         ["AVS request",           `${IDV.form.address}`],
-        ["AVS response",          "Y Ã¢â‚¬â€ street & ZIP match"],
+        ["AVS response",          "Y — street & ZIP match"],
         ["Auth type",             "$0 account-verification (no charge, no clearing)"],
-        ["Card storage",          "not stored Ã¢â‚¬â€ used for identity verification only"],
+        ["Card storage",          "not stored — used for identity verification only"],
         ["Consent reference",     "consent_13322909"],
       ];
       return {
-        title: "Step 3 Ã¢â‚¬â€ Verify By Card",
+        title: "Step 3 — Verify By Card",
         provider: isVisa ? "Visa VbV + AVS" : "Mastercard Identity Check + AVS",
         items,
-        callout: "POST consents/v1/cards  Ã¢â€ â€™  POST authentications (3DS)  Ã¢â€ â€™  POST avs/check  Ã¢â€ â€™  transStatus: Y, avsResponse: Y",
+        callout: "POST consents/v1/cards  →  POST authentications (3DS)  →  POST avs/check  →  transStatus: Y, avsResponse: Y",
       };
     }
     if (step === 3) {
       return {
-        title: "Step 4 Ã¢â‚¬â€ Combining the signals",
+        title: "Step 4 — Combining the signals",
         provider: "Decision engine",
         items: [
-          ["US Open Finance ownership", "Owner name match Ã¢â‚¬â€ strong"],
+          ["US Open Finance ownership", "Owner name match — strong"],
           ["Ekata confidence",         "612 / 1000  (Tier B)"],
-          ["Card 3DS",                 "Authenticated Ã¢â‚¬â€ strong"],
-          ["Card AVS",                 "Street & ZIP match Ã¢â‚¬â€ strong"],
+          ["Card 3DS",                 "Authenticated — strong"],
+          ["Card AVS",                 "Street & ZIP match — strong"],
           ["Name agreement",           "3 / 3 sources (bank, applicant, card)"],
           ["Address agreement",        "3 / 3 sources (Ekata, US Open Finance, AVS)"],
           ["Document fallback",        "not required"],
           ["Risk band",                "Low"],
         ],
-        callout: "score = 0.3Ã‚Â·openfinance + 0.3Ã‚Â·ekata + 0.2Ã‚Â·3ds + 0.2Ã‚Â·avs  Ã¢â€ â€™  0.91  (auto-approve)",
+        callout: "score = 0.3·openfinance + 0.3·ekata + 0.2·3ds + 0.2·avs  →  0.91  (auto-approve)",
       };
     }
     return {
-      title: "Step 5 Ã¢â‚¬â€ Identity established",
+      title: "Step 5 — Identity established",
       provider: "Medicare.gov",
       items: [
         ["Identity assurance level", "IAL2 (NIST 800-63-3)"],
@@ -5129,7 +4344,7 @@ import './features/infoModal.js';
         ["Audit bundle stored",      "US Open Finance owner.json + Ekata score + Mastercard 3DS receipt"],
         ["PII never seen",           "PAN tokenized; raw bank credentials never left US Open Finance"],
       ],
-      callout: "session.identityVerified = true  Ã¢â€ â€™  unlock Medicare account",
+      callout: "session.identityVerified = true  →  unlock Medicare account",
     };
   }
 
@@ -5168,7 +4383,7 @@ import './features/infoModal.js';
               <div class="idv-browser-chrome">
                 <span class="idv-dot r"></span><span class="idv-dot y"></span><span class="idv-dot g"></span>
                 <div class="idv-url">
-                  <span class="idv-lock">Ã°Å¸â€â€™</span>
+                  <span class="idv-lock">🔒</span>
                   <span id="idv-modal-url-text">www.medicare.gov</span>
                 </div>
               </div>
@@ -5241,7 +4456,7 @@ import './features/infoModal.js';
     el.innerHTML = IDV_STEPS.map((s, i) => {
       const state = i < IDV.step ? "done" : i === IDV.step ? "active" : "todo";
       return `<div class="idv-step idv-step-${state}">
-        <span class="idv-step-num">${i < IDV.step ? "Ã¢Å“â€œ" : (i + 1)}</span>
+        <span class="idv-step-num">${i < IDV.step ? "✓" : (i + 1)}</span>
         <span class="idv-step-label">${escapeHtml(s.label)}</span>
       </div>`;
     }).join('<span class="idv-step-sep"></span>');
@@ -5280,7 +4495,7 @@ import './features/infoModal.js';
     return `
       <div class="idv-screen">
         <h3 class="idv-screen-title">Connect your bank</h3>
-        <p class="muted">We confirm you own the account in your name. Your password is never shared with us Ã¢â‚¬â€ <strong>US Open Finance</strong> handles the secure sign-in. We'll use the account holder details to pre-fill the next step.</p>
+        <p class="muted">We confirm you own the account in your name. Your password is never shared with us — <strong>US Open Finance</strong> handles the secure sign-in. We'll use the account holder details to pre-fill the next step.</p>
         <div class="idv-banks">
           ${IDV_BANKS.map(b => `
             <button class="idv-bank ${sel && sel.id === b.id ? 'idv-bank-sel' : ''}" data-bank="${b.id}">
@@ -5292,11 +4507,11 @@ import './features/infoModal.js';
           <div class="idv-bank-card">
             <div class="idv-bank-card-head" style="background:${sel.color}">
               <span>${escapeHtml(sel.name)} Online</span>
-              <span class="idv-bank-secure">Ã°Å¸â€â€™ openfinance.us</span>
+              <span class="idv-bank-secure">🔒 openfinance.us</span>
             </div>
             <div class="idv-bank-card-body">
               <label>Username<input value="alex.morgan" disabled></label>
-              <label>Password<input type="password" value="Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢" disabled></label>
+              <label>Password<input type="password" value="••••••••" disabled></label>
               <button class="btn btn-primary" id="idv-connect-bank">Sign in &amp; share account ownership</button>
             </div>
           </div>` : `<p class="muted idv-hint">Pick your bank to continue.</p>`}
@@ -5311,7 +4526,7 @@ import './features/infoModal.js';
     if (stage === 'intro') {
       body = `
         <div class="idv-modal-body">
-          <div class="idv-modal-icon" style="background:${sel.color}">Ã°Å¸Ââ€ºÃ¯Â¸Â</div>
+          <div class="idv-modal-icon" style="background:${sel.color}">🏛️</div>
           <h4>Share account ownership with Medicare.gov?</h4>
           <p class="muted">${escapeHtml(sel.name)} will share, via US Open Finance, only the information needed to confirm your identity:</p>
           <ul class="idv-modal-list">
@@ -5329,11 +4544,11 @@ import './features/infoModal.js';
       body = `
         <div class="idv-modal-body idv-modal-center">
           <div class="idv-spinner-lg"></div>
-          <h4>Sharing account ownershipÃ¢â‚¬Â¦</h4>
+          <h4>Sharing account ownership…</h4>
           <ul class="idv-verify-list">
             <li class="idv-vli idv-vli-done">Signed in to ${escapeHtml(sel.name)}</li>
             <li class="idv-vli idv-vli-done">Consent recorded with US Open Finance</li>
-            <li class="idv-vli idv-vli-active">Retrieving account ownerÃ¢â‚¬Â¦</li>
+            <li class="idv-vli idv-vli-active">Retrieving account owner…</li>
           </ul>
         </div>`;
     }
@@ -5342,7 +4557,7 @@ import './features/infoModal.js';
         <div class="idv-modal">
           <div class="idv-modal-head">
             <span>US Open Finance</span>
-            <span class="idv-modal-secure">Ã°Å¸â€â€™ openfinance.us</span>
+            <span class="idv-modal-secure">🔒 openfinance.us</span>
           </div>
           ${body}
         </div>
@@ -5364,17 +4579,17 @@ import './features/infoModal.js';
     const visaComplete = !isVisa || visaDigits.length === 8;
     const canContinue = !!card && IDV.cardConsent && visaComplete && !IDV.cardAuthorizing;
     const displayedPan = card ? (isVisa
-      ? `${card.bin6.slice(0,4)} ${card.bin6.slice(4)}${(visaDigits.slice(0,2) || 'Ã¢â‚¬Â¢Ã¢â‚¬Â¢').padEnd(2,'Ã¢â‚¬Â¢')}  ${(visaDigits.slice(2,6) || 'Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢').padEnd(4,'Ã¢â‚¬Â¢')}  ${(visaDigits.slice(6,8) || 'Ã¢â‚¬Â¢Ã¢â‚¬Â¢').padEnd(2,'Ã¢â‚¬Â¢')}${card.last4.slice(0,2)} ${card.last4.slice(2)}`
-      : `5204  ${card.last4.slice(0,2)}Ã¢â‚¬Â¢Ã¢â‚¬Â¢  Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢  ${card.last4}`) : '';
+      ? `${card.bin6.slice(0,4)} ${card.bin6.slice(4)}${(visaDigits.slice(0,2) || '••').padEnd(2,'•')}  ${(visaDigits.slice(2,6) || '••••').padEnd(4,'•')}  ${(visaDigits.slice(6,8) || '••').padEnd(2,'•')}${card.last4.slice(0,2)} ${card.last4.slice(2)}`
+      : `5204  ${card.last4.slice(0,2)}••  ••••  ${card.last4}`) : '';
     return `
       <div class="idv-screen">
         <h3 class="idv-screen-title">Verify By Card</h3>
-        <p class="muted">We confirm you hold this card: identity verification only Ã¢â‚¬â€ no payment will be taken.</p>
+        <p class="muted">We confirm you hold this card: identity verification only — no payment will be taken.</p>
         <label class="idv-field">
           <span class="muted">Card on file from ${escapeHtml(bankName)}</span>
           <select id="idv-card-select" class="idv-select">
-            ${bankCards.map(c => `<option value="${c.id}" ${c.id === (card && card.id) ? 'selected' : ''}>${escapeHtml(c.display)} Ã¢â‚¬â€ ${escapeHtml(c.issuer)}</option>`).join('')}
-            <option value="__other__" disabled>Ã¢â‚¬â€ Choose other card (demo only) Ã¢â‚¬â€</option>
+            ${bankCards.map(c => `<option value="${c.id}" ${c.id === (card && card.id) ? 'selected' : ''}>${escapeHtml(c.display)} — ${escapeHtml(c.issuer)}</option>`).join('')}
+            <option value="__other__" disabled>— Choose other card (demo only) —</option>
           </select>
         </label>
         ${card ? `
@@ -5396,7 +4611,7 @@ import './features/infoModal.js';
             <p class="muted idv-visa-note">Your bank only shared the first 6 and last 4 of this Visa card. Enter the middle <strong>8 digits</strong> to confirm you have the physical card.</p>
             <label class="idv-field">
               <span class="muted">Middle 8 digits</span>
-              <input id="idv-visa-8" inputmode="numeric" maxlength="8" placeholder="Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢" value="${escapeHtml(visaDigits)}" autocomplete="off">
+              <input id="idv-visa-8" inputmode="numeric" maxlength="8" placeholder="••••••••" value="${escapeHtml(visaDigits)}" autocomplete="off">
             </label>
           </div>` : (card ? `
           <p class="muted idv-card-note">Your bank already shared this full card number with Open Banking, so no extra digits are required.</p>` : '')}
@@ -5417,7 +4632,7 @@ import './features/infoModal.js';
     return `
       <div class="idv-screen idv-screen-center">
         <div class="idv-spinner-lg"></div>
-        <h3 class="idv-screen-title">Confirming who you areÃ¢â‚¬Â¦</h3>
+        <h3 class="idv-screen-title">Confirming who you are…</h3>
         <p class="muted">Cross-checking your bank, card and device signals.</p>
       </div>`;
   }
@@ -5425,7 +4640,7 @@ import './features/infoModal.js';
   function idvPageStep4() {
     return `
       <div class="idv-screen idv-screen-center">
-        <div class="idv-tick">Ã¢Å“â€œ</div>
+        <div class="idv-tick">✓</div>
         <h3 class="idv-screen-title">You're verified</h3>
         <p class="muted">Your identity has been established. You can now access your Medicare account.</p>
         <div class="idv-result-card">
@@ -5481,7 +4696,7 @@ import './features/infoModal.js';
                 <span class="mcc-pair-dot" style="background:${bankColor}">${escapeHtml(bankInitial)}</span>
                 ${escapeHtml(bankName)}
               </span>
-              <span class="mcc-pair-link">Ã¢â€ â€</span>
+              <span class="mcc-pair-link">↔</span>
               <span class="mcc-pair-pill">
                 <span class="mcc-pair-card"><span class="r"></span><span class="y"></span></span>
                 Your Mastercard
@@ -5492,14 +4707,14 @@ import './features/infoModal.js';
             ${IDV_STEPS.map((s, i) => {
               const state = i < IDV.step ? 'done' : i === IDV.step ? 'active' : 'todo';
               return `<div class="mcc-step mcc-step-${state}" role="listitem">
-                <span class="mcc-step-num">${i < IDV.step ? 'Ã¢Å“â€œ' : (i + 1)}</span>
+                <span class="mcc-step-num">${i < IDV.step ? '✓' : (i + 1)}</span>
                 <span class="mcc-step-label">${escapeHtml(s.label)}</span>
               </div>`;
             }).join('<span class="mcc-step-sep"></span>')}
           </div>
           <div class="mcc-body" id="idv-step-pane"></div>
           <footer class="mcc-foot">
-            <span class="mcc-foot-lock">Ã°Å¸â€â€™</span>
+            <span class="mcc-foot-lock">🔒</span>
             Secured by Mastercard. Your bank credentials and card details are never shared with Medicare.gov.
           </footer>
         </div>
@@ -5769,7 +4984,7 @@ import './features/infoModal.js';
               <strong>Continue with Mastercard ID Connect</strong>
               <span>Verify your identity instantly using your bank &amp; card &mdash; no password needed.</span>
             </span>
-            <span class="med-mc-arrow">Ã¢â€ â€™</span>
+            <span class="med-mc-arrow">→</span>
           </button>
 
           ${IDV.passkeyChoice === 'enrolled' ? `
@@ -5777,9 +4992,9 @@ import './features/infoModal.js';
             <span class="med-mc-logo"><span class="r"></span><span class="y"></span></span>
             <span class="med-mc-text">
               <strong>Mastercard ID Passkey</strong>
-              <span>Instant access Ã¢â‚¬â€ authenticate with Face ID, Touch ID or screen lock.</span>
+              <span>Instant access — authenticate with Face ID, Touch ID or screen lock.</span>
             </span>
-            <span class="med-mc-key">Ã°Å¸â€â€˜</span>
+            <span class="med-mc-key">🔑</span>
           </button>` : ''}
 
           <p class="med-login-fine">By logging in, you agree to the <a href="#" onclick="return false">Terms of use</a> and <a href="#" onclick="return false">Privacy policy</a>.</p>
@@ -5829,7 +5044,7 @@ import './features/infoModal.js';
             </div>
           </header>
           <div class="mcc-body mcc-passkey-body">
-            <div class="med-passkey-icon">Ã°Å¸â€â€˜</div>
+            <div class="med-passkey-icon">🔑</div>
             <h2>Use a passkey next time?</h2>
             <p class="muted">Skip the bank &amp; card check the next time you log in. Your device will use Face ID, Touch ID, or your screen lock to prove it's you.</p>
             <ul class="med-passkey-list">
@@ -5843,7 +5058,7 @@ import './features/infoModal.js';
             </div>
           </div>
           <footer class="mcc-foot">
-            <span class="mcc-foot-lock">Ã°Å¸â€â€™</span>
+            <span class="mcc-foot-lock">🔒</span>
             Secured by Mastercard. Your bank credentials and card details are never shared with Medicare.gov.
           </footer>
         </div>
@@ -5858,7 +5073,7 @@ import './features/infoModal.js';
     page.querySelector('#med-passkey-go').addEventListener('click', (e) => {
       const btn = e.currentTarget;
       btn.disabled = true;
-      btn.innerHTML = '<span class="idv-btn-spin"></span> Setting upÃ¢â‚¬Â¦';
+      btn.innerHTML = '<span class="idv-btn-spin"></span> Setting up…';
       setTimeout(() => {
         IDV.passkeyChoice = 'enrolled';
         IDV.phase = 'records';
@@ -5870,7 +5085,7 @@ import './features/infoModal.js';
   function idvPageRecords() {
     const name = IDV.form.firstName + ' ' + IDV.form.lastName;
     const passkeyBadge = IDV.passkeyChoice === 'enrolled'
-      ? '<span class="med-badge med-badge-ok">Ã°Å¸â€â€˜ Passkey enabled</span>'
+      ? '<span class="med-badge med-badge-ok">🔑 Passkey enabled</span>'
       : '<span class="med-badge med-badge-dim">Passkey not set</span>';
     return `
       <div class="med-page">
@@ -5911,10 +5126,10 @@ import './features/infoModal.js';
           <div class="med-card">
             <h3>Coverage</h3>
             <dl class="med-dl">
-              <dt>Part A Ã¢â‚¬â€ Hospital</dt><dd><span class="med-pill med-pill-ok">Active</span> since 04/01/2023</dd>
-              <dt>Part B Ã¢â‚¬â€ Medical</dt><dd><span class="med-pill med-pill-ok">Active</span> since 04/01/2023</dd>
-              <dt>Part D Ã¢â‚¬â€ Drugs</dt><dd>Aetna SilverScript SmartSaver</dd>
-              <dt>Medigap</dt><dd>Plan G Ã¢â‚¬â€ Mutual of Omaha</dd>
+              <dt>Part A — Hospital</dt><dd><span class="med-pill med-pill-ok">Active</span> since 04/01/2023</dd>
+              <dt>Part B — Medical</dt><dd><span class="med-pill med-pill-ok">Active</span> since 04/01/2023</dd>
+              <dt>Part D — Drugs</dt><dd>Aetna SilverScript SmartSaver</dd>
+              <dt>Medigap</dt><dd>Plan G — Mutual of Omaha</dd>
             </dl>
           </div>
           <div class="med-card med-card-wide">
@@ -5940,7 +5155,7 @@ import './features/infoModal.js';
           <div class="med-card">
             <h3>Upcoming appointments</h3>
             <ul class="med-list">
-              <li><strong>Cardiology Ã¢â‚¬â€ Dr. Park</strong><span class="muted">06/04/2026 &middot; 10:30 AM</span></li>
+              <li><strong>Cardiology — Dr. Park</strong><span class="muted">06/04/2026 &middot; 10:30 AM</span></li>
               <li><strong>Annual flu vaccine</strong><span class="muted">09/15/2026 &middot; Walk-in</span></li>
             </ul>
           </div>
@@ -5958,7 +5173,7 @@ import './features/infoModal.js';
       IDV.bankModalOpen = false;
       IDV.cardConsent = false;
       IDV.cardAuthorizing = false;
-      // passkeyChoice intentionally NOT reset on logout Ã¢â‚¬â€ passkeys persist on device
+      // passkeyChoice intentionally NOT reset on logout — passkeys persist on device
       idvRender();
     });
   }
@@ -5981,7 +5196,7 @@ import './features/infoModal.js';
           `).join('')}
         </ul>
         <div class="idv-bts-callout">${escapeHtml(s.callout)}</div>
-        <p class="idv-bts-foot muted">Simulated data for illustration Ã¢â‚¬â€ no live API calls yet.</p>
+        <p class="idv-bts-foot muted">Simulated data for illustration — no live API calls yet.</p>
       </div>
     `;
   }
@@ -5994,7 +5209,7 @@ import './features/infoModal.js';
 
   // ===================== Find A Card Use Case =====================
   // Rendered as a sandboxed iframe pointing to /findacard/index.html.
-  // All Find A Card UI lives in usecases/findacard/ Ã¢â‚¬â€ edit there to change the look.
+  // All Find A Card UI lives in usecases/findacard/ — edit there to change the look.
 
   function renderFindACard() {
     _renderCachedWebview('findacard', 'findacard-webview-frame', _appPath('/findacard/index.html'), 'Find A Card');
@@ -6002,7 +5217,7 @@ import './features/infoModal.js';
 
   // ===================== The Wire Use Case =====================
   // Rendered as a sandboxed iframe pointing to /the_wire/index.html.
-  // All The Wire UI lives in usecases/the_wire/ Ã¢â‚¬â€ edit there to change the look.
+  // All The Wire UI lives in usecases/the_wire/ — edit there to change the look.
 
   function renderTheWire() {
     _renderCachedWebview('the_wire', 'the-wire-webview-frame', _appPath('/the_wire/index.html'), 'The Wire');
@@ -6010,7 +5225,7 @@ import './features/infoModal.js';
 
   // ===================== Sonic Branding Use Case =====================
   // Rendered as a sandboxed iframe pointing to /sonic/index.html.
-  // All sonic UI lives in usecases/sonic/ Ã¢â‚¬â€ edit there to change the look.
+  // All sonic UI lives in usecases/sonic/ — edit there to change the look.
 
   function renderSonic() {
     _renderCachedWebview('sonic', 'sonic-webview-frame', _appPath('/sonic/index.html'), 'Sonic Branding');
@@ -6254,7 +5469,7 @@ import './features/infoModal.js';
     const importBtn  = document.getElementById('cfg-import-btn');
     const importFile = document.getElementById('cfg-import-file');
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Auto Provision Keys Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // ── Auto Provision Keys ──────────────────────────────────────────────────
     const autogenBtn        = document.getElementById('cfg-autogen-btn');
     const autogenBanner     = document.getElementById('cfg-autogen-banner');
     const autogenCancel     = document.getElementById('cfg-autogen-cancel');
@@ -6279,10 +5494,10 @@ import './features/infoModal.js';
     let _unlocked = false;  // edit mode flag
     let _pending = {};      // { KEY: newValue } for unsaved file uploads
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Export Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // ── Export ──────────────────────────────────────────────────────────────
     exportBtn && exportBtn.addEventListener('click', function () {
       exportBtn.disabled = true;
-      exportBtn.textContent = 'ExportingÃ¢â‚¬Â¦';
+      exportBtn.textContent = 'Exporting…';
       const a = document.createElement('a');
       a.href = _appPath('/config/export');
       a.download = 'vima-config.zip';
@@ -6295,7 +5510,7 @@ import './features/infoModal.js';
       }, 1500);
     });
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Import Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // ── Import ──────────────────────────────────────────────────────────────
     importBtn && importBtn.addEventListener('click', function () { importFile && importFile.click(); });
     importFile && importFile.addEventListener('change', function () {
       const file = importFile.files[0];
@@ -6305,7 +5520,7 @@ import './features/infoModal.js';
         return;
       }
       importBtn.disabled = true;
-      importBtn.textContent = 'ImportingÃ¢â‚¬Â¦';
+      importBtn.textContent = 'Importing…';
       const fd = new FormData();
       fd.append('file', file);
       fetch('/config/import', { method: 'POST', body: fd })
@@ -6324,7 +5539,7 @@ import './features/infoModal.js';
     });
 
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Open / close Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // ── Open / close ────────────────────────────────────────────────────────
     function cfgOpen() {
       if (SERVER_MODE) return;
       modal.classList.remove('cfg-hidden');
@@ -6345,7 +5560,7 @@ import './features/infoModal.js';
     closeBtn && closeBtn.addEventListener('click', cfgClose);
     overlay && overlay.addEventListener('click', cfgClose);
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Global Vima Chat edit modal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // ── Global Vima Chat edit modal ──────────────────────────────────────────
     (function () {
       const editBtn   = document.getElementById('global-edit-btn');
       const editModal = document.getElementById('global-edit-modal');
@@ -6405,7 +5620,7 @@ import './features/infoModal.js';
         }, { once: true });
       }
 
-      // Ã¢â€â‚¬Ã¢â€â‚¬ Listen for done/restart signals from the chat iframe Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+      // ── Listen for done/restart signals from the chat iframe ───────────────
       window.addEventListener('message', function (e) {
         if (!e.data || e.data.type !== 'vima:chat-done') return;
         const text   = (e.data.response || '').toLowerCase();
@@ -6417,13 +5632,13 @@ import './features/infoModal.js';
 
         if (needsRestart) {
           banner.className = 'tc-modal-banner tc-modal-banner--restart';
-          banner.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Server restart required Ã¢â‚¬â€ run <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">python app.py</code> to apply changes.`;
+          banner.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Server restart required — run <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">python app.py</code> to apply changes.`;
         } else if (needsHardRefresh) {
           banner.className = 'tc-modal-banner tc-modal-banner--refresh';
-          banner.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Hard refresh recommended Ã¢â‚¬â€ press <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">Ctrl+Shift+R</code> (Win/Linux) or <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">Cmd+Shift+R</code> (Mac) after closing.`;
+          banner.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Hard refresh recommended — press <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">Ctrl+Shift+R</code> (Win/Linux) or <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">Cmd+Shift+R</code> (Mac) after closing.`;
         } else {
           banner.className = 'tc-modal-banner tc-modal-banner--done';
-          banner.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Done Ã¢â‚¬â€ page refreshed automatically.`;
+          banner.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Done — page refreshed automatically.`;
           // Auto-hide after 4s if no restart needed
           setTimeout(() => {
             if (banner.classList.contains('tc-modal-banner--done')) {
@@ -6447,7 +5662,7 @@ import './features/infoModal.js';
       if (e.key === 'Escape' && !modal.classList.contains('cfg-hidden')) cfgClose();
     });
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Lock / unlock Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // ── Lock / unlock ────────────────────────────────────────────────────────
     function cfgSetLocked(locked) {
       _unlocked = !locked;
       lockBtn.classList.toggle('unlocked', !locked);
@@ -6469,7 +5684,7 @@ import './features/infoModal.js';
       _pending = {};
     });
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Load config from server Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // ── Load config from server ──────────────────────────────────────────────
     function cfgLoad() {
       body.innerHTML = '<div class="cfg-loading">Loading configuration\u2026</div>';
       fetch('/config', { cache: 'no-store' })
@@ -6483,7 +5698,7 @@ import './features/infoModal.js';
         });
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Render Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // ── Render ───────────────────────────────────────────────────────────────
     function cfgRender(groups) {
       body.innerHTML = '';
       groups.forEach(function (g) {
@@ -6499,7 +5714,7 @@ import './features/infoModal.js';
             '<span class="cfg-group-subtitle">' + escHtml(g.subtitle) + '</span>' +
           '</div>' +
           '<a class="cfg-group-docs" href="' + escHtml(g.docs_url) + '" target="_blank" rel="noopener">' +
-            'Docs Ã¢â€ â€”' +
+            'Docs ↗' +
           '</a>';
         section.appendChild(hdr);
 
@@ -6544,7 +5759,7 @@ import './features/infoModal.js';
         } else if (f.type === 'password') {
           val.className = 'cfg-field-val masked';
           val.textContent = '\u2022'.repeat(12);
-          val.title = '(hidden) Ã¢â‚¬â€ unlock to view';
+          val.title = '(hidden) — unlock to view';
         } else {
           val.className = 'cfg-field-val';
           val.textContent = f.value;
@@ -6610,7 +5825,7 @@ import './features/infoModal.js';
           if (!file) return;
           const fd = new FormData();
           fd.append('file', file);
-          uploadBtn.textContent = 'UploadingÃ¢â‚¬Â¦';
+          uploadBtn.textContent = 'Uploading…';
           uploadBtn.disabled = true;
           fetch('/config/upload-key', { method: 'POST', body: fd })
             .then(function (r) { return r.json(); })
@@ -6642,7 +5857,7 @@ import './features/infoModal.js';
       return wrap;
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Save Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // ── Save ─────────────────────────────────────────────────────────────────
     saveBtn && saveBtn.addEventListener('click', function () {
       const updates = Object.assign({}, _pending);
 
@@ -6654,7 +5869,7 @@ import './features/infoModal.js';
       if (!Object.keys(updates).length) { cfgSetLocked(true); return; }
 
       saveBtn.disabled = true;
-      saveBtn.textContent = 'SavingÃ¢â‚¬Â¦';
+      saveBtn.textContent = 'Saving…';
 
       fetch('/config', {
         method: 'POST',
@@ -6680,7 +5895,7 @@ import './features/infoModal.js';
         });
     });
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Tooltip Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // ── Tooltip ──────────────────────────────────────────────────────────────
     function cfgTooltipShow(text, e) {
       if (!text) return;
       tooltip.textContent = text;
@@ -6799,7 +6014,7 @@ import './features/infoModal.js';
 
   // ===================== Test Chat Use Case =====================
   // Rendered as a sandboxed iframe pointing to /testchat/testchat.html.
-  // All Test Chat UI lives in usecases/testchat/ Ã¢â‚¬â€ edit there to change the look.
+  // All Test Chat UI lives in usecases/testchat/ — edit there to change the look.
 
   function renderTestChat() {
     _renderCachedWebview('testchat', 'testchat-webview-frame', _appPath('/testchat/testchat.html'), 'Test Chat');
