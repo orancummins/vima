@@ -1,0 +1,38 @@
+/* ==========================================================================
+   Sonic Branding Use Case — webview wrapper
+   (All sonic UI styles now live in static/sonic/style.css)
+   ========================================================================== */
+
+.sonic-webview-wrap {
+  display: flex; flex-direction: column;
+}
+.sonic-webview-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 12px; border-bottom: 1px solid var(--line);
+  background: var(--surface, #fff); flex-shrink: 0;
+}
+.sonic-webview-label {
+  font-size: 12px; font-weight: 600; color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.sonic-webview-refresh {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 6px;
+  border: 1px solid var(--line); background: var(--bg);
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  color: var(--ink-2); cursor: pointer;
+  transition: border-color 0.12s, color 0.12s;
+}
+.sonic-webview-refresh:hover { border-color: var(--mc-orange); color: var(--mc-orange); }
+.sonic-webview-refresh svg { flex-shrink: 0; }
+.sonic-webview-refresh.sonic-refresh--spinning svg,
+.uc-popout-btn.sonic-refresh--spinning svg {
+  animation: sonic-refresh-spin 0.7s linear infinite;
+}
+@keyframes sonic-refresh-spin { to { transform: rotate(360deg); } }
+
+.sonic-webview-frame {
+  display: block; width: 100%; border: none;
+  height: calc(100vh - 200px); min-height: 520px;
+}
+

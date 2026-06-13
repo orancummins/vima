@@ -1,0 +1,378 @@
+/* ===========================================================================
+   Auto-Provision Modal — dark theme override (matches Vima Chat / AOTD).
+   Keeps all the layout rules above; just re-skins surfaces & text to the
+   same warm-black + orange palette used by .tc-modal and .aotd-modal so
+   the welcome / API-selection / progress screens look like part of the
+   same family.
+   =========================================================================== */
+.prov-overlay {
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.prov-panel {
+  background: linear-gradient(170deg, #161310 0%, #0f0f0f 60%);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 150, 60, 0.22);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 150, 60, 0.08),
+    inset 0 1px 0 rgba(255, 200, 140, 0.06);
+}
+.prov-title { color: #fff; }
+.prov-subtitle { color: rgba(255, 255, 255, 0.65); }
+
+/* Welcome — choice cards */
+.prov-choice-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
+}
+.prov-choice-card:hover {
+  background: rgba(255, 95, 0, 0.10);
+  border-color: rgba(255, 150, 60, 0.55);
+  box-shadow: 0 4px 18px rgba(255, 95, 0, 0.18);
+}
+.prov-choice-icon {
+  background: rgba(255, 95, 0, 0.10);
+  color: #ffb070;
+}
+.prov-choice-text strong { color: #fff; }
+.prov-choice-text span { color: rgba(255, 255, 255, 0.62); }
+.prov-choice-arrow { color: rgba(255, 255, 255, 0.4); }
+
+.prov-skip { color: rgba(255, 255, 255, 0.5); }
+.prov-skip:hover { color: #fff; }
+
+.prov-register-note { color: rgba(255, 255, 255, 0.6); }
+.prov-register-note a { color: #ffb070; }
+
+/* Select-all row */
+.prov-select-all { color: rgba(255, 255, 255, 0.75); }
+.prov-select-all label { color: rgba(255, 255, 255, 0.85); }
+.prov-select-all input[type="checkbox"] { accent-color: #ff6a00; }
+
+/* API selection grid */
+.prov-api-grid::-webkit-scrollbar { width: 8px; }
+.prov-api-grid::-webkit-scrollbar-track { background: transparent; }
+.prov-api-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 4px;
+}
+.prov-api-grid::-webkit-scrollbar-thumb:hover { background: rgba(255, 150, 60, 0.35); }
+
+.prov-api-item {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.82);
+}
+.prov-api-item:hover {
+  background: rgba(255, 95, 0, 0.10);
+  border-color: rgba(255, 150, 60, 0.45);
+}
+.prov-api-cb { accent-color: #ff6a00; }
+.prov-api-name { color: rgba(255, 255, 255, 0.88); }
+.prov-api-note { color: #ffb070; }
+
+.prov-api-item--manual {
+  background: rgba(255, 255, 255, 0.025);
+  border-color: rgba(255, 255, 255, 0.07);
+  opacity: 0.7;
+}
+.prov-api-item--manual:hover { background: rgba(255, 255, 255, 0.025); }
+.prov-api-item--manual .prov-api-name { color: rgba(255, 255, 255, 0.55); }
+.prov-api-badge {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.prov-api-item--configured .prov-api-cb { accent-color: #5dd49a; }
+.prov-api-item--configured .prov-api-name-text { color: #86efac; }
+.prov-api-link { color: rgba(255, 255, 255, 0.65); }
+.prov-api-link:hover { color: #ffb070; }
+
+/* Notes — borrow Vima Chat banner colors so info/warn read on dark */
+.prov-note--info {
+  background: rgba(255, 95, 0, 0.10);
+  color: #ffd0a0;
+  border-color: rgba(255, 150, 60, 0.35);
+}
+.prov-note--warn {
+  background: rgba(20, 83, 45, 0.30);
+  color: #86efac;
+  border-color: rgba(20, 83, 45, 0.6);
+}
+
+/* Primary button — match AOTD save-button style */
+.prov-btn-primary {
+  background: linear-gradient(180deg, #ff8a3a 0%, #ff6a00 100%);
+  box-shadow: 0 4px 14px rgba(255, 95, 0, 0.35);
+}
+.prov-btn-primary:hover { opacity: 1; filter: brightness(1.08); }
+
+/* Secondary outline button used as "Back" */
+.prov-screen .btn-outline,
+.prov-footer .btn-outline {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.8);
+}
+.prov-screen .btn-outline:hover,
+.prov-footer .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 150, 60, 0.55);
+  color: #fff;
+}
+
+/* Status cards on progress screen */
+.prov-status-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.85);
+}
+.prov-status-name { color: rgba(255, 255, 255, 0.88); }
+.prov-status-label { color: rgba(255, 255, 255, 0.55); }
+
+.prov-status-pending .prov-status-dot { background: rgba(255, 255, 255, 0.25); }
+.prov-status-running {
+  border-color: rgba(255, 150, 60, 0.55);
+  background: rgba(255, 95, 0, 0.10);
+}
+.prov-status-running .prov-status-label { color: #ffb070; }
+.prov-status-done {
+  border-color: rgba(20, 83, 45, 0.6);
+  background: rgba(20, 83, 45, 0.18);
+}
+.prov-status-done .prov-status-label { color: #86efac; }
+.prov-status-failed {
+  border-color: rgba(127, 29, 29, 0.65);
+  background: rgba(58, 26, 26, 0.5);
+}
+.prov-status-failed .prov-status-label { color: #fca5a5; }
+
+/* Log terminal — already dark, just tighten the border to match */
+.prov-log-wrap {
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Globe logo glow tinted toward warm orange */
+.prov-logo canvas {
+  filter: drop-shadow(0 0 14px rgba(255, 140, 50, 0.55));
+}
+
+/* Progress screen — keep the action button always in view.
+ *
+ * The panel itself is scrollable (max-height: 92vh), so making the footer
+ * `position: sticky; bottom: 0` inside the scrollable container pins it
+ * to the bottom of the visible area regardless of how tall the log grows.
+ * We also cap the log's intrinsic height at a fraction of the viewport so
+ * the status grid + button stay on-screen on shorter displays.
+ */
+#prov-screen-progress .prov-log {
+  height: clamp(120px, 22vh, 220px);
+}
+#prov-screen-progress .prov-footer {
+  position: sticky;
+  bottom: -32px; /* cancel the panel's bottom padding so it hugs the edge */
+  background:
+    linear-gradient(180deg, rgba(15, 15, 15, 0.92) 0%, rgba(15, 15, 15, 0.98) 100%),
+    linear-gradient(170deg, #161310 0%, #0f0f0f 60%);
+  margin: 0 -32px -32px;
+  padding: 16px 32px 32px;
+  border-top: 1px solid rgba(255, 150, 60, 0.18);
+  box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.35);
+  z-index: 2;
+  justify-content: flex-end;
+}
+
+/* ---------------------------------------------------------------- */
+/* Solution bundles (sidebar entries + detail panel + paired chips) */
+/* ---------------------------------------------------------------- */
+.api-item--solution { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.api-item--solution .api-item-name { font-weight: 500; }
+.api-item--solution.active { background: var(--ink); color: white; }
+.api-item-solution-count { font-size: 11px; padding: 1px 7px; border-radius: 10px; background: #eef0f3; color: #444; font-weight: 600; }
+.api-item--solution.active .api-item-solution-count { background: rgba(255,255,255,0.18); color: white; }
+
+.api-solution-panel { padding: 32px 40px; }
+.api-solution-panel.hidden { display: none; }
+.asp-inner { max-width: 880px; }
+.asp-eyebrow { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.asp-title { font-size: 28px; margin: 0 0 8px; }
+.asp-tagline { color: #555; margin: 0 0 20px; line-height: 1.5; }
+.asp-progress { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; font-size: 13px; color: #444; }
+.asp-bar { flex: 1; height: 6px; background: #eef0f3; border-radius: 3px; overflow: hidden; }
+.asp-bar-fill { height: 100%; background: #ffcb05; transition: width 240ms ease; }
+.asp-apis { display: flex; flex-direction: column; gap: 8px; }
+.asp-api-row { display: grid; grid-template-columns: 14px 1fr auto auto; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #e8e8ea; border-radius: 8px; background: white; cursor: pointer; text-align: left; font: inherit; transition: border-color 120ms, transform 120ms; }
+.asp-api-row:hover { border-color: #999; transform: translateX(2px); }
+.asp-api-row.anchor { border-left: 3px solid #ffcb05; }
+.asp-api-row.configured { background: #fafffb; }
+.asp-api-dot { width: 10px; height: 10px; border-radius: 50%; }
+.asp-api-dot.ok { background: var(--ok); }
+.asp-api-dot.off { background: #cfcfd4; }
+.asp-api-name { font-weight: 500; color: var(--ink); }
+.asp-anchor-pill { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 8px; background: #fff4c8; color: #6d5400; margin-left: 6px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+.asp-api-group { font-size: 11px; color: var(--muted); }
+.asp-api-status { font-size: 12px; color: #555; min-width: 110px; text-align: right; }
+.asp-api-row.configured .asp-api-status { color: var(--ok); font-weight: 600; }
+
+/* -------- API Context collapsible section -------- */
+.api-context-section {
+  margin-bottom: 8px;
+}
+.api-context-section[open] .api-context-chevron {
+  transform: rotate(0deg);
+}
+.api-context-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  padding: 4px 0;
+  width: fit-content;
+  max-width: min(100%, 900px);
+}
+.api-context-toggle::-webkit-details-marker { display: none; }
+.api-context-toggle:hover { color: var(--ink); }
+html:not(.theme-light) .api-context-toggle:hover { color: rgba(255,255,255,0.85); }
+.api-context-chevron {
+  flex-shrink: 0;
+  transform: rotate(-90deg);
+  transition: transform 0.18s ease;
+  color: currentColor;
+}
+.api-context-toggle-copy {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.api-context-toggle-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  flex-shrink: 0;
+}
+.api-context-toggle-desc {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.2;
+  opacity: 0.88;
+}
+.api-context-body {
+  padding-top: 6px;
+}
+
+.api-pairs { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; min-width: 0; }
+.api-pairs[hidden] { display: none; }
+/* Single-line row: label stays put, chips strip scrolls horizontally if it
+   overflows so the page below never gets pushed down by a wrapped row. */
+.api-pairs-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.api-pairs-label {
+  font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-right: 0;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+/* The horizontally-scrolling chip strip. The chips themselves render
+   side-by-side and the row overflows into a discreet horizontal scroller
+   with a subtle right-edge fade hinting at more content. */
+.api-pairs-chips {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.18) transparent;
+  /* Soft fade at the right edge so users notice the strip continues. */
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 18px), transparent 100%);
+          mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 18px), transparent 100%);
+  padding: 2px 18px 6px 0;  /* room for the fade + scrollbar */
+  scroll-snap-type: x proximity;
+}
+.api-pairs-chips::-webkit-scrollbar { height: 6px; }
+.api-pairs-chips::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.18);
+  border-radius: 3px;
+}
+.api-pairs-chips::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.32); }
+.api-pairs-chips::-webkit-scrollbar-track { background: transparent; }
+.api-pairs-chips > .api-pair-chip { flex: 0 0 auto; scroll-snap-align: start; }
+.api-pair-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 12px; border: 1px solid #d6d8dd; background: white; font-size: 12px; cursor: pointer; color: var(--ink); transition: border-color 120ms, background 120ms; font-family: inherit; white-space: nowrap; }
+.api-pair-chip:hover { border-color: #999; background: #f6f7fa; }
+.api-pair-chip.configured { border-color: #b6dcc0; background: #f0faf3; }
+.api-pair-chip--requires { border-color: #f0c0c0; background: #fff5f5; }
+.api-pair-chip--requires.configured { border-color: #b6dcc0; background: #f0faf3; }
+.api-pair-chip--complement { border-color: #d6d8dd; background: #f3f4f6; color: var(--ink); }
+.api-pair-chip--complement.configured { border-color: #d6d8dd; background: #f3f4f6; color: var(--ink); }
+.api-pair-chip--complement .api-pair-dot.ok { background: #b0b3ba; }
+.api-pair-chip--bundle {
+  --bundle-accent: #ffcb05;
+  background: color-mix(in srgb, var(--bundle-accent) 12%, white);
+  border-color: color-mix(in srgb, var(--bundle-accent) 45%, white);
+  color: var(--ink);
+  font-weight: 500;
+}
+.api-pair-chip--bundle:hover {
+  background: color-mix(in srgb, var(--bundle-accent) 22%, white);
+  border-color: var(--bundle-accent);
+}
+.api-pair-chip--bundle .api-pair-chip-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--bundle-accent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--bundle-accent) 70%, transparent);
+}
+.api-pair-chip--usecase {
+  --bundle-accent: #ff6a00;
+  background: color-mix(in srgb, var(--bundle-accent) 12%, white);
+  border-color: color-mix(in srgb, var(--bundle-accent) 45%, white);
+  color: var(--ink);
+  font-weight: 500;
+}
+.api-pair-chip--usecase:hover {
+  background: color-mix(in srgb, var(--bundle-accent) 24%, white);
+  border-color: var(--bundle-accent);
+}
+.api-pair-chip--usecase .api-pair-chip-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--bundle-accent);
+  box-shadow:
+    0 0 6px color-mix(in srgb, var(--bundle-accent) 80%, transparent),
+    0 0 14px color-mix(in srgb, var(--bundle-accent) 60%, transparent);
+  animation: api-pair-usecase-glow 1.8s ease-in-out infinite;
+}
+@keyframes api-pair-usecase-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 4px color-mix(in srgb, var(--bundle-accent) 70%, transparent),
+      0 0 10px color-mix(in srgb, var(--bundle-accent) 45%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 8px color-mix(in srgb, var(--bundle-accent) 95%, transparent),
+      0 0 20px color-mix(in srgb, var(--bundle-accent) 70%, transparent);
+  }
+}
+.api-pair-dot { width: 7px; height: 7px; border-radius: 50%; }
+.api-pair-dot.ok { background: var(--ok); }
+.api-pair-dot.off { background: #cfcfd4; }
+

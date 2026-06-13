@@ -1,0 +1,79 @@
+/* ======================================================================
+   Connect / Launch banner + credentials table � dark theme
+====================================================================== */
+
+html:not(.theme-light) .op-launch-banner {
+  /* Opaque base under the translucent orange tint — the banner is
+     position:sticky, so without a solid layer the operation's params/desc
+     text scrolls up behind it and bleeds through, obscuring the test
+     credentials table. */
+  background:
+    linear-gradient(135deg, rgba(255, 95, 0, 0.14) 0%, rgba(235, 0, 27, 0.08) 100%),
+    #171311;
+  border-color: rgba(255, 95, 0, 0.35);
+  border-left-color: var(--mc-orange);
+  box-shadow: 0 2px 12px rgba(255, 95, 0, 0.18), 0 0 0 1px rgba(255, 95, 0, 0.08) inset;
+}
+html:not(.theme-light) .op-launch-banner .op-launch-banner-text {
+  color: rgba(244, 240, 234, 0.88);
+}
+html:not(.theme-light) .op-launch-banner .op-launch-banner-title {
+  color: #ffa35c;
+}
+html:not(.theme-light) .op-launch-banner .op-launch-banner-btn {
+  background: linear-gradient(135deg, #ff5f00 0%, #eb001b 100%);
+  box-shadow: 0 4px 14px rgba(255, 95, 0, 0.38), 0 2px 6px rgba(235, 0, 27, 0.22);
+  color: #fff;
+}
+html:not(.theme-light) .op-launch-banner .op-launch-banner-btn:hover {
+  background: linear-gradient(135deg, #ff7a1a 0%, #ff1f35 100%);
+  box-shadow: 0 6px 18px rgba(255, 95, 0, 0.48), 0 3px 8px rgba(235, 0, 27, 0.3);
+}
+
+/* Hint card variant (standalone, no launch URL yet) */
+html:not(.theme-light) .op-hint-card--creds {
+  background: linear-gradient(135deg, rgba(255, 95, 0, 0.12) 0%, rgba(235, 0, 27, 0.06) 100%);
+  border-color: rgba(255, 95, 0, 0.3);
+  border-left-color: var(--mc-orange);
+}
+
+/* Credentials block inside banner or standalone card */
+html:not(.theme-light) .op-launch-banner-creds {
+  border-top-color: rgba(255, 95, 0, 0.25);
+  color: rgba(244, 240, 234, 0.82);
+}
+html:not(.theme-light) .op-launch-banner-creds-header strong {
+  color: #ffa35c;
+}
+html:not(.theme-light) .op-launch-banner-creds-docs {
+  color: #ffa35c;
+}
+html:not(.theme-light) .op-launch-banner-creds-note {
+  color: rgba(244, 240, 234, 0.65);
+}
+
+/* Table */
+html:not(.theme-light) .op-launch-banner-creds-table {
+  background: rgba(255, 95, 0, 0.04);
+}
+html:not(.theme-light) .op-launch-banner-creds-table th,
+html:not(.theme-light) .op-launch-banner-creds-table td {
+  border-bottom-color: rgba(255, 95, 0, 0.14);
+  color: rgba(244, 240, 234, 0.82);
+}
+html:not(.theme-light) .op-launch-banner-creds-table th {
+  background: rgba(255, 95, 0, 0.1);
+  color: rgba(255, 163, 92, 0.9);
+}
+html:not(.theme-light) .op-launch-banner-creds-table tbody tr.is-recommended td {
+  background: rgba(255, 95, 0, 0.12);
+  color: rgba(244, 240, 234, 0.94);
+}
+html:not(.theme-light) .op-launch-banner-creds-table tbody tr.is-recommended td:first-child::after {
+  color: #ffa35c;
+}
+html:not(.theme-light) .op-launch-banner-creds-table code {
+  background: rgba(255, 95, 0, 0.14);
+  color: rgba(255, 200, 140, 0.95);
+}
+

@@ -1,0 +1,448 @@
+/* ================================================================
+   API Explorer — About panel
+   ================================================================ */
+.api-item--about { border-bottom: 1px solid #e8e8ea; margin-bottom: 4px; padding-bottom: 12px; }
+.api-item--about.active { background: var(--ink); color: white; }
+.api-item-about-icon { font-size: 13px; opacity: 0.55; }
+
+.api-about-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 48px 40px;
+  background: #0a0a0a;
+}
+.api-about-panel.hidden { display: none; }
+
+.api-workbench { display: contents; }
+.api-workbench.hidden { display: none; }
+
+.aap-inner {
+  display: flex;
+  align-items: center;
+  gap: 64px;
+  max-width: 960px;
+  width: 100%;
+}
+
+.aap-globe-wrap {
+  flex-shrink: 0;
+  position: relative;
+}
+.aap-globe-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  filter: blur(48px);
+  opacity: 0.5;
+  background: radial-gradient(circle, rgba(255,98,0,0.35) 0%, rgba(255,98,0,0) 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+#aap-globe, #uc-globe {
+  display: block;
+  width: 300px;
+  height: 300px;
+  position: relative;
+  z-index: 1;
+  max-width: 90vmin;
+}
+
+/* ---------------------------------------------------------------------
+   About APIs — API → Bundles prism graphic
+   Replaces the legacy orange canvas globe. Four vertical glass pillars
+   (one per Mastercard Developers product group), each containing one
+   floating dot per API (filled = configured). An SVG funnel pours the
+   four streams into a glowing "API Bundles" CTA pill at the bottom,
+   which is the literal navigation to the Bundles tab.
+   --------------------------------------------------------------------- */
+.aap-mesh-wrap {
+  width: 340px;
+  max-width: 92vmin;
+  position: relative;
+}
+.aap-prism {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 18px 4px 4px;
+  /* No surround \u2014 pillars + funnel float on the page background. */
+  border-radius: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+.aap-prism-stage {
+  position: relative;
+  height: 230px;
+}
+.aap-prism-pillars {
+  position: absolute;
+  inset: 0 0 90px 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  z-index: 2;
+}
+.aap-prism-pillar {
+  --pillar-accent: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 0;
+}
+.aap-prism-pillar--openfinance { --pillar-accent: #38bdf8; }
+.aap-prism-pillar--security    { --pillar-accent: #f97316; }
+.aap-prism-pillar--data        { --pillar-accent: #a78bfa; }
+.aap-prism-pillar--loyalty     { --pillar-accent: #34d399; }
+.aap-prism-pillar-glass {
+  position: relative;
+  flex: 1;
+  border-radius: 10px 10px 4px 4px;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--pillar-accent) 18%, transparent) 0%,
+      color-mix(in srgb, var(--pillar-accent) 6%, transparent) 60%,
+      color-mix(in srgb, var(--pillar-accent) 22%, transparent) 100%);
+  border: 1px solid color-mix(in srgb, var(--pillar-accent) 30%, transparent);
+  border-top: 1.5px solid color-mix(in srgb, var(--pillar-accent) 70%, transparent);
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 24px color-mix(in srgb, var(--pillar-accent) 12%, transparent),
+    inset 1px 0 0 rgba(255,255,255,0.04),
+    inset -1px 0 0 rgba(0,0,0,0.18);
+}
+.aap-prism-pillar-glass::before {
+  /* glassy left-edge highlight */
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 30%;
+  background: linear-gradient(90deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0) 100%);
+  pointer-events: none;
+}
+.aap-prism-pillar-glass::after {
+  /* subtle base glow that "pours" downward */
+  content: '';
+  position: absolute;
+  left: 50%; bottom: -1px;
+  width: 70%;
+  height: 14px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center bottom,
+    color-mix(in srgb, var(--pillar-accent) 60%, transparent) 0%,
+    transparent 70%);
+  filter: blur(2px);
+  pointer-events: none;
+}
+.aap-prism-pillar-dots {
+  position: absolute;
+  inset: 8px 6px 10px 6px;
+  display: flex;
+  flex-direction: column-reverse; /* dots stack from the bottom up */
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+}
+.aap-prism-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--pillar-accent) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pillar-accent) 55%, transparent);
+  flex-shrink: 0;
+  animation: aap-prism-float 4.2s ease-in-out infinite;
+  animation-delay: calc(var(--d, 0) * 220ms);
+}
+.aap-prism-dot--on {
+  background: var(--pillar-accent);
+  border-color: color-mix(in srgb, var(--pillar-accent) 90%, white);
+  box-shadow:
+    0 0 8px color-mix(in srgb, var(--pillar-accent) 65%, transparent),
+    0 0 2px color-mix(in srgb, var(--pillar-accent) 90%, transparent);
+}
+@keyframes aap-prism-float {
+  0%, 100% { transform: translateY(0); opacity: 0.95; }
+  50%      { transform: translateY(-2px); opacity: 1; }
+}
+.aap-prism-pillar-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 0 2px;
+  min-width: 0;
+}
+.aap-prism-pillar-name {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--pillar-accent) 85%, white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+.aap-prism-pillar-count {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.55);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.aap-prism-funnel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 90px;
+  width: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+.aap-prism-cta {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: -6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255,120,30,0.22) 0%, rgba(255,150,60,0.10) 100%);
+  border: 1px solid rgba(255,150,60,0.42);
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  box-shadow:
+    0 14px 32px -16px rgba(255,120,30,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+.aap-prism-cta-glow {
+  position: absolute;
+  inset: -40% 30% auto 30%;
+  height: 80%;
+  background: radial-gradient(ellipse at top, rgba(255,180,100,0.45) 0%, rgba(255,180,100,0) 70%);
+  filter: blur(8px);
+  pointer-events: none;
+  opacity: 0.7;
+}
+.aap-prism-cta:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,180,100,0.7);
+  background: linear-gradient(135deg, rgba(255,140,50,0.32) 0%, rgba(255,170,80,0.16) 100%);
+  box-shadow:
+    0 20px 40px -16px rgba(255,140,50,0.75),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+}
+.aap-prism-cta:focus-visible {
+  outline: 2px solid rgba(255,180,100,0.9);
+  outline-offset: 2px;
+}
+.aap-prism-cta-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(255,140,50,0.22);
+  color: #ffc89a;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.aap-prism-cta-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+.aap-prism-cta-eyebrow {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255,200,150,0.9);
+  line-height: 1.2;
+}
+.aap-prism-cta-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+.aap-prism-cta-arrow {
+  font-size: 18px;
+  color: #ffc89a;
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+  position: relative;
+  z-index: 1;
+}
+.aap-prism-cta:hover .aap-prism-cta-arrow {
+  transform: translateX(4px);
+}
+
+.aap-text { flex: 1; }
+
+.aap-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: rgba(255,140,50,0.6);
+  margin-bottom: 10px;
+}
+
+.aap-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.5px;
+  margin: 0 0 14px;
+  line-height: 1.2;
+  text-shadow: 0 0 32px rgba(255,120,0,0.5);
+}
+
+.aap-body {
+  font-size: 15px;
+  color: rgba(255,200,140,0.7);
+  line-height: 1.7;
+  margin: 0 0 32px;
+  max-width: 500px;
+}
+
+.aap-features {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.aap-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.aap-feature-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,140,50,0.85);
+}
+.aap-feature-icon svg { stroke: currentColor; }
+
+.aap-feature > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.aap-feature strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255,230,180,0.95);
+}
+
+.aap-feature span {
+  font-size: 13px;
+  color: rgba(255,190,120,0.55);
+  line-height: 1.55;
+}
+
+.aap-keys-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: rgba(255,160,60,0.9);
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+}
+.aap-keys-link:hover { color: #ff8c00; }
+
+.aap-footer-note {
+  font-size: 12px;
+  color: rgba(255,160,80,0.35);
+  line-height: 1.5;
+  margin: 0;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,120,0,0.12);
+}
+.aap-footer-note a { color: rgba(255,160,80,0.45); text-decoration: none; }
+.aap-footer-note a:hover { color: rgba(255,160,80,0.75); text-decoration: underline; }
+
+@media (max-width: 700px) {
+  .aap-inner { flex-direction: column; gap: 28px; align-items: flex-start; }
+  #aap-globe, #uc-globe { width: 180px; height: 180px; }
+}
+
+
+/* ── API Config tip overlay ─────────────────────────────────────────────── */
+/* Tip banner — between header and body, outside panel-body so cfgLoad() doesn't destroy it */
+.cfg-tip-banner {
+  background: linear-gradient(135deg, #fff5e6 0%, #fff9f0 100%);
+  border-bottom: 1px solid #ffcc80;
+  padding: 16px 22px;
+  flex-shrink: 0;
+}
+.cfg-tip-banner.cfg-hidden { display: none; }
+.cfg-tip-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 12px;
+}
+.cfg-tip-banner-body {
+  font-size: 13px;
+  color: #333;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  padding-left: 28px;
+}
+.cfg-tip-banner-body p { margin: 0 0 10px; }
+.cfg-tip-banner-body p:last-child { margin-bottom: 0; }
+.cfg-tip-banner-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-left: 28px;
+}
+.cfg-tip-dont-show-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  user-select: none;
+}
+.cfg-tip-dont-show-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
