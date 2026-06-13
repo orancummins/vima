@@ -1502,7 +1502,7 @@ client = OfinClient.from_env()          <span class="sdk-c-cm"># credentials aut
     window.__RUNTIME_MODE__ = {{ runtime_mode | tojson }};
     window.__PROVISION_CATALOG__ = {{ provision_catalog | tojson }};
   </script>
-  <script src="{{ url_for('static', filename='js/app.js') }}?v={{ cache_bust }}"></script>
+  <script src="{{ url_for('static', filename='js/app/main.js') }}?v={{ cache_bust }}" type="module"></script>
   <script>
     // Home tab — large revolving globe
     (function () {
