@@ -21,6 +21,7 @@ import {
 } from './features/apiSnippets.js';
 import { _isNonUsBlockedApiId, _isNonUsBlockedUseCaseById } from './core/region.js';
 import { loadUseCases, getBundlesCache, getUseCasesCache } from './core/catalog.js';
+import { showOfinSetupModal, initOfinSetupModal } from './features/ofinSetupModal.js';
 import './features/bundles.js';
 import './features/autoProvision.js';
 import './features/infoModal.js';
@@ -1104,65 +1105,6 @@ import './features/infoModal.js';
         section.hidden = false;
       }
     }
-  }
-
-  // ---------------------------------------------------------------------
-  // Open Finance setup guide modal
-  // ---------------------------------------------------------------------
-  const OFIN_SUPPRESS_KEY = 'vima:ofin-setup-suppress';
-
-  (function () {
-    const modal = $("ofin-setup-modal");
-    const closeBtn = $("ofin-setup-close");
-    const dismissBtn = $("ofin-setup-dismiss");
-    const goCreateBtn = $("ofin-setup-go-create");
-    const suppressCb = $("ofin-setup-suppress");
-    if (!modal) return;
-
-    // Reflect stored suppression state onto the checkbox
-    try {
-      if (localStorage.getItem(OFIN_SUPPRESS_KEY) === '1') suppressCb.checked = true;
-    } catch (e) {}
-
-    function saveSuppression() {
-      try {
-        if (suppressCb && suppressCb.checked) {
-          localStorage.setItem(OFIN_SUPPRESS_KEY, '1');
-        } else {
-          localStorage.removeItem(OFIN_SUPPRESS_KEY);
-        }
-      } catch (e) {}
-    }
-
-    function hide() {
-      saveSuppression();
-      modal.classList.add("hidden");
-    }
-
-    closeBtn && closeBtn.addEventListener("click", hide);
-    dismissBtn && dismissBtn.addEventListener("click", hide);
-    modal.addEventListener("click", (e) => { if (e.target === modal) hide(); });
-
-    goCreateBtn && goCreateBtn.addEventListener("click", () => {
-      hide();
-      // Navigate to open_finance API and select create_test_customer op
-      const apiBtn = document.querySelector('[data-api-id="open_finance"]');
-      if (apiBtn) {
-        apiBtn.click();
-        // Wait for renderApi to complete, then select the op
-        setTimeout(() => selectOp("create_test_customer"), 100);
-      }
-    });
-  })();
-
-  window.showOfinSetupModal = showOfinSetupModal;
-
-  function showOfinSetupModal() {
-    try {
-      if (localStorage.getItem(OFIN_SUPPRESS_KEY) === '1') return;
-    } catch (e) {}
-    const modal = $("ofin-setup-modal");
-    if (modal) modal.classList.remove("hidden");
   }
 
   // ---------------------------------------------------------------------
@@ -4889,6 +4831,8 @@ import './features/infoModal.js';
     getCurrentApiId: () => currentApiId,
     getCurrentOpId: () => currentOpId,
   });
+  // Let the Open Finance setup modal jump into the workbench.
+  initOfinSetupModal({ selectOp });
 
   if (currentApiId) renderApi();
   if (USE_CASES.length) {
