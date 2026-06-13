@@ -326,14 +326,16 @@ def home():
 
 @app.route("/app")
 def index():
+    _apis = api_registry.manifests()
     return render_template(
         "index.html",
-        apis=api_registry.manifests(),
+        apis=_apis,
         api_groups=api_registry.manifests_grouped(),
         solutions=api_registry.solutions(),
         bundles=api_registry.solutions(),
         use_cases=usecase_registry.manifests(),
-        spotlight=_build_spotlight(api_registry.manifests()),
+        spotlight=_build_spotlight(_apis),
+        provision_catalog=_build_provision_catalog(),
         runtime_mode={
             "server_mode": _server_mode_enabled(),
             "non_us_mode": _non_us_mode_enabled(),
@@ -943,7 +945,7 @@ def sdk_run():
 def explorer_execute(api_id: str):
     # Backward-compatible API aliases (e.g. older pages still posting to
     # /explorer/consent/execute).
-    resolved_api_id = "consent_management" if api_id == "consent" else api_id
+    resolved_api_id = "transaction_notifications" if api_id in ("consent", "consent_management") else api_id
 
     if _is_non_us_blocked_api(resolved_api_id):
         return _non_us_forbidden_response()
@@ -1298,7 +1300,7 @@ def consent_3ds_flow():
       setStatus('Running 3DS Method (device fingerprint)…');
       doFingerprint().then(function(fpStatus) {
         setStatus('Calling start-authentication (' + fpStatus + ')…');
-        return post('/explorer/consent_management/execute', {
+        return post('/explorer/transaction_notifications/execute', {
           operation: 'start_authentication',
           params: Object.assign(
             { card_ref: CFG.card_ref, auth_type: 'THREEDS',
@@ -1345,7 +1347,7 @@ def consent_3ds_flow():
         var creq   = params.encodedCReq || params.creq;
         return doChallenge(acsUrl, creq).then(function() {
           setStatus('Verifying authentication…');
-          return post('/explorer/consent_management/execute', {
+          return post('/explorer/transaction_notifications/execute', {
             operation: 'verify_authentication',
             params: { card_ref: CFG.card_ref, auth_type: 'THREEDS', auth_params: '{}' },
           });
@@ -1598,6 +1600,134 @@ def txpush_listener():
 def txpush_events():
     """Return the last received TxPush events (for the UI to poll)."""
     return jsonify({"events": list(_txpush_events)})
+
+
+# ----------------------------------------------------------------------------
+# Transaction Notifications webhook receiver
+# ----------------------------------------------------------------------------
+
+@app.route("/txnotify/webhook", methods=["GET", "POST"])
+def txnotify_webhook():
+    """Receive Mastercard transaction notifications forwarded via ngrok.
+
+    GET  — health-check used by Mastercard during webhook registration.
+    POST — the actual notification payload; stored in the txnotify inbox
+           so the live-demo use-case UI can pick it up via polling.
+    """
+    if request.method == "GET":
+        return jsonify({"ok": True, "endpoint": "Transaction Notifications webhook receiver"})
+    payload = request.get_json(silent=True) or {}
+    mod = usecase_registry.get_module("txnotify")
+    if mod and hasattr(mod, "receive_webhook"):
+        mod.receive_webhook(payload)
+    return "", 200
+
+
+@app.route("/txnotify/launch-ngrok", methods=["POST"])
+@_require_not_server_mode
+def txnotify_launch_ngrok():
+    """Open a native terminal running: ngrok http <port>
+
+    Points ngrok at this Solution Studio instance so Mastercard can POST
+    transaction notifications to /txnotify/webhook via the tunnel URL.
+    """
+    import platform
+    import subprocess
+    import tempfile
+    from pathlib import Path
+
+    system = platform.system().lower()
+    port = int(os.environ.get("PORT", "9021"))
+    webhook_path = "/txnotify/webhook"
+    tmpdir = Path(tempfile.gettempdir()) / "vima-snippets"
+    tmpdir.mkdir(parents=True, exist_ok=True)
+
+    if system == "windows":
+        ps1_path = tmpdir / "txnotify_ngrok.ps1"
+        lines = [
+            "$ErrorActionPreference = 'Continue'",
+            "Write-Host 'Mastercard Solution Studio — ngrok webhook tunnel' -ForegroundColor Cyan",
+            "Write-Host ''",
+            f"Write-Host 'Exposing port {port}  →  public HTTPS URL' -ForegroundColor DarkGray",
+            f"Write-Host 'After it starts, copy the Forwarding HTTPS URL and append: {webhook_path}' -ForegroundColor Yellow",
+            "Write-Host ''",
+            f"ngrok http {port}",
+            "Write-Host ''",
+            "Write-Host 'ngrok exited. Press Enter to close...' -ForegroundColor DarkGray",
+            "Read-Host | Out-Null",
+        ]
+        ps1_path.write_text("\r\n".join(lines), encoding="utf-8")
+        powershell_args = [
+            "powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass",
+            "-File", str(ps1_path),
+        ]
+        try:
+            subprocess.Popen(
+                ["wt.exe", "new-tab", "--title", "ngrok — Transaction Notifications", *powershell_args],
+                close_fds=True,
+            )
+            launcher = "wt"
+        except FileNotFoundError:
+            subprocess.Popen(
+                powershell_args,
+                creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0),
+                close_fds=True,
+            )
+            launcher = "powershell"
+
+    elif system == "darwin":
+        import shlex
+        sh_path = tmpdir / "txnotify_ngrok.sh"
+        lines = [
+            "#!/bin/bash",
+            "set +e",
+            "echo 'Mastercard Solution Studio — ngrok webhook tunnel'",
+            f"echo 'After it starts, copy the Forwarding URL and append: {webhook_path}'",
+            "echo ''",
+            f"ngrok http {port}",
+            "echo ''",
+            "echo 'Press Enter to close...'",
+            "read",
+        ]
+        sh_path.write_text("\n".join(lines), encoding="utf-8")
+        sh_path.chmod(0o755)
+        subprocess.Popen(["open", "-a", "Terminal", str(sh_path)], close_fds=True)
+        launcher = "Terminal.app"
+
+    else:  # Linux / other POSIX
+        import shlex
+        sh_path = tmpdir / "txnotify_ngrok.sh"
+        lines = [
+            "#!/bin/bash",
+            "set +e",
+            "echo 'Mastercard Solution Studio — ngrok webhook tunnel'",
+            f"echo 'After it starts, copy the Forwarding URL and append: {webhook_path}'",
+            "echo ''",
+            f"ngrok http {port}",
+            "echo ''",
+            "echo 'Press Enter to close...'",
+            "read",
+        ]
+        sh_path.write_text("\n".join(lines), encoding="utf-8")
+        sh_path.chmod(0o755)
+        spawned = False
+        for term, args in [
+            ("x-terminal-emulator", ["-e", "bash", str(sh_path)]),
+            ("gnome-terminal",      ["--", "bash", str(sh_path)]),
+            ("konsole",             ["-e", "bash", str(sh_path)]),
+            ("xterm",               ["-e", "bash", str(sh_path)]),
+        ]:
+            try:
+                subprocess.Popen([term, *args], close_fds=True)
+                launcher = term
+                spawned = True
+                break
+            except FileNotFoundError:
+                continue
+        if not spawned:
+            return jsonify({"error": "No terminal emulator found"}), 500
+
+    return jsonify({"ok": True, "launcher": launcher, "platform": system})
 
 
 # ----------------------------------------------------------------------------
@@ -2038,6 +2168,10 @@ def _build_config_schema() -> list[dict]:
 
     groups: list[dict] = []
     for entry in iter_ordered():
+        # consent_management is merged into transaction_notifications —
+        # its credentials are shown under the TxNotify group instead.
+        if entry.id == "consent_management":
+            continue
         p = entry.env_prefix
         fields: list[dict] = []
         if entry.auth in (AUTH_OAUTH1, AUTH_OAUTH1_ENC):
@@ -2615,6 +2749,14 @@ def _build_provision_catalog() -> list[dict]:
             continue
         api = by_id.get(api_id, {})
         note = entry.provision_note or ""
+        # consent_management is provisioned as part of the Transaction
+        # Notifications project — surface a note on the TxNotify entry.
+        if api_id == "transaction_notifications":
+            note = (
+                (note + " " if note else "") +
+                "Consent Management is automatically added to this project — "
+                "both APIs share the same signing key."
+            )
         catalog.append({
             "id": api_id,
             "legacy_id": entry.legacy_id,
@@ -2623,7 +2765,7 @@ def _build_provision_catalog() -> list[dict]:
             "docs_url": entry.docs_url,
             "requires_owner_approval": bool(note),
             "provision_note": note,
-            "auto_provisionable": bool(entry.auto_provisionable),
+            "auto_provisionable": bool(entry.auto_provisionable) and api_id != "consent_management",
             "manual_onboarding_url": entry.manual_onboarding_url or "",
             "disabled_in_non_us": _is_non_us_blocked_api(api_id),
             "disabled_reason": _NON_US_DISABLED_HINT if _is_non_us_blocked_api(api_id) else "",
@@ -2669,9 +2811,20 @@ def provision_start():
         return jsonify({"error": setup_error, "setup_required": True}), 503
     python_bin = _provisioner_python(tool_dir)
 
-    projects_yaml = "\n".join(
-        f"  - name: {api}\n    apis: [{api}]" for api in selected_apis
-    )
+    # transaction_notifications and consent_management must live in the
+    # same Mastercard project so they share one signing key.
+    # Build projects, merging consent_management into txnotify's project.
+    project_lines: list[str] = []
+    for api in selected_apis:
+        if api == "consent_management":
+            continue  # handled by transaction_notifications entry below
+        if api == "transaction_notifications":
+            project_lines.append(
+                f"  - name: {api}\n    apis: [{api}, consent_management]"
+            )
+        else:
+            project_lines.append(f"  - name: {api}\n    apis: [{api}]")
+    projects_yaml = "\n".join(project_lines)
     cfg_text = f"""environment: sandbox
 organization: mastercard
 login_url: https://developer.mastercard.com/account/log-in

@@ -83,6 +83,7 @@ GROUP_ORDER: tuple[str, ...] = (
 
 DISABLED_API_IDS: frozenset[str] = frozenset({
     "flight_delay_pass",
+    "consent_management",   # merged into transaction_notifications
 })
 
 
@@ -337,12 +338,12 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         env_prefix="TRANSACTION_NOTIFICATIONS",
         portal_slug="transaction-notifications",
         display_name="Transaction Notifications",
-        auth=AUTH_OAUTH1,
-        categories=("Notifications",),
+        auth=AUTH_OAUTH1_ENC,
+        categories=("Consent", "Notifications"),
         docs_url="https://developer.mastercard.com/transaction-notifications/documentation/",
         legacy_id="txnotify",
         group=GROUP_DATA,
-        complements=("open_finance", "automatic_billing_updater", "consent_management"),
+        complements=("open_finance", "automatic_billing_updater"),
     ),
     ApiCatalogEntry(
         id="benefits_eligibility",

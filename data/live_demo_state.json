@@ -1,8 +1,8 @@
 {
   "enabled": {
-    "us": false,
-    "au": false,
-    "eu": false
+    "us": true,
+    "au": true,
+    "eu": true
   },
   "connections": {
     "us": {

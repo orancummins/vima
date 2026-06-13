@@ -5,10 +5,10 @@ login_url: https://developer.mastercard.com/account/log-in
 dashboard_url_pattern: "**/dashboard**"
 key_password: "foobar!!"
 
-# Single-API config used to diagnose the Transaction Notifications wizard.
-# Run with MCD_PAUSE_STEP3=1 to pause when Step 3 ("Additional credentials")
-# appears so you can drive the browser manually.
+# Single project containing both Transaction Notifications and Consent Management.
+# Both APIs share the same signing key; the Consent Management wizard also
+# downloads the client encryption PEM needed for JWE payload encryption.
 projects:
-  - name: txnotify
-    description: Mastercard Transaction Notifications
-    apis: [txnotify]
+  - name: transaction_notifications
+    description: Mastercard Transaction Notifications + Consent Management
+    apis: [transaction_notifications, consent_management]

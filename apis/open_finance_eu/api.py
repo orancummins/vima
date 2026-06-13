@@ -258,30 +258,41 @@ MANIFEST: Dict[str, Any] = {
         {"key": "end_user_id", "label": "End User ID"},
         {"key": "use_case_configuration_id", "label": "Use Case Config ID"},
     ],
-    # Step-by-step happy-path call sequence rendered by the floating
-    # "API Guide" panel. Each step references an operation id and gives a
-    # short, plain-language summary of what it does. Optional flags:
-    #   launch       — this step returns a hosted URL the user must open
-    #   credentials  — this step requires the sandbox PSU test credentials
+    # Curated guide for the floating API Guide coach. Walks a valid happy path
+    # only — no other API calls.
     "guide": [
-        {"op": "create_token",
-         "summary": "Sign a JWT with your private key and exchange it for an OAuth bearer token. Smoke test that proves your keys and clientId are wired correctly."},
-        {"op": "get_providers",
-         "summary": "List the supported European banks (ASPSPs). Pick one whose flow matches the test user you plan to use."},
-        {"op": "create_consent",
-         "summary": "Create a consent record. Returns the consentId that authorises every downstream account / transaction call."},
-        {"op": "create_managed_flow",
-         "summary": "Generate a hosted Aiia URL. Open it in a new tab and complete bank login using the test user credentials.",
-         "launch": True,
-         "credentials": True},
-        {"op": "get_consent",
-         "summary": "Poll until status is 'granted'. Replaces the production webhook during sandbox testing."},
-        {"op": "get_accounts",
-         "summary": "List the accounts the user shared. The first accountId is auto-saved to state for the next steps."},
-        {"op": "get_transactions",
-         "summary": "Pull recent transactions for the selected account."},
-        {"op": "check_balance",
-         "summary": "Force a fresh balance read from the bank for the active account."},
+        {
+            "op": "create_token",
+            "title": "Create Access Token",
+            "summary": "Authenticate with partner credentials. Click Send below.",
+        },
+        {
+            "op": "create_consent",
+            "title": "Create Consent",
+            "summary": "Create the consent that authorises account access. Click Send below.",
+        },
+        {
+            "op": "create_managed_flow",
+            "title": "Create Managed Flow",
+            "summary": "Generate the hosted bank-login URL. Click Send below.",
+        },
+        {
+            "type": "manual",
+            "id": "launch_connect",
+            "title": "Launch Connect",
+            "summary": "Click the orange Launch Connect button and complete consent, then continue.",
+            "done_label": "I've completed consent",
+        },
+        {
+            "op": "get_accounts",
+            "title": "Get Accounts",
+            "summary": "List the consented accounts. Click Send below.",
+        },
+        {
+            "op": "get_transactions",
+            "title": "Get Transactions",
+            "summary": "Pull recent transactions for the account. Click Send below.",
+        },
     ],
     "operations": [
         # ---- Auth ----

@@ -826,66 +826,51 @@
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") modal.classList.add("hidden"); });
 
   // ---------------------------------------------------------------------
-  // API Guide — persistent floating step-by-step call sequence panel.
+  // API Guide — compact single-step coach.
   //
-  // Renders an ordered checklist of operations the user should call to walk
-  // through a typical scenario for the selected API. Steps come from
-  // `api.guide` if provided by the manifest, otherwise we derive a sensible
-  // ordering from the operations list. Steps support badges for launching an
-  // external experience and for requiring sandbox test credentials.
+  // Shows ONE step at a time (no scrolling) for the selected API's curated
+  // `guide` sequence. Progress dots, a step title + one-line hint, and a
+  // single action button. Draggable; remembers position + per-API progress.
+  //
+  // Guide step schema (manifest `guide` array):
+  //   { op, title, summary }                              — api_call step
+  //   { type:"manual", id, title, summary, done_label }   — manual step
   //
   // Public surface:
-  //   ApiGuide.show()    — open the panel for the currently-selected API
-  //   ApiGuide.hide()    — close the panel
-  //   ApiGuide.toggle()  — toggle visibility
-  //   ApiGuide.markOpDone(opId)  — called by the send-handler on 2xx
-  //   ApiGuide.refresh() — re-render after API switch
-  //   ApiGuide.syncCurrentOp()   — highlight the active op
-  // ---------------------------------------------------------------------
+  //   ApiGuide.show() / hide() / toggle()
+  //   ApiGuide.markOpDone(opId) — called by send-handler on 2xx; advances
+  //   ApiGuide.refresh()        — re-render after API switch
+  //   ApiGuide.syncCurrentOp()  — keep action button state in sync
+  // -----------------------------------------------------------------------
   const ApiGuide = (function () {
     try {
     const LS_KEY      = 'vima:apiGuide:v1';
     const LS_DONE_KEY = 'vima:apiGuide:done:v1';
-    const panel  = $("api-guide-panel");
-    const pill   = $("api-guide-pill");
-    if (!panel || !pill) {
+    const panel       = $("api-guide-panel");
+    if (!panel) {
       return { show(){}, hide(){}, toggle(){}, markOpDone(){}, refresh(){}, syncCurrentOp(){} };
     }
     const handle      = $("api-guide-drag-handle");
-    const titleEl     = $("api-guide-title");
-    const stepsEl     = $("api-guide-steps");
-    const progressFill = $("api-guide-progress-fill");
-    const metaText    = $("api-guide-meta-text");
-    const pillLabel   = $("api-guide-pill-label");
-    const pillCounter = $("api-guide-pill-counter");
-    const btnMin   = $("api-guide-minimize");
-    const btnClose = $("api-guide-close");
-    const btnReset = $("api-guide-reset");
-    const btnOpen  = $("btn-api-guide");
-    // Footer + send mirror.
-    const autoNextCb   = $("api-guide-autonext");
-    const countdownEl  = $("api-guide-countdown");
-    const countdownNum = $("api-guide-countdown-num");
-    const countdownFill = $("api-guide-countdown-fill");
-    const sendBtn    = $("api-guide-send");
-    const sendLabel  = sendBtn ? sendBtn.querySelector('.api-guide-send-btn-label') : null;
-    // Resize handles.
-    const resizeCorner = $("api-guide-resize-corner");
-    const resizeLeft   = $("api-guide-resize-left");
+    const dotsEl      = $("ag-dots");
+    const badgeNum    = $("ag-badge-num");
+    const eyebrowEl   = $("ag-eyebrow");
+    const titleEl     = $("ag-title");
+    const descEl      = $("ag-desc");
+    const actionBtn   = $("ag-action");
+    const actionLabel = $("ag-action-label");
+    const btnClose    = $("api-guide-close");
+    const btnReset    = $("api-guide-reset");
+    const btnOpen     = $("btn-api-guide");
 
-    // ---- State -----------------------------------------------------------
-    // Visibility + minimised + position survive across sessions.
-    // `done` is keyed by api id → { opId: true }.
+    // ---- Persistence ----------------------------------------------------
     function loadState() {
-      try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {}; }
-      catch (e) { return {}; }
+      try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {}; } catch (e) { return {}; }
     }
     function saveState(st) {
       try { localStorage.setItem(LS_KEY, JSON.stringify(st)); } catch (e) {}
     }
     function loadDone() {
-      try { return JSON.parse(localStorage.getItem(LS_DONE_KEY) || '{}') || {}; }
-      catch (e) { return {}; }
+      try { return JSON.parse(localStorage.getItem(LS_DONE_KEY) || '{}') || {}; } catch (e) { return {}; }
     }
     function saveDone(d) {
       try { localStorage.setItem(LS_DONE_KEY, JSON.stringify(d)); } catch (e) {}
@@ -893,228 +878,204 @@
 
     let state = loadState();
     let done  = loadDone();
-    if (typeof state.visible    !== 'boolean') state.visible    = false;
-    if (typeof state.minimized  !== 'boolean') state.minimized  = false;
+    if (typeof state.visible !== 'boolean') state.visible = false;
 
-    // ---- Position + size helpers ---------------------------------------
-    // Clamp into the viewport so a stale localStorage entry can't push the
-    // panel off-screen on a smaller display. `applySize` is separate so we
-    // can call it independently when the user resizes.
-    function clamp(value, min, max) {
-      return Math.max(min, Math.min(max, value));
-    }
-    const MIN_W = 260;
-    const MIN_H = 200;
-    // Default dimensions when localStorage has no saved size.
-    const DEFAULT_W = 300;
-    const DEFAULT_H = 380;
-    function applySize() {
-      const maxW = Math.max(MIN_W, window.innerWidth  - 16);
-      const maxH = Math.max(MIN_H, window.innerHeight - 80);
-      if (typeof state.w === 'number') {
-        panel.style.width = clamp(state.w, MIN_W, maxW) + 'px';
-      } else {
-        panel.style.width = DEFAULT_W + 'px';
-      }
-      if (typeof state.h === 'number') {
-        panel.style.height = clamp(state.h, MIN_H, maxH) + 'px';
-      } else {
-        panel.style.height = DEFAULT_H + 'px';
-      }
-    }
+    // ---- Position -------------------------------------------------------
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+    const DEFAULT_W = 296;
     function applyPosition() {
-      applySize();
-      const w = panel.offsetWidth  || 340;
-      const h = panel.offsetHeight || 200;
-      const pad = 8;
+      panel.style.width = DEFAULT_W + 'px';
+      const w   = panel.offsetWidth  || DEFAULT_W;
+      const h   = panel.offsetHeight || 260;
+      const pad = 16;
       const maxX = Math.max(pad, window.innerWidth  - w - pad);
       const maxY = Math.max(pad, window.innerHeight - h - pad);
-      let x = (typeof state.x === 'number')
-        ? clamp(state.x, pad, maxX)
-        : maxX;            // default: right edge
-      let y = (typeof state.y === 'number')
-        ? clamp(state.y, pad, maxY)
-        : Math.max(pad, window.innerHeight - h - 140); // default: above FABs
+      let x = (typeof state.x === 'number') ? clamp(state.x, pad, maxX) : maxX;
+      let y = (typeof state.y === 'number') ? clamp(state.y, pad, maxY)
+                                            : Math.max(pad, window.innerHeight - h - 120);
       panel.style.left = x + 'px';
       panel.style.top  = y + 'px';
       state.x = x; state.y = y;
     }
 
-    // ---- Guide data resolution -----------------------------------------
-    // Prefer the manifest's `guide` field. Fall back to an auto-derived
-    // sequence using the operations array order, skipping deprecated ones.
+    // ---- Guide resolution ----------------------------------------------
     function resolveGuide(api) {
       if (!api) return [];
       const opMap = {};
       (api.operations || []).forEach((op) => { opMap[op.id] = op; });
-
       if (Array.isArray(api.guide) && api.guide.length) {
-        return api.guide
-          .map((g) => {
-            const op = opMap[g.op];
-            if (!op) return null;
+        return api.guide.map((g, idx) => {
+          const stepType = g.type || 'api_call';
+          if (stepType === 'manual' || stepType === 'info') {
             return {
-              opId:    op.id,
-              opName:  op.name,
-              method:  op.method || 'POST',
-              summary: g.summary || op.description || '',
-              launch:      !!g.launch,
-              credentials: !!g.credentials,
+              stepType,
+              opId:      g.id || ('manual_' + idx),
+              opName:    g.title || g.id || '—',
+              summary:   g.summary || '',
+              doneLabel: g.done_label || 'Continue',
             };
-          })
-          .filter(Boolean);
+          }
+          const op = opMap[g.op];
+          if (!op) return null;
+          return {
+            stepType: 'api_call',
+            opId:     op.id,
+            opName:   g.title || op.name,
+            summary:  g.summary || op.description || '',
+          };
+        }).filter(Boolean);
       }
-
-      // Fallback: derive from operations in manifest order. Skip ops in
-      // deprecated categories so the suggested path stays current. Also
-      // skip any operation that deletes / revokes / removes data — these
-      // can break a successful flow if they're called mid-sequence (e.g.
-      // revoking the consent you just created).
+      // Auto-derived fallback: skip destructive ops.
       const depr = new Set(api.deprecated_categories || []);
-      const DESTRUCTIVE_RE = /\b(delete|deletion|destroy|remove|removal|revoke|revocation|cancel|cancellation|disconnect|expire|invalidate|wipe|purge|drop|reset|undo|unlink)\b/i;
-      function isDestructive(op) {
-        if (op.method && op.method.toUpperCase() === 'DELETE') return true;
-        const text = (op.id || '') + ' ' + (op.name || '');
-        return DESTRUCTIVE_RE.test(text);
-      }
+      const DESTR = /\b(delete|destroy|remove|revoke|cancel|disconnect|expire|invalidate|wipe|purge|drop|reset|undo|unlink)\b/i;
       return (api.operations || [])
-        .filter((op) => !depr.has(op.category) && !isDestructive(op))
-        .map((op) => ({
-          opId:    op.id,
-          opName:  op.name,
-          method:  op.method || 'POST',
-          summary: op.description || '',
-          launch:      false,
-          credentials: false,
-        }));
+        .filter((op) => {
+          if (depr.has(op.category)) return false;
+          if (op.method && op.method.toUpperCase() === 'DELETE') return false;
+          return !DESTR.test((op.id || '') + ' ' + (op.name || ''));
+        })
+        .map((op) => ({ stepType: 'api_call', opId: op.id, opName: op.name, summary: op.description || '' }));
     }
 
-    // ---- Rendering ------------------------------------------------------
+    function firstUndone(guide, apiDone) {
+      return guide.find((s) => !apiDone[s.opId]) || null;
+    }
+
+    // Auto-select the workbench operation for the active api_call step.
+    function autoSelectStep() {
+      const api = currentApi();
+      if (!api) return;
+      const guide   = resolveGuide(api);
+      const apiDone = done[api.id] || {};
+      const next    = firstUndone(guide, apiDone);
+      if (!next || next.stepType !== 'api_call') return;
+      if (typeof selectOp === 'function') {
+        selectOp(next.opId);
+        const btn = document.querySelector('.op-btn[data-op-id="' + CSS.escape(next.opId) + '"]');
+        if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    // ---- Rendering: ONE step at a time ---------------------------------
     function render() {
       const api   = currentApi();
       const guide = resolveGuide(api);
-      stepsEl.innerHTML = '';
-      titleEl.textContent = api ? api.name : '—';
+
+      // Progress dots.
+      if (dotsEl) {
+        dotsEl.innerHTML = '';
+        const apiDone = (api && done[api.id]) || {};
+        const next = firstUndone(guide, apiDone);
+        guide.forEach((s) => {
+          const dot = document.createElement('span');
+          dot.className = 'ag-dot';
+          if (apiDone[s.opId])      dot.classList.add('ag-dot--done');
+          else if (s === next)      dot.classList.add('ag-dot--current');
+          dotsEl.appendChild(dot);
+        });
+      }
+
       if (!api || !guide.length) {
-        const empty = document.createElement('li');
-        empty.className = 'api-guide-empty';
-        empty.textContent = api
-          ? 'No call sequence defined for this API yet.'
-          : 'Select an API to see its call sequence.';
-        stepsEl.appendChild(empty);
-        updateProgress(0, 0);
+        panel.classList.remove('ag--complete', 'ag--manual');
+        if (badgeNum)  badgeNum.textContent = '–';
+        if (eyebrowEl) eyebrowEl.textContent = '';
+        if (titleEl)   titleEl.textContent = api ? 'No guide for this API' : 'Select an API';
+        if (descEl)    descEl.textContent = '';
+        setAction(null);
         return;
       }
+
       const apiDone = done[api.id] || {};
-      let completedCount = 0;
-      guide.forEach((step, idx) => {
-        const isDone    = !!apiDone[step.opId];
-        const isCurrent = step.opId === currentOpId;
-        if (isDone) completedCount++;
-        const li = document.createElement('li');
-        li.className = 'api-guide-step'
-          + (isDone    ? ' api-guide-step--done'    : '')
-          + (isCurrent ? ' api-guide-step--current' : '');
-        li.style.setProperty('--i', String(idx));
-        li.dataset.opId = step.opId;
+      const next    = firstUndone(guide, apiDone);
 
-        // Step number / check medallion.
-        const num = document.createElement('span');
-        num.className = 'api-guide-step-num';
-        num.setAttribute('aria-hidden', 'true');
-        if (isDone) {
-          num.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 8.5 6.5 12 13 4"/></svg>';
-        } else {
-          num.textContent = String(idx + 1);
-        }
-        li.appendChild(num);
-
-        // Step body — name + summary + badges.
-        const body = document.createElement('div');
-        body.className = 'api-guide-step-body';
-
-        const head = document.createElement('div');
-        head.className = 'api-guide-step-head';
-        const name = document.createElement('span');
-        name.className = 'api-guide-step-name';
-        name.textContent = step.opName;
-        head.appendChild(name);
-
-        if (step.launch || step.credentials) {
-          const badges = document.createElement('span');
-          badges.className = 'api-guide-badges';
-          if (step.launch) {
-            const b = document.createElement('span');
-            b.className = 'api-guide-badge api-guide-badge--launch';
-            b.title = 'This step returns a URL you need to open in a new tab';
-            b.textContent = '↗ launch';
-            badges.appendChild(b);
-          }
-          if (step.credentials) {
-            const b = document.createElement('span');
-            b.className = 'api-guide-badge api-guide-badge--creds';
-            b.title = 'Sandbox test PSU credentials needed to complete the flow';
-            b.textContent = '🔑 test creds';
-            badges.appendChild(b);
-          }
-          head.appendChild(badges);
-        }
-        body.appendChild(head);
-
-        const sum = document.createElement('p');
-        sum.className = 'api-guide-step-summary';
-        sum.textContent = step.summary || '';
-        body.appendChild(sum);
-
-        li.appendChild(body);
-
-        li.addEventListener('click', () => {
-          // Jump to the operation in the workbench.
-          if (typeof selectOp === 'function') selectOp(step.opId);
-          const btn = document.querySelector('.op-btn[data-op-id="' + CSS.escape(step.opId) + '"]');
-          if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          // Brief visual pop on the clicked card.
-          li.classList.remove('api-guide-step--pulse');
-          // Force a reflow so we can re-trigger the animation.
-          void li.offsetWidth;
-          li.classList.add('api-guide-step--pulse');
-        });
-
-        stepsEl.appendChild(li);
-      });
-      updateProgress(completedCount, guide.length);
-    }
-
-    function updateProgress(done, total) {
-      const pct = total > 0 ? (done / total) * 100 : 0;
-      progressFill.style.width = pct + '%';
-      metaText.textContent = done + ' / ' + total + ' steps complete';
-      pillCounter.textContent = done + '/' + total;
-    }
-
-    // ---- Visibility / minimise -----------------------------------------
-    function applyVisibility() {
-      panel.classList.toggle('hidden', !state.visible || state.minimized);
-      panel.setAttribute('aria-hidden', (!state.visible || state.minimized) ? 'true' : 'false');
-      pill.classList.toggle('hidden',  !state.visible || !state.minimized);
-      if (btnOpen) btnOpen.setAttribute('aria-pressed', state.visible ? 'true' : 'false');
-      if (btnOpen) btnOpen.classList.toggle('btn-api-guide--active', state.visible);
-      if (state.visible && !state.minimized) {
-        // Defer to next frame so the layout settles before clamping.
-        requestAnimationFrame(applyPosition);
+      if (!next) {
+        // Completed.
+        panel.classList.add('ag--complete');
+        panel.classList.remove('ag--manual');
+        if (badgeNum)  badgeNum.innerHTML = '<svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 8.5 6.5 12 13 4"/></svg>';
+        if (eyebrowEl) eyebrowEl.textContent = 'All done';
+        if (titleEl)   titleEl.textContent = 'Sequence complete';
+        if (descEl)    descEl.textContent = 'A notification is on its way to your webhook.';
+        setAction({ complete: true });
+        return;
       }
+
+      panel.classList.remove('ag--complete');
+      panel.classList.toggle('ag--manual', next.stepType === 'manual');
+      const idx = guide.indexOf(next) + 1;
+      if (badgeNum)  badgeNum.textContent = String(idx);
+      if (eyebrowEl) eyebrowEl.textContent = 'Step ' + idx + ' of ' + guide.length;
+      if (titleEl)   titleEl.textContent = next.opName;
+      if (descEl)    descEl.textContent = next.summary;
+      setAction(next);
+    }
+
+    // ---- Action button --------------------------------------------------
+    let actionMode = null; // 'send' | 'manual' | 'complete' | null
+    function setAction(step) {
+      if (!actionBtn) return;
+      if (!step) {
+        actionMode = null;
+        actionBtn.hidden = true;
+        return;
+      }
+      actionBtn.hidden = false;
+      if (step.complete) {
+        actionMode = 'complete';
+        if (actionLabel) actionLabel.textContent = 'Start over';
+        actionBtn.disabled = false;
+        actionBtn.classList.add('ag-action--ghost');
+        return;
+      }
+      actionBtn.classList.remove('ag-action--ghost');
+      if (step.stepType === 'manual') {
+        actionMode = 'manual';
+        if (actionLabel) actionLabel.textContent = step.doneLabel || 'Continue';
+        actionBtn.disabled = false;
+      } else {
+        actionMode = 'send';
+        if (actionLabel) actionLabel.textContent = 'Send Request';
+        const mainBtn = $("op-send");
+        actionBtn.disabled = !mainBtn || mainBtn.disabled;
+      }
+    }
+
+    function onAction() {
+      if (actionMode === 'complete') { resetProgress(); return; }
+      if (actionMode === 'manual')   { markManualDone(); return; }
+      // send
+      const mainBtn = $("op-send");
+      if (!mainBtn || mainBtn.disabled) return;
+      actionBtn.classList.remove('ag-action--press');
+      void actionBtn.offsetWidth;
+      actionBtn.classList.add('ag-action--press');
+      try { mainBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+      mainBtn.classList.remove('op-send--ghost-press');
+      void mainBtn.offsetWidth;
+      mainBtn.classList.add('op-send--ghost-press');
+      setTimeout(() => { mainBtn.classList.remove('op-send--ghost-press'); mainBtn.click(); }, 200);
+    }
+
+    // ---- Visibility -----------------------------------------------------
+    function applyVisibility() {
+      panel.classList.toggle('hidden', !state.visible);
+      panel.setAttribute('aria-hidden', state.visible ? 'false' : 'true');
+      if (btnOpen) {
+        btnOpen.setAttribute('aria-pressed', state.visible ? 'true' : 'false');
+        btnOpen.classList.toggle('btn-api-guide--active', state.visible);
+      }
+      if (state.visible) requestAnimationFrame(applyPosition);
     }
 
     function show() {
-      state.visible   = true;
-      state.minimized = false;
+      state.visible = true;
       saveState(state);
       render();
       applyVisibility();
-      // Trigger entrance animation.
-      panel.classList.remove('api-guide--enter');
+      panel.classList.remove('ag--enter');
       void panel.offsetWidth;
-      panel.classList.add('api-guide--enter');
+      panel.classList.add('ag--enter');
+      setTimeout(autoSelectStep, 60);
     }
     function hide() {
       state.visible = false;
@@ -1122,27 +1083,17 @@
       applyVisibility();
     }
     function toggle() { state.visible ? hide() : show(); }
-    function minimize() {
-      state.minimized = true;
-      saveState(state);
-      const api = currentApi();
-      pillLabel.textContent = api ? api.name : 'API Guide';
-      applyVisibility();
-    }
-    function unminimize() {
-      state.minimized = false;
-      state.visible   = true;
-      saveState(state);
-      applyVisibility();
-      render();
-    }
+
     function resetProgress() {
       const api = currentApi();
       if (!api) return;
       done[api.id] = {};
       saveDone(done);
       render();
+      setTimeout(autoSelectStep, 60);
     }
+
+    // ---- Advance --------------------------------------------------------
     function markOpDone(opId) {
       const api = currentApi();
       if (!api) return;
@@ -1150,123 +1101,58 @@
       if (done[api.id][opId]) return;
       done[api.id][opId] = true;
       saveDone(done);
-      if (state.visible && !state.minimized) render();
-      else if (state.minimized) {
-        const guide = resolveGuide(api);
-        const apiDone = done[api.id] || {};
-        const count = guide.filter((s) => apiDone[s.opId]).length;
-        updateProgress(count, guide.length);
-      }
-      // Auto-next: if the toggle is on, schedule advancing to the next step.
-      if (autoNextCb && autoNextCb.checked) {
-        _scheduleAutoNext(opId);
+      if (state.visible) {
+        render();
+        setTimeout(autoSelectStep, 300);
       }
     }
 
-    // ---- Auto-next countdown ------------------------------------------
-    // After a successful 2xx, wait AUTO_NEXT_MS then select the next undone
-    // step in the guide. A visible countdown ring shows the user how long
-    // they have to cancel (clicking the ring or toggling Auto Next cancels).
-    const AUTO_NEXT_MS   = 5000;
-    const AUTO_NEXT_TICK = 100; // ms between ticks
-    let _autoNextTimer = null;
-    let _autoNextStart = 0;
-
-    const CIRCUMFERENCE = 2 * Math.PI * 8; // r=8 from SVG
-    if (countdownFill) {
-      countdownFill.style.strokeDasharray  = CIRCUMFERENCE + ' ' + CIRCUMFERENCE;
-      countdownFill.style.strokeDashoffset = CIRCUMFERENCE;
-    }
-
-    function _cancelAutoNext() {
-      if (_autoNextTimer) { clearInterval(_autoNextTimer); _autoNextTimer = null; }
-      if (countdownEl) countdownEl.classList.remove('api-guide-countdown--active');
-    }
-
-    function _scheduleAutoNext(fromOpId) {
-      _cancelAutoNext();
+    function markManualDone() {
       const api = currentApi();
       if (!api) return;
-      const guide = resolveGuide(api);
-      const idx = guide.findIndex((s) => s.opId === fromOpId);
-      if (idx === -1 || idx >= guide.length - 1) return; // last step — nothing to advance to
-      // Don't auto-next if the current step requires a browser launch (Connect
-      // flow). The user needs to open the URL and complete the flow manually
-      // before the next step makes sense.
-      const currentStep = guide[idx];
-      if (currentStep.launch) return;
-      // Belt-and-braces: also skip if the workbench is showing a live Launch
-      // banner (e.g. auto-derived guide where launch flag isn't set but the
-      // response returned a hosted Connect URL).
-      const launchBanner = $("op-launch-banner");
-      if (launchBanner && !launchBanner.hidden) return;
-      const nextStep = guide[idx + 1];
-
-      _autoNextStart = Date.now();
-      if (countdownEl)  countdownEl.classList.add('api-guide-countdown--active');
-
-      _autoNextTimer = setInterval(() => {
-        const elapsed = Date.now() - _autoNextStart;
-        const remaining = Math.max(0, AUTO_NEXT_MS - elapsed);
-        const secs = Math.ceil(remaining / 1000);
-        if (countdownNum)  countdownNum.textContent = secs;
-        if (countdownFill) {
-          const pct = remaining / AUTO_NEXT_MS;
-          countdownFill.style.strokeDashoffset = CIRCUMFERENCE * (1 - pct);
-        }
-        if (elapsed >= AUTO_NEXT_MS) {
-          _cancelAutoNext();
-          // Only advance if the user hasn't already moved to a different op.
-          if (typeof selectOp === 'function' && currentOpId === fromOpId) {
-            selectOp(nextStep.opId);
-            // Scroll it into view in the guide steps list.
-            const li = stepsEl.querySelector('[data-op-id="' + CSS.escape(nextStep.opId) + '"]');
-            if (li) li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          }
-        }
-      }, AUTO_NEXT_TICK);
+      const guide   = resolveGuide(api);
+      const apiDone = done[api.id] || {};
+      const next    = firstUndone(guide, apiDone);
+      if (!next || next.stepType !== 'manual') return;
+      done[api.id] = done[api.id] || {};
+      done[api.id][next.opId] = true;
+      saveDone(done);
+      render();
+      setTimeout(autoSelectStep, 300);
     }
 
-    // Cancel auto-next if the user manually changes op before the timer fires.
-    // This hook is called by syncCurrentOp which runs on every selectOp.
-    function _cancelAutoNextIfMoved(newOpId) {
-      if (_autoNextTimer) _cancelAutoNext();
+    function syncCurrentOp() {
+      if (!state.visible) return;
+      // Keep the action button's enabled state in sync with the workbench.
+      if (actionMode === 'send') {
+        const mainBtn = $("op-send");
+        if (actionBtn) actionBtn.disabled = !mainBtn || mainBtn.disabled;
+      }
     }
 
-    // Persist auto-next preference.
-    if (autoNextCb) {
-      try {
-        const saved = localStorage.getItem('vima:apiGuide:autoNext');
-        if (saved === '1') autoNextCb.checked = true;
-      } catch (e) {}
-      autoNextCb.addEventListener('change', () => {
-        try { localStorage.setItem('vima:apiGuide:autoNext', autoNextCb.checked ? '1' : '0'); }
-        catch (e) {}
-        if (!autoNextCb.checked) _cancelAutoNext();
-      });
-    }
-    // Clicking the countdown ring cancels the timer.
-    if (countdownEl) {
-      countdownEl.addEventListener('click', function (e) {
-        e.stopPropagation();
-        _cancelAutoNext();
+    // ---- Wiring ---------------------------------------------------------
+    if (actionBtn) actionBtn.addEventListener('click', onAction);
+    if (btnClose)  btnClose.addEventListener('click', hide);
+    if (btnReset)  btnReset.addEventListener('click', resetProgress);
+    if (btnOpen)   btnOpen.addEventListener('click', toggle);
+
+    // Mirror disabled-state changes from the main Send button.
+    const mainSendBtn = $("op-send");
+    if (mainSendBtn && window.MutationObserver) {
+      new MutationObserver(syncCurrentOp).observe(mainSendBtn, {
+        attributes: true, attributeFilter: ['disabled'],
+        childList: true, characterData: true, subtree: true,
       });
     }
 
-    // ---- Drag ----------------------------------------------------------
+    // ---- Drag -----------------------------------------------------------
     let drag = null;
     function onDragStart(e) {
-      // Don't start a drag if the user clicked a header button.
-      if (e.target.closest('.api-guide-icon-btn')) return;
+      if (e.target.closest('.ag-x, .ag-action, .ag-restart')) return;
       const pt = (e.touches && e.touches[0]) || e;
-      drag = {
-        startX: pt.clientX,
-        startY: pt.clientY,
-        origX:  state.x || panel.offsetLeft,
-        origY:  state.y || panel.offsetTop,
-        moved:  false,
-      };
-      panel.classList.add('api-guide--dragging');
+      drag = { startX: pt.clientX, startY: pt.clientY,
+               origX: state.x || panel.offsetLeft, origY: state.y || panel.offsetTop, moved: false };
+      panel.classList.add('ag--dragging');
       document.addEventListener('mousemove', onDragMove);
       document.addEventListener('mouseup',   onDragEnd);
       document.addEventListener('touchmove', onDragMove, { passive: false });
@@ -1279,20 +1165,17 @@
       const dx = pt.clientX - drag.startX;
       const dy = pt.clientY - drag.startY;
       if (Math.abs(dx) > 2 || Math.abs(dy) > 2) drag.moved = true;
-      const w = panel.offsetWidth;
-      const h = panel.offsetHeight;
       const pad = 8;
-      const x = clamp(drag.origX + dx, pad, window.innerWidth  - w - pad);
-      const y = clamp(drag.origY + dy, pad, window.innerHeight - h - pad);
-      state.x = x;
-      state.y = y;
+      const x = clamp(drag.origX + dx, pad, window.innerWidth  - panel.offsetWidth  - pad);
+      const y = clamp(drag.origY + dy, pad, window.innerHeight - panel.offsetHeight - pad);
+      state.x = x; state.y = y;
       panel.style.left = x + 'px';
       panel.style.top  = y + 'px';
       if (e.cancelable) e.preventDefault();
     }
     function onDragEnd() {
       if (!drag) return;
-      panel.classList.remove('api-guide--dragging');
+      panel.classList.remove('ag--dragging');
       document.removeEventListener('mousemove', onDragMove);
       document.removeEventListener('mouseup',   onDragEnd);
       document.removeEventListener('touchmove', onDragMove);
@@ -1300,159 +1183,20 @@
       if (drag.moved) saveState(state);
       drag = null;
     }
+    if (handle) {
+      handle.addEventListener('mousedown',  onDragStart);
+      handle.addEventListener('touchstart', onDragStart, { passive: false });
+    }
+    window.addEventListener('resize', () => { if (state.visible) applyPosition(); });
 
-    // ---- Wiring --------------------------------------------------------
-    handle.addEventListener('mousedown',  onDragStart);
-    handle.addEventListener('touchstart', onDragStart, { passive: false });
-    btnMin.addEventListener('click',   minimize);
-    btnClose.addEventListener('click', hide);
-    btnReset.addEventListener('click', resetProgress);
-    pill.addEventListener('click', unminimize);
-    if (btnOpen) btnOpen.addEventListener('click', toggle);
-    window.addEventListener('resize', () => {
-      if (state.visible && !state.minimized) applyPosition();
-    });
-
-    // Restore visibility on load. Hidden by default until user opens it.
-    // Deferred to the next tick because `currentApi()` references the
-    // `APIS` array which is declared with `let` further down in this file
-    // (temporal dead zone). Without the defer, a stale localStorage entry
-    // with visible=true would throw a ReferenceError here and halt the
-    // rest of the script load — including the top-tabs click handlers.
+    // Restore on load.
     setTimeout(function () {
       try {
-        if (state.visible) {
-          const api = (typeof currentApi === 'function') ? currentApi() : null;
-          if (api) pillLabel.textContent = api.name;
-          render();
-          applyVisibility();
-        }
+        if (state.visible) { render(); applyVisibility(); }
       } catch (err) {
-        // Never let the guide break the rest of the page.
-        // eslint-disable-next-line no-console
         if (window.console) console.warn('[ApiGuide] init failed:', err);
       }
     }, 0);
-
-    function syncCurrentOp() {
-      // Cancel any pending auto-next if the user navigated manually.
-      _cancelAutoNextIfMoved(currentOpId);
-      // Always keep the footer in sync.
-      syncFooter();
-      if (!state.visible || state.minimized) return;
-      const items = stepsEl.querySelectorAll('.api-guide-step');
-      items.forEach((li) => {
-        li.classList.toggle('api-guide-step--current', li.dataset.opId === currentOpId);
-      });
-    }
-
-    // ---- Footer / Send mirror ------------------------------------------
-    function syncFooter() {
-      if (!sendBtn) return;
-      const mainBtn = $("op-send");
-      const mainDisabled = !mainBtn || mainBtn.disabled;
-      const mainText = (mainBtn && mainBtn.textContent && mainBtn.textContent.trim()) || 'Send';
-      sendBtn.disabled = mainDisabled;
-      if (sendLabel) sendLabel.textContent = /send/i.test(mainText) ? mainText : 'Send';
-    }
-    if (sendBtn) {
-      sendBtn.addEventListener('click', function () {
-        const mainBtn = $("op-send");
-        if (!mainBtn || mainBtn.disabled) return;
-        // Visual: pulse our own button, and animate the workbench button
-        // as if a user just pressed it. Scroll it into view first so the
-        // animation isn't off-screen.
-        sendBtn.classList.remove('api-guide-send-btn--press');
-        void sendBtn.offsetWidth;
-        sendBtn.classList.add('api-guide-send-btn--press');
-
-        try { mainBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-        catch (e) {}
-        mainBtn.classList.remove('op-send--ghost-press');
-        void mainBtn.offsetWidth;
-        mainBtn.classList.add('op-send--ghost-press');
-        // Trigger the real click after the visual press settles.
-        setTimeout(() => {
-          mainBtn.classList.remove('op-send--ghost-press');
-          mainBtn.click();
-        }, 220);
-      });
-    }
-    // Mirror disabled-state changes from the main button (sending… / done).
-    const mainSendBtn = $("op-send");
-    if (mainSendBtn && window.MutationObserver) {
-      new MutationObserver(syncFooter).observe(mainSendBtn, {
-        attributes: true,
-        attributeFilter: ['disabled'],
-        childList: true,
-        characterData: true,
-        subtree: true,
-      });
-    }
-
-    // ---- Resize --------------------------------------------------------
-    // Bottom-right corner = width + height. Left edge = width-only.
-    function startResize(mode) {
-      return function (e) {
-        const pt = (e.touches && e.touches[0]) || e;
-        const startX = pt.clientX;
-        const startY = pt.clientY;
-        const startW = panel.offsetWidth;
-        const startH = panel.offsetHeight;
-        const startLeft = panel.offsetLeft;
-        panel.classList.add('api-guide--resizing');
-        document.body.style.cursor = (mode === 'corner') ? 'nwse-resize' : 'ew-resize';
-
-        function onMove(ev) {
-          const p = (ev.touches && ev.touches[0]) || ev;
-          const dx = p.clientX - startX;
-          const dy = p.clientY - startY;
-          let newW = startW;
-          let newH = startH;
-          let newLeft = startLeft;
-          const maxW = Math.max(MIN_W, window.innerWidth  - 16);
-          const maxH = Math.max(MIN_H, window.innerHeight - 80);
-          if (mode === 'corner') {
-            newW = clamp(startW + dx, MIN_W, maxW);
-            newH = clamp(startH + dy, MIN_H, maxH);
-          } else if (mode === 'left') {
-            // Dragging left edge: grow width while keeping right edge fixed.
-            newW = clamp(startW - dx, MIN_W, maxW);
-            newLeft = startLeft + (startW - newW);
-          }
-          panel.style.width  = newW + 'px';
-          panel.style.height = (mode === 'corner') ? (newH + 'px') : panel.style.height;
-          if (mode === 'left') panel.style.left = newLeft + 'px';
-          state.w = newW;
-          if (mode === 'corner') state.h = newH;
-          if (mode === 'left')   state.x = newLeft;
-          if (ev.cancelable) ev.preventDefault();
-        }
-        function onEnd() {
-          panel.classList.remove('api-guide--resizing');
-          document.body.style.cursor = '';
-          document.removeEventListener('mousemove', onMove);
-          document.removeEventListener('mouseup',   onEnd);
-          document.removeEventListener('touchmove', onMove);
-          document.removeEventListener('touchend',  onEnd);
-          saveState(state);
-        }
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup',   onEnd);
-        document.addEventListener('touchmove', onMove, { passive: false });
-        document.addEventListener('touchend',  onEnd);
-        if (e.cancelable) e.preventDefault();
-        e.stopPropagation();
-      };
-    }
-    if (resizeCorner) {
-      resizeCorner.addEventListener('mousedown',  startResize('corner'));
-      resizeCorner.addEventListener('touchstart', startResize('corner'), { passive: false });
-    }
-    if (resizeLeft) {
-      resizeLeft.addEventListener('mousedown',  startResize('left'));
-      resizeLeft.addEventListener('touchstart', startResize('left'), { passive: false });
-    }
 
     return {
       show, hide, toggle,
@@ -1461,8 +1205,6 @@
       syncCurrentOp,
     };
     } catch (err) {
-      // ApiGuide failed to initialise — return a no-op surface so the
-      // rest of the page (top tab handlers etc.) still loads.
       if (window.console) console.warn('[ApiGuide] disabled:', err);
       return { show(){}, hide(){}, toggle(){}, markOpDone(){}, refresh(){}, syncCurrentOp(){} };
     }
@@ -3519,6 +3261,8 @@
       $('op-hint').innerHTML = cached.hintHtml || '';
       if (cached.launch) {
         _showLaunchBanner(cached.launch);
+      } else if (currentOp() && currentOp().browser_action) {
+        _showLaunchBannerPending();
       } else {
         _resetLaunchBanner();
       }
@@ -3529,7 +3273,11 @@
       $("resp-body").textContent = "—";
       $("resp-status").textContent = "";
       $("resp-status").className = "status-pill";      $('resp-status').title = "";      $("op-hint").innerHTML = "";
-      _resetLaunchBanner();
+      if (currentOp() && currentOp().browser_action) {
+        _showLaunchBannerPending();
+      } else {
+        _resetLaunchBanner();
+      }
       previewRequest();
     }
   }
@@ -3544,6 +3292,27 @@
     if (!el) return;
     el.innerHTML = "";
     el.hidden = true;
+    el.removeAttribute("data-url");
+  }
+  // Show a placeholder banner before the call is made — prompts the user
+  // to click Send first, then the real URL is injected once the card
+  // reference is returned.
+  function _showLaunchBannerPending() {
+    const el = $("op-launch-banner");
+    if (!el) return;
+    el.innerHTML = "";
+    el.className = "op-launch-banner op-launch-banner--pending";
+    const text = document.createElement("div");
+    text.className = "op-launch-banner-text";
+    const title = document.createElement("strong");
+    title.className = "op-launch-banner-title";
+    title.textContent = "Browser action required";
+    const desc = document.createElement("span");
+    desc.textContent = "Click Send to enroll the card \u2014 a Launch 3DS Method button will appear here once the card reference is ready.";
+    text.appendChild(title);
+    text.appendChild(desc);
+    el.appendChild(text);
+    el.hidden = false;
     el.removeAttribute("data-url");
   }
   function _showLaunchBanner({ url, label, note, testCredentials }) {
@@ -3860,21 +3629,12 @@
         const launchNote = (data.hints && data.hints.browser_launch_note)
           || "Browser interaction required — complete the flow, then proceed to the next step.";
         if (launchUrl) {
-          const wrap = document.createElement("div");
-          wrap.className = "op-hint-card op-hint-card--browser";
-          const noteEl = document.createElement("span");
-          noteEl.className = "muted op-hint-text";
-          noteEl.textContent = launchNote;
-          const btn = document.createElement("a");
-          btn.href = launchUrl;
-          btn.target = "_blank";
-          btn.rel = "noopener";
-          btn.textContent = "Launch 3DS Method ↗";
-          btn.className = "op-hint-btn op-hint-btn--browser";
-          wrap.appendChild(noteEl);
-          wrap.appendChild(btn);
-          // Keep the launch CTA visible without scrolling through other hints.
-          $("op-hint").prepend(wrap);
+          // Update the top-of-panel banner with the real URL so it's
+          // immediately visible without scrolling.
+          _showLaunchBanner({ url: launchUrl, label: "Launch 3DS Method ↗", note: launchNote });
+        } else {
+          // Call succeeded but no URL yet — keep the pending state.
+          _showLaunchBannerPending();
         }
       }
       if (data.hints && data.hints.pdf_base64) {
@@ -3909,6 +3669,12 @@
           note: data.hints.open_link_note
             || "Open in a new tab, complete the bank login flow, then run the next step.",
           testCredentials: data.hints.test_credentials || null,
+        } : (op.browser_action && data.hints && data.hints.browser_launch_url) ? {
+          url: data.hints.browser_launch_url,
+          label: "Launch 3DS Method ↗",
+          note: data.hints.browser_launch_note
+            || "Browser interaction required — complete the flow, then proceed to the next step.",
+          testCredentials: null,
         } : null,
         headersVisible: { ...headersVisible },
       };
@@ -4065,6 +3831,8 @@
       renderFindACard();
     } else if (uc.render === "sonic") {
       renderSonic();
+    } else if (uc.render === "txnotify") {
+      renderTxNotify();
     } else if (uc.render === "testchat") {
       renderTestChat();
     } else if (uc.render === "the_wire") {
@@ -6956,6 +6724,10 @@
     _renderCachedWebview('sonic', 'sonic-webview-frame', _appPath('/sonic/index.html'), 'Sonic Branding');
   }
 
+  function renderTxNotify() {
+    _renderCachedWebview('txnotify', 'txnotify-webview-frame', _appPath('/txnotify/index.html'), 'Transaction Notifications Live');
+  }
+
   function escapeHtml(s) {
     return String(s == null ? "" : s)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -7767,14 +7539,25 @@
   let _catalogPromise = null;
 
   function _fallbackCatalogFromWindowApis() {
+    // Prefer the full provision catalog embedded at page load time.
+    if (Array.isArray(window.__PROVISION_CATALOG__) && window.__PROVISION_CATALOG__.length) {
+      return window.__PROVISION_CATALOG__;
+    }
+    // Last-resort: reconstruct minimal entries from the API manifest list.
     const windowApis = Array.isArray(window.__APIS__) ? window.__APIS__ : [];
     return windowApis.map(function (a) {
-      const note = a.id === 'priceless_cities' ? 'Requires API Owner approval' : '';
       return {
         id: a.id,
         legacy_id: a.legacy_id,
         name: a.name,
-        provision_note: note,
+        configured: a.configured || false,
+        docs_url: a.docs_url || '',
+        provision_note: '',
+        requires_owner_approval: false,
+        auto_provisionable: true,
+        manual_onboarding_url: '',
+        disabled_in_non_us: false,
+        disabled_reason: '',
       };
     });
   }

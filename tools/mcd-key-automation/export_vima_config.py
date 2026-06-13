@@ -157,6 +157,13 @@ def build_vima_config_zip(
     for entry in iter_ordered():
         if entry.auth == AUTH_OAUTH2:
             continue  # handled below
+
+        # consent_management is merged into transaction_notifications — its
+        # artifacts (encryption PEM) are written under the TxNotify prefix so
+        # there is only one block in config/.env for the combined project.
+        if entry.id == "consent_management":
+            continue
+
         aliases = _aliases_for_entry(entry)
         cred_path, matched_alias = _find_credentials_any(aliases, normalized_dir)
         if not cred_path or matched_alias is None:
@@ -192,11 +199,22 @@ def build_vima_config_zip(
             f"{prefix}_ENV=sandbox",
         ]
 
-        # Optional client encryption PEM
+        # Optional client encryption PEM (AUTH_OAUTH1_ENC).
+        # For transaction_notifications: also probe consent_management aliases
+        # for the encryption PEM since they share the same project.
         if entry.auth == AUTH_OAUTH1_ENC:
             pem_env = f"{prefix}_ENCRYPTION_KEY_PATH"
             pem_dest = f"{entry.id}-clientenc.pem"
             pem_path = _find_pem(matched_alias, normalized_dir, cred_path)
+            # If not found under txnotify alias, try consent_management aliases.
+            if not pem_path and entry.id == "transaction_notifications":
+                from apis.catalog import get as _cat_get
+                _cm = _cat_get("consent_management")
+                if _cm:
+                    _cm_aliases = [_cm.id] + ([_cm.legacy_id] if _cm.legacy_id else [])
+                    _cm_cred, _cm_alias = _find_credentials_any(_cm_aliases, normalized_dir)
+                    if _cm_alias:
+                        pem_path = _find_pem(_cm_alias, normalized_dir, _cm_cred)
             if pem_path:
                 key_files[pem_dest] = pem_path.read_bytes()
                 env_lines.append(f"{pem_env}=config/keys/{pem_dest}")

@@ -34,6 +34,8 @@ ProvisionType = Literal[
     "oauth1_standard",
     "oauth1_enc_key",
     "oauth1_skip_step3",
+    "oauth1_txnotify_combined",
+    "consent_management_skip",
     "oauth2_region",
     "priceless",
     "playbook",
@@ -62,14 +64,19 @@ _SPECIAL_BY_ID: dict[str, dict] = {
         "provision_type": "priceless",
         "api_selection": "Priceless Specials",
     },
-    # Transaction Notifications presents a Step 3 "Additional credentials"
-    # screen offering an optional Mastercard Encryption Key. Creating that key
-    # via the wizard suppresses the signing-key download and leaves the
-    # consumer key unreachable on the sandbox page. We click "Skip this step"
-    # and then add a signing key via the project's sandbox "Add project key"
-    # flow, the same way oauth1_enc_key APIs do.
+    # Transaction Notifications presents a combined wizard with Consent Management
+    # when both APIs are added to the same project. We navigate to the create-project
+    # URL with both service slugs so the wizard presents the signing key (Step 2)
+    # and the Mastercard encryption PEM (Step 3) in a single flow — rather than
+    # skipping Step 3 as we did previously when provisioning each API separately.
     "transaction_notifications": {
-        "provision_type": "oauth1_skip_step3",
+        "provision_type": "oauth1_txnotify_combined",
+    },
+    # Consent Management lives in the same portal project as Transaction Notifications.
+    # Its key material (enc PEM + consumer key) is captured during the txnotify combined
+    # flow above, so we skip independent provisioning here to avoid creating a second project.
+    "consent_management": {
+        "provision_type": "consent_management_skip",
     },
     # MATCH Pro shows a single-page create-project form with required
     # service-details (company type, ICA, contact email, replacement-id No)

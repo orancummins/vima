@@ -17,7 +17,7 @@ def register(bp):
             "cardholderAmount": body.get("cardholderAmount", 9.99),
             "cardholderCurrency": body.get("cardholderCurrency", "USD"),
             "merchantName": body.get("merchantName", "Coffee Corner"),
-            "cardLastNumbers": body.get("cardLastNumbers", 1234),
+            "cardLastNumbers": body.get("cardLastNumbers", "1234"),
             "transactionType": "PURCHASE",
             "postedDate": "2026-05-23T10:00:00Z",
         }

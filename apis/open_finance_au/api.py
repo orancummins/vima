@@ -194,6 +194,42 @@ MANIFEST: Dict[str, Any] = {
     "categories": [
         "Auth", "Customers", "Connect", "Consent (CDR)", "Accounts",
     ],
+    # Curated guide for the floating API Guide coach. Walks a valid happy path
+    # only — no other API calls.
+    "guide": [
+        {
+            "op": "create_token",
+            "title": "Create Access Token",
+            "summary": "Authenticate with partner credentials. Click Send below.",
+        },
+        {
+            "op": "add_testing_customer",
+            "title": "Add Testing Customer",
+            "summary": "Create a sandbox customer to link. Click Send below.",
+        },
+        {
+            "op": "generate_connect_url",
+            "title": "Generate Connect URL",
+            "summary": "Build the link the customer opens to grant CDR consent. Click Send below.",
+        },
+        {
+            "type": "manual",
+            "id": "launch_connect",
+            "title": "Launch Connect",
+            "summary": "Click the orange Launch Connect button and complete consent, then continue.",
+            "done_label": "I've completed consent",
+        },
+        {
+            "op": "get_data_sharing_consents",
+            "title": "Get Data Sharing Consents",
+            "summary": "Poll for the active consent record. Click Send below.",
+        },
+        {
+            "op": "get_customer_accounts",
+            "title": "Get Customer Accounts",
+            "summary": "Retrieve the consented accounts. Click Send below.",
+        },
+    ],
     "state_schema": [
         {"key": "customer_id", "label": "Customer ID"},
         {"key": "customer_username", "label": "Username"},

@@ -339,6 +339,90 @@ async def _provision_via_playbook(
     return artifacts
 
 
+async def _provision_oauth1_txnotify_combined(
+    page, dashboard: DashboardPage, portal_name: str,
+    dest_dir: Path, project: ProjectSpec, api_name: str,
+    alias: str, config: AppConfig,
+) -> list[Path]:
+    """
+    Create one portal project containing both Transaction Notifications AND
+    Consent Management, so both APIs share a single signing key and the
+    Mastercard encryption PEM is provisioned in the same wizard run.
+
+    URL: ?services=transaction-notifications,consent-management
+
+    The combined wizard flow is:
+      Step 1 — project name + "No" → Proceed
+      Step 2 — signing key alias + password → Create project
+      Step 3 — Mastercard encryption key (NOT skipped) → Create project → download PEM
+      Sandbox — Add project key → download signing ZIP + extract consumer key
+
+    The downloaded enc PEM is named with hint "{project.name}-{api_name}-enc" so
+    export_vima_config.py finds it under the transaction_notifications alias and
+    writes TRANSACTION_NOTIFICATIONS_ENCRYPTION_KEY_PATH.
+    """
+    create_page = CreateProjectPage(page)
+    await create_page.wait_for_form()
+    await create_page.fill(project_name=portal_name, on_behalf_of_company=False)
+    await create_page.proceed()
+
+    result = await create_page.wait_for_confirmation_or_project_page()
+
+    if result == "step2_credentials":
+        await create_page.fill_step2_credentials(alias=alias, password=config.key_password)
+        await create_page.create_key_step2()
+        # skip_step3=False → click "Create project" on Step 3 to get the enc PEM
+        result = await create_page.wait_for_download_after_step2(
+            alias=alias, password=config.key_password, skip_step3=False,
+        )
+
+    if result == "download":
+        # Step 3 downloaded the Mastercard PUBLIC encryption PEM for JWE body encryption.
+        enc_pem = await create_page.download_key_file(
+            dest_dir=dest_dir, filename_hint=f"{project.name}-{api_name}-enc"
+        )
+        logger.info("Downloaded Mastercard encryption PEM (combined txnotify+consent flow): {}", enc_pem)
+        uuid = await _get_uuid_after_creation(page, dashboard, portal_name)
+        if uuid:
+            sandbox_artifacts = await _add_oauth_signing_key_via_sandbox(
+                page, uuid, dest_dir, project, api_name, alias, config
+            )
+            return [enc_pem] + sandbox_artifacts
+        logger.error("oauth1_txnotify_combined: could not resolve project UUID after PEM download")
+        return [enc_pem]
+
+    if result == "project_page":
+        uuid = await _get_uuid_after_creation(page, dashboard, portal_name)
+        if not uuid:
+            logger.error("oauth1_txnotify_combined: could not resolve project UUID after redirect")
+            return []
+        logger.info("Combined wizard landed on project page — adding signing key via sandbox ({})", uuid)
+        return await _add_oauth_signing_key_via_sandbox(
+            page, uuid, dest_dir, project, api_name, alias, config
+        )
+
+    logger.error("Unexpected result {!r} for oauth1_txnotify_combined ({})", result, api_name)
+    return []
+
+
+async def _provision_consent_management_skip(
+    project: ProjectSpec, api_name: str,
+) -> list[Path]:
+    """
+    Consent Management is co-provisioned inside the Transaction Notifications
+    project via ``oauth1_txnotify_combined``.  There is nothing more to do here
+    — returning an empty list signals that no new portal project should be
+    created.  The export step (export_vima_config.py) already handles the
+    key material by reading it from the transaction_notifications artifacts.
+    """
+    logger.info(
+        "Skipping independent provisioning for {!r} — already included in the "
+        "Transaction Notifications combined project.",
+        api_name,
+    )
+    return []
+
+
 async def _provision_oauth1_enc_key(
     page, dashboard: DashboardPage, portal_name: str,
     dest_dir: Path, project: ProjectSpec, api_name: str,
@@ -581,7 +665,14 @@ async def ensure_project_with_api(
         )
 
     api_slug = API_SLUGS.get(api_name, api_cfg.slug)
-    fast_path = CreateProjectSelectors.fast_path_url_tpl.format(api_slug=api_slug)
+    # Transaction Notifications + Consent Management share one portal project.
+    # Use both service slugs in the URL so the combined wizard presents the
+    # signing key (Step 2) and the enc PEM (Step 3) in a single flow.
+    if api_cfg.provision_type == "oauth1_txnotify_combined":
+        consent_slug = API_SLUGS.get("consent_management", "consent-management")
+        fast_path = CreateProjectSelectors.fast_path_url_tpl.format(api_slug=api_slug) + f",{consent_slug}"
+    else:
+        fast_path = CreateProjectSelectors.fast_path_url_tpl.format(api_slug=api_slug)
     logger.info("Provisioning {!r} (type={}) — project {!r}", api_name, api_cfg.provision_type, portal_name)
 
     from app.strategy_learner import (
@@ -662,6 +753,14 @@ async def _dispatch_provision(
             page, dashboard, portal_name, dest_dir, project, api_name,
             alias, config, api_selection=api_cfg.api_selection,
         )
+
+    if ptype == "oauth1_txnotify_combined":
+        return await _provision_oauth1_txnotify_combined(
+            page, dashboard, portal_name, dest_dir, project, api_name, alias, config
+        )
+
+    if ptype == "consent_management_skip":
+        return await _provision_consent_management_skip(project, api_name)
 
     if ptype == "oauth1_skip_step3":
         return await _provision_oauth1_skip_step3(

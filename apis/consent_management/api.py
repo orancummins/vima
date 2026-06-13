@@ -27,12 +27,16 @@ from typing import Any, Dict
 _SANDBOX_BASE_URL = "https://sandbox.api.mastercard.com/openapis/authentication"
 _PROD_BASE_URL    = "https://api.mastercard.com/openapis/authentication"
 
-# In-process sticky state (persists for the life of the server process)
-STATE: Dict[str, Any] = {
-    "card_ref": "",
-    "consent_id": "",
-    "verify_auth_params": "{}",
-}
+# In-process sticky state — now proxied from transaction_notifications so both
+# modules share the same card_ref/consent_id lifecycle.
+try:
+    from apis.transaction_notifications.api import STATE  # noqa: F401
+except Exception:
+    STATE: Dict[str, Any] = {
+        "card_ref":           "",
+        "consent_id":        "",
+        "verify_auth_params": "{}",
+    }
 
 MANIFEST: Dict[str, Any] = {
     "id": "consent_management",
@@ -87,9 +91,9 @@ MANIFEST: Dict[str, Any] = {
         {"key": "verify_auth_params", "label": "Verify Auth Params (JSON)"},
     ],
     "configured": bool(
-        os.environ.get("CONSENT_MANAGEMENT_CONSUMER_KEY")
-        and os.environ.get("CONSENT_MANAGEMENT_CONSUMER_KEY") != "your-consumer-key-here"
-        and os.environ.get("CONSENT_MANAGEMENT_SIGNING_KEY_PATH")
+        os.environ.get("TRANSACTION_NOTIFICATIONS_CONSUMER_KEY")
+        and os.environ.get("TRANSACTION_NOTIFICATIONS_CONSUMER_KEY") != "your-consumer-key-here"
+        and os.environ.get("TRANSACTION_NOTIFICATIONS_SIGNING_KEY_PATH")
     ),
     "operations": [
         {
@@ -348,14 +352,14 @@ MANIFEST: Dict[str, Any] = {
 
 def _base_url() -> str:
     from simulator.switcher import sim_base_url
-    env = os.environ.get("CONSENT_MANAGEMENT_ENV", "sandbox").lower()
+    env = os.environ.get("TRANSACTION_NOTIFICATIONS_ENV", "sandbox").lower()
     real = _PROD_BASE_URL if env == "production" else _SANDBOX_BASE_URL
     return sim_base_url("consent_management", real)
 
 
 def _configured() -> bool:
-    key  = os.environ.get("CONSENT_MANAGEMENT_CONSUMER_KEY", "")
-    path = os.environ.get("CONSENT_MANAGEMENT_SIGNING_KEY_PATH", "")
+    key  = os.environ.get("TRANSACTION_NOTIFICATIONS_CONSUMER_KEY", "")
+    path = os.environ.get("TRANSACTION_NOTIFICATIONS_SIGNING_KEY_PATH", "")
     return bool(key and key != "your-consumer-key-here" and path)
 
 
@@ -373,9 +377,9 @@ def _get_auth_header(url: str, method: str, body_str: str | None = None) -> str:
     import oauth1.authenticationutils as authutils
     from oauth1.oauth import OAuth
 
-    consumer_key = os.environ["CONSENT_MANAGEMENT_CONSUMER_KEY"]
-    key_path     = os.environ["CONSENT_MANAGEMENT_SIGNING_KEY_PATH"]
-    key_password = os.environ.get("CONSENT_MANAGEMENT_SIGNING_KEY_PASSWORD", "keystorepassword")
+    consumer_key = os.environ["TRANSACTION_NOTIFICATIONS_CONSUMER_KEY"]
+    key_path     = os.environ["TRANSACTION_NOTIFICATIONS_SIGNING_KEY_PATH"]
+    key_password = os.environ.get("TRANSACTION_NOTIFICATIONS_SIGNING_KEY_PASSWORD", "keystorepassword")
 
     if not os.path.isabs(key_path):
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -389,8 +393,8 @@ def _not_configured_error() -> Dict[str, Any]:
     return {
         "success": False,
         "error": (
-            "Consent Management is not configured. "
-            "Set CONSENT_MANAGEMENT_CONSUMER_KEY and CONSENT_MANAGEMENT_SIGNING_KEY_PATH in .env, "
+            "Transaction Notifications is not configured. "
+            "Set TRANSACTION_NOTIFICATIONS_CONSUMER_KEY and TRANSACTION_NOTIFICATIONS_SIGNING_KEY_PATH in config/.env, "
             "then restart the server."
         ),
     }
@@ -599,7 +603,10 @@ def _get_consents(params: Dict[str, Any]) -> Dict[str, Any]:
 
 def _resolve_cert_path() -> str | None:
     """Return the absolute cert path if configured and exists, else None."""
-    cert_path = os.environ.get("CONSENT_MANAGEMENT_ENCRYPTION_KEY_PATH", "").strip()
+    cert_path = os.environ.get("TRANSACTION_NOTIFICATIONS_ENCRYPTION_KEY_PATH", "").strip()
+    if not cert_path or cert_path == "your-encryption-cert.pem":
+        # Migration fallback: accept the old per-module env var.
+        cert_path = os.environ.get("CONSENT_MANAGEMENT_ENCRYPTION_KEY_PATH", "").strip()
     if not cert_path or cert_path == "your-encryption-cert.pem":
         return None
     if not os.path.isabs(cert_path):

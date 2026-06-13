@@ -18,6 +18,7 @@ No edits required here.
 from __future__ import annotations
 
 import os
+import threading
 from typing import Any, Dict, List
 
 from apis.catalog import CATALOG, DISABLED_API_IDS, GROUP_ORDER, iter_ordered, get as catalog_get
@@ -27,19 +28,21 @@ from apis.credentials import is_configured as default_is_configured
 
 # Map: api_id -> module. Built lazily on first access.
 REGISTRY: Dict[str, Any] = {}
+_REGISTRY_LOCK = threading.Lock()
 
 # Display order, matching the catalog declaration order.
 ORDER: List[str] = [e.id for e in iter_ordered()]
 
 
 def _load_all() -> None:
-    if REGISTRY:
-        return
-    for entry in iter_ordered():
-        try:
-            REGISTRY[entry.id] = entry.load_module()
-        except Exception as exc:  # pragma: no cover — surface but don't crash startup
-            print(f"[apis] failed to load {entry.id}: {exc}")
+    with _REGISTRY_LOCK:
+        if REGISTRY:
+            return
+        for entry in iter_ordered():
+            try:
+                REGISTRY[entry.id] = entry.load_module()
+            except Exception as exc:  # pragma: no cover — surface but don't crash startup
+                print(f"[apis] failed to load {entry.id}: {exc}")
 
 
 def manifests() -> List[Dict[str, Any]]:
