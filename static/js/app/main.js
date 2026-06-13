@@ -35,6 +35,7 @@ import {
   fmt, fmtWithoutHeaders, renderIoPanel, updateHeaderToggleBtn,
   headersVisible, lastIoData, initHeaderToggles,
 } from './workbench/io.js';
+import { setSimUI, fetchSimStatus, initSimToggle } from './workbench/simToggle.js';
 import { showOfinSetupModal, initOfinSetupModal } from './features/ofinSetupModal.js';
 import './features/bundles.js';
 import './features/autoProvision.js';
@@ -345,6 +346,11 @@ import './features/infoModal.js';
 
     // ---- Visibility -----------------------------------------------------
     function applyVisibility() {
+      // When hiding, move focus out of the panel first — leaving a focused
+      // descendant under aria-hidden is an accessibility violation.
+      if (!state.visible && panel.contains(document.activeElement)) {
+        try { document.activeElement.blur(); } catch (e) {}
+      }
       panel.classList.toggle('hidden', !state.visible);
       panel.setAttribute('aria-hidden', state.visible ? 'false' : 'true');
       if (btnOpen) {
@@ -906,51 +912,6 @@ import './features/infoModal.js';
         }, 0);
       });
     });
-  }
-
-  // ---------------------------------------------------------------------
-  // Simulator toggle
-  // ---------------------------------------------------------------------
-  (function () {
-    const cb = $("sim-toggle-cb");
-    const label = $("sim-toggle-label");
-    if (!cb) return;
-    cb.addEventListener("change", () => {
-      const api = currentApi();
-      if (!api) return;
-      const simulated = cb.checked;
-      fetch("/api-sim/admin/toggle", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ api: api.id, simulated }),
-      })
-        .then((r) => r.json())
-        .then(() => setSimUI(simulated))
-        .catch(() => {});
-    });
-  })();
-
-  function setSimUI(simulated) {
-    const cb = $("sim-toggle-cb");
-    const label = $("sim-toggle-label");
-    const track = document.querySelector(".sim-toggle-track");
-    if (!cb || !label) return;
-    cb.checked = simulated;
-    label.textContent = simulated ? "Sim" : "Live";
-    label.classList.toggle("sim-on", simulated);
-    if (track) track.style.background = simulated ? "#7c3aed" : "";
-    const thumb = track && track.querySelector(".sim-toggle-thumb");
-    if (thumb) thumb.style.left = simulated ? "19px" : "3px";
-  }
-
-  function fetchSimStatus(apiId) {
-    fetch("/api-sim/admin/status")
-      .then((r) => r.json())
-      .then((data) => {
-        const entry = data[apiId];
-        setSimUI(entry ? entry.simulated : false);
-      })
-      .catch(() => setSimUI(false));
   }
 
   // ---------------------------------------------------------------------
@@ -4619,6 +4580,8 @@ import './features/infoModal.js';
   initOfinSetupModal({ selectOp });
   // Wire the request/response Show/Hide Headers toggles.
   initHeaderToggles();
+  // Wire the per-API Sim/Live simulator toggle.
+  initSimToggle();
 
   if (getCurrentApiId()) renderApi();
   if (USE_CASES.length) {
