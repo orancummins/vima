@@ -768,6 +768,12 @@ html.theme-light .header.header--home .theme-toggle-option {
    op-hint card below the fold. */
 .op-launch-banner {
   flex-shrink: 0;
+  /* When the sandbox test-credentials table is large (e.g. Open Finance
+     Australia lists many test users), the banner can grow taller than the
+     panel. Cap its height and let it scroll internally so the credentials
+     are readable instead of being clipped with no way to reach them. */
+  max-height: 60%;
+  overflow-y: auto;
   margin: 0;
   padding: 12px 16px;
   display: flex;
