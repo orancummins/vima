@@ -941,9 +941,13 @@ def sdk_run():
 
 @app.route("/explorer/<api_id>/execute", methods=["POST"])
 def explorer_execute(api_id: str):
-    if _is_non_us_blocked_api(api_id):
+    # Backward-compatible API aliases (e.g. older pages still posting to
+    # /explorer/consent/execute).
+    resolved_api_id = "consent_management" if api_id == "consent" else api_id
+
+    if _is_non_us_blocked_api(resolved_api_id):
         return _non_us_forbidden_response()
-    mod = api_registry.get_module(api_id)
+    mod = api_registry.get_module(resolved_api_id)
     if mod is None:
         return jsonify({"error": "Unknown API"}), 404
     body = request.get_json(silent=True) or {}
@@ -959,10 +963,10 @@ def explorer_execute(api_id: str):
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
     # Capture live responses into the simulator DB (non-simulated calls only)
-    if result.get("success") and not is_simulated(api_id):
+    if result.get("success") and not is_simulated(resolved_api_id):
         resp_body = (result.get("response") or {}).get("body") or result.get("data")
         try:
-            capture_response(api_id, op_id, resp_body)
+            capture_response(resolved_api_id, op_id, resp_body)
         except Exception:
             pass
     # If the API module did not include the 'request' or 'response' envelope
@@ -1106,6 +1110,7 @@ def consent_3ds_flow():
     method_url  = request.args.get("method_url", "")
     method_data = request.args.get("method_data", "")
     trans_id    = request.args.get("trans_id", "")
+    method_notify = request.args.get("method_notify", "")
     if not card_ref:
         return "Missing card_ref", 400
 
@@ -1115,6 +1120,7 @@ def consent_3ds_flow():
         "method_url":  _html.escape(method_url, quote=True),
         "method_data": _html.escape(method_data, quote=True),
         "trans_id":    _html.escape(trans_id, quote=True),
+        "method_notify": _html.escape(method_notify, quote=True),
     }
     cfg_json = _json.dumps(safe)
 
@@ -1242,8 +1248,14 @@ def consent_3ds_flow():
           '<script>document.addEventListener("DOMContentLoaded",function(){'
           + 'var f=document.createElement("form");f.method="POST";'
           + 'f.action=' + JSON.stringify(CFG.method_url) + ';'
+                    + 'if(' + JSON.stringify(CFG.method_notify) + '){'
+                    + 'var n=document.createElement("input");n.name="threeDSMethodNotificationURL";'
+                    + 'n.value=' + JSON.stringify(CFG.method_notify) + ';f.appendChild(n);}'
           + 'var i=document.createElement("input");i.name="threeDSMethodData";'
           + 'i.value=' + JSON.stringify(CFG.method_data) + ';'
+                    + 'if(' + JSON.stringify(CFG.trans_id) + '){'
+                    + 'var t=document.createElement("input");t.name="threeDSServerTransID";'
+                    + 't.value=' + JSON.stringify(CFG.trans_id) + ';f.appendChild(t);}'
           + 'f.appendChild(i);document.body.appendChild(f);f.submit();'
           + '});<\\/script>';
         var iframe = document.getElementById('fp-frame');
@@ -1286,7 +1298,7 @@ def consent_3ds_flow():
       setStatus('Running 3DS Method (device fingerprint)…');
       doFingerprint().then(function(fpStatus) {
         setStatus('Calling start-authentication (' + fpStatus + ')…');
-        return post('/explorer/consent/execute', {
+        return post('/explorer/consent_management/execute', {
           operation: 'start_authentication',
           params: Object.assign(
             { card_ref: CFG.card_ref, auth_type: 'THREEDS',
@@ -1333,7 +1345,7 @@ def consent_3ds_flow():
         var creq   = params.encodedCReq || params.creq;
         return doChallenge(acsUrl, creq).then(function() {
           setStatus('Verifying authentication…');
-          return post('/explorer/consent/execute', {
+          return post('/explorer/consent_management/execute', {
             operation: 'verify_authentication',
             params: { card_ref: CFG.card_ref, auth_type: 'THREEDS', auth_params: '{}' },
           });

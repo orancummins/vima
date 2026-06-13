@@ -150,6 +150,18 @@ def _err(res: Dict[str, Any], fallback: str) -> str:
     return fallback
 
 
+def _status_code(res: Dict[str, Any]) -> Optional[int]:
+    if not isinstance(res, dict):
+        return None
+    response = res.get("response")
+    if isinstance(response, dict):
+        code = response.get("status_code")
+        if isinstance(code, int):
+            return code
+    code = res.get("code")
+    return code if isinstance(code, int) else None
+
+
 # ---------------------------------------------------------------------------
 # Normalizers — fold each provider's account/transaction shape into a common
 # form the UI can render uniformly.
@@ -334,6 +346,10 @@ def start_connect(region: str) -> Dict[str, Any]:
 
     if region == "us":
         cid = conn.get("customer_id")
+        if cid:
+            check = _exec("us", "get_customer", {"customer_id": cid})
+            if _status_code(check) == 404:
+                cid = None
         if not cid:
             res = _exec("us", "create_test_customer", {})
             if not _ok(res):

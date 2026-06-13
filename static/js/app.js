@@ -3873,7 +3873,8 @@
           btn.className = "op-hint-btn op-hint-btn--browser";
           wrap.appendChild(noteEl);
           wrap.appendChild(btn);
-          $("op-hint").appendChild(wrap);
+          // Keep the launch CTA visible without scrolling through other hints.
+          $("op-hint").prepend(wrap);
         }
       }
       if (data.hints && data.hints.pdf_base64) {
