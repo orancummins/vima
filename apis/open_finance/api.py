@@ -308,6 +308,37 @@ MANIFEST: Dict[str, Any] = {
         "Transactions", "Institutions", "Reports", "Payments", "Micro Entries",
         "Business", "TxPush", "Transfer", "Data Enrichment",
     ],
+    # Curated guide for the floating API Guide coach. Walks a valid happy path
+    # only — no other API calls.
+    "guide": [
+        {
+            "op": "create_token",
+            "title": "Create Access Token",
+            "summary": "Authenticate with partner credentials. Click Send below.",
+        },
+        {
+            "op": "create_test_customer",
+            "title": "Create Testing Customer",
+            "summary": "Create a sandbox customer to link. Click Send below.",
+        },
+        {
+            "op": "generate_connect_url",
+            "title": "Generate Data Connect URL",
+            "summary": "Build the link the customer opens to connect a bank. Click Send below.",
+        },
+        {
+            "type": "manual",
+            "id": "launch_data_connect",
+            "title": "Launch Data Connect",
+            "summary": "Click the orange Launch Data Connect button and complete the flow, then continue.",
+            "done_label": "I've completed Data Connect",
+        },
+        {
+            "op": "refresh_accounts",
+            "title": "Refresh Accounts",
+            "summary": "Pull the newly linked accounts. Click Send below.",
+        },
+    ],
     "state_schema": [
         {"key": "customer_id", "label": "Customer ID"},
         {"key": "customer_username", "label": "Username"},

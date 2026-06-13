@@ -24,11 +24,8 @@ projects:
   - name: priceless
     apis: [priceless]
 
-  - name: txnotify
-    apis: [txnotify]
-
-  - name: consent
-    apis: [consent]
+  - name: transaction_notifications
+    apis: [transaction_notifications, consent_management]
 
   - name: ofpub
     apis: [ofpub]

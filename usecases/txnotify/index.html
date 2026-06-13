@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Transaction Notifications — Live Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="/static/js/usecase-theme.js"></script>
+  <link rel="stylesheet" href="/txnotify/style.css" />
+  <link rel="stylesheet" href="/static/css/usecase-theme.css" />
+</head>
+<body>
+  <div class="txn-app">
+
+    <!-- ============================================================
+         LEFT: Setup guide
+         ============================================================ -->
+    <aside class="txn-setup">
+      <header class="txn-setup-header">
+        <div class="txn-eyebrow">Mastercard</div>
+        <h1 class="txn-title">Transaction Notifications</h1>
+        <p class="txn-sub">Receive real-time purchase notifications for enrolled cardholders — live, in your browser.</p>
+      </header>
+
+      <!-- Step 1 -->
+      <div class="txn-step">
+        <div class="txn-step-head" data-target="step1-body">
+          <span class="txn-step-num">1</span>
+          <div>
+            <div class="txn-step-title">Get an ngrok account</div>
+            <div class="txn-step-sub">Mastercard requires a public HTTPS URL to POST notifications to.</div>
+          </div>
+        </div>
+        <div class="txn-step-body" id="step1-body">
+          <p>Sign up for free at <a href="https://ngrok.com" target="_blank" rel="noopener" class="txn-link">ngrok.com ↗</a>, then install and authenticate:</p>
+          <div class="txn-code-block"><code><span class="c"># Install (Windows — or download from ngrok.com)</span>
+winget install ngrok
+
+<span class="c"># Add your authtoken (from dashboard.ngrok.com/authtokens)</span>
+ngrok config add-authtoken &lt;your-token&gt;</code></div>
+          <p class="txn-note">Free accounts get a fresh random URL every session. A paid account gives you a <strong>reserved domain</strong> that stays stable across restarts: <code>ngrok http --domain=myapp.ngrok.dev 9021</code></p>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="txn-step">
+        <div class="txn-step-head" data-target="step2-body">
+          <span class="txn-step-num">2</span>
+          <div>
+            <div class="txn-step-title">Launch the webhook tunnel</div>
+            <div class="txn-step-sub">Exposes this Solution Studio instance (port 9021) via HTTPS.</div>
+          </div>
+        </div>
+        <div class="txn-step-body" id="step2-body">
+          <p>The button below opens a terminal and runs <code>ngrok http 9021</code>. Once it starts, copy the <strong>Forwarding</strong> HTTPS URL it prints.</p>
+          <button class="txn-btn txn-btn-primary" id="launch-ngrok-btn" type="button">
+            <span class="txn-btn-icon">⚡</span> Launch ngrok Terminal
+          </button>
+          <div class="txn-inline-note txn-inline-note--success" id="ngrok-launched-note" hidden>
+            Terminal launched. Copy the <strong>Forwarding</strong> URL from the terminal window.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="txn-step">
+        <div class="txn-step-head" data-target="step3-body">
+          <span class="txn-step-num">3</span>
+          <div>
+            <div class="txn-step-title">Register your webhook URL</div>
+            <div class="txn-step-sub">Paste your ngrok URL to generate the full endpoint, then register it.</div>
+          </div>
+        </div>
+        <div class="txn-step-body" id="step3-body">
+          <label class="txn-label" for="ngrok-url-input">Your ngrok HTTPS URL:</label>
+          <div class="txn-input-row">
+            <input class="txn-input" id="ngrok-url-input" type="text"
+                   placeholder="https://abc123.ngrok-free.app"
+                   autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="txn-webhook-result" id="txn-webhook-result" hidden>
+            <div class="txn-webhook-result-label">Register this webhook URL in Mastercard Dashboard:</div>
+            <div class="txn-webhook-result-row">
+              <code class="txn-webhook-result-code" id="txn-webhook-url-code"></code>
+              <button class="txn-copy-btn" id="txn-copy-url-btn" type="button">⎘ Copy</button>
+            </div>
+          </div>
+          <div class="txn-step-links">
+            <a class="txn-btn txn-btn-ghost txn-btn-sm" href="https://developer.mastercard.com/dashboard" target="_blank" rel="noopener">
+              Open Mastercard Dashboard ↗
+            </a>
+          </div>
+          <p class="txn-note" style="margin-top: 8px;">In the dashboard, go to your <strong>Transaction Notifications</strong> project → <strong>Webhooks</strong> → set the URL above. The endpoint must respond with HTTP 2xx within a few seconds.</p>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="txn-step">
+        <div class="txn-step-head" data-target="step4-body">
+          <span class="txn-step-num">4</span>
+          <div>
+            <div class="txn-step-title">Enroll a card</div>
+            <div class="txn-step-sub">Use the Consent operations in the API tab to register a test card.</div>
+          </div>
+        </div>
+        <div class="txn-step-body" id="step4-body">
+          <p>Open the <strong>Transaction Notifications</strong> API tab and run through the Consent operations: <em>Create consent → Launch 3DS Method → Start authentication → Verify authentication</em>. The sandbox test PAN is <code>2303779951000297</code>.</p>
+          <a class="txn-btn txn-btn-ghost txn-btn-sm" href="/app?tab=apis&amp;api=transaction_notifications" target="_blank" rel="noopener">
+            Go to Transaction Notifications API →
+          </a>
+          <div class="txn-card-ref-row" id="txn-card-ref-row" hidden>
+            <span class="txn-card-ref-label">Active card enrolled:</span>
+            <code id="txn-active-card-ref"></code>
+            <span class="txn-card-ref-ok">✓</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="txn-step">
+        <div class="txn-step-head" data-target="step5-body">
+          <span class="txn-step-num">5</span>
+          <div>
+            <div class="txn-step-title">Trigger a test transaction</div>
+            <div class="txn-step-sub">Simulate a purchase — the notification lands in the feed within seconds.</div>
+          </div>
+        </div>
+        <div class="txn-step-body" id="step5-body">
+          <p>Sends a simulated purchase using the enrolled card. Mastercard will POST the notification to your registered webhook URL.</p>
+          <button class="txn-btn txn-btn-primary" id="trigger-txn-btn" type="button">
+            <span class="txn-btn-icon">▶</span> Trigger Test Transaction
+          </button>
+          <div class="txn-trigger-status" id="txn-trigger-status" hidden></div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ============================================================
+         RIGHT: Live notification feed
+         ============================================================ -->
+    <main class="txn-feed-area">
+
+      <div class="txn-feed-topbar">
+        <div class="txn-feed-topbar-left">
+          <div class="txn-pulse-dot" id="txn-pulse-dot"></div>
+          <span class="txn-feed-heading">Live notifications</span>
+          <span class="txn-count-badge" id="txn-count-badge" hidden>0</span>
+        </div>
+        <div class="txn-feed-topbar-right">
+          <a href="http://127.0.0.1:4040" target="_blank" rel="noopener" class="txn-ngrok-link">
+            ngrok inspector ↗
+          </a>
+          <button class="txn-btn txn-btn-ghost txn-btn-sm" id="txn-clear-btn" type="button">Clear</button>
+        </div>
+      </div>
+
+      <div class="txn-feed-infobar">
+        <span class="txn-infobar-label">Webhook endpoint:</span>
+        <code class="txn-infobar-code" id="txn-local-endpoint">http://localhost:9021/txnotify/webhook</code>
+      </div>
+
+      <div class="txn-feed" id="txn-feed">
+        <div class="txn-feed-empty" id="txn-feed-empty">
+          <div class="txn-feed-empty-icon">📡</div>
+          <div class="txn-feed-empty-title">Waiting for notifications…</div>
+          <div class="txn-feed-empty-sub">Complete the setup steps on the left, then trigger a test transaction to see the payload land here in real time.</div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* ---- helpers ---- */
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function highlight(obj) {
+      const json = JSON.stringify(obj, null, 2);
+      return esc(json).replace(
+        /("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)/g,
+        (m) => {
+          let cls = 'j-num';
+          if (/^"/.test(m)) cls = /:$/.test(m) ? 'j-key' : 'j-str';
+          else if (/true|false/.test(m)) cls = 'j-bool';
+          else if (/null/.test(m)) cls = 'j-null';
+          return `<span class="${cls}">${m}</span>`;
+        }
+      );
+    }
+
+    function post(url, body) {
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }).then(r => r.json());
+    }
+
+    /* ---- state ---- */
+    let seenIds = new Set();
+    let latestId = null;
+    let cardRef = '';
+
+    /* ---- DOM refs ---- */
+    const feed           = document.getElementById('txn-feed');
+    const feedEmpty      = document.getElementById('txn-feed-empty');
+    const countBadge     = document.getElementById('txn-count-badge');
+    const pulseDot       = document.getElementById('txn-pulse-dot');
+    const clearBtn       = document.getElementById('txn-clear-btn');
+    const launchBtn      = document.getElementById('launch-ngrok-btn');
+    const launchedNote   = document.getElementById('ngrok-launched-note');
+    const triggerBtn     = document.getElementById('trigger-txn-btn');
+    const triggerStatus  = document.getElementById('txn-trigger-status');
+    const ngrokInput     = document.getElementById('ngrok-url-input');
+    const webhookResult  = document.getElementById('txn-webhook-result');
+    const webhookCode    = document.getElementById('txn-webhook-url-code');
+    const copyUrlBtn     = document.getElementById('txn-copy-url-btn');
+    const cardRefRow     = document.getElementById('txn-card-ref-row');
+    const activeCardRef  = document.getElementById('txn-active-card-ref');
+    const localEndpoint  = document.getElementById('txn-local-endpoint');
+
+    /* ---- local endpoint URL ---- */
+    localEndpoint.textContent = window.location.protocol + '//' + window.location.host + '/txnotify/webhook';
+
+    /* ---- collapsible step bodies ---- */
+    document.querySelectorAll('.txn-step-head').forEach(head => {
+      head.addEventListener('click', () => {
+        const targetId = head.getAttribute('data-target');
+        if (!targetId) return;
+        const body = document.getElementById(targetId);
+        if (!body) return;
+        const isOpen = !body.hidden;
+        body.hidden = isOpen;
+        head.classList.toggle('txn-step-head--collapsed', isOpen);
+      });
+    });
+
+    /* ---- ngrok URL input ---- */
+    ngrokInput.addEventListener('input', () => {
+      const raw = ngrokInput.value.trim().replace(/\/$/, '');
+      if (raw.startsWith('https://') || raw.startsWith('http://')) {
+        webhookCode.textContent = raw + '/txnotify/webhook';
+        webhookResult.hidden = false;
+      } else {
+        webhookResult.hidden = true;
+      }
+    });
+
+    copyUrlBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(webhookCode.textContent).then(() => {
+        copyUrlBtn.textContent = '✓ Copied!';
+        setTimeout(() => { copyUrlBtn.textContent = '⎘ Copy'; }, 1800);
+      });
+    });
+
+    /* ---- launch ngrok ---- */
+    launchBtn.addEventListener('click', () => {
+      launchBtn.disabled = true;
+      launchBtn.innerHTML = '<span class="txn-btn-icon">⏳</span> Launching…';
+      fetch('/txnotify/launch-ngrok', { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+          if (d.ok) {
+            launchedNote.hidden = false;
+            launchBtn.innerHTML = '<span class="txn-btn-icon">✓</span> Terminal opened';
+          } else {
+            launchBtn.disabled = false;
+            launchBtn.innerHTML = '<span class="txn-btn-icon">⚡</span> Launch ngrok Terminal';
+            alert('Could not open terminal: ' + (d.error || 'Unknown error'));
+          }
+        })
+        .catch(() => {
+          launchBtn.disabled = false;
+          launchBtn.innerHTML = '<span class="txn-btn-icon">⚡</span> Launch ngrok Terminal';
+        });
+    });
+
+    /* ---- trigger test transaction ---- */
+    triggerBtn.addEventListener('click', () => {
+      triggerBtn.disabled = true;
+      triggerStatus.hidden = false;
+      triggerStatus.className = 'txn-trigger-status txn-trigger-status--loading';
+      triggerStatus.textContent = 'Triggering transaction…';
+
+      // Fetch current card ref from API state, then trigger.
+      post('/usecases/txnotify/action', { action: 'get_state', params: {} })
+        .then(res => {
+          const ref = (res.state && res.state.card_ref) || cardRef || '';
+          return post('/explorer/transaction_notifications/execute', {
+            operation: 'trigger_test_transaction',
+            params: { card_reference: ref, amount: '9.99', currency: 'USD', merchant_name: 'Coffee Corner', card_last_numbers: '1234' },
+          });
+        })
+        .then(r => {
+          triggerBtn.disabled = false;
+          if (r.success) {
+            triggerStatus.className = 'txn-trigger-status txn-trigger-status--ok';
+            triggerStatus.textContent = '✓ Transaction triggered — the notification should arrive in the feed within seconds.';
+          } else {
+            triggerStatus.className = 'txn-trigger-status txn-trigger-status--err';
+            triggerStatus.textContent = '✗ ' + (r.error || JSON.stringify(r));
+          }
+        })
+        .catch(err => {
+          triggerBtn.disabled = false;
+          triggerStatus.className = 'txn-trigger-status txn-trigger-status--err';
+          triggerStatus.textContent = '✗ Request failed: ' + (err.message || err);
+        });
+    });
+
+    /* ---- clear ---- */
+    clearBtn.addEventListener('click', () => {
+      post('/usecases/txnotify/action', { action: 'clear', params: {} }).then(() => {
+        seenIds.clear();
+        latestId = null;
+        // Remove all cards but keep the empty placeholder
+        feed.innerHTML = '';
+        feed.appendChild(feedEmpty);
+        feedEmpty.hidden = false;
+        countBadge.hidden = true;
+        countBadge.textContent = '0';
+        pulseDot.classList.remove('txn-pulse-dot--live');
+      });
+    });
+
+    /* ---- notification card ---- */
+    function makeCard(ev) {
+      const p = ev.payload || {};
+      const merchant  = p.merchantName  || p.merchant_name  || 'Unknown merchant';
+      const amount    = p.amount        != null ? p.amount    : (p.cardholderAmount   != null ? p.cardholderAmount   : '');
+      const currency  = p.currency      || p.cardholderCurrency || '';
+      const ref       = p.cardReference || p.card_reference  || '';
+      const shortRef  = ref ? '…' + ref.slice(-8) : '—';
+      const txType    = p.transactionType || '';
+
+      const card = document.createElement('div');
+      card.className = 'txn-card txn-card--new';
+      card.dataset.id = ev.id;
+      card.innerHTML = `
+        <div class="txn-card-main">
+          <div class="txn-card-left">
+            <div class="txn-card-merchant">${esc(merchant)}</div>
+            <div class="txn-card-meta">
+              ${txType ? `<span class="txn-card-type">${esc(txType)}</span><span class="txn-sep">·</span>` : ''}
+              <span class="txn-card-time">${esc(ev.received_at)}</span>
+              <span class="txn-sep">·</span>
+              <span class="txn-card-ref">card ${esc(shortRef)}</span>
+            </div>
+          </div>
+          <div class="txn-card-right">
+            ${amount !== '' ? `<div class="txn-card-amount">${esc(String(amount))}</div><div class="txn-card-currency">${esc(currency)}</div>` : ''}
+            <button class="txn-expand-btn" type="button" aria-expanded="false">JSON ▾</button>
+          </div>
+        </div>
+        <pre class="txn-card-json" hidden>${highlight(p)}</pre>
+      `;
+
+      card.querySelector('.txn-expand-btn').addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        const pre = card.querySelector('.txn-card-json');
+        const expanded = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!expanded));
+        btn.textContent = expanded ? 'JSON ▾' : 'JSON ▴';
+        pre.hidden = expanded;
+      });
+
+      return card;
+    }
+
+    /* ---- poll ---- */
+    function poll() {
+      post('/usecases/txnotify/action', { action: 'poll', params: { since_id: latestId } })
+        .then(res => {
+          const events = Array.isArray(res.events) ? res.events : [];
+          const total  = typeof res.total === 'number' ? res.total : 0;
+
+          if (events.length > 0) {
+            // Pulse indicator
+            pulseDot.classList.add('txn-pulse-dot--live');
+            setTimeout(() => pulseDot.classList.remove('txn-pulse-dot--live'), 1800);
+
+            // Update latestId to the newest event the server returned
+            // (events[0] is always the newest since _inbox is newest-first).
+            latestId = events[0].id;
+
+            feedEmpty.hidden = true;
+            events.forEach(ev => {
+              if (seenIds.has(ev.id)) return;
+              seenIds.add(ev.id);
+              const card = makeCard(ev);
+              feed.insertBefore(card, feed.firstChild);
+              // Remove the animation class after it plays.
+              setTimeout(() => card.classList.remove('txn-card--new'), 600);
+            });
+          }
+
+          if (total > 0) {
+            countBadge.textContent = String(total);
+            countBadge.hidden = false;
+          } else {
+            countBadge.hidden = true;
+          }
+        })
+        .catch(() => {/* network error — silently retry next tick */});
+    }
+
+    /* ---- sync card ref from API state ---- */
+    function syncState() {
+      post('/usecases/txnotify/action', { action: 'get_state', params: {} })
+        .then(res => {
+          if (res.ok && res.state && res.state.card_ref) {
+            cardRef = res.state.card_ref;
+            activeCardRef.textContent = cardRef.slice(0, 8) + '…' + cardRef.slice(-6);
+            cardRefRow.hidden = false;
+          } else {
+            cardRefRow.hidden = true;
+          }
+        })
+        .catch(() => {});
+    }
+
+    /* ---- boot ---- */
+    syncState();
+    poll();
+    setInterval(poll, 2000);
+    setInterval(syncState, 6000);
+
+  })();
+  </script>
+</body>
+</html>

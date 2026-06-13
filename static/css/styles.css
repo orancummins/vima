@@ -767,10 +767,8 @@ html.theme-light .header.header--home .theme-toggle-option {
    returns hints.open_link, even when the params list pushes the inline
    op-hint card below the fold. */
 .op-launch-banner {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  margin: 0 0 12px 0;
+  flex-shrink: 0;
+  margin: 0;
   padding: 12px 16px;
   display: flex;
   align-items: center;
@@ -778,11 +776,22 @@ html.theme-light .header.header--home .theme-toggle-option {
   flex-wrap: wrap;
   background: linear-gradient(135deg, #fff4eb 0%, #ffe3cc 100%);
   border: 1px solid #ffb37a;
+  border-top: none;
   border-left: 4px solid #ff5f00;
-  border-radius: 8px;
+  border-radius: 0 0 0 0;
   box-shadow: 0 2px 8px rgba(255, 95, 0, 0.15);
 }
 .op-launch-banner[hidden] { display: none; }
+/* Pending state — before the call is made, no URL yet */
+.op-launch-banner--pending {
+  background: linear-gradient(135deg, #f5f7fb 0%, #eaeff8 100%);
+  border-color: #b0bdd6;
+  border-top-color: transparent;
+  border-left-color: #6b7ea8;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
+}
+.op-launch-banner--pending .op-launch-banner-title { color: #3a4a6b; }
+.op-launch-banner--pending .op-launch-banner-text  { color: #4a5568; }
 .op-launch-banner .op-launch-banner-text {
   flex: 1;
   min-width: 200px;
@@ -11052,9 +11061,8 @@ html.theme-light .tc-modal-banner--done {
      once the panel opens so it can be dragged anywhere. */
   bottom: 140px;
   right: 24px;
-  width: 300px;
+  width: 320px;
   max-width: calc(100vw - 16px);
-  max-height: 420px;
   z-index: 1090;
   display: flex;
   flex-direction: column;
@@ -11597,23 +11605,25 @@ html:not(.theme-light) .api-guide-pill-counter {
   color: rgba(244, 240, 234, 0.85);
 }
 /* ======================================================================
-   API Guide � footer (Send mirror) + resize handles
+   API Guide — footer (Send mirror)
 ====================================================================== */
 
-/* Make the panel resizable: switch to flex so the steps list takes the
-   remaining height when the user grows the panel vertically. */
-.api-guide {
-  /* Persist a hard min so resize can't break the layout. */
-  min-width: 280px;
-  min-height: 220px;
+/* When the steps list is long, cap it so the footer stays visible. */
+.api-guide-steps { max-height: 180px; }
+
+/* ---- Footer base --------------------------------------------------- */
+.api-guide-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  background: linear-gradient(0deg, rgba(255, 95, 0, 0.05) 0%, transparent 100%);
+  flex-shrink: 0;
 }
-.api-guide--resizing {
-  transition: none !important;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.api-guide--resizing .api-guide-step,
-.api-guide--resizing * { user-select: none !important; }
+
+/* When the steps list is long, cap it so the footer stays visible. */
+.api-guide-steps { max-height: 180px; }
 
 /* ---- Footer (Send mirror) ------------------------------------------ */
 .api-guide-footer {
@@ -11625,34 +11635,6 @@ html:not(.theme-light) .api-guide-pill-counter {
   background: linear-gradient(0deg, rgba(255, 95, 0, 0.05) 0%, transparent 100%);
   flex-shrink: 0;
 }
-.api-guide-footer-current {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-  min-width: 0;
-}
-.api-guide-footer-eyebrow {
-  font-size: 9.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.7px;
-  font-weight: 700;
-  color: var(--muted);
-}
-.api-guide-footer-name {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.api-guide-footer-name--empty {
-  color: var(--muted);
-  font-weight: 500;
-  font-style: italic;
-}
-
 .api-guide-send-btn {
   display: inline-flex;
   align-items: center;
@@ -11792,14 +11774,9 @@ html:not(.theme-light) .api-guide-footer {
   border-top-color: rgba(255, 255, 255, 0.06);
   background: linear-gradient(0deg, rgba(255, 115, 28, 0.12) 0%, transparent 100%);
 }
-html:not(.theme-light) .api-guide-footer-name {
-  color: rgba(244, 240, 234, 0.94);
-}
-html:not(.theme-light) .api-guide-footer-eyebrow {
-  color: rgba(244, 240, 234, 0.5);
-}
-html:not(.theme-light) .api-guide-resize {
-  color: rgba(244, 240, 234, 0.32);
+html:not(.theme-light) .api-guide-footer {
+  border-top-color: rgba(255, 255, 255, 0.06);
+  background: linear-gradient(0deg, rgba(255, 95, 0, 0.08) 0%, transparent 100%);
 }
 
 /* ---- Reduced motion ------------------------------------------------- */
@@ -11813,151 +11790,456 @@ html:not(.theme-light) .api-guide-resize {
   }
 }
 /* ======================================================================
-   API Guide � Auto Next toggle + countdown ring
+   API Guide — hero panel, Done button, manual / info step styles
+   (replaces Auto Next toggle, countdown ring, and resize handle styles)
 ====================================================================== */
 
-/* ---- Footer: now hosts Auto Next + Send only ----------------------- */
-.api-guide-footer {
-  /* Override the previous flex-direction so toggle + button sit in a row */
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-}
-
-/* ---- Auto Next toggle ---------------------------------------------- */
-.api-guide-autonext {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  flex: 1;
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-  min-width: 0;
-}
-.api-guide-autonext-cb {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-.api-guide-autonext-track {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  width: 32px;
-  height: 18px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.14);
+/* ---- Hero — active step displayed prominently above the list ------- */
+.api-guide-hero {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px 14px 14px;
+  background: linear-gradient(135deg, rgba(255, 95, 0, 0.07) 0%, rgba(235, 0, 27, 0.04) 100%);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.07);
   flex-shrink: 0;
-  transition: background 220ms ease, box-shadow 220ms ease;
 }
-.api-guide-autonext-thumb {
-  position: absolute;
-  left: 2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.22);
-  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), background 220ms ease;
+.api-guide-hero--manual {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.07) 0%, rgba(109, 40, 217, 0.04) 100%);
+  border-bottom-color: rgba(124, 58, 237, 0.12);
 }
-.api-guide-autonext-cb:checked + .api-guide-autonext-track {
-  background: linear-gradient(135deg, var(--mc-orange) 0%, var(--mc-red) 100%);
-  box-shadow: 0 0 0 3px rgba(255, 95, 0, 0.16);
+.api-guide-hero--info {
+  background: linear-gradient(135deg, rgba(22, 163, 74, 0.08) 0%, rgba(21, 128, 61, 0.04) 100%);
+  border-bottom-color: rgba(22, 163, 74, 0.12);
 }
-.api-guide-autonext-cb:checked + .api-guide-autonext-track .api-guide-autonext-thumb {
-  transform: translateX(14px);
+.api-guide-hero--done {
+  background: linear-gradient(135deg, rgba(22, 163, 74, 0.08) 0%, rgba(21, 128, 61, 0.04) 100%);
+  border-bottom-color: rgba(22, 163, 74, 0.12);
 }
-.api-guide-autonext-cb:focus-visible + .api-guide-autonext-track {
-  outline: 2px solid var(--mc-orange);
-  outline-offset: 2px;
-}
-.api-guide-autonext-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink-2);
-  white-space: nowrap;
-}
-
-/* ---- Countdown ring ------------------------------------------------ */
-.api-guide-countdown {
-  display: none;          /* hidden until timer starts */
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-  cursor: pointer;        /* click to cancel */
-}
-.api-guide-countdown--active {
-  display: inline-flex;
-}
-.api-guide-countdown-svg {
-  width: 22px;
-  height: 22px;
-  transform: rotate(-90deg);
-}
-.api-guide-countdown-track {
-  fill: none;
-  stroke: rgba(15, 23, 42, 0.1);
-  stroke-width: 2.5;
-}
-.api-guide-countdown-fill {
-  fill: none;
-  stroke: var(--mc-orange);
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.12s linear;
-}
-.api-guide-countdown-num {
-  position: absolute;
-  inset: 0;
+.api-guide-hero-num {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 8.5px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--mc-orange) 0%, var(--mc-red) 100%);
+  color: #fff;
+  font-size: 17px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: var(--mc-orange);
-  line-height: 1;
-  pointer-events: none;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(255, 95, 0, 0.4), 0 0 0 5px rgba(255, 95, 0, 0.1);
+  animation: apiGuideHeroPulse 2.2s ease-in-out infinite;
 }
-/* Tooltip hint on the ring */
-.api-guide-countdown[title]:hover::after {
-  content: "Click to cancel";
-  position: absolute;
-  bottom: calc(100% + 4px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--ink);
-  color: #fff;
-  font-size: 10px;
-  padding: 3px 7px;
-  border-radius: 5px;
-  white-space: nowrap;
-  pointer-events: none;
+@keyframes apiGuideHeroPulse {
+  0%,100% { box-shadow: 0 4px 14px rgba(255,95,0,0.38), 0 0 0 5px rgba(255,95,0,0.10); }
+  50%      { box-shadow: 0 6px 20px rgba(255,95,0,0.52), 0 0 0 8px rgba(255,95,0,0.05); }
+}
+.api-guide-hero--manual .api-guide-hero-num {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  box-shadow: 0 4px 14px rgba(124,58,237,0.4), 0 0 0 5px rgba(124,58,237,0.1);
+  animation: apiGuideHeroPulseManual 2.2s ease-in-out infinite;
+}
+@keyframes apiGuideHeroPulseManual {
+  0%,100% { box-shadow: 0 4px 14px rgba(124,58,237,0.38), 0 0 0 5px rgba(124,58,237,0.10); }
+  50%      { box-shadow: 0 6px 20px rgba(124,58,237,0.52), 0 0 0 8px rgba(124,58,237,0.05); }
+}
+.api-guide-hero--info .api-guide-hero-num,
+.api-guide-hero--done .api-guide-hero-num {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  box-shadow: 0 4px 14px rgba(22,163,74,0.4), 0 0 0 5px rgba(22,163,74,0.1);
+  animation: none;
+  font-size: 20px;
+}
+.api-guide-hero-content { min-width: 0; }
+.api-guide-hero-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.25;
+  margin-bottom: 4px;
+}
+.api-guide-hero-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-2);
 }
 
-/* ---- Dark theme ----------------------------------------------------- */
-html:not(.theme-light) .api-guide-autonext-track {
-  background: rgba(255, 255, 255, 0.12);
+/* ---- Footer redesign: meta text + action buttons ------------------- */
+.api-guide-footer {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
-html:not(.theme-light) .api-guide-autonext-label {
-  color: rgba(244, 240, 234, 0.8);
+.api-guide-meta-text {
+  flex: 1;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
 }
-html:not(.theme-light) .api-guide-countdown-track {
-  stroke: rgba(255, 255, 255, 0.1);
+
+/* Done button — shown for manual steps */
+.api-guide-done-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+  letter-spacing: 0.2px;
+  box-shadow: 0 6px 14px -4px rgba(124, 58, 237, 0.5), 0 2px 6px -2px rgba(109, 40, 217, 0.35);
+  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 160ms ease, filter 160ms ease;
+}
+.api-guide-done-btn:hover {
+  transform: translate3d(0, -1px, 0);
+  box-shadow: 0 10px 22px -4px rgba(124, 58, 237, 0.58), 0 3px 8px -2px rgba(109, 40, 217, 0.4);
+  filter: brightness(1.06);
+}
+.api-guide-done-btn:active { transform: scale(0.96); }
+.api-guide-done-btn:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+
+/* ---- Manual step styling in the timeline list ---------------------- */
+.api-guide-step--manual .api-guide-step-num {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: rgba(124, 58, 237, 0.3);
+  color: #7c3aed;
+}
+.api-guide-step--manual.api-guide-step--current .api-guide-step-num {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  border-color: #7c3aed;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.16);
+  animation: apiGuideManualPulse 1.8s ease-in-out infinite;
+}
+@keyframes apiGuideManualPulse {
+  0%,100% { box-shadow: 0 0 0 4px rgba(124,58,237,0.16); }
+  50%     { box-shadow: 0 0 0 7px rgba(124,58,237,0.06); }
+}
+.api-guide-step--manual.api-guide-step--current .api-guide-step-name { color: #7c3aed; }
+
+/* ---- Info / completion step --------------------------------------- */
+.api-guide-step--info .api-guide-step-num {
+  background: rgba(22, 163, 74, 0.08);
+  border-color: rgba(22, 163, 74, 0.25);
+  color: #16a34a;
+}
+.api-guide-step--info.api-guide-step--current .api-guide-step-num {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  border-color: #16a34a;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.16);
+  animation: none;
+}
+.api-guide-step--info.api-guide-step--current .api-guide-step-name { color: #16a34a; }
+
+/* ---- Dark theme additions ----------------------------------------- */
+html:not(.theme-light) .api-guide-hero {
+  background: linear-gradient(135deg, rgba(255, 95, 0, 0.12) 0%, rgba(235, 0, 27, 0.06) 100%);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+html:not(.theme-light) .api-guide-hero--manual {
+  background: linear-gradient(135deg, rgba(124,58,237,0.14) 0%, rgba(109,40,217,0.07) 100%);
+  border-bottom-color: rgba(124,58,237,0.18);
+}
+html:not(.theme-light) .api-guide-hero--info,
+html:not(.theme-light) .api-guide-hero--done {
+  background: linear-gradient(135deg, rgba(22,163,74,0.12) 0%, rgba(21,128,61,0.06) 100%);
+  border-bottom-color: rgba(22,163,74,0.18);
+}
+html:not(.theme-light) .api-guide-hero-title { color: rgba(244,240,234,0.95); }
+html:not(.theme-light) .api-guide-hero-desc  { color: rgba(244,240,234,0.72); }
+html:not(.theme-light) .api-guide-meta-text  { color: rgba(244,240,234,0.5); }
+html:not(.theme-light) .api-guide-step--manual .api-guide-step-num {
+  background: rgba(124,58,237,0.14);
+  border-color: rgba(124,58,237,0.35);
+  color: #c4b5fd;
+}
+html:not(.theme-light) .api-guide-step--manual.api-guide-step--current .api-guide-step-name { color: #c4b5fd; }
+html:not(.theme-light) .api-guide-step--info .api-guide-step-num {
+  background: rgba(22,163,74,0.12);
+  border-color: rgba(22,163,74,0.3);
+  color: #86efac;
+}
+html:not(.theme-light) .api-guide-step--info.api-guide-step--current .api-guide-step-name { color: #86efac; }
+
+/* ---- Reduced motion ------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .api-guide-hero-num,
+  .api-guide-hero--manual .api-guide-hero-num,
+  .api-guide-step--manual.api-guide-step--current .api-guide-step-num { animation: none !important; }
+  .api-guide-done-btn { transition: none !important; }
+}
+
+/* ======================================================================
+   API Guide — compact single-step coach (.ag)
+   A distinctive, asymmetric coach card that shows ONE step at a time:
+   progress dots, a circular step badge, a short title + one-line hint,
+   and a single action button. No internal scrolling.
+====================================================================== */
+.ag {
+  position: fixed;
+  z-index: 1400;
+  width: 296px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  /* Distinctive asymmetric coach shape — three soft corners, one tucked */
+  border-radius: 24px 24px 24px 7px;
+  box-shadow:
+    0 26px 52px -18px rgba(15, 23, 42, 0.34),
+    0 10px 22px -10px rgba(15, 23, 42, 0.18);
+  color: var(--ink);
+  overflow: hidden;
+  user-select: none;
+  transform-origin: bottom right;
+}
+.ag.hidden { display: none; }
+
+/* ---- Header: drag handle + progress dots + close ------------------- */
+.ag-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  height: 42px;
+  padding: 0 12px 0 16px;
+  background: linear-gradient(110deg, var(--mc-orange) 0%, var(--mc-red) 68%, #b8001a 100%);
+  cursor: grab;
+}
+.ag-head:active { cursor: grabbing; }
+.ag--manual .ag-head {
+  background: linear-gradient(110deg, #7c3aed 0%, #6d28d9 70%, #5b21b6 100%);
+}
+.ag--complete .ag-head {
+  background: linear-gradient(110deg, #16a34a 0%, #15803d 75%, #14532d 100%);
+}
+
+.ag-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.45);
+  transition: width 220ms cubic-bezier(0.16, 1, 0.3, 1), background 220ms ease;
+}
+.ag-dot--current {
+  width: 18px;
+  background: #fff;
+}
+.ag-dot--done { background: rgba(255, 255, 255, 0.92); }
+
+.ag-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 140ms ease, transform 140ms ease;
+}
+.ag-x:hover { background: rgba(255, 255, 255, 0.32); }
+.ag-x:active { transform: scale(0.9); }
+.ag-x:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+
+/* ---- Body: circular step badge + text (centered, no scroll) -------- */
+.ag-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 22px 18px;
+}
+.ag-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-top: -26px;            /* overlap the header for a distinctive look */
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--mc-orange) 0%, var(--mc-red) 100%);
+  color: #fff;
+  font-size: 21px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  border: 3px solid rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6px 18px rgba(255, 95, 0, 0.42);
+  animation: agBadgePulse 2.2s ease-in-out infinite;
+}
+.ag--manual .ag-badge {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.42);
+}
+.ag--complete .ag-badge {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.42);
+  animation: none;
+}
+@keyframes agBadgePulse {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2px); }
+}
+
+.ag-eyebrow {
+  margin-top: 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ag-title {
+  margin: 5px 0 0;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.ag-desc {
+  margin: 7px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+/* ---- Footer: one action button + restart -------------------------- */
+.ag-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px 18px;
+}
+.ag-action {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--mc-orange) 0%, var(--mc-red) 100%);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 700;
+  font-family: inherit;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  box-shadow: 0 8px 18px -6px rgba(255, 95, 0, 0.55);
+  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 160ms ease, filter 160ms ease, opacity 160ms ease;
+}
+.ag-action .ag-action-icon { transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1); }
+.ag-action:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 12px 24px -6px rgba(255, 95, 0, 0.62);
+}
+.ag-action:hover:not(:disabled) .ag-action-icon { transform: translateX(3px); }
+.ag-action:active:not(:disabled) { transform: scale(0.97); }
+.ag-action:focus-visible { outline: 2px solid var(--mc-orange); outline-offset: 2px; }
+.ag-action:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+.ag-action--press { animation: agActionPress 280ms ease; }
+@keyframes agActionPress {
+  0% { transform: scale(1); }
+  45% { transform: scale(0.94); }
+  100% { transform: scale(1); }
+}
+.ag--manual .ag-action {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  box-shadow: 0 8px 18px -6px rgba(124, 58, 237, 0.55);
+}
+.ag--manual .ag-action:hover:not(:disabled) { box-shadow: 0 12px 24px -6px rgba(124, 58, 237, 0.62); }
+.ag-action--ghost {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  box-shadow: 0 8px 18px -6px rgba(22, 163, 74, 0.5);
+}
+.ag-action--ghost:hover:not(:disabled) { box-shadow: 0 12px 24px -6px rgba(22, 163, 74, 0.58); }
+
+.ag-restart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 11px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease, transform 140ms ease;
+}
+.ag-restart:hover {
+  color: var(--ink);
+  border-color: rgba(15, 23, 42, 0.22);
+  background: rgba(15, 23, 42, 0.04);
+}
+.ag-restart:active { transform: scale(0.92); }
+.ag-restart:focus-visible { outline: 2px solid var(--mc-orange); outline-offset: 2px; }
+
+/* ---- Open / enter animation --------------------------------------- */
+.ag--enter { animation: agEnter 300ms cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes agEnter {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.ag--dragging { transition: none !important; }
+
+/* ---- Dark theme ---------------------------------------------------- */
+html:not(.theme-light) .ag {
+  background: rgba(24, 26, 33, 0.92);
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow:
+    0 26px 54px -18px rgba(0, 0, 0, 0.66),
+    0 10px 22px -10px rgba(0, 0, 0, 0.5);
+}
+html:not(.theme-light) .ag-badge { border-color: rgba(24, 26, 33, 0.92); }
+html:not(.theme-light) .ag-title { color: rgba(244, 240, 234, 0.96); }
+html:not(.theme-light) .ag-desc  { color: rgba(244, 240, 234, 0.72); }
+html:not(.theme-light) .ag-eyebrow { color: rgba(244, 240, 234, 0.5); }
+html:not(.theme-light) .ag-restart {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(244, 240, 234, 0.6);
+}
+html:not(.theme-light) .ag-restart:hover {
+  color: rgba(244, 240, 234, 0.95);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 /* ---- Reduced motion ------------------------------------------------ */
 @media (prefers-reduced-motion: reduce) {
-  .api-guide-autonext-track,
-  .api-guide-autonext-thumb,
-  .api-guide-countdown-fill { transition: none !important; }
+  .ag-badge,
+  .ag--enter,
+  .ag-action--press { animation: none !important; }
+  .ag-action,
+  .ag-dot { transition: none !important; }
 }
+
 /* ======================================================================
    Connect / Launch banner + credentials table � dark theme
 ====================================================================== */
