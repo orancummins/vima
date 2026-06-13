@@ -340,7 +340,7 @@ def index():
             "server_mode": _server_mode_enabled(),
             "non_us_mode": _non_us_mode_enabled(),
         },
-        cache_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'js', 'app.js'))),
+        cache_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'js', 'app', 'main.js'))),
         css_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'css', 'styles.css'))),
     )
 
