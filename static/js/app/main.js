@@ -21,6 +21,11 @@ import {
 } from './features/apiSnippets.js';
 import { _isNonUsBlockedApiId, _isNonUsBlockedUseCaseById } from './core/region.js';
 import { loadUseCases, getBundlesCache, getUseCasesCache } from './core/catalog.js';
+import {
+  getCurrentApiId, setCurrentApiId, getCurrentOpId, setCurrentOpId,
+  getCurrentState, setCurrentState, currentApi, currentOp,
+  ioCache, lastOpByApi,
+} from './core/state.js';
 import { showOfinSetupModal, initOfinSetupModal } from './features/ofinSetupModal.js';
 import './features/bundles.js';
 import './features/autoProvision.js';
@@ -674,24 +679,9 @@ import './features/infoModal.js';
   });
 
   // ---------------------------------------------------------------------
-  // API state
+  // API state lives in core/state.js (currentApiId/currentOpId/currentState,
+  // ioCache, lastOpByApi, currentApi(), currentOp()) — imported above.
   // ---------------------------------------------------------------------
-  let currentApiId = null;  // null = About panel shown; set when user selects an API
-  let currentOpId = null;
-  let currentState = {};
-
-  // Cache of last request/response per (apiId, opId), plus last op per api.
-  const ioCache = {};            // ioCache[apiId][opId] = { request, response, statusCode, hint }
-  const lastOpByApi = {};        // lastOpByApi[apiId] = opId
-
-  function currentApi() {
-    return APIS.find((a) => a.id === currentApiId);
-  }
-  function currentOp() {
-    const a = currentApi();
-    if (!a) return null;
-    return a.operations.find((o) => o.id === currentOpId);
-  }
 
   // ---------------------------------------------------------------------
   // API About panel & globe
@@ -819,15 +809,15 @@ import './features/infoModal.js';
       if (_isNonUsBlockedApiId(btn.dataset.apiId)) return;
       document.querySelectorAll("[data-api-id]").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-      currentApiId = btn.dataset.apiId;
-      currentOpId = null;
+      setCurrentApiId(btn.dataset.apiId);
+      setCurrentOpId(null);
       if (window._showApiWorkbench) window._showApiWorkbench();
       renderApi();
       // Refresh the floating API Guide to reflect the newly-selected API.
       if (window.ApiGuide) ApiGuide.refresh();
       // If the Python snippets drawer is open, follow the selection so
       // it shows the snippet for the API the user just picked.
-      apisSnippetsFollowApi(currentApiId);
+      apisSnippetsFollowApi(getCurrentApiId());
     });
   });
 
@@ -1060,10 +1050,10 @@ import './features/infoModal.js';
     _nativeFetch(`/explorer/${api.id}/state`)
       .then((r) => r.json())
       .then((d) => {
-        currentState = d.state || {};
+        setCurrentState(d.state || {});
         renderStateStrip();
         // refresh param defaults if an op is open
-        if (currentOpId) renderParams();
+        if (getCurrentOpId()) renderParams();
         // Show Open Finance setup guide every time (unless suppressed)
           if (api.id === 'open_finance' && !NON_US_MODE) {
           showOfinSetupModal();
@@ -1087,7 +1077,7 @@ import './features/infoModal.js';
       strip.appendChild(w);
     }
     schema.forEach((s) => {
-      const v = currentState[s.key];
+      const v = getCurrentState()[s.key];
       const pill = document.createElement("div");
       pill.className = "state-pill" + (v ? "" : " empty");
       pill.innerHTML = `<span class="k">${s.label}:</span><span class="v">${v || "—"}</span>`;
@@ -1111,8 +1101,8 @@ import './features/infoModal.js';
   // Select operation
   // ---------------------------------------------------------------------
   function selectOp(opId) {
-    currentOpId = opId;
-    lastOpByApi[currentApiId] = opId;
+    setCurrentOpId(opId);
+    lastOpByApi[getCurrentApiId()] = opId;
     document.querySelectorAll(".op-btn").forEach((b) => {
       b.classList.toggle("active", b.dataset.opId === opId);
     });
@@ -1130,11 +1120,11 @@ import './features/infoModal.js';
     if (window.ApiGuide) ApiGuide.syncCurrentOp();
     // If the View Code panel is open for this API, refresh it so the
     // snippet tracks whichever operation the user has chosen.
-    apisSnippetsRefreshOp(currentApiId);
+    apisSnippetsRefreshOp(getCurrentApiId());
   }
 
   function restoreIo() {
-    const cached = (ioCache[currentApiId] || {})[currentOpId];
+    const cached = (ioCache[getCurrentApiId()] || {})[getCurrentOpId()];
     if (cached) {
       // Restore header-visibility state for this cached result
       if (cached.headersVisible) {
@@ -1320,7 +1310,7 @@ import './features/infoModal.js';
       let value = "";
       if (p.source && p.source.startsWith("state:")) {
         const k = p.source.slice("state:".length);
-        value = currentState[k] || "";
+        value = getCurrentState()[k] || "";
       }
       if (!value && p.default != null) value = resolveDefault(p.default);
       // Cross-API prefill: auto-fill card_reference / card_ref from the most
@@ -1345,7 +1335,7 @@ import './features/infoModal.js';
         });
       } else if (p.type === "account_select") {
         input = document.createElement("select");
-        const accounts = currentState.accounts || [];
+        const accounts = getCurrentState().accounts || [];
         if (!accounts.length) {
           const opt = document.createElement("option");
           opt.value = "";
@@ -1368,7 +1358,7 @@ import './features/infoModal.js';
       } else if (p.type === "provider_select") {
         // Populated by Open Finance EU → Get Providers. Items: {id, name, country}.
         input = document.createElement("select");
-        const providers = currentState.providers || [];
+        const providers = getCurrentState().providers || [];
         if (!providers.length) {
           const opt = document.createElement("option");
           opt.value = "";
@@ -1394,7 +1384,7 @@ import './features/infoModal.js';
         input.type = "text";
         input.value = value;
         input.placeholder = "https://...";
-        const urls = currentState.redirect_urls || [];
+        const urls = getCurrentState().redirect_urls || [];
         if (urls.length) {
           const listId = `redirect-urls-${p.name}-${Math.random().toString(36).slice(2, 8)}`;
           const dl = document.createElement("datalist");
@@ -1435,7 +1425,7 @@ import './features/infoModal.js';
 
   function previewRequest() {
     // Only overwrite request panel if we don't have a real cached response for this op.
-    const cached = (ioCache[currentApiId] || {})[currentOpId];
+    const cached = (ioCache[getCurrentApiId()] || {})[getCurrentOpId()];
     if (cached) return;
     const op = currentOp();
     if (!op) return;
@@ -1574,7 +1564,7 @@ import './features/infoModal.js';
       };
       // Update state
       if (data.state) {
-        currentState = data.state;
+        setCurrentState(data.state);
         renderStateStrip();
       }
       // Open Finance: show setup guide if refresh_accounts returns no accounts
@@ -4828,13 +4818,13 @@ import './features/infoModal.js';
   });
   // Let the snippets drawer read the live workbench selection.
   initApisSnippets({
-    getCurrentApiId: () => currentApiId,
-    getCurrentOpId: () => currentOpId,
+    getCurrentApiId: () => getCurrentApiId(),
+    getCurrentOpId: () => getCurrentOpId(),
   });
   // Let the Open Finance setup modal jump into the workbench.
   initOfinSetupModal({ selectOp });
 
-  if (currentApiId) renderApi();
+  if (getCurrentApiId()) renderApi();
   if (USE_CASES.length) {
     _startPolling(); // begin polling for badge updates immediately
   }
@@ -4978,8 +4968,8 @@ import './features/infoModal.js';
             url += '?type=usecases&item=' + encodeURIComponent(uc.name);
             if (uc.directory) url += '&cwd=' + encodeURIComponent(uc.directory);
           }
-        } else if (activeTab === 'apis' && currentApiId) {
-          const api = APIS.find(a => a.id === currentApiId);
+        } else if (activeTab === 'apis' && getCurrentApiId()) {
+          const api = APIS.find(a => a.id === getCurrentApiId());
           if (api) {
             url += '?type=apis&item=' + encodeURIComponent(api.name);
             if (api.directory) url += '&cwd=' + encodeURIComponent(api.directory);
