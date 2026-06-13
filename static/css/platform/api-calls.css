@@ -1,0 +1,931 @@
+/* ================================================================
+   API Calls Panel — floating toggle (FAB) + hovering drawer
+   ================================================================ */
+
+/* Floating action button */
+.api-calls-fab {
+  position: fixed; bottom: 28px; right: 28px; z-index: 8600;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px 10px 13px;
+  background: var(--ink); color: white;
+  border: none; border-radius: 24px;
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.api-calls-fab svg { width: 15px; height: 15px; flex-shrink: 0; }
+.api-calls-fab:hover { background: #2c2c2c; box-shadow: 0 6px 20px rgba(0,0,0,0.28); }
+.api-calls-fab--active { background: var(--mc-orange); }
+.api-calls-fab--active:hover { background: #e0540a; }
+.api-calls-fab-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--mc-red); color: white;
+  border-radius: 12px; font-size: 10px; font-weight: 700;
+  min-width: 18px; height: 18px; padding: 0 5px;
+}
+
+/* Hovering drawer */
+.api-calls-drawer {
+  position: fixed; top: 68px; right: 0;
+  width: 480px; max-width: calc(100vw - 32px);
+  height: calc(100vh - 68px);
+  background: white; border-left: 1px solid var(--line);
+  box-shadow: -6px 0 32px rgba(0,0,0,0.1);
+  z-index: 8550;
+  display: flex; flex-direction: column;
+  font-size: 13px;
+}
+.api-calls-drawer-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--line);
+  background: var(--bg); flex-shrink: 0;
+}
+.api-calls-drawer-title {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 700; font-size: 13px;
+}
+.api-calls-count {
+  background: var(--line); color: var(--muted);
+  border-radius: 10px; padding: 1px 8px;
+  font-size: 11px; font-weight: 600;
+}
+.api-calls-drawer-actions { display: flex; align-items: center; gap: 6px; }
+.api-calls-action-btn {
+  background: none; border: 1px solid var(--line); border-radius: 6px;
+  padding: 4px 10px; font-size: 12px; cursor: pointer;
+  color: var(--muted); font-family: inherit;
+}
+.api-calls-action-btn:hover { background: var(--line); color: var(--ink); }
+.api-calls-close {
+  background: none; border: none; font-size: 20px; line-height: 1;
+  cursor: pointer; color: var(--muted); padding: 0 4px;
+}
+.api-calls-close:hover { color: var(--ink); }
+.api-calls-drawer-body { overflow-y: auto; flex: 1; }
+.api-calls-empty {
+  text-align: center; color: var(--muted);
+  padding: 40px 20px; font-size: 13px; margin: 0;
+}
+
+/* ----------------------------------------------------------------
+   APIs tab — Python snippets FAB + drawer (sibling of api-calls).
+   The FAB sits to the left of the API Calls FAB so they don't
+   collide when both happen to be visible. The drawer reuses the
+   api-calls-drawer chrome but swaps the body for a code-viewer.
+   ---------------------------------------------------------------- */
+.apis-snippets-fab {
+  /* Same position as the API Calls FAB — they live on different
+     tabs and are never visible together, so they can occupy the
+     same bottom-right slot. */
+  right: 28px;
+  background: #1a1a2e;
+}
+.apis-snippets-fab:hover { background: #2a2a3e; }
+
+/* Modal sizing — wide and tall so the entire snippet is visible
+   without scrolling on most displays. */
+.apis-snippets-backdrop { z-index: 9100; }
+.apis-snippets-modal {
+  width: min(92vw, 1100px);
+  height: min(92vh, 900px);
+  background: #0f1014;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.apis-snippets-modal .tc-modal-header {
+  background: #16171c;
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+.apis-snippets-modal-title { color: rgba(255, 255, 255, 0.9); }
+.apis-snippets-modal-chip {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  background: rgba(255, 95, 0, 0.14);
+  color: #ffb878;
+  vertical-align: 1px;
+}
+.apis-snippets-modal-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #0f1014;
+  overflow: hidden;
+}
+.apis-snippets-modal .api-calls-empty { color: rgba(255, 255, 255, 0.45); padding: 24px; }
+
+/* Snippet section inside the modal — copy button stays pinned at the
+   top of the scroll area so it's always within reach. */
+.apis-snippets-modal .apis-snippets-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px 16px;
+}
+.apis-snippets-modal .apis-snippets-section-meta {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #0f1014;
+  padding-bottom: 8px;
+  margin-bottom: 0;
+}
+.apis-snippets-modal .apis-snippets-code {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.apis-snippets-body { padding: 0; background: #0f1014; }
+.apis-snippets-section { padding: 14px 16px; }
+.apis-snippets-section-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.apis-snippets-section-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  font-weight: 700;
+}
+.apis-snippets-copy {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.75);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.apis-snippets-copy:hover {
+  background: rgba(255,95,0,0.10);
+  border-color: rgba(255,95,0,0.38);
+  color: #ffd1a8;
+}
+.apis-snippets-copy--copied {
+  background: rgba(80,200,120,0.14);
+  border-color: rgba(80,200,120,0.4);
+  color: #9be3b1;
+}
+.apis-snippets-code {
+  margin: 0;
+  padding: 14px 16px;
+  background: #0a0b0e;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #d8d9df;
+  overflow-x: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  tab-size: 4;
+}
+
+/* Dark, near-invisible scrollbar that blends into the snippet panel. */
+.apis-snippets-modal .apis-snippets-code,
+.apis-snippets-modal .apis-snippets-body {
+  scrollbar-width: thin;
+  scrollbar-color: #1a1b20 #0a0b0e;
+}
+.apis-snippets-modal .apis-snippets-code::-webkit-scrollbar,
+.apis-snippets-modal .apis-snippets-body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-track,
+.apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-track {
+  background: #0a0b0e;
+}
+.apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-thumb,
+.apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-thumb {
+  background: #1a1b20;
+  border-radius: 6px;
+  border: 2px solid #0a0b0e;
+}
+.apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-thumb:hover,
+.apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-thumb:hover {
+  background: #2a2b32;
+}
+.apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-corner,
+.apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-corner {
+  background: #0a0b0e;
+}
+.apis-snippets-code .apis-snippets-tok-kw      { color: #c792ea; }
+.apis-snippets-code .apis-snippets-tok-str     { color: #9be3b1; }
+.apis-snippets-code .apis-snippets-tok-com     { color: #5a6079; font-style: italic; }
+.apis-snippets-code .apis-snippets-tok-num     { color: #ffb878; }
+.apis-snippets-code .apis-snippets-tok-fn      { color: #82aaff; }
+
+html.theme-light .apis-snippets-fab {
+  background: #ffffff;
+  color: #141414;
+  border: 1px solid rgba(20, 20, 20, 0.10);
+  box-shadow: 0 16px 40px rgba(20, 20, 20, 0.12);
+}
+
+html.theme-light .apis-snippets-fab:hover {
+  background: #fff5ec;
+  color: #141414;
+}
+
+html.theme-light .apis-snippets-backdrop {
+  background: rgba(250, 247, 242, 0.76);
+}
+
+html.theme-light .apis-snippets-modal {
+  background: #ffffff;
+  border-color: rgba(20, 20, 20, 0.10);
+  box-shadow: 0 24px 80px rgba(20, 20, 20, 0.14);
+}
+
+html.theme-light .apis-snippets-modal .tc-modal-header {
+  background: #f8f6f2;
+  border-bottom-color: rgba(20, 20, 20, 0.08);
+}
+
+html.theme-light .apis-snippets-modal-title {
+  color: #141414;
+}
+
+html.theme-light .apis-snippets-modal-chip {
+  background: rgba(255, 95, 0, 0.10);
+  color: #b74c00;
+}
+
+html.theme-light .apis-snippets-modal-body,
+html.theme-light .apis-snippets-body,
+html.theme-light .apis-snippets-modal .apis-snippets-section-meta {
+  background: #ffffff;
+}
+
+html.theme-light .apis-snippets-modal .api-calls-empty,
+html.theme-light .apis-snippets-section-label {
+  color: #6b6b6b;
+}
+
+html.theme-light .apis-snippets-copy {
+  background: #ffffff;
+  border-color: rgba(20, 20, 20, 0.12);
+  color: #2a2a2a;
+}
+
+html.theme-light .apis-snippets-copy:hover {
+  background: #fff2e8;
+  border-color: rgba(255, 95, 0, 0.28);
+  color: #8f3d00;
+}
+
+html.theme-light .apis-snippets-copy--copied {
+  background: rgba(16, 185, 129, 0.10);
+  border-color: rgba(16, 185, 129, 0.28);
+  color: #0f7050;
+}
+
+html.theme-light .apis-snippets-code {
+  background: #fbfaf8;
+  border-color: rgba(20, 20, 20, 0.08);
+  color: #1f2937;
+}
+
+html.theme-light .apis-snippets-modal .apis-snippets-code,
+html.theme-light .apis-snippets-modal .apis-snippets-body {
+  scrollbar-color: #cfc6bb #f3efea;
+}
+
+html.theme-light .apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-track,
+html.theme-light .apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-track,
+html.theme-light .apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-corner,
+html.theme-light .apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-corner {
+  background: #f3efea;
+}
+
+html.theme-light .apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-thumb,
+html.theme-light .apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-thumb {
+  background: #cfc6bb;
+  border-color: #f3efea;
+}
+
+html.theme-light .apis-snippets-modal .apis-snippets-code::-webkit-scrollbar-thumb:hover,
+html.theme-light .apis-snippets-modal .apis-snippets-body::-webkit-scrollbar-thumb:hover {
+  background: #b8aea2;
+}
+
+html.theme-light .apis-snippets-code .apis-snippets-tok-kw      { color: #7c3aed; }
+html.theme-light .apis-snippets-code .apis-snippets-tok-str     { color: #047857; }
+html.theme-light .apis-snippets-code .apis-snippets-tok-com     { color: #6b7280; }
+html.theme-light .apis-snippets-code .apis-snippets-tok-num     { color: #c2410c; }
+html.theme-light .apis-snippets-code .apis-snippets-tok-fn      { color: #1d4ed8; }
+
+/* Editable snippet body: visible caret, subtle focus ring, no native
+   browser outline gap. The snippet pane is the source-of-truth that
+   gets sent back to /run when the user clicks the Run button. */
+.apis-snippets-code > code[contenteditable] {
+  outline: none;
+  caret-color: #82aaff;
+  cursor: text;
+  display: block;
+  min-height: 1.4em;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.apis-snippets-code > code[contenteditable]:focus {
+  box-shadow: inset 0 0 0 1px rgba(130, 170, 255, 0.35);
+  border-radius: 4px;
+}
+/* Use the brand orange for text selection inside the editable snippet
+   instead of the browser default blue. */
+.apis-snippets-code > code[contenteditable] ::selection,
+.apis-snippets-code > code[contenteditable]::selection {
+  background: rgba(255, 140, 0, 0.45);
+  color: #fff;
+}
+
+/* Section action cluster (Copy + Commands) */
+.apis-snippets-section-actions { display: flex; gap: 6px; align-items: center; }
+.apis-snippets-setup {
+  background: rgba(130, 170, 255, 0.10);
+  border-color: rgba(130, 170, 255, 0.32);
+  color: #a9c4ff;
+}
+.apis-snippets-setup:hover {
+  background: rgba(130, 170, 255, 0.18);
+  border-color: rgba(130, 170, 255, 0.55);
+  color: #d6e3ff;
+}
+/* Primary "Run in terminal" action \u2014 green to read as a Go button. */
+.apis-snippets-run {
+  background: rgba(80, 200, 120, 0.18);
+  border-color: rgba(80, 200, 120, 0.5);
+  color: #b8f0ce;
+  font-weight: 700;
+}
+.apis-snippets-run:hover {
+  background: rgba(80, 200, 120, 0.28);
+  border-color: rgba(80, 200, 120, 0.7);
+  color: #e0ffec;
+}
+.apis-snippets-run:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.apis-snippets-run--err {
+  background: rgba(255, 95, 0, 0.18);
+  border-color: rgba(255, 95, 0, 0.55);
+  color: #ffd1a8;
+}
+/* "Code only" secondary action \u2014 ghost-button look so the primary
+   "Copy run command" stays visually dominant. */
+.apis-snippets-codeonly {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.apis-snippets-codeonly:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Setup-commands sub-modal */
+.apis-setup-backdrop { z-index: 9200; }
+.apis-setup-modal {
+  width: min(80vw, 780px);
+  height: min(72vh, 600px);
+  background: #0f1014;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e6e6ea;
+}
+.apis-setup-modal .tc-modal-header {
+  background: #16171c;
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+.apis-setup-modal .tc-modal-title { color: rgba(255, 255, 255, 0.9); }
+.apis-setup-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px 16px;
+  gap: 10px;
+}
+.apis-setup-tabs { display: flex; gap: 6px; }
+.apis-setup-tab {
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 5px;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.apis-setup-tab:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.apis-setup-tab--active {
+  background: rgba(130, 170, 255, 0.18);
+  border-color: rgba(130, 170, 255, 0.5);
+  color: #d6e3ff;
+}
+.apis-setup-warning {
+  font-size: 11.5px;
+  color: #ffb878;
+  background: rgba(255, 184, 120, 0.08);
+  border: 1px solid rgba(255, 184, 120, 0.28);
+  border-radius: 5px;
+  padding: 7px 10px;
+}
+.apis-setup-code {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin: 0;
+}
+.apis-setup-actions { display: flex; justify-content: flex-end; }
+
+/* Log entries */
+.api-calls-entry { border-bottom: 1px solid var(--line); }
+.api-calls-entry:last-child { border-bottom: none; }
+.api-calls-entry-head {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 16px; cursor: pointer; user-select: none;
+}
+.api-calls-entry-head:hover { background: var(--bg); }
+.api-calls-method {
+  font-size: 10px; font-weight: 700; font-family: var(--mono);
+  padding: 2px 6px; border-radius: 4px; flex-shrink: 0; text-transform: uppercase;
+}
+.api-calls-method--get  { background: #dbeafe; color: #1d4ed8; }
+.api-calls-method--post { background: #dcfce7; color: #15803d; }
+.api-calls-url {
+  flex: 1; font-family: var(--mono); font-size: 11px; color: var(--ink-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.api-calls-uc { color: var(--mc-orange); font-weight: 600; }
+.api-calls-status {
+  font-size: 11px; font-weight: 600; font-family: var(--mono);
+  flex-shrink: 0; padding: 2px 7px; border-radius: 4px;
+}
+.api-calls-status--ok      { background: #d1fae5; color: #065f46; }
+.api-calls-status--bad     { background: #fee2e2; color: #991b1b; }
+.api-calls-status--err     { background: #fee2e2; color: #991b1b; }
+.api-calls-status--pending { background: #f3f4f6; color: #6b7280; }
+.api-calls-time { font-size: 10px; color: var(--muted); font-family: var(--mono); flex-shrink: 0; }
+.api-calls-chevron { font-size: 11px; color: var(--muted); flex-shrink: 0; transition: transform 0.15s; }
+.api-calls-entry--open .api-calls-chevron { transform: rotate(180deg); }
+
+.api-calls-entry-body {
+  display: none; padding: 0 16px 14px;
+  border-top: 1px solid var(--line); background: #fafafa;
+}
+.api-calls-entry--open .api-calls-entry-body { display: block; }
+.api-calls-section { margin-top: 10px; }
+.api-calls-section-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px;
+  color: var(--muted); font-weight: 700; margin-bottom: 5px;
+}
+.api-calls-pre {
+  background: #1e2030; color: #cdd6f4;
+  border-radius: 6px; padding: 10px 12px;
+  font-family: var(--mono); font-size: 11px;
+  overflow: auto; max-height: 220px;
+  margin: 0; white-space: pre-wrap; word-break: break-all;
+}
+.api-calls-pending { color: var(--muted); font-style: italic; font-size: 12px; margin: 4px 0 0; }
+.api-calls-copy-row { display: flex; justify-content: flex-end; margin-top: 10px; }
+.api-calls-copy-btn {
+  background: none; border: 1px solid var(--line); border-radius: 5px;
+  padding: 3px 10px; font-size: 11px; cursor: pointer;
+  color: var(--muted); font-family: inherit;
+}
+.api-calls-copy-btn:hover { background: var(--line); color: var(--ink); }
+
+html:not(.theme-light) .api-calls-fab {
+  background: #17191f;
+  color: rgba(255, 247, 238, 0.92);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+html:not(.theme-light) .api-calls-fab:hover {
+  background: #20242d;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+html:not(.theme-light) .api-calls-fab--active,
+html:not(.theme-light) .api-calls-fab--active:hover {
+  background: var(--mc-orange);
+}
+html:not(.theme-light) .api-calls-fab-badge {
+  background: rgba(255, 98, 74, 0.95);
+  color: #fff7f0;
+}
+html:not(.theme-light) .api-calls-drawer {
+  background: #0f1319;
+  border-left-color: rgba(255, 255, 255, 0.08);
+  box-shadow: -18px 0 48px rgba(0, 0, 0, 0.5);
+  color: rgba(244, 240, 234, 0.9);
+}
+html:not(.theme-light) .api-calls-drawer-header {
+  background: linear-gradient(180deg, rgba(255, 115, 28, 0.12) 0%, rgba(255, 115, 28, 0.02) 100%);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+html:not(.theme-light) .api-calls-drawer-title,
+html:not(.theme-light) .api-calls-url {
+  color: rgba(244, 240, 234, 0.92);
+}
+html:not(.theme-light) .api-calls-count {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(244, 240, 234, 0.7);
+}
+html:not(.theme-light) .api-calls-action-btn,
+html:not(.theme-light) .api-calls-copy-btn {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(244, 240, 234, 0.72);
+}
+html:not(.theme-light) .api-calls-action-btn:hover,
+html:not(.theme-light) .api-calls-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 247, 240, 0.95);
+}
+html:not(.theme-light) .api-calls-close,
+html:not(.theme-light) .api-calls-empty,
+html:not(.theme-light) .api-calls-time,
+html:not(.theme-light) .api-calls-chevron,
+html:not(.theme-light) .api-calls-section-label,
+html:not(.theme-light) .api-calls-pending {
+  color: rgba(214, 220, 229, 0.62);
+}
+html:not(.theme-light) .api-calls-close:hover {
+  color: rgba(255, 247, 240, 0.94);
+}
+html:not(.theme-light) .api-calls-entry {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+html:not(.theme-light) .api-calls-entry-head:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+html:not(.theme-light) .api-calls-entry-body {
+  border-top-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+}
+html:not(.theme-light) .api-calls-method--get {
+  background: rgba(96, 165, 250, 0.18);
+  color: #9ec7ff;
+}
+html:not(.theme-light) .api-calls-method--post {
+  background: rgba(74, 222, 128, 0.18);
+  color: #9be8b2;
+}
+html:not(.theme-light) .api-calls-status--ok {
+  background: rgba(16, 185, 129, 0.18);
+  color: #8de3bd;
+}
+html:not(.theme-light) .api-calls-status--bad,
+html:not(.theme-light) .api-calls-status--err {
+  background: rgba(248, 113, 113, 0.18);
+  color: #ffb4b4;
+}
+html:not(.theme-light) .api-calls-status--pending {
+  background: rgba(148, 163, 184, 0.18);
+  color: #cbd5e1;
+}
+html:not(.theme-light) .api-calls-pre {
+  background: #090d12;
+  color: #dbe5f2;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+html:not(.theme-light) #panel-usecases,
+html:not(.theme-light) #panel-usecases #uc-content-section,
+html:not(.theme-light) #panel-usecases #uc-body {
+  color: rgba(239, 234, 227, 0.9);
+}
+html:not(.theme-light) #panel-usecases .content,
+html:not(.theme-light) #panel-usecases #uc-content-section,
+html:not(.theme-light) #panel-usecases #uc-content-section .content-sticky,
+html:not(.theme-light) #panel-usecases #uc-content-section .usecase-body {
+  background: #0a0a0a;
+}
+html:not(.theme-light) #panel-usecases .uc-header,
+html:not(.theme-light) #panel-usecases .uc-sidebar-apis {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+html:not(.theme-light) #panel-usecases .uc-popout-btn,
+html:not(.theme-light) #panel-usecases .sonic-webview-refresh {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.09);
+  color: rgba(239, 234, 227, 0.78);
+}
+html:not(.theme-light) #panel-usecases .uc-popout-btn:hover,
+html:not(.theme-light) #panel-usecases .sonic-webview-refresh:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 140, 74, 0.4);
+  color: #ffd3bc;
+}
+html:not(.theme-light) .uc-fullscreen-overlay,
+html:not(.theme-light) .uc-fullscreen-body {
+  background: #0a0a0a;
+  color: rgba(239, 234, 227, 0.9);
+}
+html:not(.theme-light) .uc-fullscreen-topbar {
+  background: #111111;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+html:not(.theme-light) .uc-fullscreen-title {
+  color: rgba(239, 234, 227, 0.94);
+}
+html:not(.theme-light) .uc-fullscreen-reduce-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.09);
+  color: rgba(239, 234, 227, 0.78);
+}
+html:not(.theme-light) .uc-fullscreen-reduce-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 140, 74, 0.4);
+  color: #ffd3bc;
+}
+html:not(.theme-light) #panel-usecases .uc-sidebar-api-badge.unconfigured {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(239, 234, 227, 0.7);
+}
+html:not(.theme-light) #panel-usecases .uc-sidebar-api-badge.configured {
+  background: rgba(16, 185, 129, 0.18);
+  color: #8de3bd;
+}
+
+html:not(.theme-light) #panel-usecases .enrich-row,
+html:not(.theme-light) #panel-usecases .enrich-error-state,
+html:not(.theme-light) #panel-usecases .psi-controlbar,
+html:not(.theme-light) #panel-usecases .psi-hero,
+html:not(.theme-light) #panel-usecases .psi-gauge-card,
+html:not(.theme-light) #panel-usecases .psi-details-card,
+html:not(.theme-light) #panel-usecases .psi-timeline,
+html:not(.theme-light) #panel-usecases .psi-factors,
+html:not(.theme-light) #panel-usecases .bin-db-panel,
+html:not(.theme-light) #panel-usecases .bin-cap-chip,
+html:not(.theme-light) #panel-usecases .bin-chip,
+html:not(.theme-light) #panel-usecases .clarity-form-card,
+html:not(.theme-light) #panel-usecases .clarity-hero,
+html:not(.theme-light) #panel-usecases .clarity-raw-card,
+html:not(.theme-light) #panel-usecases .clarity-merchant-card,
+html:not(.theme-light) #panel-usecases .clarity-details,
+html:not(.theme-light) #panel-usecases .clarity-media-card,
+html:not(.theme-light) #panel-usecases .es-form-card,
+html:not(.theme-light) #panel-usecases .es-summary-strip,
+html:not(.theme-light) #panel-usecases .es-offer-card,
+html:not(.theme-light) #panel-usecases .es-hero,
+html:not(.theme-light) #panel-usecases .sonic-webview-toolbar {
+  background: #111111;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+}
+html:not(.theme-light) #panel-usecases .enrich-row--raw,
+html:not(.theme-light) #panel-usecases .clarity-merchant-card--empty,
+html:not(.theme-light) #panel-usecases .clarity-map-box,
+html:not(.theme-light) #panel-usecases .clarity-industry-logo-box,
+html:not(.theme-light) #panel-usecases .es-offer-logo,
+html:not(.theme-light) #panel-usecases .psi-day:hover,
+html:not(.theme-light) #panel-usecases .bin-db-pagination,
+html:not(.theme-light) #panel-usecases .bin-db-table thead th {
+  background: rgba(255, 255, 255, 0.04);
+}
+html:not(.theme-light) #panel-usecases .enrich-row--done {
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+html:not(.theme-light) #panel-usecases .enrich-row-raw-label,
+html:not(.theme-light) #panel-usecases .enrich-error-detail,
+html:not(.theme-light) #panel-usecases .psi-amount-dollar,
+html:not(.theme-light) #panel-usecases .clarity-empty-icon,
+html:not(.theme-light) #panel-usecases .es-summary-item code,
+html:not(.theme-light) #panel-usecases .es-hero-chip,
+html:not(.theme-light) #panel-usecases .bin-db-expand-body {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+html:not(.theme-light) #panel-usecases .psi-field input,
+html:not(.theme-light) #panel-usecases .psi-field select,
+html:not(.theme-light) #panel-usecases .psi-amount-wrap,
+html:not(.theme-light) #panel-usecases .bin-field select,
+html:not(.theme-light) #panel-usecases .bin-db-search-input,
+html:not(.theme-light) #panel-usecases .clarity-field select,
+html:not(.theme-light) #panel-usecases .es-field input {
+  background: #161616;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(244, 240, 234, 0.92);
+}
+html:not(.theme-light) #panel-usecases .psi-field input::placeholder,
+html:not(.theme-light) #panel-usecases .bin-db-search-input::placeholder,
+html:not(.theme-light) #panel-usecases .es-field input::placeholder {
+  color: rgba(214, 220, 229, 0.4);
+}
+html:not(.theme-light) #panel-usecases .psi-field input:focus,
+html:not(.theme-light) #panel-usecases .psi-field select:focus,
+html:not(.theme-light) #panel-usecases .psi-amount-wrap:focus-within,
+html:not(.theme-light) #panel-usecases .bin-db-search-input:focus,
+html:not(.theme-light) #panel-usecases .clarity-field select:focus,
+html:not(.theme-light) #panel-usecases .es-field input:focus {
+  background: #1c1c1c;
+  border-color: rgba(255, 140, 74, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 115, 28, 0.18);
+}
+html:not(.theme-light) #panel-usecases .enrich-header-text h2,
+html:not(.theme-light) #panel-usecases .enrich-row-name,
+html:not(.theme-light) #panel-usecases .enrich-stat-val,
+html:not(.theme-light) #panel-usecases .psi-hero h3,
+html:not(.theme-light) #panel-usecases .psi-verdict-title,
+html:not(.theme-light) #panel-usecases .psi-detail-value,
+html:not(.theme-light) #panel-usecases .psi-section-title,
+html:not(.theme-light) #panel-usecases .psi-day-conf,
+html:not(.theme-light) #panel-usecases .bin-db-panel-title,
+html:not(.theme-light) #panel-usecases .bin-db-cell,
+html:not(.theme-light) #panel-usecases .bin-callout-value,
+html:not(.theme-light) #panel-usecases .bin-cap-value,
+html:not(.theme-light) #panel-usecases .bin-chip-value,
+html:not(.theme-light) #panel-usecases .clarity-form-title,
+html:not(.theme-light) #panel-usecases .clarity-hero h3,
+html:not(.theme-light) #panel-usecases .clarity-raw-name,
+html:not(.theme-light) #panel-usecases .clarity-empty-title,
+html:not(.theme-light) #panel-usecases .clarity-merchant-name,
+html:not(.theme-light) #panel-usecases .clarity-details-val,
+html:not(.theme-light) #panel-usecases .es-form-title,
+html:not(.theme-light) #panel-usecases .es-summary-item span,
+html:not(.theme-light) #panel-usecases .es-offer-merchant,
+html:not(.theme-light) #panel-usecases .es-offer-title {
+  color: rgba(244, 240, 234, 0.94);
+}
+html:not(.theme-light) #panel-usecases .enrich-header-text p,
+html:not(.theme-light) #panel-usecases .enrich-pipeline-legend,
+html:not(.theme-light) #panel-usecases .enrich-row-meta,
+html:not(.theme-light) #panel-usecases .enrich-confidence-label,
+html:not(.theme-light) #panel-usecases .enrich-stat-lbl,
+html:not(.theme-light) #panel-usecases .psi-hint,
+html:not(.theme-light) #panel-usecases .psi-hero p,
+html:not(.theme-light) #panel-usecases .psi-card-sub,
+html:not(.theme-light) #panel-usecases .psi-card-desc,
+html:not(.theme-light) #panel-usecases .psi-detail-label,
+html:not(.theme-light) #panel-usecases .psi-day-date,
+html:not(.theme-light) #panel-usecases .psi-legend-best,
+html:not(.theme-light) #panel-usecases .bin-field label,
+html:not(.theme-light) #panel-usecases .bin-db-detail-label,
+html:not(.theme-light) #panel-usecases .bin-callout-label,
+html:not(.theme-light) #panel-usecases .bin-cap-label,
+html:not(.theme-light) #panel-usecases .bin-chip-label,
+html:not(.theme-light) #panel-usecases .bin-empty-hint,
+html:not(.theme-light) #panel-usecases .clarity-form-sub,
+html:not(.theme-light) #panel-usecases .clarity-field label,
+html:not(.theme-light) #panel-usecases .clarity-hero p,
+html:not(.theme-light) #panel-usecases .clarity-details-title,
+html:not(.theme-light) #panel-usecases .clarity-details-key,
+html:not(.theme-light) #panel-usecases .clarity-media-label,
+html:not(.theme-light) #panel-usecases .clarity-merchant-addr,
+html:not(.theme-light) #panel-usecases .es-form-sub,
+html:not(.theme-light) #panel-usecases .es-field label,
+html:not(.theme-light) #panel-usecases .es-offer-cat,
+html:not(.theme-light) #panel-usecases .es-offer-desc,
+html:not(.theme-light) #panel-usecases .es-offer-dates,
+html:not(.theme-light) #panel-usecases .es-hero p,
+html:not(.theme-light) #panel-usecases .sonic-webview-label {
+  color: rgba(214, 220, 229, 0.68);
+}
+html:not(.theme-light) #panel-usecases .enrich-raw-big,
+html:not(.theme-light) #panel-usecases .enrich-raw-text,
+html:not(.theme-light) #panel-usecases .clarity-raw-sub,
+html:not(.theme-light) #panel-usecases .clarity-raw-tag,
+html:not(.theme-light) #panel-usecases .bin-db-badge,
+html:not(.theme-light) #panel-usecases .bin-db-pg-info,
+html:not(.theme-light) #panel-usecases .bin-db-badge-disk,
+html:not(.theme-light) #panel-usecases .bin-db-search-icon,
+html:not(.theme-light) #panel-usecases .bin-db-search-clear,
+html:not(.theme-light) #panel-usecases .psi-verdict-sub,
+html:not(.theme-light) #panel-usecases .psi-verdict-rec-label,
+html:not(.theme-light) #panel-usecases .psi-section-sub {
+  color: rgba(201, 192, 181, 0.66);
+}
+html:not(.theme-light) #panel-usecases .bin-db-csv-btn,
+html:not(.theme-light) #panel-usecases .bin-db-pg-btn,
+html:not(.theme-light) #panel-usecases .enrich-btn-reset,
+html:not(.theme-light) #panel-usecases .enrich-btn-row:disabled,
+html:not(.theme-light) #panel-usecases .es-btn--redeem {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(239, 234, 227, 0.78);
+}
+html:not(.theme-light) #panel-usecases .bin-db-csv-btn:hover,
+html:not(.theme-light) #panel-usecases .bin-db-pg-btn:hover:not(:disabled):not(.bin-db-pg-btn--active),
+html:not(.theme-light) #panel-usecases .es-btn--redeem:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+html:not(.theme-light) #panel-usecases .bin-db-row:hover td {
+  background: rgba(255, 140, 74, 0.08);
+}
+html:not(.theme-light) #panel-usecases .bin-db-row--open td,
+html:not(.theme-light) #panel-usecases .psi-day--selected {
+  background: rgba(255, 115, 28, 0.12) !important;
+}
+html:not(.theme-light) #panel-usecases .clarity-hero-icon,
+html:not(.theme-light) #panel-usecases .es-hero-icon {
+  background: linear-gradient(135deg, rgba(255, 140, 74, 0.18) 0%, rgba(255, 140, 74, 0.08) 100%);
+}
+html:not(.theme-light) #panel-usecases .clarity-chip--cat,
+html:not(.theme-light) #panel-usecases .psi-hero-chip {
+  background: rgba(99, 102, 241, 0.16);
+  color: #c7d2fe;
+  border-color: rgba(129, 140, 248, 0.25);
+}
+html:not(.theme-light) #panel-usecases .clarity-chip--ok,
+html:not(.theme-light) #panel-usecases .es-offer-discount,
+html:not(.theme-light) #panel-usecases .es-redemption-banner {
+  background: rgba(16, 185, 129, 0.14);
+  color: #99f6c5;
+  border-color: rgba(52, 211, 153, 0.28);
+}
+html:not(.theme-light) #panel-usecases .es-redemption-icon,
+html:not(.theme-light) #panel-usecases .es-voucher-code {
+  background: rgba(16, 185, 129, 0.2);
+  color: #d1fae5;
+}
+html:not(.theme-light) #panel-usecases .psi-disclaimer,
+html:not(.theme-light) #panel-usecases .bin-notfound-msg {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.34);
+  color: #fdd58a;
+}
+html:not(.theme-light) #panel-usecases .psi-error-card,
+html:not(.theme-light) #panel-usecases .clarity-error,
+html:not(.theme-light) #panel-usecases .enrich-row-error,
+html:not(.theme-light) #panel-usecases .enrich-error-icon,
+html:not(.theme-light) #panel-usecases .bin-error-msg,
+html:not(.theme-light) #panel-usecases .es-error {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #ffb4b4;
+}
+
+/* UC sidebar: APIs Used section */
+.uc-sidebar-apis {
+  margin-top: 20px; padding: 0 10px 16px;
+  border-top: 1px solid var(--line);
+}
+.uc-sidebar-apis-title {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px;
+  color: var(--muted); font-weight: 700;
+  padding: 12px 2px 8px;
+}
+.uc-sidebar-api-badge {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 9px; border-radius: 7px;
+  font-size: 12px; font-weight: 500; margin-bottom: 4px;
+  border: 1px solid transparent;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.uc-sidebar-api-badge:hover {
+  border-color: rgba(255,150,60,0.45);
+  box-shadow: 0 2px 8px rgba(255,95,0,0.18);
+  transform: translateY(-1px);
+}
+.uc-sidebar-api-badge:active { transform: translateY(0); }
+.uc-sidebar-api-badge:focus-visible {
+  outline: 2px solid var(--mc-orange);
+  outline-offset: 2px;
+}
+.uc-sidebar-api-badge.disabled,
+.uc-sidebar-api-badge[disabled] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.uc-sidebar-api-badge.disabled:hover,
+.uc-sidebar-api-badge[disabled]:hover {
+  border-color: transparent;
+  box-shadow: none;
+  transform: none;
+}
+.uc-sidebar-api-badge.configured   { background: #d1fae5; color: #065f46; }
+.uc-sidebar-api-badge.unconfigured { background: #f3f4f6; color: var(--muted); }
+.uc-sidebar-api-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: currentColor;
+}
+

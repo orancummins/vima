@@ -319,6 +319,47 @@ def _fetch_geo_payload(client_ip: str) -> dict:
 # Pages
 # ----------------------------------------------------------------------------
 
+# Ordered stylesheet list (loaded as individual <link>s in this exact order so
+# the cascade matches the former single styles.css). base.css must stay first.
+CSS_FILES = [
+    "css/base.css",
+    "css/features/enrichment.css",
+    "css/features/psi.css",
+    "css/platform/api-calls.css",
+    "css/features/bin-lookup.css",
+    "css/features/consumer-clarity.css",
+    "css/features/easy-savings.css",
+    "css/platform/chat-modal.css",
+    "css/features/sonic.css",
+    "css/platform/home.css",
+    "css/platform/config-modal.css",
+    "css/features/idv.css",
+    "css/features/medicare.css",
+    "css/features/mastercard-connect.css",
+    "css/platform/about-panel.css",
+    "css/platform/provision.css",
+    "css/platform/explorer-dark.css",
+    "css/platform/bundles.css",
+    "css/platform/theme-coverage.css",
+    "css/platform/api-guide.css",
+    "css/platform/launch-banner.css",
+    "css/platform/sdk-panel.css",
+    "css/platform/info-modal.css",
+]
+
+
+def _css_bust() -> int:
+    """Newest mtime across the split stylesheets, for cache-busting links."""
+    base = os.path.dirname(__file__)
+    newest = 0.0
+    for rel in CSS_FILES:
+        try:
+            newest = max(newest, os.path.getmtime(os.path.join(base, "static", *rel.split("/"))))
+        except OSError:
+            pass
+    return int(newest)
+
+
 @app.route("/")
 def home():
     return redirect(url_for("index"))
@@ -341,7 +382,8 @@ def index():
             "non_us_mode": _non_us_mode_enabled(),
         },
         cache_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'js', 'app', 'main.js'))),
-        css_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'css', 'styles.css'))),
+        css_files=CSS_FILES,
+        css_bust=_css_bust(),
     )
 
 
