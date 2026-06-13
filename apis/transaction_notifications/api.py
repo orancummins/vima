@@ -124,7 +124,10 @@ MANIFEST: Dict[str, Any] = {
                     "default": "",
                     "required": True,
                     "placeholder": "e.g. 6c9a079c-18dc-4881-9907-467aad648333",
-                    "help": "UUID returned by the Consent API when a card is enrolled.",
+                    "help": (
+                        "UUID returned by Consent Management when a card is enrolled. "
+                        "If left blank, the API will try the latest Consent card reference in memory."
+                    ),
                 },
                 {
                     "name": "amount",
@@ -282,6 +285,21 @@ def _trigger_test_transaction(params: Dict[str, Any]) -> Dict[str, Any]:
         return _not_configured_error("trigger_test_transaction")
 
     card_reference = (params.get("card_reference") or "").strip()
+
+    def _latest_consent_card_ref() -> str:
+        # Pull the latest in-process Consent Management state so TxNotify can
+        # guide users toward the currently enrolled card reference.
+        try:
+            from apis.consent_management import api as consent_api  # lazy import
+            st = consent_api.get_state() or {}
+            return str(st.get("card_ref") or "").strip()
+        except Exception:
+            return ""
+
+    latest_card_ref = _latest_consent_card_ref()
+    if not card_reference and latest_card_ref:
+        card_reference = latest_card_ref
+
     if not card_reference:
         return {"success": False, "error": "card_reference is required"}
 
@@ -334,7 +352,7 @@ def _trigger_test_transaction(params: Dict[str, Any]) -> Dict[str, Any]:
         return {"success": False, "error": f"Request failed: {e}"}
 
     success = 200 <= status_code < 300
-    return {
+    result = {
         "success": success,
         "data": resp_body if success else {},
         "error": None if success else resp_body,
@@ -349,6 +367,23 @@ def _trigger_test_transaction(params: Dict[str, Any]) -> Dict[str, Any]:
         },
         "state_updates": {},
     }
+
+    # Provide actionable guidance for the common enrollment mismatch error.
+    if not success:
+        err_blob = json.dumps(resp_body).lower() if isinstance(resp_body, (dict, list)) else str(resp_body).lower()
+        if "could not find a card for that reference" in err_blob:
+            hints = result.setdefault("hints", {})
+            hints["note"] = (
+                "Card reference not found by Transaction Notifications. "
+                "Use the latest cardReference from Consent Management in the same project/account."
+            )
+            if latest_card_ref:
+                hints["next_step"] = (
+                    "Try this card_reference from the latest Consent flow: "
+                    f"{latest_card_ref}"
+                )
+
+    return result
 
 
 def _get_undelivered(params: Dict[str, Any]) -> Dict[str, Any]:

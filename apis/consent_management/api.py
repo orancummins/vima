@@ -31,6 +31,7 @@ _PROD_BASE_URL    = "https://api.mastercard.com/openapis/authentication"
 STATE: Dict[str, Any] = {
     "card_ref": "",
     "consent_id": "",
+    "verify_auth_params": "{}",
 }
 
 MANIFEST: Dict[str, Any] = {
@@ -50,16 +51,26 @@ MANIFEST: Dict[str, Any] = {
         "<li><strong>Create Consent</strong> — POST /consents with the cardholder's PAN "
         "and expiry details. The response contains a <code>cardReference</code> (UUID) "
         "and an <code>auth</code> object indicating whether authentication is required "
-        "(e.g. THREEDS or ASI).</li>"
-        "<li><strong>Start Authentication</strong> — if auth.type is THREEDS, call "
-        "POST /consents/{card_ref}/start-authentication to initiate the 3DS flow.</li>"
-        "<li><strong>Verify Authentication</strong> — complete the 3DS challenge, then "
-        "call POST /consents/{card_ref}/verify-authentication with the result.</li>"
+        "(e.g. THREEDS or ASI). Use the <strong>Launch 3DS Method</strong> button shown "
+        "at the top of the hint area to run the browser flow.</li>"
+        "<li><strong>Complete browser 3DS flow</strong> — fingerprint runs first, then "
+        "challenge only if required.</li>"
+        "<li><strong>Start Authentication</strong> — call "
+        "POST /consents/{card_ref}/start-authentication after the browser flow.</li>"
+        "<li><strong>Verify Authentication</strong> — call "
+        "POST /consents/{card_ref}/verify-authentication to complete enrollment.</li>"
         "<li><strong>Get Consents</strong> — retrieve all consents and their statuses "
         "for a card reference. Status <code>APPROVED</code> means the card is enrolled.</li>"
         "<li>Store the <code>cardReference</code> and use it with the "
         "<a href='#txnotify'>Transaction Notifications API</a> to receive real-time alerts.</li>"
         "</ol>"
+        "<h3>Troubleshooting</h3>"
+        "<ul>"
+        "<li>If Verify Authentication fails after a successful launch, ensure you used "
+        "the same <code>cardReference</code> and ran Start Authentication first.</li>"
+        "<li>If auth state is invalid, delete consents for that card and restart from "
+        "Create Consent.</li>"
+        "</ul>"
         "<h3>Sandbox notes</h3>"
         "<ul>"
         "<li>Use test PAN <code>2303779951000297</code> (any future expiry, CVC 123) for sandbox testing.</li>"
@@ -73,6 +84,7 @@ MANIFEST: Dict[str, Any] = {
     "state_schema": [
         {"key": "card_ref",   "label": "Card Reference"},
         {"key": "consent_id", "label": "Consent ID"},
+        {"key": "verify_auth_params", "label": "Verify Auth Params (JSON)"},
     ],
     "configured": bool(
         os.environ.get("CONSENT_MANAGEMENT_CONSUMER_KEY")
@@ -89,7 +101,8 @@ MANIFEST: Dict[str, Any] = {
             "description": (
                 "Enroll a card by submitting PAN and expiry details. Returns a "
                 "cardReference (UUID) and a 3DS Method URL for device fingerprinting. "
-                "Click the Launch button to complete the 3DS Method in your browser, "
+                "Click Launch 3DS Method (shown at the top of the hint area) to "
+                "complete the 3DS Method in your browser, "
                 "then call Start Authentication."
             ),
             "params": [
@@ -178,9 +191,9 @@ MANIFEST: Dict[str, Any] = {
             "category": "Consent",
             "method": "POST",
             "description": (
-                "Initiate 3DS authentication. Call this after completing the 3DS Method "
-                "(launched from Create Consent). Returns the challenge URL for the cardholder "
-                "to complete authentication."
+                "Initiate 3DS authentication after completing Launch 3DS Method. "
+                "If no challenge is required, status can return AUTHENTICATED immediately. "
+                "If challenge is required, this returns challenge parameters."
             ),
             "params": [
                 {
@@ -237,8 +250,9 @@ MANIFEST: Dict[str, Any] = {
             "category": "Consent",
             "method": "POST",
             "description": (
-                "Submit the 3DS authentication result to verify cardholder identity "
-                "and complete the consent enrollment."
+                "Complete consent enrollment after Start Authentication. "
+                "Supports smart defaulting: if auth_params is left empty, the API will "
+                "use available state from prior 3DS steps where possible."
             ),
             "params": [
                 {
@@ -265,9 +279,14 @@ MANIFEST: Dict[str, Any] = {
                     "label": "Auth Params (JSON)",
                     "type": "text",
                     "default": "{}",
+                    "source": "state:verify_auth_params",
                     "required": False,
                     "placeholder": '{"key": "value"}',
-                    "help": "Additional authentication parameters from the 3DS flow as a JSON object.",
+                    "help": (
+                        "Additional authentication parameters from the 3DS flow as a JSON object. "
+                        "Auto-populated from Start Authentication when available. "
+                        "For Mastercard 3DS, leaving this as {} is typically valid."
+                    ),
                 },
             ],
         },
@@ -518,7 +537,13 @@ def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
             consents = result["data"].get("consents", [])
             if consents:
                 STATE["consent_id"] = str(consents[0].get("id", ""))
-            result["state_updates"] = {"card_ref": STATE["card_ref"], "consent_id": STATE["consent_id"]}
+            # Start each enrollment from a clean verify payload to avoid stale values.
+            STATE["verify_auth_params"] = "{}"
+            result["state_updates"] = {
+                "card_ref": STATE["card_ref"],
+                "consent_id": STATE["consent_id"],
+                "verify_auth_params": STATE["verify_auth_params"],
+            }
             # Build 3DS Method launch hint — the new flow page runs fingerprint,
             # start-authentication (with browser params), challenge iframe and
             # verify-authentication all in one browser tab.
@@ -527,12 +552,18 @@ def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
             method_url  = auth_params.get("threeDsMethodUrl", "")
             method_data = auth_params.get("threeDSMethodData", "")
             trans_id    = auth_params.get("threeDSServerTransID", "")
+            method_notify = (
+                auth_params.get("threeDSMethodNotificationURL", "")
+                or auth_params.get("threeDsMethodNotificationURL", "")
+                or auth_params.get("threeDsMethodNotificationUrl", "")
+            )
             if STATE["card_ref"]:
                 from urllib.parse import urlencode
                 q = {"card_ref": STATE["card_ref"]}
                 if method_url:  q["method_url"]  = method_url
                 if method_data: q["method_data"] = method_data
                 if trans_id:    q["trans_id"]    = trans_id
+                if method_notify: q["method_notify"] = method_notify
                 launch_path = "/explorer/consent/3ds-flow?" + urlencode(q)
                 result["hints"] = {
                     "browser_launch_url": launch_path,
@@ -623,9 +654,45 @@ def _start_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
         if k in params and params[k] not in (None, ""):
             auth_params[k] = params[k]
 
+    # Smart defaults for manual runs: Mastercard's 3DS tutorial shows these
+    # browser fields are expected by start-authentication.
+    if auth_type.upper() == "THREEDS":
+        auth_params.setdefault("fingerprintStatus", "complete")
+        auth_params.setdefault("challengeWindowSize", "04")
+        auth_params.setdefault(
+            "browserAcceptHeader",
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        )
+        auth_params.setdefault("browserColorDepth", "24")
+        auth_params.setdefault("browserJavaEnabled", False)
+        auth_params.setdefault("browserLanguage", "en-US")
+        auth_params.setdefault("browserScreenHeight", "1080")
+        auth_params.setdefault("browserScreenWidth", "1920")
+        auth_params.setdefault("browserTZ", "0")
+        auth_params.setdefault("browserUserAgent", "Mozilla/5.0")
+
     body = {"auth": {"type": auth_type, "params": auth_params}}
     url  = f"{_base_url()}/consents/{card_ref}/start-authentication"
     result = _http_encrypted("POST", url, body)
+
+    if result.get("success"):
+        auth_obj = (result.get("data") or {}).get("auth") or {}
+        returned_params = auth_obj.get("params") if isinstance(auth_obj.get("params"), dict) else {}
+
+        # Mastercard's reference verify step accepts an empty params object, but
+        # some partner flows echo auth artifacts. Keep a best-effort subset ready.
+        verify_subset = {}
+        for key in (
+            "authenticationValue", "eci", "cavv", "xid", "transStatus",
+            "dsTransId", "directoryServerTransactionId", "threeDSServerTransID",
+        ):
+            val = returned_params.get(key)
+            if val not in (None, ""):
+                verify_subset[key] = val
+
+        STATE["verify_auth_params"] = json.dumps(verify_subset or {}, separators=(",", ":"))
+        updates = result.setdefault("state_updates", {})
+        updates["verify_auth_params"] = STATE["verify_auth_params"]
 
     # Surface a friendlier hint when the consent has already completed auth.
     try:
@@ -652,15 +719,56 @@ def _verify_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
     if not card_ref:
         return {"success": False, "error": "card_ref is required"}
 
-    auth_params_str = (params.get("auth_params") or "{}").strip()
+    auth_params_raw = params.get("auth_params")
+    auth_params_str = str(auth_params_raw).strip() if auth_params_raw is not None else ""
+    auth_params_source = "explicit-input"
+
+    # Smart defaulting: use last start-authentication values only when the field
+    # is blank or left at the default "{}".
+    state_auth_params = str(STATE.get("verify_auth_params") or "{}").strip()
+    if (not auth_params_str or auth_params_str == "{}") and state_auth_params and state_auth_params != "{}":
+        auth_params_str = state_auth_params
+        auth_params_source = "state-fallback"
+    elif not auth_params_str:
+        auth_params_str = "{}"
+        auth_params_source = "default-empty"
+    elif auth_params_str == "{}":
+        auth_params_source = "explicit-empty"
+
     try:
         auth_params = json.loads(auth_params_str)
     except json.JSONDecodeError:
         return {"success": False, "error": "auth_params must be valid JSON"}
 
+    if not isinstance(auth_params, dict):
+        return {"success": False, "error": "auth_params must be a JSON object"}
+
+    # Accept flattened inputs in case callers pass fields directly.
+    for k in (
+        "authenticationValue", "eci", "cavv", "xid", "transStatus",
+        "dsTransId", "directoryServerTransactionId", "threeDSServerTransID",
+    ):
+        if k in params and params[k] not in (None, ""):
+            auth_params[k] = params[k]
+
     body = {"auth": {"type": auth_type, "params": auth_params}}
     url  = f"{_base_url()}/consents/{card_ref}/verify-authentication"
-    return _http_encrypted("POST", url, body)
+    result = _http_encrypted("POST", url, body)
+
+    source_label = {
+        "explicit-input": "verify used auth_params from your input",
+        "explicit-empty": "verify used explicit empty auth_params {}",
+        "default-empty": "verify used default empty auth_params {}",
+        "state-fallback": "verify auto-filled auth_params from Start Authentication state",
+    }.get(auth_params_source, auth_params_source)
+    result.setdefault("hints", {})["note"] = source_label
+
+    if result.get("success"):
+        # Keep the state strip and source-backed form in sync with what was sent.
+        STATE["verify_auth_params"] = json.dumps(auth_params, separators=(",", ":"))
+        updates = result.setdefault("state_updates", {})
+        updates["verify_auth_params"] = STATE["verify_auth_params"]
+    return result
 
 
 def _delete_consents(params: Dict[str, Any]) -> Dict[str, Any]:
