@@ -178,4 +178,53 @@ def run_status():
     except Exception:
         tail_lines = ["(error reading log)"]
 
-    return jsonify({"ok": True, "pid": pid, "running": running, "log": tail_lines})
+    # Simple progress parser: detect suite headers (lines starting with '>>')
+    # and test result lines containing [PASS] or [FAIL]. Build a lightweight
+    # progress summary for the UI.
+    try:
+        import re
+        suites = []
+        current = None
+        total = passed = failed = 0
+        # Use the full log if available for accurate counts, else tail_lines
+        full_lines = []
+        try:
+            with open(log_path, 'r') as f:
+                full_lines = [l.rstrip('\n') for l in f.readlines()]
+        except Exception:
+            full_lines = tail_lines
+
+        for ln in full_lines:
+            m = re.match(r"^>>\s*(.*)", ln)
+            if m:
+                # start new suite
+                current = {"name": m.group(1).strip(), "passed": 0, "failed": 0, "total": 0, "tests": []}
+                suites.append(current)
+                continue
+
+            if "[PASS]" in ln or "[FAIL]" in ln or "[OK]" in ln:
+                status = 'pass' if ('[PASS]' in ln or '[OK]' in ln) else 'fail'
+                desc = ln.strip()
+                if current is None:
+                    current = {"name": "Other", "passed": 0, "failed": 0, "total": 0, "tests": []}
+                    suites.append(current)
+                current['tests'].append({"name": desc, "status": status})
+                current['total'] += 1
+                total += 1
+                if status == 'pass':
+                    current['passed'] += 1
+                    passed += 1
+                else:
+                    current['failed'] += 1
+                    failed += 1
+
+        progress = {"total": total, "passed": passed, "failed": failed, "suites": []}
+        for s in suites:
+            pct = int((s['passed'] / s['total'] * 100) if s['total'] > 0 else 0)
+            progress['suites'].append({
+                'name': s['name'], 'passed': s['passed'], 'failed': s['failed'], 'total': s['total'], 'pct': pct
+            })
+    except Exception:
+        progress = {"total": 0, "passed": 0, "failed": 0, "suites": []}
+
+    return jsonify({"ok": True, "pid": pid, "running": running, "log": tail_lines, "progress": progress})
