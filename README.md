@@ -11,6 +11,19 @@ A unified platform for exploring, showcasing and innovating across
 
 ---
 
+> [!WARNING]
+> **Local use only — do not expose to the internet.**
+>
+> This application is designed to run on your local machine and is **not hardened for remote or production deployment**. Specifically:
+>
+> - **Sandbox credentials only.** Store only Mastercard Developer sandbox keys and test credentials in `config/.env`. Never put production or live API keys into this app.
+> - **No remote access.** Do not run this behind a reverse proxy, in a cloud VM, or in any configuration where the app is reachable by other users or systems on a network. There is no authentication layer protecting the config panel, credential export, or ViMA chat.
+> - **`--server` flag is not a security hardening measure.** It hides some UI surfaces but does not make the app safe for public exposure.
+>
+> If you need to share a demo with others, use a screen-share session rather than hosting the app on a shared server.
+
+---
+
 ## What it does
 
 Solution Studio wires up a curated set of Mastercard Developer APIs so they
