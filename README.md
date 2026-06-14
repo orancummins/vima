@@ -316,6 +316,65 @@ After cleaning, re-run `./addapi.sh <DOCS_URL>` (or the Copilot agent command) t
 
 ---
 
+## Testing
+
+### Quick start
+
+```bash
+# Windows — existing install, smoke tests only
+.\test.bat --existing --smoke
+
+# macOS / Linux — existing install, full suite
+./test.sh --existing --full
+
+# Windows — clean install (clone, provision, test, clean up)
+.\test.bat --clean --sso --email you@mastercard.com --smoke
+```
+
+### Two modes
+
+**`--existing`** — run tests against the current working directory, no
+portal login, no keys created or deleted. Only `--smoke`, `--full`, and
+`--no-server` are accepted. Any clean-only flag is an error.
+
+**`--clean`** — clone the repo into a temp directory, auto-provision API
+keys on the Mastercard Developers portal, run the suite, then delete
+the portal project and local key material. Requires portal credentials.
+
+### Flag reference
+
+| Flag | Modes | Description |
+|---|---|---|
+| `--smoke` | both | Smoke tests only — connectivity, catalog integrity, basic API checks (default) |
+| `--full` | both | Full suite — smoke + API contract tests + use case tests + bundles + SDKs |
+| `--clean` | — | Clone repo into a temp dir, provision keys, run, clean up |
+| `--existing` | — | Use this directory as-is; no portal interaction whatsoever |
+| `--email` | clean only | Mastercard Developers account email |
+| `--sso` | clean only | Corporate SSO: browser auto-fills email and waits for the SSO redirect |
+| `--portal-password` | clean only | Portal password for non-SSO accounts (auto-filled in browser) |
+| `--storepass` / `--key-password` | clean only | Password for generated `.p12` keystores (default: `foobar!!`) |
+| `--skip-provision` | clean only | Clone and test but skip portal provisioning (no project created) |
+| `--nocleanup` | clean only | Skip cleanup: keep cloned dir, keys, and portal projects |
+| `--no-server` | both | Skip starting the Flask server (assumes one is already running) |
+
+### What a clean run does
+
+1. Clone repo into `%TEMP%\vima-test-<timestamp>`
+2. `pip install -r requirements.txt` in the cloned venv
+3. Start Flask server, wait until ready
+4. **Smoke tests** — server reachable, catalog loads, API endpoints respond
+5. **Auto-provision** BIN Lookup API key (Playwright portal automation on developer.mastercard.com)
+6. **BIN Lookup** API contract tests
+7. **BIN Lookup** use case tests
+8. **Bundles / SDKs** (placeholder)
+9. **Portal project cleanup** — deletes the SST-* test project; failure counts as a test failure
+10. Remove `config/keys/` and the cloned temp directory
+
+Steps 9 and 10 are skipped if `--nocleanup` is passed. Steps 5–9 are
+skipped if `--skip-provision` is passed.
+
+---
+
 ## Extending the platform
 
 ### Add a new API (or fix an existing one)
