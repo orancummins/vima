@@ -28,6 +28,7 @@ set "KEY_PASSWORD="
 set "TEST_SCOPE="
 set "SKIP_PROVISION="
 set "NO_SERVER="
+set "NOCLEANUP="
 
 :parse_args
 if "%~1"=="" goto :args_done
@@ -42,6 +43,7 @@ if /i "%~1"=="--smoke"           ( set "TEST_SCOPE=S"         & shift /1        
 if /i "%~1"=="--full"            ( set "TEST_SCOPE=F"         & shift /1             & goto :parse_args )
 if /i "%~1"=="--skip-provision"  ( set "SKIP_PROVISION=1"    & shift /1             & goto :parse_args )
 if /i "%~1"=="--no-server"       ( set "NO_SERVER=1"         & shift /1             & goto :parse_args )
+if /i "%~1"=="--nocleanup"       ( set "NOCLEANUP=1"         & shift /1             & goto :parse_args )
 shift /1
 goto :parse_args
 :args_done
@@ -163,6 +165,7 @@ if /i "!TEST_SCOPE!"=="F"      set "_XARGS=!_XARGS! --full"
 if /i "!TEST_SCOPE!"=="S"      set "_XARGS=!_XARGS! --smoke"
 if "!SKIP_PROVISION!"=="1"     set "_XARGS=!_XARGS! --skip-provision"
 if "!NO_SERVER!"=="1"          set "_XARGS=!_XARGS! --no-server"
+if "!NOCLEANUP!"=="1"          set "_XARGS=!_XARGS! --nocleanup"
 
 REM ── Launch test runner ────────────────────────────────────────
 "!PYTHON!" "!WORK_DIR!\tests\run.py" --email "!EMAIL!" --install-type "!INSTALL_TYPE!" --key-password "!KEY_PASSWORD!" --work-dir "!WORK_DIR!" !_XARGS!

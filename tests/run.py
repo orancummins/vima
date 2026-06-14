@@ -74,6 +74,7 @@ _bundles    = _imp("tests.bundles._placeholder")
 _sdks       = _imp("tests.sdks._placeholder")
 
 Summary            = _utils.Summary
+TestRunner         = _utils.TestRunner
 bold, green, red   = _utils.bold, _utils.green, _utils.red
 yellow, cyan       = _utils.yellow, _utils.cyan
 start_server       = _server_mod.start_server
@@ -103,6 +104,8 @@ def _parse_args() -> argparse.Namespace:
                    help="Skip starting the server (assume one is already running)")
     p.add_argument("--skip-provision",   action="store_true",
                    help="Skip provisioning even on a clean install")
+    p.add_argument("--nocleanup",        action="store_true",
+                   help="Skip all cleanup: keep cloned dir, keys/certs, and portal projects")
     return p.parse_args()
 
 
@@ -228,31 +231,55 @@ def main() -> None:
             stop_server(server_proc)
             print(f"  {green('[OK]  Server stopped.')}")
 
-    # ── Step 9: Portal project cleanup (clean install only) ───
-    if install_type == "C" and not args.skip_provision:
-        _step("Cleaning up portal projects (SST-* prefix)")
-        try:
-            import importlib.util as _ilu
-            import asyncio as _asyncio
-            _tool_dir = os.path.join(work_dir, "tools", "mcd-key-automation")
-            _spec = _ilu.spec_from_file_location(
-                "clean_portal_projects",
-                os.path.join(_tool_dir, "clean_portal_projects.py"),
+    # ── Step 9: Portal project cleanup (clean install, unless --nocleanup) ──
+    # Treated as a test suite — failure counts toward the final exit code.
+    # Runs after the server is stopped so test failures never skip cleanup.
+    # ALWAYS use the original repo's tool venv — the cloned temp dir has no .venv.
+    if install_type == "C" and not args.skip_provision and not args.nocleanup:
+        import subprocess as _sp
+        _cleanup_runner = TestRunner("Portal project cleanup")
+        _orig_tool_dir = os.path.join(_ROOT, "tools", "mcd-key-automation")
+        _tool_python = os.path.join(_orig_tool_dir, ".venv", "Scripts", "python.exe")
+        if not os.path.exists(_tool_python):
+            _tool_python = os.path.join(_orig_tool_dir, ".venv", "bin", "python")
+        _cleanup_script = os.path.join(_orig_tool_dir, "clean_portal_projects.py")
+
+        def _run_portal_cleanup():
+            proc = _sp.run(
+                [_tool_python, _cleanup_script, "--prefix", "SST-"],
+                cwd=_orig_tool_dir,
+                capture_output=False,
             )
-            _cpc = _ilu.module_from_spec(_spec)
-            # Add tool dir to sys.path so its internal imports resolve.
-            if _tool_dir not in sys.path:
-                sys.path.insert(0, _tool_dir)
-            _spec.loader.exec_module(_cpc)
-            result = _asyncio.run(_cpc.run_cleanup(prefix="SST-"))
-            if result["deleted"]:
-                print(f"  {green('[OK]  Deleted ' + str(len(result['deleted'])) + ' portal project(s): ' + ', '.join(result['deleted']))}")
-            if result["failed"]:
-                print(f"  {yellow('[WARN] Could not delete: ' + ', '.join(result['failed']))}")
-            if not result["deleted"] and not result["failed"]:
-                print(f"  {yellow('No SST-* portal projects found to clean up.')}")
-        except Exception as exc:
-            print(f"  {yellow(f'Portal cleanup skipped: {exc}')}")
+            assert proc.returncode == 0, \
+                f"clean_portal_projects.py exited with code {proc.returncode}"
+
+        _cleanup_runner.run("Delete SST-* projects from Mastercard Developers", _run_portal_cleanup)
+        summary.add(_cleanup_runner)
+
+    # ── Step 10: Local cleanup (clean install, unless --nocleanup) ─────────
+    if install_type == "C" and not args.nocleanup:
+        _step("Removing local keys/certs and cloned directory")
+        import shutil as _shutil
+        # Remove keys directory (inside the cloned work_dir or the original)
+        _keys_dir = os.path.join(work_dir, "config", "keys")
+        if os.path.isdir(_keys_dir):
+            try:
+                _shutil.rmtree(_keys_dir)
+                print(f"  {green('[OK]  Removed keys/certs: ' + _keys_dir)}")
+            except Exception as exc:
+                print(f"  {yellow(f'[WARN] Could not remove keys dir: {exc}')}")
+        # Remove the cloned temp directory (work_dir itself if it was a temp clone).
+        # Only remove if it looks like a temp dir (not the original repo).
+        _orig_root = os.path.normpath(os.path.abspath(_ROOT))
+        _cur_work  = os.path.normpath(os.path.abspath(work_dir))
+        if _cur_work != _orig_root:
+            try:
+                _shutil.rmtree(_cur_work)
+                print(f"  {green('[OK]  Removed cloned directory: ' + _cur_work)}")
+            except Exception as exc:
+                print(f"  {yellow(f'[WARN] Could not remove cloned dir: {exc}')}")
+        else:
+            print(f"  {yellow('[INFO] work-dir is the original repo — skipping directory removal.')}")
 
     # ── Final summary ──────────────────────────────────────────
     summary.print_and_exit()

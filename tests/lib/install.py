@@ -1,9 +1,9 @@
-"""tests/lib/install.py — obtain a working copy of the codebase.
+"""tests/lib/install.py - obtain a working copy of the codebase.
 
 Two modes:
-  - clone_repo(dest_dir)  — git-clone from the remote URL detected in the
+  - clone_repo(dest_dir)  - git-clone from the remote URL detected in the
                             current working directory into *dest_dir*.
-  - copy_local(src, dest) — fast local copy (no git required; good for
+  - copy_local(src, dest) - fast local copy (no git required; good for
                             testing uncommitted changes).
 
 Returns the absolute path to the directory that contains app.py.
@@ -56,7 +56,7 @@ def clone_repo(src_dir: str, dest_dir: str | None = None) -> str:
         dest_dir = os.path.join(tempfile.gettempdir(), f"vima-test-{ts}")
 
     os.makedirs(dest_dir, exist_ok=True)
-    print(f"  Cloning {url} → {dest_dir} …")
+    print(f"  Cloning {url} -> {dest_dir} ...")
 
     try:
         subprocess.run(
@@ -86,7 +86,7 @@ def copy_local(src_dir: str, dest_dir: str | None = None) -> str:
         ".venv", "__pycache__", "*.pyc", ".git",
         "*.p12", "*.pem", "*.key", ".env",
     )
-    print(f"  Copying {src_dir} → {dest_dir} …")
+    print(f"  Copying {src_dir} -> {dest_dir} ...")
     shutil.copytree(src_dir, dest_dir, ignore=_IGNORE)
     return os.path.abspath(dest_dir)
 
@@ -108,7 +108,7 @@ def install_dependencies(work_dir: str) -> None:
     elif os.path.isfile(venv_nix):
         python = venv_nix
 
-    print("  Installing dependencies …")
+    print("  Installing dependencies ...")
     cmd = [python, "-m", "pip", "install", "-r", req_path, "--quiet"]
     # Use truststore for corporate proxy cert chains when available
     try:
