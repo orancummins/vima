@@ -36,7 +36,7 @@ fi
 # ── Install / sync dependencies ───────────────────────────────────────
 if [[ -f "$SCRIPT_DIR/requirements.txt" ]]; then
   echo "Installing dependencies..."
-  python3 -m pip install -q -r "$SCRIPT_DIR/requirements.txt"
+  python3 -m pip install -q --use-feature=truststore -r "$SCRIPT_DIR/requirements.txt"
 fi
 
 # ── Set up key-automation tool (once, on first run) ───────────────────
@@ -61,7 +61,7 @@ if [[ ! -f "$TOOL_MARKER" ]]; then
   echo "  [2/4] Upgrading pip..."
   "$TOOL_PY" -m pip install --upgrade pip -q
   echo "  [3/4] Installing dependencies via python -m pip (no console_script shims)..."
-  "$TOOL_PY" -m pip install -r "$TOOL_DIR/requirements.txt"
+  "$TOOL_PY" -m pip install --use-feature=truststore -r "$TOOL_DIR/requirements.txt"
   echo "  [4/4] Installing browser via python -m playwright (downloading, please wait)..."
   "$TOOL_PY" -m playwright install chromium
   # Belt-and-braces: remove any console_script shims left behind by older installs.

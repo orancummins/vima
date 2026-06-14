@@ -85,7 +85,7 @@ stop_server        = _server_mod.stop_server
 # ── CLI ───────────────────────────────────────────────────────────────────────
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Vima test orchestrator")
-    p.add_argument("--email",            required=True, help="Mastercard Developers email")
+    p.add_argument("--email",            default="", help="Mastercard Developers email (required for clean install)")
     p.add_argument("--sso",              action="store_true",
                    help="SSO login: only email is auto-filled (no portal password required)")
     p.add_argument("--portal-password",  default="",
