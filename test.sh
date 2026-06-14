@@ -30,6 +30,7 @@ KEY_PASSWORD=""
 TEST_SCOPE=""
 SKIP_PROVISION=""
 NO_SERVER=""
+NOCLEANUP=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -44,6 +45,7 @@ while [[ $# -gt 0 ]]; do
         --full)            TEST_SCOPE="F";        shift   ;;
         --skip-provision)  SKIP_PROVISION="1";    shift   ;;
         --no-server)       NO_SERVER="1";         shift   ;;
+        --nocleanup)       NOCLEANUP="1";         shift   ;;
         *) shift ;;
     esac
 done
@@ -143,6 +145,7 @@ EXTRA_ARGS=()
 [[ "$TEST_SCOPE" == "S" ]]      && EXTRA_ARGS+=(--smoke)
 [[ "$SKIP_PROVISION" == "1" ]]  && EXTRA_ARGS+=(--skip-provision)
 [[ "$NO_SERVER" == "1" ]]       && EXTRA_ARGS+=(--no-server)
+[[ "$NOCLEANUP" == "1" ]]       && EXTRA_ARGS+=(--nocleanup)
 
 # ── Launch test runner ────────────────────────────────────────
 "$PYTHON" "$SCRIPT_DIR/tests/run.py" \
