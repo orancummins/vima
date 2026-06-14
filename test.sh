@@ -36,6 +36,11 @@ NO_SERVER=""
 NOCLEANUP=""
 _CLEAN_FLAGS=""
 
+# Portable uppercase helper for macOS / POSIX shells (bash 3.2 doesn't support ${VAR^^})
+upper() {
+    echo "$1" | tr '[:lower:]' '[:upper:]'
+}
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --email)           EMAIL="$2";            _CLEAN_FLAGS="1"; shift 2 ;;
@@ -66,7 +71,7 @@ if [[ "$INSTALL_TYPE" != "C" && "$INSTALL_TYPE" != "E" ]]; then
     echo ""
     while [[ "$INSTALL_TYPE" != "C" && "$INSTALL_TYPE" != "E" ]]; do
         read -rp "Choice [C/E]: " INSTALL_TYPE
-        INSTALL_TYPE="${INSTALL_TYPE^^}"
+        INSTALL_TYPE="$(upper "$INSTALL_TYPE")"
         [[ "$INSTALL_TYPE" != "C" && "$INSTALL_TYPE" != "E" ]] && echo "  Please enter C or E."
     done
 fi
@@ -99,7 +104,7 @@ else
         echo ""
         while [[ "$SSO" != "Y" && "$SSO" != "N" ]]; do
             read -rp "Mastercard Developers SSO [Y/N]: " SSO
-            SSO="${SSO^^}"
+            SSO="$(upper "$SSO")"
             [[ "$SSO" != "Y" && "$SSO" != "N" ]] && echo "  Please enter Y or N."
         done
     fi
@@ -132,7 +137,7 @@ if [[ -z "$TEST_SCOPE" ]]; then
     while [[ "$TEST_SCOPE" != "S" && "$TEST_SCOPE" != "F" ]]; do
         read -rp "Choice [S/F, default S]: " TS_INPUT
         TEST_SCOPE="${TS_INPUT:-S}"
-        TEST_SCOPE="${TEST_SCOPE^^}"
+        TEST_SCOPE="$(upper "$TEST_SCOPE")"
         [[ "$TEST_SCOPE" != "S" && "$TEST_SCOPE" != "F" ]] && echo "  Please enter S or F."
     done
 fi
