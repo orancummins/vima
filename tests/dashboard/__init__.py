@@ -111,3 +111,27 @@ def config():
             saved = True
 
     return render_template("test_config.html", cfg=cfg, saved=saved, test_result=test_result)
+
+
+# Trigger a test run from the dashboard (best-effort background launch)
+@test_bp.route("/run", methods=["POST"])
+def run_trigger():
+    import subprocess
+    import shlex
+    from flask import jsonify
+
+    # Run smoke tests against the existing working directory, non-interactive.
+    cmd = "bash ./test.sh --existing --smoke --no-server"
+    try:
+        # Launch in background so the web request returns immediately.
+        p = subprocess.Popen(
+            shlex.split(cmd),
+            cwd=os.getcwd(),
+            stdout=open("tests/last_run.log", "ab"),
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )
+    except Exception as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+    return jsonify({"ok": True, "pid": p.pid, "message": "Test run started in background."}), 202
