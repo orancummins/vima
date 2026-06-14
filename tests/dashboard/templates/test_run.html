@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Run #{{ run.id }} — Test Results</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --mc-red: #eb001b;
+      --mc-yellow: #f79e1b;
+      --bg: #111111; --bg2: #161616; --bg3: #1a1a1a;
+      --card: #1e1e1e; --line: #2a2a2a;
+      --text: #f4f0ea; --text2: #aaaaaa; --text3: #666666;
+      --ok: #1f9d55; --ok-dim: #14532d;
+      --err: #eb001b; --err-dim: #450a0a;
+      --warn: #f79e1b; --warn-dim: #432407;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; }
+    body {
+      font-family: "Inter", -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      font-size: 14px;
+    }
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px; background: #000;
+      border-bottom: 1px solid var(--line); flex-shrink: 0;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-marks { display: flex; gap: 5px; }
+    .dot { width: 18px; height: 18px; border-radius: 50%; display: inline-block; }
+    .dot-red { background: var(--mc-red); }
+    .dot-yellow { background: var(--mc-yellow); }
+    .brand-title { font-weight: 700; font-size: 15px; }
+    .brand-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+    .header-nav { display: flex; gap: 8px; }
+    .nav-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--text2); font-size: 13px; font-family: inherit;
+      padding: 6px 14px; border-radius: 6px;
+      text-decoration: none; display: inline-block;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-btn:hover { background: var(--line); color: var(--text); }
+
+    .page-content { padding: 28px 32px; max-width: 1100px; margin: 0 auto; }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text3); margin-bottom: 20px; }
+    .breadcrumb a { color: var(--text2); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb-sep { color: var(--text3); }
+
+    /* ── Run header card ── */
+    .run-header {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 12px; padding: 24px 28px; margin-bottom: 20px;
+      display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;
+    }
+    .run-title-block { flex: 1; min-width: 200px; }
+    .run-id { font-size: 13px; color: var(--text3); margin-bottom: 6px; }
+    .run-score {
+      font-size: 32px; font-weight: 700; letter-spacing: -0.04em;
+      line-height: 1;
+    }
+    .run-score.ok   { color: #86efac; }
+    .run-score.fail { color: #fca5a5; }
+    .run-tagline { font-size: 13px; color: var(--text3); margin-top: 6px; }
+
+    .run-meta-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px; flex: 2;
+    }
+    .meta-item { }
+    .meta-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+    .meta-value { font-size: 13px; color: var(--text2); }
+    .meta-value.highlight { color: var(--text); font-weight: 600; }
+
+    /* ── Alert card ── */
+    .alert-card {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 12px; padding: 18px 24px; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .alert-card-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .alert-card-icon.sent   { background: var(--ok-dim);  color: #86efac; }
+    .alert-card-icon.failed { background: var(--err-dim); color: #fca5a5; }
+    .alert-card-icon.none   { background: var(--bg3);     color: var(--text3); }
+    .alert-card-body { flex: 1; }
+    .alert-card-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .alert-card-sub   { font-size: 12px; color: var(--text3); margin-top: 3px; }
+
+    /* ── Suite sections ── */
+    .suite-section { margin-bottom: 16px; }
+    .suite-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg3); border: 1px solid var(--line);
+      border-radius: 10px 10px 0 0; cursor: pointer;
+      user-select: none;
+    }
+    .suite-header.all-pass { border-left: 3px solid var(--ok); }
+    .suite-header.has-fail { border-left: 3px solid var(--err); }
+    .suite-name { font-weight: 600; font-size: 14px; }
+    .suite-score { font-size: 12px; color: var(--text3); }
+    .suite-chevron { transition: transform 0.2s; color: var(--text3); }
+    .suite-chevron.open { transform: rotate(180deg); }
+
+    .suite-body {
+      background: var(--card); border: 1px solid var(--line);
+      border-top: none; border-radius: 0 0 10px 10px; overflow: hidden;
+    }
+    .test-row {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 11px 16px; border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+    .test-row:last-child { border-bottom: none; }
+    .test-status-icon {
+      width: 20px; height: 20px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .test-status-icon.pass { background: var(--ok-dim); color: #86efac; }
+    .test-status-icon.fail { background: var(--err-dim); color: #fca5a5; }
+    .test-info { flex: 1; min-width: 0; }
+    .test-name { color: var(--text); }
+    .test-error {
+      margin-top: 6px; padding: 8px 12px;
+      background: var(--bg2); border: 1px solid var(--err-dim);
+      border-radius: 6px;
+      font-family: var(--mono); font-size: 11px; color: #fca5a5;
+      white-space: pre-wrap; word-break: break-word;
+    }
+
+    /* ── Progress bar ── */
+    .progress-bar {
+      height: 4px; background: var(--line); border-radius: 2px;
+      margin-top: 8px; overflow: hidden;
+    }
+    .progress-fill { height: 100%; border-radius: 2px; }
+    .progress-fill.ok   { background: var(--ok); }
+    .progress-fill.warn { background: var(--warn); }
+    .progress-fill.fail { background: var(--err); }
+
+    /* ── OS detail ── */
+    .os-detail {
+      font-family: var(--mono); font-size: 11px;
+      color: var(--text3); margin-top: 3px;
+    }
+  </style>
+</head>
+<body>
+<header class="header">
+  <div class="brand">
+    <div class="brand-marks">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+    </div>
+    <div>
+      <div class="brand-title">Mastercard Solution Studio</div>
+      <div class="brand-sub">Test Results Dashboard</div>
+    </div>
+  </div>
+  <nav class="header-nav">
+    <a href="{{ url_for('test_dashboard.run_list') }}" class="nav-btn">All Runs</a>
+    <a href="{{ url_for('test_dashboard.config') }}" class="nav-btn">Settings</a>
+    <a href="/" class="nav-btn">Back to App</a>
+  </nav>
+</header>
+
+<main class="page-content">
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="{{ url_for('test_dashboard.run_list') }}">Test Runs</a>
+    <span class="breadcrumb-sep">/</span>
+    <span>Run #{{ run.id }}</span>
+  </div>
+
+  <!-- Run header -->
+  {% set all_pass = run.failed_tests == 0 %}
+  {% set pct = (run.passed_tests / run.total_tests * 100) | int if run.total_tests > 0 else 0 %}
+  {% set dur = run.duration_seconds | int %}
+
+  <div class="run-header">
+    <div class="run-title-block">
+      <div class="run-id">Run #{{ run.id }}</div>
+      <div class="run-score {% if all_pass %}ok{% else %}fail{% endif %}">
+        {{ run.passed_tests }}/{{ run.total_tests }}
+      </div>
+      <div class="run-tagline">
+        {% if all_pass %}All tests passed{% else %}{{ run.failed_tests }} test{{ 's' if run.failed_tests != 1 else '' }} failed{% endif %}
+      </div>
+      <div class="progress-bar" style="max-width:160px;margin-top:12px">
+        <div class="progress-fill {% if all_pass %}ok{% elif pct > 0 %}warn{% else %}fail{% endif %}"
+             style="width:{{ pct }}%"></div>
+      </div>
+    </div>
+
+    <div class="run-meta-grid">
+      <div class="meta-item">
+        <div class="meta-label">Date</div>
+        <div class="meta-value highlight">{{ run.run_at[:10] }}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Time</div>
+        <div class="meta-value highlight" style="font-family:var(--mono)">{{ run.run_at[11:19] }}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Duration</div>
+        <div class="meta-value highlight">
+          {% if dur >= 60 %}{{ (dur // 60) }}m {{ dur % 60 }}s{% else %}{{ dur }}s{% endif %}
+        </div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Install type</div>
+        <div class="meta-value highlight">{{ run.install_type | capitalize }}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Scope</div>
+        <div class="meta-value">{{ run.scope or 'smoke' }}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">OS</div>
+        <div class="meta-value highlight">{{ run.os_name or '—' }}</div>
+        {% if run.os_detail and run.os_detail != run.os_name %}
+        <div class="os-detail">{{ run.os_detail[:60] }}</div>
+        {% endif %}
+      </div>
+      {% if run.base_url %}
+      <div class="meta-item" style="grid-column: span 2">
+        <div class="meta-label">Server URL</div>
+        <div class="meta-value" style="font-family:var(--mono);font-size:12px">{{ run.base_url }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Alert status -->
+  <div class="alert-card">
+    {% if run.email_sent %}
+    <div class="alert-card-icon sent">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="alert-card-body">
+      <div class="alert-card-title">Alert sent</div>
+      <div class="alert-card-sub">Email notification delivered at {{ run.email_sent_at or 'unknown time' }}</div>
+    </div>
+    {% elif run.email_error %}
+    <div class="alert-card-icon failed">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <div class="alert-card-body">
+      <div class="alert-card-title">Alert failed to send</div>
+      <div class="alert-card-sub" style="color:#fca5a5">{{ run.email_error }}</div>
+    </div>
+    {% else %}
+    <div class="alert-card-icon none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    </div>
+    <div class="alert-card-body">
+      <div class="alert-card-title">No alert sent</div>
+      <div class="alert-card-sub">
+        Email notifications are not configured.
+        <a href="{{ url_for('test_dashboard.config') }}" style="color:var(--mc-yellow);text-decoration:none">Configure SMTP &rarr;</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Test suites -->
+  {% for suite_name, results in suites.items() %}
+  {% set suite_pass = results | selectattr('status', 'eq', 'pass') | list | length %}
+  {% set suite_total = results | length %}
+  {% set suite_all_pass = suite_pass == suite_total %}
+  <div class="suite-section">
+    <div class="suite-header {% if suite_all_pass %}all-pass{% else %}has-fail{% endif %}"
+         onclick="toggleSuite(this)">
+      <div>
+        <span class="suite-name">{{ suite_name }}</span>
+        <span class="suite-score" style="margin-left:12px">{{ suite_pass }}/{{ suite_total }} passing</span>
+      </div>
+      <svg class="suite-chevron open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="18 15 12 9 6 15"/>
+      </svg>
+    </div>
+    <div class="suite-body">
+      {% for r in results %}
+      <div class="test-row">
+        <div class="test-status-icon {{ r.status }}">
+          {% if r.status == 'pass' %}
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          {% else %}
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          {% endif %}
+        </div>
+        <div class="test-info">
+          <div class="test-name">{{ r.test_name }}</div>
+          {% if r.error_message %}
+          <div class="test-error">{{ r.error_message }}</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <p style="color:var(--text3);font-size:13px">No individual test results recorded for this run.</p>
+  {% endfor %}
+
+</main>
+
+<script>
+function toggleSuite(header) {
+  const body = header.nextElementSibling;
+  const chevron = header.querySelector('.suite-chevron');
+  const isOpen = chevron.classList.contains('open');
+  if (isOpen) {
+    body.style.display = 'none';
+    chevron.classList.remove('open');
+  } else {
+    body.style.display = '';
+    chevron.classList.add('open');
+  }
+}
+</script>
+</body>
+</html>

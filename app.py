@@ -52,6 +52,16 @@ app.register_blueprint(chat_bp)
 app.secret_key = os.environ.get("SECRET_KEY", "vima-dev-secret")
 app.register_blueprint(sim_bp)
 
+# Test results dashboard — mounted at /vima/test
+# Lives in tests/ to keep it separate from production app code.
+# The DB (tests/results.db) and config (tests/test_config.ini) are gitignored.
+try:
+    from tests.dashboard import test_bp as _test_bp  # noqa: E402
+    app.register_blueprint(_test_bp)
+except Exception as _e:  # pragma: no cover
+    import logging as _lg
+    _lg.getLogger(__name__).warning("Test dashboard unavailable: %s", _e)
+
 # Eagerly trigger Open Finance customer seeding in the background so that
 # the state strip is populated by the time the user navigates to the tab.
 def _eager_seed_ofin():

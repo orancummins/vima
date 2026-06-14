@@ -48,6 +48,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import time
 
 # ── Path bootstrap ─────────────────────────────────────────────────────────────
 # Must run before ANY package import so that `tests.*` resolves correctly
@@ -109,6 +110,79 @@ def _parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
+# ── DB / email reporter ──────────────────────────────────────────────────────
+def _record_run(
+    summary: Summary,
+    args,
+    install_type: str,
+    start_time: float,
+) -> None:
+    """Persist this run to tests/results.db and send email if configured.
+
+    Failures here are non-fatal: they are printed as warnings but never
+    affect the test exit code.
+    """
+    try:
+        import platform
+        from tests.dashboard.db import init_db, save_run, update_email_status
+        from tests.dashboard.mailer import load_config, send_summary_email
+
+        init_db()
+
+        duration = time.time() - start_time
+        total_p = sum(r.passed() for r in summary._suites)
+        total_f = sum(r.failed() for r in summary._suites)
+
+        # Flatten individual test results across all suites
+        all_results = []
+        for runner in summary._suites:
+            for result in runner.results:
+                all_results.append({
+                    "suite":   runner.suite,
+                    "name":    result.name,
+                    "passed":  result.passed,
+                    "message": result.message,
+                })
+
+        run_id = save_run(
+            run_at=time.strftime("%Y-%m-%dT%H:%M:%S"),
+            duration_seconds=round(duration, 2),
+            install_type="clean" if install_type == "C" else "existing",
+            os_name=platform.system(),
+            os_detail=platform.platform(),
+            total_tests=total_p + total_f,
+            passed_tests=total_p,
+            failed_tests=total_f,
+            scope="full" if getattr(args, "full", False) else "smoke",
+            base_url=getattr(args, "base_url", ""),
+            results=all_results,
+        )
+        print(f"  {green('[OK]  Run recorded in dashboard DB (run #{run_id}).')}")  # noqa: E501
+
+        # Send email if SMTP is configured
+        cfg = load_config()
+        if cfg.get("smtp_host") and cfg.get("to_addresses"):
+            ok, msg = send_summary_email(
+                cfg,
+                run_id=run_id,
+                passed=total_p,
+                failed=total_f,
+                total=total_p + total_f,
+                duration=duration,
+                install_type="clean" if install_type == "C" else "existing",
+                os_name=platform.system(),
+                scope="full" if getattr(args, "full", False) else "smoke",
+                suite_results=all_results,
+            )
+            update_email_status(run_id, ok, None if ok else msg)
+            if ok:
+                print(f"  {green('[OK]  Alert email sent.')}")
+            else:
+                print(f"  {yellow(f'[WARN] Alert email failed: {msg}')}")
+    except Exception as exc:
+        print(f"  {yellow(f'[WARN] Could not record run to dashboard: {exc}')}")  # noqa: E501
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def _header(text: str) -> None:
     print(f"\n{bold(cyan('-' * 60))}")
@@ -123,6 +197,7 @@ def _step(text: str) -> None:
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main() -> None:
     args = _parse_args()
+    _run_start_time = time.time()
     install_type = args.install_type.upper()
     # Normalize work_dir: strip trailing separator (Windows %~dp0 quirk) and
     # resolve to absolute path so subprocess.Popen(cwd=) never sees a stale cwd.
@@ -194,6 +269,20 @@ def main() -> None:
                 ok = wait_provision_complete(base_url, job_id, args.email)
                 if ok:
                     print(f"  {green('[OK]  Provisioning complete.')}")
+                    # Restart the server so it re-reads the .env credentials
+                    # written by the provisioner.  Without a restart the running
+                    # Flask process still has the old (empty) env vars in memory.
+                    if server_proc is not None and not args.no_server:
+                        _step("Restarting server to load provisioned credentials")
+                        stop_server(server_proc)
+                        server_proc = start_server(work_dir)
+                        print(f"  Waiting for server at {base_url} …")
+                        try:
+                            wait_server_ready(base_url, timeout=30)
+                            print(f"  {green('[OK]  Server ready with new credentials.')}")
+                        except RuntimeError as exc:
+                            print(f"  {red(f'Server failed to restart: {exc}')}")
+                            sys.exit(1)
                 else:
                     print(f"  {yellow('Provisioning did not complete — API tests may fail.')}")
                     print(f"  {yellow('You can re-run with --skip-provision on an existing install.')}")
@@ -282,6 +371,7 @@ def main() -> None:
             print(f"  {yellow('[INFO] work-dir is the original repo — skipping directory removal.')}")
 
     # ── Final summary ──────────────────────────────────────────
+    _record_run(summary, args, install_type, _run_start_time)
     summary.print_and_exit()
 
 

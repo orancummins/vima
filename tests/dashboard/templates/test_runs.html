@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Results — Mastercard Solution Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --mc-red: #eb001b;
+      --mc-orange: #ff5f00;
+      --mc-yellow: #f79e1b;
+      --bg: #111111;
+      --bg2: #161616;
+      --bg3: #1a1a1a;
+      --card: #1e1e1e;
+      --line: #2a2a2a;
+      --text: #f4f0ea;
+      --text2: #aaaaaa;
+      --text3: #666666;
+      --ok: #1f9d55;
+      --ok-dim: #14532d;
+      --err: #eb001b;
+      --err-dim: #450a0a;
+      --warn: #f79e1b;
+      --warn-dim: #432407;
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: "Inter", -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px;
+      background: #000;
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-marks { display: flex; gap: 5px; align-items: center; }
+    .dot { width: 18px; height: 18px; border-radius: 50%; display: inline-block; }
+    .dot-red { background: var(--mc-red); }
+    .dot-yellow { background: var(--mc-yellow); }
+    .brand-title { font-weight: 700; font-size: 15px; letter-spacing: -0.02em; }
+    .brand-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+    .header-nav { display: flex; gap: 8px; }
+    .nav-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--text2); font-size: 13px; font-family: inherit;
+      padding: 6px 14px; border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+      text-decoration: none; display: inline-block;
+    }
+    .nav-btn:hover { background: var(--line); color: var(--text); }
+    .nav-btn.active { background: var(--line); color: var(--text); font-weight: 600; }
+
+    /* ── Page layout ── */
+    .page-content {
+      flex: 1;
+      padding: 28px 32px;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ── Page header ── */
+    .page-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 24px;
+      gap: 16px;
+    }
+    .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; }
+    .page-meta { font-size: 12px; color: var(--text3); margin-top: 4px; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 13px; font-weight: 500; font-family: inherit;
+      cursor: pointer; border: 1px solid transparent;
+      text-decoration: none; transition: opacity 0.15s, background 0.15s;
+    }
+    .btn-primary { background: var(--mc-yellow); color: #000; }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-ghost { background: var(--line); color: var(--text2); border-color: var(--line); }
+    .btn-ghost:hover { background: #333; color: var(--text); }
+
+    /* ── Alert banner ── */
+    .alert {
+      padding: 12px 16px; border-radius: 8px; font-size: 13px;
+      margin-bottom: 20px; border: 1px solid;
+    }
+    .alert-error { background: var(--err-dim); border-color: var(--err); color: #fca5a5; }
+    .alert-ok    { background: var(--ok-dim);  border-color: var(--ok);  color: #86efac; }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: flex; gap: 14px; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+      padding: 16px 22px; min-width: 140px;
+    }
+    .stat-value { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; }
+    .stat-label { font-size: 11px; color: var(--text3); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* ── Table card ── */
+    .table-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .table-toolbar {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 13px; color: var(--text2);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 11px 16px;
+      text-align: left;
+      font-size: 11px; font-weight: 600;
+      color: var(--text3);
+      text-transform: uppercase; letter-spacing: 0.07em;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--line);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--bg3); }
+    tbody td {
+      padding: 13px 16px;
+      font-size: 13px;
+      vertical-align: middle;
+    }
+    .td-mono { font-family: var(--mono); font-size: 12px; }
+    .td-right { text-align: right; }
+    .td-center { text-align: center; }
+
+    /* ── Badges / pills ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+    .badge-ok   { background: var(--ok-dim);   color: #86efac; border: 1px solid #166534; }
+    .badge-fail { background: var(--err-dim);  color: #fca5a5; border: 1px solid #991b1b; }
+    .badge-warn { background: var(--warn-dim); color: #fed7aa; border: 1px solid #9a3412; }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .badge-ok   .badge-dot { background: var(--ok); }
+    .badge-fail .badge-dot { background: var(--err); }
+    .badge-warn .badge-dot { background: var(--warn); }
+
+    .pill-install {
+      display: inline-block;
+      padding: 2px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 500;
+      border: 1px solid var(--line);
+      color: var(--text2); background: var(--bg3);
+    }
+    .pill-install.clean { color: #7dd3fc; border-color: #075985; background: #082f49; }
+
+    /* ── Score bar ── */
+    .score-wrap { display: flex; align-items: center; gap: 10px; }
+    .score-bar {
+      flex: 1; height: 6px; background: var(--line); border-radius: 3px;
+      max-width: 80px; overflow: hidden;
+    }
+    .score-fill { height: 100%; border-radius: 3px; background: var(--ok); }
+    .score-fill.partial { background: var(--warn); }
+    .score-fill.fail { background: var(--err); }
+    .score-text { font-size: 13px; font-weight: 600; white-space: nowrap; }
+    .score-text.ok   { color: #86efac; }
+    .score-text.warn { color: #fed7aa; }
+    .score-text.fail { color: #fca5a5; }
+
+    /* ── Alert placeholder ── */
+    .alert-cell {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--text3);
+    }
+    .alert-cell.sent { color: #86efac; }
+    .alert-cell.failed { color: #fca5a5; }
+    .alert-cell svg { flex-shrink: 0; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 64px 24px;
+      color: var(--text3);
+    }
+    .empty-state-icon { font-size: 40px; margin-bottom: 16px; }
+    .empty-state-title { font-size: 16px; font-weight: 600; color: var(--text2); margin-bottom: 8px; }
+    .empty-state-sub { font-size: 13px; }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px;
+      border-top: 1px solid var(--line);
+      font-size: 13px; color: var(--text2);
+    }
+    .page-btns { display: flex; gap: 4px; }
+    .page-btn {
+      width: 32px; height: 32px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-family: inherit; font-weight: 500;
+      cursor: pointer; border: 1px solid var(--line);
+      background: none; color: var(--text2);
+      text-decoration: none;
+      transition: background 0.1s, color 0.1s;
+    }
+    .page-btn:hover:not(.disabled):not(.active) { background: var(--line); color: var(--text); }
+    .page-btn.active { background: var(--mc-yellow); border-color: var(--mc-yellow); color: #000; font-weight: 700; }
+    .page-btn.disabled { opacity: 0.3; pointer-events: none; cursor: default; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="brand">
+    <div class="brand-marks">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+    </div>
+    <div>
+      <div class="brand-title">Mastercard Solution Studio</div>
+      <div class="brand-sub">Test Results Dashboard</div>
+    </div>
+  </div>
+  <nav class="header-nav">
+    <a href="{{ url_for('test_dashboard.run_list') }}" class="nav-btn active">Runs</a>
+    <a href="{{ url_for('test_dashboard.config') }}" class="nav-btn">Settings</a>
+    <a href="/" class="nav-btn">Back to App</a>
+  </nav>
+</header>
+
+<!-- Page content -->
+<main class="page-content">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Test Runs</h1>
+      <p class="page-meta">All recorded test runs &mdash; {{ total }} total</p>
+    </div>
+    <div class="header-actions">
+      <a href="{{ url_for('test_dashboard.config') }}" class="btn btn-ghost">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Email settings
+      </a>
+    </div>
+  </div>
+
+  {% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+  {% endif %}
+
+  <!-- Stats row (last run stats) -->
+  {% if runs %}
+  {% set latest = runs[0] %}
+  {% set pct = (latest.passed_tests / latest.total_tests * 100) | int if latest.total_tests > 0 else 0 %}
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value" style="color:{{ '#86efac' if latest.failed_tests == 0 else '#fca5a5' }}">
+        {{ latest.passed_tests }}/{{ latest.total_tests }}
+      </div>
+      <div class="stat-label">Last run score</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ total }}</div>
+      <div class="stat-label">Total runs</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color: var(--mc-yellow)">
+        {% set dur = latest.duration_seconds | int %}
+        {% if dur >= 60 %}{{ (dur // 60) }}m {{ dur % 60 }}s{% else %}{{ dur }}s{% endif %}
+      </div>
+      <div class="stat-label">Last run duration</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="font-size:18px;padding-top:4px">{{ latest.run_at[:10] }}</div>
+      <div class="stat-label">Last run date</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Results table -->
+  <div class="table-card">
+    <div class="table-toolbar">
+      <span>
+        {% if total > 0 %}
+          Showing {{ ((page-1) * 15) + 1 }}–{{ [page * 15, total] | min }} of {{ total }} runs
+        {% else %}
+          No runs recorded yet
+        {% endif %}
+      </span>
+    </div>
+
+    {% if runs %}
+    <table>
+      <thead>
+        <tr>
+          <th style="width:52px">#</th>
+          <th>Date &amp; time</th>
+          <th>Install</th>
+          <th>OS</th>
+          <th>Score</th>
+          <th>Duration</th>
+          <th>Scope</th>
+          <th class="td-center">Alert</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in runs %}
+        {% set all_pass = run.failed_tests == 0 %}
+        {% set pct = (run.passed_tests / run.total_tests * 100) | int if run.total_tests > 0 else 0 %}
+        {% set dur = run.duration_seconds | int %}
+        <tr onclick="window.location='{{ url_for('test_dashboard.run_detail', run_id=run.id) }}'">
+          <td class="td-mono" style="color:var(--text3)">{{ run.id }}</td>
+          <td>
+            <span style="color:var(--text)">{{ run.run_at[:10] }}</span>
+            <span style="color:var(--text3);margin-left:6px;font-family:var(--mono);font-size:12px">{{ run.run_at[11:19] }}</span>
+          </td>
+          <td>
+            <span class="pill-install{% if run.install_type == 'clean' %} clean{% endif %}">{{ run.install_type }}</span>
+          </td>
+          <td style="color:var(--text2)">{{ run.os_name or '—' }}</td>
+          <td>
+            <div class="score-wrap">
+              <div class="score-bar">
+                <div class="score-fill{% if not all_pass %}{% if pct > 0 %} partial{% else %} fail{% endif %}{% endif %}"
+                     style="width:{{ pct }}%"></div>
+              </div>
+              <span class="score-text {% if all_pass %}ok{% elif run.failed_tests > 0 and run.passed_tests > 0 %}warn{% else %}fail{% endif %}">
+                {{ run.passed_tests }}/{{ run.total_tests }}
+              </span>
+            </div>
+          </td>
+          <td class="td-mono" style="color:var(--text2)">
+            {% if dur >= 60 %}{{ (dur // 60) }}m {{ dur % 60 }}s{% else %}{{ dur }}s{% endif %}
+          </td>
+          <td style="color:var(--text3);font-size:12px">{{ run.scope or 'smoke' }}</td>
+          <td class="td-center">
+            {% if run.email_sent %}
+              <span class="alert-cell sent" title="Email sent at {{ run.email_sent_at }}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                Sent
+              </span>
+            {% elif run.email_error %}
+              <span class="alert-cell failed" title="{{ run.email_error }}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                Failed
+              </span>
+            {% else %}
+              <span class="alert-cell" title="No email configured">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                &mdash;
+              </span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination">
+      <span>Page {{ page }} of {{ total_pages }}</span>
+      <div class="page-btns">
+        <a href="{{ url_for('test_dashboard.run_list', page=1) }}"
+           class="page-btn {% if page == 1 %}disabled{% endif %}" title="First">&laquo;</a>
+        <a href="{{ url_for('test_dashboard.run_list', page=page-1) }}"
+           class="page-btn {% if page == 1 %}disabled{% endif %}" title="Previous">&lsaquo;</a>
+        {% for p in range([1, page-2]|max, [total_pages+1, page+3]|min) %}
+          <a href="{{ url_for('test_dashboard.run_list', page=p) }}"
+             class="page-btn {% if p == page %}active{% endif %}">{{ p }}</a>
+        {% endfor %}
+        <a href="{{ url_for('test_dashboard.run_list', page=page+1) }}"
+           class="page-btn {% if page == total_pages %}disabled{% endif %}" title="Next">&rsaquo;</a>
+        <a href="{{ url_for('test_dashboard.run_list', page=total_pages) }}"
+           class="page-btn {% if page == total_pages %}disabled{% endif %}" title="Last">&raquo;</a>
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">&#9711;</div>
+      <div class="empty-state-title">No test runs recorded yet</div>
+      <div class="empty-state-sub">Run <code>test.bat</code> or <code>./test.sh</code> to record your first run.</div>
+    </div>
+    {% endif %}
+  </div>
+
+</main>
+</body>
+</html>
