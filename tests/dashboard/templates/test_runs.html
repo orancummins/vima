@@ -273,8 +273,19 @@
     </div>
   </div>
 
-  <div id="run-progress" style="margin-bottom:18px;">
-    <pre id="run-log" style="max-height:320px;overflow:auto;padding:12px;border-radius:8px;background:var(--card);border:1px solid var(--line);color:var(--text2);font-family:var(--mono);font-size:12px">Loading...</pre>
+  <div id="run-progress" style="margin-bottom:18px;display:flex;gap:12px;align-items:flex-start;">
+    <div style="flex:0 0 320px;">
+      <div style="font-size:13px;margin-bottom:8px">Overall Progress</div>
+      <div style="background:var(--line);border-radius:8px;overflow:hidden;height:18px;margin-bottom:8px">
+        <div id="overall-fill" style="height:100%;width:0%;background:var(--ok);"></div>
+      </div>
+      <div id="overall-text" style="font-size:12px;color:var(--text2);margin-bottom:8px">Idle</div>
+      <div id="suites-list" style="max-height:240px;overflow:auto"></div>
+    </div>
+    <div style="flex:1;">
+      <div style="font-size:13px;margin-bottom:8px">Live Log</div>
+      <pre id="run-log" style="max-height:320px;overflow:auto;padding:12px;border-radius:8px;background:var(--card);border:1px solid var(--line);color:var(--text2);font-family:var(--mono);font-size:12px">Loading...</pre>
+    </div>
   </div>
 
   {% if error %}
@@ -305,6 +316,31 @@
     renderLog(log);
     const runBtn = document.getElementById('run-btn');
     const runStatus = document.getElementById('run-status');
+    // Render structured progress if present
+    if (status.progress) {
+      const p = status.progress;
+      const overallFill = document.getElementById('overall-fill');
+      const overallText = document.getElementById('overall-text');
+      const suitesList = document.getElementById('suites-list');
+      if (overallFill && overallText) {
+        const pct = p.total > 0 ? Math.round((p.passed / p.total) * 100) : 0;
+        overallFill.style.width = pct + '%';
+        overallFill.style.background = p.failed > 0 ? 'var(--err)' : 'var(--ok)';
+        overallText.textContent = `${p.passed}/${p.total} passed (${pct}%)`;
+      }
+      if (suitesList) {
+        suitesList.innerHTML = '';
+        for (const s of p.suites) {
+          const div = document.createElement('div');
+          div.style.marginBottom = '8px';
+          div.innerHTML = `<div style="font-size:12px;color:var(--text);margin-bottom:4px">${s.name}</div>
+            <div style=\"background:var(--line);border-radius:6px;overflow:hidden;height:10px\">\n              <div style=\"height:100%;width:${s.pct}%;background:${s.failed>0? 'var(--err)': 'var(--ok)'}\"></div>\n            </div>
+            <div style=\"font-size:11px;color:var(--text2);margin-top:4px\">${s.passed}/${s.total} passed</div>`;
+          suitesList.appendChild(div);
+        }
+      }
+    }
+
     if (status.running) {
       if (runBtn) runBtn.disabled = true;
       if (runStatus) runStatus.textContent = 'Running (pid ' + (status.pid || '') + ')';
