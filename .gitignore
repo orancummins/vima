@@ -36,3 +36,7 @@ cli/ofin/sdk/_vendor/*_client.py
 
 # Local-only docs / plans (not for commit)
 *.local.md
+
+# Test results dashboard
+tests/results.db
+tests/test_config.ini

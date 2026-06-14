@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Email Settings — Test Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --mc-red: #eb001b; --mc-yellow: #f79e1b;
+      --bg: #111111; --bg2: #161616; --bg3: #1a1a1a;
+      --card: #1e1e1e; --line: #2a2a2a;
+      --text: #f4f0ea; --text2: #aaaaaa; --text3: #666666;
+      --ok: #1f9d55; --ok-dim: #14532d;
+      --err: #eb001b; --err-dim: #450a0a;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; }
+    body {
+      font-family: "Inter", -apple-system, sans-serif;
+      background: var(--bg); color: var(--text); font-size: 14px;
+    }
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px; background: #000;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-marks { display: flex; gap: 5px; }
+    .dot { width: 18px; height: 18px; border-radius: 50%; display: inline-block; }
+    .dot-red { background: var(--mc-red); }
+    .dot-yellow { background: var(--mc-yellow); }
+    .brand-title { font-weight: 700; font-size: 15px; }
+    .brand-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+    .header-nav { display: flex; gap: 8px; }
+    .nav-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--text2); font-size: 13px; font-family: inherit;
+      padding: 6px 14px; border-radius: 6px;
+      text-decoration: none; display: inline-block;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-btn:hover { background: var(--line); color: var(--text); }
+    .nav-btn.active { background: var(--line); color: var(--text); font-weight: 600; }
+
+    .page-content { padding: 28px 32px; max-width: 640px; margin: 0 auto; }
+    .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 6px; }
+    .page-meta { font-size: 13px; color: var(--text3); margin-bottom: 28px; }
+
+    /* ── Alert banners ── */
+    .banner {
+      padding: 12px 16px; border-radius: 8px; font-size: 13px;
+      margin-bottom: 20px; border: 1px solid; display: flex; gap: 10px; align-items: flex-start;
+    }
+    .banner-ok  { background: var(--ok-dim); border-color: var(--ok); color: #86efac; }
+    .banner-err { background: var(--err-dim); border-color: var(--err); color: #fca5a5; }
+
+    /* ── Form card ── */
+    .form-card {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 12px; overflow: hidden;
+    }
+    .form-section {
+      padding: 22px 24px; border-bottom: 1px solid var(--line);
+    }
+    .form-section:last-child { border-bottom: none; }
+    .section-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 16px; }
+    .section-desc  { font-size: 12px; color: var(--text3); margin-bottom: 16px; margin-top: -8px; }
+
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
+    .field-row { display: flex; gap: 12px; }
+    .field-row .field { flex: 1; margin-bottom: 0; }
+    label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+    input[type="text"], input[type="email"], input[type="number"], input[type="password"] {
+      width: 100%; padding: 9px 12px;
+      background: var(--bg2); border: 1px solid var(--line);
+      border-radius: 7px; color: var(--text); font-family: inherit; font-size: 13px;
+      outline: none; transition: border-color 0.15s;
+    }
+    input:focus { border-color: var(--mc-yellow); }
+    input::placeholder { color: var(--text3); }
+
+    .checkbox-row { display: flex; align-items: center; gap: 10px; }
+    input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--mc-yellow); cursor: pointer; }
+    .checkbox-label { font-size: 13px; color: var(--text2); cursor: pointer; }
+
+    .hint { font-size: 11px; color: var(--text3); margin-top: 5px; }
+
+    /* ── Buttons ── */
+    .form-actions {
+      padding: 18px 24px; background: var(--bg3);
+      border-top: 1px solid var(--line);
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: 8px;
+      font-size: 13px; font-weight: 500; font-family: inherit;
+      cursor: pointer; border: 1px solid transparent;
+      text-decoration: none; transition: opacity 0.15s, background 0.15s;
+    }
+    .btn-primary { background: var(--mc-yellow); color: #000; border: none; }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-ghost { background: var(--line); color: var(--text2); border-color: var(--line); }
+    .btn-ghost:hover { background: #333; color: var(--text); }
+
+    /* ── Config file path note ── */
+    .config-path-note {
+      margin-top: 20px; padding: 12px 16px;
+      background: var(--bg2); border: 1px solid var(--line);
+      border-radius: 8px; font-size: 12px; color: var(--text3);
+    }
+    .config-path-note code { font-family: var(--mono); color: var(--text2); }
+  </style>
+</head>
+<body>
+<header class="header">
+  <div class="brand">
+    <div class="brand-marks">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+    </div>
+    <div>
+      <div class="brand-title">Mastercard Solution Studio</div>
+      <div class="brand-sub">Test Results Dashboard</div>
+    </div>
+  </div>
+  <nav class="header-nav">
+    <a href="{{ url_for('test_dashboard.run_list') }}" class="nav-btn">Runs</a>
+    <a href="{{ url_for('test_dashboard.config') }}" class="nav-btn active">Settings</a>
+    <a href="/" class="nav-btn">Back to App</a>
+  </nav>
+</header>
+
+<main class="page-content">
+  <h1 class="page-title">Email Settings</h1>
+  <p class="page-meta">Configure SMTP to receive test completion alerts with pass/fail details.</p>
+
+  {% if saved %}
+  <div class="banner banner-ok">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><polyline points="20 6 9 17 4 12"/></svg>
+    Settings saved to <code style="font-family:var(--mono);margin:0 4px">tests/test_config.ini</code>
+  </div>
+  {% endif %}
+
+  {% if test_result %}
+  {% if test_result[0] %}
+  <div class="banner banner-ok">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><polyline points="20 6 9 17 4 12"/></svg>
+    {{ test_result[1] }}
+  </div>
+  {% else %}
+  <div class="banner banner-err">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    Failed to send test email: {{ test_result[1] }}
+  </div>
+  {% endif %}
+  {% endif %}
+
+  <form method="POST">
+    <div class="form-card">
+
+      <!-- SMTP server -->
+      <div class="form-section">
+        <div class="section-title">SMTP server</div>
+        <div class="field-row">
+          <div class="field" style="flex:3">
+            <label for="smtp_host">SMTP host</label>
+            <input type="text" id="smtp_host" name="smtp_host"
+                   value="{{ cfg.smtp_host }}" placeholder="smtp.office365.com" />
+          </div>
+          <div class="field" style="flex:1">
+            <label for="smtp_port">Port</label>
+            <input type="number" id="smtp_port" name="smtp_port"
+                   value="{{ cfg.smtp_port }}" placeholder="587" min="1" max="65535" />
+          </div>
+        </div>
+        <div class="field">
+          <div class="checkbox-row">
+            <input type="checkbox" id="use_tls" name="use_tls"
+                   {% if cfg.use_tls in ('1', 'true', 'yes', 'on') %}checked{% endif %} />
+            <label class="checkbox-label" for="use_tls">Use STARTTLS (recommended for port 587)</label>
+          </div>
+          <div class="hint">Disable only if your server uses a plain-text or implicit TLS (port 465) connection.</div>
+        </div>
+      </div>
+
+      <!-- Authentication -->
+      <div class="form-section">
+        <div class="section-title">Authentication</div>
+        <div class="field-row">
+          <div class="field">
+            <label for="smtp_user">SMTP username</label>
+            <input type="email" id="smtp_user" name="smtp_user"
+                   value="{{ cfg.smtp_user }}" placeholder="your@email.com" />
+          </div>
+          <div class="field">
+            <label for="smtp_password">SMTP password / app password</label>
+            <input type="password" id="smtp_password" name="smtp_password"
+                   value="{{ cfg.smtp_password }}" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Recipients -->
+      <div class="form-section">
+        <div class="section-title">From &amp; recipients</div>
+        <div class="field">
+          <label for="from_address">From address</label>
+          <input type="email" id="from_address" name="from_address"
+                 value="{{ cfg.from_address }}" placeholder="vima-test@your-domain.com" />
+          <div class="hint">Defaults to the SMTP username if left blank.</div>
+        </div>
+        <div class="field">
+          <label for="to_addresses">To addresses</label>
+          <input type="text" id="to_addresses" name="to_addresses"
+                 value="{{ cfg.to_addresses }}" placeholder="alice@example.com, bob@example.com" />
+          <div class="hint">Comma-separated list. All addresses receive every test completion alert.</div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <button type="submit" name="action" value="save" class="btn btn-primary">Save settings</button>
+        <button type="submit" name="action" value="test_email" class="btn btn-ghost">Send test email</button>
+        <a href="{{ url_for('test_dashboard.run_list') }}" class="btn btn-ghost">Cancel</a>
+      </div>
+
+    </div>
+  </form>
+
+  <div class="config-path-note">
+    Settings are stored in <code>tests/test_config.ini</code> which is gitignored.
+    Copy <code>tests/test_config.example.ini</code> as a starting point.
+  </div>
+</main>
+</body>
+</html>
