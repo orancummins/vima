@@ -263,9 +263,9 @@
       <p class="page-meta">All recorded test runs &mdash; {{ total }} total</p>
     </div>
     <div class="header-actions">
-      <form method="post" action="/vima/test/run" style="display:inline">
-        <button class="btn btn-primary" type="submit">Run Smoke Tests</button>
-      </form>
+      <button id="run-btn" class="btn btn-primary">Run Smoke Tests</button>
+      <div id="run-status" style="margin-left:12px;display:inline-block;color:var(--text2)"></div>
+      
       <a href="{{ url_for('test_dashboard.config') }}" class="btn btn-ghost">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Email settings
@@ -273,9 +273,77 @@
     </div>
   </div>
 
+  <div id="run-progress" style="margin-bottom:18px;">
+    <pre id="run-log" style="max-height:320px;overflow:auto;padding:12px;border-radius:8px;background:var(--card);border:1px solid var(--line);color:var(--text2);font-family:var(--mono);font-size:12px">Loading...</pre>
+  </div>
+
   {% if error %}
   <div class="alert alert-error">{{ error }}</div>
   {% endif %}
+
+<script>
+  async function fetchStatus() {
+    try {
+      const res = await fetch('/vima/test/run_status');
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) { return null; }
+  }
+
+  function renderLog(lines) {
+    const el = document.getElementById('run-log');
+    if (!el) return;
+    el.textContent = lines.join('\n');
+    el.scrollTop = el.scrollHeight;
+  }
+
+  let pollTimer = null;
+  async function poll() {
+    const status = await fetchStatus();
+    if (!status) return;
+    const log = status.log || [];
+    renderLog(log);
+    const runBtn = document.getElementById('run-btn');
+    const runStatus = document.getElementById('run-status');
+    if (status.running) {
+      if (runBtn) runBtn.disabled = true;
+      if (runStatus) runStatus.textContent = 'Running (pid ' + (status.pid || '') + ')';
+      pollTimer = setTimeout(poll, 2000);
+    } else {
+      if (runBtn) runBtn.disabled = false;
+      if (runStatus) runStatus.textContent = 'Idle';
+      // don't poll continuously when idle
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    const runBtn = document.getElementById('run-btn');
+    if (runBtn) {
+      runBtn.addEventListener('click', async function(){
+        runBtn.disabled = true;
+        runBtn.textContent = 'Starting...';
+        try {
+          const r = await fetch('/vima/test/run', { method: 'POST' });
+          const j = await r.json();
+          if (j.ok) {
+            document.getElementById('run-status').textContent = 'Started (pid ' + j.pid + ')';
+          } else {
+            document.getElementById('run-status').textContent = 'Failed to start';
+            runBtn.disabled = false;
+            runBtn.textContent = 'Run Smoke Tests';
+          }
+        } catch (e) {
+          document.getElementById('run-status').textContent = 'Error starting run';
+          runBtn.disabled = false;
+          runBtn.textContent = 'Run Smoke Tests';
+        }
+        poll();
+      });
+    }
+    // initial poll to load latest log
+    poll();
+  });
+</script>
 
   <!-- Stats row (last run stats) -->
   {% if runs %}
