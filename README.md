@@ -78,6 +78,30 @@ configured.
 
 ![Open Finance API](docs/screenshots/MastercardSolutionStudio-API-OpenFinance.png)
 
+### API Bundles — solution-shaped API combinations
+
+The **API Bundles** tab reframes the same APIs around real business problems
+rather than product categories. Each bundle groups the APIs that naturally
+compose together (e.g. "Account Intelligence & PFM" combines Open Finance,
+Consumer Clarity and Merchant Identifier), explains why they belong together,
+and walks through the end-to-end integration journey.
+
+Every bundle page includes:
+
+- **What you can do** — headline capability grid
+- **How the APIs fit together** — numbered timeline across the member APIs
+- **Walkthroughs** — concrete end-to-end scenarios
+- **Open Finance CLI** — `ofin` command-line tool (bundled under `cli/`) for
+  driving Open Finance directly from a terminal; supports US, AU and EU
+  regions, Windows / macOS / Linux
+- **Open Finance SDK** — `OfinClient` Python client for embedding Open Finance
+  into your own app; one client, three regions, credentials auto-loaded from
+  `config/.env`
+
+![Open Finance CLI](docs/screenshots/ss-ofin-cli.png)
+
+![Open Finance SDK](docs/screenshots/ss-ofin-sdk.png)
+
 ### Authentic Python snippets
 
 Every API operation can render an authentic Python snippet sourced from the
