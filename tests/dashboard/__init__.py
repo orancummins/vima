@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 import os
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 
 from tests.dashboard.db import (
     init_db,
@@ -134,4 +134,48 @@ def run_trigger():
     except Exception as exc:
         return jsonify({"ok": False, "error": str(exc)}), 500
 
+    # Persist PID so status endpoint can detect a running run
+    try:
+        with open("tests/last_run.pid", "w") as f:
+            f.write(str(p.pid))
+    except Exception:
+        pass
+
     return jsonify({"ok": True, "pid": p.pid, "message": "Test run started in background."}), 202
+
+
+
+@test_bp.route("/run_status", methods=["GET"])
+def run_status():
+    """Return current run status and tail of the log file."""
+    pid = None
+    running = False
+    pid_path = os.path.join(os.getcwd(), "tests", "last_run.pid")
+    log_path = os.path.join(os.getcwd(), "tests", "last_run.log")
+
+    # Read pid if present
+    try:
+        if os.path.exists(pid_path):
+            with open(pid_path, "r") as f:
+                pid = int(f.read().strip() or 0)
+            # Check whether process exists
+            try:
+                os.kill(pid, 0)
+                running = True
+            except Exception:
+                running = False
+    except Exception:
+        pid = None
+        running = False
+
+    # Tail log file
+    tail_lines = []
+    try:
+        if os.path.exists(log_path):
+            with open(log_path, "r") as f:
+                lines = f.readlines()
+            tail_lines = [l.rstrip("\n") for l in lines[-400:]]
+    except Exception:
+        tail_lines = ["(error reading log)"]
+
+    return jsonify({"ok": True, "pid": pid, "running": running, "log": tail_lines})
