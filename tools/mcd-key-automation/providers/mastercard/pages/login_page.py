@@ -37,17 +37,29 @@ class LoginPage:
         """
         logger.info("Pre-filling login form for {}", email)
         try:
+            await self.page.bring_to_front()
             await self.page.wait_for_load_state("domcontentloaded", timeout=10000)
 
             email_loc = self.page.locator(LoginSelectors.email_input).first
             await email_loc.wait_for(state="visible", timeout=8000)
-            await email_loc.click(click_count=3)
-            await email_loc.press_sequentially(email, delay=40)
+            await email_loc.scroll_into_view_if_needed(timeout=3000)
+            # Use force=True so React portals that intercept pointer events still receive the click.
+            await email_loc.click(click_count=3, force=True)
+            # Prefer fill() so the full value is committed atomically; fall back to
+            # press_sequentially for frameworks that only respond to key events.
+            try:
+                await email_loc.fill(email)
+            except Exception:
+                await email_loc.press_sequentially(email, delay=40)
 
             password_loc = self.page.locator(LoginSelectors.password_input).first
             await password_loc.wait_for(state="visible", timeout=8000)
-            await password_loc.click(click_count=3)
-            await password_loc.press_sequentially(password, delay=40)
+            await password_loc.scroll_into_view_if_needed(timeout=3000)
+            await password_loc.click(click_count=3, force=True)
+            try:
+                await password_loc.fill(password)
+            except Exception:
+                await password_loc.press_sequentially(password, delay=40)
 
             submit_loc = self.page.locator(LoginSelectors.submit_button).first
             await submit_loc.wait_for(state="visible", timeout=5000)
@@ -56,6 +68,43 @@ class LoginPage:
         except Exception as exc:
             logger.warning(
                 "Credential pre-fill failed ({}): {} — complete login manually in the browser",
+                type(exc).__name__,
+                str(exc)[:120],
+            )
+
+    async def fill_email_sso(self, email: str) -> None:
+        """Pre-fill the email field only and submit — for SSO/federated login.
+
+        After entering the email and clicking submit the portal redirects to
+        the corporate SSO provider (e.g. Okta, AAD).  We do not attempt to
+        fill the password field because it lives on a different domain.
+        The caller is responsible for waiting until authentication completes.
+
+        Set MCD_PORTAL_EMAIL (without MCD_PORTAL_PASSWORD) to trigger this
+        path automatically, or pass SSO=Y via the test launcher.
+        """
+        logger.info("Pre-filling email for SSO login: {}", email)
+        try:
+            await self.page.bring_to_front()
+            await self.page.wait_for_load_state("domcontentloaded", timeout=10000)
+
+            email_loc = self.page.locator(LoginSelectors.email_input).first
+            await email_loc.wait_for(state="visible", timeout=8000)
+            await email_loc.scroll_into_view_if_needed(timeout=3000)
+            # Use force=True so React portals that intercept pointer events still receive the click.
+            await email_loc.click(click_count=3, force=True)
+            try:
+                await email_loc.fill(email)
+            except Exception:
+                await email_loc.press_sequentially(email, delay=40)
+
+            submit_loc = self.page.locator(LoginSelectors.submit_button).first
+            await submit_loc.wait_for(state="visible", timeout=5000)
+            await submit_loc.click()
+            logger.info("SSO email submitted — waiting for corporate SSO redirect...")
+        except Exception as exc:
+            logger.warning(
+                "SSO email fill failed ({}): {} — complete login manually",
                 type(exc).__name__,
                 str(exc)[:120],
             )
@@ -108,8 +157,16 @@ class LoginPage:
             bool(email) and email not in _PLACEHOLDER_EMAILS
             and bool(password) and password not in _PLACEHOLDER_PASSWORDS
         )
+        # SSO / email-only mode: MCD_PORTAL_EMAIL set but MCD_PORTAL_PASSWORD absent.
+        # We auto-fill just the email and submit; the portal redirects to the
+        # corporate SSO provider which handles authentication from there.
+        have_sso_email = (
+            bool(email) and email not in _PLACEHOLDER_EMAILS and not password
+        )
         if have_real_creds:
             await self.fill_credentials(email, password)
+        elif have_sso_email:
+            await self.fill_email_sso(email)
         else:
             if headless:
                 raise RuntimeError(

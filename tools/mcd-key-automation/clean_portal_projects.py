@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Delete all Solution Studio ('SS-*') projects from Mastercard Developers portal.
+"""Delete all Solution Studio ('SST-*') projects from Mastercard Developers portal.
 
 Run standalone:
-    python clean_portal_projects.py [--prefix SS]
+    python clean_portal_projects.py [--prefix SST]
 
 Or called programmatically from clean_keys.py.
 """
@@ -147,7 +147,7 @@ async def _delete_project(page: Page, name: str, href: str, base_url: str = "htt
     return True
 
 
-async def run_cleanup(prefix: str = "SS-") -> dict:
+async def run_cleanup(prefix: str = "SST-") -> dict:
     """Open browser (reusing saved session), list SS projects, delete them all.
 
     Always navigates through the login flow (LoginPage.wait_for_manual_auth) so
@@ -187,8 +187,8 @@ async def run_cleanup(prefix: str = "SS-") -> dict:
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Delete SS-* projects from Mastercard Developers portal.")
-    parser.add_argument("--prefix", default="SS-", help="Project name prefix to match (default: SS-)")
+    parser = argparse.ArgumentParser(description="Delete SST-* projects from Mastercard Developers portal.")
+    parser.add_argument("--prefix", default="SST-", help="Project name prefix to match (default: SST-)")
     args = parser.parse_args()
 
     logger.remove()
@@ -204,5 +204,5 @@ if __name__ == "__main__":
         for n in r["failed"]:
             print(f"  • {n}")
     if not r["deleted"] and not r["failed"]:
-        print("No SS-* projects found.")
+        print("No SST-* projects found.")
 
