@@ -26,7 +26,8 @@ echo ""
 
 # ── Parse CLI arguments ───────────────────────────────────────
 EMAIL=""
-SSO=""
+# Default to non-SSO when `--sso` is not passed
+SSO="N"
 PORTAL_PASSWORD=""
 INSTALL_TYPE=""
 KEY_PASSWORD=""
