@@ -263,7 +263,7 @@
       <p class="page-meta">All recorded test runs &mdash; {{ total }} total</p>
     </div>
     <div class="header-actions">
-      <form method="post" action="{{ url_for('test_dashboard.run_trigger') }}" style="display:inline">
+      <form method="post" action="/vima/test/run" style="display:inline">
         <button class="btn btn-primary" type="submit">Run Smoke Tests</button>
       </form>
       <a href="{{ url_for('test_dashboard.config') }}" class="btn btn-ghost">
