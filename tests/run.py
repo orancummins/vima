@@ -270,7 +270,12 @@ def main() -> None:
                 portal_password = getattr(args, "portal_password", "") or ""
                 save_portal_credentials(base_url, args.email, portal_password)
 
-                job_id = start_provision_job(base_url, ["bin_lookup"], args.key_password)
+                job_id = start_provision_job(
+                    base_url,
+                    ["bin_lookup"],
+                    args.key_password,
+                    tool_dir=os.path.join(_ROOT, "tools", "mcd-key-automation"),
+                )
                 print(f"  Provision job started: {job_id}")
                 ok = wait_provision_complete(base_url, job_id, args.email)
                 if ok:

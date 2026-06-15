@@ -2857,7 +2857,16 @@ def provision_start():
     if _non_us_mode_enabled() and _OPEN_FINANCE_US_API_ID in selected_apis:
         return _non_us_forbidden_response()
 
-    tool_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools", "mcd-key-automation")
+    # Allow the caller (e.g. tests/run.py in a clean run) to override the tool
+    # directory so the cloned temp server can use the original repo's .venv
+    # rather than failing because the clone doesn't have a .venv installed.
+    _default_tool_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools", "mcd-key-automation")
+    override_tool_dir = (body.get("tool_dir") or "").strip()
+    if override_tool_dir and os.path.isdir(override_tool_dir):
+        tool_dir = os.path.normpath(os.path.abspath(override_tool_dir))
+    else:
+        tool_dir = _default_tool_dir
+
     setup_error = _provisioner_setup_error(tool_dir)
     if setup_error:
         return jsonify({"error": setup_error, "setup_required": True}), 503

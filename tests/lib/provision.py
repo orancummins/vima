@@ -70,12 +70,16 @@ def start_provision_job(
     base_url: str,
     apis: list[str],
     key_password: str = "foobar!!",
+    tool_dir: str | None = None,
 ) -> str:
     """POST /provision/start and return the job_id string."""
     url = f"{base_url}/provision/start"
+    payload: dict = {"apis": apis, "password": key_password, "project_prefix": "SST"}
+    if tool_dir:
+        payload["tool_dir"] = tool_dir
     resp = requests.post(
         url,
-        json={"apis": apis, "password": key_password, "project_prefix": "SST"},
+        json=payload,
         timeout=30,
     )
     if resp.status_code != 200:
