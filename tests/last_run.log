@@ -4,8 +4,7 @@
 ============================================================
 
 
-Cloning into 'C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-200519'...
-Updating files:  30% (133/436)Updating files:  31% (136/436)Updating files:  32% (140/436)Updating files:  33% (144/436)Updating files:  34% (149/436)Updating files:  35% (153/436)Updating files:  36% (157/436)Updating files:  37% (162/436)Updating files:  38% (166/436)Updating files:  39% (171/436)Updating files:  40% (175/436)Updating files:  41% (179/436)Updating files:  42% (184/436)Updating files:  43% (188/436)Updating files:  44% (192/436)Updating files:  45% (197/436)Updating files:  46% (201/436)Updating files:  47% (205/436)Updating files:  48% (210/436)Updating files:  49% (214/436)Updating files:  50% (218/436)Updating files:  51% (223/436)Updating files:  52% (227/436)Updating files:  53% (232/436)Updating files:  54% (236/436)Updating files:  55% (240/436)Updating files:  56% (245/436)Updating files:  57% (249/436)Updating files:  58% (253/436)Updating files:  59% (258/436)Updating files:  60% (262/436)Updating files:  61% (266/436)Updating files:  62% (271/436)Updating files:  63% (275/436)Updating files:  64% (280/436)Updating files:  65% (284/436)Updating files:  66% (288/436)Updating files:  67% (293/436)Updating files:  68% (297/436)Updating files:  69% (301/436)Updating files:  70% (306/436)Updating files:  71% (310/436)Updating files:  72% (314/436)Updating files:  72% (315/436)Updating files:  73% (319/436)Updating files:  74% (323/436)Updating files:  75% (327/436)Updating files:  76% (332/436)Updating files:  77% (336/436)Updating files:  78% (341/436)Updating files:  79% (345/436)Updating files:  80% (349/436)Updating files:  81% (354/436)Updating files:  82% (358/436)Updating files:  83% (362/436)Updating files:  84% (367/436)Updating files:  85% (371/436)Updating files:  86% (375/436)Updating files:  87% (380/436)Updating files:  88% (384/436)Updating files:  89% (389/436)Updating files:  90% (393/436)Updating files:  91% (397/436)Updating files:  92% (402/436)Updating files:  93% (406/436)Updating files:  94% (410/436)Updating files:  95% (415/436)Updating files:  96% (419/436)Updating files:  97% (423/436)Updating files:  98% (428/436)Updating files:  99% (432/436)Updating files: 100% (436/436)Updating files: 100% (436/436), done.
+Cloning into 'C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-212231'...
 WARNING: The following features are always enabled: truststore. 
 
 [notice] A new release of pip is available: 25.3 -> 26.1.2
@@ -40,16 +39,6 @@ Listening on http://0.0.0.0:9022
 
  * Serving Flask app 'app'
  * Debug mode: on
-Warning: Ignoring extra certs from `C:\Program Files\ClaudeCode\mastercard_prd_corporate_network_root_ca_g2.pem;C:\Program Files\ClaudeCode\combined-certs.pem`, load failed: error:8000007B:system library::no protocol option
-2026-06-15 20:05:50.515 | INFO     | browser.session:browser_session:48 - Reusing saved session from C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
-2026-06-15 20:05:52.217 | INFO     | providers.mastercard.pages.login_page:goto:25 - Navigating to https://developer.mastercard.com/account/log-in
-2026-06-15 20:06:03.082 | INFO     | browser.waits:wait_until:33 - Still waiting for saved-session redirect...
-2026-06-15 20:06:04.597 | INFO     | browser.waits:wait_until:25 - Reached saved-session redirect
-2026-06-15 20:06:04.598 | INFO     | providers.mastercard.pages.login_page:wait_for_manual_auth:142 - Saved session redirected to https://developer.mastercard.com/dashboard — skipping login form.
-2026-06-15 20:06:04.598 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
-2026-06-15 20:06:07.705 | INFO     | __main__:run_cleanup:203 - No projects found with prefix 'SST-'
-2026-06-15 20:06:07.721 | INFO     | browser.session:browser_session:61 - Saved session state to C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
-No SST-* projects found.
 
 [1m[36m------------------------------------------------------------[0m[0m
 [1m[36mVima / Solution Studio — Automated Test Suite[0m[0m
@@ -61,8 +50,8 @@ No SST-* projects found.
   Server:        http://127.0.0.1:9022
 
 [1m>> Clean install — cloning repository[0m
-  Cloning https://github.com/orancummins/vima.git -> C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-200519 ...
-  Cloned to: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-200519
+  Cloning https://github.com/orancummins/vima.git -> C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-212231 ...
+  Cloned to: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-212231
   Installing dependencies ...
 
 [1m>> Starting Flask server on port 9022[0m
@@ -84,11 +73,71 @@ No SST-* projects found.
 [1m>> Auto-provisioning BIN Lookup API key[0m
 
 [1m>> Saving portal credentials for provisioner auto-login[0m
-  [31mProvisioning error: POST /provision/start returned 503: {
-  "error": "Mastercard key automation is not set up. Run `run.bat` from the repo root, then try provisioning again.",
-  "setup_required": true
-}
-[0m
+  Provision job started: 00f53ba1
+
+  Opening http://127.0.0.1:9022/app for Mastercard portal SSO login …
+  Account: oran.cummins@mastercard.com
+  Please log in when the browser opens and complete the portal flow.
+  (Timeout: 600s)
+
+  Provisioning log:
+    2026-06-15 21:22:41.487 | INFO     | app.orchestrator:run:32 - Loaded config for env=sandbox (1 projects)
+    Warning: Ignoring extra certs from `C:\Program Files\ClaudeCode\mastercard_prd_corporate_network_root_ca_g2.pem;C:\Program Files\ClaudeCode\combined-certs.pem`, load failed: error:8000007B:system library::no protocol option
+    2026-06-15 21:22:42.633 | INFO     | browser.session:browser_session:48 - Reusing saved session from C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
+    2026-06-15 21:22:43.390 | INFO     | providers.mastercard.pages.login_page:goto:25 - Navigating to https://developer.mastercard.com/account/log-in
+    2026-06-15 21:22:47.417 | INFO     | browser.waits:wait_until:33 - Still waiting for saved-session redirect...
+    2026-06-15 21:22:48.922 | INFO     | browser.waits:wait_until:25 - Reached saved-session redirect
+    2026-06-15 21:22:48.922 | INFO     | providers.mastercard.pages.login_page:wait_for_manual_auth:142 - Saved session redirected to https://developer.mastercard.com/dashboard — skipping login form.
+    2026-06-15 21:22:48.922 | INFO     | providers.mastercard.provider:login:34 - Authenticated session detected.
+    2026-06-15 21:22:48.922 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
+    2026-06-15 21:22:51.251 | INFO     | providers.mastercard.workflows.project_workflow:ensure_project_with_api:677 - Provisioning 'bin_lookup' (type=oauth1_standard) — project 'SST-bin_lookup-20260615212243'
+    2026-06-15 21:22:54.522 | INFO     | providers.mastercard.pages.create_project_page:fill:31 - Filling create-project form: name='SST-bin_lookup-20260615212243' on_behalf=False region=None api_selection=None
+    2026-06-15 21:22:56.470 | INFO     | providers.mastercard.pages.create_project_page:proceed:91 - Proceed button enabled after 0.0s
+    2026-06-15 21:22:56.470 | INFO     | providers.mastercard.pages.create_project_page:proceed:97 - Clicking Proceed (url=https://developer.mastercard.com/create-project?services=bin-lookup)
+    2026-06-15 21:22:56.516 | INFO     | providers.mastercard.pages.create_project_page:proceed:101 - Proceed clicked — url now: https://developer.mastercard.com/create-project?services=bin-lookup
+    2026-06-15 21:22:57.063 | INFO     | providers.mastercard.pages.create_project_page:wait_for_confirmation_or_project_page:136 - Wizard advanced to Step 2 (Project credentials) — https://developer.mastercard.com/create-project?services=bin-lookup
+    2026-06-15 21:22:57.064 | INFO     | providers.mastercard.pages.create_project_page:fill_step2_credentials:226 - Filling Step 2 credentials: alias='bin_lookup'
+    2026-06-15 21:22:58.611 | INFO     | providers.mastercard.pages.create_project_page:_wait_for_create_button_enabled:315 - 'Create project' button enabled after 0.0s
+    2026-06-15 21:22:58.614 | INFO     | providers.mastercard.pages.create_project_page:create_key_step2:760 - 'Create project' button state: {'found': True, 'disabled': False, 'ariaDisabled': 'false', 'display': 'block', 'visibility': 'visible'}
+    2026-06-15 21:22:58.783 | INFO     | browser.screenshots:capture:20 - Captured screenshot C:\Users\e031093\dev\vima\tools\mcd-key-automation\logs\screenshots\20260615T202258_step2_before_submit.png
+    2026-06-15 21:22:58.783 | INFO     | providers.mastercard.pages.create_project_page:create_key_step2:776 - Clicking 'Create project' on Step 2
+    2026-06-15 21:22:58.932 | INFO     | providers.mastercard.pages.create_project_page:wait_for_download_after_step2:870 - Final key step detected via visible 'Skip this step' + 'Create project' buttons
+    2026-06-15 21:22:59.025 | INFO     | browser.screenshots:capture:20 - Captured screenshot C:\Users\e031093\dev\vima\tools\mcd-key-automation\logs\screenshots\20260615T202258_step3_detected_via_skip.png
+    2026-06-15 21:22:59.035 | INFO     | providers.mastercard.pages.create_project_page:_wait_for_create_button_enabled:315 - 'Create project' button enabled after 0.0s
+    2026-06-15 21:22:59.041 | INFO     | providers.mastercard.pages.create_project_page:wait_for_download_after_step2:905 - Clicked 'Create project' on final key step — found=True
+    2026-06-15 21:23:04.546 | INFO     | providers.mastercard.pages.create_project_page:wait_for_download_after_step2:822 - Download key button appeared — https://developer.mastercard.com/create-project?services=bin-lookup
+    2026-06-15 21:23:04.548 | INFO     | providers.mastercard.pages.create_project_page:download_key_file:1046 - Clicking 'Download key file'
+    2026-06-15 21:23:05.201 | INFO     | browser.downloads:save_download:19 - Copied download C:\Users\e031093\AppData\Local\Temp\1\playwright-artifacts-xtCApa\ef0f2514-8ed1-460a-9469-cf0d13489e9e -> C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup.zip
+    2026-06-15 21:23:05.201 | INFO     | providers.mastercard.pages.create_project_page:download_key_file:1063 - Downloaded key file: C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup.zip
+    2026-06-15 21:23:05.201 | INFO     | providers.mastercard.workflows.project_workflow:_provision_oauth1_standard:167 - Downloaded signing key zip: C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup.zip
+    2026-06-15 21:23:05.201 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
+    2026-06-15 21:23:07.297 | INFO     | providers.mastercard.pages.project_page:goto:97 - Navigating to sandbox page: https://developer.mastercard.com/project-details/c44ebb08-40d0-4fc8-9d1d-3906835b89e4/sandbox
+    2026-06-15 21:23:12.750 | INFO     | providers.mastercard.pages.project_page:extract_consumer_key:216 - Extracted consumer key (alias='bin_lookup', idx=0): 14lpnXGU...0000
+    2026-06-15 21:23:12.753 | INFO     | providers.mastercard.workflows.project_workflow:_capture_consumer_key:76 - Saved OAuth 1.0a credentials JSON: C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup-credentials.json
+    2026-06-15 21:23:12.776 | INFO     | providers.mastercard.provider:download_keys:85 - Artifact: mastercard-sbx-bin-lookup-bin-lookup-signing-v1-credentials.json (d3090a09d348)
+    2026-06-15 21:23:12.791 | INFO     | providers.mastercard.provider:download_keys:85 - Artifact: mastercard-sbx-bin-lookup-bin-lookup-signing-v1.zip (1e0ae675dec5)
+    2026-06-15 21:23:12.791 | INFO     | app.orchestrator:run:63 - Provisioned 'bin_lookup' \u2713Warning: Ignoring extra certs from `C:\Program Files\ClaudeCode\mastercard_prd_corporate_network_root_ca_g2.pem;C:\Program Files\ClaudeCode\combined-certs.pem`, load failed: error:8000007B:system library::no protocol option
+2026-06-15 21:23:17.165 | INFO     | browser.session:browser_session:48 - Reusing saved session from C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
+2026-06-15 21:23:18.039 | INFO     | providers.mastercard.pages.login_page:goto:25 - Navigating to https://developer.mastercard.com/account/log-in
+2026-06-15 21:23:24.533 | INFO     | browser.waits:wait_until:33 - Still waiting for saved-session redirect...
+2026-06-15 21:23:26.047 | INFO     | browser.waits:wait_until:25 - Reached saved-session redirect
+2026-06-15 21:23:26.047 | INFO     | providers.mastercard.pages.login_page:wait_for_manual_auth:142 - Saved session redirected to https://developer.mastercard.com/dashboard — skipping login form.
+2026-06-15 21:23:26.047 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
+2026-06-15 21:23:28.619 | INFO     | __main__:run_cleanup:206 - Found 1 project(s) to delete: ['SST-bin_lookup-20260615212243']
+2026-06-15 21:23:28.619 | INFO     | __main__:_delete_project:95 - Navigating to project 'SST-bin_lookup-20260615212243' at https://developer.mastercard.com/project-details/c44ebb08-40d0-4fc8-9d1d-3906835b89e4
+2026-06-15 21:23:36.199 | INFO     | __main__:_delete_project:121 - Scrolling to 'Delete this project' for 'SST-bin_lookup-20260615212243'
+2026-06-15 21:23:36.751 | INFO     | __main__:_delete_project:131 - Mouse-clicking 'Delete this project' at (422, 532)
+2026-06-15 21:23:38.891 | INFO     | __main__:_delete_project:157 - Confirming deletion via '[role='dialog'] button:has-text('Delete')'
+2026-06-15 21:23:38.943 | INFO     | __main__:_delete_project:173 - Confirmed deletion of 'SST-bin_lookup-20260615212243'
+2026-06-15 21:23:43.946 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
+2026-06-15 21:23:45.892 | INFO     | __main__:_delete_project:184 - Verified: 'SST-bin_lookup-20260615212243' no longer in dashboard
+2026-06-15 21:23:45.899 | INFO     | browser.session:browser_session:61 - Saved session state to C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
+
+Deleted 1 project(s):
+  - SST-bin_lookup-20260615212243
+
+    2026-06-15 21:23:12.884 | INFO     | app.orchestrator:_rebuild_vima_zip:120 - Built vima-config.zip: 17 API(s) included
+  [31mProvisioning error: 'charmap' codec can't encode character '\U0001f4be' in position 4: character maps to <undefined>[0m
   [33mContinuing with remaining tests …[0m
 
 [1m>> BIN Lookup API tests[0m
@@ -96,7 +145,7 @@ No SST-* projects found.
 [1m[36m>> BIN Lookup API[0m[0m
   [32m[PASS][0m BIN Lookup is configured
   [31m[FAIL][0m Execute lookup_bin (BIN 543210)
-    [2mexecute lookup_bin returned success=false after retry. Response: {'error': "OAuth signing failed: [Errno 2] No such file or directory: 'C:\\\\Users\\\\e031093\\\\AppData\\\\Local\\\\Temp\\\\1\\\\vima-test-20260615-200519\\\\config/keys/bin_lookup.p12'", 'request': {'body': {'account_range': '543210'}, 'method': '(no HTTP call)', 'url': 'explorer://bin_lookup/lookup_bin'}, 'response': {'body': {'error': "OAuth signing failed: [Errno 2] No such file or directory: 'C:\\\\Users\\\\e031093\\\\AppData\\\\Local\\\\Temp\\\\1\\\\vima-test-20260615-200519\\\\config/keys/bin_lookup.p12'", 'success': False}, 'note': 'No outbound HTTP call was made — this envelope was synthesized from the executor return value.', 'status_code': 400, 'synthetic': True}, 'state': {'configured': True}, 'success': False}[0m
+    [2mexecute lookup_bin returned success=false after retries. Response: {'data': {}, 'error': {'Error': [{'Description': 'You may not have permission to access this endpoint. Please check you are using the correct credentials or upgrade your subscription if you wish to use it', 'Details': '', 'ReasonCode': '1006', 'Recoverable': False, 'Source': 'bin-resources'}]}, 'request': {'body': [{'key': 'binNum', 'value': '543210'}], 'headers': {'Accept': 'application/json', 'Accept-Encoding': 'gzip, deflate', 'Connection': 'keep-alive', 'Content-Length': '38', 'Content-Type': 'application/json', 'User-Agent': 'python-requests/2.31.0'}, 'method': 'POST', 'url': 'https://sandbox.api.mastercard.com/bin-resources/bin-ranges?page=1&size=10'}, 'response': {'body': {'Errors': {'Error': [{'Description': 'You may not have permission to access this endpoint. Please check you are using the correct credentials or upgrade your subscription if you wish to use it', 'Details': '', 'ReasonCode': '1006', 'Recoverable': False, 'Source': 'bin-resources'}]}}, 'headers': {'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate', 'Connection': 'close', 'Content-Length': '273', 'Content-Type': 'application/json;charset=ISO-8859-1', 'Date': 'Mon, 15 Jun 2026 20:23:13 GMT', 'Expires': '0', 'Pragma': 'no-cache', 'Set-Cookie': 'JSESSIONID=4531635A4829AC1978831431A97E6532; Path=/bin-resources; Secure; HttpOnly', 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains', 'X-Content-Type-Options': 'nosniff', 'X-EdgeConnect-MidMile-RTT': '89', 'X-EdgeConnect-Origin-MEX-Latency': '137', 'X-Frame-Options': 'DENY', 'X-MC-Correlation-ID': '0.c63e1202.1781554993.841e4822', 'X-XSS-Protection': '0', 'correlation-id': '0.c63e1202.1781554993.841e4822'}, 'status_code': 403}, 'state': {'configured': True}, 'state_updates': {}, 'success': False}[0m
   [32m[PASS][0m Get Code snippet contains valid Python
   [31m2/3 passed[0m
 
@@ -105,10 +154,9 @@ No SST-* projects found.
 [1m[36m>> BIN Lookup Use Case[0m[0m
   [32m[PASS][0m /bin_lookup/index.html loads (200)
   [32m[PASS][0m BIN ranges status endpoint returns valid JSON
-  [31m[FAIL][0m Lookup action returns card data for BIN 543210
-    [2mBIN lookup action: expected found=true for BIN 543210. Response: {'error': "OAuth signing failed: [Errno 2] No such file or directory: 'C:\\\\Users\\\\e031093\\\\AppData\\\\Local\\\\Temp\\\\1\\\\vima-test-20260615-200519\\\\config/keys/bin_lookup.p12'", 'found': False}[0m
+  [32m[PASS][0m Lookup action returns card data for BIN 543210
   [32m[PASS][0m Lookup action handles unknown BIN gracefully
-  [31m3/4 passed[0m
+  [32m4/4 passed[0m
 
 [1m>> Bundles tests[0m
 
@@ -129,7 +177,8 @@ No SST-* projects found.
   [32m[PASS][0m Delete SST-* projects from Mastercard Developers
 
 [1m>> Removing local keys/certs and cloned directory[0m
-  [32m[OK]  Removed cloned directory: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-200519[0m
+  [32m[OK]  Removed keys/certs: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-212231\config\keys[0m
+  [32m[OK]  Removed cloned directory: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-212231[0m
   [32m[OK]  Run recorded in dashboard DB (run #{run_id}).[0m
 
 ============================================================
@@ -137,11 +186,11 @@ No SST-* projects found.
 ============================================================
   [32m[OK][0m  Smoke — Home / APIs / Use Cases     7/7
   [31m[FAIL][0m  BIN Lookup API                      2/3
-  [31m[FAIL][0m  BIN Lookup Use Case                 3/4
+  [32m[OK][0m  BIN Lookup Use Case                 4/4
   [32m[OK][0m  Bundles                             1/1
   [32m[OK][0m  SDKs / ofin CLI                     1/1
   [32m[OK][0m  Portal project cleanup              1/1
 ------------------------------------------------------------
-[31m[1m  15/17 passed[0m[0m
+[31m[1m  16/17 passed[0m[0m
 ============================================================
 
