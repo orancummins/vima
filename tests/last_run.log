@@ -218,3 +218,75 @@ Test Summary
   16/16 passed
 ============================================================
 
+
+============================================================
+ Vima / Solution Studio — Test Suite
+============================================================
+
+
+
+------------------------------------------------------------
+Vima / Solution Studio — Automated Test Suite
+------------------------------------------------------------
+  Email:         
+  Login mode:    Standard (email + password auto-fill)
+  Install type:  Existing
+  Work dir:      /Users/orancummins/dev/vima
+  Server:        http://127.0.0.1:9021
+
+>> Skipping server start (--no-server)
+
+>> Smoke tests
+
+>> Smoke — Home / APIs / Use Cases
+  [PASS] GET /app returns 200
+  [PASS] GET /app has no server error
+  [PASS] GET /app contains all navigation panels
+  [PASS] GET /explorer/apis returns 200
+  [PASS] GET /explorer/apis returns a non-empty list
+  [PASS] GET /explorer/apis includes bin_lookup
+  [PASS] Use Cases panel marker present in /app
+  7/7 passed
+
+>> BIN Lookup API tests
+
+>> BIN Lookup API
+  [PASS] BIN Lookup is configured
+  [PASS] Execute lookup_bin (BIN 543210)
+  [PASS] Get Code snippet contains valid Python
+  3/3 passed
+
+>> BIN Lookup Use Case tests
+
+>> BIN Lookup Use Case
+  [PASS] /bin_lookup/index.html loads (200)
+  [PASS] BIN ranges status endpoint returns valid JSON
+  [PASS] Lookup action returns card data for BIN 543210
+  [PASS] Lookup action handles unknown BIN gracefully
+  4/4 passed
+
+>> Bundles tests
+
+>> Bundles
+  [PASS] Bundles: /explorer/apis reachable (placeholder)
+  1/1 passed
+
+>> SDK tests
+
+>> SDKs / ofin CLI
+  [PASS] SDKs: /app reachable (placeholder)
+  1/1 passed
+  [OK]  Run recorded in dashboard DB (run #{run_id}).
+
+============================================================
+Test Summary
+============================================================
+  [OK]  Smoke — Home / APIs / Use Cases     7/7
+  [OK]  BIN Lookup API                      3/3
+  [OK]  BIN Lookup Use Case                 4/4
+  [OK]  Bundles                             1/1
+  [OK]  SDKs / ofin CLI                     1/1
+------------------------------------------------------------
+  16/16 passed
+============================================================
+
