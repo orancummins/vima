@@ -24,7 +24,8 @@ class MastercardProvider(DeveloperPortalProvider):
         self.login_page = LoginPage(page, login_url=config.login_url)
         self.dashboard = DashboardPage(page)
         # Single timestamp shared across all projects in this run.
-        # Used to construct unique portal project names (SS-<name>-<ts>).
+        # Used to construct unique portal project names ({prefix}-<name>-<ts>).
+        # prefix comes from AppConfig.project_prefix ("SS" for app, "SST" for tests).
         self.run_timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
     async def login(self) -> None:

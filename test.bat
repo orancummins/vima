@@ -32,6 +32,7 @@ set "TEST_SCOPE="
 set "SKIP_PROVISION="
 set "NO_SERVER="
 set "NOCLEANUP="
+set "BASE_URL="
 set "_CLEAN_FLAGS="
 
 :parse_args
@@ -48,6 +49,7 @@ if /i "%~1"=="--full"            ( set "TEST_SCOPE=F"                           
 if /i "%~1"=="--skip-provision"  ( set "SKIP_PROVISION=1"    & set "_CLEAN_FLAGS=1" & shift /1             & goto :parse_args )
 if /i "%~1"=="--no-server"       ( set "NO_SERVER=1"                                & shift /1             & goto :parse_args )
 if /i "%~1"=="--nocleanup"       ( set "NOCLEANUP=1"         & set "_CLEAN_FLAGS=1" & shift /1             & goto :parse_args )
+if /i "%~1"=="--base-url"        ( set "BASE_URL=%~2"                               & shift /1 & shift /1 & goto :parse_args )
 echo ERROR: Unknown flag: %~1
 exit /b 1
 :args_done
@@ -83,6 +85,9 @@ if /i "!INSTALL_TYPE!"=="E" (
 )
 
 REM ── Clean install: collect email, SSO, portal password, key password ──────
+REM    When --skip-provision is set these credentials are never used,
+REM    so we skip collection entirely.
+if "!SKIP_PROVISION!"=="1" goto :collect_scope
 
 REM ── Collect: email ────────────────────────────────────────────
 if not "!EMAIL!"=="" goto :email_ok
@@ -176,6 +181,7 @@ if /i "!INSTALL_TYPE!"=="E" (
     if /i "!TEST_SCOPE!"=="F" set "_XARGS=!_XARGS! --full"
     if /i "!TEST_SCOPE!"=="S" set "_XARGS=!_XARGS! --smoke"
     if "!NO_SERVER!"=="1"     set "_XARGS=!_XARGS! --no-server"
+    if not "!BASE_URL!"==""   set "_XARGS=!_XARGS! --base-url "!BASE_URL!""
     "!PYTHON!" "!WORK_DIR!\tests\run.py" --install-type E --work-dir "!WORK_DIR!" !_XARGS!
     exit /b %ERRORLEVEL%
 )
@@ -189,6 +195,7 @@ if /i "!TEST_SCOPE!"=="S"      set "_XARGS=!_XARGS! --smoke"
 if "!SKIP_PROVISION!"=="1"     set "_XARGS=!_XARGS! --skip-provision"
 if "!NO_SERVER!"=="1"          set "_XARGS=!_XARGS! --no-server"
 if "!NOCLEANUP!"=="1"          set "_XARGS=!_XARGS! --nocleanup"
+if not "!BASE_URL!"==""        set "_XARGS=!_XARGS! --base-url "!BASE_URL!""
 "!PYTHON!" "!WORK_DIR!\tests\run.py" --email "!EMAIL!" --install-type C --key-password "!KEY_PASSWORD!" --work-dir "!WORK_DIR!" !_XARGS!
 
 exit /b %ERRORLEVEL%

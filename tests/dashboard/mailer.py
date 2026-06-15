@@ -16,7 +16,7 @@ from typing import Any, Dict, Optional, Tuple
 _TESTS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _CONFIG_PATH = os.path.join(_TESTS_DIR, "test_config.ini")
 
-_DEFAULTS: Dict[str, str] = {
+_EMAIL_DEFAULTS: Dict[str, str] = {
     "smtp_host": "",
     "smtp_port": "587",
     "smtp_user": "",
@@ -26,28 +26,43 @@ _DEFAULTS: Dict[str, str] = {
     "use_tls": "1",
 }
 
+# Keep backwards-compatible alias
+_DEFAULTS = _EMAIL_DEFAULTS
+
+_PORTAL_DEFAULTS: Dict[str, str] = {
+    "portal_email": "",
+    "portal_sso": "1",
+    "test_port": "9022",
+    "key_password": "foobar!!",
+}
+
 
 def load_config() -> Dict[str, str]:
-    """Load email config from tests/test_config.ini.  Returns defaults on missing file."""
-    cfg = dict(_DEFAULTS)
+    """Load email + portal config from tests/test_config.ini.  Returns defaults on missing file."""
+    cfg = {**_EMAIL_DEFAULTS, **_PORTAL_DEFAULTS}
     if not os.path.exists(_CONFIG_PATH):
         return cfg
     parser = configparser.ConfigParser()
     try:
         parser.read(_CONFIG_PATH, encoding="utf-8")
         if parser.has_section("email"):
-            for key in _DEFAULTS:
+            for key in _EMAIL_DEFAULTS:
                 if parser.has_option("email", key):
                     cfg[key] = parser.get("email", key)
+        if parser.has_section("portal"):
+            for key in _PORTAL_DEFAULTS:
+                if parser.has_option("portal", key):
+                    cfg[key] = parser.get("portal", key)
     except Exception:
         pass
     return cfg
 
 
 def save_config(cfg: Dict[str, str]) -> None:
-    """Persist email config to tests/test_config.ini."""
+    """Persist email + portal config to tests/test_config.ini."""
     parser = configparser.ConfigParser()
-    parser["email"] = {k: cfg.get(k, _DEFAULTS.get(k, "")) for k in _DEFAULTS}
+    parser["email"] = {k: cfg.get(k, _EMAIL_DEFAULTS.get(k, "")) for k in _EMAIL_DEFAULTS}
+    parser["portal"] = {k: cfg.get(k, _PORTAL_DEFAULTS.get(k, "")) for k in _PORTAL_DEFAULTS}
     with open(_CONFIG_PATH, "w", encoding="utf-8") as fh:
         parser.write(fh)
 

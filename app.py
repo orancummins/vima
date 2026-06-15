@@ -2877,11 +2877,13 @@ def provision_start():
         else:
             project_lines.append(f"  - name: {api}\n    apis: [{api}]")
     projects_yaml = "\n".join(project_lines)
+    project_prefix = body.get("project_prefix", "SS")
     cfg_text = f"""environment: sandbox
 organization: mastercard
 login_url: https://developer.mastercard.com/account/log-in
 dashboard_url_pattern: "**/dashboard**"
 key_password: "{password}"
+project_prefix: "{project_prefix}"
 projects:
 {projects_yaml}
 """
