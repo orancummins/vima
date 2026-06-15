@@ -123,6 +123,8 @@ import './features/apiGuide.js';
 
   initHistory();
   startUsIpStatusPolling();
+  // Expose for cross-module callers (e.g. bundles.js selectSdk)
+  window.__refreshUsIpStatus = refreshUsIpStatus;
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') refreshUsIpStatus();
   });
@@ -186,6 +188,8 @@ import './features/apiGuide.js';
       }
       let rot = 0, last = null;
       function renderGlobe(ts) {
+        if (document.hidden) { requestAnimationFrame(renderGlobe); return; }
+        if (last && (ts - last) < 30) { requestAnimationFrame(renderGlobe); return; } // ~30fps cap
         const delta = last ? Math.min((ts - last) / 16.667, 2) : 1;
         last = ts;
         ctx.clearRect(0, 0, SIZE, SIZE);
@@ -193,9 +197,9 @@ import './features/apiGuide.js';
         ctx.lineWidth = 0.9;
         for (let lat = -80; lat <= 80; lat += 20) {
           const lR = (lat * Math.PI) / 180;
-          for (let seg = 0; seg < 360; seg += 5) {
+          for (let seg = 0; seg < 360; seg += 10) {
             const l0 = ((seg * Math.PI) / 180) + rot;
-            const l1 = (((seg + 5) * Math.PI) / 180) + rot;
+            const l1 = (((seg + 10) * Math.PI) / 180) + rot;
             const z0 = Math.cos(lR) * Math.sin(l0), z1 = Math.cos(lR) * Math.sin(l1);
             const a = gOpacity * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
             if (a < 0.005) continue;
@@ -208,8 +212,8 @@ import './features/apiGuide.js';
           }
         }
         for (let lon = 0; lon < 360; lon += 20) {
-          for (let seg = -88; seg < 90; seg += 5) {
-            const l0 = (seg * Math.PI) / 180, l1 = ((seg + 5) * Math.PI) / 180;
+          for (let seg = -88; seg < 90; seg += 10) {
+            const l0 = (seg * Math.PI) / 180, l1 = ((seg + 10) * Math.PI) / 180;
             const lR = ((lon * Math.PI) / 180) + rot;
             const z0 = Math.cos(l0) * Math.sin(lR), z1 = Math.cos(l1) * Math.sin(lR);
             const a = gOpacity * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
@@ -230,16 +234,12 @@ import './features/apiGuide.js';
           return { px: CX + rx * RADIUS * sc, py: CY + p.y * RADIUS * sc, rz, sc, alpha: 0.15 + fade * 0.75 };
         });
         projected.filter(p => p.rz > -0.18).sort((a, b) => a.rz - b.rz).forEach(p => {
-          const r = Math.round(255);
           const g = Math.round(110 + p.alpha * 40);
-          ctx.shadowColor = `rgba(255,80,0,${p.alpha * 0.8})`;
-          ctx.shadowBlur = 8 * p.sc;
-          ctx.fillStyle = `rgba(${r},${g},20,${p.alpha})`;
+          ctx.fillStyle = `rgba(255,${g},20,${p.alpha})`;
           ctx.beginPath();
-          ctx.arc(p.px, p.py, 2.5 * p.sc, 0, Math.PI * 2);
+          ctx.arc(p.px, p.py, 3 * p.sc, 0, Math.PI * 2);
           ctx.fill();
         });
-        ctx.shadowBlur = 0;
         rot += SPEED * delta;
         requestAnimationFrame(renderGlobe);
       }
@@ -3300,6 +3300,8 @@ import './features/apiGuide.js';
       }
       let rot = 0, last = null;
       function renderUcGlobe(ts) {
+        if (document.hidden) { requestAnimationFrame(renderUcGlobe); return; }
+        if (last && (ts - last) < 30) { requestAnimationFrame(renderUcGlobe); return; } // ~30fps cap
         const delta = last ? Math.min((ts - last) / 16.667, 2) : 1;
         last = ts;
         ctx.clearRect(0, 0, SIZE, SIZE);
@@ -3307,9 +3309,9 @@ import './features/apiGuide.js';
         ctx.lineWidth = 0.9;
         for (let lat = -80; lat <= 80; lat += 20) {
           const lR = (lat * Math.PI) / 180;
-          for (let seg = 0; seg < 360; seg += 5) {
+          for (let seg = 0; seg < 360; seg += 10) {
             const l0 = ((seg * Math.PI) / 180) + rot;
-            const l1 = (((seg + 5) * Math.PI) / 180) + rot;
+            const l1 = (((seg + 10) * Math.PI) / 180) + rot;
             const z0 = Math.cos(lR) * Math.sin(l0), z1 = Math.cos(lR) * Math.sin(l1);
             const a = gOpacity * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
             if (a < 0.005) continue;
@@ -3322,8 +3324,8 @@ import './features/apiGuide.js';
           }
         }
         for (let lon = 0; lon < 360; lon += 20) {
-          for (let seg = -88; seg < 90; seg += 5) {
-            const l0 = (seg * Math.PI) / 180, l1 = ((seg + 5) * Math.PI) / 180;
+          for (let seg = -88; seg < 90; seg += 10) {
+            const l0 = (seg * Math.PI) / 180, l1 = ((seg + 10) * Math.PI) / 180;
             const lR = ((lon * Math.PI) / 180) + rot;
             const z0 = Math.cos(l0) * Math.sin(lR), z1 = Math.cos(l1) * Math.sin(lR);
             const a = gOpacity * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
@@ -3345,14 +3347,11 @@ import './features/apiGuide.js';
         });
         projected.filter(p => p.rz > -0.18).sort((a, b) => a.rz - b.rz).forEach(p => {
           const g = Math.round(110 + p.alpha * 40);
-          ctx.shadowColor = `rgba(255,80,0,${p.alpha * 0.8})`;
-          ctx.shadowBlur = 8 * p.sc;
           ctx.fillStyle = `rgba(255,${g},20,${p.alpha})`;
           ctx.beginPath();
-          ctx.arc(p.px, p.py, 2.5 * p.sc, 0, Math.PI * 2);
+          ctx.arc(p.px, p.py, 3 * p.sc, 0, Math.PI * 2);
           ctx.fill();
         });
-        ctx.shadowBlur = 0;
         rot += SPEED * delta;
         requestAnimationFrame(renderUcGlobe);
       }

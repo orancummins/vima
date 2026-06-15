@@ -73,30 +73,94 @@
   display: flex; align-items: center; gap: 7px; padding: 9px 13px;
   background: #181c23; border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
-.info-browser-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, 0.18); }
+.info-browser-dot { width: 9px; height: 9px; border-radius: 50%; }
+.info-browser-dot--r { background: #ff5f56; }
+.info-browser-dot--y { background: #ffbd2e; }
+.info-browser-dot--g { background: #27c93f; }
+/* Old generic dot (fallback) */
+.info-browser-dot:not([class*="--"]) { background: rgba(255, 255, 255, 0.18); }
 .info-browser-url {
   display: flex; align-items: center; gap: 6px; margin-left: 8px;
   font-family: var(--mono); font-size: 11px; color: rgba(255, 255, 255, 0.5);
 }
 .info-browser-url svg { color: rgba(47, 208, 122, 0.8); flex-shrink: 0; }
-.info-browser-screen { padding: 26px 24px 24px; text-align: center; }
-.info-mc-logo { position: relative; width: 46px; height: 30px; margin: 0 auto 14px; }
-.info-mc-logo span { position: absolute; top: 0; width: 30px; height: 30px; border-radius: 50%; }
-.info-mc-red { left: 0; background: var(--mc-red); }
-.info-mc-yellow { left: 16px; background: var(--mc-yellow); mix-blend-mode: screen; }
-.info-login-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 16px; }
-.info-login-field { height: 32px; border-radius: 8px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); margin-bottom: 10px; }
-.info-login-cta {
-  display: block; margin: 16px auto 0; padding: 11px 14px; border-radius: 9px;
-  font-size: 13.5px; font-weight: 700; text-decoration: none; color: #fff;
-  background: linear-gradient(135deg, var(--mc-orange) 0%, var(--mc-red) 100%);
-  box-shadow: 0 6px 18px rgba(235, 0, 27, 0.3);
-  transition: filter .15s ease;
+
+/* ── Mastercard Developers sign-up page mock ── */
+.info-mcd-screen {
+  background: #0f111a;
+  font-size: 12px;
+  overflow: hidden;
 }
-.info-login-cta:hover { filter: brightness(1.08); }
-.info-login-alt { margin-top: 12px; font-size: 11.5px; color: rgba(255, 255, 255, 0.5); }
-.info-login-alt a { color: #6ea8ff; text-decoration: none; }
-.info-login-alt a:hover { text-decoration: underline; }
+/* Nav */
+.info-mcd-nav {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 16px;
+  background: #080a11;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.info-mcd-nav-logo {
+  display: flex; align-items: center; gap: 7px; flex-shrink: 0;
+}
+.info-mcd-nav-logo .info-mc-red  { position: static; width: 16px; height: 16px; display: inline-block; border-radius: 50%; flex-shrink: 0; background: var(--mc-red); }
+.info-mcd-nav-logo .info-mc-yellow { position: static; width: 16px; height: 16px; display: inline-block; border-radius: 50%; flex-shrink: 0; background: var(--mc-yellow); margin-left: -6px; mix-blend-mode: screen; }
+.info-mcd-nav-wordmark { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.9); letter-spacing: -0.01em; white-space: nowrap; }
+.info-mcd-nav-links { display: flex; gap: 14px; margin-left: 10px; flex: 1; }
+.info-mcd-nav-links span { font-size: 11px; color: rgba(255,255,255,0.45); cursor: default; }
+.info-mcd-nav-cta {
+  font-size: 11px; font-weight: 600; text-decoration: none;
+  padding: 4px 12px; border-radius: 6px;
+  background: var(--mc-orange); color: #fff;
+  flex-shrink: 0;
+  transition: filter .15s;
+}
+.info-mcd-nav-cta:hover { filter: brightness(1.1); }
+/* Hero */
+.info-mcd-hero {
+  padding: 20px 20px 22px;
+  background: linear-gradient(160deg, #101522 0%, #0c0f1d 60%, #0b0d18 100%);
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.info-mcd-hero-eyebrow {
+  font-size: 9px; font-weight: 800; letter-spacing: 0.12em;
+  color: var(--mc-orange); text-transform: uppercase; margin-bottom: 6px;
+}
+.info-mcd-hero-title {
+  font-size: 19px; font-weight: 800; letter-spacing: -0.03em;
+  color: #fff; margin-bottom: 5px; line-height: 1.15;
+}
+.info-mcd-hero-sub {
+  font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 14px; line-height: 1.5;
+}
+.info-mcd-form { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 260px; }
+.info-mcd-field {
+  height: 30px; border-radius: 7px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  display: flex; align-items: center; padding: 0 10px;
+}
+.info-mcd-field-label { font-size: 10.5px; color: rgba(255,255,255,0.3); }
+.info-mcd-signup-btn {
+  display: block; padding: 9px 14px; border-radius: 8px;
+  font-size: 12px; font-weight: 700; text-decoration: none; color: #fff; text-align: center;
+  background: linear-gradient(135deg, var(--mc-orange) 0%, var(--mc-red) 100%);
+  box-shadow: 0 4px 14px rgba(235,0,27,0.28);
+  transition: filter .15s;
+}
+.info-mcd-signup-btn:hover { filter: brightness(1.08); }
+.info-mcd-already { margin-top: 9px; font-size: 10.5px; color: rgba(255,255,255,0.4); text-align: center; }
+.info-mcd-already a { color: var(--mc-orange); text-decoration: none; }
+.info-mcd-already a:hover { text-decoration: underline; }
+
+/* Canvas globe (replaces CSS .info-prov-logo) */
+.info-prov-globe-canvas {
+  width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 26%, rgba(255,255,255,0.12), transparent 44%),
+    radial-gradient(circle at 50% 48%, #1a3560 0%, #0c1c3d 68%, #06101e 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(120,175,255,0.22),
+    inset -2px -3px 6px rgba(0,0,0,0.5),
+    0 3px 10px rgba(0,0,0,0.4);
+}
 
 /* Step 2 — tools */
 .info-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -166,40 +230,6 @@
   background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .info-prov-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-/* Revolving mini-globe — mirrors the SDK hero globe (scrolling longitude
-   lines + static latitudes over a shaded sphere). */
-.info-prov-logo {
-  position: relative; width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 30% 26%, rgba(255, 255, 255, 0.20), transparent 44%),
-    radial-gradient(circle at 50% 48%, #20407a 0%, #0c1c3d 68%, #060f22 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(120, 175, 255, 0.30),
-    inset -3px -4px 8px rgba(0, 0, 0, 0.55),
-    0 3px 10px rgba(0, 0, 0, 0.45);
-}
-.info-prov-logo::before {
-  content: ''; position: absolute; inset: 0; border-radius: 50%;
-  background-image:
-    repeating-linear-gradient(90deg, transparent 0 4px, rgba(125, 185, 255, 0.40) 4px 5px),
-    repeating-linear-gradient(0deg, transparent 0 6px, rgba(125, 185, 255, 0.16) 6px 7px);
-  background-size: 18px 100%, 100% 100%;
-  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 58%, transparent 72%);
-  mask-image: radial-gradient(circle at 50% 50%, #000 58%, transparent 72%);
-  animation: info-globe-spin 5s linear infinite;
-}
-.info-prov-logo::after {
-  content: ''; position: absolute; inset: 0; border-radius: 50%;
-  background: radial-gradient(circle at 68% 74%, rgba(0, 0, 0, 0.35), transparent 55%);
-}
-@keyframes info-globe-spin {
-  from { background-position: 0 0, 0 0; }
-  to   { background-position: -18px 0, 0 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .info-prov-logo::before { animation: none; }
-}
 .info-prov-titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .info-prov-titles strong { font-size: 13.5px; color: #fff; font-weight: 700; }
 .info-prov-titles span { font-size: 11.5px; color: rgba(255, 255, 255, 0.55); }
@@ -279,6 +309,12 @@ html.theme-light .info-tool-meta a { color: #005b99; }
 html.theme-light .info-tool-cmd {
   background: #0d1117; color: #ffe7a1; border-color: #0d1117;
 }
+
+/* Step 1 — Mastercard Developers mock (light) */
+html.theme-light .info-mcd-screen { background: #f4f5f7; }
+html.theme-light .info-mcd-nav { background: #1a1a2e; border-bottom-color: rgba(255,255,255,0.06); }
+html.theme-light .info-mcd-hero { background: linear-gradient(160deg, #1a1d2e 0%, #10131e 100%); }
+html.theme-light .info-mcd-field { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.14); }
 
 /* Step 4 — provisioning mock */
 html.theme-light .info-prov-mock { background: #f7f7f8; border-color: var(--line); }

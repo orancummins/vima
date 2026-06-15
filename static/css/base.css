@@ -371,6 +371,22 @@ html.theme-light .header.header--home .theme-toggle-option {
 .uc-us-ip-banner .of-ip-light { flex-shrink: 0; margin-top: 4px; }
 .uc-us-ip-banner strong { font-weight: 700; }
 .uc-us-ip-banner-text { flex: 1; min-width: 0; }
+/* Light mode: darker, higher-contrast versions of the same states */
+html.theme-light .uc-us-ip-banner {
+  background: rgba(180, 110, 0, 0.08);
+  border-color: rgba(180, 110, 0, 0.35);
+  color: #7a4a00;
+}
+html.theme-light .uc-us-ip-banner.of-ip-pill--green {
+  background: rgba(22, 130, 70, 0.08);
+  border-color: rgba(22, 130, 70, 0.35);
+  color: #145c30;
+}
+html.theme-light .uc-us-ip-banner.of-ip-pill--red {
+  background: rgba(200, 30, 30, 0.07);
+  border-color: rgba(200, 30, 30, 0.35);
+  color: #8b1a1a;
+}
 .of-vpn-warning-note {
   color: rgba(255, 190, 130, 0.95);
 }

@@ -2,7 +2,7 @@
   "enabled": {
     "us": true,
     "au": true,
-    "eu": true
+    "eu": false
   },
   "connections": {
     "us": {
