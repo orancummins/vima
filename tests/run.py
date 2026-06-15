@@ -294,6 +294,21 @@ def main() -> None:
                         except RuntimeError as exc:
                             print(f"  {red(f'Server failed to restart: {exc}')}")
                             sys.exit(1)
+                    # Warm up BIN Lookup: the Mastercard gateway always rejects
+                    # the very first call on a newly provisioned key.  Fire one
+                    # call now (outside the test suite) so the rejection is
+                    # absorbed here and every subsequent test call succeeds.
+                    _step("Warming up BIN Lookup API (absorbing first-call gateway rejection)")
+                    try:
+                        import requests as _warmup_req
+                        _warmup_req.post(
+                            f"{base_url}/explorer/bin_lookup/execute",
+                            json={"operation": "lookup_bin", "params": {"account_range": "543210"}},
+                            timeout=15,
+                        )
+                        print(f"  {green('[OK]  Warm-up call complete.')}")
+                    except Exception as _warmup_exc:
+                        print(f"  {yellow(f'[WARN] Warm-up call failed (non-fatal): {_warmup_exc}')}")
                 else:
                     print(f"  {yellow('Provisioning did not complete — API tests may fail.')}")
                     print(f"  {yellow('You can re-run with --skip-provision on an existing install.')}")
