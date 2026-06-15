@@ -516,6 +516,8 @@ import { _initSdkDemo, _initLiveDemo } from './openFinanceSdk.js';
     }
     _initSdkDemo();
     _initLiveDemo();
+    // Refresh US IP status so the banner in the SDK panel is up to date.
+    if (typeof window.__refreshUsIpStatus === 'function') window.__refreshUsIpStatus();
   }
 
   document.querySelectorAll('[data-bundle-id]').forEach((btn) => {
