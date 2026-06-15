@@ -74,13 +74,14 @@ def run_detail(run_id: int):
             error=f"Run #{run_id} not found.",
         ), 404
     results = get_run_results(run_id)
-    # Group by suite
+    # Group by suite; convert sqlite3.Row → plain dict so tojson works in templates
     suites: dict = {}
     for r in results:
         s = r["suite"]
         if s not in suites:
             suites[s] = []
-        suites[s].append(r)
+        suites[s].append(dict(r))
+    run = dict(run)
     return render_template("test_run.html", run=run, suites=suites)
 
 
@@ -157,7 +158,15 @@ def run_trigger():
     # the button still works safely without credentials.
     scope = request.form.get("scope", "smoke")
 
-    if scope == "clean":
+    if scope == "lint":
+        # Lint is server-independent: no install type, no provisioning, no port.
+        # Pass --lint --no-server --existing so run.py takes the lint-only path.
+        install_flag    = "--existing"
+        scope_flag      = "--lint"
+        extra_flags     = []
+        needs_no_server = True
+
+    elif scope == "clean":
         portal_cfg    = load_config()
         portal_email  = portal_cfg.get("portal_email", "").strip()
         portal_sso    = portal_cfg.get("portal_sso", "1").strip()
@@ -185,10 +194,18 @@ def run_trigger():
 
     no_server_flags = ["--no-server"] if needs_no_server else []
 
+    # Force unbuffered Python output so every print() flushes to last_run.log
+    # immediately — without this, stdout is block-buffered when piped to a file
+    # and nothing appears in the live log until the buffer fills (~8 KB) or the
+    # process exits.
+    _env = os.environ.copy()
+    _env["PYTHONUNBUFFERED"] = "1"
+
     if is_windows:
         cmd = ["cmd", "/c", "test.bat", install_flag, scope_flag] + no_server_flags + extra_flags
         popen_kwargs = dict(
             cwd=cwd,
+            env=_env,
             stdout=open(os.path.join(cwd, "tests", "last_run.log"), "wb"),
             stderr=subprocess.STDOUT,
             creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
@@ -197,6 +214,7 @@ def run_trigger():
         cmd = ["bash", "./test.sh", install_flag, scope_flag] + no_server_flags + extra_flags
         popen_kwargs = dict(
             cwd=cwd,
+            env=_env,
             stdout=open(os.path.join(cwd, "tests", "last_run.log"), "wb"),
             stderr=subprocess.STDOUT,
             start_new_session=True,

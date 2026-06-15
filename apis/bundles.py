@@ -26,8 +26,8 @@ Adding a bundle is one ``Bundle(...)`` entry — no other code changes.
 """
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable, Optional
 
 
 @dataclass(frozen=True)
@@ -36,7 +36,7 @@ class Bundle:
     name: str
     tagline: str
     apis: tuple[str, ...]
-    anchor: Optional[str] = None
+    anchor: str | None = None
     # Longer-form explanation rendered on the bundle detail page below the
     # tagline. Should answer "why do these APIs belong together?" in 2-3
     # sentences.
@@ -448,7 +448,7 @@ def iter_bundles() -> Iterable[Bundle]:
     return iter(_BUNDLES)
 
 
-def get(bundle_id: str) -> Optional[Bundle]:
+def get(bundle_id: str) -> Bundle | None:
     return BUNDLES.get(bundle_id)
 
 

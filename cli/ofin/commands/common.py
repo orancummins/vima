@@ -1,15 +1,13 @@
 """Shared command helpers used by every region handler."""
 from __future__ import annotations
 
-from typing import Optional
-
 from ..errors import UsageError
 from ..output import open_in_browser
 from ..sdk.base import Result
 
 
 def resolve_arg(args, attr: str, ctx, region: str, state_key: str,
-                label: Optional[str] = None, required: bool = True) -> Optional[str]:
+                label: str | None = None, required: bool = True) -> str | None:
     """Return an arg value, falling back to saved state for the region.
 
     Looks first at the parsed CLI value (``getattr(args, attr)``), then at the
@@ -41,7 +39,7 @@ def emit(res: Result, ctx, region: str, *, open_link: bool = False) -> int:
     return 0 if res.ok else 3
 
 
-def parse_account_ids(value: Optional[str]):
+def parse_account_ids(value: str | None):
     """Split a comma-separated --account-ids value into a list (or None)."""
     if not value:
         return None

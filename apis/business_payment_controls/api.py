@@ -21,8 +21,7 @@ GATING (see catalog.DISABLED_API_IDS):
 from __future__ import annotations
 
 import os
-from typing import Any, Dict
-
+from typing import Any
 
 _PROD_BASE    = "https://api.mastercard.com/business-payment-controls"
 _SANDBOX_BASE = "https://sandbox.api.mastercard.com/business-payment-controls"
@@ -46,7 +45,7 @@ def is_configured() -> bool:
     return _configured() or is_simulated("business_payment_controls")
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured()}
 
 
@@ -134,7 +133,7 @@ _HOW_TO = (
 )
 
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "business_payment_controls",
     "name": "Business Payment Controls",
     "description": (
@@ -216,7 +215,7 @@ MANIFEST: Dict[str, Any] = {
 }
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     """Dispatch to a per-operation handler. All handlers return the standard
     envelope ({success, data, error, request, response, state_updates}) so the
     UI can render request/response panels without backfill."""
@@ -282,9 +281,10 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     return {"success": False, "error": f"Unknown operation: {op_id}"}
 
 
-def _call(method: str, path: str, body: Any) -> Dict[str, Any]:
+def _call(method: str, path: str, body: Any) -> dict[str, Any]:
     """Issue an OAuth1.0a body-signed request against the BPC base URL."""
     import json
+
     import requests
 
     url = f"{_base()}{path}"

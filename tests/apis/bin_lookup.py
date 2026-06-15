@@ -50,8 +50,10 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
         payload = {"operation": OPERATION_ID, "params": {"account_range": TEST_BIN}}
         url = f"{base_url}/explorer/{API_ID}/execute"
 
-        # First-call gateway rejection is absorbed by the warm-up in run.py.
-        # A single attempt is all that's needed here.
+        # The Mastercard gateway rejects the very first call on a new key.
+        # Always send once and discard the result, then send again — the
+        # second call is the real test.
+        post(url, payload)
         resp = assert_status(post(url, payload), 200)
         data = assert_json(resp)
 

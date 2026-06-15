@@ -5,9 +5,9 @@ animated payment card displayed in the Use Cases tab.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, Tuple
+from typing import Any
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "bin_lookup",
     "name": "BIN Lookup",
     "description": (
@@ -25,7 +25,7 @@ MANIFEST: Dict[str, Any] = {
 # ── acceptanceBrand → network ─────────────────────────────────────────────────
 # Valid acceptanceBrand values per Mastercard docs:
 # MCC=Mastercard® Credit, DMC=Debit Mastercard®, MSI=Maestro®, CIR=Cirrus®, PVL=Private Label
-_ACCEPTANCE_BRAND_TO_NETWORK: Dict[str, str] = {
+_ACCEPTANCE_BRAND_TO_NETWORK: dict[str, str] = {
     "MCC": "Mastercard",
     "DMC": "Mastercard",
     "MSI": "Maestro",
@@ -33,7 +33,7 @@ _ACCEPTANCE_BRAND_TO_NETWORK: Dict[str, str] = {
     "PVL": "Other",
 }
 
-_ACCEPTANCE_BRAND_LABELS: Dict[str, str] = {
+_ACCEPTANCE_BRAND_LABELS: dict[str, str] = {
     "MCC": "Mastercard® Credit",
     "DMC": "Debit Mastercard®",
     "MSI": "Maestro®",
@@ -42,7 +42,7 @@ _ACCEPTANCE_BRAND_LABELS: Dict[str, str] = {
 }
 
 # ── Network gradient colours (dark → lighter, for CSS linear-gradient) ────────
-_NETWORK_GRADIENTS: Dict[str, Tuple[str, str]] = {
+_NETWORK_GRADIENTS: dict[str, tuple[str, str]] = {
     "Mastercard": ("#1a0808", "#8b0000"),
     "Maestro":    ("#1a0818", "#6b0060"),
     "Visa":       ("#0a1340", "#1A1F71"),
@@ -53,7 +53,7 @@ _NETWORK_GRADIENTS: Dict[str, Tuple[str, str]] = {
 }
 
 # ── ISO 3166-1 alpha-3 → alpha-2 (for flag emoji) ────────────────────────────
-_ALPHA3_TO_ALPHA2: Dict[str, str] = {
+_ALPHA3_TO_ALPHA2: dict[str, str] = {
     "USA": "US", "GBR": "GB", "DEU": "DE", "FRA": "FR", "JPN": "JP",
     "CAN": "CA", "AUS": "AU", "JOR": "JO", "ARG": "AR", "CHE": "CH",
     "SGP": "SG", "IND": "IN", "MEX": "MX", "BRA": "BR", "ZAF": "ZA",
@@ -77,8 +77,7 @@ _ALPHA3_TO_ALPHA2: Dict[str, str] = {
     "OMN": "OM", "LBN": "LB", "IRQ": "IQ", "IRN": "IR", "SYR": "SY",
 }
 
-
-def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
     if action == "lookup":
         from apis.bin_lookup import api as bin_api
         result = bin_api.execute("lookup_bin", params)
@@ -99,7 +98,6 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
         }
     return {"error": f"Unknown action: {action}"}
 
-
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _flag(iso2: str) -> str:
@@ -109,12 +107,10 @@ def _flag(iso2: str) -> str:
     base = 0x1F1E6
     return chr(base + ord(iso2[0].upper()) - ord("A")) + chr(base + ord(iso2[1].upper()) - ord("A"))
 
-
 def _flag_from_alpha3(alpha3: str) -> str:
     """Convert ISO 3166-1 alpha-3 code to flag emoji via alpha-2 lookup."""
     alpha2 = _ALPHA3_TO_ALPHA2.get((alpha3 or "").strip().upper(), "")
     return _flag(alpha2) if alpha2 else ""
-
 
 def _network_from_bin(bin_num: str) -> str:
     """Infer card network from BIN prefix as a fallback."""
@@ -138,8 +134,7 @@ def _network_from_bin(bin_num: str) -> str:
         return "Discover"
     return "Unknown"
 
-
-def _shape(item: Dict[str, Any]) -> Dict[str, Any]:
+def _shape(item: dict[str, Any]) -> dict[str, Any]:
     # ── Network / acceptance brand ────────────────────────────────────────────
     acceptance_brand = (item.get("acceptanceBrand") or "").strip().upper()
     network = _ACCEPTANCE_BRAND_TO_NETWORK.get(acceptance_brand)

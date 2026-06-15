@@ -14,19 +14,18 @@ from __future__ import annotations
 
 import os
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .client import OpenFinanceEUClient
-
 
 # ---------------------------------------------------------------------------
 # Client (singleton)
 # ---------------------------------------------------------------------------
 
-_client: Optional[OpenFinanceEUClient] = None
+_client: OpenFinanceEUClient | None = None
 
 
-def _get_client() -> Optional[OpenFinanceEUClient]:
+def _get_client() -> OpenFinanceEUClient | None:
     global _client
     from simulator.switcher import is_simulated
     if is_simulated("open_finance_eu"):
@@ -76,7 +75,7 @@ def is_configured() -> bool:
 # Per-API state
 # ---------------------------------------------------------------------------
 
-STATE: Dict[str, Any] = {
+STATE: dict[str, Any] = {
     "provider_id": None,
     "consent_id": None,
     "flow_url": None,
@@ -116,7 +115,7 @@ TEST_USERS_DOCS_URL = (
     "developer-support/testing/"
 )
 
-TEST_USERS: List[Dict[str, Any]] = [
+TEST_USERS: list[dict[str, Any]] = [
     {"username": "john.smith",         "password": "12345", "otp": "987654",
      "flow": "Redirect",                                  "data": "Advanced (4 accounts since 2023, dynamic)",
      "recommended": True},
@@ -140,7 +139,7 @@ TEST_PROVIDERS_NOTE = (
 )
 
 
-def _test_credentials_payload() -> Dict[str, Any]:
+def _test_credentials_payload() -> dict[str, Any]:
     """Compact representation of the sandbox PSU credentials table.
 
     Returned as a hint on consent / managed-flow operations so the UI can
@@ -169,7 +168,7 @@ def _test_credentials_payload() -> Dict[str, Any]:
 # Manifest
 # ---------------------------------------------------------------------------
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "open_finance_eu",
     "name": "Open Finance Europe",
     "description": (
@@ -544,14 +543,14 @@ MANIFEST: Dict[str, Any] = {
 # ---------------------------------------------------------------------------
 
 def _err(msg: str, code: int = 400,
-         hints: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+         hints: dict[str, Any] | None = None) -> dict[str, Any]:
     return {"status": "error", "code": code, "data": {"error": msg},
             "state_updates": {}, "hints": hints or {}}
 
 
 def _ok(data: Any, code: int = 200,
-        state_updates: Optional[Dict[str, Any]] = None,
-        hints: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        state_updates: dict[str, Any] | None = None,
+        hints: dict[str, Any] | None = None) -> dict[str, Any]:
     if state_updates:
         for k, v in state_updates.items():
             if v is not None:
@@ -582,7 +581,7 @@ def _seed_defaults() -> None:
             STATE["use_case_configuration_id"] = env_ucid
 
 
-def _record_redirect_url(url: Optional[str]) -> None:
+def _record_redirect_url(url: str | None) -> None:
     """Append a user-supplied redirect URL to STATE['redirect_urls']."""
     if not url:
         return
@@ -591,7 +590,7 @@ def _record_redirect_url(url: Optional[str]) -> None:
         bucket.append(url)
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     _seed_defaults()
     return {
         "provider_id": STATE.get("provider_id"),
@@ -606,7 +605,7 @@ def get_state() -> Dict[str, Any]:
     }
 
 
-def _extract_first(data: Any, *keys: str) -> Optional[str]:
+def _extract_first(data: Any, *keys: str) -> str | None:
     """Defensive lookup — the Aiia response shape uses both camelCase and
     snake_case across versions; try the listed keys in order."""
     if not isinstance(data, dict):
@@ -618,7 +617,7 @@ def _extract_first(data: Any, *keys: str) -> Optional[str]:
     return None
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     """Dispatch operation by id; returns {status, code, data, state_updates, hints}."""
     p = params or {}
 
@@ -654,7 +653,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
                                               limit=limit)
             # Cache a slim provider list in state so Create Consent can
             # render a dropdown without re-fetching.
-            state_updates: Dict[str, Any] = {}
+            state_updates: dict[str, Any] = {}
             if isinstance(data, dict):
                 items = data.get("items") or data.get("providers") or []
                 if isinstance(items, list):
@@ -699,7 +698,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
                 end_user_email=str(email),
             )
             cid = _extract_first(data, "consentId", "consent_id", "id")
-            state_updates: Dict[str, Any] = {
+            state_updates: dict[str, Any] = {
                 "use_case_configuration_id": str(ucid),
                 "end_user_id": str(eu_id),
                 "end_user_email": str(email),
@@ -729,11 +728,11 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
                 provider_id=str(pid) if pid else "",
             )
             url = _extract_first(data, "flowUrl", "flow_url", "link")
-            state_updates: Dict[str, Any] = {}
+            state_updates: dict[str, Any] = {}
             # Always surface the sandbox PSU credentials + docs link so users
             # can see what to log in with, even when the Aiia call fails
             # (e.g. a sandbox 403) and no flowUrl is returned.
-            hints: Dict[str, Any] = {"test_credentials": _test_credentials_payload()}
+            hints: dict[str, Any] = {"test_credentials": _test_credentials_payload()}
             if pid:
                 state_updates["provider_id"] = str(pid)
             if url:
@@ -836,7 +835,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
                     "compare against the consented account holder(s)."
                 )
             raw_ids = p.get("account_ids") or p.get("account_id") or ""
-            account_ids: List[str] = []
+            account_ids: list[str] = []
             if isinstance(raw_ids, list):
                 account_ids = [str(x).strip() for x in raw_ids if str(x).strip()]
             elif isinstance(raw_ids, str) and raw_ids.strip():

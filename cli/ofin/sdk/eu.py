@@ -13,7 +13,7 @@ app's ``api.py`` normally does:
 from __future__ import annotations
 
 import uuid
-from typing import Any, List, Optional
+from typing import Any
 
 from ._imports import EUClientCls
 from .base import Result, first
@@ -25,8 +25,8 @@ class EUClient:
     region = "eu"
 
     def __init__(self, client_id: str, private_key_path: str, public_cert_path: str,
-                 auth_base_url: Optional[str] = None, api_base_url: Optional[str] = None,
-                 application_id: str = "", timeout: Optional[int] = None) -> None:
+                 auth_base_url: str | None = None, api_base_url: str | None = None,
+                 application_id: str = "", timeout: int | None = None) -> None:
         kwargs: dict = {"application_id": application_id}
         if auth_base_url:
             kwargs["auth_base_url"] = auth_base_url
@@ -57,7 +57,7 @@ class EUClient:
 
     # -- consent ------------------------------------------------------------
     def create_consent(self, use_case_configuration_id: str, end_user_email: str,
-                        end_user_id: Optional[str] = None) -> Result:
+                        end_user_id: str | None = None) -> Result:
         # The same end_user_id must be reused by create_flow; generate one if
         # the caller didn't supply (or persist) it.
         eu_id = end_user_id or str(uuid.uuid4())
@@ -127,7 +127,7 @@ class EUClient:
 
     # -- insights -----------------------------------------------------------
     def verify_ownership(self, consent_id: str, customer_name: str,
-                         account_ids: Optional[List[str]] = None) -> Result:
+                         account_ids: list[str] | None = None) -> Result:
         body, status = self._c.verify_account_ownership(
             consent_id=consent_id, customer_name=customer_name, account_ids=account_ids)
         updates = {}

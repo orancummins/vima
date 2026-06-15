@@ -13,7 +13,6 @@ from apis.catalog import iter_ordered
 from simulator import switcher
 from simulator.datastore import store
 
-
 # Ordered list of api ids handled by the simulator (sourced from the catalog).
 _ALL_APIS: list[str] = [entry.id for entry in iter_ordered()]
 

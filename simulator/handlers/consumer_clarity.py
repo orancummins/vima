@@ -1,4 +1,5 @@
-from flask import request, jsonify
+from flask import jsonify, request
+
 from simulator.datastore import store
 
 API = "consumer_clarity"

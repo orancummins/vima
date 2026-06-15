@@ -6,9 +6,9 @@ stream-card structure for the UI.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "recurring",
     "name": "Recurring Transactions",
     "description": (
@@ -23,13 +23,11 @@ MANIFEST: Dict[str, Any] = {
     "render": "recurring",
 }
 
-
 def _client():
     from apis.open_finance import api as ofin_api
     return ofin_api._get_client()
 
-
-def _cadence_to_frequency(cadence: Optional[int]) -> str:
+def _cadence_to_frequency(cadence: int | None) -> str:
     """Convert mean-days-between-transactions to a human frequency label."""
     if cadence is None:
         return "UNKNOWN"
@@ -45,10 +43,9 @@ def _cadence_to_frequency(cadence: Optional[int]) -> str:
         return "QUARTERLY"
     return "ANNUAL"
 
-
-def _parse_stream(s: Dict[str, Any], stream_type: str) -> Dict[str, Any]:
+def _parse_stream(s: dict[str, Any], stream_type: str) -> dict[str, Any]:
     """Normalise a raw recurringOutflow / recurringInflow object."""
-    categories: List[str] = s.get("transactionCategories") or []
+    categories: list[str] = s.get("transactionCategories") or []
     return {
         "merchantName":      s.get("normalizedPayeeName") or "Unknown",
         "type":              stream_type,          # "DEBIT" or "CREDIT"
@@ -68,8 +65,7 @@ def _parse_stream(s: Dict[str, Any], stream_type: str) -> Dict[str, Any]:
         "status":            s.get("status", ""),
     }
 
-
-def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
     client = _client()
 
     # ------------------------------------------------------------------
@@ -118,7 +114,7 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
         if status >= 400:
             return {"error": f"API returned {status}", "detail": data}
         eligible_types = {"checking", "savings", "moneyMarket"}
-        accounts: List[Dict[str, Any]] = [
+        accounts: list[dict[str, Any]] = [
             {
                 "id":     str(a["id"]),
                 "name":   a.get("name", "Account"),
@@ -140,7 +136,7 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
         # Optional account filter — comma-separated IDs become a list
         raw_ids = params.get("account_ids", "")
-        account_ids: Optional[List[str]] = None
+        account_ids: list[str] | None = None
         if raw_ids:
             account_ids = [x.strip() for x in str(raw_ids).split(",") if x.strip()]
 

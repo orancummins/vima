@@ -16,11 +16,11 @@ functions (single source of truth), so there is no duplicate HTTP logic.
 """
 from __future__ import annotations
 
-import os
 import json
-import time
+import os
 import threading
-from typing import Any, Dict, List, Optional, Tuple
+import time
+from typing import Any
 
 from apis import registry as api_registry
 
@@ -46,7 +46,7 @@ _STATE_FILE = os.path.join(
 _lock = threading.Lock()
 
 
-def _blank_connection() -> Dict[str, Any]:
+def _blank_connection() -> dict[str, Any]:
     return {
         "connected": False,
         "bank_name": None,
@@ -62,16 +62,16 @@ def _blank_connection() -> Dict[str, Any]:
     }
 
 
-def _default_state() -> Dict[str, Any]:
+def _default_state() -> dict[str, Any]:
     return {
         "enabled": {r: False for r in _REGIONS},
         "connections": {r: _blank_connection() for r in _REGIONS},
     }
 
 
-def _load() -> Dict[str, Any]:
+def _load() -> dict[str, Any]:
     try:
-        with open(_STATE_FILE, "r", encoding="utf-8") as fh:
+        with open(_STATE_FILE, encoding="utf-8") as fh:
             data = json.load(fh)
     except (OSError, ValueError):
         return _default_state()
@@ -88,7 +88,7 @@ def _load() -> Dict[str, Any]:
     return state
 
 
-def _save(state: Dict[str, Any]) -> None:
+def _save(state: dict[str, Any]) -> None:
     os.makedirs(os.path.dirname(_STATE_FILE), exist_ok=True)
     tmp = _STATE_FILE + ".tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
@@ -117,7 +117,7 @@ def _is_configured(region: str) -> bool:
     return True
 
 
-def _exec(region: str, op_id: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def _exec(region: str, op_id: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
     mod = _module(region)
     if mod is None:
         return {"success": False, "error": f"{region} API not available", "data": None}
@@ -127,7 +127,7 @@ def _exec(region: str, op_id: str, params: Optional[Dict[str, Any]] = None) -> D
         return {"success": False, "error": str(exc), "data": None}
 
 
-def _ok(res: Dict[str, Any]) -> bool:
+def _ok(res: dict[str, Any]) -> bool:
     """API modules signal success with status == 'ok' (no 'success' key)."""
     if not isinstance(res, dict):
         return False
@@ -139,7 +139,7 @@ def _ok(res: Dict[str, Any]) -> bool:
     return isinstance(code, int) and 200 <= code < 300
 
 
-def _err(res: Dict[str, Any], fallback: str) -> str:
+def _err(res: dict[str, Any], fallback: str) -> str:
     """Pull the human error message out of a failed API result."""
     if isinstance(res, dict):
         if res.get("error"):
@@ -150,7 +150,7 @@ def _err(res: Dict[str, Any], fallback: str) -> str:
     return fallback
 
 
-def _status_code(res: Dict[str, Any]) -> Optional[int]:
+def _status_code(res: dict[str, Any]) -> int | None:
     if not isinstance(res, dict):
         return None
     response = res.get("response")
@@ -166,7 +166,7 @@ def _status_code(res: Dict[str, Any]) -> Optional[int]:
 # Normalizers — fold each provider's account/transaction shape into a common
 # form the UI can render uniformly.
 # ---------------------------------------------------------------------------
-def _num(*vals: Any) -> Optional[float]:
+def _num(*vals: Any) -> float | None:
     for v in vals:
         if v is None or v == "":
             continue
@@ -177,14 +177,14 @@ def _num(*vals: Any) -> Optional[float]:
     return None
 
 
-def _first(d: Dict[str, Any], *keys: str) -> Any:
+def _first(d: dict[str, Any], *keys: str) -> Any:
     for k in keys:
         if isinstance(d, dict) and d.get(k) not in (None, ""):
             return d.get(k)
     return None
 
 
-def _norm_account(region: str, a: Dict[str, Any]) -> Dict[str, Any]:
+def _norm_account(region: str, a: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(a, dict):
         return {"id": None, "name": "Account", "type": "", "balance": None, "currency": "", "mask": ""}
     balance = _num(
@@ -209,8 +209,8 @@ def _norm_account(region: str, a: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _norm_txn(region: str, t: Dict[str, Any],
-              default_account_id: Optional[str] = None) -> Dict[str, Any]:
+def _norm_txn(region: str, t: dict[str, Any],
+              default_account_id: str | None = None) -> dict[str, Any]:
     if not isinstance(t, dict):
         return {"date": "", "description": "", "amount": None,
                 "currency": "", "account_id": default_account_id}
@@ -266,7 +266,7 @@ def _norm_txn(region: str, t: Dict[str, Any],
     }
 
 
-def _extract_accounts(region: str, data: Any) -> List[Dict[str, Any]]:
+def _extract_accounts(region: str, data: Any) -> list[dict[str, Any]]:
     if not isinstance(data, dict):
         return []
     raw = data.get("accounts") or data.get("items")
@@ -279,7 +279,7 @@ def _extract_accounts(region: str, data: Any) -> List[Dict[str, Any]]:
 
 
 def _extract_txns(region: str, data: Any,
-                  default_account_id: Optional[str] = None) -> List[Dict[str, Any]]:
+                  default_account_id: str | None = None) -> list[dict[str, Any]]:
     if not isinstance(data, dict):
         return []
     raw = data.get("transactions") or data.get("items")
@@ -294,7 +294,7 @@ def _extract_txns(region: str, data: Any,
 # ---------------------------------------------------------------------------
 # Public state helpers
 # ---------------------------------------------------------------------------
-def _public_connection(region: str, conn: Dict[str, Any]) -> Dict[str, Any]:
+def _public_connection(region: str, conn: dict[str, Any]) -> dict[str, Any]:
     return {
         "region": region,
         "connected": bool(conn.get("connected")),
@@ -305,7 +305,7 @@ def _public_connection(region: str, conn: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def get_public_state() -> Dict[str, Any]:
+def get_public_state() -> dict[str, Any]:
     with _lock:
         state = _load()
     return {
@@ -322,7 +322,7 @@ def get_public_state() -> Dict[str, Any]:
     }
 
 
-def set_enabled(region: str, enabled: bool) -> Dict[str, Any]:
+def set_enabled(region: str, enabled: bool) -> dict[str, Any]:
     if region not in _REGIONS:
         return {"success": False, "error": f"unknown region {region!r}"}
     with _lock:
@@ -335,7 +335,7 @@ def set_enabled(region: str, enabled: bool) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Connect flows — kick off the real hosted bank login per region.
 # ---------------------------------------------------------------------------
-def start_connect(region: str) -> Dict[str, Any]:
+def start_connect(region: str) -> dict[str, Any]:
     if region not in _REGIONS:
         return {"success": False, "error": f"unknown region {region!r}"}
     with _lock:
@@ -417,7 +417,7 @@ def start_connect(region: str) -> Dict[str, Any]:
     return {"success": False, "error": "unsupported region"}
 
 
-def _pull_us(conn: Dict[str, Any]) -> Tuple[bool, List, List, Optional[str]]:
+def _pull_us(conn: dict[str, Any]) -> tuple[bool, list, list, str | None]:
     cid = conn.get("customer_id")
     if not cid:
         return False, [], [], "No customer linked yet"
@@ -433,13 +433,13 @@ def _pull_us(conn: Dict[str, Any]) -> Tuple[bool, List, List, Optional[str]]:
         accounts = _extract_accounts("us", res.get("data"))
     if not accounts:
         return False, [], [], None
-    txns: List = []
+    txns: list = []
     res_t = _exec("us", "get_transactions", {"customer_id": cid, "days": 90})
     txns = _extract_txns("us", res_t.get("data"))
     return True, accounts, txns, None
 
 
-def _pull_au(conn: Dict[str, Any]) -> Tuple[bool, List, List, Optional[str]]:
+def _pull_au(conn: dict[str, Any]) -> tuple[bool, list, list, str | None]:
     cid = conn.get("customer_id")
     if not cid:
         return False, [], [], "No customer linked yet"
@@ -459,7 +459,7 @@ def _pull_au(conn: Dict[str, Any]) -> Tuple[bool, List, List, Optional[str]]:
     return True, accounts, [], None
 
 
-def _pull_eu(conn: Dict[str, Any]) -> Tuple[bool, List, List, Optional[str]]:
+def _pull_eu(conn: dict[str, Any]) -> tuple[bool, list, list, str | None]:
     consent_id = conn.get("consent_id")
     if not consent_id:
         return False, [], [], "No consent created yet"
@@ -469,7 +469,7 @@ def _pull_eu(conn: Dict[str, Any]) -> Tuple[bool, List, List, Optional[str]]:
         return False, [], [], None
     conn["account_id"] = accounts[0].get("id")
     # Pull transactions for every account so the UI can show them per-account.
-    txns: List = []
+    txns: list = []
     for acct in accounts:
         aid = acct.get("id")
         if not aid:
@@ -484,7 +484,7 @@ def _pull_eu(conn: Dict[str, Any]) -> Tuple[bool, List, List, Optional[str]]:
 _PULLERS = {"us": _pull_us, "au": _pull_au, "eu": _pull_eu}
 
 
-def _do_pull(region: str) -> Dict[str, Any]:
+def _do_pull(region: str) -> dict[str, Any]:
     with _lock:
         state = _load()
         conn = state["connections"][region]
@@ -516,13 +516,13 @@ def _do_pull(region: str) -> Dict[str, Any]:
     }
 
 
-def poll_connect(region: str) -> Dict[str, Any]:
+def poll_connect(region: str) -> dict[str, Any]:
     if region not in _REGIONS:
         return {"success": False, "error": f"unknown region {region!r}"}
     return _do_pull(region)
 
 
-def refresh(region: str) -> Dict[str, Any]:
+def refresh(region: str) -> dict[str, Any]:
     if region not in _REGIONS:
         return {"success": False, "error": f"unknown region {region!r}"}
     return _do_pull(region)

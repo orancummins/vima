@@ -1,9 +1,11 @@
-import uuid
-import time
 import json
+import time
+import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from flask import request, jsonify
+
+from flask import jsonify, request
+
 from simulator.datastore import store
 
 API = "open_finance"

@@ -4,12 +4,45 @@
 ============================================================
 
 
-Cloning into 'C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-212231'...
-WARNING: The following features are always enabled: truststore. 
 
-[notice] A new release of pip is available: 25.3 -> 26.1.2
-[notice] To update, run: python.exe -m pip install --upgrade pip
-WARNING: ANTHROPIC_API_KEY is not set in config/.env -- Claude API calls will fail.
+[1m[36m------------------------------------------------------------[0m[0m
+[1m[36mVima / Solution Studio — Automated Test Suite[0m[0m
+[1m[36m------------------------------------------------------------[0m[0m
+  Email:         
+  Login mode:    Standard (email + password auto-fill)
+  Install type:  Existing
+  Work dir:      C:\Users\e031093\dev\vima
+  Server:        http://127.0.0.1:9021
+
+[1m>> Starting Flask server on port 9021[0m
+  Waiting for server at http://127.0.0.1:9021 …
+  [32m[OK]  Server ready.[0m
+
+[1m>> Smoke tests[0m
+
+[1m[36m>> Smoke — Home / APIs / Use Cases[0m[0m
+  [32m[PASS][0m GET /app returns 200
+  [32m[PASS][0m GET /app has no server error
+  [32m[PASS][0m GET /app contains all navigation panels
+  [32m[PASS][0m GET /explorer/apis returns 200
+  [32m[PASS][0m GET /explorer/apis returns a non-empty list
+  [32m[PASS][0m GET /explorer/apis includes bin_lookup
+  [32m[PASS][0m Use Cases panel marker present in /app
+  [32m7/7 passed[0m
+
+[1m>> BIN Lookup API tests[0m
+
+[1m[36m>> BIN Lookup API[0m[0m
+  [32m[PASS][0m BIN Lookup is configured
+  [32m[PASS][0m Execute lookup_bin (BIN 543210)
+  [32m[PASS][0m Get Code snippet contains valid Python
+  [32m3/3 passed[0m
+
+[1m>> BIN Lookup Use Case tests[0m
+
+[1m[36m>> BIN Lookup Use Case[0m[0m
+  [32m[PASS][0m /bin_lookup/index.html loads (200)
+  [32m[PASS][0m BIN ranges status endpoint returns valid JSON
 
 ============================================================
 Solution Studio
@@ -34,126 +67,11 @@ Solution Studio
   - Carbon Calculator    (9 operations)
   + Business Payment Controls (4 operations)
 
-Listening on http://0.0.0.0:9022
+Listening on http://0.0.0.0:9021
 ============================================================
 
  * Serving Flask app 'app'
  * Debug mode: on
-
-[1m[36m------------------------------------------------------------[0m[0m
-[1m[36mVima / Solution Studio — Automated Test Suite[0m[0m
-[1m[36m------------------------------------------------------------[0m[0m
-  Email:         oran.cummins@mastercard.com
-  Login mode:    SSO (email auto-fill only)
-  Install type:  Clean (clone)
-  Work dir:      C:\Users\e031093\dev\vima
-  Server:        http://127.0.0.1:9022
-
-[1m>> Clean install — cloning repository[0m
-  Cloning https://github.com/orancummins/vima.git -> C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-212231 ...
-  Cloned to: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-212231
-  Installing dependencies ...
-
-[1m>> Starting Flask server on port 9022[0m
-  Waiting for server at http://127.0.0.1:9022 …
-  [32m[OK]  Server ready.[0m
-
-[1m>> Smoke tests[0m
-
-[1m[36m>> Smoke — Home / APIs / Use Cases[0m[0m
-  [32m[PASS][0m GET /app returns 200
-  [32m[PASS][0m GET /app has no server error
-  [32m[PASS][0m GET /app contains all navigation panels
-  [32m[PASS][0m GET /explorer/apis returns 200
-  [32m[PASS][0m GET /explorer/apis returns a non-empty list
-  [32m[PASS][0m GET /explorer/apis includes bin_lookup
-  [32m[PASS][0m Use Cases panel marker present in /app
-  [32m7/7 passed[0m
-
-[1m>> Auto-provisioning BIN Lookup API key[0m
-
-[1m>> Saving portal credentials for provisioner auto-login[0m
-  Provision job started: 00f53ba1
-
-  Opening http://127.0.0.1:9022/app for Mastercard portal SSO login …
-  Account: oran.cummins@mastercard.com
-  Please log in when the browser opens and complete the portal flow.
-  (Timeout: 600s)
-
-  Provisioning log:
-    2026-06-15 21:22:41.487 | INFO     | app.orchestrator:run:32 - Loaded config for env=sandbox (1 projects)
-    Warning: Ignoring extra certs from `C:\Program Files\ClaudeCode\mastercard_prd_corporate_network_root_ca_g2.pem;C:\Program Files\ClaudeCode\combined-certs.pem`, load failed: error:8000007B:system library::no protocol option
-    2026-06-15 21:22:42.633 | INFO     | browser.session:browser_session:48 - Reusing saved session from C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
-    2026-06-15 21:22:43.390 | INFO     | providers.mastercard.pages.login_page:goto:25 - Navigating to https://developer.mastercard.com/account/log-in
-    2026-06-15 21:22:47.417 | INFO     | browser.waits:wait_until:33 - Still waiting for saved-session redirect...
-    2026-06-15 21:22:48.922 | INFO     | browser.waits:wait_until:25 - Reached saved-session redirect
-    2026-06-15 21:22:48.922 | INFO     | providers.mastercard.pages.login_page:wait_for_manual_auth:142 - Saved session redirected to https://developer.mastercard.com/dashboard — skipping login form.
-    2026-06-15 21:22:48.922 | INFO     | providers.mastercard.provider:login:34 - Authenticated session detected.
-    2026-06-15 21:22:48.922 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
-    2026-06-15 21:22:51.251 | INFO     | providers.mastercard.workflows.project_workflow:ensure_project_with_api:677 - Provisioning 'bin_lookup' (type=oauth1_standard) — project 'SST-bin_lookup-20260615212243'
-    2026-06-15 21:22:54.522 | INFO     | providers.mastercard.pages.create_project_page:fill:31 - Filling create-project form: name='SST-bin_lookup-20260615212243' on_behalf=False region=None api_selection=None
-    2026-06-15 21:22:56.470 | INFO     | providers.mastercard.pages.create_project_page:proceed:91 - Proceed button enabled after 0.0s
-    2026-06-15 21:22:56.470 | INFO     | providers.mastercard.pages.create_project_page:proceed:97 - Clicking Proceed (url=https://developer.mastercard.com/create-project?services=bin-lookup)
-    2026-06-15 21:22:56.516 | INFO     | providers.mastercard.pages.create_project_page:proceed:101 - Proceed clicked — url now: https://developer.mastercard.com/create-project?services=bin-lookup
-    2026-06-15 21:22:57.063 | INFO     | providers.mastercard.pages.create_project_page:wait_for_confirmation_or_project_page:136 - Wizard advanced to Step 2 (Project credentials) — https://developer.mastercard.com/create-project?services=bin-lookup
-    2026-06-15 21:22:57.064 | INFO     | providers.mastercard.pages.create_project_page:fill_step2_credentials:226 - Filling Step 2 credentials: alias='bin_lookup'
-    2026-06-15 21:22:58.611 | INFO     | providers.mastercard.pages.create_project_page:_wait_for_create_button_enabled:315 - 'Create project' button enabled after 0.0s
-    2026-06-15 21:22:58.614 | INFO     | providers.mastercard.pages.create_project_page:create_key_step2:760 - 'Create project' button state: {'found': True, 'disabled': False, 'ariaDisabled': 'false', 'display': 'block', 'visibility': 'visible'}
-    2026-06-15 21:22:58.783 | INFO     | browser.screenshots:capture:20 - Captured screenshot C:\Users\e031093\dev\vima\tools\mcd-key-automation\logs\screenshots\20260615T202258_step2_before_submit.png
-    2026-06-15 21:22:58.783 | INFO     | providers.mastercard.pages.create_project_page:create_key_step2:776 - Clicking 'Create project' on Step 2
-    2026-06-15 21:22:58.932 | INFO     | providers.mastercard.pages.create_project_page:wait_for_download_after_step2:870 - Final key step detected via visible 'Skip this step' + 'Create project' buttons
-    2026-06-15 21:22:59.025 | INFO     | browser.screenshots:capture:20 - Captured screenshot C:\Users\e031093\dev\vima\tools\mcd-key-automation\logs\screenshots\20260615T202258_step3_detected_via_skip.png
-    2026-06-15 21:22:59.035 | INFO     | providers.mastercard.pages.create_project_page:_wait_for_create_button_enabled:315 - 'Create project' button enabled after 0.0s
-    2026-06-15 21:22:59.041 | INFO     | providers.mastercard.pages.create_project_page:wait_for_download_after_step2:905 - Clicked 'Create project' on final key step — found=True
-    2026-06-15 21:23:04.546 | INFO     | providers.mastercard.pages.create_project_page:wait_for_download_after_step2:822 - Download key button appeared — https://developer.mastercard.com/create-project?services=bin-lookup
-    2026-06-15 21:23:04.548 | INFO     | providers.mastercard.pages.create_project_page:download_key_file:1046 - Clicking 'Download key file'
-    2026-06-15 21:23:05.201 | INFO     | browser.downloads:save_download:19 - Copied download C:\Users\e031093\AppData\Local\Temp\1\playwright-artifacts-xtCApa\ef0f2514-8ed1-460a-9469-cf0d13489e9e -> C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup.zip
-    2026-06-15 21:23:05.201 | INFO     | providers.mastercard.pages.create_project_page:download_key_file:1063 - Downloaded key file: C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup.zip
-    2026-06-15 21:23:05.201 | INFO     | providers.mastercard.workflows.project_workflow:_provision_oauth1_standard:167 - Downloaded signing key zip: C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup.zip
-    2026-06-15 21:23:05.201 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
-    2026-06-15 21:23:07.297 | INFO     | providers.mastercard.pages.project_page:goto:97 - Navigating to sandbox page: https://developer.mastercard.com/project-details/c44ebb08-40d0-4fc8-9d1d-3906835b89e4/sandbox
-    2026-06-15 21:23:12.750 | INFO     | providers.mastercard.pages.project_page:extract_consumer_key:216 - Extracted consumer key (alias='bin_lookup', idx=0): 14lpnXGU...0000
-    2026-06-15 21:23:12.753 | INFO     | providers.mastercard.workflows.project_workflow:_capture_consumer_key:76 - Saved OAuth 1.0a credentials JSON: C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup-credentials.json
-    2026-06-15 21:23:12.776 | INFO     | providers.mastercard.provider:download_keys:85 - Artifact: mastercard-sbx-bin-lookup-bin-lookup-signing-v1-credentials.json (d3090a09d348)
-    2026-06-15 21:23:12.791 | INFO     | providers.mastercard.provider:download_keys:85 - Artifact: mastercard-sbx-bin-lookup-bin-lookup-signing-v1.zip (1e0ae675dec5)
-    2026-06-15 21:23:12.791 | INFO     | app.orchestrator:run:63 - Provisioned 'bin_lookup' \u2713Warning: Ignoring extra certs from `C:\Program Files\ClaudeCode\mastercard_prd_corporate_network_root_ca_g2.pem;C:\Program Files\ClaudeCode\combined-certs.pem`, load failed: error:8000007B:system library::no protocol option
-2026-06-15 21:23:17.165 | INFO     | browser.session:browser_session:48 - Reusing saved session from C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
-2026-06-15 21:23:18.039 | INFO     | providers.mastercard.pages.login_page:goto:25 - Navigating to https://developer.mastercard.com/account/log-in
-2026-06-15 21:23:24.533 | INFO     | browser.waits:wait_until:33 - Still waiting for saved-session redirect...
-2026-06-15 21:23:26.047 | INFO     | browser.waits:wait_until:25 - Reached saved-session redirect
-2026-06-15 21:23:26.047 | INFO     | providers.mastercard.pages.login_page:wait_for_manual_auth:142 - Saved session redirected to https://developer.mastercard.com/dashboard — skipping login form.
-2026-06-15 21:23:26.047 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
-2026-06-15 21:23:28.619 | INFO     | __main__:run_cleanup:206 - Found 1 project(s) to delete: ['SST-bin_lookup-20260615212243']
-2026-06-15 21:23:28.619 | INFO     | __main__:_delete_project:95 - Navigating to project 'SST-bin_lookup-20260615212243' at https://developer.mastercard.com/project-details/c44ebb08-40d0-4fc8-9d1d-3906835b89e4
-2026-06-15 21:23:36.199 | INFO     | __main__:_delete_project:121 - Scrolling to 'Delete this project' for 'SST-bin_lookup-20260615212243'
-2026-06-15 21:23:36.751 | INFO     | __main__:_delete_project:131 - Mouse-clicking 'Delete this project' at (422, 532)
-2026-06-15 21:23:38.891 | INFO     | __main__:_delete_project:157 - Confirming deletion via '[role='dialog'] button:has-text('Delete')'
-2026-06-15 21:23:38.943 | INFO     | __main__:_delete_project:173 - Confirmed deletion of 'SST-bin_lookup-20260615212243'
-2026-06-15 21:23:43.946 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
-2026-06-15 21:23:45.892 | INFO     | __main__:_delete_project:184 - Verified: 'SST-bin_lookup-20260615212243' no longer in dashboard
-2026-06-15 21:23:45.899 | INFO     | browser.session:browser_session:61 - Saved session state to C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
-
-Deleted 1 project(s):
-  - SST-bin_lookup-20260615212243
-
-    2026-06-15 21:23:12.884 | INFO     | app.orchestrator:_rebuild_vima_zip:120 - Built vima-config.zip: 17 API(s) included
-  [31mProvisioning error: 'charmap' codec can't encode character '\U0001f4be' in position 4: character maps to <undefined>[0m
-  [33mContinuing with remaining tests …[0m
-
-[1m>> BIN Lookup API tests[0m
-
-[1m[36m>> BIN Lookup API[0m[0m
-  [32m[PASS][0m BIN Lookup is configured
-  [31m[FAIL][0m Execute lookup_bin (BIN 543210)
-    [2mexecute lookup_bin returned success=false after retries. Response: {'data': {}, 'error': {'Error': [{'Description': 'You may not have permission to access this endpoint. Please check you are using the correct credentials or upgrade your subscription if you wish to use it', 'Details': '', 'ReasonCode': '1006', 'Recoverable': False, 'Source': 'bin-resources'}]}, 'request': {'body': [{'key': 'binNum', 'value': '543210'}], 'headers': {'Accept': 'application/json', 'Accept-Encoding': 'gzip, deflate', 'Connection': 'keep-alive', 'Content-Length': '38', 'Content-Type': 'application/json', 'User-Agent': 'python-requests/2.31.0'}, 'method': 'POST', 'url': 'https://sandbox.api.mastercard.com/bin-resources/bin-ranges?page=1&size=10'}, 'response': {'body': {'Errors': {'Error': [{'Description': 'You may not have permission to access this endpoint. Please check you are using the correct credentials or upgrade your subscription if you wish to use it', 'Details': '', 'ReasonCode': '1006', 'Recoverable': False, 'Source': 'bin-resources'}]}}, 'headers': {'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate', 'Connection': 'close', 'Content-Length': '273', 'Content-Type': 'application/json;charset=ISO-8859-1', 'Date': 'Mon, 15 Jun 2026 20:23:13 GMT', 'Expires': '0', 'Pragma': 'no-cache', 'Set-Cookie': 'JSESSIONID=4531635A4829AC1978831431A97E6532; Path=/bin-resources; Secure; HttpOnly', 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains', 'X-Content-Type-Options': 'nosniff', 'X-EdgeConnect-MidMile-RTT': '89', 'X-EdgeConnect-Origin-MEX-Latency': '137', 'X-Frame-Options': 'DENY', 'X-MC-Correlation-ID': '0.c63e1202.1781554993.841e4822', 'X-XSS-Protection': '0', 'correlation-id': '0.c63e1202.1781554993.841e4822'}, 'status_code': 403}, 'state': {'configured': True}, 'state_updates': {}, 'success': False}[0m
-  [32m[PASS][0m Get Code snippet contains valid Python
-  [31m2/3 passed[0m
-
-[1m>> BIN Lookup Use Case tests[0m
-
-[1m[36m>> BIN Lookup Use Case[0m[0m
-  [32m[PASS][0m /bin_lookup/index.html loads (200)
-  [32m[PASS][0m BIN ranges status endpoint returns valid JSON
   [32m[PASS][0m Lookup action returns card data for BIN 543210
   [32m[PASS][0m Lookup action handles unknown BIN gracefully
   [32m4/4 passed[0m
@@ -170,27 +88,68 @@ Deleted 1 project(s):
   [32m[PASS][0m SDKs: /app reachable (placeholder)
   [32m1/1 passed[0m
 
+[1m>> Python Lint (Ruff)[0m
+
+[1m[36m>> Python Lint (Ruff)[0m[0m
+  [32m[PASS][0m ruff is installed
+  [32m[PASS][0m Scan scope: 104 Python file(s) across 7 target(s)
+  Targets: apis, usecases, chat, simulator, app.py, clean_keys.py, live_demo.py
+  Rules:   E(style), F(Pyflakes), W(warnings), I(imports), B(bugbear), UP(pyupgrade)
+  Ignored: E501, B008
+  Issues:  0 total across 0 file(s)
+  [32m[PASS][0m All 7 target(s) are lint-clean
+  [32m3/3 passed[0m
+
+[1m>> JavaScript Lint (ESLint)[0m
+
+[1m[36m>> JavaScript Lint (ESLint)[0m[0m
+  [32m[PASS][0m Scan scope: 0 JS file(s) in static/js
+  Config:   .eslintrc.json (eslint:recommended)
+  Checks:   best-practices, no-unused-vars, no-undef, consistent syntax
+  Findings: 0 error(s), 0 warning(s)
+  [32m[PASS][0m All 0 JS file(s) are lint-clean
+  [32m2/2 passed[0m
+
+[1m>> Security (Bandit)[0m
+
+[1m[36m>> Security (Bandit)[0m[0m
+  [32m[PASS][0m bandit is installed
+  [32m[PASS][0m Scan scope: 104 file(s), 22,343 lines of code
+  Targets:   apis, usecases, chat, simulator, app.py, clean_keys.py, live_demo.py
+  Threshold: severity >=MEDIUM, confidence >=MEDIUM
+  Checks:    B1xx (injection), B2xx (shell), B3xx (imports), B4xx (ciphers),
+             B5xx (assert/try), B6xx (crypto/ssl), B7xx (xml/yaml)
+  Findings:  0 HIGH, 2 MEDIUM, 71 LOW (all severities, before filter)
+  [32m[PASS][0m No medium/high security issues in 7 target(s)
+  [32m[PASS][0m Suppressions (9 # nosec annotation(s)):
+  apis/snippet.py:297  f"{env_prefix}_SIGNING_KEY_PATH": "/tmp/snippet-dry-run.p12",  # nosec B108 — placeholder path, never created
+  apis/snippet.py:318  f"{env_prefix}_PRIVATE_KEY_PATH": "/tmp/snippet-dry-run-key.pem",  # nosec B108 — placeholder path, never created
+  apis/snippet.py:319  f"{env_prefix}_PUBLIC_CERT_PATH": "/tmp/snippet-dry-run-cert.pem",  # nosec B108 — placeholder path, never created
+  app.py:94  _INTERNAL_HOSTS = ("localhost", "127.0.0.1", "0.0.0.0", "::1", "cloudflare.com")  # nosec B104
+  app.py:200  default=os.environ.get("HOST", "0.0.0.0"),  # nosec B104 — configurable dev server binding
+  app.py:293  resp = _requests.get(url, timeout=4.0, verify=False)  # nosec B501
+  app.py:1889  "INSERT INTO bin_ranges VALUES (" + ",".join(["?"] * 32) + ")",  # nosec B608 — values via ? params
+  app.py:3120  app.run(host=host, port=port, debug=True, use_reloader=False)  # nosec B201 — local dev server only
+  clean_keys.py:77  with urllib.request.urlopen(req, timeout=2) as resp:  # nosec B310 — localhost only
+  [33m[INFO] 73 low-severity/confidence finding(s) below threshold — run bandit manually to review[0m
+  [32m4/4 passed[0m
+
 [1m>> Stopping server[0m
   [32m[OK]  Server stopped.[0m
-
-[1m[36m>> Portal project cleanup[0m[0m
-  [32m[PASS][0m Delete SST-* projects from Mastercard Developers
-
-[1m>> Removing local keys/certs and cloned directory[0m
-  [32m[OK]  Removed keys/certs: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-212231\config\keys[0m
-  [32m[OK]  Removed cloned directory: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-212231[0m
   [32m[OK]  Run recorded in dashboard DB (run #{run_id}).[0m
 
 ============================================================
 [1mTest Summary[0m
 ============================================================
   [32m[OK][0m  Smoke — Home / APIs / Use Cases     7/7
-  [31m[FAIL][0m  BIN Lookup API                      2/3
+  [32m[OK][0m  BIN Lookup API                      3/3
   [32m[OK][0m  BIN Lookup Use Case                 4/4
   [32m[OK][0m  Bundles                             1/1
   [32m[OK][0m  SDKs / ofin CLI                     1/1
-  [32m[OK][0m  Portal project cleanup              1/1
+  [32m[OK][0m  Python Lint (Ruff)                  3/3
+  [32m[OK][0m  JavaScript Lint (ESLint)            2/2
+  [32m[OK][0m  Security (Bandit)                   4/4
 ------------------------------------------------------------
-[31m[1m  16/17 passed[0m[0m
+[32m[1m  25/25 passed[0m[0m
 ============================================================
 

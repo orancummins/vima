@@ -9,7 +9,7 @@ import json
 import os
 import time
 from datetime import date
-from typing import Any, Dict
+from typing import Any
 
 # ABU OpenAPI servers:
 # - Sandbox:   https://sandbox.api.mastercard.com/abu/accounts/
@@ -19,15 +19,15 @@ _PROD_BASE_URL = "https://api.mastercard.com/abu/accounts"
 _TESTING_DOCS_URL = "https://developer.mastercard.com/automatic-billing-updater/documentation/testing/"
 _DEFAULT_EXPIRY_MMYY = "1235"
 _PUSH_CHECK_CACHE_TTL_S = 300
-_PUSH_CHECK_CACHE: Dict[str, Any] = {
+_PUSH_CHECK_CACHE: dict[str, Any] = {
     "checked_at": 0.0,
     "ok": None,
     "reason": "",
 }
 
 
-def _sample_payload(account_number: str, expiry: str, request_id: str, *, sub_merchant_id: str = "") -> Dict[str, Any]:
-    customer: Dict[str, Any] = {
+def _sample_payload(account_number: str, expiry: str, request_id: str, *, sub_merchant_id: str = "") -> dict[str, Any]:
+    customer: dict[str, Any] = {
         "ica": "1111",
         "merchantId": "XXX000000000XXX",
     }
@@ -43,7 +43,7 @@ def _sample_payload(account_number: str, expiry: str, request_id: str, *, sub_me
     }
 
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "automatic_billing_updater",
     "name": "Automatic Billing Updater",
     "description": (
@@ -168,7 +168,7 @@ def _expiry_older_than_12_months(expiry_date: str) -> bool:
     return expiry_idx < cutoff_idx
 
 
-def _push_expiry_error() -> Dict[str, Any]:
+def _push_expiry_error() -> dict[str, Any]:
     return {
         "success": False,
         "error": "Invalid expiry_date for ABU Push. Use MMYY not older than 12 months (for example 1235).",
@@ -253,7 +253,7 @@ def is_configured() -> bool:
     return _configured()
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     push_ok, push_reason = _push_entitlement_status()
     return {
         "configured": is_configured(),
@@ -262,7 +262,7 @@ def get_state() -> Dict[str, Any]:
     }
 
 
-def _not_configured_err() -> Dict[str, Any]:
+def _not_configured_err() -> dict[str, Any]:
     return {
         "success": False,
         "error": (
@@ -280,7 +280,7 @@ def _resolve_key_path(path: str) -> str:
     return os.path.join(project_root, path)
 
 
-def _build_payload(params: Dict[str, Any]) -> Dict[str, Any]:
+def _build_payload(params: dict[str, Any]) -> dict[str, Any]:
     request_id = (params.get("request_id") or "abu-req-1").strip()
     ica = (params.get("ica") or "1111").strip()
     merchant_id = (params.get("merchant_id") or "XXX000000000XXX").strip()
@@ -293,7 +293,7 @@ def _build_payload(params: Dict[str, Any]) -> Dict[str, Any]:
     if not expiry_date:
         raise ValueError("expiry_date is required")
 
-    customer: Dict[str, Any] = {
+    customer: dict[str, Any] = {
         "ica": ica,
         "merchantId": merchant_id,
     }
@@ -310,9 +310,10 @@ def _build_payload(params: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _post(path: str, body: Dict[str, Any]) -> Dict[str, Any]:
-    from simulator.switcher import is_simulated
+def _post(path: str, body: dict[str, Any]) -> dict[str, Any]:
     import requests
+
+    from simulator.switcher import is_simulated
 
     body_str = json.dumps(body)
     url = f"{_base_url()}{path}"
@@ -379,7 +380,7 @@ def _post(path: str, body: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("automatic_billing_updater"):
         return _not_configured_err()

@@ -19,19 +19,19 @@ from __future__ import annotations
 
 import os
 import threading
-from typing import Any, Dict, List
+from typing import Any
 
-from apis.catalog import CATALOG, DISABLED_API_IDS, GROUP_ORDER, iter_ordered, get as catalog_get
-from apis.bundles import iter_bundles, bundles_for_api
+from apis.bundles import bundles_for_api, iter_bundles
+from apis.catalog import CATALOG, DISABLED_API_IDS, GROUP_ORDER, iter_ordered
+from apis.catalog import get as catalog_get
 from apis.credentials import is_configured as default_is_configured
 
-
 # Map: api_id -> module. Built lazily on first access.
-REGISTRY: Dict[str, Any] = {}
+REGISTRY: dict[str, Any] = {}
 _REGISTRY_LOCK = threading.Lock()
 
 # Display order, matching the catalog declaration order.
-ORDER: List[str] = [e.id for e in iter_ordered()]
+ORDER: list[str] = [e.id for e in iter_ordered()]
 
 
 def _load_all() -> None:
@@ -45,7 +45,7 @@ def _load_all() -> None:
                 print(f"[apis] failed to load {entry.id}: {exc}")
 
 
-def manifests() -> List[Dict[str, Any]]:
+def manifests() -> list[dict[str, Any]]:
     """Return the manifest for every registered API, in display order.
 
     APIs listed in ``catalog.DISABLED_API_IDS`` are silently omitted so the
@@ -53,7 +53,7 @@ def manifests() -> List[Dict[str, Any]]:
     underlying modules are still loaded and importable for tests/tools.
     """
     _load_all()
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for api_id in ORDER:
         if api_id in DISABLED_API_IDS:
             continue
@@ -83,18 +83,18 @@ def manifests() -> List[Dict[str, Any]]:
     return out
 
 
-def manifests_grouped() -> List[Dict[str, Any]]:
+def manifests_grouped() -> list[dict[str, Any]]:
     """Return manifests bucketed by ``ApiCatalogEntry.group``.
 
     Output: ``[{"group": "...", "apis": [manifest, ...]}, ...]`` ordered by
     ``GROUP_ORDER`` (Mastercard Developers product categories). Within each
     group the order matches the catalog declaration order.
     """
-    by_group: Dict[str, List[Dict[str, Any]]] = {g: [] for g in GROUP_ORDER}
+    by_group: dict[str, list[dict[str, Any]]] = {g: [] for g in GROUP_ORDER}
     for m in manifests():
         g = m.get("group") or GROUP_ORDER[-1]
         by_group.setdefault(g, []).append(m)
-    sections: List[Dict[str, Any]] = []
+    sections: list[dict[str, Any]] = []
     for g in GROUP_ORDER:
         items = by_group.get(g) or []
         if items:
@@ -114,7 +114,7 @@ def get_module(api_id: str):
     entry = catalog_get(api_id)
     if entry is None:
         return None
-def solutions() -> List[Dict[str, Any]]:
+def solutions() -> list[dict[str, Any]]:
     """Return solution-shaped bundles enriched with per-bundle status.
 
     Each bundle yields:
@@ -135,9 +135,9 @@ def solutions() -> List[Dict[str, Any]]:
     coherent solution stacks rather than individual APIs.
     """
     manifest_by_id = {m["id"]: m for m in manifests()}
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for b in iter_bundles():
-        apis_out: List[Dict[str, Any]] = []
+        apis_out: list[dict[str, Any]] = []
         configured = 0
         for api_id in b.apis:
             m = manifest_by_id.get(api_id)

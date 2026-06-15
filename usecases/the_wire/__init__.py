@@ -38,10 +38,9 @@ recurring detection, etc.).
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
-
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "the_wire",
     "name": "The Wire",
     "description": (
@@ -56,12 +55,10 @@ MANIFEST: Dict[str, Any] = {
     "render": "the_wire",
 }
 
-
 # This use case is fully offline-capable — no live Open Finance customer
 # required.  Lets the route at ``/usecases/the_wire/data`` serve the
 # curated journeys even when nobody has connected a bank yet.
 REQUIRES_CUSTOMER = False
-
 
 # ---------------------------------------------------------------------------
 # Curated journeys — each one is real-shaped data hand-assembled so the demo
@@ -73,7 +70,7 @@ REQUIRES_CUSTOMER = False
 #   tw_5 — ride-share with MCC mapping
 #   tw_6 — bill-pay / utilities recurring
 # ---------------------------------------------------------------------------
-_JOURNEYS: List[Dict[str, Any]] = [
+_JOURNEYS: list[dict[str, Any]] = [
     {
         "id": "tw_1",
         "summary": "Blue Bottle Coffee  ·  $4.50",
@@ -540,8 +537,7 @@ _JOURNEYS: List[Dict[str, Any]] = [
     },
 ]
 
-
-def get_data(customer_id: str) -> Dict[str, Any]:
+def get_data(customer_id: str) -> dict[str, Any]:
     """Return the curated journeys.
 
     ``customer_id`` is accepted for API symmetry with other use cases but

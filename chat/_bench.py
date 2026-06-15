@@ -14,18 +14,18 @@ import shutil
 import sys
 import tempfile
 import time
-import uuid
 from pathlib import Path
 
 # Inject OS cert store BEFORE any HTTPS clients are created (matches what
 # app.py does at startup).
 import truststore
+
 truststore.inject_into_ssl()
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from chat.app import _make_chat_generator, PROJECT_ROOT  # noqa: E402
+from chat.app import PROJECT_ROOT, _make_chat_generator  # noqa: E402
 
 
 def _consume(gen):

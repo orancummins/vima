@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from typing import Any, Dict
+from typing import Any
 
 from flask import jsonify, request
 
@@ -58,7 +58,7 @@ def register(bp):
         store.lazy_load(API)
         body = request.get_json(force=True, silent=True) or {}
         consent_id = "con_" + uuid.uuid4().hex[:16]
-        record: Dict[str, Any] = {
+        record: dict[str, Any] = {
             "consent_id": consent_id,
             "id": consent_id,
             "provider_id": body.get("provider_id"),

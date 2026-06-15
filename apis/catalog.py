@@ -24,10 +24,8 @@ the matching ``apis/<id>/api.py`` module.
 from __future__ import annotations
 
 import importlib
-import os
-from dataclasses import dataclass, field
-from typing import Iterable, Optional
-
+from collections.abc import Iterable
+from dataclasses import dataclass
 
 # ---------------------------------------------------------------------------
 # Auth schemas
@@ -104,7 +102,7 @@ class ApiCatalogEntry:
     auth: str
     categories: tuple[str, ...] = ()
     docs_url: str = ""
-    legacy_id: Optional[str] = None
+    legacy_id: str | None = None
     # Top-level Mastercard Developers product grouping (see GROUP_* above).
     # Drives sidebar section headings in the API explorer.
     group: str = GROUP_DATA
@@ -125,7 +123,7 @@ class ApiCatalogEntry:
     # against; any Open Finance use case needs a Consent mandate first).
     requires: tuple[str, ...] = ()
     # Optional override; defaults to ``apis.<id>.api``.
-    module_path: Optional[str] = None
+    module_path: str | None = None
 
     @property
     def folder(self) -> str:
@@ -480,14 +478,14 @@ def iter_ordered() -> Iterable[ApiCatalogEntry]:
     return iter(_ENTRIES)
 
 
-def get(api_id: str) -> Optional[ApiCatalogEntry]:
+def get(api_id: str) -> ApiCatalogEntry | None:
     """Look up by canonical id; falls back to legacy id."""
     if api_id in CATALOG:
         return CATALOG[api_id]
     return CATALOG.get(LEGACY_TO_ID.get(api_id, ""))
 
 
-def by_portal_slug(slug: str) -> Optional[ApiCatalogEntry]:
+def by_portal_slug(slug: str) -> ApiCatalogEntry | None:
     for e in _ENTRIES:
         if e.portal_slug == slug:
             return e

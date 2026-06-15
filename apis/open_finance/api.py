@@ -8,19 +8,18 @@ from __future__ import annotations
 import os
 import threading
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from .client import OpenFinanceClient
-
 
 # ---------------------------------------------------------------------------
 # Client (singleton)
 # ---------------------------------------------------------------------------
 
-_client: Optional[OpenFinanceClient] = None
+_client: OpenFinanceClient | None = None
 
 
-def _get_client() -> Optional[OpenFinanceClient]:
+def _get_client() -> OpenFinanceClient | None:
     global _client
     from simulator.switcher import is_simulated
     if is_simulated("open_finance"):
@@ -116,10 +115,10 @@ def _save_state() -> None:
         pass
 
 
-def _load_state_from_disk() -> Dict[str, Any]:
+def _load_state_from_disk() -> dict[str, Any]:
     """Return the persisted state dict, or an empty dict if none/unreadable."""
     try:
-        with open(_STATE_FILE, "r", encoding="utf-8") as fh:
+        with open(_STATE_FILE, encoding="utf-8") as fh:
             data = _json.load(fh) or {}
     except (OSError, ValueError):
         return {}
@@ -128,7 +127,7 @@ def _load_state_from_disk() -> Dict[str, Any]:
     return data
 
 
-STATE: Dict[str, Any] = _PersistentDict({
+STATE: dict[str, Any] = _PersistentDict({
     "customer_id": None,
     "customer_username": None,
     "consumer_id": None,
@@ -182,7 +181,7 @@ TEST_USERS_DOCS_URL = (
     "connect/testing-with-finbank-profiles/"
 )
 
-TEST_USERS: List[Dict[str, Any]] = [
+TEST_USERS: list[dict[str, Any]] = [
     {"username": "demo",                "password": "go",
      "institution": "FinBank (102105)",
      "scenario": "Generic happy path — accepts anywhere a username is required",
@@ -211,7 +210,7 @@ TEST_PROVIDERS_NOTE = (
 )
 
 
-def _test_credentials_payload() -> Dict[str, Any]:
+def _test_credentials_payload() -> dict[str, Any]:
     """Compact representation of the Finicity sandbox PSU credentials table.
 
     Returned as a hint on the Generate Data Connect URL operations so the UI
@@ -236,7 +235,7 @@ def _test_credentials_payload() -> Dict[str, Any]:
     }
 
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "open_finance",
     "name": "Open Finance US",
     "description": (
@@ -1213,7 +1212,7 @@ MANIFEST: Dict[str, Any] = {
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _err(msg: str, status: int = 500) -> Dict[str, Any]:
+def _err(msg: str, status: int = 500) -> dict[str, Any]:
     return {
         "success": False,
         "data": None,
@@ -1225,8 +1224,8 @@ def _err(msg: str, status: int = 500) -> Dict[str, Any]:
 
 
 def _wrap(client: OpenFinanceClient, data: Any, status: int,
-          state_updates: Optional[Dict[str, Any]] = None,
-          hints: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+          state_updates: dict[str, Any] | None = None,
+          hints: dict[str, Any] | None = None) -> dict[str, Any]:
     return {
         "success": status < 400,
         "data": data,
@@ -1240,7 +1239,7 @@ def _wrap(client: OpenFinanceClient, data: Any, status: int,
     }
 
 
-def _ensure_consumer(client: OpenFinanceClient, customer_id: str) -> Tuple[Dict, int]:
+def _ensure_consumer(client: OpenFinanceClient, customer_id: str) -> tuple[dict, int]:
     data, status = client.get_consumer_for_customer(customer_id)
     if status == 200 and isinstance(data, dict) and data.get("id"):
         return data, status
@@ -1254,10 +1253,10 @@ def _ensure_consumer(client: OpenFinanceClient, customer_id: str) -> Tuple[Dict,
     )
 
 
-def _report_updates(data: Any, status: int) -> Dict[str, Any]:
+def _report_updates(data: Any, status: int) -> dict[str, Any]:
     """Extract report_id from a 202 generate response and return kwargs for _wrap."""
-    updates: Dict[str, Any] = {}
-    hints: Dict[str, Any] = {}
+    updates: dict[str, Any] = {}
+    hints: dict[str, Any] = {}
     if status in (200, 202) and isinstance(data, dict) and data.get("id"):
         rid = data["id"]
         STATE["report_id"] = rid
@@ -1274,7 +1273,7 @@ def _report_updates(data: Any, status: int) -> Dict[str, Any]:
 # Dispatch
 # ---------------------------------------------------------------------------
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     client = _get_client()
     if client is None:
         return _err("Open Finance client not configured. Check OPEN_FINANCE_PARTNER_ID / OPEN_FINANCE_PARTNER_SECRET / OPEN_FINANCE_APP_KEY in .env")
@@ -1304,7 +1303,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
         if op_id == "create_test_customer":
             username = p.get("username") or f"test_user_{int(time.time())}"
             data, status = client.add_testing_customer(username)
-            updates: Dict[str, Any] = {}
+            updates: dict[str, Any] = {}
             if status < 400 and isinstance(data, dict) and data.get("id"):
                 updates["customer_id"] = str(data["id"])
                 updates["customer_username"] = username
@@ -1340,7 +1339,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
             data, status = client.generate_connect_url(
                 p["customer_id"], os.environ.get("OPEN_FINANCE_PARTNER_ID", "")
             )
-            hints: Dict[str, Any] = {"test_credentials": _test_credentials_payload()}
+            hints: dict[str, Any] = {"test_credentials": _test_credentials_payload()}
             if isinstance(data, dict) and data.get("link"):
                 hints["open_link"] = data["link"]
                 hints["open_link_label"] = "Launch Data Connect ↗"
@@ -1354,7 +1353,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
             data, status = client.generate_lite_connect_url(
                 p["customer_id"], p["institution_id"]
             )
-            hints: Dict[str, Any] = {"test_credentials": _test_credentials_payload()}
+            hints: dict[str, Any] = {"test_credentials": _test_credentials_payload()}
             if isinstance(data, dict) and data.get("link"):
                 hints["open_link"] = data["link"]
                 hints["open_link_label"] = "Launch Data Connect Lite ↗"
@@ -1368,7 +1367,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
             data, status = client.generate_fix_connect_url(
                 p["customer_id"], p["institution_login_id"]
             )
-            hints: Dict[str, Any] = {"test_credentials": _test_credentials_payload()}
+            hints: dict[str, Any] = {"test_credentials": _test_credentials_payload()}
             if isinstance(data, dict) and data.get("link"):
                 hints["open_link"] = data["link"]
                 hints["open_link_label"] = "Launch Connect Fix ↗"
@@ -1424,14 +1423,14 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
         if op_id == "get_account_statement":
             index = int(p.get("index") or 1)
             data, status = client.get_account_statement(p["customer_id"], p["account_id"], index)
-            hints: Dict[str, Any] = {}
+            hints: dict[str, Any] = {}
             if status < 400 and isinstance(data, dict) and data.get("pdf_base64"):
                 hints["pdf_base64"] = data["pdf_base64"]
             return _wrap(client, data, status, hints=hints)
 
         if op_id == "load_historic_transactions":
             data, status = client.load_historic_transactions(p["customer_id"], p["account_id"])
-            hints: Dict[str, Any] = {}
+            hints: dict[str, Any] = {}
             if status == 204:
                 hints["note"] = (
                     "204 No Content — success. Finicity has queued a background refresh of up to "
@@ -1563,7 +1562,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
                 "name": p.get("customer_name") or "Test User",
             }
             data, status = client.initiate_micro_deposits(p["customer_id"], receiver)
-            state_updates: Dict[str, Any] = {}
+            state_updates: dict[str, Any] = {}
             if status == 200 and isinstance(data, dict) and data.get("accountId"):
                 STATE["micro_account_id"] = str(data["accountId"])
                 state_updates["micro_account_id"] = STATE["micro_account_id"]
@@ -1779,7 +1778,7 @@ def _seed_default_customer() -> None:
         )
         # First pass: find a customer with a checking account
         # Second pass: accept any customer with accounts (fallback)
-        best: Optional[tuple] = None  # (customer, accounts, default_account)
+        best: tuple | None = None  # (customer, accounts, default_account)
         for c in candidates:
             cid = str(c.get("id"))
             acc_data, acc_status = client.get_customer_accounts(cid)
@@ -1816,7 +1815,7 @@ def _seed_default_customer() -> None:
         pass
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     """Return a UI-safe snapshot of state.
 
     Kicks off background seeding on first call; if seeding is still in

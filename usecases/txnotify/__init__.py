@@ -18,9 +18,9 @@ from __future__ import annotations
 import datetime
 import uuid
 from collections import deque
-from typing import Any, Dict
+from typing import Any
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "txnotify",
     "name": "Transaction Notifications Live",
     "description": (
@@ -39,7 +39,6 @@ REQUIRES_CUSTOMER = False
 # Ring buffer: newest events at index 0.
 _inbox: deque = deque(maxlen=100)
 
-
 def receive_webhook(payload: Any) -> None:
     """Called by app.py when POST /txnotify/webhook is hit."""
     _inbox.appendleft({
@@ -49,8 +48,7 @@ def receive_webhook(payload: Any) -> None:
         "payload": payload,
     })
 
-
-def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
     if action == "poll":
         # since_id: return only events newer than this ID.
         # _inbox is newest-first so events[:idx] are the newer ones.

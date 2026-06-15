@@ -4,7 +4,9 @@ Mirrors a subset of the live sandbox endpoints under ``/carbon`` so local
 development can run without a CID-bound project.
 """
 import uuid
-from flask import request, jsonify
+
+from flask import jsonify, request
+
 from simulator.datastore import store
 
 API = "carbon_calculator"

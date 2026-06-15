@@ -5,49 +5,53 @@ Mastercard Developer APIs (Open Finance, BIN Lookup, …) and demoing use
 cases composed from them.
 """
 import warnings
+
 warnings.filterwarnings("ignore", message="resource_tracker", category=UserWarning)
-import os
-import time
-import threading
+import argparse
 import json
+import os
 import queue
-import uuid
 import subprocess
 import sys
-import argparse
+import threading
+import time
+import uuid
 from collections import deque
 from functools import wraps
 
 import truststore
+
 truststore.inject_into_ssl()
 
 import requests as _requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template, request, redirect, send_from_directory, url_for
+from flask import Flask, jsonify, redirect, render_template, request, send_from_directory, url_for
 
 _CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
 load_dotenv(os.path.join(_CONFIG_DIR, ".env"))
 
+import live_demo  # noqa: E402
 from apis import registry as api_registry  # noqa: E402
 from apis import spotlights as api_spotlights  # noqa: E402
-from usecases import registry as usecase_registry  # noqa: E402
-import live_demo  # noqa: E402
 from simulator.blueprint import sim_bp  # noqa: E402
 from simulator.capture import capture_response  # noqa: E402
 from simulator.switcher import is_simulated  # noqa: E402
-
+from usecases import registry as usecase_registry  # noqa: E402
 
 app = Flask(__name__)
 from werkzeug.middleware.proxy_fix import ProxyFix
+
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # Suppress Werkzeug's per-request stdout log lines ("GET /... 200")
 import logging as _logging
+
 _logging.getLogger("werkzeug").setLevel(_logging.ERROR)
 
 # Register the in-process Vima Chat blueprint at /chat. Vima Chat is no
 # longer a standalone service — it lives inside Mastercard Solution Studio.
 from chat.app import chat_bp  # noqa: E402
+
 app.register_blueprint(chat_bp)
 app.secret_key = os.environ.get("SECRET_KEY", "vima-dev-secret")
 app.register_blueprint(sim_bp)
@@ -73,6 +77,7 @@ def _eager_seed_ofin():
         pass
 
 import threading as _threading
+
 _threading.Thread(target=_eager_seed_ofin, daemon=True, name="ofin-eager-seed").start()
 
 # In-memory store for TxPush events (last 50)
@@ -86,7 +91,7 @@ _api_call_seq = 0
 _api_call_lock = threading.Lock()
 
 # URLs containing these substrings are considered "internal" and are skipped
-_INTERNAL_HOSTS = ("localhost", "127.0.0.1", "0.0.0.0", "::1", "cloudflare.com")
+_INTERNAL_HOSTS = ("localhost", "127.0.0.1", "0.0.0.0", "::1", "cloudflare.com")  # nosec B104
 
 _orig_send = _requests.Session.send  # keep reference before patching
 
@@ -137,7 +142,7 @@ def _patched_send(self, prepared_request, **kwargs):
 
     try:
         resp = _orig_send(self, prepared_request, **kwargs)
-    except Exception as exc:
+    except Exception:
         entry["status"] = "ERR"
         entry["elapsed_ms"] = round((time.time() - t0) * 1000)
         with _api_call_lock:
@@ -192,7 +197,7 @@ def _parse_runtime_flags(argv: list[str]) -> argparse.Namespace:
     )
     parser.add_argument(
         "--host",
-        default=os.environ.get("HOST", "0.0.0.0"),
+        default=os.environ.get("HOST", "0.0.0.0"),  # nosec B104 — configurable dev server binding
         help="Host interface to bind.",
     )
     parser.add_argument(
@@ -285,7 +290,7 @@ def _fetch_geo_payload(client_ip: str) -> dict:
             # carry no credentials so disabling verification here is safe.
             import urllib3
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-            resp = _requests.get(url, timeout=4.0, verify=False)
+            resp = _requests.get(url, timeout=4.0, verify=False)  # nosec B501
             resp.raise_for_status()
             raw = resp.text
             if provider == "cloudflare-trace":
@@ -625,7 +630,6 @@ def explorer_run(api_id: str):
     import platform
     import shlex
     import subprocess
-    import sys
     import tempfile
     from pathlib import Path
 
@@ -1168,7 +1172,8 @@ def consent_3ds_flow():
     if not card_ref:
         return "Missing card_ref", 400
 
-    import html as _html, json as _json
+    import html as _html
+    import json as _json
     safe = {
         "card_ref":    _html.escape(card_ref, quote=True),
         "method_url":  _html.escape(method_url, quote=True),
@@ -1482,7 +1487,7 @@ def _serve_prefixed_static(directory: str, filename: str):
     if filename.lower().endswith('.html'):
         path = os.path.join(directory, filename)
         if os.path.isfile(path):
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, encoding='utf-8') as f:
                 html = f.read()
             return _prefix_html_routes(html), 200, {"Content-Type": "text/html; charset=utf-8"}
     return send_from_directory(directory, filename)
@@ -1728,7 +1733,6 @@ def txnotify_launch_ngrok():
             launcher = "powershell"
 
     elif system == "darwin":
-        import shlex
         sh_path = tmpdir / "txnotify_ngrok.sh"
         lines = [
             "#!/bin/bash",
@@ -1747,7 +1751,6 @@ def txnotify_launch_ngrok():
         launcher = "Terminal.app"
 
     else:  # Linux / other POSIX
-        import shlex
         sh_path = tmpdir / "txnotify_ngrok.sh"
         lines = [
             "#!/bin/bash",
@@ -1883,7 +1886,7 @@ def _bin_build_sqlite(rows):
         ))
 
     conn.executemany(
-        "INSERT INTO bin_ranges VALUES (" + ",".join(["?"] * 32) + ")",
+        "INSERT INTO bin_ranges VALUES (" + ",".join(["?"] * 32) + ")",  # nosec B608 — values via ? params
         records,
     )
     conn.execute("INSERT INTO bin_fts(bin_fts) VALUES('rebuild')")
@@ -1925,8 +1928,9 @@ def _bin_cache_do_load():
     """Background thread: fetch all BIN range pages and load into SQLite."""
     global _BIN_DB_CONN
     import ast
-    import requests as _req
+
     import oauth1.authenticationutils as authutils
+    import requests as _req
     from oauth1.oauth import OAuth
 
     consumer_key = os.environ.get("BIN_LOOKUP_CONSUMER_KEY", "")
@@ -2101,11 +2105,11 @@ def binlookup_download_bins():
     """Stream all BIN ranges from the Mastercard BIN Resource API as a CSV."""
     import csv
     import io
-    import json as _json
-    import requests as _req
+
     import oauth1.authenticationutils as authutils
-    from oauth1.oauth import OAuth
+    import requests as _req
     from flask import Response, stream_with_context
+    from oauth1.oauth import OAuth
 
     consumer_key = os.environ.get("BIN_LOOKUP_CONSUMER_KEY", "")
     key_path = os.environ.get("BIN_LOOKUP_SIGNING_KEY_PATH", "")
@@ -2151,10 +2155,10 @@ def binlookup_download_bins():
                     writer = csv.DictWriter(output, fieldnames=list(item.keys()), extrasaction="ignore")
                     writer.writeheader()
                     yield output.getvalue()
-                    output.seek(0); output.truncate(0)
+                    output.seek(0); output.truncate(0)  # noqa: E702
                 writer.writerow(item)
                 yield output.getvalue()
-                output.seek(0); output.truncate(0)
+                output.seek(0); output.truncate(0)  # noqa: E702
 
             page += 1
 
@@ -2182,7 +2186,7 @@ def findacard_health():
         else:
             url = "http://localhost:5432"
         return jsonify({"online": True, "url": url})
-    except (socket.timeout, ConnectionRefusedError, OSError):
+    except (TimeoutError, ConnectionRefusedError, OSError):
         return jsonify({"online": False, "url": "http://localhost:5432"})
 
 
@@ -2211,11 +2215,11 @@ def _build_config_schema() -> list[dict]:
     Adding a new API to the catalog automatically surfaces it in Settings.
     """
     from apis.catalog import (
-        iter_ordered,
+        AUTH_JWT_RS256,
         AUTH_OAUTH1,
         AUTH_OAUTH1_ENC,
         AUTH_OAUTH2,
-        AUTH_JWT_RS256,
+        iter_ordered,
     )
 
     groups: list[dict] = []
@@ -2307,7 +2311,7 @@ def _read_env_values() -> dict:
     """Parse .env file, return {KEY: value} preserving raw values."""
     result: dict = {}
     try:
-        with open(_ENV_PATH, "r", encoding="utf-8") as fh:
+        with open(_ENV_PATH, encoding="utf-8") as fh:
             for line in fh:
                 s = line.strip()
                 if s and not s.startswith("#") and "=" in s:
@@ -2321,7 +2325,7 @@ def _read_env_values() -> dict:
 def _write_env_values(updates: dict) -> None:
     """Write updated key=value pairs into .env, preserving comments and order."""
     try:
-        with open(_ENV_PATH, "r", encoding="utf-8") as fh:
+        with open(_ENV_PATH, encoding="utf-8") as fh:
             lines = fh.readlines()
     except OSError:
         lines = []
@@ -2401,13 +2405,15 @@ def config_save_route():
 @_require_not_server_mode
 def config_export():
     """Export config/keys + .env (with ANTHROPIC_API_KEY redacted) as a zip."""
-    import zipfile, io, re as _re
+    import io
+    import re as _re
+    import zipfile
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
         # .env — redact ANTHROPIC_API_KEY
         if os.path.isfile(_ENV_PATH):
-            with open(_ENV_PATH, "r", encoding="utf-8") as fh:
+            with open(_ENV_PATH, encoding="utf-8") as fh:
                 env_text = fh.read()
             env_text = _re.sub(
                 r"(?m)^(ANTHROPIC_API_KEY\s*=\s*).*$",
@@ -2572,7 +2578,10 @@ def _atomic_write_bytes(path: str, data: bytes) -> None:
 @_require_not_server_mode
 def config_import():
     """Import a vima-config.zip or upload_bundle_xxx.zip — merges into existing .env."""
-    import zipfile, io as _io, tempfile, importlib.util as _ilu
+    import importlib.util as _ilu
+    import io as _io
+    import tempfile
+    import zipfile
     from pathlib import Path as _Path
 
     if "file" not in request.files:
@@ -2924,7 +2933,8 @@ projects:
         if not os.path.isfile(zip_path):
             return False, "no zip yet"
         try:
-            import zipfile, io as _io
+            import io as _io
+            import zipfile
             with open(zip_path, "rb") as zf_file:
                 data = zf_file.read()
             updated_apis: set[str] = set()
@@ -3107,4 +3117,4 @@ if __name__ == "__main__":
         print(f"  - non-us mode: {'ON' if _non_us_mode_enabled() else 'OFF'}")
     print(f"\nListening on http://{host}:{port}")
     print("=" * 60 + "\n")
-    app.run(host=host, port=port, debug=True, use_reloader=False)
+    app.run(host=host, port=port, debug=True, use_reloader=False)  # nosec B201 — local dev server only
