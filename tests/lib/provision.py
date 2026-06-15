@@ -75,7 +75,7 @@ def start_provision_job(
     url = f"{base_url}/provision/start"
     resp = requests.post(
         url,
-        json={"apis": apis, "password": key_password},
+        json={"apis": apis, "password": key_password, "project_prefix": "SST"},
         timeout=30,
     )
     if resp.status_code != 200:

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Test Results — Mastercard Solution Studio</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -40,17 +41,20 @@
 
     /* ── Header ── */
     .header {
+      position: sticky; top: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 24px;
-      background: #000;
+      padding: 12px 24px;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--line);
       flex-shrink: 0;
     }
-    .brand { display: flex; align-items: center; gap: 14px; }
-    .brand-marks { display: flex; gap: 5px; align-items: center; }
-    .dot { width: 18px; height: 18px; border-radius: 50%; display: inline-block; }
-    .dot-red { background: var(--mc-red); }
-    .dot-yellow { background: var(--mc-yellow); }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-marks { position: relative; width: 36px; height: 22px; flex-shrink: 0; }
+    .brand-dot { position: absolute; top: 0; width: 22px; height: 22px; border-radius: 50%; }
+    .brand-dot-red  { left: 0; background: var(--mc-red); }
+    .brand-dot-yellow { left: 14px; background: var(--mc-yellow); mix-blend-mode: screen; }
     .brand-title { font-weight: 700; font-size: 15px; letter-spacing: -0.02em; }
     .brand-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
     .header-nav { display: flex; gap: 8px; }
@@ -89,8 +93,9 @@
       cursor: pointer; border: 1px solid transparent;
       text-decoration: none; transition: opacity 0.15s, background 0.15s;
     }
-    .btn-primary { background: var(--mc-yellow); color: #000; }
+    .btn-primary { background: var(--mc-orange); color: #fff; border-color: var(--mc-orange); }
     .btn-primary:hover { opacity: 0.88; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-ghost { background: var(--line); color: var(--text2); border-color: var(--line); }
     .btn-ghost:hover { background: #333; color: var(--text); }
 
@@ -237,19 +242,21 @@
 <!-- Header -->
 <header class="header">
   <div class="brand">
+    <canvas id="hdr-globe" width="36" height="36" style="flex-shrink:0;opacity:0.85"></canvas>
     <div class="brand-marks">
-      <span class="dot dot-red"></span>
-      <span class="dot dot-yellow"></span>
+      <span class="brand-dot brand-dot-red"></span>
+      <span class="brand-dot brand-dot-yellow"></span>
     </div>
     <div>
       <div class="brand-title">Mastercard Solution Studio</div>
-      <div class="brand-sub">Test Results Dashboard</div>
+      <div class="brand-sub">TESTING DASHBOARD</div>
     </div>
   </div>
   <nav class="header-nav">
     <a href="{{ url_for('test_dashboard.run_list') }}" class="nav-btn active">Runs</a>
+    <a href="{{ url_for('test_dashboard.stats') }}" class="nav-btn">Stats</a>
     <a href="{{ url_for('test_dashboard.config') }}" class="nav-btn">Settings</a>
-    <a href="/" class="nav-btn">Back to App</a>
+    <a href="/" class="nav-btn">&#8592; Back to App</a>
   </nav>
 </header>
 
@@ -263,9 +270,18 @@
       <p class="page-meta">All recorded test runs &mdash; {{ total }} total</p>
     </div>
     <div class="header-actions">
-      <button id="run-btn" class="btn btn-primary">Run Smoke Tests</button>
-      <div id="run-status" style="margin-left:12px;display:inline-block;color:var(--text2)"></div>
-      
+      <button id="run-smoke-btn" class="btn btn-primary">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Smoke Tests
+      </button>
+      <button id="run-full-btn" class="btn btn-ghost">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/><line x1="19" y1="5" x2="23" y2="5"/><line x1="19" y1="12" x2="23" y2="12"/><line x1="19" y1="19" x2="23" y2="19"/></svg>
+        Full Tests
+      </button>
+      <button id="run-clean-btn" class="btn btn-ghost" title="Clones the repo to a temp dir and runs all tests against the running server — does not reprovision or delete your API keys">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Clean Run
+      </button>
       <a href="{{ url_for('test_dashboard.config') }}" class="btn btn-ghost">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Email settings
@@ -273,26 +289,60 @@
     </div>
   </div>
 
-  <div id="run-progress" style="margin-bottom:18px;display:flex;gap:12px;align-items:flex-start;">
-    <div style="flex:0 0 320px;">
-      <div style="font-size:13px;margin-bottom:8px">Overall Progress</div>
-      <div style="background:var(--line);border-radius:8px;overflow:hidden;height:18px;margin-bottom:8px">
-        <div id="overall-fill" style="height:100%;width:0%;background:var(--ok);"></div>
+  <!-- Live run panel (hidden when idle) -->
+  <div id="run-panel" style="display:none;margin-bottom:24px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="run-spinner" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--mc-orange)"></span>
+        <span id="run-label" style="font-size:13px;font-weight:600">Running tests</span>
+        <span id="run-pid" style="font-size:11px;color:var(--text3);font-family:var(--mono)"></span>
       </div>
-      <div id="overall-text" style="font-size:12px;color:var(--text2);margin-bottom:8px">Idle</div>
-      <div id="suites-list" style="max-height:240px;overflow:auto"></div>
+      <span id="run-score" style="font-size:12px;color:var(--text3);white-space:nowrap"></span>
     </div>
-    <div style="flex:1;">
-      <div style="font-size:13px;margin-bottom:8px">Live Log</div>
-      <pre id="run-log" style="max-height:320px;overflow:auto;padding:12px;border-radius:8px;background:var(--card);border:1px solid var(--line);color:var(--text2);font-family:var(--mono);font-size:12px">Loading...</pre>
+    <!-- Animated progress stripe -->
+    <div id="run-pbar-track" style="height:3px;background:rgba(255,255,255,0.08);overflow:hidden">
+      <div id="run-pbar-inner" style="height:100%;width:100%;background:repeating-linear-gradient(-45deg,var(--mc-orange) 0,var(--mc-orange) 10px,rgba(255,127,0,0.35) 10px,rgba(255,127,0,0.35) 20px);background-size:40px 40px"></div>
+    </div>
+    <div style="display:flex;gap:0;min-height:0;border-top:1px solid var(--line)">
+      <!-- Progress column -->
+      <div style="flex:0 0 260px;padding:14px 16px;border-right:1px solid var(--line);overflow-y:auto;max-height:320px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Suites</div>
+        <div id="suites-list"></div>
+      </div>
+      <!-- Log column -->
+      <div style="flex:1;min-width:0;padding:14px 16px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Live log</div>
+        <pre id="run-log" style="margin:0;max-height:280px;overflow-y:auto;font-family:var(--mono);font-size:11.5px;line-height:1.6;color:var(--text2);white-space:pre-wrap;word-break:break-all"></pre>
+      </div>
     </div>
   </div>
-
-  {% if error %}
-  <div class="alert alert-error">{{ error }}</div>
-  {% endif %}
+  <style>
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+    @keyframes stripe-move { from{background-position:0 0} to{background-position:40px 0} }
+    #run-log::-webkit-scrollbar { width: 4px; }
+    #run-log::-webkit-scrollbar-track { background: transparent; }
+    #run-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+    #run-log::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+    #run-log { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent; }
+  </style>
 
 <script>
+  var _pollTimer = null;
+  var _wasRunning = false;
+
+  function _startAnimations() {
+    var sp = document.getElementById('run-spinner');
+    var pb = document.getElementById('run-pbar-inner');
+    if (sp) { sp.style.background = 'var(--mc-orange)'; sp.style.animation = 'pulse 1.2s ease-in-out infinite'; }
+    if (pb) pb.style.animation = 'stripe-move 0.6s linear infinite';
+  }
+  function _stopAnimations(spColor) {
+    var sp = document.getElementById('run-spinner');
+    var pb = document.getElementById('run-pbar-inner');
+    if (sp) { sp.style.animation = 'none'; if (spColor) sp.style.background = spColor; }
+    if (pb) pb.style.animation = 'none';
+  }
+
   async function fetchStatus() {
     try {
       const res = await fetch('/vima/test/run_status');
@@ -301,85 +351,204 @@
     } catch (e) { return null; }
   }
 
+  function colourLine(line) {
+    if (line.includes('[PASS]')) return 'color:#86efac';
+    if (line.includes('[FAIL]') || line.includes('[ERROR]')) return 'color:#fca5a5';
+    if (line.includes('[OK]') && !line.includes('[FAIL]')) return 'color:#86efac';
+    if (/^>>/.test(line.trim())) return 'color:var(--mc-yellow);font-weight:600';
+    if (/^={4,}|^-{4,}/.test(line.trim())) return 'color:var(--text3)';
+    return '';
+  }
+
   function renderLog(lines) {
     const el = document.getElementById('run-log');
     if (!el) return;
-    el.textContent = lines.join('\n');
+    // Filter out pure separator lines and empty lines from the top (banner)
+    const filtered = lines.filter((l, i) => {
+      const t = l.trim();
+      return t.length > 0;
+    });
+    el.innerHTML = filtered.map(l => {
+      const s = colourLine(l);
+      const esc = l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return s ? `<span style="${s}">${esc}</span>` : esc;
+    }).join('\n');
     el.scrollTop = el.scrollHeight;
   }
 
-  let pollTimer = null;
-  async function poll() {
-    const status = await fetchStatus();
-    if (!status) return;
-    const log = status.log || [];
-    renderLog(log);
-    const runBtn = document.getElementById('run-btn');
-    const runStatus = document.getElementById('run-status');
-    // Render structured progress if present
-    if (status.progress) {
-      const p = status.progress;
-      const overallFill = document.getElementById('overall-fill');
-      const overallText = document.getElementById('overall-text');
-      const suitesList = document.getElementById('suites-list');
-      if (overallFill && overallText) {
-        const pct = p.total > 0 ? Math.round((p.passed / p.total) * 100) : 0;
-        overallFill.style.width = pct + '%';
-        overallFill.style.background = p.failed > 0 ? 'var(--err)' : 'var(--ok)';
-        overallText.textContent = `${p.passed}/${p.total} passed (${pct}%)`;
-      }
-      if (suitesList) {
-        suitesList.innerHTML = '';
-        for (const s of p.suites) {
-          const div = document.createElement('div');
-          div.style.marginBottom = '8px';
-          div.innerHTML = `<div style="font-size:12px;color:var(--text);margin-bottom:4px">${s.name}</div>
-            <div style=\"background:var(--line);border-radius:6px;overflow:hidden;height:10px\">\n              <div style=\"height:100%;width:${s.pct}%;background:${s.failed>0? 'var(--err)': 'var(--ok)'}\"></div>\n            </div>
-            <div style=\"font-size:11px;color:var(--text2);margin-top:4px\">${s.passed}/${s.total} passed</div>`;
-          suitesList.appendChild(div);
-        }
+  function renderProgress(p) {
+    const total = p.total || 0;
+    const passed = p.passed || 0;
+    const failed = p.failed || 0;
+
+    // Score text
+    const score = document.getElementById('run-score');
+    if (score) {
+      if (total === 0) {
+        score.textContent = 'Starting…';
+      } else {
+        const passHtml = `<span style="color:#86efac;font-weight:600">${passed} ✓</span>`;
+        const failHtml = failed > 0 ? ` &middot; <span style="color:#fca5a5;font-weight:600">${failed} ✗</span>` : '';
+        score.innerHTML = passHtml + failHtml;
       }
     }
 
+    // Stripe bar transitions to solid green/red once tests are coming in
+    const pbarInner = document.getElementById('run-pbar-inner');
+    if (pbarInner && total > 0) {
+      if (failed > 0) {
+        pbarInner.style.background = 'repeating-linear-gradient(-45deg,#ef4444 0,#ef4444 10px,rgba(239,68,68,0.4) 10px,rgba(239,68,68,0.4) 20px)';
+      } else {
+        pbarInner.style.background = 'repeating-linear-gradient(-45deg,#22c55e 0,#22c55e 10px,rgba(34,197,94,0.4) 10px,rgba(34,197,94,0.4) 20px)';
+      }
+    }
+
+    // Suites list
+    const suitesList = document.getElementById('suites-list');
+    if (!suitesList) return;
+    suitesList.innerHTML = '';
+    for (const s of (p.suites || [])) {
+      if (s.total === 0) continue;
+      const allPass = s.failed === 0;
+      const div = document.createElement('div');
+      div.style.cssText = 'margin-bottom:12px';
+      const passPct = s.total > 0 ? (s.passed / s.total * 100) : 0;
+      const failPct = s.total > 0 ? (s.failed / s.total * 100) : 0;
+      const statusCol = allPass ? '#86efac' : '#fca5a5';
+      const countStr = s.failed > 0
+        ? `<span style="color:#86efac">${s.passed}✓</span> <span style="color:#fca5a5">${s.failed}✗</span>`
+        : `<span style="color:#86efac">${s.passed}✓</span>`;
+      div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <div style="font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px" title="${s.name}">${s.name}</div>
+          <div style="font-size:11px;font-family:var(--mono);flex-shrink:0;margin-left:6px">${countStr}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.08);border-radius:3px;height:5px;overflow:hidden">
+          <div style="height:100%;display:flex">
+            <div style="width:${passPct}%;background:#22c55e;transition:width .3s"></div>
+            <div style="width:${failPct}%;background:#ef4444;transition:width .3s"></div>
+          </div>
+        </div>`;
+      suitesList.appendChild(div);
+    }
+  }
+
+  async function poll() {
+    const status = await fetchStatus();
+    if (!status) return;
+
+    const panel = document.getElementById('run-panel');
+    const runSmokeBtn = document.getElementById('run-smoke-btn');
+    const runFullBtn  = document.getElementById('run-full-btn');
+    var runCleanBtn = document.getElementById('run-clean-btn');
+
+    // Always render data whenever we have it
+    if (status.log && status.log.length) renderLog(status.log);
+    if (status.progress) renderProgress(status.progress);
+
     if (status.running) {
-      if (runBtn) runBtn.disabled = true;
-      if (runStatus) runStatus.textContent = 'Running (pid ' + (status.pid || '') + ')';
-      pollTimer = setTimeout(poll, 2000);
+      _wasRunning = true;
+      if (panel) panel.style.display = '';
+      _startAnimations();
+      if (runSmokeBtn) runSmokeBtn.disabled = true;
+      if (runFullBtn)  runFullBtn.disabled  = true;
+      if (runCleanBtn) runCleanBtn.disabled = true;
+      const pidEl = document.getElementById('run-pid');
+      if (pidEl && status.pid) pidEl.textContent = '(pid ' + status.pid + ')';
+      _pollTimer = setTimeout(poll, 800);
     } else {
-      if (runBtn) runBtn.disabled = false;
-      if (runStatus) runStatus.textContent = 'Idle';
-      // don't poll continuously when idle
+      if (_wasRunning) {
+        // Run just finished — show final result briefly then reload
+        if (panel) panel.style.display = '';
+        var failed = status.progress && status.progress.failed > 0;
+        _stopAnimations(failed ? '#ef4444' : '#22c55e');
+        var lbl = document.getElementById('run-label');
+        if (lbl) lbl.textContent = failed ? 'Run finished — failures detected' : 'Run complete ✓';
+        setTimeout(function(){ window.location.reload(); }, 2500);
+        return;
+      }
+      if (runSmokeBtn) runSmokeBtn.disabled = false;
+      if (runFullBtn)  runFullBtn.disabled  = false;
+      if (runCleanBtn) runCleanBtn.disabled = false;
     }
   }
 
   document.addEventListener('DOMContentLoaded', function(){
-    const runBtn = document.getElementById('run-btn');
-    if (runBtn) {
-      runBtn.addEventListener('click', async function(){
-        runBtn.disabled = true;
-        runBtn.textContent = 'Starting...';
+    function wireRunBtn(btnId, scope, label, runningLabel) {
+      var btn = document.getElementById(btnId);
+      if (!btn) return;
+      btn.addEventListener('click', async function(){
+        var lbl = document.getElementById('run-label');
+        if (lbl) lbl.textContent = runningLabel || 'Running tests';
+        var pbarInner = document.getElementById('run-pbar-inner');
+        if (pbarInner) pbarInner.style.background = 'repeating-linear-gradient(-45deg,var(--mc-orange) 0,var(--mc-orange) 10px,rgba(255,127,0,0.35) 10px,rgba(255,127,0,0.35) 20px)';
+        var score = document.getElementById('run-score');
+        if (score) score.textContent = 'Starting\u2026';
+        var suitesList = document.getElementById('suites-list');
+        if (suitesList) suitesList.innerHTML = '';
+        var runLog = document.getElementById('run-log');
+        if (runLog) runLog.innerHTML = '';
+        _startAnimations();
+        var allBtns = [document.getElementById('run-smoke-btn'), document.getElementById('run-full-btn'), document.getElementById('run-clean-btn')];
+        allBtns.forEach(function(b){ if(b) b.disabled = true; });
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="10" y1="15" x2="10" y2="9"/><line x1="14" y1="15" x2="14" y2="9"/></svg> Starting\u2026';
+        var body = new URLSearchParams();
+        body.append('scope', scope);
         try {
-          const r = await fetch('/vima/test/run', { method: 'POST' });
-          const j = await r.json();
-          if (j.ok) {
-            document.getElementById('run-status').textContent = 'Started (pid ' + j.pid + ')';
-          } else {
-            document.getElementById('run-status').textContent = 'Failed to start';
-            runBtn.disabled = false;
-            runBtn.textContent = 'Run Smoke Tests';
+          var r = await fetch('/vima/test/run', { method: 'POST', body: body });
+          var j = await r.json();
+          if (!j.ok) {
+            alert('Failed to start: ' + (j.error || 'unknown error'));
+            allBtns.forEach(function(b){ if(b) b.disabled = false; });
+            btn.innerHTML = label;
+            return;
           }
         } catch (e) {
-          document.getElementById('run-status').textContent = 'Error starting run';
-          runBtn.disabled = false;
-          runBtn.textContent = 'Run Smoke Tests';
+          alert('Error: ' + e);
+          allBtns.forEach(function(b){ if(b) b.disabled = false; });
+          btn.innerHTML = label;
+          return;
         }
+        if (_pollTimer) clearTimeout(_pollTimer);
+        var panel = document.getElementById('run-panel');
+        if (panel) { panel.style.display = ''; }
+        _wasRunning = true;
         poll();
       });
     }
-    // initial poll to load latest log
-    poll();
+
+    var smokeIcon = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Smoke Tests';
+    var fullIcon  = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Full Tests';
+    var cleanIcon = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Clean Run';
+    wireRunBtn('run-smoke-btn', 'smoke', smokeIcon, 'Running smoke tests');
+    wireRunBtn('run-full-btn',  'full',  fullIcon,  'Running full tests');
+    wireRunBtn('run-clean-btn', 'clean', cleanIcon, 'Running clean tests (fresh clone)');
+
+    // On page load: show last-run data, or start polling if run is in progress
+    fetchStatus().then(function(status){
+      if (!status) return;
+      if (status.running) {
+        _wasRunning = true;
+        var panel = document.getElementById('run-panel');
+        if (panel) panel.style.display = '';
+        _startAnimations();
+        poll();
+      } else if (status.progress && status.progress.total > 0) {
+        // Always show last completed run data so panel is immediately useful
+        var panel = document.getElementById('run-panel');
+        if (panel) panel.style.display = '';
+        _stopAnimations(status.progress.failed > 0 ? '#ef4444' : '#22c55e');
+        var lbl = document.getElementById('run-label');
+        if (lbl) lbl.textContent = 'Last run';
+        if (status.log && status.log.length) renderLog(status.log);
+        renderProgress(status.progress);
+      }
+    });
   });
 </script>
+
+  {% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+  {% endif %}
 
   <!-- Stats row (last run stats) -->
   {% if runs %}
@@ -415,7 +584,7 @@
     <div class="table-toolbar">
       <span>
         {% if total > 0 %}
-          Showing {{ ((page-1) * 15) + 1 }}–{{ [page * 15, total] | min }} of {{ total }} runs
+          Showing {{ ((page-1) * page_size) + 1 }}–{{ [page * page_size, total] | min }} of {{ total }} runs
         {% else %}
           No runs recorded yet
         {% endif %}
@@ -520,5 +689,25 @@
   </div>
 
 </main>
+<script>
+(function(){
+  var c=document.getElementById('hdr-globe');if(!c)return;
+  var ctx=c.getContext('2d'),S=36,R=S*0.38,CX=S/2,CY=S/2,SPEED=0.004,ND=24;
+  var pts=[];for(var i=0;i<ND;i++){var phi=Math.acos(-1+(2*i)/ND),th=Math.sqrt(ND*Math.PI)*phi;pts.push({x:Math.cos(th)*Math.sin(phi),y:Math.sin(th)*Math.sin(phi),z:Math.cos(phi)});}
+  var rot=0,last=null;
+  function render(ts){
+    if(document.hidden){requestAnimationFrame(render);return;}
+    if(last&&(ts-last)<33){requestAnimationFrame(render);return;}
+    last=ts;ctx.clearRect(0,0,S,S);
+    var gO=0.15;ctx.lineWidth=0.5;
+    for(var lat=-60;lat<=60;lat+=30){var lR=lat*Math.PI/180;for(var seg=0;seg<360;seg+=10){var l0=(seg*Math.PI/180)+rot,l1=((seg+10)*Math.PI/180)+rot,z0=Math.cos(lR)*Math.sin(l0),z1=Math.cos(lR)*Math.sin(l1),a=gO*Math.max(0,Math.min(1,((z0+z1)/2+0.4)/0.8));if(a<0.005)continue;var s0=1/(1.8-z0),s1=1/(1.8-z1);ctx.strokeStyle='rgba(255,120,0,'+a+')';ctx.beginPath();ctx.moveTo(CX+Math.cos(lR)*Math.cos(l0)*R*s0,CY+Math.sin(lR)*R*s0);ctx.lineTo(CX+Math.cos(lR)*Math.cos(l1)*R*s1,CY+Math.sin(lR)*R*s1);ctx.stroke();}}
+    for(var lon=0;lon<360;lon+=30){for(var seg=-88;seg<90;seg+=10){var l0=seg*Math.PI/180,l1=(seg+10)*Math.PI/180,lR=(lon*Math.PI/180)+rot,z0=Math.cos(l0)*Math.sin(lR),z1=Math.cos(l1)*Math.sin(lR),a=gO*Math.max(0,Math.min(1,((z0+z1)/2+0.4)/0.8));if(a<0.005)continue;var s0=1/(1.8-z0),s1=1/(1.8-z1);ctx.strokeStyle='rgba(255,120,0,'+a+')';ctx.beginPath();ctx.moveTo(CX+Math.cos(l0)*Math.cos(lR)*R*s0,CY+Math.sin(l0)*R*s0);ctx.lineTo(CX+Math.cos(l1)*Math.cos(lR)*R*s1,CY+Math.sin(l1)*R*s1);ctx.stroke();}}
+    var proj=pts.map(function(p){var rx=p.x*Math.cos(rot)-p.z*Math.sin(rot),rz=p.x*Math.sin(rot)+p.z*Math.cos(rot),sc=1/(1.8-rz),fade=Math.max(0,Math.min(1,(rz+0.2)/0.4));return{px:CX+rx*R*sc,py:CY+p.y*R*sc,rz:rz,sc:sc,alpha:0.15+fade*0.85};});
+    proj.filter(function(p){return p.rz>-0.18;}).sort(function(a,b){return a.rz-b.rz;}).forEach(function(p){ctx.fillStyle='rgba(255,160,40,'+p.alpha+')';ctx.beginPath();ctx.arc(p.px,p.py,1.8*p.sc,0,Math.PI*2);ctx.fill();});
+    rot+=SPEED;requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+})();
+</script>
 </body>
 </html>

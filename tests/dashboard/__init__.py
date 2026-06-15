@@ -20,10 +20,11 @@ from tests.dashboard.db import (
     list_runs,
     get_run,
     get_run_results,
+    get_stats,
 )
 from tests.dashboard.mailer import load_config, save_config, send_test_email
 
-_PAGE_SIZE = 15
+_PAGE_SIZE = 10
 
 test_bp = Blueprint(
     "test_dashboard",
@@ -54,6 +55,7 @@ def run_list():
         page=page,
         total_pages=total_pages,
         total=total,
+        page_size=_PAGE_SIZE,
     )
 
 
@@ -82,6 +84,14 @@ def run_detail(run_id: int):
     return render_template("test_run.html", run=run, suites=suites)
 
 
+# ── Stats view ────────────────────────────────────────────────────────────────
+
+@test_bp.route("/stats", methods=["GET"])
+def stats():
+    data = get_stats()
+    return render_template("test_stats.html", stats=data)
+
+
 # ── Config view ────────────────────────────────────────────────────────────────
 
 @test_bp.route("/config", methods=["GET", "POST"])
@@ -92,23 +102,37 @@ def config():
 
     if request.method == "POST":
         action = request.form.get("action", "save")
-        new_cfg = {
-            "smtp_host":     request.form.get("smtp_host", "").strip(),
-            "smtp_port":     request.form.get("smtp_port", "587").strip(),
-            "smtp_user":     request.form.get("smtp_user", "").strip(),
-            "smtp_password": request.form.get("smtp_password", "").strip(),
-            "from_address":  request.form.get("from_address", "").strip(),
-            "to_addresses":  request.form.get("to_addresses", "").strip(),
-            "use_tls":       "1" if request.form.get("use_tls") else "0",
-        }
-        save_config(new_cfg)
-        cfg = new_cfg
+        section = request.form.get("section", "email")
 
-        if action == "test_email":
-            ok, msg = send_test_email(new_cfg)
-            test_result = (ok, msg)
-        else:
+        if section == "portal":
+            # Portal credentials form — merge into existing config
+            existing = load_config()
+            existing["portal_email"] = request.form.get("portal_email", "").strip()
+            existing["portal_sso"]   = "1" if request.form.get("portal_sso") else "0"
+            existing["key_password"] = request.form.get("key_password", "foobar!!").strip() or "foobar!!"
+            existing["test_port"]    = request.form.get("test_port", "9022").strip()
+            save_config(existing)
+            cfg = existing
             saved = True
+        else:
+            new_cfg = {
+                **load_config(),  # preserve portal section
+                "smtp_host":     request.form.get("smtp_host", "").strip(),
+                "smtp_port":     request.form.get("smtp_port", "587").strip(),
+                "smtp_user":     request.form.get("smtp_user", "").strip(),
+                "smtp_password": request.form.get("smtp_password", "").strip(),
+                "from_address":  request.form.get("from_address", "").strip(),
+                "to_addresses":  request.form.get("to_addresses", "").strip(),
+                "use_tls":       "1" if request.form.get("use_tls") else "0",
+            }
+            save_config(new_cfg)
+            cfg = new_cfg
+
+            if action == "test_email":
+                ok, msg = send_test_email(new_cfg)
+                test_result = (ok, msg)
+            else:
+                saved = True
 
     return render_template("test_config.html", cfg=cfg, saved=saved, test_result=test_result)
 
@@ -117,31 +141,84 @@ def config():
 @test_bp.route("/run", methods=["POST"])
 def run_trigger():
     import subprocess
-    import shlex
+    import sys
     from flask import jsonify
 
-    # Run smoke tests against the existing working directory, non-interactive.
-    cmd = "bash ./test.sh --existing --smoke --no-server"
-    try:
-        # Launch in background so the web request returns immediately.
-        p = subprocess.Popen(
-            shlex.split(cmd),
-            cwd=os.getcwd(),
-            stdout=open("tests/last_run.log", "ab"),
+    cwd = os.getcwd()
+    is_windows = sys.platform == "win32"
+
+    # scope: 'smoke' | 'full' | 'clean'
+    # smoke/full use --existing (safe — never touches keys or portal).
+    # clean uses --clean: clones repo, starts a fresh server on a SEPARATE
+    # port (test_port from settings, default 9022), provisions SST-* keys
+    # into that isolated server, runs tests, then cleans up portal projects
+    # and the temp dir.  The running app on port 9021 is never touched.
+    # If portal_email isn't configured, falls back to --skip-provision so
+    # the button still works safely without credentials.
+    scope = request.form.get("scope", "smoke")
+
+    if scope == "clean":
+        portal_cfg    = load_config()
+        portal_email  = portal_cfg.get("portal_email", "").strip()
+        portal_sso    = portal_cfg.get("portal_sso", "1").strip()
+        test_port     = portal_cfg.get("test_port", "9022").strip() or "9022"
+        test_base_url = f"http://127.0.0.1:{test_port}"
+
+        install_flag = "--clean"
+        scope_flag   = "--full"
+        needs_no_server = False  # clean starts its own server on test_port
+
+        if portal_email:
+            key_password = portal_cfg.get("key_password", "foobar!!") or "foobar!!"
+            extra_flags = ["--email", portal_email, "--base-url", test_base_url, "--storepass", key_password]
+            if portal_sso in ("1", "true", "yes", "on"):
+                extra_flags.append("--sso")
+        else:
+            # No credentials → safe fallback: reuse running server, skip provision
+            needs_no_server = True
+            extra_flags = ["--skip-provision"]
+    else:
+        install_flag    = "--existing"
+        scope_flag      = "--full" if scope == "full" else "--smoke"
+        extra_flags     = []
+        needs_no_server = True  # existing always reuses the running server
+
+    no_server_flags = ["--no-server"] if needs_no_server else []
+
+    if is_windows:
+        cmd = ["cmd", "/c", "test.bat", install_flag, scope_flag] + no_server_flags + extra_flags
+        popen_kwargs = dict(
+            cwd=cwd,
+            stdout=open(os.path.join(cwd, "tests", "last_run.log"), "wb"),
+            stderr=subprocess.STDOUT,
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+        )
+    else:
+        cmd = ["bash", "./test.sh", install_flag, scope_flag] + no_server_flags + extra_flags
+        popen_kwargs = dict(
+            cwd=cwd,
+            stdout=open(os.path.join(cwd, "tests", "last_run.log"), "wb"),
             stderr=subprocess.STDOUT,
             start_new_session=True,
         )
+
+    try:
+        p = subprocess.Popen(cmd, **popen_kwargs)
     except Exception as exc:
         return jsonify({"ok": False, "error": str(exc)}), 500
 
     # Persist PID so status endpoint can detect a running run
     try:
-        with open("tests/last_run.pid", "w") as f:
+        with open(os.path.join(cwd, "tests", "last_run.pid"), "w") as f:
             f.write(str(p.pid))
+        # Remove any stale done-sentinel so run_status reports running=True
+        _done_path = os.path.join(cwd, "tests", "last_run.done")
+        if os.path.exists(_done_path):
+            os.remove(_done_path)
     except Exception:
         pass
 
-    return jsonify({"ok": True, "pid": p.pid, "message": "Test run started in background."}), 202
+    return jsonify({"ok": True, "pid": p.pid, "scope": scope, "message": "Test run started in background."}), 202
 
 
 
@@ -153,28 +230,60 @@ def run_status():
     pid_path = os.path.join(os.getcwd(), "tests", "last_run.pid")
     log_path = os.path.join(os.getcwd(), "tests", "last_run.log")
 
+    # Check if done sentinel written by run.py exists — if so the run has
+    # finished regardless of PID state (Windows recycles PIDs quickly).
+    done_path = os.path.join(os.getcwd(), "tests", "last_run.done")
+    done_file_present = os.path.exists(done_path)
+
     # Read pid if present
     try:
-        if os.path.exists(pid_path):
+        if os.path.exists(pid_path) and not done_file_present:
             with open(pid_path, "r") as f:
                 pid = int(f.read().strip() or 0)
-            # Check whether process exists
+            # Check whether process is still alive (cross-platform)
             try:
-                os.kill(pid, 0)
-                running = True
+                import sys as _sys
+                if _sys.platform == "win32":
+                    import ctypes
+                    SYNCHRONIZE = 0x00100000
+                    handle = ctypes.windll.kernel32.OpenProcess(SYNCHRONIZE, False, pid)
+                    if handle:
+                        import ctypes.wintypes
+                        result = ctypes.windll.kernel32.WaitForSingleObject(handle, 0)
+                        ctypes.windll.kernel32.CloseHandle(handle)
+                        running = (result == 0x102)  # WAIT_TIMEOUT means still running
+                    else:
+                        running = False
+                else:
+                    os.kill(pid, 0)
+                    running = True
             except Exception:
                 running = False
     except Exception:
         pid = None
         running = False
 
-    # Tail log file
+    # Tail log file — strip ANSI escape codes so the browser receives clean text
+    import re as _re
+    _ANSI_RE = _re.compile(r'\x1b\[[0-9;]*[A-Za-z]')
+
+    def _read_log_lines(path):
+        """Read log, decode robustly, strip ANSI codes, return list of stripped lines."""
+        try:
+            with open(path, "rb") as f:
+                raw = f.read()
+            text = raw.decode("utf-8", errors="replace")
+            return [_ANSI_RE.sub("", l).rstrip("\n") for l in text.splitlines()]
+        except Exception:
+            return []
+
     tail_lines = []
     try:
         if os.path.exists(log_path):
-            with open(log_path, "r") as f:
-                lines = f.readlines()
-            tail_lines = [l.rstrip("\n") for l in lines[-400:]]
+            all_log_lines = _read_log_lines(log_path)
+            tail_lines = all_log_lines[-400:]
+        if not tail_lines:
+            tail_lines = []
     except Exception:
         tail_lines = ["(error reading log)"]
 
@@ -186,25 +295,24 @@ def run_status():
         suites = []
         current = None
         total = passed = failed = 0
-        # Use the full log if available for accurate counts, else tail_lines
-        full_lines = []
-        try:
-            with open(log_path, 'r') as f:
-                full_lines = [l.rstrip('\n') for l in f.readlines()]
-        except Exception:
-            full_lines = tail_lines
+        full_lines = all_log_lines if 'all_log_lines' in dir() else tail_lines
 
         for ln in full_lines:
-            m = re.match(r"^>>\s*(.*)", ln)
+            m = re.match(r"^>>\s+(.+)", ln)
             if m:
-                # start new suite
-                current = {"name": m.group(1).strip(), "passed": 0, "failed": 0, "total": 0, "tests": []}
+                name = m.group(1).strip()
+                # Skip non-suite header lines (e.g. ">> Skipping server start")
+                if name.lower().startswith("skipping"):
+                    continue
+                # Start new suite
+                current = {"name": name, "passed": 0, "failed": 0, "total": 0, "tests": []}
                 suites.append(current)
                 continue
 
-            if "[PASS]" in ln or "[FAIL]" in ln or "[OK]" in ln:
-                status = 'pass' if ('[PASS]' in ln or '[OK]' in ln) else 'fail'
-                desc = ln.strip()
+            if "[PASS]" in ln or "[FAIL]" in ln:
+                status = 'pass' if '[PASS]' in ln else 'fail'
+                # Extract just the description after the tag
+                desc = re.sub(r'^\s*\[(?:PASS|FAIL)\]\s*', '', ln).strip()
                 if current is None:
                     current = {"name": "Other", "passed": 0, "failed": 0, "total": 0, "tests": []}
                     suites.append(current)
@@ -220,6 +328,8 @@ def run_status():
 
         progress = {"total": total, "passed": passed, "failed": failed, "suites": []}
         for s in suites:
+            if s['total'] == 0:
+                continue  # skip header-only lines with no tests
             pct = int((s['passed'] / s['total'] * 100) if s['total'] > 0 else 0)
             progress['suites'].append({
                 'name': s['name'], 'passed': s['passed'], 'failed': s['failed'], 'total': s['total'], 'pct': pct

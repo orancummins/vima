@@ -35,6 +35,7 @@ TEST_SCOPE=""
 SKIP_PROVISION=""
 NO_SERVER=""
 NOCLEANUP=""
+BASE_URL=""
 _CLEAN_FLAGS=""
 
 # Portable uppercase helper for macOS / POSIX shells (bash 3.2 doesn't support ${VAR^^})
@@ -56,6 +57,7 @@ while [[ $# -gt 0 ]]; do
         --skip-provision)  SKIP_PROVISION="1";    _CLEAN_FLAGS="1"; shift   ;;
         --no-server)       NO_SERVER="1";                            shift   ;;
         --nocleanup)       NOCLEANUP="1";         _CLEAN_FLAGS="1"; shift   ;;
+        --base-url)        BASE_URL="$2";                            shift 2 ;;
         *)
             echo "ERROR: Unknown flag: $1"
             exit 1
@@ -89,6 +91,11 @@ if [[ "$INSTALL_TYPE" == "E" ]]; then
     fi
 else
     # ── Clean install: collect email, SSO, portal password, key password ──
+    # When --skip-provision is set these credentials are never used,
+    # so skip collection entirely.
+    if [[ "$SKIP_PROVISION" == "1" ]]; then
+        : # nothing to collect
+    else
 
     # ── Collect: email ────────────────────────────────────────────
     while [[ -z "$EMAIL" ]]; do
@@ -124,6 +131,7 @@ else
         read -rp "Key password [default: foobar!!]: " KP_INPUT
         KEY_PASSWORD="${KP_INPUT:-foobar!!}"
     fi
+    fi  # end: not skip-provision credential collection
 fi
 
 # ── Collect: test scope ───────────────────────────────────────
@@ -165,6 +173,7 @@ if [[ "$INSTALL_TYPE" == "E" ]]; then
     [[ "$TEST_SCOPE" == "F" ]] && EXTRA_ARGS+=(--full)
     [[ "$TEST_SCOPE" == "S" ]] && EXTRA_ARGS+=(--smoke)
     [[ "$NO_SERVER"  == "1" ]] && EXTRA_ARGS+=(--no-server)
+    [[ -n "$BASE_URL"       ]] && EXTRA_ARGS+=(--base-url "$BASE_URL")
     "$PYTHON" "$SCRIPT_DIR/tests/run.py" \
         --install-type E \
         --work-dir "$SCRIPT_DIR" \
@@ -181,6 +190,7 @@ EXTRA_ARGS=()
 [[ "$SKIP_PROVISION" == "1" ]] && EXTRA_ARGS+=(--skip-provision)
 [[ "$NO_SERVER"      == "1" ]] && EXTRA_ARGS+=(--no-server)
 [[ "$NOCLEANUP"      == "1" ]] && EXTRA_ARGS+=(--nocleanup)
+[[ -n "$BASE_URL"           ]] && EXTRA_ARGS+=(--base-url "$BASE_URL")
 "$PYTHON" "$SCRIPT_DIR/tests/run.py" \
     --email "$EMAIL" \
     --install-type C \

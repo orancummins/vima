@@ -176,3 +176,66 @@ def get_run_results(run_id: int) -> List[sqlite3.Row]:
             "SELECT * FROM suite_results WHERE run_id=? ORDER BY id",
             (run_id,),
         ).fetchall()
+
+
+def get_stats() -> dict:
+    """Return aggregated statistics for the stats dashboard."""
+    init_db()
+    with _conn() as con:
+        summary_row = con.execute("""
+            SELECT
+                COUNT(*) as total_runs,
+                COALESCE(SUM(total_tests), 0) as total_tests_run,
+                ROUND(COALESCE(AVG(CAST(passed_tests AS FLOAT) / NULLIF(total_tests, 0) * 100), 0), 1) as avg_pass_rate,
+                ROUND(COALESCE(AVG(CASE WHEN duration_seconds > 0 THEN duration_seconds END), 0), 1) as avg_duration,
+                ROUND(COALESCE(MIN(CASE WHEN duration_seconds > 0 THEN duration_seconds END), 0), 1) as min_duration,
+                SUM(CASE WHEN failed_tests = 0 AND total_tests > 0 THEN 1 ELSE 0 END) as perfect_runs
+            FROM runs
+        """).fetchone()
+
+        trend_rows = con.execute("""
+            SELECT id, run_at, total_tests, passed_tests, failed_tests,
+                   duration_seconds, scope, os_name, install_type
+            FROM runs ORDER BY id DESC LIMIT 50
+        """).fetchall()
+
+        reliability_rows = con.execute("""
+            SELECT test_name, suite,
+                   COUNT(*) as total_runs,
+                   SUM(CASE WHEN status='pass' THEN 1 ELSE 0 END) as passes,
+                   ROUND(CAST(SUM(CASE WHEN status='pass' THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*) * 100, 1) as pass_rate
+            FROM suite_results
+            GROUP BY test_name, suite
+            ORDER BY pass_rate ASC, total_runs DESC
+        """).fetchall()
+
+        os_rows = con.execute(
+            "SELECT COALESCE(os_name,'Unknown') as label, COUNT(*) as cnt FROM runs GROUP BY os_name ORDER BY cnt DESC"
+        ).fetchall()
+        scope_rows = con.execute(
+            "SELECT COALESCE(scope,'smoke') as label, COUNT(*) as cnt FROM runs GROUP BY scope ORDER BY cnt DESC"
+        ).fetchall()
+        install_rows = con.execute(
+            "SELECT COALESCE(install_type,'existing') as label, COUNT(*) as cnt FROM runs GROUP BY install_type ORDER BY cnt DESC"
+        ).fetchall()
+
+    trend = list(reversed([dict(r) for r in trend_rows]))
+    all_rel = [dict(r) for r in reliability_rows]
+    most_reliable = sorted(
+        [r for r in all_rel if r["pass_rate"] == 100.0],
+        key=lambda r: -r["total_runs"],
+    )[:10]
+    least_reliable = [r for r in all_rel if r["pass_rate"] < 100.0][:10]
+
+    return {
+        "summary": dict(summary_row) if summary_row else {
+            "total_runs": 0, "total_tests_run": 0, "avg_pass_rate": 0.0,
+            "avg_duration": 0.0, "min_duration": 0.0, "perfect_runs": 0,
+        },
+        "trend": trend,
+        "most_reliable": most_reliable,
+        "least_reliable": least_reliable,
+        "os_breakdown": [dict(r) for r in os_rows],
+        "scope_breakdown": [dict(r) for r in scope_rows],
+        "install_breakdown": [dict(r) for r in install_rows],
+    }

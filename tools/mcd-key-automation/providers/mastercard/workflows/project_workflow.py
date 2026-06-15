@@ -632,7 +632,7 @@ async def ensure_project_with_api(
     run_timestamp: str | None = None,
 ) -> list[Path]:
     """
-    Always creates a new ``SST-{project.name}-{run_timestamp}`` portal project
+    Always creates a new ``{prefix}-{project.name}-{run_timestamp}`` portal project
     and provisions key material for the given API.
 
     Dispatches to a per-provision-type function based on API_CONFIG[api_name].provision_type
@@ -648,7 +648,8 @@ async def ensure_project_with_api(
 
     alias = _key_alias(api_name)
     ts = run_timestamp or "000000"
-    portal_name = f"SST-{project.name}-{ts}"
+    prefix = getattr(config, "project_prefix", "SS")
+    portal_name = f"{prefix}-{project.name}-{ts}"
     # Mastercard Developers portal enforces a 50-char limit on project name.
     # When the API slug is long (e.g. enhanced-currency-conversion-calculator
     # is already 40 chars), the default "SST-<slug>-<ts>" overflows and the
@@ -658,7 +659,7 @@ async def ensure_project_with_api(
     if len(portal_name) > _PORTAL_NAME_MAX:
         overflow = len(portal_name) - _PORTAL_NAME_MAX
         trimmed = project.name[: max(1, len(project.name) - overflow)]
-        portal_name = f"SST-{trimmed}-{ts}"
+        portal_name = f"{prefix}-{trimmed}-{ts}"
         logger.info(
             "Project name exceeded {} chars — truncated slug portion to {!r}",
             _PORTAL_NAME_MAX, trimmed,

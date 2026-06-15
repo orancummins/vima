@@ -204,6 +204,12 @@ def main() -> None:
     work_dir = os.path.normpath(os.path.abspath(args.work_dir.strip('\"')))
     base_url     = args.base_url.rstrip("/")
 
+    # Extract port from base_url so start_server uses the same port.
+    # e.g. http://127.0.0.1:9022 → 9022
+    import re as _re
+    _port_match = _re.search(r':(\d+)$', base_url.rstrip('/'))
+    _server_port = int(_port_match.group(1)) if _port_match else 9021
+
     # Resolve test scope: flags accepted for future use; all tests run for now
 
     _header("Vima / Solution Studio — Automated Test Suite")
@@ -229,8 +235,8 @@ def main() -> None:
         if args.no_server:
             _step("Skipping server start (--no-server)")
         else:
-            _step("Starting Flask server")
-            server_proc = start_server(work_dir)
+            _step(f"Starting Flask server on port {_server_port}")
+            server_proc = start_server(work_dir, port=_server_port)
             print(f"  Waiting for server at {base_url} …")
             try:
                 wait_server_ready(base_url, timeout=30)
@@ -275,7 +281,7 @@ def main() -> None:
                     if server_proc is not None and not args.no_server:
                         _step("Restarting server to load provisioned credentials")
                         stop_server(server_proc)
-                        server_proc = start_server(work_dir)
+                        server_proc = start_server(work_dir, port=_server_port)
                         print(f"  Waiting for server at {base_url} …")
                         try:
                             wait_server_ready(base_url, timeout=30)
@@ -349,11 +355,21 @@ def main() -> None:
     if install_type == "C" and not args.nocleanup:
         _step("Removing local keys/certs and cloned directory")
         import shutil as _shutil
+        import stat as _stat
+
+        def _force_remove(func, path, exc_info):
+            """onerror handler: clear read-only flag (Windows .git pack files) and retry."""
+            try:
+                os.chmod(path, _stat.S_IWRITE)
+                func(path)
+            except Exception:
+                pass  # best-effort; already warned above
+
         # Remove keys directory (inside the cloned work_dir or the original)
         _keys_dir = os.path.join(work_dir, "config", "keys")
         if os.path.isdir(_keys_dir):
             try:
-                _shutil.rmtree(_keys_dir)
+                _shutil.rmtree(_keys_dir, onerror=_force_remove)
                 print(f"  {green('[OK]  Removed keys/certs: ' + _keys_dir)}")
             except Exception as exc:
                 print(f"  {yellow(f'[WARN] Could not remove keys dir: {exc}')}")
@@ -363,7 +379,7 @@ def main() -> None:
         _cur_work  = os.path.normpath(os.path.abspath(work_dir))
         if _cur_work != _orig_root:
             try:
-                _shutil.rmtree(_cur_work)
+                _shutil.rmtree(_cur_work, onerror=_force_remove)
                 print(f"  {green('[OK]  Removed cloned directory: ' + _cur_work)}")
             except Exception as exc:
                 print(f"  {yellow(f'[WARN] Could not remove cloned dir: {exc}')}")
@@ -371,6 +387,18 @@ def main() -> None:
             print(f"  {yellow('[INFO] work-dir is the original repo — skipping directory removal.')}")
 
     # ── Final summary ──────────────────────────────────────────
+    # Register a sentinel so the dashboard knows the run completed even if
+    # the PID gets recycled by Windows before the next poll.
+    import atexit as _atexit
+    _done_path = os.path.join(_ROOT, "tests", "last_run.done")
+    def _write_done():
+        try:
+            with open(_done_path, "w") as _f:
+                _f.write("done")
+        except Exception:
+            pass
+    _atexit.register(_write_done)
+
     _record_run(summary, args, install_type, _run_start_time)
     summary.print_and_exit()
 
