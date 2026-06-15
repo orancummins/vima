@@ -1,3 +1,4 @@
+
 :root {
   --mc-red: #eb001b;
   --mc-orange: #ff5f00;
@@ -340,6 +341,36 @@ html.theme-light .header.header--home .theme-toggle-option {
   color: #ffd7ad;
   font-weight: 600;
 }
+/* ── US IP requirement banner (shown in use case header for OF-US use cases) ── */
+.uc-us-ip-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 14px;
+  margin: 4px 0 0;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  border: 1px solid;
+  transition: background 200ms, border-color 200ms;
+  /* default / unknown state */
+  background: rgba(242, 163, 73, 0.08);
+  border-color: rgba(242, 163, 73, 0.30);
+  color: rgba(255, 210, 160, 0.90);
+}
+.uc-us-ip-banner.of-ip-pill--green {
+  background: rgba(47, 211, 122, 0.07);
+  border-color: rgba(47, 211, 122, 0.25);
+  color: rgba(180, 255, 210, 0.80);
+}
+.uc-us-ip-banner.of-ip-pill--red {
+  background: rgba(255, 92, 92, 0.09);
+  border-color: rgba(255, 92, 92, 0.35);
+  color: rgba(255, 190, 180, 0.95);
+}
+.uc-us-ip-banner .of-ip-light { flex-shrink: 0; margin-top: 4px; }
+.uc-us-ip-banner strong { font-weight: 700; }
+.uc-us-ip-banner-text { flex: 1; min-width: 0; }
 .of-vpn-warning-note {
   color: rgba(255, 190, 130, 0.95);
 }

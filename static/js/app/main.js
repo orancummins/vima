@@ -291,6 +291,19 @@ import './features/apiGuide.js';
   // ---------------------------------------------------------------------
   // Use cases
   // ---------------------------------------------------------------------
+  // US Open Finance use cases — require a US IP address.
+  const _US_OF_RENDER_KEYS = new Set(['pfm', 'enrichment', 'recurring', 'psi', 'financeincolour', 'the_wire']);
+
+  function _setUsIpBannerVisible(visible) {
+    const banner = document.getElementById('uc-us-ip-banner');
+    if (!banner) return;
+    if (visible) {
+      banner.classList.remove('hidden');
+    } else {
+      banner.classList.add('hidden');
+    }
+  }
+
   function renderUseCase(id) {
     const uc = USE_CASES.find((u) => u.id === id) || USE_CASES[0];
     if (!uc) return;
@@ -310,6 +323,13 @@ import './features/apiGuide.js';
     updateUcSidebar(uc);
     const title = $("uc-title"); if (title) title.textContent = uc.name;
     const desc = $("uc-desc"); if (desc) desc.textContent = uc.description || "";
+
+    // Show the US IP requirement banner for Open Finance US use cases,
+    // hide it for everything else. Trigger a fresh status check on entry.
+    const needsUsIp = _US_OF_RENDER_KEYS.has(uc.render);
+    _setUsIpBannerVisible(needsUsIp);
+    if (needsUsIp) { refreshUsIpStatus(); }
+
     if (uc.render === "pfm") {
       renderPfm();
     } else if (uc.render === "enrichment") {
@@ -340,6 +360,8 @@ import './features/apiGuide.js';
       renderTestChat();
     } else if (uc.render === "the_wire") {
       renderTheWire();
+    } else if (uc.render === "financeincolour") {
+      _renderCachedWebview('financeincolour', 'financeincolour-webview-frame', _appPath('/financeincolour/index.html'), 'Finance In Colour');
     } else {
       $("uc-body").innerHTML = `<p class="muted">${(uc.apis && uc.apis.length)
         ? "Composes: " + uc.apis.join(", ")

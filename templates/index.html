@@ -1011,6 +1011,19 @@ client = OfinClient.from_env()          <span class="sdk-c-cm"># credentials aut
               Full screen
             </button>
           </div>
+          <!-- US IP banner — shown only for US Open Finance use cases -->
+          <div id="uc-us-ip-banner" class="uc-us-ip-banner hidden"
+               data-us-ip-warning
+               data-tooltip="Checking US IP status..."
+               title="Checking US IP status...">
+            <span class="of-ip-light of-ip-light--unknown" data-us-ip-light aria-hidden="true"></span>
+            <span class="uc-us-ip-banner-text">
+              <strong>US IP required.</strong>
+              <span data-us-ip-text>Checking...</span>
+              &mdash; Open Finance US APIs only respond to requests from a US IP address.
+              Connect via a US VPN if you are outside the United States.
+            </span>
+          </div>
         </div>
       </div>
       <div class="usecase-body" id="uc-body">
