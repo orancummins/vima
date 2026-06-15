@@ -4,8 +4,8 @@
 ============================================================
 
 
-Cloning into 'C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-200122'...
-Updating files:  41% (179/432)Updating files:  42% (182/432)Updating files:  43% (186/432)Updating files:  44% (191/432)Updating files:  45% (195/432)Updating files:  46% (199/432)Updating files:  47% (204/432)Updating files:  48% (208/432)Updating files:  49% (212/432)Updating files:  50% (216/432)Updating files:  51% (221/432)Updating files:  52% (225/432)Updating files:  53% (229/432)Updating files:  54% (234/432)Updating files:  55% (238/432)Updating files:  56% (242/432)Updating files:  57% (247/432)Updating files:  58% (251/432)Updating files:  59% (255/432)Updating files:  60% (260/432)Updating files:  61% (264/432)Updating files:  62% (268/432)Updating files:  63% (273/432)Updating files:  64% (277/432)Updating files:  65% (281/432)Updating files:  66% (286/432)Updating files:  67% (290/432)Updating files:  68% (294/432)Updating files:  69% (299/432)Updating files:  70% (303/432)Updating files:  71% (307/432)Updating files:  72% (312/432)Updating files:  73% (316/432)Updating files:  74% (320/432)Updating files:  75% (324/432)Updating files:  76% (329/432)Updating files:  77% (333/432)Updating files:  78% (337/432)Updating files:  79% (342/432)Updating files:  80% (346/432)Updating files:  81% (350/432)Updating files:  82% (355/432)Updating files:  83% (359/432)Updating files:  84% (363/432)Updating files:  85% (368/432)Updating files:  86% (372/432)Updating files:  87% (376/432)Updating files:  88% (381/432)Updating files:  89% (385/432)Updating files:  90% (389/432)Updating files:  91% (394/432)Updating files:  91% (395/432)Updating files:  92% (398/432)Updating files:  93% (402/432)Updating files:  94% (407/432)Updating files:  95% (411/432)Updating files:  96% (415/432)Updating files:  97% (420/432)Updating files:  98% (424/432)Updating files:  99% (428/432)Updating files: 100% (432/432)Updating files: 100% (432/432), done.
+Cloning into 'C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-200519'...
+Updating files:  30% (133/436)Updating files:  31% (136/436)Updating files:  32% (140/436)Updating files:  33% (144/436)Updating files:  34% (149/436)Updating files:  35% (153/436)Updating files:  36% (157/436)Updating files:  37% (162/436)Updating files:  38% (166/436)Updating files:  39% (171/436)Updating files:  40% (175/436)Updating files:  41% (179/436)Updating files:  42% (184/436)Updating files:  43% (188/436)Updating files:  44% (192/436)Updating files:  45% (197/436)Updating files:  46% (201/436)Updating files:  47% (205/436)Updating files:  48% (210/436)Updating files:  49% (214/436)Updating files:  50% (218/436)Updating files:  51% (223/436)Updating files:  52% (227/436)Updating files:  53% (232/436)Updating files:  54% (236/436)Updating files:  55% (240/436)Updating files:  56% (245/436)Updating files:  57% (249/436)Updating files:  58% (253/436)Updating files:  59% (258/436)Updating files:  60% (262/436)Updating files:  61% (266/436)Updating files:  62% (271/436)Updating files:  63% (275/436)Updating files:  64% (280/436)Updating files:  65% (284/436)Updating files:  66% (288/436)Updating files:  67% (293/436)Updating files:  68% (297/436)Updating files:  69% (301/436)Updating files:  70% (306/436)Updating files:  71% (310/436)Updating files:  72% (314/436)Updating files:  72% (315/436)Updating files:  73% (319/436)Updating files:  74% (323/436)Updating files:  75% (327/436)Updating files:  76% (332/436)Updating files:  77% (336/436)Updating files:  78% (341/436)Updating files:  79% (345/436)Updating files:  80% (349/436)Updating files:  81% (354/436)Updating files:  82% (358/436)Updating files:  83% (362/436)Updating files:  84% (367/436)Updating files:  85% (371/436)Updating files:  86% (375/436)Updating files:  87% (380/436)Updating files:  88% (384/436)Updating files:  89% (389/436)Updating files:  90% (393/436)Updating files:  91% (397/436)Updating files:  92% (402/436)Updating files:  93% (406/436)Updating files:  94% (410/436)Updating files:  95% (415/436)Updating files:  96% (419/436)Updating files:  97% (423/436)Updating files:  98% (428/436)Updating files:  99% (432/436)Updating files: 100% (436/436)Updating files: 100% (436/436), done.
 WARNING: The following features are always enabled: truststore. 
 
 [notice] A new release of pip is available: 25.3 -> 26.1.2
@@ -41,14 +41,14 @@ Listening on http://0.0.0.0:9022
  * Serving Flask app 'app'
  * Debug mode: on
 Warning: Ignoring extra certs from `C:\Program Files\ClaudeCode\mastercard_prd_corporate_network_root_ca_g2.pem;C:\Program Files\ClaudeCode\combined-certs.pem`, load failed: error:8000007B:system library::no protocol option
-2026-06-15 20:01:54.756 | INFO     | browser.session:browser_session:48 - Reusing saved session from C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
-2026-06-15 20:02:01.110 | INFO     | providers.mastercard.pages.login_page:goto:25 - Navigating to https://developer.mastercard.com/account/log-in
-2026-06-15 20:02:11.276 | INFO     | browser.waits:wait_until:33 - Still waiting for saved-session redirect...
-2026-06-15 20:02:12.784 | INFO     | browser.waits:wait_until:25 - Reached saved-session redirect
-2026-06-15 20:02:12.784 | INFO     | providers.mastercard.pages.login_page:wait_for_manual_auth:142 - Saved session redirected to https://developer.mastercard.com/dashboard — skipping login form.
-2026-06-15 20:02:12.785 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
-2026-06-15 20:02:15.185 | INFO     | __main__:run_cleanup:203 - No projects found with prefix 'SST-'
-2026-06-15 20:02:15.196 | INFO     | browser.session:browser_session:61 - Saved session state to C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
+2026-06-15 20:05:50.515 | INFO     | browser.session:browser_session:48 - Reusing saved session from C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
+2026-06-15 20:05:52.217 | INFO     | providers.mastercard.pages.login_page:goto:25 - Navigating to https://developer.mastercard.com/account/log-in
+2026-06-15 20:06:03.082 | INFO     | browser.waits:wait_until:33 - Still waiting for saved-session redirect...
+2026-06-15 20:06:04.597 | INFO     | browser.waits:wait_until:25 - Reached saved-session redirect
+2026-06-15 20:06:04.598 | INFO     | providers.mastercard.pages.login_page:wait_for_manual_auth:142 - Saved session redirected to https://developer.mastercard.com/dashboard — skipping login form.
+2026-06-15 20:06:04.598 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
+2026-06-15 20:06:07.705 | INFO     | __main__:run_cleanup:203 - No projects found with prefix 'SST-'
+2026-06-15 20:06:07.721 | INFO     | browser.session:browser_session:61 - Saved session state to C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
 No SST-* projects found.
 
 [1m[36m------------------------------------------------------------[0m[0m
@@ -61,8 +61,8 @@ No SST-* projects found.
   Server:        http://127.0.0.1:9022
 
 [1m>> Clean install — cloning repository[0m
-  Cloning https://github.com/orancummins/vima.git -> C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-200122 ...
-  Cloned to: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-200122
+  Cloning https://github.com/orancummins/vima.git -> C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-200519 ...
+  Cloned to: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-200519
   Installing dependencies ...
 
 [1m>> Starting Flask server on port 9022[0m
@@ -96,7 +96,7 @@ No SST-* projects found.
 [1m[36m>> BIN Lookup API[0m[0m
   [32m[PASS][0m BIN Lookup is configured
   [31m[FAIL][0m Execute lookup_bin (BIN 543210)
-    [2mexecute lookup_bin returned success=false after retry. Response: {'error': "OAuth signing failed: [Errno 2] No such file or directory: 'C:\\\\Users\\\\e031093\\\\AppData\\\\Local\\\\Temp\\\\1\\\\vima-test-20260615-200122\\\\config/keys/bin_lookup.p12'", 'request': {'body': {'account_range': '543210'}, 'method': '(no HTTP call)', 'url': 'explorer://bin_lookup/lookup_bin'}, 'response': {'body': {'error': "OAuth signing failed: [Errno 2] No such file or directory: 'C:\\\\Users\\\\e031093\\\\AppData\\\\Local\\\\Temp\\\\1\\\\vima-test-20260615-200122\\\\config/keys/bin_lookup.p12'", 'success': False}, 'note': 'No outbound HTTP call was made — this envelope was synthesized from the executor return value.', 'status_code': 400, 'synthetic': True}, 'state': {'configured': True}, 'success': False}[0m
+    [2mexecute lookup_bin returned success=false after retry. Response: {'error': "OAuth signing failed: [Errno 2] No such file or directory: 'C:\\\\Users\\\\e031093\\\\AppData\\\\Local\\\\Temp\\\\1\\\\vima-test-20260615-200519\\\\config/keys/bin_lookup.p12'", 'request': {'body': {'account_range': '543210'}, 'method': '(no HTTP call)', 'url': 'explorer://bin_lookup/lookup_bin'}, 'response': {'body': {'error': "OAuth signing failed: [Errno 2] No such file or directory: 'C:\\\\Users\\\\e031093\\\\AppData\\\\Local\\\\Temp\\\\1\\\\vima-test-20260615-200519\\\\config/keys/bin_lookup.p12'", 'success': False}, 'note': 'No outbound HTTP call was made — this envelope was synthesized from the executor return value.', 'status_code': 400, 'synthetic': True}, 'state': {'configured': True}, 'success': False}[0m
   [32m[PASS][0m Get Code snippet contains valid Python
   [31m2/3 passed[0m
 
@@ -106,7 +106,7 @@ No SST-* projects found.
   [32m[PASS][0m /bin_lookup/index.html loads (200)
   [32m[PASS][0m BIN ranges status endpoint returns valid JSON
   [31m[FAIL][0m Lookup action returns card data for BIN 543210
-    [2mBIN lookup action: expected found=true for BIN 543210. Response: {'error': "OAuth signing failed: [Errno 2] No such file or directory: 'C:\\\\Users\\\\e031093\\\\AppData\\\\Local\\\\Temp\\\\1\\\\vima-test-20260615-200122\\\\config/keys/bin_lookup.p12'", 'found': False}[0m
+    [2mBIN lookup action: expected found=true for BIN 543210. Response: {'error': "OAuth signing failed: [Errno 2] No such file or directory: 'C:\\\\Users\\\\e031093\\\\AppData\\\\Local\\\\Temp\\\\1\\\\vima-test-20260615-200519\\\\config/keys/bin_lookup.p12'", 'found': False}[0m
   [32m[PASS][0m Lookup action handles unknown BIN gracefully
   [31m3/4 passed[0m
 
@@ -129,7 +129,7 @@ No SST-* projects found.
   [32m[PASS][0m Delete SST-* projects from Mastercard Developers
 
 [1m>> Removing local keys/certs and cloned directory[0m
-  [32m[OK]  Removed cloned directory: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-200122[0m
+  [32m[OK]  Removed cloned directory: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260615-200519[0m
   [32m[OK]  Run recorded in dashboard DB (run #{run_id}).[0m
 
 ============================================================

@@ -47,22 +47,30 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
 
     # ── 2. Execute lookup_bin ──────────────────────────────────
     def _execute():
+        import time as _time
         payload = {"operation": OPERATION_ID, "params": {"account_range": TEST_BIN}}
         url = f"{base_url}/explorer/{API_ID}/execute"
-        resp = assert_status(post(url, payload), 200)
-        data = assert_json(resp)
 
-        # Freshly provisioned BIN Lookup keys can fail on the very first call
-        # (Mastercard sandbox propagation delay).  Retry once and use the
-        # second result, ignoring the first failure.
-        if not data.get("success"):
-            import time as _time
-            _time.sleep(2)
+        # Freshly provisioned keys can be rejected by the Mastercard gateway on
+        # the first call (sandbox propagation delay is usually 5–30 s).  Retry
+        # up to 3 times with increasing backoff, skipping failures that look
+        # like gateway auth errors rather than misconfiguration.
+        _GATEWAY_ERRORS = ("Unauthorized", "Access Not Granted", "DECLINED")
+        data = {}
+        for attempt in range(3):
             resp = assert_status(post(url, payload), 200)
             data = assert_json(resp)
+            if data.get("success"):
+                break
+            err = str(data.get("error", ""))
+            # Only retry gateway / propagation errors, not missing-key errors
+            if not any(e in err for e in _GATEWAY_ERRORS):
+                break
+            if attempt < 2:
+                _time.sleep(10 * (attempt + 1))  # 10 s, 20 s
 
         assert data.get("success"), (
-            f"execute {OPERATION_ID} returned success=false after retry. Response: {data}"
+            f"execute {OPERATION_ID} returned success=false after retries. Response: {data}"
         )
         # Response envelope has a nested response.body from the Mastercard API
         assert_field(data, "response", msg="'response' key missing from execute result")

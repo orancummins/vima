@@ -55,14 +55,26 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
 
     # ── 3. Lookup action ───────────────────────────────────────
     def _lookup_action():
-        resp = assert_status(
-            post(
-                f"{base_url}/usecases/bin_lookup/action",
-                {"action": "lookup", "params": {"account_range": TEST_BIN}},
-            ),
-            200,
-        )
-        data = assert_json(resp)
+        import time as _time
+        _GATEWAY_ERRORS = ("Unauthorized", "Access Not Granted", "DECLINED")
+        data = {}
+        for attempt in range(3):
+            resp = assert_status(
+                post(
+                    f"{base_url}/usecases/bin_lookup/action",
+                    {"action": "lookup", "params": {"account_range": TEST_BIN}},
+                ),
+                200,
+            )
+            data = assert_json(resp)
+            if data.get("found"):
+                break
+            err = str(data.get("error", ""))
+            if not any(e in err for e in _GATEWAY_ERRORS):
+                break
+            if attempt < 2:
+                _time.sleep(10 * (attempt + 1))  # 10 s, 20 s
+
         assert data.get("found") is True, (
             f"BIN lookup action: expected found=true for BIN {TEST_BIN}. "
             f"Response: {data}"
