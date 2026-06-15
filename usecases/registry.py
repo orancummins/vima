@@ -3,14 +3,13 @@ from __future__ import annotations
 
 import importlib
 import os
-from typing import Any, Dict, List, Optional
-
+from typing import Any
 
 # Each use case is a module under `usecases/` exposing at least a MANIFEST dict.
 USE_CASE_MODULES = ["pfm", "enrichment", "recurring", "psi", "bin_lookup", "consumer_clarity", "easy_savings", "places", "identity", "specials", "findacard", "sonic", "testchat", "the_wire", "txnotify"]
 
 
-_modules: Dict[str, Any] = {}
+_modules: dict[str, Any] = {}
 
 
 def _load():
@@ -25,7 +24,7 @@ def _load():
             print(f"[usecases] failed to load {mod_name}: {e}")
 
 
-def manifests() -> List[Dict[str, Any]]:
+def manifests() -> list[dict[str, Any]]:
     _load()
     result = []
     for m in _modules.values():
@@ -35,6 +34,6 @@ def manifests() -> List[Dict[str, Any]]:
     return result
 
 
-def get_module(uc_id: str) -> Optional[Any]:
+def get_module(uc_id: str) -> Any | None:
     _load()
     return _modules.get(uc_id)

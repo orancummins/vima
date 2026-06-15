@@ -16,10 +16,9 @@ and participating merchants for that combination.
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, List
+from typing import Any
 
-
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "specials",
     "name": "Priceless Concierge",
     "description": (
@@ -39,21 +38,19 @@ MANIFEST: Dict[str, Any] = {
     },
 }
 
-
 # --- Action dispatcher ----------------------------------------------------
 
-def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
     if action == "search":
         return _search(params)
     return {"error": f"Unknown action: {action}"}
 
-
 # --- Search ---------------------------------------------------------------
 
-def _search(params: Dict[str, Any]) -> Dict[str, Any]:
+def _search(params: dict[str, Any]) -> dict[str, Any]:
     from apis.priceless_cities import api as p_api
 
-    base: Dict[str, Any] = {
+    base: dict[str, Any] = {
         "language":            params.get("language") or "en-US",
         "eligible_markets":    params.get("eligible_markets") or "",
         "destination_markets": params.get("destination_markets") or "",
@@ -74,7 +71,7 @@ def _search(params: Dict[str, Any]) -> Dict[str, Any]:
         "merchants": ("specials_merchants", merchants_params),
     }
 
-    results: Dict[str, Dict[str, Any]] = {}
+    results: dict[str, dict[str, Any]] = {}
     with ThreadPoolExecutor(max_workers=4) as ex:
         futures = {key: ex.submit(p_api.execute, op, p) for key, (op, p) in feeds.items()}
         for key, fut in futures.items():
@@ -136,40 +133,34 @@ def _search(params: Dict[str, Any]) -> Dict[str, Any]:
         },
     }
 
-
 # --- Filters: drop ghost rows --------------------------------------------
 
-def _meaningful_offer(o: Dict[str, Any]) -> bool:
+def _meaningful_offer(o: dict[str, Any]) -> bool:
     title_ok = bool(o.get("title")) and o.get("title") != "Untitled offer"
     has_body = bool(o.get("description") or o.get("discount") or o.get("redemptionUrl"))
     return title_ok and has_body
 
-
-def _meaningful_benefit(b: Dict[str, Any]) -> bool:
+def _meaningful_benefit(b: dict[str, Any]) -> bool:
     title_ok = bool(b.get("title")) and b.get("title") != "Benefit"
     has_body = bool(b.get("description") or b.get("url"))
     return title_ok and has_body
 
-
-def _meaningful_program(p: Dict[str, Any]) -> bool:
+def _meaningful_program(p: dict[str, Any]) -> bool:
     title_ok = bool(p.get("title")) and p.get("title") != "Program"
     has_body = bool(p.get("description") or p.get("image") or p.get("url"))
     return title_ok and has_body
 
-
-def _meaningful_merchant(m: Dict[str, Any]) -> bool:
+def _meaningful_merchant(m: dict[str, Any]) -> bool:
     name_ok = bool(m.get("name")) and m.get("name") != "Merchant"
     return name_ok and bool(m.get("category") or m.get("logo"))
-
 
 # Hybrid threshold: if live data has fewer than this many usable items across
 # all four feeds combined, swap in the curated demo dataset.
 _MIN_LIVE_ITEMS = 4
 
-
 # --- Helpers --------------------------------------------------------------
 
-def _items(data: Any) -> List[Dict[str, Any]]:
+def _items(data: Any) -> list[dict[str, Any]]:
     """Normalize any Priceless Specials response shape to a flat list."""
     if data is None:
         return []
@@ -198,16 +189,14 @@ def _items(data: Any) -> List[Dict[str, Any]]:
                         return [iv]
     return []
 
-
-def _first(d: Dict[str, Any], *keys: str, default: str = "") -> str:
+def _first(d: dict[str, Any], *keys: str, default: str = "") -> str:
     for k in keys:
         v = d.get(k)
         if v not in (None, "", []):
             return str(v) if not isinstance(v, (dict, list)) else default
     return default
 
-
-def _shape_offer(o: Dict[str, Any]) -> Dict[str, Any]:
+def _shape_offer(o: dict[str, Any]) -> dict[str, Any]:
     merchant = o.get("merchant") or o.get("Merchant") or {}
     if not isinstance(merchant, dict):
         merchant = {}
@@ -229,8 +218,7 @@ def _shape_offer(o: Dict[str, Any]) -> Dict[str, Any]:
         "tags":         _list_str(o.get("tags") or o.get("Tags")),
     }
 
-
-def _shape_benefit(b: Dict[str, Any]) -> Dict[str, Any]:
+def _shape_benefit(b: dict[str, Any]) -> dict[str, Any]:
     return {
         "id":          _first(b, "id", "benefitId", "BenefitId"),
         "title":       _first(b, "benefitTitle", "title", "Title", "name", default="Benefit"),
@@ -241,8 +229,7 @@ def _shape_benefit(b: Dict[str, Any]) -> Dict[str, Any]:
         "endDate":     _first(b, "endDate", "expiryDate"),
     }
 
-
-def _shape_program(p: Dict[str, Any]) -> Dict[str, Any]:
+def _shape_program(p: dict[str, Any]) -> dict[str, Any]:
     return {
         "id":          _first(p, "id", "programId", "ProgramId"),
         "title":       _first(p, "programTitle", "title", "Name", "name", default="Program"),
@@ -251,8 +238,7 @@ def _shape_program(p: Dict[str, Any]) -> Dict[str, Any]:
         "url":         _first(p, "programUrl", "url"),
     }
 
-
-def _shape_merchant(m: Dict[str, Any]) -> Dict[str, Any]:
+def _shape_merchant(m: dict[str, Any]) -> dict[str, Any]:
     return {
         "id":       _first(m, "id", "merchantId", "MerchantId"),
         "name":     _first(m, "merchantName", "name", "Name", default="Merchant"),
@@ -261,14 +247,12 @@ def _shape_merchant(m: Dict[str, Any]) -> Dict[str, Any]:
         "country":  _first(m, "country", "countryCode"),
     }
 
-
-def _list_str(v: Any) -> List[str]:
+def _list_str(v: Any) -> list[str]:
     if isinstance(v, list):
         return [str(x) for x in v if x is not None]
     if isinstance(v, str):
         return [t.strip() for t in v.split(",") if t.strip()]
     return []
-
 
 def _stringify_error(err: Any) -> str:
     if err is None:
@@ -281,7 +265,6 @@ def _stringify_error(err: Any) -> str:
     except Exception:
         return str(err)[:400]
 
-
 # --- Curated demo dataset -------------------------------------------------
 #
 # The Priceless Specials sandbox returns very sparse rows (lots of empty
@@ -291,13 +274,12 @@ def _stringify_error(err: Any) -> str:
 
 _CATEGORIES = ["Dining", "Shopping", "Travel", "Entertainment", "Sports", "Wellness", "Lifestyle"]
 
-
 def _curated_dataset(
     destination: str,
     eligible: str,
     product: str,
     category: str = "",
-) -> Dict[str, List[Dict[str, Any]]]:
+) -> dict[str, list[dict[str, Any]]]:
     """Return a curated set of offers/benefits/programs/merchants for a destination."""
     dest = (destination or "").upper()
     pack = _DEMO_PACKS.get(dest) or _DEMO_PACKS["_DEFAULT"]
@@ -318,8 +300,8 @@ def _curated_dataset(
             return (item.get("category") or "").lower() == cat.lower()
         offers_f    = [o for o in offers    if _matches(o)]
         merchants_f = [m for m in merchants if _matches(m)]
-        if len(offers_f) >= 2:    offers = offers_f
-        if len(merchants_f) >= 2: merchants = merchants_f
+        if len(offers_f) >= 2:    offers = offers_f        # noqa: E701
+        if len(merchants_f) >= 2: merchants = merchants_f  # noqa: E701
 
     return {
         "offers":    offers,
@@ -327,7 +309,6 @@ def _curated_dataset(
         "programs":  programs,
         "merchants": merchants,
     }
-
 
 # Tier benefits — these are universal across markets.
 _DEMO_BENEFITS_CORE = [
@@ -360,9 +341,8 @@ _DEMO_BENEFITS_PREMIUM = _DEMO_BENEFITS_CORE + [
      "icon": "", "url": "", "endDate": ""},
 ]
 
-
 # Per-destination packs — offers, programs, merchants. Light, illustrative.
-_DEMO_PACKS: Dict[str, Dict[str, List[Dict[str, Any]]]] = {
+_DEMO_PACKS: dict[str, dict[str, list[dict[str, Any]]]] = {
     "JP": {
         "offers": [
             {"id": "jp-o1", "title": "10% off omakase tasting menu",

@@ -1,15 +1,15 @@
-import os
 import json
+import os
 from pathlib import Path
 
-from flask import Blueprint, render_template, request, jsonify, Response, stream_with_context
 import anthropic
-from dotenv import load_dotenv, dotenv_values
+from dotenv import dotenv_values, load_dotenv
+from flask import Blueprint, Response, jsonify, render_template, request, stream_with_context
 
 _config_env_path = Path(__file__).parent.parent / "config" / ".env"
 load_dotenv(_config_env_path)
 
-from .config import MODEL, MAX_FILE_SIZE, MODELS, DEFAULT_MODEL_ID
+from .config import DEFAULT_MODEL_ID, MAX_FILE_SIZE, MODEL, MODELS
 
 # Blueprint mounted at /chat by the main Vima app. Vima Chat is no longer
 # available as a standalone service — it is only usable from within
@@ -213,7 +213,7 @@ def _safe_path(relative: str, work_dir: Path, read_root: Path | None = None, wri
         target.relative_to(boundary)
     except ValueError:
         scope = "work directory" if boundary == work_dir else "project root"
-        raise ValueError(f"Access denied: '{relative}' is outside the {scope}.")
+        raise ValueError(f"Access denied: '{relative}' is outside the {scope}.") from None
     return target
 
 
@@ -357,7 +357,7 @@ def _execute_tool(name: str, inp: dict, work_dir: Path, read_root: Path | None =
             ctx = max(0, int(inp.get("context_lines") or 3))
             lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
             total = len(lines)
-            matches = [i for i, l in enumerate(lines) if pattern in l.lower()]
+            matches = [i for i, line in enumerate(lines) if pattern in line.lower()]
             if not matches:
                 return {"path": inp["path"], "pattern": inp["pattern"], "matches": []}
             results = []
@@ -643,7 +643,7 @@ def _make_chat_generator(gen_conversation: list, work_dir, system_prompt: str, m
         _trim_conversation(gen_conversation)
         # Running token totals across every loop iteration in this turn.
         totals = {"input": 0, "output": 0, "cache_creation": 0, "cache_read": 0}
-        for loop_idx in range(MAX_LOOPS):
+        for _ in range(MAX_LOOPS):
             text_chunks: list[str] = []
             tool_uses: list[dict] = []
             # Thinking blocks must be preserved verbatim and replayed back on

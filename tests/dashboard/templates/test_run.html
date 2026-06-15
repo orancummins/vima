@@ -6,6 +6,7 @@
   <title>Run #{{ run.id }} — Test Results</title>
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <style>
     :root {
       --mc-red: #eb001b;
@@ -20,6 +21,14 @@
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { min-height: 100%; }
+    html {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.1) transparent;
+    }
+    html::-webkit-scrollbar { width: 5px; }
+    html::-webkit-scrollbar-track { background: transparent; }
+    html::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    html::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
     body {
       font-family: "Inter", -apple-system, sans-serif;
       background: var(--bg); color: var(--text);
@@ -160,6 +169,19 @@
       font-family: var(--mono); font-size: 11px;
       color: var(--text3); margin-top: 3px;
     }
+
+    /* ── Structured finding display (security / lint) ── */
+    .finding-block { white-space: pre-wrap; }
+    .finding-line { display: block; padding: 2px 0; }
+    .sev-high   { color: #fca5a5; font-weight: 700; }
+    .sev-medium { color: #fed7aa; font-weight: 600; }
+    .sev-low    { color: #fde68a; }
+    .sev-info   { color: #93c5fd; }
+    .finding-code  { color: #a5b4fc; font-weight: 600; }
+    .finding-loc   { color: var(--text3); }
+    .finding-msg   { color: var(--text2); }
+    .nosec-line    { color: #6ee7b7; font-size: 10.5px; opacity: 0.85; }
+    .noqa-line     { color: #6ee7b7; font-size: 10.5px; opacity: 0.85; }
   </style>
 </head>
 <body>
@@ -311,7 +333,12 @@
         <div class="test-info">
           <div class="test-name">{{ r.test_name }}</div>
           {% if r.error_message %}
+          {% set is_security = 'Lint' in suite_name or 'Ruff' in suite_name or 'ESLint' in suite_name or 'Bandit' in suite_name or 'Security' in suite_name %}
+          {% if is_security %}
+          <div class="test-error finding-block" id="finding-{{ loop.index }}">{{ r.error_message }}</div>
+          {% else %}
           <div class="test-error">{{ r.error_message }}</div>
+          {% endif %}
           {% endif %}
         </div>
       </div>
@@ -321,6 +348,93 @@
   {% else %}
   <p style="color:var(--text3);font-size:13px">No individual test results recorded for this run.</p>
   {% endfor %}
+
+  <!-- Lint summary chart (shown when run contains lint suites) -->
+  {% set has_lint = namespace(value=false) %}
+  {% for suite_name in suites.keys() %}
+    {% if 'Lint' in suite_name or 'Ruff' in suite_name or 'ESLint' in suite_name %}
+      {% set has_lint.value = true %}
+    {% endif %}
+  {% endfor %}
+  {% if has_lint.value %}
+  <div style="margin-top:28px">
+    <div style="font-size:13px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px">Lint Overview</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      {% for suite_name, results in suites.items() %}
+      {% if 'Lint' in suite_name or 'Ruff' in suite_name or 'ESLint' in suite_name %}
+      {% set s_pass = results | selectattr('status', 'eq', 'pass') | list | length %}
+      {% set s_fail = results | selectattr('status', 'eq', 'fail') | list | length %}
+      {% set s_total = results | length %}
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 24px;flex:1;min-width:260px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">{{ suite_name }}</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:16px">{{ s_pass }} clean &middot; {{ s_fail }} with issues</div>
+        <canvas id="lint-chart-{{ loop.index }}" height="140"></canvas>
+        <script>
+        (function(){
+          var ctx = document.getElementById('lint-chart-{{ loop.index }}').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: {{ results | map(attribute='test_name') | list | tojson }},
+              datasets: [{
+                label: 'Status',
+                data: {{ results | map(attribute='status') | list | tojson }}.map(function(s){ return s === 'pass' ? 1 : 0; }),
+                backgroundColor: {{ results | map(attribute='status') | list | tojson }}.map(
+                  function(s){ return s === 'pass' ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)'; }
+                ),
+                borderRadius: 4,
+                borderSkipped: false,
+              }]
+            },
+            options: {
+              indexAxis: 'y',
+              responsive: true,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: function(ctx2){
+                      var r = {{ results | tojson }}[ctx2.dataIndex];
+                      return r.status === 'pass' ? 'Clean' : 'Issues found';
+                    },
+                    afterLabel: function(ctx2){
+                      var r = {{ results | tojson }}[ctx2.dataIndex];
+                      if (r.error_message) {
+                        var lines = r.error_message.split('\n').slice(0, 5);
+                        return lines;
+                      }
+                      return '';
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  display: false,
+                  min: 0, max: 1,
+                },
+                y: {
+                  ticks: {
+                    color: '#aaaaaa',
+                    font: { size: 11, family: 'JetBrains Mono, monospace' },
+                    callback: function(val, idx){
+                      var label = this.getLabelForValue(idx);
+                      return label.length > 38 ? label.slice(0, 36) + '\u2026' : label;
+                    }
+                  },
+                  grid: { color: 'rgba(255,255,255,0.05)' }
+                }
+              }
+            }
+          });
+        })();
+        </script>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 
 </main>
 
@@ -337,6 +451,75 @@ function toggleSuite(header) {
     chevron.classList.add('open');
   }
 }
+
+// Render structured, color-coded output for security/lint finding blocks
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.finding-block').forEach(function(el) {
+    var raw = el.textContent;
+    var lines = raw.split('\n');
+    el.innerHTML = '';
+    lines.forEach(function(line) {
+      var span = document.createElement('span');
+      span.className = 'finding-line';
+
+      // Bandit finding: [HIGH/HIGH] file:line  B501  message
+      var banditM = line.match(/^\s*\[(HIGH|MEDIUM|LOW)\/(HIGH|MEDIUM|LOW)\]\s*(.+?):(\d+)\s+(\w+)\s+(.*)$/);
+      if (banditM) {
+        var sev = banditM[1], conf = banditM[2], file = banditM[3], lineno = banditM[4], code = banditM[5], msg = banditM[6];
+        var sevClass = sev === 'HIGH' ? 'sev-high' : sev === 'MEDIUM' ? 'sev-medium' : 'sev-low';
+        span.innerHTML =
+          '  <span class="' + sevClass + '">[' + sev + '/' + conf + ']</span> ' +
+          '<span class="finding-loc">' + esc(file) + ':' + lineno + '</span>  ' +
+          '<span class="finding-code">' + esc(code) + '</span>  ' +
+          '<span class="finding-msg">' + esc(msg) + '</span>';
+        el.appendChild(span);
+        return;
+      }
+
+      // Ruff finding: file.py:row:col  E123  message
+      var ruffM = line.match(/^\s*(\S+\.py):(\d+):(\d+)\s+([A-Z]\d+)\s+(.*)$/);
+      if (ruffM) {
+        var file2 = ruffM[1], row = ruffM[2], col = ruffM[3], code2 = ruffM[4], msg2 = ruffM[5];
+        span.innerHTML =
+          '  <span class="finding-loc">' + esc(file2) + ':' + row + ':' + col + '</span>  ' +
+          '<span class="finding-code">' + esc(code2) + '</span>  ' +
+          '<span class="finding-msg">' + esc(msg2) + '</span>';
+        el.appendChild(span);
+        return;
+      }
+
+      // ESLint finding: file.js:row:col  [error/warn]  rule  message
+      var eslintM = line.match(/^\s*(\S+\.js):(\d+):(\d+)\s+\[(error|warn)\]\s+(\S+)\s+(.*)$/);
+      if (eslintM) {
+        var file3 = eslintM[1], row3 = eslintM[2], col3 = eslintM[3], sev3 = eslintM[4], rule = eslintM[5], msg3 = eslintM[6];
+        var sevClass3 = sev3 === 'error' ? 'sev-high' : 'sev-medium';
+        span.innerHTML =
+          '  <span class="' + sevClass3 + '">[' + sev3 + ']</span> ' +
+          '<span class="finding-loc">' + esc(file3) + ':' + row3 + ':' + col3 + '</span>  ' +
+          '<span class="finding-code">' + esc(rule) + '</span>  ' +
+          '<span class="finding-msg">' + esc(msg3) + '</span>';
+        el.appendChild(span);
+        return;
+      }
+
+      // nosec / noqa suppression line
+      if (line.includes('# nosec') || line.includes('# noqa')) {
+        var cls = line.includes('# nosec') ? 'nosec-line' : 'noqa-line';
+        span.innerHTML = '<span class="' + cls + '">' + esc(line) + '</span>';
+        el.appendChild(span);
+        return;
+      }
+
+      // Plain header / summary lines
+      span.textContent = line;
+      el.appendChild(span);
+    });
+  });
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+});
 </script>
 <script>
 (function(){

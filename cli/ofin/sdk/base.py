@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 @dataclass
@@ -17,19 +17,19 @@ class Result:
 
     status: int
     body: Any
-    request: Optional[Dict[str, Any]] = None
-    response: Optional[Dict[str, Any]] = None
+    request: dict[str, Any] | None = None
+    response: dict[str, Any] | None = None
     #: Local state mutations produced by this call (e.g. captured customer_id).
-    state_updates: Dict[str, Any] = field(default_factory=dict)
+    state_updates: dict[str, Any] = field(default_factory=dict)
     #: Side-channel hints, e.g. a Connect/flow URL to open in a browser.
-    hints: Dict[str, Any] = field(default_factory=dict)
+    hints: dict[str, Any] = field(default_factory=dict)
 
     @property
     def ok(self) -> bool:
         return 200 <= int(self.status) < 300
 
     @property
-    def token(self) -> Optional[str]:
+    def token(self) -> str | None:
         """The access token from an auth call, regardless of region.
 
         US/AU return it as ``token``; EU as ``access_token``.
@@ -38,7 +38,7 @@ class Result:
             return self.body.get("token") or self.body.get("access_token")
         return None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "ok": self.ok,
             "status": self.status,
@@ -50,7 +50,7 @@ class Result:
         }
 
 
-def first(d: Any, *keys: str) -> Optional[Any]:
+def first(d: Any, *keys: str) -> Any | None:
     """Return the first present, truthy value among ``keys`` in mapping ``d``."""
     if not isinstance(d, dict):
         return None

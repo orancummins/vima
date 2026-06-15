@@ -8,7 +8,7 @@ Wraps :class:`OpenFinanceAUClient`. The notable AU specifics handled here:
 """
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from ._imports import AUClientCls
 from .base import Result, first
@@ -21,7 +21,7 @@ class AUClient:
 
     def __init__(self, partner_id: str, partner_secret: str, app_key: str,
                  base_url: str = "https://api.openbanking.mastercard.com.au",
-                 timeout: Optional[int] = None) -> None:
+                 timeout: int | None = None) -> None:
         self._c = AUClientCls(partner_id, partner_secret, app_key, base_url=base_url)
         self._timeout = timeout
 

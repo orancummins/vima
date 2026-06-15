@@ -10,9 +10,10 @@ are made; the goal is to illustrate the user-facing journey and a
 "behind the scenes" reveal of the signals each provider contributes.
 """
 from __future__ import annotations
-from typing import Any, Dict
 
-MANIFEST: Dict[str, Any] = {
+from typing import Any
+
+MANIFEST: dict[str, Any] = {
     "id": "identity",
     "name": "Online Identity Verification",
     "description": (

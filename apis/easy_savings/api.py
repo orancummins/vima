@@ -16,7 +16,7 @@ Docs:
 from __future__ import annotations
 
 import os
-from typing import Any, Dict
+from typing import Any
 
 # Sandbox provides predefined responses for specific values.  These match the
 # documented test cases so the Explorer "just works" out of the box.
@@ -26,7 +26,7 @@ _PROD_BASE_URL    = "https://sme.api.mastercard.com/easysavings/specials"
 # Sample sandbox offer that always succeeds (per the docs).
 _SAMPLE_OFFER_ID = "QDWC0NRZmyabde"
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "easy_savings",
     "name": "Easy Savings",
     "description": (
@@ -184,11 +184,11 @@ def is_configured() -> bool:
     return _configured() or is_simulated("easy_savings")
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured()}
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if op_id == "list_countries":
         return _list_countries()
     if op_id == "list_offers":
@@ -200,7 +200,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     return {"success": False, "error": f"Unknown operation: {op_id}"}
 
 
-def _not_configured_err() -> Dict[str, Any]:
+def _not_configured_err() -> dict[str, Any]:
     return {
         "success": False,
         "error": (
@@ -217,7 +217,7 @@ def _resolve_key_path(path: str) -> str:
     return os.path.join(project_root, path)
 
 
-def _signed_request(method: str, url: str, body_str: str | None) -> Dict[str, Any]:
+def _signed_request(method: str, url: str, body_str: str | None) -> dict[str, Any]:
     """Build OAuth-signed headers + execute the HTTP call.
 
     Returns a uniform response envelope: success / data / error / request /
@@ -291,14 +291,14 @@ def _signed_request(method: str, url: str, body_str: str | None) -> Dict[str, An
 # ---------------------------------------------------------------------------
 # Operations
 # ---------------------------------------------------------------------------
-def _list_countries() -> Dict[str, Any]:
+def _list_countries() -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("easy_savings"):
         return _not_configured_err()
     return _signed_request("GET", f"{_base_url()}/countries", None)
 
 
-def _list_offers(params: Dict[str, Any]) -> Dict[str, Any]:
+def _list_offers(params: dict[str, Any]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("easy_savings"):
         return _not_configured_err()
@@ -325,7 +325,7 @@ def _list_offers(params: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request("GET", url, None)
 
 
-def _redeem_offer(params: Dict[str, Any]) -> Dict[str, Any]:
+def _redeem_offer(params: dict[str, Any]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("easy_savings"):
         return _not_configured_err()
@@ -341,7 +341,7 @@ def _redeem_offer(params: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request("POST", f"{_base_url()}/redemptions", body_str)
 
 
-def _get_redemption(params: Dict[str, Any]) -> Dict[str, Any]:
+def _get_redemption(params: dict[str, Any]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("easy_savings"):
         return _not_configured_err()

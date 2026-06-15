@@ -30,9 +30,9 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, Dict, Iterator, List, Optional, Tuple
-
+from typing import Any
 
 # ----------------------------------------------------------------------------
 # Open Finance variant config
@@ -43,7 +43,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 # stubbing during capture, and the /explorer/<api>/setup + /run endpoints
 # in app.py all stay in sync.
 
-_OF_VARIANTS: Dict[str, Dict[str, Any]] = {
+_OF_VARIANTS: dict[str, dict[str, Any]] = {
     "OPEN_FINANCE": {
         "kind":         "finicity",
         "default_base": "https://api.finicity.com",
@@ -76,11 +76,11 @@ _OF_VARIANTS: Dict[str, Dict[str, Any]] = {
 }
 
 
-def _of_variant(env_prefix: str) -> Optional[Dict[str, Any]]:
+def _of_variant(env_prefix: str) -> dict[str, Any] | None:
     return _OF_VARIANTS.get(env_prefix)
 
 
-def of_runtime_for_prefix(env_prefix: str) -> Optional[Dict[str, Any]]:
+def of_runtime_for_prefix(env_prefix: str) -> dict[str, Any] | None:
     """Public helper used by ``/explorer/<api>/setup`` and ``/run`` in
     ``app.py`` so they advertise / export the right env vars and pip
     packages for each Open Finance variant.
@@ -106,9 +106,9 @@ class _FakeResponse:
     crash before we've extracted the interesting data."""
     status_code = 200
     text = "{}"
-    headers: Dict[str, str] = {}
+    headers: dict[str, str] = {}
 
-    def json(self) -> Dict[str, Any]:
+    def json(self) -> dict[str, Any]:
         return {}
 
     def raise_for_status(self) -> None:  # pragma: no cover — defensive
@@ -151,7 +151,7 @@ def _stub_oauth() -> Iterator[None]:
 
 
 @contextmanager
-def _capture_requests() -> Iterator[Dict[str, Any]]:
+def _capture_requests() -> Iterator[dict[str, Any]]:
     """Replace ``requests.{get,post,put,patch,delete,request}`` with a
     capturer that records the first call and returns ``_FakeResponse``.
 
@@ -160,7 +160,7 @@ def _capture_requests() -> Iterator[Dict[str, Any]]:
     """
     import requests as _r
 
-    captured: Dict[str, Any] = {}
+    captured: dict[str, Any] = {}
 
     def _record(method: str, url: str, **kwargs: Any) -> _FakeResponse:
         if not captured:
@@ -218,7 +218,7 @@ def _capture_requests() -> Iterator[Dict[str, Any]]:
 # Helpers
 # ----------------------------------------------------------------------------
 
-def _sample_params(op: Dict[str, Any], mod: Any = None) -> Dict[str, Any]:
+def _sample_params(op: dict[str, Any], mod: Any = None) -> dict[str, Any]:
     """Build a sample params dict from operation defaults.
 
     Mirrors the UI's behaviour: optional params left blank are omitted
@@ -230,13 +230,13 @@ def _sample_params(op: Dict[str, Any], mod: Any = None) -> Dict[str, Any]:
     the live value is used instead of a ``<your ...>`` placeholder so
     the rendered snippet has a real, runnable URL when possible.
     """
-    state: Dict[str, Any] = {}
+    state: dict[str, Any] = {}
     if mod is not None:
         try:
             state = dict(getattr(mod, "get_state", lambda: {})() or {})
         except Exception:
             state = {}
-    out: Dict[str, Any] = {}
+    out: dict[str, Any] = {}
     for p in op.get("params") or []:
         name = p["name"]
         default = p.get("default")
@@ -261,7 +261,7 @@ def _sample_params(op: Dict[str, Any], mod: Any = None) -> Dict[str, Any]:
     return out
 
 
-def _split_base_and_path(url: str, mod: Any) -> Tuple[str, str]:
+def _split_base_and_path(url: str, mod: Any) -> tuple[str, str]:
     """Split a captured absolute URL into (BASE_URL, path+query)."""
     for attr in ("_SANDBOX_BASE_URL", "_PROD_BASE_URL"):
         base = getattr(mod, attr, None)
@@ -285,16 +285,16 @@ def _py_repr(value: Any, indent: int = 4) -> str:
     )
 
 
-def _ensure_env_set(env_prefix: str) -> Dict[str, str]:
+def _ensure_env_set(env_prefix: str) -> dict[str, str]:
     """Stub env vars the module reads, so its config branch doesn't
     short-circuit before reaching the HTTP layer. Returns a dict mapping
     each env var name to its prior value (``""`` if it was unset) so we
     can restore afterwards.
     """
-    saved: Dict[str, str] = {}
+    saved: dict[str, str] = {}
     placeholders = {
         f"{env_prefix}_CONSUMER_KEY": "snippet-dry-run",
-        f"{env_prefix}_SIGNING_KEY_PATH": "/tmp/snippet-dry-run.p12",
+        f"{env_prefix}_SIGNING_KEY_PATH": "/tmp/snippet-dry-run.p12",  # nosec B108 — placeholder path, never created
     }
     # Open Finance variants use vendor-specific credentials rather than
     # OAuth1, so stub those too when relevant.
@@ -315,8 +315,8 @@ def _ensure_env_set(env_prefix: str) -> Dict[str, str]:
             # before _load_private_key()/_compute_kid() ever runs.
             placeholders.update({
                 f"{env_prefix}_CLIENT_ID":        "snippet-dry-run-client",
-                f"{env_prefix}_PRIVATE_KEY_PATH": "/tmp/snippet-dry-run-key.pem",
-                f"{env_prefix}_PUBLIC_CERT_PATH": "/tmp/snippet-dry-run-cert.pem",
+                f"{env_prefix}_PRIVATE_KEY_PATH": "/tmp/snippet-dry-run-key.pem",  # nosec B108 — placeholder path, never created
+                f"{env_prefix}_PUBLIC_CERT_PATH": "/tmp/snippet-dry-run-cert.pem",  # nosec B108 — placeholder path, never created
             })
     for name, val in placeholders.items():
         if name not in os.environ:
@@ -325,7 +325,7 @@ def _ensure_env_set(env_prefix: str) -> Dict[str, str]:
     return saved
 
 
-def _restore_env(saved: Dict[str, str]) -> None:
+def _restore_env(saved: dict[str, str]) -> None:
     for name, val in saved.items():
         if val == "":
             os.environ.pop(name, None)
@@ -340,9 +340,9 @@ def _restore_env(saved: Dict[str, str]) -> None:
 def _capture_call(
     mod: Any,
     op_id: str,
-    op: Dict[str, Any],
+    op: dict[str, Any],
     env_prefix: str,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """Run ``mod.execute(op_id, sample_params)`` inside a request capturer.
 
     Returns the captured call dict, or ``None`` if nothing was captured
@@ -365,7 +365,7 @@ def _capture_call(
     # is what gets captured (not the token-exchange fetch). We patch
     # _get_token on every available OF client class because we don't
     # know up front which one ``mod`` will instantiate.
-    of_client_restore: List[Tuple[Any, Any]] = []
+    of_client_restore: list[tuple[Any, Any]] = []
     saved_cached_client = None
     if env_prefix.startswith("OPEN_FINANCE"):
         for _mod_path, _cls_name in (
@@ -383,7 +383,7 @@ def _capture_call(
                 _cls._get_token = lambda self, *a, **kw: "snippet-dry-run-token"
                 of_client_restore.append((_cls, _orig))
         if hasattr(mod, "_client"):
-            saved_cached_client = getattr(mod, "_client")
+            saved_cached_client = mod._client
             mod._client = None
 
     try:
@@ -415,7 +415,7 @@ def _capture_call(
 # Snippet rendering
 # ----------------------------------------------------------------------------
 
-def _render_body_block(captured: Dict[str, Any]) -> Tuple[str, str]:
+def _render_body_block(captured: dict[str, Any]) -> tuple[str, str]:
     """Return (request_body_section, requests_kwargs_fragment)."""
     if captured.get("json") is not None:
         body_repr = _py_repr(captured["json"], indent=4)
@@ -461,9 +461,9 @@ def _render_body_block(captured: Dict[str, Any]) -> Tuple[str, str]:
 
 def _oauth1_snippet_runnable(
     api_id: str,
-    op: Dict[str, Any],
+    op: dict[str, Any],
     env_prefix: str,
-    captured: Dict[str, Any],
+    captured: dict[str, Any],
     docs_url: str,
     mod: Any,
 ) -> str:
@@ -582,7 +582,7 @@ def _extract_placeholders(s: str) -> list:
     return seen
 
 
-def _open_finance_snippet(api_id: str, op: Dict[str, Any], env_prefix: str, docs_url: str) -> str:
+def _open_finance_snippet(api_id: str, op: dict[str, Any], env_prefix: str, docs_url: str) -> str:
     """Fallback / `create_token` template. Dispatches by variant kind."""
     variant = _of_variant(env_prefix) or _OF_VARIANTS["OPEN_FINANCE"]
     if variant["kind"] == "jwt_oauth2":
@@ -592,9 +592,9 @@ def _open_finance_snippet(api_id: str, op: Dict[str, Any], env_prefix: str, docs
 
 def _open_finance_snippet_runnable(
     api_id: str,
-    op: Dict[str, Any],
+    op: dict[str, Any],
     env_prefix: str,
-    captured: Dict[str, Any],
+    captured: dict[str, Any],
     docs_url: str,
 ) -> str:
     """Render a runnable snippet around a captured call. Dispatches by variant."""
@@ -610,10 +610,10 @@ def _open_finance_snippet_runnable(
 
 def _finicity_create_token_snippet(
     api_id: str,
-    op: Dict[str, Any],
+    op: dict[str, Any],
     env_prefix: str,
     docs_url: str,
-    variant: Dict[str, Any],
+    variant: dict[str, Any],
 ) -> str:
     """Static `create_token` template for US (Finicity) + AU."""
     op_name = op.get("name") or op.get("id") or "operation"
@@ -672,11 +672,11 @@ def _finicity_create_token_snippet(
 
 def _finicity_snippet_runnable(
     api_id: str,
-    op: Dict[str, Any],
+    op: dict[str, Any],
     env_prefix: str,
-    captured: Dict[str, Any],
+    captured: dict[str, Any],
     docs_url: str,
-    variant: Dict[str, Any],
+    variant: dict[str, Any],
 ) -> str:
     """Render a runnable Bearer-token snippet around a captured call.
 
@@ -869,10 +869,10 @@ print("Access token acquired:", ACCESS_TOKEN[:12] + "\u2026")
 
 def _eu_create_token_snippet(
     api_id: str,
-    op: Dict[str, Any],
+    op: dict[str, Any],
     env_prefix: str,
     docs_url: str,
-    variant: Dict[str, Any],
+    variant: dict[str, Any],
 ) -> str:
     """Static `create_token` template for EU (Aiia, RS256+OAuth2)."""
     op_name = op.get("name") or op.get("id") or "operation"
@@ -923,11 +923,11 @@ def _eu_create_token_snippet(
 
 def _eu_snippet_runnable(
     api_id: str,
-    op: Dict[str, Any],
+    op: dict[str, Any],
     env_prefix: str,
-    captured: Dict[str, Any],
+    captured: dict[str, Any],
     docs_url: str,
-    variant: Dict[str, Any],
+    variant: dict[str, Any],
 ) -> str:
     """Render a runnable EU snippet around a captured call."""
     method = (captured.get("method") or op.get("method") or "GET").upper()
@@ -1056,8 +1056,8 @@ def build_snippet(
     op_id: str,
     *,
     mod: Any,
-    manifest: Dict[str, Any],
-) -> Dict[str, Any]:
+    manifest: dict[str, Any],
+) -> dict[str, Any]:
     """Return ``{snippet, summary, language, runnable, docs_url}`` for the
     given (api_id, op_id) pair.
 

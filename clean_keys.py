@@ -15,12 +15,11 @@ Mastercard Developers portal using Chrome automation.
 
 Safe to run at any time; idempotent if already clean.
 """
-import asyncio
 import shutil
 import subprocess
 import sys
-import urllib.request
 import urllib.error
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).parent
@@ -75,7 +74,7 @@ def notify_server() -> bool:
             VIMA_URL, data=b"{}", method="POST",
             headers={"Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(req, timeout=2) as resp:
+        with urllib.request.urlopen(req, timeout=2) as resp:  # nosec B310 — localhost only
             return 200 <= resp.status < 300
     except (urllib.error.URLError, ConnectionError, TimeoutError):
         return False

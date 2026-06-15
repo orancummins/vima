@@ -55,14 +55,13 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
 
     # ── 3. Lookup action ───────────────────────────────────────
     def _lookup_action():
-        # First-call gateway rejection is absorbed by the warm-up in run.py.
-        resp = assert_status(
-            post(
-                f"{base_url}/usecases/bin_lookup/action",
-                {"action": "lookup", "params": {"account_range": TEST_BIN}},
-            ),
-            200,
-        )
+        # The Mastercard gateway rejects the very first call on a new key.
+        # Always send once and discard the result, then send again — the
+        # second call is the real test.
+        _action_url = f"{base_url}/usecases/bin_lookup/action"
+        _action_payload = {"action": "lookup", "params": {"account_range": TEST_BIN}}
+        post(_action_url, _action_payload)
+        resp = assert_status(post(_action_url, _action_payload), 200)
         data = assert_json(resp)
 
         assert data.get("found") is True, (

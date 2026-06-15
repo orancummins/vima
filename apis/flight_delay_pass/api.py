@@ -23,8 +23,7 @@ from __future__ import annotations
 import json
 import os
 import uuid
-from typing import Any, Dict, List, Optional
-
+from typing import Any
 
 _PROD_BASE    = "https://api.mastercard.com/loyalty/flight-delay-pass"
 _SANDBOX_BASE = "https://sandbox.api.mastercard.com/loyalty/flight-delay-pass"
@@ -47,7 +46,7 @@ def is_configured() -> bool:
     return _configured() or is_simulated("flight_delay_pass")
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured()}
 
 
@@ -93,7 +92,7 @@ _ENC_NOTE = (
 )
 
 
-_ELIGIBILITY_PARAMS: List[Dict[str, Any]] = [
+_ELIGIBILITY_PARAMS: list[dict[str, Any]] = [
     {"name": "carrierCode",      "label": "Carrier code (IATA)",    "type": "text", "default": "AA",         "required": True,  "help": "2-letter IATA airline code (e.g. AA, BA, LH)."},
     {"name": "flightNumber",     "label": "Flight number",          "type": "text", "default": "100",        "required": True,  "help": "Numeric portion of the flight number."},
     {"name": "departureDate",    "label": "Departure date",         "type": "text", "default": "2026-06-15", "required": True,  "help": "YYYY-MM-DD in the local departure timezone."},
@@ -103,11 +102,11 @@ _ELIGIBILITY_PARAMS: List[Dict[str, Any]] = [
     {"name": "propositionCode",  "label": "Proposition code",       "type": "text", "default": "",           "required": False, "help": "Proposition code configured in the Mastercard system for this benefit."},
 ]
 
-_GET_PARAMS: List[Dict[str, Any]] = [
+_GET_PARAMS: list[dict[str, Any]] = [
     {"name": "registrationId", "label": "Registration ID", "type": "text", "default": "", "required": True, "help": "Returned by Create registration."},
 ]
 
-_CREATE_PARAMS: List[Dict[str, Any]] = [
+_CREATE_PARAMS: list[dict[str, Any]] = [
     {"name": "carrierCode",      "label": "Carrier code (IATA)",    "type": "text", "default": "AA",         "required": True},
     {"name": "flightNumber",     "label": "Flight number",          "type": "text", "default": "100",        "required": True},
     {"name": "departureDate",    "label": "Departure date",         "type": "text", "default": "2026-06-15", "required": True, "help": "YYYY-MM-DD."},
@@ -121,7 +120,7 @@ _CREATE_PARAMS: List[Dict[str, Any]] = [
     {"name": "propositionCode",  "label": "Proposition code",       "type": "text", "default": "", "required": False},
 ]
 
-_UPDATE_PARAMS: List[Dict[str, Any]] = [
+_UPDATE_PARAMS: list[dict[str, Any]] = [
     {"name": "registrationId", "label": "Registration ID", "type": "text", "default": "", "required": True},
     {"name": "firstName",      "label": "First name",      "type": "text", "default": "", "required": False},
     {"name": "lastName",       "label": "Last name",       "type": "text", "default": "", "required": False},
@@ -129,12 +128,12 @@ _UPDATE_PARAMS: List[Dict[str, Any]] = [
     {"name": "phoneNumber",    "label": "Phone (E.164)",   "type": "text", "default": "", "required": False},
 ]
 
-_CANCEL_PARAMS: List[Dict[str, Any]] = [
+_CANCEL_PARAMS: list[dict[str, Any]] = [
     {"name": "registrationId", "label": "Registration ID", "type": "text", "default": "", "required": True},
 ]
 
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "flight_delay_pass",
     "name": "Flight Delay Pass",
     "description": (
@@ -197,7 +196,7 @@ MANIFEST: Dict[str, Any] = {
 }
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if op_id == "eligibility_check":
         return _eligibility_check(params)
     if op_id == "get_registration":
@@ -222,14 +221,14 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
 # Operation handlers
 # ---------------------------------------------------------------------------
 
-def _eligibility_check(params: Dict[str, Any]) -> Dict[str, Any]:
+def _eligibility_check(params: dict[str, Any]) -> dict[str, Any]:
     required = ("carrierCode", "flightNumber", "departureDate",
                 "departureAirport", "arrivalAirport")
     missing = [k for k in required if not (params.get(k) or "").strip()]
     if missing:
         return {"success": False, "error": f"Missing required fields: {', '.join(missing)}"}
 
-    query: Dict[str, Any] = {k: params[k].strip() for k in required}
+    query: dict[str, Any] = {k: params[k].strip() for k in required}
     for opt in ("clientId", "propositionCode"):
         v = (params.get(opt) or "").strip()
         if v:
@@ -237,14 +236,14 @@ def _eligibility_check(params: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request("GET", "/eligibility-checks", query=query)
 
 
-def _get_registration(params: Dict[str, Any]) -> Dict[str, Any]:
+def _get_registration(params: dict[str, Any]) -> dict[str, Any]:
     reg_id = (params.get("registrationId") or "").strip()
     if not reg_id:
         return {"success": False, "error": "registrationId is required."}
     return _signed_request("GET", f"/registrations/{reg_id}")
 
 
-def _cancel_registration(params: Dict[str, Any]) -> Dict[str, Any]:
+def _cancel_registration(params: dict[str, Any]) -> dict[str, Any]:
     reg_id = (params.get("registrationId") or "").strip()
     if not reg_id:
         return {"success": False, "error": "registrationId is required."}
@@ -259,9 +258,9 @@ def _signed_request(
     method: str,
     path: str,
     *,
-    body: Optional[Dict[str, Any]] = None,
-    query: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    body: dict[str, Any] | None = None,
+    query: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("flight_delay_pass"):
         return {
@@ -274,6 +273,7 @@ def _signed_request(
         }
 
     from urllib.parse import urlencode
+
     import requests
 
     url = f"{_base()}{path}"
@@ -283,7 +283,7 @@ def _signed_request(
     body_str = json.dumps(body) if body is not None else None
 
     if is_simulated("flight_delay_pass"):
-        headers: Dict[str, str] = {
+        headers: dict[str, str] = {
             "Accept": "application/json",
             "x-openapi-transid": str(uuid.uuid4()),
         }
@@ -329,7 +329,7 @@ def _signed_request(
         return {"success": False, "error": f"Request failed: {e}"}
 
     success = 200 <= status_code < 300
-    state_updates: Dict[str, Any] = {}
+    state_updates: dict[str, Any] = {}
     if success and isinstance(resp_body, dict):
         reg_id = resp_body.get("registrationId") or resp_body.get("id")
         if reg_id:
