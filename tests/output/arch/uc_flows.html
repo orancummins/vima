@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Use Case -> API Flows</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #0f172a; color: #e2e8f0;
+                  font-family: ui-sans-serif,system-ui,sans-serif;
+                  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent; }
+    html::-webkit-scrollbar { width: 5px; }
+    html::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+    html::-webkit-scrollbar-track { background: transparent; }
+    body { display: flex; flex-direction: column; }
+    .diagram   { flex: 1; overflow: auto; padding: 16px;
+                  display: flex; justify-content: center; align-items: flex-start; }
+    .mermaid   { width: 100%; }
+    /* Force the Mermaid-rendered SVG to fill available width */
+    .mermaid svg { width: 100% !important; height: auto !important;
+                    max-width: none !important; background: transparent !important; }
+    .fallback  { padding: 20px; }
+    .fallback pre { font-size: 12px; color: #94a3b8; white-space: pre-wrap;
+                     font-family: 'Cascadia Code','Fira Code',monospace;
+                     background: #1e293b; border: 1px solid #334155;
+                     border-radius: 8px; padding: 16px; }
+    .fallback-note { font-size: 12px; color: #f97316; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="diagram" style="">
+    <div class="mermaid">
+flowchart LR
+
+    %% Use cases (left side)
+    UC_pfm(["Personal Finance Manager"])
+    UC_enrichment(["Data Enrichment"])
+    UC_recurring(["Recurring Transactions"])
+    UC_psi(["Payment Success Indicator"])
+    UC_bin_lookup(["BIN Lookup"])
+    UC_consumer_clarity(["Consumer Clarity"])
+    UC_easy_savings(["Easy Savings"])
+    UC_places(["Places"])
+    UC_identity(["Online Identity Verification"])
+    UC_specials(["Priceless Concierge"])
+    UC_findacard(["Find A Card"])
+    UC_sonic(["Sonic Branding"])
+    UC_testchat(["Test Chat"])
+    UC_the_wire(["The Wire"])
+    UC_txnotify(["Transaction Notifications Live"])
+
+    %% APIs (right side)
+    API_open_finance["Open Finance US"]
+    API_consumer_clarity["Consumer Clarity"]
+    API_merchant_identifier["Merchant Identifier"]
+    API_places["Places"]
+    API_automatic_billing_updater["Automatic Billing Updater"]
+    API_transaction_notifications["Transaction Notifications"]
+    API_consent_management["Consent Management"]
+    API_bin_lookup["BIN Lookup"]
+    API_easy_savings["Easy Savings"]
+    API_priceless_cities["Priceless Cities"]
+    API_offers_for_publishers["Offers for Publishers"]
+    API_Mastercard_Brand_Centre["Mastercard Brand Centre"]
+
+    %% Edges
+    UC_pfm --> API_open_finance
+    UC_pfm --> API_consumer_clarity
+    UC_pfm --> API_merchant_identifier
+    UC_pfm --> API_places
+    UC_enrichment --> API_open_finance
+    UC_enrichment --> API_consumer_clarity
+    UC_enrichment --> API_merchant_identifier
+    UC_recurring --> API_open_finance
+    UC_recurring --> API_automatic_billing_updater
+    UC_recurring --> API_transaction_notifications
+    UC_recurring --> API_consent_management
+    UC_psi --> API_open_finance
+    UC_psi --> API_consent_management
+    UC_bin_lookup --> API_bin_lookup
+    UC_consumer_clarity --> API_consumer_clarity
+    UC_easy_savings --> API_easy_savings
+    UC_places --> API_places
+    UC_identity --> API_open_finance
+    UC_identity --> API_consent_management
+    UC_specials --> API_priceless_cities
+    UC_findacard --> API_open_finance
+    UC_findacard --> API_offers_for_publishers
+    UC_sonic --> API_Mastercard_Brand_Centre
+    UC_the_wire --> API_open_finance
+    UC_the_wire --> API_merchant_identifier
+    UC_the_wire --> API_consumer_clarity
+    UC_txnotify --> API_transaction_notifications
+
+    %% Styling
+    classDef uc fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
+    classDef api fill:#14532d,stroke:#22c55e,color:#bbf7d0
+    class UC_psi,UC_the_wire,UC_specials,UC_places,UC_sonic,UC_txnotify,UC_recurring,UC_identity,UC_enrichment,UC_bin_lookup,UC_pfm,UC_consumer_clarity,UC_findacard,UC_easy_savings uc
+    class API_open_finance,API_consumer_clarity,API_merchant_identifier,API_places,API_automatic_billing_updater,API_transaction_notifications,API_consent_management,API_bin_lookup,API_easy_savings,API_priceless_cities,API_offers_for_publishers,API_Mastercard_Brand_Centre api
+    </div>
+  </div>
+  <div class="fallback" style="display:none">
+    <p class="fallback-note">Mermaid JS unavailable. Re-run the Architecture suite with network access to bundle it. Raw source:</p>
+    <pre>flowchart LR
+
+    %% Use cases (left side)
+    UC_pfm(["Personal Finance Manager"])
+    UC_enrichment(["Data Enrichment"])
+    UC_recurring(["Recurring Transactions"])
+    UC_psi(["Payment Success Indicator"])
+    UC_bin_lookup(["BIN Lookup"])
+    UC_consumer_clarity(["Consumer Clarity"])
+    UC_easy_savings(["Easy Savings"])
+    UC_places(["Places"])
+    UC_identity(["Online Identity Verification"])
+    UC_specials(["Priceless Concierge"])
+    UC_findacard(["Find A Card"])
+    UC_sonic(["Sonic Branding"])
+    UC_testchat(["Test Chat"])
+    UC_the_wire(["The Wire"])
+    UC_txnotify(["Transaction Notifications Live"])
+
+    %% APIs (right side)
+    API_open_finance["Open Finance US"]
+    API_consumer_clarity["Consumer Clarity"]
+    API_merchant_identifier["Merchant Identifier"]
+    API_places["Places"]
+    API_automatic_billing_updater["Automatic Billing Updater"]
+    API_transaction_notifications["Transaction Notifications"]
+    API_consent_management["Consent Management"]
+    API_bin_lookup["BIN Lookup"]
+    API_easy_savings["Easy Savings"]
+    API_priceless_cities["Priceless Cities"]
+    API_offers_for_publishers["Offers for Publishers"]
+    API_Mastercard_Brand_Centre["Mastercard Brand Centre"]
+
+    %% Edges
+    UC_pfm --> API_open_finance
+    UC_pfm --> API_consumer_clarity
+    UC_pfm --> API_merchant_identifier
+    UC_pfm --> API_places
+    UC_enrichment --> API_open_finance
+    UC_enrichment --> API_consumer_clarity
+    UC_enrichment --> API_merchant_identifier
+    UC_recurring --> API_open_finance
+    UC_recurring --> API_automatic_billing_updater
+    UC_recurring --> API_transaction_notifications
+    UC_recurring --> API_consent_management
+    UC_psi --> API_open_finance
+    UC_psi --> API_consent_management
+    UC_bin_lookup --> API_bin_lookup
+    UC_consumer_clarity --> API_consumer_clarity
+    UC_easy_savings --> API_easy_savings
+    UC_places --> API_places
+    UC_identity --> API_open_finance
+    UC_identity --> API_consent_management
+    UC_specials --> API_priceless_cities
+    UC_findacard --> API_open_finance
+    UC_findacard --> API_offers_for_publishers
+    UC_sonic --> API_Mastercard_Brand_Centre
+    UC_the_wire --> API_open_finance
+    UC_the_wire --> API_merchant_identifier
+    UC_the_wire --> API_consumer_clarity
+    UC_txnotify --> API_transaction_notifications
+
+    %% Styling
+    classDef uc fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
+    classDef api fill:#14532d,stroke:#22c55e,color:#bbf7d0
+    class UC_psi,UC_the_wire,UC_specials,UC_places,UC_sonic,UC_txnotify,UC_recurring,UC_identity,UC_enrichment,UC_bin_lookup,UC_pfm,UC_consumer_clarity,UC_findacard,UC_easy_savings uc
+    class API_open_finance,API_consumer_clarity,API_merchant_identifier,API_places,API_automatic_billing_updater,API_transaction_notifications,API_consent_management,API_bin_lookup,API_easy_savings,API_priceless_cities,API_offers_for_publishers,API_Mastercard_Brand_Centre api</pre>
+  </div>
+  <script src="/vima/test/arch/mermaid.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1e40af', primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#3b82f6', lineColor: '#475569',
+      secondaryColor: '#065f46', tertiaryColor: '#1e293b',
+      background: '#0f172a', mainBkg: '#1e293b',
+      nodeBorder: '#475569', clusterBkg: '#1e293b',
+      titleColor: '#f8fafc', edgeLabelBackground: '#0f172a',
+    },
+    flowchart: { curve: 'basis', padding: 20 },
+  });
+</script>
+</body>
+</html>

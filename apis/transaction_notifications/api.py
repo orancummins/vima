@@ -502,6 +502,11 @@ MANIFEST: dict[str, Any] = {
 }
 
 
+# First 6 operations are the consent-enrollment flow shared with consent_management.
+# Exporting them avoids duplicating the parameter definitions in that module.
+_CONSENT_OPERATIONS: list[dict] = MANIFEST["operations"][:6]
+
+
 def _base_url() -> str:
     from simulator.switcher import sim_base_url
     env = os.environ.get("TRANSACTION_NOTIFICATIONS_ENV", "sandbox").lower()

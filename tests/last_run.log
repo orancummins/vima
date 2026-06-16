@@ -8,56 +8,13 @@
 [1m[36m------------------------------------------------------------[0m[0m
 [1m[36mVima / Solution Studio — Automated Test Suite[0m[0m
 [1m[36m------------------------------------------------------------[0m[0m
-  Email:         oran.cummins@mastercard.com
-  Login mode:    SSO (email auto-fill only)
-  Install type:  Clean (clone)
+  Email:         
+  Login mode:    Standard (email + password auto-fill)
+  Install type:  Existing
   Work dir:      C:\Users\e031093\dev\vima
-  Server:        http://127.0.0.1:9022
+  Server:        http://127.0.0.1:9021
 
-[1m>> Clean install — cloning repository[0m
-  Cloning https://github.com/orancummins/vima.git -> C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260616-015447 ...
-Cloning into 'C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260616-015447'...
-Updating files:  50% (224/447)Updating files:  51% (228/447)Updating files:  52% (233/447)Updating files:  53% (237/447)Updating files:  54% (242/447)Updating files:  55% (246/447)Updating files:  56% (251/447)Updating files:  57% (255/447)Updating files:  58% (260/447)Updating files:  59% (264/447)Updating files:  60% (269/447)Updating files:  61% (273/447)Updating files:  62% (278/447)Updating files:  63% (282/447)Updating files:  64% (287/447)Updating files:  65% (291/447)Updating files:  66% (296/447)Updating files:  67% (300/447)Updating files:  68% (304/447)Updating files:  69% (309/447)Updating files:  70% (313/447)Updating files:  71% (318/447)Updating files:  72% (322/447)Updating files:  73% (327/447)Updating files:  74% (331/447)Updating files:  75% (336/447)Updating files:  76% (340/447)Updating files:  77% (345/447)Updating files:  78% (349/447)Updating files:  79% (354/447)Updating files:  80% (358/447)Updating files:  81% (363/447)Updating files:  82% (367/447)Updating files:  83% (372/447)Updating files:  84% (376/447)Updating files:  85% (380/447)Updating files:  86% (385/447)Updating files:  87% (389/447)Updating files:  88% (394/447)Updating files:  89% (398/447)Updating files:  90% (403/447)Updating files:  91% (407/447)Updating files:  92% (412/447)Updating files:  93% (416/447)Updating files:  94% (421/447)Updating files:  95% (425/447)Updating files:  96% (430/447)Updating files:  97% (434/447)Updating files:  98% (439/447)Updating files:  99% (443/447)Updating files: 100% (447/447)Updating files: 100% (447/447), done.
-  Cloned to: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260616-015447
-  Installing dependencies ...
-WARNING: The following features are always enabled: truststore. 
-
-[notice] A new release of pip is available: 25.3 -> 26.1.2
-[notice] To update, run: python.exe -m pip install --upgrade pip
-
-[1m>> Starting Flask server on port 9022[0m
-  Waiting for server at http://127.0.0.1:9022 …
-WARNING: ANTHROPIC_API_KEY is not set in config/.env -- Claude API calls will fail.
-
-============================================================
-Solution Studio
-============================================================
-  + Open Finance US      (57 operations)
-  + Open Finance Australia (9 operations)
-  + Open Finance Europe  (12 operations)
-  + BIN Lookup           (1 operations)
-  + Merchant Identifier  (3 operations)
-  + Automatic Billing Updater (4 operations)
-  + MATCH Pro            (6 operations)
-  + Consumer Clarity     (1 operations)
-  + Priceless Cities     (21 operations)
-  + Easy Savings         (4 operations)
-  + Places               (6 operations)
-  + Offers for Publishers (11 operations)
-  + Offers Merchant Content (10 operations)
-  + Transaction Notifications (8 operations)
-  + Benefits Eligibility (4 operations)
-  + Benefits Content Eligibility Service (1 operations)
-  + Enhanced Currency Conversion Calculator (4 operations)
-  - Carbon Calculator    (9 operations)
-  + Business Payment Controls (4 operations)
-
-Listening on http://0.0.0.0:9022
-============================================================
-
- * Serving Flask app 'app'
- * Debug mode: on
-  [32m[OK]  Server ready.[0m
+[1m>> Skipping server start (--no-server)[0m
 
 [1m>> Smoke tests[0m
 
@@ -70,57 +27,6 @@ Listening on http://0.0.0.0:9022
   [32m[PASS][0m GET /explorer/apis includes bin_lookup
   [32m[PASS][0m Use Cases panel marker present in /app
   [32m7/7 passed[0m
-
-[1m>> Auto-provisioning BIN Lookup API key[0m
-
-[1m>> Saving portal credentials for provisioner auto-login[0m
-  Provision job started: 3c7845ef
-
-  Opening http://127.0.0.1:9022/app for Mastercard portal SSO login …
-  Account: oran.cummins@mastercard.com
-  Please log in when the browser opens and complete the portal flow.
-  (Timeout: 600s)
-
-  Provisioning log:
-    2026-06-16 01:55:05.602 | INFO     | app.orchestrator:run:32 - Loaded config for env=sandbox (1 projects)
-    Warning: Ignoring extra certs from `C:\Program Files\ClaudeCode\mastercard_prd_corporate_network_root_ca_g2.pem;C:\Program Files\ClaudeCode\combined-certs.pem`, load failed: error:8000007B:system library::no protocol option
-    2026-06-16 01:55:07.382 | INFO     | browser.session:browser_session:48 - Reusing saved session from C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
-    2026-06-16 01:55:08.495 | INFO     | providers.mastercard.pages.login_page:goto:25 - Navigating to https://developer.mastercard.com/account/log-in
-    2026-06-16 01:55:12.311 | INFO     | browser.waits:wait_until:33 - Still waiting for saved-session redirect...
-    2026-06-16 01:55:13.815 | INFO     | browser.waits:wait_until:25 - Reached saved-session redirect
-    2026-06-16 01:55:13.815 | INFO     | providers.mastercard.pages.login_page:wait_for_manual_auth:142 - Saved session redirected to https://developer.mastercard.com/dashboard — skipping login form.
-    2026-06-16 01:55:13.815 | INFO     | providers.mastercard.provider:login:34 - Authenticated session detected.
-    2026-06-16 01:55:13.815 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
-    2026-06-16 01:55:16.062 | INFO     | providers.mastercard.workflows.project_workflow:ensure_project_with_api:677 - Provisioning 'bin_lookup' (type=oauth1_standard) — project 'SST-bin_lookup-20260616015508'
-    2026-06-16 01:55:18.785 | INFO     | providers.mastercard.pages.create_project_page:fill:31 - Filling create-project form: name='SST-bin_lookup-20260616015508' on_behalf=False region=None api_selection=None
-    2026-06-16 01:55:20.715 | INFO     | providers.mastercard.pages.create_project_page:proceed:91 - Proceed button enabled after 0.0s
-    2026-06-16 01:55:20.715 | INFO     | providers.mastercard.pages.create_project_page:proceed:97 - Clicking Proceed (url=https://developer.mastercard.com/create-project?services=bin-lookup)
-    2026-06-16 01:55:20.750 | INFO     | providers.mastercard.pages.create_project_page:proceed:101 - Proceed clicked — url now: https://developer.mastercard.com/create-project?services=bin-lookup
-    2026-06-16 01:55:21.301 | INFO     | providers.mastercard.pages.create_project_page:wait_for_confirmation_or_project_page:136 - Wizard advanced to Step 2 (Project credentials) — https://developer.mastercard.com/create-project?services=bin-lookup
-    2026-06-16 01:55:21.302 | INFO     | providers.mastercard.pages.create_project_page:fill_step2_credentials:226 - Filling Step 2 credentials: alias='bin_lookup'
-    2026-06-16 01:55:22.845 | INFO     | providers.mastercard.pages.create_project_page:_wait_for_create_button_enabled:315 - 'Create project' button enabled after 0.0s
-    2026-06-16 01:55:22.848 | INFO     | providers.mastercard.pages.create_project_page:create_key_step2:760 - 'Create project' button state: {'found': True, 'disabled': False, 'ariaDisabled': 'false', 'display': 'block', 'visibility': 'visible'}
-    2026-06-16 01:55:22.992 | INFO     | browser.screenshots:capture:20 - Captured screenshot C:\Users\e031093\dev\vima\tools\mcd-key-automation\logs\screenshots\20260616T005522_step2_before_submit.png
-    2026-06-16 01:55:22.993 | INFO     | providers.mastercard.pages.create_project_page:create_key_step2:776 - Clicking 'Create project' on Step 2
-    2026-06-16 01:55:23.031 | INFO     | providers.mastercard.pages.create_project_page:wait_for_download_after_step2:870 - Final key step detected via visible 'Skip this step' + 'Create project' buttons
-    2026-06-16 01:55:23.146 | INFO     | browser.screenshots:capture:20 - Captured screenshot C:\Users\e031093\dev\vima\tools\mcd-key-automation\logs\screenshots\20260616T005523_step3_detected_via_skip.png
-    2026-06-16 01:55:23.155 | INFO     | providers.mastercard.pages.create_project_page:_wait_for_create_button_enabled:315 - 'Create project' button enabled after 0.0s
-    2026-06-16 01:55:23.162 | INFO     | providers.mastercard.pages.create_project_page:wait_for_download_after_step2:905 - Clicked 'Create project' on final key step — found=True
-    2026-06-16 01:55:26.366 | INFO     | providers.mastercard.pages.create_project_page:wait_for_download_after_step2:822 - Download key button appeared — https://developer.mastercard.com/create-project?services=bin-lookup
-    2026-06-16 01:55:26.367 | INFO     | providers.mastercard.pages.create_project_page:download_key_file:1046 - Clicking 'Download key file'
-    2026-06-16 01:55:26.726 | INFO     | browser.downloads:save_download:19 - Copied download C:\Users\e031093\AppData\Local\Temp\1\playwright-artifacts-ozpO24\143f88ef-1f10-49be-a44f-351fa46523c6 -> C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup.zip
-    2026-06-16 01:55:26.727 | INFO     | providers.mastercard.pages.create_project_page:download_key_file:1063 - Downloaded key file: C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup.zip
-    2026-06-16 01:55:26.727 | INFO     | providers.mastercard.workflows.project_workflow:_provision_oauth1_standard:167 - Downloaded signing key zip: C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup.zip
-    2026-06-16 01:55:26.727 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
-    2026-06-16 01:55:28.199 | INFO     | providers.mastercard.pages.project_page:goto:97 - Navigating to sandbox page: https://developer.mastercard.com/project-details/ee960c79-0646-4e40-8512-e38f472b838f/sandbox
-    2026-06-16 01:55:33.384 | INFO     | providers.mastercard.pages.project_page:extract_consumer_key:216 - Extracted consumer key (alias='bin_lookup', idx=0): 05zhZWQF...0000
-    2026-06-16 01:55:33.389 | INFO     | providers.mastercard.workflows.project_workflow:_capture_consumer_key:76 - Saved OAuth 1.0a credentials JSON: C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup-credentials.json
-    2026-06-16 01:55:33.418 | INFO     | providers.mastercard.provider:download_keys:85 - Artifact: mastercard-sbx-bin-lookup-bin-lookup-signing-v1-credentials.json (bf15328fa014)
-    2026-06-16 01:55:33.437 | INFO     | providers.mastercard.provider:download_keys:85 - Artifact: mastercard-sbx-bin-lookup-bin-lookup-signing-v1.zip (06d6c5a49b2e)
-    2026-06-16 01:55:33.437 | INFO     | app.orchestrator:run:63 - Provisioned 'bin_lookup' \u2713
-    2026-06-16 01:55:33.550 | INFO     | app.orchestrator:_rebuild_vima_zip:120 - Built vima-config.zip: 17 API(s) included
-  [31mProvisioning error: 'charmap' codec can't encode character '\U0001f4be' in position 4: character maps to <undefined>[0m
-  [33mContinuing with remaining tests …[0m
 
 [1m>> BIN Lookup API tests[0m
 
@@ -151,9 +57,6 @@ Listening on http://0.0.0.0:9022
   [32m[PASS][0m SDKs: /app reachable (placeholder)
   [32m1/1 passed[0m
 
-[1m>> Stopping server[0m
-  [32m[OK]  Server stopped.[0m
-
 [1m>> Python Lint (Ruff)[0m
 
 [1m[36m>> Python Lint (Ruff)[0m[0m
@@ -180,12 +83,12 @@ Listening on http://0.0.0.0:9022
 
 [1m[36m>> Security (Bandit)[0m[0m
   [32m[PASS][0m bandit is installed
-  [32m[PASS][0m Scan scope: 104 file(s), 22,341 lines of code
+  [32m[PASS][0m Scan scope: 104 file(s), 21,752 lines of code
   Targets:   apis, usecases, chat, simulator, app.py, clean_keys.py, live_demo.py
   Threshold: severity >=MEDIUM, confidence >=MEDIUM
   Checks:    B1xx (injection), B2xx (shell), B3xx (imports), B4xx (ciphers),
              B5xx (assert/try), B6xx (crypto/ssl), B7xx (xml/yaml)
-  Findings:  0 HIGH, 2 MEDIUM, 71 LOW (all severities, before filter)
+  Findings:  0 HIGH, 2 MEDIUM, 70 LOW (all severities, before filter)
   [32m[PASS][0m No medium/high security issues in 7 target(s)
   [32m[PASS][0m Suppressions (9 # nosec annotation(s)):
   apis/snippet.py:297  f"{env_prefix}_SIGNING_KEY_PATH": "/tmp/snippet-dry-run.p12",  # nosec B108 — placeholder path, never created
@@ -194,10 +97,10 @@ Listening on http://0.0.0.0:9022
   app.py:94  _INTERNAL_HOSTS = ("localhost", "127.0.0.1", "0.0.0.0", "::1", "cloudflare.com")  # nosec B104
   app.py:200  default=os.environ.get("HOST", "0.0.0.0"),  # nosec B104 — configurable dev server binding
   app.py:293  resp = _requests.get(url, timeout=4.0, verify=False)  # nosec B501
-  app.py:1889  "INSERT INTO bin_ranges VALUES (" + ",".join(["?"] * 32) + ")",  # nosec B608 — values via ? params
-  app.py:3120  app.run(host=host, port=port, debug=True, use_reloader=False)  # nosec B201 — local dev server only
+  app.py:1880  "INSERT INTO bin_ranges VALUES (" + ",".join(["?"] * 32) + ")",  # nosec B608 — values via ? params
+  app.py:3111  app.run(host=host, port=port, debug=True, use_reloader=False)  # nosec B201 — local dev server only
   clean_keys.py:77  with urllib.request.urlopen(req, timeout=2) as resp:  # nosec B310 — localhost only
-  [33m[INFO] 73 low-severity/confidence finding(s) below threshold — run bandit manually to review[0m
+  [33m[INFO] 72 low-severity/confidence finding(s) below threshold — run bandit manually to review[0m
   [32m4/4 passed[0m
 
 [1m>> Dead Code (Vulture)[0m
@@ -219,36 +122,141 @@ Listening on http://0.0.0.0:9022
   Target:    tests/lint/profile_target.py
   Profiling: CPU time, memory allocation
   Hotspot:   files >= 5% CPU; lines >= 2% CPU
-  [32m[PASS][0m tests/lint/profile_target.py  CPU 36.8%
-  line   19  CPU 24.9%  peak 0.0 MB  sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-  line   21  CPU 4.4%  peak 0.0 MB  import app as _vima  # noqa: E402 — imports and registers all routes + blueprints
+  [32m[PASS][0m Profile complete (4.77s, 3 file(s) sampled) — no file >= 5% CPU
   [32m3/3 passed[0m
 
-[1m[36m>> Portal project cleanup[0m[0m
-Warning: Ignoring extra certs from `C:\Program Files\ClaudeCode\mastercard_prd_corporate_network_root_ca_g2.pem;C:\Program Files\ClaudeCode\combined-certs.pem`, load failed: error:8000007B:system library::no protocol option
-2026-06-16 01:57:14.565 | INFO     | browser.session:browser_session:48 - Reusing saved session from C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
-2026-06-16 01:57:15.643 | INFO     | providers.mastercard.pages.login_page:goto:25 - Navigating to https://developer.mastercard.com/account/log-in
-2026-06-16 01:57:19.421 | INFO     | browser.waits:wait_until:33 - Still waiting for saved-session redirect...
-2026-06-16 01:57:20.931 | INFO     | browser.waits:wait_until:25 - Reached saved-session redirect
-2026-06-16 01:57:20.931 | INFO     | providers.mastercard.pages.login_page:wait_for_manual_auth:142 - Saved session redirected to https://developer.mastercard.com/dashboard — skipping login form.
-2026-06-16 01:57:20.931 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
-2026-06-16 01:57:23.691 | INFO     | __main__:run_cleanup:206 - Found 1 project(s) to delete: ['SST-bin_lookup-20260616015508']
-2026-06-16 01:57:23.692 | INFO     | __main__:_delete_project:95 - Navigating to project 'SST-bin_lookup-20260616015508' at https://developer.mastercard.com/project-details/ee960c79-0646-4e40-8512-e38f472b838f
-2026-06-16 01:57:30.109 | INFO     | __main__:_delete_project:121 - Scrolling to 'Delete this project' for 'SST-bin_lookup-20260616015508'
-2026-06-16 01:57:30.677 | INFO     | __main__:_delete_project:131 - Mouse-clicking 'Delete this project' at (422, 532)
-2026-06-16 01:57:32.847 | INFO     | __main__:_delete_project:157 - Confirming deletion via '[role='dialog'] button:has-text('Delete')'
-2026-06-16 01:57:32.907 | INFO     | __main__:_delete_project:173 - Confirmed deletion of 'SST-bin_lookup-20260616015508'
-2026-06-16 01:57:37.927 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
-2026-06-16 01:57:39.902 | INFO     | __main__:_delete_project:184 - Verified: 'SST-bin_lookup-20260616015508' no longer in dashboard
-2026-06-16 01:57:39.911 | INFO     | browser.session:browser_session:61 - Saved session state to C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
+[1m>> Code Duplication[0m
 
-Deleted 1 project(s):
-  - SST-bin_lookup-20260616015508
-  [32m[PASS][0m Delete SST-* projects from Mastercard Developers
+[1m[36m>> Code Duplication (pure Python)[0m[0m
+  [32m[PASS][0m Scan scope: 131 file(s) (104 Python, 27 JavaScript)
+  Targets:       apis, usecases, chat, simulator, static/js, app.py, clean_keys.py, live_demo.py
+  Window size:   6 lines (normalised)
+  Report threshold: 50 duplicated lines per pair
+  [32m[PASS][0m Ignored: app.py <-> app.py
+  181 shared line(s) — ignored
+  Reason: Multiple Flask route handlers share the same guard/jsonify boilerplate — structural pattern inherent to Flask routing, not copy-paste logic
+  [32m[PASS][0m Ignored: apis/snippet.py <-> apis/snippet.py
+  163 shared line(s) — ignored
+  Reason: Code-generator with three auth-flavour branches (OAuth1, Finicity, EU JWT); each branch produces a similarly-shaped script — template content, not logic
+  [32m[PASS][0m Ignored: apis/open_finance/api.py <-> apis/open_finance/api.py
+  139 shared line(s) — ignored
+  Reason: Large single-API file with ~15 endpoints that each declare an identical customer_id/account_id param dict — operation data definition, not logic
+  [32m[PASS][0m Ignored: usecases/the_wire/__init__.py <-> usecases/the_wire/__init__.py
+  119 shared line(s) — ignored
+  Reason: Six hand-assembled fixture journeys each with the same 5-stage schema (bank -> agg -> merchant -> category -> app) — the repetition is the dataset
+  [32m[PASS][0m Ignored: static/js/app/main.js <-> static/js/app/main.js
+  118 shared line(s) — ignored
+  Reason: 3000-line UI file with repeated panel/event-handler patterns — frontend boilerplate; refactoring requires dedicated JS test coverage
+  [32m[PASS][0m Ignored: apis/transaction_notifications/api.py <-> apis/transaction_notifications/api.py
+  101 shared line(s) — ignored
+  Reason: Large single-file API with consent-enrollment handlers that each share the same param-guard + OAuth-sign pattern — structural within-file similarity, not extractable logic
+  [32m[PASS][0m Ignored: apis/carbon_calculator/api.py <-> apis/flight_delay_pass/api.py
+  77 shared line(s) — ignored
+  Reason: Independent API modules sharing OAuth1 signing helper and JWE operation structures — per-API module design; cross-module extraction adds coupling with no clear benefit
+  [32m[PASS][0m Ignored: apis/benefits_eligibility/api.py <-> apis/carbon_calculator/api.py
+  69 shared line(s) — ignored
+  Reason: Independent API modules sharing OAuth1 signing boilerplate — each is a self-contained data + request definition unit
+  [32m[PASS][0m Ignored: apis/benefits_eligibility/api.py <-> apis/flight_delay_pass/api.py
+  69 shared line(s) — ignored
+  Reason: Independent API modules sharing OAuth1 signing boilerplate — each is a self-contained data + request definition unit
+  [32m[PASS][0m Ignored: apis/open_finance/api.py <-> apis/open_finance_au/api.py
+  69 shared line(s) — ignored
+  Reason: Regional Open Finance API variants (global vs AU) — structurally similar by design, independently maintained for different Mastercard Open Banking regions
+  [32m[PASS][0m Ignored: apis/easy_savings/api.py <-> apis/places/api.py
+  62 shared line(s) — ignored
+  Reason: Both are location/offer search APIs with similar geographic parameter dicts — independent modules sharing query-parameter schema by product design
+  [32m[PASS][0m Ignored: apis/open_finance_au/api.py <-> apis/open_finance_eu/api.py
+  61 shared line(s) — ignored
+  Reason: Regional Open Finance API variants (AU vs EU) — structurally similar by design, independently maintained for different Mastercard Open Banking regions
+  [32m[PASS][0m Ignored: apis/offers_for_publishers/api.py <-> apis/offers_merchant_content/api.py
+  53 shared line(s) — ignored
+  Reason: Closely related Offers product APIs sharing response schema and parameter patterns — independently maintained per-API modules in the same product family
+  [32m[PASS][0m Ignored: apis/benefits_content_eligibility/api.py <-> apis/benefits_eligibility/api.py
+  53 shared line(s) — ignored
+  Reason: Benefits API family sharing eligibility parameter structures — independently maintained per-API modules in the same product family
+  [32m[PASS][0m Ignored: apis/open_finance_au/client.py <-> apis/open_finance_eu/client.py
+  53 shared line(s) — ignored
+  Reason: Regional Open Finance client implementations (AU Finicity vs EU JWT OAuth2) — structural similarity is intentional; independently maintained for different auth flows
+  [32m[PASS][0m 68 pair(s) with minor duplication (< 50 lines) — informational
+  apis/offers_merchant_content/api.py <-> apis/places/api.py: 48 shared line(s)
+  apis/offers_for_publishers/api.py <-> apis/places/api.py: 46 shared line(s)
+  apis/easy_savings/api.py <-> apis/offers_merchant_content/api.py: 41 shared line(s)
+  usecases/pfm/__init__.py <-> usecases/recurring/__init__.py: 41 shared line(s)
+  apis/easy_savings/api.py <-> apis/offers_for_publishers/api.py: 39 shared line(s)
+  usecases/psi/__init__.py <-> usecases/recurring/__init__.py: 39 shared line(s)
+  apis/benefits_content_eligibility/api.py <-> apis/carbon_calculator/api.py: 37 shared line(s)
+  apis/benefits_content_eligibility/api.py <-> apis/flight_delay_pass/api.py: 37 shared line(s)
+  apis/open_finance/api.py <-> apis/open_finance_eu/api.py: 31 shared line(s)
+  usecases/financeincolour/__init__.py <-> usecases/pfm/__init__.py: 31 shared line(s)
+  apis/merchant_identifier/api.py <-> apis/offers_for_publishers/api.py: 30 shared line(s)
+  apis/merchant_identifier/api.py <-> apis/offers_merchant_content/api.py: 30 shared line(s)
+  apis/merchant_identifier/api.py <-> apis/places/api.py: 29 shared line(s)
+  apis/consumer_clarity/api.py <-> apis/easy_savings/api.py: 27 shared line(s)
+  apis/enhanced_currency_conversion_calculator/api.py <-> apis/transaction_notifications/api.py: 27 shared line(s)
+  apis/benefits_content_eligibility/api.py <-> apis/transaction_notifications/api.py: 23 shared line(s)
+  apis/easy_savings/api.py <-> apis/merchant_identifier/api.py: 22 shared line(s)
+  apis/open_finance/client.py <-> apis/open_finance/client.py: 22 shared line(s)
+  usecases/pfm/__init__.py <-> usecases/psi/__init__.py: 22 shared line(s)
+  apis/consumer_clarity/api.py <-> apis/places/api.py: 21 shared line(s)
+  apis/automatic_billing_updater/api.py <-> apis/easy_savings/api.py: 18 shared line(s)
+  apis/automatic_billing_updater/api.py <-> apis/merchant_identifier/api.py: 18 shared line(s)
+  apis/automatic_billing_updater/api.py <-> apis/offers_for_publishers/api.py: 18 shared line(s)
+  apis/automatic_billing_updater/api.py <-> apis/offers_merchant_content/api.py: 18 shared line(s)
+  apis/automatic_billing_updater/api.py <-> apis/places/api.py: 18 shared line(s)
+  apis/consumer_clarity/api.py <-> apis/transaction_notifications/api.py: 18 shared line(s)
+  apis/bin_lookup/api.py <-> apis/enhanced_currency_conversion_calculator/api.py: 18 shared line(s)
+  apis/consent_management/api.py <-> apis/transaction_notifications/api.py: 18 shared line(s)
+  apis/match/api.py <-> apis/transaction_notifications/api.py: 18 shared line(s)
+  apis/automatic_billing_updater/api.py <-> apis/automatic_billing_updater/api.py: 15 shared line(s)
+  apis/automatic_billing_updater/api.py <-> apis/consumer_clarity/api.py: 15 shared line(s)
+  usecases/financeincolour/__init__.py <-> usecases/psi/__init__.py: 15 shared line(s)
+  usecases/financeincolour/__init__.py <-> usecases/recurring/__init__.py: 15 shared line(s)
+  apis/benefits_eligibility/api.py <-> apis/transaction_notifications/api.py: 14 shared line(s)
+  apis/easy_savings/api.py <-> apis/easy_savings/api.py: 14 shared line(s)
+  simulator/handlers/open_finance.py <-> simulator/handlers/open_finance_au.py: 14 shared line(s)
+  apis/bin_lookup/api.py <-> apis/transaction_notifications/api.py: 13 shared line(s)
+  apis/offers_for_publishers/api.py <-> apis/transaction_notifications/api.py: 12 shared line(s)
+  apis/easy_savings/api.py <-> apis/transaction_notifications/api.py: 12 shared line(s)
+  apis/open_finance_eu/api.py <-> apis/open_finance_eu/api.py: 12 shared line(s)
+  apis/enhanced_currency_conversion_calculator/api.py <-> apis/priceless_cities/api.py: 11 shared line(s)
+  apis/match/api.py <-> apis/match/api.py: 11 shared line(s)
+  apis/benefits_eligibility/api.py <-> apis/benefits_eligibility/api.py: 10 shared line(s)
+  apis/consumer_clarity/api.py <-> apis/merchant_identifier/api.py: 9 shared line(s)
+  apis/consumer_clarity/api.py <-> apis/offers_for_publishers/api.py: 9 shared line(s)
+  apis/consumer_clarity/api.py <-> apis/offers_merchant_content/api.py: 9 shared line(s)
+  apis/benefits_content_eligibility/api.py <-> apis/enhanced_currency_conversion_calculator/api.py: 9 shared line(s)
+  apis/benefits_eligibility/api.py <-> apis/enhanced_currency_conversion_calculator/api.py: 9 shared line(s)
+  apis/bin_lookup/api.py <-> apis/priceless_cities/api.py: 9 shared line(s)
+  apis/priceless_cities/api.py <-> apis/transaction_notifications/api.py: 9 shared line(s)
+  apis/open_finance_au/client.py <-> apis/open_finance_au/client.py: 8 shared line(s)
+  apis/open_finance_eu/client.py <-> apis/open_finance_eu/client.py: 8 shared line(s)
+  apis/benefits_content_eligibility/api.py <-> apis/offers_for_publishers/api.py: 7 shared line(s)
+  apis/benefits_eligibility/api.py <-> apis/priceless_cities/api.py: 7 shared line(s)
+  apis/enhanced_currency_conversion_calculator/api.py <-> apis/merchant_identifier/api.py: 7 shared line(s)
+  apis/merchant_identifier/api.py <-> apis/priceless_cities/api.py: 7 shared line(s)
+  apis/match/api.py <-> apis/offers_for_publishers/api.py: 7 shared line(s)
+  apis/match/api.py <-> apis/offers_merchant_content/api.py: 7 shared line(s)
+  apis/automatic_billing_updater/api.py <-> apis/transaction_notifications/api.py: 6 shared line(s)
+  apis/bin_lookup/api.py <-> apis/business_payment_controls/api.py: 6 shared line(s)
+  apis/business_payment_controls/api.py <-> apis/enhanced_currency_conversion_calculator/api.py: 6 shared line(s)
+  apis/business_payment_controls/api.py <-> apis/priceless_cities/api.py: 6 shared line(s)
+  apis/bin_lookup/api.py <-> apis/consumer_clarity/api.py: 6 shared line(s)
+  apis/bin_lookup/api.py <-> apis/easy_savings/api.py: 6 shared line(s)
+  apis/merchant_identifier/api.py <-> apis/transaction_notifications/api.py: 6 shared line(s)
+  apis/match/api.py <-> apis/places/api.py: 6 shared line(s)
+  apis/offers_for_publishers/api.py <-> apis/offers_for_publishers/api.py: 6 shared line(s)
+  static/js/app/workbench/launchBanner.js <-> static/js/app/workbench/launchBanner.js: 6 shared line(s)
+  [32m17/17 passed[0m
 
-[1m>> Removing local keys/certs and cloned directory[0m
-  [32m[OK]  Removed keys/certs: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260616-015447\config\keys[0m
-  [32m[OK]  Removed cloned directory: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260616-015447[0m
+[1m>> Safety (Dependency Vulnerabilities)[0m
+
+[1m[36m>> Safety (Dependency Vulnerabilities)[0m[0m
+  [32m[PASS][0m safety is installed
+  [32m[PASS][0m Scan scope: requirements.txt
+  Packages scanned for known CVEs in the Safety vulnerability database
+  Findings: 0 active vulnerability/ies, 0 ignored
+  [32m[PASS][0m All scanned packages are free of known vulnerabilities
+  [32m3/3 passed[0m
   [32m[OK]  Run recorded in dashboard DB (run #{run_id}).[0m
 
 ============================================================
@@ -264,8 +272,9 @@ Deleted 1 project(s):
   [32m[OK][0m  Security (Bandit)                   4/4
   [32m[OK][0m  Dead Code (Vulture)                 3/3
   [32m[OK][0m  Runtime Performance (Scalene)       3/3
-  [32m[OK][0m  Portal project cleanup              1/1
+  [32m[OK][0m  Code Duplication (pure Python)      17/17
+  [32m[OK][0m  Safety (Dependency Vulnerabilities) 3/3
 ------------------------------------------------------------
-[32m[1m  32/32 passed[0m[0m
+[32m[1m  51/51 passed[0m[0m
 ============================================================
 

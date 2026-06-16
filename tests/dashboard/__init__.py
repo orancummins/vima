@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 import os
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, send_file, abort
 
 from tests.dashboard.db import (
     init_db,
@@ -258,6 +258,11 @@ def run_trigger():
         _done_path = os.path.join(cwd, "tests", "last_run.done")
         if os.path.exists(_done_path):
             os.remove(_done_path)
+        # Persist the submitted scope panel IDs so the UI can restore running
+        # highlights even after navigating away and back.
+        _submitted_scopes = request.form.get("scopes", "").strip()
+        with open(os.path.join(cwd, "tests", "last_run.scope"), "w") as _sf:
+            _sf.write(_submitted_scopes)
     except Exception:
         pass
 
@@ -272,6 +277,7 @@ def run_status():
     running = False
     pid_path = os.path.join(os.getcwd(), "tests", "last_run.pid")
     log_path = os.path.join(os.getcwd(), "tests", "last_run.log")
+    scope_path = os.path.join(os.getcwd(), "tests", "last_run.scope")
 
     # Check if done sentinel written by run.py exists — if so the run has
     # finished regardless of PID state (Windows recycles PIDs quickly).
@@ -380,10 +386,69 @@ def run_status():
     except Exception:
         progress = {"total": 0, "passed": 0, "failed": 0, "suites": []}
 
-    return jsonify({"ok": True, "pid": pid, "running": running, "log": tail_lines, "progress": progress})
+    running_scopes: list[str] = []
+    if running:
+        try:
+            if os.path.exists(scope_path):
+                with open(scope_path) as _sf:
+                    running_scopes = [s for s in _sf.read().strip().split(",") if s]
+        except Exception:
+            pass
+
+    return jsonify({"ok": True, "pid": pid, "running": running, "log": tail_lines, "progress": progress, "running_scopes": running_scopes})
 
 
 # ── Codebase stats (used by Run tab) ──────────────────────────────────────────
+
+@test_bp.route("/pydeps/<pkg>.svg", methods=["GET"])
+def pydeps_svg(pkg: str):
+    """Serve a generated pydeps SVG visualization."""
+    if not pkg.replace("_", "").isalnum():
+        abort(404)
+    svg_path = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "tests", "output", "pydeps", f"{pkg}.svg")
+    )
+    if not os.path.exists(svg_path):
+        abort(404)
+    return send_file(svg_path, mimetype="image/svg+xml")
+
+
+@test_bp.route("/pydeps/<pkg>", methods=["GET"])
+def pydeps_html(pkg: str):
+    """Serve an interactive pyvis dependency graph HTML page."""
+    if not pkg.replace("_", "").isalnum():
+        abort(404)
+    html_path = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "tests", "output", "pydeps", f"{pkg}.html")
+    )
+    if not os.path.exists(html_path):
+        abort(404)
+    return send_file(html_path, mimetype="text/html")
+
+
+@test_bp.route("/arch/<diagram>", methods=["GET"])
+def arch_html(diagram: str):
+    """Serve a Mermaid architecture diagram HTML page."""
+    if not diagram.replace("_", "").isalnum():
+        abort(404)
+    html_path = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "tests", "output", "arch", f"{diagram}.html")
+    )
+    if not os.path.exists(html_path):
+        abort(404)
+    return send_file(html_path, mimetype="text/html")
+
+
+@test_bp.route("/arch/mermaid.js", methods=["GET"])
+def arch_mermaid_js():
+    """Serve the cached mermaid UMD bundle."""
+    js_path = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "tests", "output", "arch", "_mermaid.min.js")
+    )
+    if not os.path.exists(js_path):
+        abort(404)
+    return send_file(js_path, mimetype="application/javascript")
+
 
 @test_bp.route("/codebase_stats", methods=["GET"])
 def codebase_stats():
