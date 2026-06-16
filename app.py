@@ -522,6 +522,51 @@ def explorer_state(api_id: str):
     return jsonify({"state": state})
 
 
+def _api_credentials(
+    api_id: str,
+    manifest: dict,
+    resolve_paths: bool = False,
+) -> tuple[str, list[str], list[str], list[tuple[str, str]]]:
+    """Return (env_prefix, var_names, packages, env_pairs) for an API.
+
+    Used by /explorer/<api_id>/setup and /explorer/<api_id>/run so both
+    routes resolve credentials identically without duplicating the logic.
+    When *resolve_paths* is True, relative *_PATH env vars are resolved to
+    absolute paths against the project root (needed when spawning a terminal
+    that runs from a temp directory).
+    """
+    from apis import snippet as api_snippet
+
+    env_prefix = manifest.get("env_prefix") or api_id.upper()
+    of_runtime = (
+        api_snippet.of_runtime_for_prefix(env_prefix)
+        if api_id.startswith("open_finance")
+        else None
+    )
+    if of_runtime:
+        var_names: list[str] = of_runtime["env_var_names"]
+        packages: list[str] = of_runtime["packages"]
+    else:
+        var_names = [
+            f"{env_prefix}_CONSUMER_KEY",
+            f"{env_prefix}_SIGNING_KEY_PATH",
+            f"{env_prefix}_SIGNING_KEY_PASSWORD",
+        ]
+        packages = ["requests", "mastercard-oauth1-signer"]
+
+    env_pairs: list[tuple[str, str]] = [(n, os.environ.get(n, "")) for n in var_names]
+    if resolve_paths:
+        project_root = os.path.dirname(os.path.abspath(__file__))
+        resolved: list[tuple[str, str]] = []
+        for name, val in env_pairs:
+            if val and name.endswith("_PATH") and not os.path.isabs(val):
+                candidate = os.path.normpath(os.path.join(project_root, val))
+                if os.path.exists(candidate):
+                    val = candidate
+            resolved.append((name, val))
+        env_pairs = resolved
+
+    return env_prefix, var_names, packages, env_pairs
 @app.route("/explorer/<api_id>/snippet")
 def explorer_snippet(api_id: str):
     """Return an authentic Python snippet showing how to call the
@@ -567,43 +612,18 @@ def explorer_setup(api_id: str):
     if manifest is None:
         return jsonify({"error": "Unknown API"}), 404
 
-    env_prefix = manifest.get("env_prefix") or api_id.upper()
-    # Standard Mastercard OAuth1 credential triple. Open Finance uses a
-    # different shape per variant (US/AU = Finicity Partner+App; EU =
-    # OAuth2/JWT client_credentials) — defer to the shared variant table
-    # in apis.snippet so /setup, /run and snippet rendering stay in sync.
-    from apis import snippet as api_snippet
-    of_runtime = (
-        api_snippet.of_runtime_for_prefix(env_prefix)
-        if api_id.startswith("open_finance")
-        else None
+    env_prefix, var_names, packages, env_pairs = _api_credentials(
+        api_id, manifest, resolve_paths=True
     )
-    if of_runtime:
-        var_names = of_runtime["env_var_names"]
-        packages = of_runtime["packages"]
-    else:
-        var_names = [
-            f"{env_prefix}_CONSUMER_KEY",
-            f"{env_prefix}_SIGNING_KEY_PATH",
-            f"{env_prefix}_SIGNING_KEY_PASSWORD",
-        ]
-        packages = ["requests", "mastercard-oauth1-signer"]
 
-    env: list[dict[str, str]] = []
-    project_root = os.path.dirname(os.path.abspath(__file__))
-    for name in var_names:
-        val = os.environ.get(name, "")
-        # Resolve relative *_PATH values (e.g. config/keys/foo.p12) to
-        # absolute paths so generated scripts work from any cwd.
-        if val and name.endswith("_PATH") and not os.path.isabs(val):
-            candidate = os.path.normpath(os.path.join(project_root, val))
-            if os.path.exists(candidate):
-                val = candidate
-        env.append({
+    env: list[dict[str, str]] = [
+        {
             "name": name,
             "value": val,
             "set": name in os.environ and bool(os.environ.get(name)),
-        })
+        }
+        for name, val in env_pairs
+    ]
 
     return jsonify({
         "api_id": api_id,
@@ -662,40 +682,11 @@ def explorer_run(api_id: str):
         snippet_payload = api_snippet.build_snippet(api_id, op_id, mod=mod, manifest=manifest)
         code = snippet_payload.get("snippet") or ""
 
-    # Build the env-var list using the same logic as /setup so the
-    # spawned terminal sees what the local server sees.
-    env_prefix = manifest.get("env_prefix") or api_id.upper()
-    of_runtime = (
-        api_snippet.of_runtime_for_prefix(env_prefix)
-        if api_id.startswith("open_finance")
-        else None
+    # Resolve credentials using the same helper as /setup so the spawned
+    # terminal sees what the local server sees, with paths made absolute.
+    _env_prefix, _var_names, packages, env_pairs = _api_credentials(
+        api_id, manifest, resolve_paths=True
     )
-    if of_runtime:
-        var_names = of_runtime["env_var_names"]
-        packages = of_runtime["packages"]
-    else:
-        var_names = [
-            f"{env_prefix}_CONSUMER_KEY",
-            f"{env_prefix}_SIGNING_KEY_PATH",
-            f"{env_prefix}_SIGNING_KEY_PASSWORD",
-        ]
-        packages = ["requests", "mastercard-oauth1-signer"]
-
-    env_pairs = [(n, os.environ.get(n, "")) for n in var_names]
-    # Modules typically resolve a relative SIGNING_KEY_PATH against the
-    # project root before opening it. The spawned terminal runs in a
-    # temp dir, so relative paths break (FileNotFoundError on the .p12).
-    # Resolve any *_PATH style vars to absolute paths here so the
-    # snippet's `open(key_path)` works from anywhere.
-    project_root = os.path.dirname(os.path.abspath(__file__))
-    resolved_pairs: list[tuple[str, str]] = []
-    for name, val in env_pairs:
-        if val and name.endswith("_PATH") and not os.path.isabs(val):
-            candidate = os.path.normpath(os.path.join(project_root, val))
-            if os.path.exists(candidate):
-                val = candidate
-        resolved_pairs.append((name, val))
-    env_pairs = resolved_pairs
 
     system = platform.system().lower()
     tmpdir = Path(tempfile.gettempdir()) / "vima-snippets"

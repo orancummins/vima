@@ -123,6 +123,7 @@
   <nav class="header-nav">
     <a href="{{ url_for('test_dashboard.run_list') }}" class="nav-btn">Run</a>
     <a href="{{ url_for('test_dashboard.run_list') }}#history" class="nav-btn">History</a>
+    <a href="{{ url_for('test_dashboard.run_list') }}#code" class="nav-btn">Code</a>
     <a href="{{ url_for('test_dashboard.stats') }}" class="nav-btn active">Stats</a>
     <a href="{{ url_for('test_dashboard.config') }}" class="nav-btn">Settings</a>
     <a href="/" class="nav-btn">&#8592; Back to App</a>
@@ -130,12 +131,7 @@
 </header>
 
 <main class="page-content">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Statistics</h1>
-      <p class="page-meta">Aggregated across {{ stats.summary.total_runs }} test run{{ 's' if stats.summary.total_runs != 1 else '' }}</p>
-    </div>
-  </div>
+
 
   {% if stats.summary.total_runs == 0 %}
   <div class="empty-state">

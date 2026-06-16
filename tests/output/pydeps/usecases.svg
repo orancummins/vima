@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="950" style="background:#0f172a;font-family:ui-sans-serif,system-ui,sans-serif">
+  <defs>
+    <marker id="arr-root" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#f97316" fill-opacity="0.6"/></marker>
+    <marker id="arr-apis" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#3b82f6" fill-opacity="0.6"/></marker>
+    <marker id="arr-simulator" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#22c55e" fill-opacity="0.6"/></marker>
+    <marker id="arr-usecases" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#a855f7" fill-opacity="0.6"/></marker>
+    <filter id='shadow' x='-20%' y='-20%' width='140%' height='140%'>
+      <feDropShadow dx='0' dy='2' stdDeviation='3' flood-color='#000' flood-opacity='0.5'/>
+    </filter>
+  </defs>
+  <rect x="1200" y="0" width="200" height="950" fill="#0a0f1e" rx="0"/>
+  <line x1="1200" y1="0" x2="1200" y2="950" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <text x="600" y="34" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="20" font-weight="700" letter-spacing="0.5">usecases - dependency graph</text>
+  <text x="600" y="54" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="12">36 modules &#183; 50 edges &#183; 4 sub-packages</text>
+  <path d="M97.0,104.0 C724.3,102.2 1101.8,147.5 1100.7,101.1 C1102.6,178.4 990.7,437.6 1103.8,224.8 C915.3,579.6 770.2,809.7 802.2,792.4 C748.8,821.2 682.0,845.7 716.7,838.4 C658.8,850.6 470.6,765.5 624.1,857.8 C368.3,703.9 170.6,421.2 214.7,611.6 C141.2,294.3 473.4,102.9 97.0,104.0 Z" fill="#f97316" fill-opacity="0.07" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="664.6" y="106.0" text-anchor="middle" fill="#f97316" font-size="11" font-weight="600" fill-opacity="0.9">(root)</text>
+  <path d="M93.7,421.0 C114.2,298.3 313.7,222.9 126.4,224.6 C438.5,221.7 806.5,379.0 625.7,219.9 C927.0,485.0 1105.8,718.1 1107.8,644.0 C1104.4,767.5 827.6,846.5 1102.4,841.6 C644.4,849.9 290.5,842.5 369.6,854.8 C237.8,834.3 134.3,671.6 158.7,822.0 C118.1,571.4 106.0,347.4 93.7,421.0 Z" fill="#3b82f6" fill-opacity="0.07" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="515.1" y="229.4" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="600" fill-opacity="0.9">apis</text>
+  <path d="M332.1,781.6 C363.7,727.6 363.7,727.6 382.7,695.1 C351.1,749.2 351.1,749.2 332.1,781.6 Z" fill="#22c55e" fill-opacity="0.07" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="357.4" y="705.3" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="600" fill-opacity="0.9">simulator</text>
+  <circle cx="706.9" cy="120.0" r="34.0" fill="#a855f7" fill-opacity="0.06" stroke="#a855f7" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="706.9" y="79.0" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="600" fill-opacity="0.9">usecases</text>
+  <path d="M473.5,830.0 Q404.1,803.9 364.5,767.8" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-apis)"/>
+  <path d="M473.5,830.0 Q412.2,783.1 383.0,734.6" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-apis)"/>
+  <path d="M382.5,830.0 Q358.6,796.6 355.7,776.2" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-apis)"/>
+  <path d="M382.5,830.0 Q366.7,775.8 371.2,740.2" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-apis)"/>
+  <path d="M181.7,806.0 Q260.1,768.6 326.1,763.4" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-apis)"/>
+  <path d="M181.7,806.0 Q268.2,747.7 349.5,728.2" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-apis)"/>
+  <path d="M435.0,473.6 Q329.6,408.4 260.1,322.5" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-apis)"/>
+  <path d="M435.0,473.6 Q413.3,622.6 352.5,737.4" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-apis)"/>
+  <path d="M435.0,473.6 Q421.4,601.8 374.0,699.0" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-apis)"/>
+  <path d="M168.9,691.2 Q262.9,710.1 326.6,750.1" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-apis)"/>
+  <path d="M168.9,691.2 Q271.0,689.3 347.7,716.4" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-apis)"/>
+  <path d="M553.7,721.9 Q452.8,756.3 367.0,753.9" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-apis)"/>
+  <path d="M553.7,721.9 Q460.9,735.4 389.5,719.6" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-apis)"/>
+  <path d="M540.4,830.0 Q437.5,809.2 365.9,764.8" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-apis)"/>
+  <path d="M540.4,830.0 Q445.6,788.4 386.2,730.7" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-apis)"/>
+  <path d="M712.5,810.8 Q617.1,699.0 572.3,580.9" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M712.5,810.8 Q841.9,799.9 954.8,829.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M712.5,810.8 Q594.5,839.5 487.0,828.9" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M627.2,830.0 Q572.9,701.8 566.4,583.4" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M627.2,830.0 Q743.4,811.4 846.0,830.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M627.2,830.0 Q504.9,849.6 396.0,830.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M241.9,604.8 Q398.3,558.3 540.5,565.7" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M241.9,604.8 Q167.0,527.5 127.7,441.7" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M241.9,604.8 Q227.9,710.2 185.6,793.1" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M585.2,403.7 Q586.0,485.3 564.5,542.2" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M585.2,403.7 Q588.7,322.6 613.4,265.8" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M585.2,403.7 Q515.7,450.7 452.7,465.4" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M507.8,381.1 Q549.1,467.8 555.4,542.9" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M507.8,381.1 Q551.8,305.1 605.0,261.8" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M507.8,381.1 Q478.8,433.2 447.0,458.3" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M577.1,299.7 Q590.3,432.6 562.6,542.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M577.1,299.7 Q593.0,270.0 605.6,262.2" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M577.1,299.7 Q520.0,398.0 447.3,458.5" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M577.1,299.7 Q627.7,199.5 698.2,132.2" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M577.1,299.7 Q531.4,315.1 498.0,313.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M248.2,479.8 Q411.5,496.3 541.1,557.6" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M248.2,479.8 Q178.8,369.7 152.5,255.8" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M248.2,479.8 Q225.5,591.8 173.7,678.6" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M653.3,407.5 Q619.8,492.6 572.0,544.9" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M653.3,407.5 Q622.5,329.9 621.6,265.7" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M653.3,407.5 Q549.4,458.0 453.6,468.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M483.2,315.5 Q542.1,433.0 555.0,543.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M483.2,315.5 Q544.8,270.3 600.0,255.6" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M483.2,315.5 Q471.7,398.4 440.7,455.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M807.4,634.6 Q678.7,618.5 581.5,568.9" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M807.4,634.6 Q944.2,615.9 1066.5,640.5" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M807.4,634.6 Q687.5,698.5 566.4,717.5" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M790.3,767.1 Q659.5,683.4 577.0,577.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M790.3,767.1 Q938.7,775.6 1063.7,827.1" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M790.3,767.1 Q670.4,818.5 553.5,826.7" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <circle cx="561.4" cy="563.0" r="23.0" fill="#3b82f6" fill-opacity="0.15" stroke="none"/>
+  <circle cx="561.4" cy="563.0" r="18.0" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis - imported by 11</title></circle>
+  <text x="538.4" y="563.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">apis</text>
+  <circle cx="968.3" cy="830.0" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.bin_lookup - imported by 1</title></circle>
+  <text x="983.8" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">bin_lookup</text>
+  <circle cx="473.5" cy="830.0" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.bin_lookup.api - imported by 1</title></circle>
+  <text x="458.0" y="830.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="859.5" cy="830.0" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.consumer_clarity - imported by 1</title></circle>
+  <text x="875.0" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">consumer_clarity</text>
+  <circle cx="382.5" cy="830.0" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.consumer_clarity.api - imported by 1</title></circle>
+  <text x="367.0" y="830.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="120.0" cy="430.7" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.easy_savings - imported by 1</title></circle>
+  <text x="104.5" y="430.7" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">easy_savings</text>
+  <circle cx="181.7" cy="806.0" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.easy_savings.api - imported by 1</title></circle>
+  <text x="166.2" y="806.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="617.4" cy="246.7" r="21.5" fill="#3b82f6" fill-opacity="0.15" stroke="none"/>
+  <circle cx="617.4" cy="246.7" r="16.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance - imported by 5</title></circle>
+  <text x="638.9" y="246.7" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">open_finance</text>
+  <circle cx="435.0" cy="473.6" r="21.5" fill="#3b82f6" fill-opacity="0.15" stroke="none"/>
+  <circle cx="435.0" cy="473.6" r="16.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance.api - imported by 5</title></circle>
+  <text x="413.5" y="473.6" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="249.9" cy="313.6" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance.client - imported by 1</title></circle>
+  <text x="234.4" y="313.6" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">client</text>
+  <circle cx="147.2" cy="243.4" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.places - imported by 1</title></circle>
+  <text x="131.7" y="243.4" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">places</text>
+  <circle cx="168.9" cy="691.2" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.places.api - imported by 1</title></circle>
+  <text x="153.4" y="691.2" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="1080.0" cy="640.8" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.priceless_cities - imported by 1</title></circle>
+  <text x="1095.5" y="640.8" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">priceless_cities</text>
+  <circle cx="553.7" cy="721.9" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.priceless_cities.api - imported by 1</title></circle>
+  <text x="569.2" y="721.9" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="1076.9" cy="830.0" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.transaction_notifications - imported by 1</title></circle>
+  <text x="1092.4" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">transaction_notifications</text>
+  <circle cx="540.4" cy="830.0" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.transaction_notifications.api - imported by 1</title></circle>
+  <text x="555.9" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="346.3" cy="757.4" r="23.0" fill="#22c55e" fill-opacity="0.15" stroke="none"/>
+  <circle cx="346.3" cy="757.4" r="18.0" fill="#22c55e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>simulator - imported by 7</title></circle>
+  <text x="323.3" y="757.4" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">simulator</text>
+  <circle cx="368.5" cy="719.3" r="23.0" fill="#22c55e" fill-opacity="0.15" stroke="none"/>
+  <circle cx="368.5" cy="719.3" r="18.0" fill="#22c55e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>simulator.switcher - imported by 7</title></circle>
+  <text x="345.5" y="719.3" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">switcher</text>
+  <circle cx="706.9" cy="120.0" r="12.0" fill="#a855f7" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases - imported by 2</title></circle>
+  <text x="723.9" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">usecases</text>
+  <circle cx="712.5" cy="810.8" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.bin_lookup - imported by 1</title></circle>
+  <text x="728.0" y="810.8" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">bin_lookup</text>
+  <circle cx="627.2" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.consumer_clarity - imported by 1</title></circle>
+  <text x="642.7" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">consumer_clarity</text>
+  <circle cx="241.9" cy="604.8" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.easy_savings - imported by 1</title></circle>
+  <text x="226.4" y="604.8" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">easy_savings</text>
+  <circle cx="585.2" cy="403.7" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.enrichment - imported by 1</title></circle>
+  <text x="600.7" y="403.7" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">enrichment</text>
+  <circle cx="507.8" cy="381.1" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.financeincolour - imported by 1</title></circle>
+  <text x="492.3" y="381.1" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">financeincolour</text>
+  <circle cx="120.0" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.findacard - imported by 1</title></circle>
+  <text x="135.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">findacard</text>
+  <circle cx="120.0" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.identity - imported by 1</title></circle>
+  <text x="135.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">identity</text>
+  <circle cx="577.1" cy="299.7" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.pfm - imported by 1</title></circle>
+  <text x="592.6" y="299.7" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">pfm</text>
+  <circle cx="248.2" cy="479.8" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.places - imported by 1</title></circle>
+  <text x="232.7" y="479.8" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">places</text>
+  <circle cx="653.3" cy="407.5" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.psi - imported by 1</title></circle>
+  <text x="668.8" y="407.5" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">psi</text>
+  <circle cx="483.2" cy="315.5" r="12.0" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.recurring - imported by 2</title></circle>
+  <text x="466.2" y="315.5" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">recurring</text>
+  <circle cx="1011.8" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.registry - imported by 1</title></circle>
+  <text x="1027.3" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">registry</text>
+  <circle cx="1080.0" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.sonic - imported by 1</title></circle>
+  <text x="1095.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">sonic</text>
+  <circle cx="807.4" cy="634.6" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.specials - imported by 1</title></circle>
+  <text x="822.9" y="634.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">specials</text>
+  <circle cx="1080.0" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.testchat - imported by 1</title></circle>
+  <text x="1095.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">testchat</text>
+  <circle cx="1080.0" cy="239.6" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.the_wire - imported by 1</title></circle>
+  <text x="1095.5" y="239.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">the_wire</text>
+  <circle cx="790.3" cy="767.1" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>usecases.txnotify - imported by 1</title></circle>
+  <text x="805.8" y="767.1" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">txnotify</text>
+  <text x="1218" y="50" fill="rgba(255,255,255,0.55)" font-size="11" font-weight="700" letter-spacing="1">SUB-PACKAGES</text>
+  <rect x="1218" y="68" width="10" height="10" rx="2" fill="#f97316" fill-opacity="0.85"/>
+  <text x="1233" y="77" fill="rgba(255,255,255,0.72)" font-size="11">usecases (root) <tspan fill="rgba(255,255,255,0.35)">(17)</tspan></text>
+  <rect x="1218" y="86" width="10" height="10" rx="2" fill="#3b82f6" fill-opacity="0.85"/>
+  <text x="1233" y="95" fill="rgba(255,255,255,0.72)" font-size="11">apis <tspan fill="rgba(255,255,255,0.35)">(16)</tspan></text>
+  <rect x="1218" y="104" width="10" height="10" rx="2" fill="#22c55e" fill-opacity="0.85"/>
+  <text x="1233" y="113" fill="rgba(255,255,255,0.72)" font-size="11">simulator <tspan fill="rgba(255,255,255,0.35)">(2)</tspan></text>
+  <rect x="1218" y="122" width="10" height="10" rx="2" fill="#a855f7" fill-opacity="0.85"/>
+  <text x="1233" y="131" fill="rgba(255,255,255,0.72)" font-size="11">usecases <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1218" y="150" fill="rgba(255,255,255,0.55)" font-size="11" font-weight="700" letter-spacing="1">NODE SIZE</text>
+  <text x="1218" y="166" fill="rgba(255,255,255,0.45)" font-size="10">= fan-in (imports by others)</text>
+</svg>

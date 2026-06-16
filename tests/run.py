@@ -77,8 +77,12 @@ _py_lint    = _imp("tests.lint.python_lint")
 _js_lint    = _imp("tests.lint.js_lint")
 _security   = _imp("tests.lint.security_lint")
 _vulture    = _imp("tests.lint.vulture_lint")
-_scalene    = _imp("tests.lint.scalene_lint")
-_radon      = _imp("tests.lint.radon_lint")
+_scalene      = _imp("tests.lint.scalene_lint")
+_radon        = _imp("tests.lint.radon_lint")
+_duplication  = _imp("tests.lint.duplication_lint")
+_safety       = _imp("tests.lint.safety_lint")
+_pydeps       = _imp("tests.lint.pydeps_lint")
+_arch         = _imp("tests.lint.arch_lint")
 
 Summary            = _utils.Summary
 TestRunner         = _utils.TestRunner
@@ -105,7 +109,7 @@ def _parse_args() -> argparse.Namespace:
     _scope.add_argument("--lint",         action="store_true",
                         help="Run static code analysis only (Ruff + ESLint) — no server required")
     p.add_argument("--lint-tools",       default="",
-                   help="Subset of lint tools to run (+ or comma separated): python,js,security,vulture,scalene,radon (default: all)")
+                   help="Subset of lint tools to run (+ or comma separated): python,js,security,vulture,scalene,radon,duplication,safety,pydeps,arch (default: all)")
     p.add_argument("--install-type",     choices=["C", "c", "E", "e"], default="E")
     p.add_argument("--key-password", "--storepass",     default="foobar!!",
                    help="Password for provisioned .p12 certs (default: foobar!!)")
@@ -240,6 +244,26 @@ def _run_lint_tools(args, summary) -> None:
         r = _radon.run()
         summary.add(r)
         r.print_summary()
+    if "duplication" in _run_tools:
+        _step("Code Duplication")
+        r = _duplication.run()
+        summary.add(r)
+        r.print_summary()
+    if "safety" in _run_tools:
+        _step("Safety (Dependency Vulnerabilities)")
+        r = _safety.run()
+        summary.add(r)
+        r.print_summary()
+    if "pydeps" in _run_tools:
+        _step("Dependency Graph (pydeps)")
+        r = _pydeps.run()
+        summary.add(r)
+        r.print_summary()
+    if "arch" in _run_tools:
+        _step("Architecture Diagrams (Mermaid)")
+        r = _arch.run()
+        summary.add(r)
+        r.print_summary()
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -269,7 +293,7 @@ def main() -> None:
 
         # Resolve which tools to run (empty = all)
         _tools_arg = getattr(args, "lint_tools", "") or ""
-        _run_tools = {t.strip().lower() for t in _tools_arg.replace(',', '+').split('+') if t.strip()} or {"python", "js", "security", "vulture", "scalene", "radon"}
+        _run_tools = {t.strip().lower() for t in _tools_arg.replace(',', '+').split('+') if t.strip()} or {"python", "js", "security", "vulture", "scalene", "radon", "duplication", "safety", "pydeps", "arch"}
         print(f"  Tools:         {', '.join(sorted(_run_tools))}")
 
         if "python" in _run_tools:
@@ -305,6 +329,29 @@ def main() -> None:
         if "radon" in _run_tools:
             _step("Code Complexity (Radon)")
             r = _radon.run()
+            summary.add(r)
+            r.print_summary()
+        if "duplication" in _run_tools:
+            _step("Code Duplication")
+            r = _duplication.run()
+            summary.add(r)
+            r.print_summary()
+
+        if "safety" in _run_tools:
+            _step("Safety (Dependency Vulnerabilities)")
+            r = _safety.run()
+            summary.add(r)
+            r.print_summary()
+
+        if "pydeps" in _run_tools:
+            _step("Dependency Graph (pydeps)")
+            r = _pydeps.run()
+            summary.add(r)
+            r.print_summary()
+
+        if "arch" in _run_tools:
+            _step("Architecture Diagrams (Mermaid)")
+            r = _arch.run()
             summary.add(r)
             r.print_summary()
 
