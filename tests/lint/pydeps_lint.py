@@ -71,15 +71,37 @@ def _get_deps(pkg: str) -> dict:
 
 
 def _project_nodes(deps: dict, root: str) -> dict[str, dict]:
-    """Filter to nodes that live inside the project root directory."""
+    """Filter to nodes that live inside the project root directory.
+
+    Excludes:
+    - Paths inside any virtualenv (.venv, venv, env) within the root — these
+      are third-party packages that happen to be under _ROOT on macOS/Linux
+      (where the venv is typically created inside the project).  On Windows,
+      normcase lowercasing tends to hide these paths, but we exclude them
+      explicitly for cross-platform consistency.
+    - __main__ sentinel nodes emitted by pydeps.
+    """
     norm_root = os.path.normcase(_ROOT)
+    # Virtualenv sub-directories to exclude (case-insensitive via normcase)
+    _venv_dirs = {
+        os.path.normcase(os.path.join(_ROOT, d)) + os.sep
+        for d in (".venv", "venv", "env", ".env")
+    }
+
     out: dict[str, dict] = {}
     for name, info in deps.items():
         if name == "__main__":
             continue
         path = info.get("path") or ""
-        if path and os.path.normcase(path).startswith(norm_root):
-            out[name] = info
+        if not path:
+            continue
+        norm_path = os.path.normcase(path)
+        if not norm_path.startswith(norm_root):
+            continue
+        # Skip anything inside a virtualenv directory
+        if any(norm_path.startswith(vd) for vd in _venv_dirs):
+            continue
+        out[name] = info
     return out
 
 
@@ -493,7 +515,19 @@ def _generate_pyvis_html(pkg: str, nodes: dict[str, dict], edges: list[tuple[str
     try:
         from pyvis.network import Network  # type: ignore[import]
     except ImportError:
-        raise AssertionError("pyvis not installed. Run: pip install pyvis")
+        # Auto-install pyvis (it is listed in requirements.txt but may be
+        # absent on an --existing install that hasn't been updated recently).
+        print("  [pydeps] pyvis not found — installing automatically …")
+        result = subprocess.run(
+            [sys.executable, "-m", "pip", "install", "pyvis>=0.3.2", "-q"],
+            capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            raise AssertionError(
+                f"pyvis not installed and auto-install failed:\n{result.stderr[:300]}\n"
+                "Run manually: pip install pyvis"
+            )
+        from pyvis.network import Network  # type: ignore[import]
 
     groups: dict[str, list[str]] = {}
     for name in sorted(nodes):

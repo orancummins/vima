@@ -47,6 +47,32 @@ def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
 
 # --- Search ---------------------------------------------------------------
 
+def _shape_results(results: dict[str, dict[str, Any]]) -> tuple[list, list, list, list]:
+    """Shape raw API results into filtered item lists for each feed."""
+    offers    = [s for s in (_shape_offer(o)    for o in _items(results["offers"].get("data")))    if _meaningful_offer(s)]
+    benefits  = [s for s in (_shape_benefit(b)  for b in _items(results["benefits"].get("data")))  if _meaningful_benefit(s)]
+    programs  = [s for s in (_shape_program(p)  for p in _items(results["programs"].get("data")))  if _meaningful_program(s)]
+    merchants = [s for s in (_shape_merchant(m) for m in _items(results["merchants"].get("data"))) if _meaningful_merchant(s)]
+    return offers, benefits, programs, merchants
+
+
+def _demo_reason(all_failed: bool, live_total: int, first_err: Any) -> str:
+    """Return a user-facing explanation for why demo mode was activated."""
+    if all_failed:
+        return _stringify_error(first_err) or "Priceless Specials API not reachable."
+    if live_total == 0:
+        return "Sandbox returned no live perks for this combination."
+    return "Sandbox returned only sparse rows — showing curated demo perks."
+
+
+def _partial_errors(results: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    return {
+        key: _stringify_error(r.get("error"))
+        for key, r in results.items()
+        if not r.get("success")
+    }
+
+
 def _search(params: dict[str, Any]) -> dict[str, Any]:
     from apis.priceless_cities import api as p_api
 
@@ -57,7 +83,6 @@ def _search(params: dict[str, Any]) -> dict[str, Any]:
         "category":            params.get("category") or "",
         "mastercard_product":  params.get("mastercard_product") or "",
     }
-    # Drop empties for the merchants & programs feeds that don't use category etc.
     merchants_params = {k: v for k, v in base.items() if v}
     programs_params  = {k: v for k, v in {
         "language":         base["language"],
@@ -81,42 +106,23 @@ def _search(params: dict[str, Any]) -> dict[str, Any]:
                 results[key] = {"success": False, "error": str(e)}
 
     all_failed = all(not r.get("success") for r in results.values())
-    first_err = next((r.get("error") for r in results.values() if r.get("error")), None)
+    first_err  = next((r.get("error") for r in results.values() if r.get("error")), None)
 
-    # Shape & drop ghost rows the sandbox often emits (rows with no usable
-    # content). The UI was rendering those as empty cards.
-    offers    = [s for s in (_shape_offer(o)    for o in _items(results["offers"].get("data")))    if _meaningful_offer(s)]
-    benefits  = [s for s in (_shape_benefit(b)  for b in _items(results["benefits"].get("data")))  if _meaningful_benefit(s)]
-    programs  = [s for s in (_shape_program(p)  for p in _items(results["programs"].get("data")))  if _meaningful_program(s)]
-    merchants = [s for s in (_shape_merchant(m) for m in _items(results["merchants"].get("data"))) if _meaningful_merchant(s)]
-
+    offers, benefits, programs, merchants = _shape_results(results)
     live_total = len(offers) + len(benefits) + len(programs) + len(merchants)
 
-    # Hybrid behaviour: if the live API gave us nothing usable (or it failed
-    # outright), drop in a curated demo dataset so the use case is still a
-    # compelling demo. We tag the response so the UI can show a notice.
     if live_total < _MIN_LIVE_ITEMS:
         curated = _curated_dataset(
             destination=base["destination_markets"],
             product=base["mastercard_product"],
             category=base["category"],
         )
-        if all_failed:
-            demo_reason = _stringify_error(first_err) or "Priceless Specials API not reachable."
-        elif live_total == 0:
-            demo_reason = "Sandbox returned no live perks for this combination."
-        else:
-            demo_reason = "Sandbox returned only sparse rows — showing curated demo perks."
         return {
             **curated,
-            "demo_mode": True,
-            "demo_reason": demo_reason,
-            "live_total": live_total,
-            "partial_errors": {
-                key: _stringify_error(r.get("error"))
-                for key, r in results.items()
-                if not r.get("success")
-            },
+            "demo_mode":     True,
+            "demo_reason":   _demo_reason(all_failed, live_total, first_err),
+            "live_total":    live_total,
+            "partial_errors": _partial_errors(results),
         }
 
     return {
@@ -125,11 +131,7 @@ def _search(params: dict[str, Any]) -> dict[str, Any]:
         "programs":  programs,
         "merchants": merchants,
         "demo_mode": False,
-        "partial_errors": {
-            key: _stringify_error(r.get("error"))
-            for key, r in results.items()
-            if not r.get("success")
-        },
+        "partial_errors": _partial_errors(results),
     }
 
 # --- Filters: drop ghost rows --------------------------------------------

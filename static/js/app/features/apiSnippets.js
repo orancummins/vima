@@ -94,8 +94,6 @@ export function initApisSnippets(opts) {
     }).join('');
   }
 
-  function _snippetRenderTabs() { /* removed — only one snippet shown at a time */ }
-
   function _snippetRenderBody(api) {
     const body = $('apis-snippets-body');
     if (!body) return;
@@ -432,8 +430,7 @@ export function initApisSnippets(opts) {
     if (backdrop) {
       backdrop.classList.remove('hidden');
       // Force a reflow so the opacity/transform transition runs.
-      // eslint-disable-next-line no-unused-expressions
-      backdrop.offsetHeight;
+      void backdrop.offsetHeight;
       requestAnimationFrame(() => backdrop.classList.add('tc-modal-backdrop--open'));
     }
     const fab = $('apis-snippets-fab');

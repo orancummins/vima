@@ -372,7 +372,7 @@
           <span class="toggle-value" id="install-label">Existing</span>
         </div>
         <span id="clean-hint" style="font-size:11.5px;color:var(--text3);display:none">Clean run clones from GitHub into a temp directory &mdash; requires portal credentials in <a href="{{ url_for('test_dashboard.config') }}" style="color:var(--mc-yellow)">Settings</a></span>
-        <span class="selected-count" id="selected-count">3 suites selected</span>
+        <span class="selected-count" id="selected-count">0 suites selected</span>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
         <button id="select-all-btn" class="btn" style="min-width:90px;justify-content:center" onclick="selectAllSuites()">
@@ -942,20 +942,41 @@ function updateSelectedCount() {
   if (el) el.textContent = selected + ' suite' + (selected === 1 ? '' : 's') + ' selected';
   var btn = document.getElementById('select-all-btn');
   if (btn) {
-    var total = document.querySelectorAll('.suite-panel').length;
-    btn.textContent = selected === total ? 'Deselect All' : 'Select All';
+    var selectableTotal = document.querySelectorAll('.suite-panel:not([data-scope="smoke"])').length;
+    var selectableSelected = document.querySelectorAll('.suite-panel:not([data-scope="smoke"]).selected').length;
+    btn.textContent = selectableSelected === selectableTotal ? 'Deselect All' : 'Select All';
   }
 }
 function selectAllSuites() {
-  var panels = document.querySelectorAll('.suite-panel');
+  // "Select All" covers all panels except Smoke (Smoke is a subset of Full).
+  var panels = Array.from(document.querySelectorAll('.suite-panel')).filter(function(p) {
+    return p.dataset.scope !== 'smoke';
+  });
   var total = panels.length;
-  var selected = document.querySelectorAll('.suite-panel.selected').length;
+  var selected = panels.filter(function(p) { return p.classList.contains('selected'); }).length;
   var selectAll = selected < total;
   panels.forEach(function(p) { p.classList.toggle('selected', selectAll); });
+  // When selecting all, ensure Smoke is deselected (Full covers it).
+  if (selectAll) {
+    document.querySelectorAll('.suite-panel').forEach(function(p) {
+      if (p.dataset.scope === 'smoke') p.classList.remove('selected');
+    });
+  }
   updateSelectedCount();
 }
+// Functional panels are mutually exclusive: selecting smoke deselects full and vice versa
+var _functionalScopes = ['smoke', 'full'];
 document.querySelectorAll('.suite-panel').forEach(function(panel) {
   panel.addEventListener('click', function() {
+    var scope = panel.dataset.scope;
+    if (_functionalScopes.indexOf(scope) !== -1 && !panel.classList.contains('selected')) {
+      // Deselect other functional panels when selecting a new one
+      document.querySelectorAll('.suite-panel').forEach(function(p) {
+        if (p !== panel && _functionalScopes.indexOf(p.dataset.scope) !== -1) {
+          p.classList.remove('selected');
+        }
+      });
+    }
     panel.classList.toggle('selected');
     updateSelectedCount();
   });
@@ -1143,6 +1164,11 @@ async function poll() {
 // ── Execute button ────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
 
+  // Default selection: Smoke Tests pre-selected on load
+  var defaultPanel = document.querySelector('.suite-panel[data-scope="smoke"]');
+  if (defaultPanel) { defaultPanel.classList.add('selected'); }
+  updateSelectedCount();
+
   // Open correct section if navigated here with a hash
   if (window.location.hash === '#history') {
     showSection('history');
@@ -1230,7 +1256,10 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       if (_pollTimer) clearTimeout(_pollTimer);
       var panel = document.getElementById('run-panel');
-      if (panel) panel.style.display = '';
+      if (panel) {
+        panel.style.display = '';
+        setTimeout(function() { panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 50);
+      }
       _wasRunning = true;
       poll();
     });

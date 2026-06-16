@@ -8,8 +8,8 @@
 // -------------------------------------------------------------------
 import { USE_CASES } from '../core/env.js';
 import { escapeHtml } from '../core/html.js';
-import { _isNonUsBlockedApiId, _isNonUsBlockedUseCaseById } from '../core/region.js';
-import { loadBundles, loadUseCases } from '../core/catalog.js';
+import { _isNonUsBlockedUseCaseById } from '../core/region.js';
+import { loadBundles } from '../core/catalog.js';
 import { _initSdkDemo, _initLiveDemo } from './openFinanceSdk.js';
   function _bundleApiTileHtml(bundle, a) {
     const isAnchor = a.id === bundle.anchor;
