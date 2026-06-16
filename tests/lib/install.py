@@ -110,13 +110,4 @@ def install_dependencies(work_dir: str) -> None:
 
     print("  Installing dependencies ...")
     cmd = [python, "-m", "pip", "install", "-r", req_path, "--quiet"]
-    # Use truststore for corporate proxy cert chains when available
-    try:
-        subprocess.run(
-            cmd + ["--use-feature=truststore"],
-            cwd=work_dir,
-            check=True,
-        )
-    except subprocess.CalledProcessError:
-        # Older pip or truststore unavailable — try without flag
-        subprocess.run(cmd, cwd=work_dir, check=True)
+    subprocess.run(cmd, cwd=work_dir, check=True)

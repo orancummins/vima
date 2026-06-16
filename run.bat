@@ -33,9 +33,9 @@ cd /d "%SCRIPT_DIR%"
 REM Install dependencies using OS cert store (handles corporate proxies)
 echo Installing dependencies...
 if exist "%SCRIPT_DIR%.venv\Scripts\python.exe" (
-    "%SCRIPT_DIR%.venv\Scripts\python.exe" -m pip install --use-feature=truststore -r requirements.txt --quiet
+    "%SCRIPT_DIR%.venv\Scripts\python.exe" -m pip install -r requirements.txt --quiet
 ) else (
-    py -m pip install --use-feature=truststore -r requirements.txt --quiet
+    py -m pip install -r requirements.txt --quiet
 )
 if errorlevel 1 (
     echo ERROR: Failed to install Python dependencies. Aborting.
@@ -76,7 +76,7 @@ if not exist "%TOOL_MARKER%" (
         goto :end
     )
     echo   [3/4] Installing dependencies via python -m pip ^(no .exe shims, this may take a minute^)...
-    "%TOOL_PY%" -m pip install --use-feature=truststore -r "%TOOL_DIR%\requirements.txt"
+    "%TOOL_PY%" -m pip install -r "%TOOL_DIR%\requirements.txt"
     if errorlevel 1 (
         echo ERROR: Failed to install key-automation tool dependencies. Aborting.
         goto :end

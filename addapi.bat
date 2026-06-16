@@ -69,7 +69,7 @@ if not exist "%TOOL_PY%" (
         py -m venv "%TOOL_VENV%"
     )
     echo   [2/3] Installing dependencies via python -m pip ^(no .exe shims^)...
-    "%TOOL_PY%" -m pip install --use-feature=truststore -r "%TOOL_DIR%\requirements.txt" --quiet
+    "%TOOL_PY%" -m pip install -r "%TOOL_DIR%\requirements.txt" --quiet
     echo   [3/3] Installing Chromium browser via python -m playwright...
     "%TOOL_PY%" -m playwright install chromium
     echo.
