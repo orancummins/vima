@@ -77,6 +77,12 @@ _py_lint    = _imp("tests.lint.python_lint")
 _js_lint    = _imp("tests.lint.js_lint")
 _security   = _imp("tests.lint.security_lint")
 _vulture    = _imp("tests.lint.vulture_lint")
+_scalene      = _imp("tests.lint.scalene_lint")
+_radon        = _imp("tests.lint.radon_lint")
+_duplication  = _imp("tests.lint.duplication_lint")
+_safety       = _imp("tests.lint.safety_lint")
+_pydeps       = _imp("tests.lint.pydeps_lint")
+_arch         = _imp("tests.lint.arch_lint")
 
 Summary            = _utils.Summary
 TestRunner         = _utils.TestRunner
@@ -103,7 +109,7 @@ def _parse_args() -> argparse.Namespace:
     _scope.add_argument("--lint",         action="store_true",
                         help="Run static code analysis only (Ruff + ESLint) — no server required")
     p.add_argument("--lint-tools",       default="",
-                   help="Comma-separated subset of lint tools to run: python,js,security,vulture (default: all)")
+                   help="Subset of lint tools to run (+ or comma separated): python,js,security,vulture,scalene,radon,duplication,safety,pydeps,arch (default: all)")
     p.add_argument("--install-type",     choices=["C", "c", "E", "e"], default="E")
     p.add_argument("--key-password", "--storepass",     default="foobar!!",
                    help="Password for provisioned .p12 certs (default: foobar!!)")
@@ -202,6 +208,64 @@ def _step(text: str) -> None:
     print(f"\n{bold(f'>> {text}')}")
 
 
+def _run_lint_tools(args, summary) -> None:
+    """Run any lint tools requested via --lint-tools alongside a functional run."""
+    _tools_arg = getattr(args, "lint_tools", "") or ""
+    _run_tools = {t.strip().lower() for t in _tools_arg.replace(',', '+').split('+') if t.strip()}
+    if not _run_tools:
+        return
+    if "python" in _run_tools:
+        _step("Python Lint (Ruff)")
+        r = _py_lint.run()
+        summary.add(r)
+        r.print_summary()
+    if "js" in _run_tools:
+        _step("JavaScript Lint (ESLint)")
+        r = _js_lint.run()
+        summary.add(r)
+        r.print_summary()
+    if "security" in _run_tools:
+        _step("Security (Bandit)")
+        r = _security.run()
+        summary.add(r)
+        r.print_summary()
+    if "vulture" in _run_tools:
+        _step("Dead Code (Vulture)")
+        r = _vulture.run()
+        summary.add(r)
+        r.print_summary()
+    if "scalene" in _run_tools:
+        _step("Runtime Performance (Scalene)")
+        r = _scalene.run()
+        summary.add(r)
+        r.print_summary()
+    if "radon" in _run_tools:
+        _step("Code Complexity (Radon)")
+        r = _radon.run()
+        summary.add(r)
+        r.print_summary()
+    if "duplication" in _run_tools:
+        _step("Code Duplication")
+        r = _duplication.run()
+        summary.add(r)
+        r.print_summary()
+    if "safety" in _run_tools:
+        _step("Safety (Dependency Vulnerabilities)")
+        r = _safety.run()
+        summary.add(r)
+        r.print_summary()
+    if "pydeps" in _run_tools:
+        _step("Dependency Graph (pydeps)")
+        r = _pydeps.run()
+        summary.add(r)
+        r.print_summary()
+    if "arch" in _run_tools:
+        _step("Architecture Diagrams (Mermaid)")
+        r = _arch.run()
+        summary.add(r)
+        r.print_summary()
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main() -> None:
     args = _parse_args()
@@ -229,7 +293,7 @@ def main() -> None:
 
         # Resolve which tools to run (empty = all)
         _tools_arg = getattr(args, "lint_tools", "") or ""
-        _run_tools = {t.strip().lower() for t in _tools_arg.split(",") if t.strip()} or {"python", "js", "security", "vulture"}
+        _run_tools = {t.strip().lower() for t in _tools_arg.replace(',', '+').split('+') if t.strip()} or {"python", "js", "security", "vulture", "scalene", "radon", "duplication", "safety", "pydeps", "arch"}
         print(f"  Tools:         {', '.join(sorted(_run_tools))}")
 
         if "python" in _run_tools:
@@ -253,6 +317,41 @@ def main() -> None:
         if "vulture" in _run_tools:
             _step("Dead Code (Vulture)")
             r = _vulture.run()
+            summary.add(r)
+            r.print_summary()
+
+        if "scalene" in _run_tools:
+            _step("Runtime Performance (Scalene)")
+            r = _scalene.run()
+            summary.add(r)
+            r.print_summary()
+
+        if "radon" in _run_tools:
+            _step("Code Complexity (Radon)")
+            r = _radon.run()
+            summary.add(r)
+            r.print_summary()
+        if "duplication" in _run_tools:
+            _step("Code Duplication")
+            r = _duplication.run()
+            summary.add(r)
+            r.print_summary()
+
+        if "safety" in _run_tools:
+            _step("Safety (Dependency Vulnerabilities)")
+            r = _safety.run()
+            summary.add(r)
+            r.print_summary()
+
+        if "pydeps" in _run_tools:
+            _step("Dependency Graph (pydeps)")
+            r = _pydeps.run()
+            summary.add(r)
+            r.print_summary()
+
+        if "arch" in _run_tools:
+            _step("Architecture Diagrams (Mermaid)")
+            r = _arch.run()
             summary.add(r)
             r.print_summary()
 
@@ -311,8 +410,9 @@ def main() -> None:
             print(f"\n{red('Smoke tests failed. Aborting further tests.')}")
             summary.print_and_exit()
 
-        # Smoke-only: stop here — no provisioning or further tests
+        # Smoke-only: stop here — run any requested lint tools, then exit
         if args.smoke:
+            _run_lint_tools(args, summary)
             _record_run(summary, args, install_type, _run_start_time)
             summary.print_and_exit()
 
@@ -419,6 +519,9 @@ def main() -> None:
             _step("Stopping server")
             stop_server(server_proc)
             print(f"  {green('[OK]  Server stopped.')}")
+
+    # Run any lint tools requested alongside the functional suite
+    _run_lint_tools(args, summary)
 
     # ── Step 9: Portal project cleanup (clean install, unless --nocleanup) ──
     # Treated as a test suite — failure counts toward the final exit code.

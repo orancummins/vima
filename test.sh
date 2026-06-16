@@ -32,9 +32,8 @@ PORTAL_PASSWORD=""
 INSTALL_TYPE=""
 KEY_PASSWORD=""
 TEST_SCOPE=""
+LINT_TOOLS=""
 SKIP_PROVISION=""
-NO_SERVER=""
-NOCLEANUP=""
 BASE_URL=""
 _CLEAN_FLAGS=""
 
@@ -55,6 +54,7 @@ while [[ $# -gt 0 ]]; do
         --smoke)           TEST_SCOPE="S";                           shift   ;;
         --full)            TEST_SCOPE="F";                           shift   ;;
         --lint)            TEST_SCOPE="L";                           shift   ;;
+        --lint-tools)      LINT_TOOLS="$2";                          shift 2 ;;
         --skip-provision)  SKIP_PROVISION="1";    _CLEAN_FLAGS="1"; shift   ;;
         --no-server)       NO_SERVER="1";                            shift   ;;
         --nocleanup)       NOCLEANUP="1";         _CLEAN_FLAGS="1"; shift   ;;
@@ -175,6 +175,7 @@ if [[ "$INSTALL_TYPE" == "E" ]]; then
     [[ "$TEST_SCOPE" == "F" ]] && EXTRA_ARGS+=(--full)
     [[ "$TEST_SCOPE" == "S" ]] && EXTRA_ARGS+=(--smoke)
     [[ "$TEST_SCOPE" == "L" ]] && EXTRA_ARGS+=(--lint)
+    [[ -n "$LINT_TOOLS"       ]] && EXTRA_ARGS+=(--lint-tools "$LINT_TOOLS")
     [[ "$NO_SERVER"  == "1" ]] && EXTRA_ARGS+=(--no-server)
     [[ -n "$BASE_URL"       ]] && EXTRA_ARGS+=(--base-url "$BASE_URL")
     "$PYTHON" "$SCRIPT_DIR/tests/run.py" \
@@ -191,6 +192,7 @@ EXTRA_ARGS=()
 [[ "$TEST_SCOPE"     == "F" ]] && EXTRA_ARGS+=(--full)
 [[ "$TEST_SCOPE"     == "S" ]] && EXTRA_ARGS+=(--smoke)
 [[ "$TEST_SCOPE"     == "L" ]] && EXTRA_ARGS+=(--lint)
+[[ -n "$LINT_TOOLS"         ]] && EXTRA_ARGS+=(--lint-tools "$LINT_TOOLS")
 [[ "$SKIP_PROVISION" == "1" ]] && EXTRA_ARGS+=(--skip-provision)
 [[ "$NO_SERVER"      == "1" ]] && EXTRA_ARGS+=(--no-server)
 [[ "$NOCLEANUP"      == "1" ]] && EXTRA_ARGS+=(--nocleanup)

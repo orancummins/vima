@@ -270,8 +270,9 @@
       padding: 2px 7px; border-radius: 4px;
       background: var(--bg3); border: 1px solid var(--line); color: var(--text3);
     }
-    .suite-cat-tag.functional { color: #7dd3fc; border-color: #075985; background: #082f49; }
-    .suite-cat-tag.analysis   { color: #d8b4fe; border-color: #6b21a8; background: #2e1065; }
+    .suite-cat-tag.functional  { color: #7dd3fc; border-color: #075985; background: #082f49; }
+    .suite-cat-tag.analysis    { color: #d8b4fe; border-color: #6b21a8; background: #2e1065; }
+    .suite-cat-tag.performance { color: #fde68a; border-color: #92400e; background: #451a03; }
     .suite-panels { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 8px; }
     .suite-panel {
       background: var(--card); border: 1px solid var(--line); border-radius: 10px;
@@ -281,6 +282,8 @@
     }
     .suite-panel:hover { border-color: rgba(255,255,255,0.18); }
     .suite-panel.selected { border-color: var(--mc-orange); background: rgba(255,95,0,0.06); }
+    .suite-panel.running { border-color: var(--mc-orange); background: rgba(255,95,0,0.10); box-shadow: 0 0 0 1px var(--mc-orange); animation: suite-pulse 1.4s ease-in-out infinite; }
+    @keyframes suite-pulse { 0%,100% { box-shadow: 0 0 0 1px rgba(255,95,0,0.9); } 50% { box-shadow: 0 0 0 3px rgba(255,95,0,0.25); } }
     .suite-check {
       width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0; margin-top: 2px;
       border: 1.5px solid var(--text3); background: none; position: relative;
@@ -345,6 +348,7 @@
   <nav class="header-nav">
     <button class="nav-btn active" id="run-nav-btn" onclick="showSection('run')">Run</button>
     <button class="nav-btn" id="history-nav-btn" onclick="showSection('history')">History</button>
+    <button class="nav-btn" id="code-nav-btn" onclick="showSection('code')">Code</button>
     <a href="{{ url_for('test_dashboard.stats') }}" class="nav-btn">Stats</a>
     <a href="{{ url_for('test_dashboard.config') }}" class="nav-btn">Settings</a>
     <a href="/" class="nav-btn">&#8592; Back to App</a>
@@ -370,16 +374,21 @@
         <span id="clean-hint" style="font-size:11.5px;color:var(--text3);display:none">Clean run clones from GitHub into a temp directory &mdash; requires portal credentials in <a href="{{ url_for('test_dashboard.config') }}" style="color:var(--mc-yellow)">Settings</a></span>
         <span class="selected-count" id="selected-count">3 suites selected</span>
       </div>
-      <button id="execute-btn" class="btn btn-primary" style="min-width:110px;justify-content:center;flex-shrink:0;align-self:center">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        Execute
-      </button>
+      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+        <button id="select-all-btn" class="btn" style="min-width:90px;justify-content:center" onclick="selectAllSuites()">
+          Select All
+        </button>
+        <button id="execute-btn" class="btn btn-primary" style="min-width:110px;justify-content:center">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Execute
+        </button>
+      </div>
     </div>
 
     <!-- Test suite selection -->
     <div class="suite-panels" style="margin-bottom:24px">
 
-      <div class="suite-panel selected" data-scope="smoke" data-group="functional">
+      <div class="suite-panel" data-scope="smoke" data-group="functional">
         <div class="suite-check"></div>
         <div class="suite-info">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
@@ -412,7 +421,7 @@
         </div>
       </div>
 
-      <div class="suite-panel selected" data-scope="lint-python" data-group="analysis">
+      <div class="suite-panel" data-scope="lint-python" data-group="analysis">
         <div class="suite-check"></div>
         <div class="suite-info">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
@@ -431,7 +440,7 @@
         </div>
       </div>
 
-      <div class="suite-panel selected" data-scope="lint-js" data-group="analysis">
+      <div class="suite-panel" data-scope="lint-js" data-group="analysis">
         <div class="suite-check"></div>
         <div class="suite-info">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
@@ -446,7 +455,7 @@
         </div>
       </div>
 
-      <div class="suite-panel selected" data-scope="lint-security" data-group="analysis">
+      <div class="suite-panel" data-scope="lint-security" data-group="analysis">
         <div class="suite-check"></div>
         <div class="suite-info">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
@@ -464,7 +473,7 @@
         </div>
       </div>
 
-      <div class="suite-panel selected" data-scope="lint-vulture" data-group="analysis">
+      <div class="suite-panel" data-scope="lint-vulture" data-group="analysis">
         <div class="suite-check"></div>
         <div class="suite-info">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
@@ -477,6 +486,104 @@
             <span class="suite-tag">usecases/</span>
             <span class="suite-tag">app.py</span>
             <span class="suite-tag">&ge;80% confidence</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="suite-panel" data-scope="lint-scalene" data-group="performance">
+        <div class="suite-check"></div>
+        <div class="suite-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div class="suite-panel-name" style="margin:0">Runtime Performance</div>
+            <span class="suite-cat-tag performance">Performance</span>
+          </div>
+          <div class="suite-panel-desc">Scalene runtime profiler &mdash; identifies CPU and memory hotspots across the Flask startup path and core request handlers. No server required.</div>
+          <div class="suite-panel-tags">
+            <span class="suite-tag">apis/</span>
+            <span class="suite-tag">usecases/</span>
+            <span class="suite-tag">app.py</span>
+            <span class="suite-tag">CPU + memory</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="suite-panel" data-scope="lint-radon" data-group="analysis">
+        <div class="suite-check"></div>
+        <div class="suite-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div class="suite-panel-name" style="margin:0">Code Complexity</div>
+            <span class="suite-cat-tag analysis">Code Analysis</span>
+          </div>
+          <div class="suite-panel-desc">Radon cyclomatic complexity (CC) and maintainability index (MI). Reports blocks ranked C&ndash;F (CC&nbsp;&ge;&nbsp;11) and files with low maintainability.</div>
+          <div class="suite-panel-tags">
+            <span class="suite-tag">apis/</span>
+            <span class="suite-tag">usecases/</span>
+            <span class="suite-tag">app.py</span>
+            <span class="suite-tag">CC + MI</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="suite-panel" data-scope="lint-duplication" data-group="analysis">
+        <div class="suite-check"></div>
+        <div class="suite-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div class="suite-panel-name" style="margin:0">Code Duplication</div>
+            <span class="suite-cat-tag analysis">Code Analysis</span>
+          </div>
+          <div class="suite-panel-desc">Pure-Python sliding-window clone detection across Python and JavaScript files. Reports file pairs with &ge;50 duplicated lines.</div>
+          <div class="suite-panel-tags">
+            <span class="suite-tag">apis/</span>
+            <span class="suite-tag">usecases/</span>
+            <span class="suite-tag">static/js</span>
+            <span class="suite-tag">.py + .js</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="suite-panel" data-scope="lint-safety" data-group="analysis">
+        <div class="suite-check"></div>
+        <div class="suite-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div class="suite-panel-name" style="margin:0">Dependency Safety</div>
+            <span class="suite-cat-tag analysis">Code Analysis</span>
+          </div>
+          <div class="suite-panel-desc">Safety CVE scan &mdash; checks all packages in requirements.txt against the Safety vulnerability database and reports known CVEs.</div>
+          <div class="suite-panel-tags">
+            <span class="suite-tag">requirements.txt</span>
+            <span class="suite-tag">CVE database</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="suite-panel" data-scope="lint-pydeps" data-group="analysis">
+        <div class="suite-check"></div>
+        <div class="suite-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div class="suite-panel-name" style="margin:0">Dependency Graph</div>
+            <span class="suite-cat-tag analysis">Code Analysis</span>
+          </div>
+          <div class="suite-panel-desc">pydeps import graph &mdash; generates interactive (pyvis) and SVG visualizations of module dependencies for apis/ and usecases/, and detects circular imports.</div>
+          <div class="suite-panel-tags">
+            <span class="suite-tag">apis/</span>
+            <span class="suite-tag">usecases/</span>
+            <span class="suite-tag">interactive HTML</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="suite-panel" data-scope="lint-arch" data-group="analysis">
+        <div class="suite-check"></div>
+        <div class="suite-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div class="suite-panel-name" style="margin:0">Architecture Diagrams</div>
+            <span class="suite-cat-tag analysis">Code Analysis</span>
+          </div>
+          <div class="suite-panel-desc">Mermaid diagrams generated live from the catalog &amp; registry &mdash; app architecture (blueprints, middleware, API groups) and use case &rarr; API flows.</div>
+          <div class="suite-panel-tags">
+            <span class="suite-tag">app_arch</span>
+            <span class="suite-tag">uc_flows</span>
+            <span class="suite-tag">Mermaid</span>
           </div>
         </div>
       </div>
@@ -510,8 +617,13 @@
       </div>
     </div>
 
+  </div><!-- /section-run -->
+
+  <!-- ════════════════════ CODE (hidden by default) ════════════════════ -->
+  <div id="section-code" style="display:none">
+
     <!-- Codebase overview card -->
-    <div class="codebase-card">
+    <div class="codebase-card" style="margin-top:28px">
       <div class="codebase-header">
         <div class="codebase-title">Codebase</div>
         <p id="codebase-meta" class="codebase-meta">Loading&hellip;</p>
@@ -521,17 +633,72 @@
       </div>
     </div>
 
-  </div><!-- /section-run -->
+    <!-- Architecture diagrams (Mermaid) -->
+    <div style="margin-bottom:8px;margin-top:28px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:14px;font-weight:600">Architecture Diagrams</div>
+      <span style="font-size:11px;color:var(--text3)">Generated from live catalog &amp; registry</span>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:28px">
+      {% for diag, label, desc in [
+          ('app_arch', 'Application Architecture', 'Flask app, blueprints, middleware, API groups'),
+          ('uc_flows', 'Use Case \u2192 API Flows',  'Which use cases call which APIs')
+      ] %}
+      <div class="codebase-card" style="flex:1;min-width:300px;padding:0;overflow:hidden">
+        <div style="padding:16px 20px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:14px;font-weight:600">{{ label }}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">{{ desc }}</div>
+          </div>
+          <a href="{{ url_for('test_dashboard.arch_html', diagram=diag) }}" target="_blank"
+             style="font-size:11px;color:var(--text3);text-decoration:none;flex-shrink:0;margin-left:12px" title="Open in new tab">&#8599; full size</a>
+        </div>
+        <div style="background:var(--bg3);position:relative">
+          <iframe src="{{ url_for('test_dashboard.arch_html', diagram=diag) }}"
+                  id="arch-frame-{{ diag }}"
+                  style="width:100%;height:420px;border:none;display:block"
+                  loading="lazy"
+                  title="{{ label }}"></iframe>
+          <div id="arch-err-{{ diag }}" style="display:none;padding:24px;color:var(--text3);font-size:12px;text-align:center">
+            No diagram available &mdash; run the <strong>Architecture</strong> suite to generate it.
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Dependency graphs (SVG) -->
+    <div style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:14px;font-weight:600">Module Dependency Graphs</div>
+      <span style="font-size:11px;color:var(--text3)">Generated by pydeps &middot; force-directed layout</span>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:28px">
+      {% for pkg in ['apis', 'usecases'] %}
+      <div class="codebase-card" style="flex:1;min-width:300px;padding:0;overflow:hidden">
+        <div style="padding:16px 20px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:14px;font-weight:600">{{ pkg }}/ dependencies</div>
+          <a href="{{ url_for('test_dashboard.pydeps_svg', pkg=pkg) }}" target="_blank"
+             style="font-size:11px;color:var(--text3);text-decoration:none" title="Open SVG in new tab">&#8599; full size</a>
+        </div>
+        <div style="padding:12px;background:var(--bg3)">
+          <img src="{{ url_for('test_dashboard.pydeps_svg', pkg=pkg) }}"
+               alt="{{ pkg }} dependency graph"
+               id="pydeps-img-{{ pkg }}"
+               style="width:100%;border-radius:6px;display:block"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+          <div style="display:none;padding:24px;color:var(--text3);font-size:12px;text-align:center">
+            No graph available &mdash; run the <strong>Dependency Graph</strong> suite to generate it.
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div><!-- /section-code -->
 
   <!-- ════════════════════ HISTORY (hidden by default) ════════════════════ -->
   <div id="section-history" style="display:none">
 
-    <div class="page-header" style="margin-top:32px">
-      <div>
-        <h1 class="page-title">History</h1>
-        <p class="page-meta">All recorded test runs &mdash; {{ total }} total</p>
-      </div>
-    </div>
+    <div style="margin-top:32px"></div>
 
     {% if error %}
     <div class="alert alert-error">{{ error }}</div>
@@ -682,25 +849,85 @@
   #run-log::-webkit-scrollbar, #run-scripts::-webkit-scrollbar { display: none; }
 </style>
 <script>
-// ── Section switching (Run / History) ───────────────────────────────────────
+// ── Codebase stats (global so showSection can call it) ──────────────────────
+var _codebaseStatsLoaded = false;
+function _loadCodebaseStats() {
+  if (_codebaseStatsLoaded) return;
+  fetch('/vima/test/codebase_stats').then(function(r){ return r.ok ? r.json() : null; }).then(function(data){
+    if (data && data.ok) { renderCodebaseStats(data); _codebaseStatsLoaded = true; }
+    else {
+      var el = document.getElementById('lang-rows');
+      if (el) el.innerHTML = '<span style="color:var(--text3);font-size:12px">Could not load stats.</span>';
+    }
+  });
+}
+
+// ── Section switching (Run / History / Code) ────────────────────────────────
 function showSection(name) {
-  var runSec  = document.getElementById('section-run');
-  var histSec = document.getElementById('section-history');
-  var runBtn  = document.getElementById('run-nav-btn');
-  var histBtn = document.getElementById('history-nav-btn');
-  var isRun   = name === 'run';
-  if (runSec)  runSec.style.display  = isRun  ? '' : 'none';
-  if (histSec) histSec.style.display = isRun  ? 'none' : '';
-  if (runBtn)  runBtn.classList.toggle('active',  isRun);
-  if (histBtn) histBtn.classList.toggle('active', !isRun);
-  if (!isRun && histSec) {
+  if (name === 'run') _applyRunningHighlight();
+  var runSec   = document.getElementById('section-run');
+  var histSec  = document.getElementById('section-history');
+  var codeSec  = document.getElementById('section-code');
+  var runBtn   = document.getElementById('run-nav-btn');
+  var histBtn  = document.getElementById('history-nav-btn');
+  var codeBtn  = document.getElementById('code-nav-btn');
+  if (runSec)  runSec.style.display  = name === 'run'     ? '' : 'none';
+  if (histSec) histSec.style.display = name === 'history' ? '' : 'none';
+  if (codeSec) codeSec.style.display = name === 'code'    ? '' : 'none';
+  if (runBtn)  runBtn.classList.toggle('active',  name === 'run');
+  if (histBtn) histBtn.classList.toggle('active', name === 'history');
+  if (codeBtn) codeBtn.classList.toggle('active', name === 'code');
+  if (name === 'history') {
     window.scrollTo({ top: 0, behavior: 'instant' });
-    histSec.innerHTML = '<div style="padding:40px 0;text-align:center;color:var(--text3);font-size:13px">Loading\u2026</div>';
-    fetch('/vima/test/history_fragment')
-      .then(function(r) { return r.ok ? r.text() : Promise.reject(r.status); })
-      .then(function(html) { histSec.innerHTML = html; })
-      .catch(function() { histSec.innerHTML = '<div style="padding:40px;color:var(--err)">Failed to load history.</div>'; });
+    loadHistoryPage(1);
   }
+  if (name === 'code') {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    _loadCodebaseStats();
+    // Check iframe 404s and show fallback message; otherwise ensure loaded
+    ['apis', 'usecases'].forEach(function(pkg) {
+      var frame = document.getElementById('pydeps-frame-' + pkg);
+      var err   = document.getElementById('pydeps-err-' + pkg);
+      if (frame) {
+        frame.addEventListener('load', function onLoad() {
+          frame.removeEventListener('load', onLoad);
+          try {
+            if (frame.contentDocument && frame.contentDocument.title === '404 Not Found') {
+              frame.style.display = 'none';
+              if (err) err.style.display = '';
+            }
+          } catch(e) { /* cross-origin — file exists, leave visible */ }
+        });
+        var s = frame.src; frame.src = ''; frame.src = s;
+      }
+    });
+    ['app_arch', 'uc_flows'].forEach(function(diag) {
+      var frame = document.getElementById('arch-frame-' + diag);
+      var err   = document.getElementById('arch-err-' + diag);
+      if (frame) {
+        frame.addEventListener('load', function onLoad() {
+          frame.removeEventListener('load', onLoad);
+          try {
+            if (frame.contentDocument && frame.contentDocument.title === '404 Not Found') {
+              frame.style.display = 'none';
+              if (err) err.style.display = '';
+            }
+          } catch(e) { /* cross-origin — file exists */ }
+        });
+        var s = frame.src; frame.src = ''; frame.src = s;
+      }
+    });
+  }
+}
+
+function loadHistoryPage(page) {
+  var histSec = document.getElementById('section-history');
+  if (!histSec) return;
+  histSec.innerHTML = '<div style="padding:40px 0;text-align:center;color:var(--text3);font-size:13px">Loading\u2026</div>';
+  fetch('/vima/test/history_fragment?page=' + page)
+    .then(function(r) { return r.ok ? r.text() : Promise.reject(r.status); })
+    .then(function(html) { histSec.innerHTML = html; window.scrollTo({ top: 0, behavior: 'instant' }); })
+    .catch(function() { histSec.innerHTML = '<div style="padding:40px;color:var(--err)">Failed to load history.</div>'; });
 }
 
 // ── Suite panel selection ─────────────────────────────────────────────────────
@@ -708,6 +935,19 @@ function updateSelectedCount() {
   var selected = document.querySelectorAll('.suite-panel.selected').length;
   var el = document.getElementById('selected-count');
   if (el) el.textContent = selected + ' suite' + (selected === 1 ? '' : 's') + ' selected';
+  var btn = document.getElementById('select-all-btn');
+  if (btn) {
+    var total = document.querySelectorAll('.suite-panel').length;
+    btn.textContent = selected === total ? 'Deselect All' : 'Select All';
+  }
+}
+function selectAllSuites() {
+  var panels = document.querySelectorAll('.suite-panel');
+  var total = panels.length;
+  var selected = document.querySelectorAll('.suite-panel.selected').length;
+  var selectAll = selected < total;
+  panels.forEach(function(p) { p.classList.toggle('selected', selectAll); });
+  updateSelectedCount();
 }
 document.querySelectorAll('.suite-panel').forEach(function(panel) {
   panel.addEventListener('click', function() {
@@ -765,6 +1005,23 @@ function renderCodebaseStats(data) {
 // ── Poll / run machinery ──────────────────────────────────────────────────────
 var _pollTimer = null;
 var _wasRunning = false;
+var _runningScopes = [];
+
+function _applyRunningHighlight() {
+  document.querySelectorAll('.suite-panel').forEach(function(p) {
+    var isRunning = _runningScopes.length > 0 && _runningScopes.indexOf(p.dataset.scope) !== -1;
+    p.classList.toggle('running', isRunning);
+    if (isRunning) p.style.pointerEvents = 'none';
+    else p.style.pointerEvents = '';
+  });
+}
+function _clearRunningHighlight() {
+  _runningScopes = [];
+  document.querySelectorAll('.suite-panel').forEach(function(p) {
+    p.classList.remove('running');
+    p.style.pointerEvents = '';
+  });
+}
 
 function _startAnimations() {
   var sp = document.getElementById('run-spinner');
@@ -870,6 +1127,7 @@ async function poll() {
       if (execBtn) execBtn.disabled = false;
       execBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Execute';
       _wasRunning = false;
+      _clearRunningHighlight();
       return;
     }
     if (execBtn) execBtn.disabled = false;
@@ -879,20 +1137,14 @@ async function poll() {
 // ── Execute button ────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
 
-  // Open history section if navigated here with #history hash
+  // Open correct section if navigated here with a hash
   if (window.location.hash === '#history') {
     showSection('history');
     history.replaceState(null, '', window.location.pathname);
+  } else if (window.location.hash === '#code') {
+    showSection('code');
+    history.replaceState(null, '', window.location.pathname);
   }
-
-  // Load codebase stats
-  fetch('/vima/test/codebase_stats').then(function(r){ return r.ok ? r.json() : null; }).then(function(data){
-    if (data && data.ok) renderCodebaseStats(data);
-    else {
-      var el = document.getElementById('lang-rows');
-      if (el) el.innerHTML = '<span style="color:var(--text3);font-size:12px">Could not load stats.</span>';
-    }
-  });
 
   var execBtn = document.getElementById('execute-btn');
   if (execBtn) {
@@ -904,10 +1156,10 @@ document.addEventListener('DOMContentLoaded', function() {
       var scopes = Array.from(panels).map(function(p){ return p.dataset.scope; });
       // Map combinations to a single scope string the backend understands
       var hasSmoke = scopes.includes('smoke'), hasFull = scopes.includes('full');
-      var hasPyLint = scopes.includes('lint-python'), hasJsLint = scopes.includes('lint-js'), hasSec = scopes.includes('lint-security'), hasVulture = scopes.includes('lint-vulture');
-      var allAnalysis = hasPyLint && hasJsLint && hasSec && hasVulture;
+      var hasPyLint = scopes.includes('lint-python'), hasJsLint = scopes.includes('lint-js'), hasSec = scopes.includes('lint-security'), hasVulture = scopes.includes('lint-vulture'), hasScalene = scopes.includes('lint-scalene'), hasRadon = scopes.includes('lint-radon'), hasDuplication = scopes.includes('lint-duplication'), hasSafety = scopes.includes('lint-safety'), hasPydeps = scopes.includes('lint-pydeps'), hasArch = scopes.includes('lint-arch');
+      var allAnalysis = hasPyLint && hasJsLint && hasSec && hasVulture && hasScalene && hasRadon && hasDuplication && hasSafety && hasPydeps && hasArch;
       var anyFunctional = hasSmoke || hasFull;
-      var anyAnalysis   = hasPyLint || hasJsLint || hasSec || hasVulture;
+      var anyAnalysis   = hasPyLint || hasJsLint || hasSec || hasVulture || hasScalene || hasRadon || hasDuplication || hasSafety || hasPydeps || hasArch;
 
       var scope;
       if (anyFunctional && anyAnalysis) {
@@ -925,6 +1177,12 @@ document.addEventListener('DOMContentLoaded', function() {
       if (hasJsLint)   lintTools.push('js');
       if (hasSec)      lintTools.push('security');
       if (hasVulture)  lintTools.push('vulture');
+      if (hasScalene)  lintTools.push('scalene');
+      if (hasRadon)    lintTools.push('radon');
+      if (hasDuplication) lintTools.push('duplication');
+      if (hasSafety)    lintTools.push('safety');
+      if (hasPydeps)    lintTools.push('pydeps');
+      if (hasArch)      lintTools.push('arch');
 
       // Reset UI
       var pbar = document.getElementById('run-pbar-inner');
@@ -941,9 +1199,14 @@ document.addEventListener('DOMContentLoaded', function() {
       execBtn.disabled = true;
       execBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="10" y1="15" x2="10" y2="9"/><line x1="14" y1="15" x2="14" y2="9"/></svg> Starting\u2026';
 
+      // Mark which panels are running so tab switches can restore the highlight
+      _runningScopes = Array.from(panels).map(function(p){ return p.dataset.scope; });
+      _applyRunningHighlight();
+
       var body = new URLSearchParams();
       body.append('scope', scope);
-      if (scope === 'lint' && lintTools.length) body.append('lint_tools', lintTools.join(','));
+      body.append('scopes', _runningScopes.join(','));
+      if (lintTools.length) body.append('lint_tools', lintTools.join('+'));
       try {
         var r = await fetch('/vima/test/run', { method: 'POST', body: body });
         var j = await r.json();
@@ -972,9 +1235,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!status) return;
     if (status.running) {
       _wasRunning = true;
+      _runningScopes = status.running_scopes || [];
       var panel = document.getElementById('run-panel');
       if (panel) panel.style.display = '';
       _startAnimations();
+      _applyRunningHighlight();
       poll();
     } else if (status.progress && status.progress.total > 0) {
       var panel = document.getElementById('run-panel');
