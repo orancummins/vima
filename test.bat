@@ -29,6 +29,7 @@ set "PORTAL_PASSWORD="
 set "INSTALL_TYPE="
 set "KEY_PASSWORD="
 set "TEST_SCOPE="
+set "LINT_TOOLS="
 set "SKIP_PROVISION="
 set "NO_SERVER="
 set "NOCLEANUP="
@@ -47,6 +48,7 @@ if /i "%~1"=="--storepass"       ( set "KEY_PASSWORD=%~2"    & set "_CLEAN_FLAGS
 if /i "%~1"=="--smoke"           ( set "TEST_SCOPE=S"                               & shift /1             & goto :parse_args )
 if /i "%~1"=="--full"            ( set "TEST_SCOPE=F"                               & shift /1             & goto :parse_args )
 if /i "%~1"=="--lint"            ( set "TEST_SCOPE=L"                               & shift /1             & goto :parse_args )
+if /i "%~1"=="--lint-tools"      ( set "LINT_TOOLS=%~2"                              & shift /1 & shift /1 & goto :parse_args )
 if /i "%~1"=="--skip-provision"  ( set "SKIP_PROVISION=1"    & set "_CLEAN_FLAGS=1" & shift /1             & goto :parse_args )
 if /i "%~1"=="--no-server"       ( set "NO_SERVER=1"                                & shift /1             & goto :parse_args )
 if /i "%~1"=="--nocleanup"       ( set "NOCLEANUP=1"         & set "_CLEAN_FLAGS=1" & shift /1             & goto :parse_args )
@@ -183,7 +185,10 @@ REM ── Launch: existing install ──────────────�
 if /i "!INSTALL_TYPE!"=="E" (
     set "_XARGS="
     if /i "!TEST_SCOPE!"=="F" set "_XARGS=!_XARGS! --full"
-    if /i "!TEST_SCOPE!"=="S" set "_XARGS=!_XARGS! --smoke"    if /i "!TEST_SCOPE!"=="L" set "_XARGS=!_XARGS! --lint"    if "!NO_SERVER!"=="1"     set "_XARGS=!_XARGS! --no-server"
+    if /i "!TEST_SCOPE!"=="S" set "_XARGS=!_XARGS! --smoke"
+    if /i "!TEST_SCOPE!"=="L" set "_XARGS=!_XARGS! --lint"
+    if not "!LINT_TOOLS!"=="" set "_XARGS=!_XARGS! --lint-tools !LINT_TOOLS!"
+    if "!NO_SERVER!"=="1"     set "_XARGS=!_XARGS! --no-server"
     if not "!BASE_URL!"==""   set "_XARGS=!_XARGS! --base-url "!BASE_URL!""
     "!PYTHON!" "!WORK_DIR!\tests\run.py" --install-type E --work-dir "!WORK_DIR!" !_XARGS!
     exit /b %ERRORLEVEL%
@@ -194,7 +199,10 @@ set "_XARGS="
 if /i "!SSO!"=="Y"             set "_XARGS=!_XARGS! --sso"
 if not "!PORTAL_PASSWORD!"=="" set "_XARGS=!_XARGS! --portal-password "!PORTAL_PASSWORD!""
 if /i "!TEST_SCOPE!"=="F"      set "_XARGS=!_XARGS! --full"
-if /i "!TEST_SCOPE!"=="S"      set "_XARGS=!_XARGS! --smoke"if /i "!TEST_SCOPE!"=="L"      set "_XARGS=!_XARGS! --lint"if "!SKIP_PROVISION!"=="1"     set "_XARGS=!_XARGS! --skip-provision"
+if /i "!TEST_SCOPE!"=="S"      set "_XARGS=!_XARGS! --smoke"
+if /i "!TEST_SCOPE!"=="L"      set "_XARGS=!_XARGS! --lint"
+if not "!LINT_TOOLS!"==""      set "_XARGS=!_XARGS! --lint-tools !LINT_TOOLS!"
+if "!SKIP_PROVISION!"=="1"     set "_XARGS=!_XARGS! --skip-provision"
 if "!NO_SERVER!"=="1"          set "_XARGS=!_XARGS! --no-server"
 if "!NOCLEANUP!"=="1"          set "_XARGS=!_XARGS! --nocleanup"
 if not "!BASE_URL!"==""        set "_XARGS=!_XARGS! --base-url "!BASE_URL!""
