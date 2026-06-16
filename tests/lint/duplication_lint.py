@@ -134,6 +134,7 @@ def _collect_files(root: str) -> list[str]:
                     os.path.normpath(p)
                     for p in glob.glob(os.path.join(path, "**", ext), recursive=True)
                     if ".min.js" not in p
+                    and os.sep + "node_modules" + os.sep not in os.path.normpath(p)
                 )
     return sorted(set(files))
 

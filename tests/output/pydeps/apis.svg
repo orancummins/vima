@@ -36,94 +36,94 @@
   <text x="600.0" y="106.0" text-anchor="middle" fill="#f97316" font-size="11" font-weight="600" fill-opacity="0.9">(root)</text>
   <circle cx="720.2" cy="756.7" r="37.0" fill="#3b82f6" fill-opacity="0.06" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
   <text x="720.2" y="712.7" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="600" fill-opacity="0.9">apis</text>
-  <circle cx="807.2" cy="251.8" r="32.5" fill="#22c55e" fill-opacity="0.06" stroke="#22c55e" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="807.2" y="212.3" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="600" fill-opacity="0.9">automatic_billing_updater</text>
-  <circle cx="999.4" cy="401.6" r="32.5" fill="#a855f7" fill-opacity="0.06" stroke="#a855f7" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="999.4" y="362.1" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="600" fill-opacity="0.9">benefits_content_eligibility</text>
-  <circle cx="1080.0" cy="280.1" r="32.5" fill="#eab308" fill-opacity="0.06" stroke="#eab308" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="1080.0" y="240.6" text-anchor="middle" fill="#eab308" font-size="11" font-weight="600" fill-opacity="0.9">benefits_eligibility</text>
+  <circle cx="807.0" cy="252.1" r="32.5" fill="#22c55e" fill-opacity="0.06" stroke="#22c55e" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="807.0" y="212.6" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="600" fill-opacity="0.9">automatic_billing_updater</text>
+  <circle cx="999.6" cy="401.6" r="32.5" fill="#a855f7" fill-opacity="0.06" stroke="#a855f7" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="999.6" y="362.1" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="600" fill-opacity="0.9">benefits_content_eligibility</text>
+  <circle cx="1080.0" cy="280.0" r="32.5" fill="#eab308" fill-opacity="0.06" stroke="#eab308" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="1080.0" y="240.5" text-anchor="middle" fill="#eab308" font-size="11" font-weight="600" fill-opacity="0.9">benefits_eligibility</text>
   <circle cx="1080.0" cy="407.9" r="32.5" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
   <text x="1080.0" y="368.4" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="600" fill-opacity="0.9">bin_lookup</text>
-  <circle cx="983.7" cy="173.7" r="32.5" fill="#ec4899" fill-opacity="0.06" stroke="#ec4899" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="983.7" y="134.2" text-anchor="middle" fill="#ec4899" font-size="11" font-weight="600" fill-opacity="0.9">business_payment_controls</text>
-  <circle cx="1080.0" cy="454.1" r="32.5" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="1080.0" y="414.6" text-anchor="middle" fill="#10b981" font-size="11" font-weight="600" fill-opacity="0.9">carbon_calculator</text>
+  <circle cx="983.6" cy="173.7" r="32.5" fill="#ec4899" fill-opacity="0.06" stroke="#ec4899" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="983.6" y="134.2" text-anchor="middle" fill="#ec4899" font-size="11" font-weight="600" fill-opacity="0.9">business_payment_controls</text>
+  <circle cx="1080.0" cy="454.2" r="32.5" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="1080.0" y="414.7" text-anchor="middle" fill="#10b981" font-size="11" font-weight="600" fill-opacity="0.9">carbon_calculator</text>
   <circle cx="858.8" cy="547.7" r="32.5" fill="#6366f1" fill-opacity="0.06" stroke="#6366f1" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
   <text x="858.8" y="508.2" text-anchor="middle" fill="#6366f1" font-size="11" font-weight="600" fill-opacity="0.9">consent_management</text>
-  <circle cx="994.5" cy="466.2" r="32.5" fill="#f43f5e" fill-opacity="0.06" stroke="#f43f5e" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="994.5" y="426.7" text-anchor="middle" fill="#f43f5e" font-size="11" font-weight="600" fill-opacity="0.9">consumer_clarity</text>
-  <circle cx="827.2" cy="393.4" r="32.5" fill="#14b8a6" fill-opacity="0.06" stroke="#14b8a6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="827.2" y="353.9" text-anchor="middle" fill="#14b8a6" font-size="11" font-weight="600" fill-opacity="0.9">easy_savings</text>
-  <circle cx="781.5" cy="331.2" r="32.5" fill="#8b5cf6" fill-opacity="0.06" stroke="#8b5cf6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="781.5" y="291.7" text-anchor="middle" fill="#8b5cf6" font-size="11" font-weight="600" fill-opacity="0.9">enhanced_currency_conversion_calculator</text>
-  <circle cx="893.0" cy="120.0" r="32.5" fill="#84cc16" fill-opacity="0.06" stroke="#84cc16" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="893.0" y="80.5" text-anchor="middle" fill="#84cc16" font-size="11" font-weight="600" fill-opacity="0.9">flight_delay_pass</text>
-  <circle cx="839.1" cy="120.0" r="32.5" fill="#fb923c" fill-opacity="0.06" stroke="#fb923c" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="839.1" y="80.5" text-anchor="middle" fill="#fb923c" font-size="11" font-weight="600" fill-opacity="0.9">match</text>
-  <circle cx="953.1" cy="120.0" r="32.5" fill="#38bdf8" fill-opacity="0.06" stroke="#38bdf8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="953.1" y="80.5" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="600" fill-opacity="0.9">merchant_identifier</text>
-  <circle cx="878.7" cy="182.5" r="32.5" fill="#f97316" fill-opacity="0.06" stroke="#f97316" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="878.7" y="143.0" text-anchor="middle" fill="#f97316" font-size="11" font-weight="600" fill-opacity="0.9">offers_for_publishers</text>
-  <circle cx="1080.0" cy="321.7" r="32.5" fill="#3b82f6" fill-opacity="0.06" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="1080.0" y="282.2" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="600" fill-opacity="0.9">offers_merchant_content</text>
-  <path d="M491.8,108.6 C648.9,179.0 648.9,179.0 743.2,221.2 C586.1,150.8 586.1,150.8 491.8,108.6 Z" fill="#22c55e" fill-opacity="0.07" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
-  <text x="617.5" y="106.0" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="600" fill-opacity="0.9">open_finance</text>
-  <path d="M565.9,114.1 C707.9,144.7 707.9,144.7 793.1,163.0 C651.1,132.4 651.1,132.4 565.9,114.1 Z" fill="#a855f7" fill-opacity="0.07" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <circle cx="994.4" cy="466.2" r="32.5" fill="#f43f5e" fill-opacity="0.06" stroke="#f43f5e" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="994.4" y="426.7" text-anchor="middle" fill="#f43f5e" font-size="11" font-weight="600" fill-opacity="0.9">consumer_clarity</text>
+  <circle cx="827.3" cy="393.5" r="32.5" fill="#14b8a6" fill-opacity="0.06" stroke="#14b8a6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="827.3" y="354.0" text-anchor="middle" fill="#14b8a6" font-size="11" font-weight="600" fill-opacity="0.9">easy_savings</text>
+  <circle cx="781.5" cy="331.4" r="32.5" fill="#8b5cf6" fill-opacity="0.06" stroke="#8b5cf6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="781.5" y="291.9" text-anchor="middle" fill="#8b5cf6" font-size="11" font-weight="600" fill-opacity="0.9">enhanced_currency_conversion_calculator</text>
+  <circle cx="893.2" cy="120.0" r="32.5" fill="#84cc16" fill-opacity="0.06" stroke="#84cc16" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="893.2" y="80.5" text-anchor="middle" fill="#84cc16" font-size="11" font-weight="600" fill-opacity="0.9">flight_delay_pass</text>
+  <circle cx="839.3" cy="120.0" r="32.5" fill="#fb923c" fill-opacity="0.06" stroke="#fb923c" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="839.3" y="80.5" text-anchor="middle" fill="#fb923c" font-size="11" font-weight="600" fill-opacity="0.9">match</text>
+  <circle cx="953.0" cy="120.0" r="32.5" fill="#38bdf8" fill-opacity="0.06" stroke="#38bdf8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="953.0" y="80.5" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="600" fill-opacity="0.9">merchant_identifier</text>
+  <circle cx="878.1" cy="182.8" r="32.5" fill="#f97316" fill-opacity="0.06" stroke="#f97316" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="878.1" y="143.3" text-anchor="middle" fill="#f97316" font-size="11" font-weight="600" fill-opacity="0.9">offers_for_publishers</text>
+  <circle cx="1080.0" cy="321.6" r="32.5" fill="#3b82f6" fill-opacity="0.06" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="1080.0" y="282.1" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="600" fill-opacity="0.9">offers_merchant_content</text>
+  <path d="M491.7,108.6 C648.9,178.9 648.9,178.9 743.2,221.1 C586.0,150.8 586.0,150.8 491.7,108.6 Z" fill="#22c55e" fill-opacity="0.07" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="617.4" y="106.0" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="600" fill-opacity="0.9">open_finance</text>
+  <path d="M565.9,114.1 C707.9,144.6 707.9,144.6 793.1,162.9 C651.1,132.4 651.1,132.4 565.9,114.1 Z" fill="#a855f7" fill-opacity="0.07" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
   <text x="679.5" y="106.0" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="600" fill-opacity="0.9">open_finance_au</text>
-  <path d="M1023.7,95.7 C1067.6,172.4 1067.6,172.4 1093.9,218.5 C1050.0,141.7 1050.0,141.7 1023.7,95.7 Z" fill="#eab308" fill-opacity="0.07" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <path d="M1023.7,95.7 C1067.6,172.4 1067.6,172.4 1093.9,218.4 C1050.0,141.7 1050.0,141.7 1023.7,95.7 Z" fill="#eab308" fill-opacity="0.07" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
   <text x="1058.8" y="106.0" text-anchor="middle" fill="#eab308" font-size="11" font-weight="600" fill-opacity="0.9">open_finance_eu</text>
   <circle cx="1080.0" cy="238.7" r="32.5" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
   <text x="1080.0" y="199.2" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="600" fill-opacity="0.9">places</text>
   <circle cx="1080.0" cy="363.9" r="32.5" fill="#ec4899" fill-opacity="0.06" stroke="#ec4899" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
   <text x="1080.0" y="324.4" text-anchor="middle" fill="#ec4899" font-size="11" font-weight="600" fill-opacity="0.9">priceless_cities</text>
-  <path d="M905.3,321.8 C941.0,291.8 941.0,291.8 962.4,273.8 C926.8,303.8 926.8,303.8 905.3,321.8 Z" fill="#10b981" fill-opacity="0.07" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
-  <text x="933.9" y="277.8" text-anchor="middle" fill="#10b981" font-size="11" font-weight="600" fill-opacity="0.9">simulator</text>
-  <circle cx="895.6" cy="452.5" r="34.0" fill="#6366f1" fill-opacity="0.06" stroke="#6366f1" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="895.6" y="411.5" text-anchor="middle" fill="#6366f1" font-size="11" font-weight="600" fill-opacity="0.9">transaction_notifications</text>
-  <path d="M807.2,251.8 Q877.3,261.1 920.9,285.8" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-automatic_billing_updater)"/>
-  <path d="M807.2,251.8 Q871.1,268.3 907.5,295.4" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-automatic_billing_updater)"/>
-  <path d="M999.4,401.6 Q961.4,351.4 950.9,310.4" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_content_eligibility)"/>
-  <path d="M999.4,401.6 Q955.3,358.5 939.3,320.7" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_content_eligibility)"/>
-  <path d="M1080.0,280.1 Q1011.4,297.1 961.9,290.1" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_eligibility)"/>
-  <path d="M1080.0,280.1 Q1005.3,304.2 947.5,300.6" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_eligibility)"/>
+  <path d="M905.4,321.9 C941.0,291.8 941.0,291.8 962.4,273.8 C926.8,303.8 926.8,303.8 905.4,321.9 Z" fill="#10b981" fill-opacity="0.07" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="933.9" y="277.9" text-anchor="middle" fill="#10b981" font-size="11" font-weight="600" fill-opacity="0.9">simulator</text>
+  <circle cx="895.7" cy="452.5" r="34.0" fill="#6366f1" fill-opacity="0.06" stroke="#6366f1" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="895.7" y="411.5" text-anchor="middle" fill="#6366f1" font-size="11" font-weight="600" fill-opacity="0.9">transaction_notifications</text>
+  <path d="M807.0,252.1 Q877.2,261.2 920.9,285.9" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-automatic_billing_updater)"/>
+  <path d="M807.0,252.1 Q871.0,268.4 907.5,295.5" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-automatic_billing_updater)"/>
+  <path d="M999.6,401.6 Q961.5,351.4 950.9,310.4" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_content_eligibility)"/>
+  <path d="M999.6,401.6 Q955.4,358.5 939.3,320.7" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_content_eligibility)"/>
+  <path d="M1080.0,280.0 Q1011.5,297.1 961.9,290.1" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_eligibility)"/>
+  <path d="M1080.0,280.0 Q1005.3,304.2 947.5,300.6" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_eligibility)"/>
   <path d="M1080.0,407.9 Q1001.2,361.0 957.1,305.3" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-bin_lookup)"/>
   <path d="M1080.0,407.9 Q995.1,368.1 944.1,315.6" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-bin_lookup)"/>
-  <path d="M983.7,173.7 Q971.8,236.2 948.1,272.1" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-business_payment_controls)"/>
-  <path d="M983.7,173.7 Q965.6,243.3 935.2,284.6" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-business_payment_controls)"/>
-  <path d="M1080.0,454.1 Q997.5,384.1 954.7,307.8" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-carbon_calculator)"/>
-  <path d="M1080.0,454.1 Q991.4,391.2 941.8,318.5" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-carbon_calculator)"/>
-  <path d="M858.8,547.7 Q806.2,663.2 730.2,741.7" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
-  <path d="M858.8,547.7 Q880.3,648.5 868.6,736.0" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
-  <path d="M858.8,547.7 Q869.6,497.1 890.2,466.5" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
+  <path d="M983.6,173.7 Q971.8,236.2 948.1,272.1" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-business_payment_controls)"/>
+  <path d="M983.6,173.7 Q965.6,243.3 935.2,284.6" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-business_payment_controls)"/>
+  <path d="M1080.0,454.2 Q997.5,384.1 954.7,307.8" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-carbon_calculator)"/>
+  <path d="M1080.0,454.2 Q991.4,391.3 941.8,318.5" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-carbon_calculator)"/>
+  <path d="M858.8,547.7 Q806.2,663.3 730.2,741.7" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
+  <path d="M858.8,547.7 Q880.3,648.5 868.6,736.1" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
+  <path d="M858.8,547.7 Q869.6,497.2 890.3,466.5" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
   <path d="M858.8,547.7 Q879.4,413.2 934.6,311.8" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
-  <path d="M858.8,547.7 Q873.3,420.3 921.1,324.0" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
-  <path d="M994.5,466.2 Q953.8,383.3 947.2,311.9" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consumer_clarity)"/>
-  <path d="M994.5,466.2 Q947.7,390.4 934.9,323.2" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consumer_clarity)"/>
-  <path d="M646.0,830.0 Q677.3,787.4 707.4,769.3" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M858.8,547.7 Q873.3,420.3 921.1,324.1" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
+  <path d="M994.4,466.2 Q953.8,383.3 947.2,311.9" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consumer_clarity)"/>
+  <path d="M994.4,466.2 Q947.6,390.4 934.9,323.2" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consumer_clarity)"/>
+  <path d="M646.0,830.0 Q677.2,787.4 707.4,769.3" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
   <path d="M646.0,830.0 Q584.1,839.9 538.7,830.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
-  <path d="M827.2,393.4 Q876.0,333.5 925.3,305.8" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-easy_savings)"/>
-  <path d="M827.2,393.4 Q869.8,340.6 911.2,317.9" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-easy_savings)"/>
-  <path d="M781.5,331.2 Q858.1,298.8 920.6,296.9" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-enhanced_currency_conversion_calculator)"/>
-  <path d="M781.5,331.2 Q852.0,305.9 906.1,307.7" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-enhanced_currency_conversion_calculator)"/>
-  <path d="M893.0,120.0 Q930.7,202.1 935.4,271.6" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-flight_delay_pass)"/>
-  <path d="M893.0,120.0 Q924.6,209.2 923.0,283.2" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-flight_delay_pass)"/>
-  <path d="M839.1,120.0 Q903.8,197.8 930.3,273.8" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-match)"/>
-  <path d="M839.1,120.0 Q897.6,204.9 917.7,284.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-match)"/>
-  <path d="M953.1,120.0 Q960.8,206.9 942.5,270.9" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-merchant_identifier)"/>
-  <path d="M953.1,120.0 Q954.6,214.0 929.7,283.0" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-merchant_identifier)"/>
-  <path d="M878.7,182.5 Q918.6,232.2 930.6,273.6" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_for_publishers)"/>
-  <path d="M878.7,182.5 Q912.4,239.3 919.0,284.3" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_for_publishers)"/>
-  <path d="M1080.0,321.7 Q1008.1,317.9 961.5,296.2" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_merchant_content)"/>
-  <path d="M1080.0,321.7 Q1002.0,325.0 947.6,306.2" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_merchant_content)"/>
-  <path d="M717.7,209.7 Q610.3,180.9 531.0,126.1" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance)"/>
+  <path d="M827.3,393.5 Q876.0,333.6 925.4,305.8" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-easy_savings)"/>
+  <path d="M827.3,393.5 Q869.9,340.7 911.2,317.9" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-easy_savings)"/>
+  <path d="M781.5,331.4 Q858.1,298.9 920.6,296.9" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-enhanced_currency_conversion_calculator)"/>
+  <path d="M781.5,331.4 Q851.9,306.0 906.1,307.7" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-enhanced_currency_conversion_calculator)"/>
+  <path d="M893.2,120.0 Q930.9,202.1 935.4,271.6" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-flight_delay_pass)"/>
+  <path d="M893.2,120.0 Q924.7,209.2 923.0,283.2" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-flight_delay_pass)"/>
+  <path d="M839.3,120.0 Q903.9,197.8 930.3,273.8" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-match)"/>
+  <path d="M839.3,120.0 Q897.8,204.9 917.8,284.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-match)"/>
+  <path d="M953.0,120.0 Q960.8,206.9 942.5,270.9" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-merchant_identifier)"/>
+  <path d="M953.0,120.0 Q954.6,214.0 929.7,283.0" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-merchant_identifier)"/>
+  <path d="M878.1,182.8 Q918.3,232.3 930.5,273.7" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_for_publishers)"/>
+  <path d="M878.1,182.8 Q912.1,239.4 918.9,284.3" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_for_publishers)"/>
+  <path d="M1080.0,321.6 Q1008.1,317.9 961.5,296.3" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_merchant_content)"/>
+  <path d="M1080.0,321.6 Q1002.0,325.0 947.6,306.3" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_merchant_content)"/>
+  <path d="M717.7,209.7 Q610.3,180.9 530.9,126.1" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance)"/>
   <path d="M717.7,209.7 Q835.9,232.9 921.3,284.6" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance)"/>
   <path d="M717.7,209.7 Q829.7,240.0 907.6,295.2" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance)"/>
-  <path d="M765.7,157.1 Q676.5,152.3 608.0,123.2" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_au)"/>
-  <path d="M765.7,157.1 Q864.1,210.4 924.4,279.0" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_au)"/>
-  <path d="M765.7,157.1 Q858.0,217.6 911.2,289.7" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_au)"/>
+  <path d="M765.7,157.0 Q676.6,152.3 608.0,123.1" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_au)"/>
+  <path d="M765.7,157.0 Q864.2,210.4 924.4,279.1" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_au)"/>
+  <path d="M765.7,157.0 Q858.0,217.6 911.3,289.7" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_au)"/>
   <path d="M1080.0,194.1 Q1052.9,160.5 1045.1,133.0" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
   <path d="M1080.0,194.1 Q1018.3,254.1 958.2,279.8" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
-  <path d="M1080.0,194.1 Q1012.2,261.2 943.8,291.6" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
+  <path d="M1080.0,194.1 Q1012.2,261.2 943.9,291.6" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
   <path d="M1080.0,238.7 Q1014.8,276.4 960.6,284.3" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-places)"/>
   <path d="M1080.0,238.7 Q1008.6,283.5 946.1,295.6" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-places)"/>
   <path d="M1080.0,363.9 Q1004.7,339.0 959.7,301.5" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-priceless_cities)"/>
@@ -132,23 +132,23 @@
   <path d="M578.4,830.0 Q505.9,841.6 448.4,830.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
   <path d="M578.4,830.0 Q550.3,834.5 538.7,830.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
   <path d="M578.4,830.0 Q612.2,824.6 631.0,830.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
-  <path d="M895.6,452.5 Q905.5,368.5 935.3,312.0" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-transaction_notifications)"/>
-  <path d="M895.6,452.5 Q899.3,375.7 922.5,324.4" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-transaction_notifications)"/>
+  <path d="M895.7,452.5 Q905.5,368.6 935.3,312.1" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-transaction_notifications)"/>
+  <path d="M895.7,452.5 Q899.3,375.7 922.5,324.4" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-transaction_notifications)"/>
   <circle cx="720.2" cy="756.7" r="20.0" fill="#3b82f6" fill-opacity="0.15" stroke="none"/>
   <circle cx="720.2" cy="756.7" r="15.0" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis - imported by 4</title></circle>
   <text x="740.2" y="756.7" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">apis</text>
   <circle cx="1080.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.automatic_billing_updater - imported by 1</title></circle>
   <text x="1095.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">automatic_billing_updater</text>
-  <circle cx="807.2" cy="251.8" r="10.5" fill="#22c55e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.automatic_billing_updater.api - imported by 1</title></circle>
-  <text x="791.7" y="251.8" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="807.0" cy="252.1" r="10.5" fill="#22c55e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.automatic_billing_updater.api - imported by 1</title></circle>
+  <text x="791.5" y="252.1" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="1080.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.benefits_content_eligibility - imported by 1</title></circle>
   <text x="1095.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">benefits_content_eligibility</text>
-  <circle cx="999.4" cy="401.6" r="10.5" fill="#a855f7" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.benefits_content_eligibility.api - imported by 1</title></circle>
-  <text x="1014.9" y="401.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="999.6" cy="401.6" r="10.5" fill="#a855f7" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.benefits_content_eligibility.api - imported by 1</title></circle>
+  <text x="1015.1" y="401.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="1080.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.benefits_eligibility - imported by 1</title></circle>
   <text x="1095.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">benefits_eligibility</text>
-  <circle cx="1080.0" cy="280.1" r="10.5" fill="#eab308" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.benefits_eligibility.api - imported by 1</title></circle>
-  <text x="1095.5" y="280.1" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="1080.0" cy="280.0" r="10.5" fill="#eab308" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.benefits_eligibility.api - imported by 1</title></circle>
+  <text x="1095.5" y="280.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="1080.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.bin_lookup - imported by 1</title></circle>
   <text x="1095.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">bin_lookup</text>
   <circle cx="1080.0" cy="407.9" r="10.5" fill="#06b6d4" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.bin_lookup.api - imported by 1</title></circle>
@@ -157,12 +157,12 @@
   <text x="416.4" y="830.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">bundles</text>
   <circle cx="970.2" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.business_payment_controls - imported by 1</title></circle>
   <text x="985.7" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">business_payment_controls</text>
-  <circle cx="983.7" cy="173.7" r="10.5" fill="#ec4899" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.business_payment_controls.api - imported by 1</title></circle>
-  <text x="999.2" y="173.7" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="983.6" cy="173.7" r="10.5" fill="#ec4899" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.business_payment_controls.api - imported by 1</title></circle>
+  <text x="999.1" y="173.7" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="242.1" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.carbon_calculator - imported by 1</title></circle>
   <text x="257.6" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">carbon_calculator</text>
-  <circle cx="1080.0" cy="454.1" r="10.5" fill="#10b981" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.carbon_calculator.api - imported by 1</title></circle>
-  <text x="1095.5" y="454.1" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="1080.0" cy="454.2" r="10.5" fill="#10b981" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.carbon_calculator.api - imported by 1</title></circle>
+  <text x="1095.5" y="454.2" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="522.2" cy="830.0" r="18.5" fill="#f97316" fill-opacity="0.15" stroke="none"/>
   <circle cx="522.2" cy="830.0" r="13.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.catalog - imported by 3</title></circle>
   <text x="503.7" y="830.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">catalog</text>
@@ -172,48 +172,48 @@
   <text x="843.3" y="547.7" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="120.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.consumer_clarity - imported by 1</title></circle>
   <text x="135.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">consumer_clarity</text>
-  <circle cx="994.5" cy="466.2" r="10.5" fill="#f43f5e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.consumer_clarity.api - imported by 1</title></circle>
-  <text x="1010.0" y="466.2" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="994.4" cy="466.2" r="10.5" fill="#f43f5e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.consumer_clarity.api - imported by 1</title></circle>
+  <text x="1009.9" y="466.2" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="646.0" cy="830.0" r="12.0" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.credentials - imported by 2</title></circle>
   <text x="663.0" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">credentials</text>
   <circle cx="120.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.easy_savings - imported by 1</title></circle>
   <text x="135.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">easy_savings</text>
-  <circle cx="827.2" cy="393.4" r="10.5" fill="#14b8a6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.easy_savings.api - imported by 1</title></circle>
-  <text x="811.7" y="393.4" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="827.3" cy="393.5" r="10.5" fill="#14b8a6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.easy_savings.api - imported by 1</title></circle>
+  <text x="811.8" y="393.5" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="120.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.enhanced_currency_conversion_calculator - imported by 1</title></circle>
   <text x="135.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">enhanced_currency_conversion_calculator</text>
-  <circle cx="781.5" cy="331.2" r="10.5" fill="#8b5cf6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.enhanced_currency_conversion_calculator.api - imported by 1</title></circle>
-  <text x="766.0" y="331.2" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="781.5" cy="331.4" r="10.5" fill="#8b5cf6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.enhanced_currency_conversion_calculator.api - imported by 1</title></circle>
+  <text x="766.0" y="331.4" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="120.0" cy="708.6" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.flight_delay_pass - imported by 1</title></circle>
   <text x="135.5" y="708.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">flight_delay_pass</text>
-  <circle cx="893.0" cy="120.0" r="10.5" fill="#84cc16" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.flight_delay_pass.api - imported by 1</title></circle>
-  <text x="877.5" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="893.2" cy="120.0" r="10.5" fill="#84cc16" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.flight_delay_pass.api - imported by 1</title></circle>
+  <text x="877.7" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="120.0" cy="590.8" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.match - imported by 1</title></circle>
   <text x="135.5" y="590.8" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">match</text>
-  <circle cx="839.1" cy="120.0" r="10.5" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.match.api - imported by 1</title></circle>
-  <text x="823.6" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="839.3" cy="120.0" r="10.5" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.match.api - imported by 1</title></circle>
+  <text x="823.8" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="120.0" cy="440.5" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.merchant_identifier - imported by 1</title></circle>
   <text x="135.5" y="440.5" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">merchant_identifier</text>
-  <circle cx="953.1" cy="120.0" r="10.5" fill="#38bdf8" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.merchant_identifier.api - imported by 1</title></circle>
-  <text x="968.6" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="953.0" cy="120.0" r="10.5" fill="#38bdf8" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.merchant_identifier.api - imported by 1</title></circle>
+  <text x="968.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="120.0" cy="288.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.offers_for_publishers - imported by 1</title></circle>
   <text x="135.5" y="288.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">offers_for_publishers</text>
-  <circle cx="878.7" cy="182.5" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.offers_for_publishers.api - imported by 1</title></circle>
-  <text x="863.2" y="182.5" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="878.1" cy="182.8" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.offers_for_publishers.api - imported by 1</title></circle>
+  <text x="862.6" y="182.8" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="120.0" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.offers_merchant_content - imported by 1</title></circle>
   <text x="135.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">offers_merchant_content</text>
-  <circle cx="1080.0" cy="321.7" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.offers_merchant_content.api - imported by 1</title></circle>
-  <text x="1095.5" y="321.7" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="1080.0" cy="321.6" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.offers_merchant_content.api - imported by 1</title></circle>
+  <text x="1095.5" y="321.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="120.0" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance - imported by 1</title></circle>
   <text x="135.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">open_finance</text>
   <circle cx="717.7" cy="209.7" r="10.5" fill="#22c55e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance.api - imported by 1</title></circle>
   <text x="702.2" y="209.7" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="517.4" cy="120.0" r="12.0" fill="#22c55e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance.client - imported by 2</title></circle>
-  <text x="500.4" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">client</text>
+  <circle cx="517.2" cy="120.0" r="12.0" fill="#22c55e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance.client - imported by 2</title></circle>
+  <text x="500.2" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">client</text>
   <circle cx="120.0" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_au - imported by 1</title></circle>
   <text x="135.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">open_finance_au</text>
-  <circle cx="765.7" cy="157.1" r="10.5" fill="#a855f7" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_au.api - imported by 1</title></circle>
-  <text x="750.2" y="157.1" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="765.7" cy="157.0" r="10.5" fill="#a855f7" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_au.api - imported by 1</title></circle>
+  <text x="750.2" y="157.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="593.3" cy="120.0" r="12.0" fill="#a855f7" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_au.client - imported by 2</title></circle>
   <text x="576.3" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">client</text>
   <circle cx="170.5" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_eu - imported by 1</title></circle>
@@ -236,13 +236,13 @@
   <text x="1095.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">snippet</text>
   <circle cx="1080.0" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.spotlights - imported by 1</title></circle>
   <text x="1095.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">spotlights</text>
-  <circle cx="869.4" cy="751.0" r="12.0" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.transaction_notifications - imported by 2</title></circle>
-  <text x="886.4" y="751.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">transaction_notifications</text>
-  <circle cx="895.6" cy="452.5" r="12.0" fill="#6366f1" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.transaction_notifications.api - imported by 2</title></circle>
-  <text x="878.6" y="452.5" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="941.0" cy="291.8" r="23.0" fill="#10b981" fill-opacity="0.15" stroke="none"/>
-  <circle cx="941.0" cy="291.8" r="18.0" fill="#10b981" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>simulator - imported by 21</title></circle>
-  <text x="964.0" y="291.8" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">simulator</text>
+  <circle cx="869.4" cy="751.1" r="12.0" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.transaction_notifications - imported by 2</title></circle>
+  <text x="886.4" y="751.1" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">transaction_notifications</text>
+  <circle cx="895.7" cy="452.5" r="12.0" fill="#6366f1" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.transaction_notifications.api - imported by 2</title></circle>
+  <text x="878.7" y="452.5" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="941.0" cy="291.9" r="23.0" fill="#10b981" fill-opacity="0.15" stroke="none"/>
+  <circle cx="941.0" cy="291.9" r="18.0" fill="#10b981" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>simulator - imported by 21</title></circle>
+  <text x="964.0" y="291.9" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">simulator</text>
   <circle cx="926.8" cy="303.8" r="23.0" fill="#10b981" fill-opacity="0.15" stroke="none"/>
   <circle cx="926.8" cy="303.8" r="18.0" fill="#10b981" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>simulator.switcher - imported by 21</title></circle>
   <text x="903.8" y="303.8" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">switcher</text>

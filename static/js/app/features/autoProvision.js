@@ -8,6 +8,7 @@
   const SERVER_MODE = !!RUNTIME_MODE.server_mode;
   const NON_US_MODE = !!RUNTIME_MODE.non_us_mode;
   const SCRIPT_ROOT = (document.body?.dataset?.scriptRoot || '').replace(/\/$/, '');
+  const NON_US_TOOLTIP = 'Disabled in non-us mode. If running on US IP, this would be enabled.';
 
   function _appPath(path) {
     if (typeof path !== 'string') return path;
@@ -325,7 +326,7 @@
       }
       if (raw === '__NO_ZIP__') {
         _provFailed = true;
-        _provFailMessage = 'Provisioning completed but no vima-config.zip was produced. Check the log above for errors, then import keys manually.';;
+        _provFailMessage = 'Provisioning completed but no vima-config.zip was produced. Check the log above for errors, then import keys manually.';
         appendLog('ERROR: ' + _provFailMessage);
         return;
       }

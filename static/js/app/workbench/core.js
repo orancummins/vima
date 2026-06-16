@@ -284,7 +284,7 @@ import { showOfinSetupModal } from '../features/ofinSetupModal.js';
     $("op-hint").innerHTML = "";
     renderParams();    restoreIo();
     // Keep the floating API Guide's "current step" highlight in sync.
-    if (window.ApiGuide) ApiGuide.syncCurrentOp();
+    if (window.ApiGuide) window.ApiGuide.syncCurrentOp();
     // If the View Code panel is open for this API, refresh it so the
     // snippet tracks whichever operation the user has chosen.
     apisSnippetsRefreshOp(getCurrentApiId());
@@ -519,7 +519,7 @@ import { showOfinSetupModal } from '../features/ofinSetupModal.js';
       }
       // Mark the step done in the floating API Guide on any 2xx response.
       if (s != null && s >= 200 && s < 300 && window.ApiGuide) {
-        ApiGuide.markOpDone(op.id);
+        window.ApiGuide.markOpDone(op.id);
       }
       // Hints
       $("op-hint").innerHTML = "";

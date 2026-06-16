@@ -33,7 +33,7 @@ export function fetchSimStatus(apiId) {
 
 export function initSimToggle() {
   const cb = $("sim-toggle-cb");
-  const label = $("sim-toggle-label");
+
   if (!cb) return;
   cb.addEventListener("change", () => {
     const api = currentApi();

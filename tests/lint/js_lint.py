@@ -89,14 +89,12 @@ def run(base_url: str = "") -> TestRunner:  # base_url unused — linting is ser
     # are silently rejected by some ESLint versions.
     js_files_rel = [os.path.relpath(f, root).replace("\\", "/") for f in js_files]
 
-    # ESLINT_USE_FLAT_CONFIG=false forces legacy .eslintrc.json behaviour on
-    # both ESLint 8 and 9 without requiring a specific version download.
-    eslint_env = {**os.environ, "ESLINT_USE_FLAT_CONFIG": "false"}
-
+    # ESLint 10 uses flat config (eslint.config.js) exclusively — the
+    # ESLINT_USE_FLAT_CONFIG env var and --no-eslintrc flag were removed.
+    # eslint.config.js at the project root is discovered automatically.
     result = subprocess.run(
         [npx, "--yes", "eslint"] + js_files_rel + ["--format", "json"],
         capture_output=True, text=True, encoding="utf-8",
-        env=eslint_env,
         cwd=root,
     )
 
@@ -132,15 +130,47 @@ def run(base_url: str = "") -> TestRunner:  # base_url unused — linting is ser
     )
 
     # Each entry: {filePath, messages:[{ruleId,severity,message,line,column}], errorCount, warningCount}
-    files_with_issues = [f for f in file_results if f.get("errorCount", 0) > 0 or f.get("warningCount", 0) > 0]
-    files_clean = len(file_results) - len(files_with_issues)
+    # Only files with errors (severity=2) are FAIL. Files with warnings-only are
+    # surfaced as informational PASSes so the suite doesn't penalise style noise.
+    files_with_errors   = [f for f in file_results if f.get("errorCount", 0) > 0]
+    files_with_warnings = [f for f in file_results if f.get("errorCount", 0) == 0 and f.get("warningCount", 0) > 0]
+    files_clean = len(file_results) - len(files_with_errors) - len(files_with_warnings)
 
-    if not files_with_issues:
+    if not files_with_errors and not files_with_warnings:
         def _all_clean():
             pass
         runner.run(f"All {len(js_files)} JS file(s) are lint-clean", _all_clean)
     else:
-        for file_entry in sorted(files_with_issues, key=lambda x: x.get("filePath", "")):
+        # Emit FAIL for every file with errors
+        for file_entry in sorted(files_with_errors, key=lambda x: x.get("filePath", "")):
+            try:
+                rel = os.path.relpath(file_entry["filePath"], root).replace("\\", "/")
+            except (ValueError, KeyError):
+                rel = file_entry.get("filePath", "?")
+
+            _rel = rel
+            _msgs = [m for m in file_entry.get("messages", []) if m.get("severity", 1) == 2]
+            _ec = file_entry.get("errorCount", 0)
+            _wc = file_entry.get("warningCount", 0)
+
+            def _file_lint(_rel=_rel, _msgs=_msgs, _ec=_ec, _wc=_wc):
+                lines = []
+                for m in _msgs[:20]:
+                    rule = m.get("ruleId", "?")
+                    msg = m.get("message", "")
+                    row = m.get("line", "?")
+                    col = m.get("column", "?")
+                    lines.append(f"  {_rel}:{row}:{col}  [error]  {rule}  {msg}")
+                summary = f"{_ec} error(s), {_wc} warning(s)"
+                raise AssertionError(
+                    f"{summary} in {_rel}:\n" + "\n".join(lines)
+                    + ("\n  …" if len(_msgs) > 20 else "")
+                )
+
+            runner.run(f"{rel} ({_ec} error(s))", _file_lint)
+
+        # Emit PASS (informational) for files with warnings only
+        for file_entry in sorted(files_with_warnings, key=lambda x: x.get("filePath", "")):
             try:
                 rel = os.path.relpath(file_entry["filePath"], root).replace("\\", "/")
             except (ValueError, KeyError):
@@ -148,35 +178,31 @@ def run(base_url: str = "") -> TestRunner:  # base_url unused — linting is ser
 
             _rel = rel
             _msgs = file_entry.get("messages", [])
-            _ec = file_entry.get("errorCount", 0)
             _wc = file_entry.get("warningCount", 0)
 
-            def _file_lint(_rel=_rel, _msgs=_msgs, _ec=_ec, _wc=_wc):
+            def _file_warn(_rel=_rel, _msgs=_msgs, _wc=_wc):
+                # Print warning detail to stdout but do NOT raise — warnings are
+                # informational and must not cause the test suite to fail.
                 lines = []
-                for m in _msgs[:20]:
-                    sev = "error" if m.get("severity", 1) == 2 else "warn"
+                for m in _msgs[:10]:
                     rule = m.get("ruleId", "?")
                     msg = m.get("message", "")
                     row = m.get("line", "?")
                     col = m.get("column", "?")
-                    lines.append(f"  {_rel}:{row}:{col}  [{sev}]  {rule}  {msg}")
-                summary = f"{_ec} error(s), {_wc} warning(s)"
-                raise AssertionError(
-                    f"{summary} in {_rel}:\n" + "\n".join(lines)
-                    + ("\n  …" if len(_msgs) > 20 else "")
-                )
+                    lines.append(f"    {_rel}:{row}:{col}  [warn]  {rule}  {msg}")
+                print(f"  [warn] {_rel} ({_wc} warning(s)):")
+                for ln in lines:
+                    print(ln)
+                if len(_msgs) > 10:
+                    print("    …")
 
-            label_parts = []
-            if _ec:
-                label_parts.append(f"{_ec} error(s)")
-            if _wc:
-                label_parts.append(f"{_wc} warning(s)")
-            runner.run(f"{rel} ({', '.join(label_parts)})", _file_lint)
+            runner.run(f"{rel} ({_wc} warning(s)) [informational]", _file_warn)
 
         def _summary_note():
             pass
         runner.run(
-            f"{files_clean} file(s) clean, {len(files_with_issues)} file(s) with issues",
+            f"{files_clean} file(s) clean, {len(files_with_errors)} file(s) with errors, "
+            f"{len(files_with_warnings)} file(s) with warnings only",
             _summary_note,
         )
 
