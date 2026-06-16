@@ -884,40 +884,45 @@ function showSection(name) {
   if (name === 'code') {
     window.scrollTo({ top: 0, behavior: 'instant' });
     _loadCodebaseStats();
-    // Check iframe 404s and show fallback message; otherwise ensure loaded
-    ['apis', 'usecases'].forEach(function(pkg) {
-      var frame = document.getElementById('pydeps-frame-' + pkg);
-      var err   = document.getElementById('pydeps-err-' + pkg);
-      if (frame) {
-        frame.addEventListener('load', function onLoad() {
-          frame.removeEventListener('load', onLoad);
-          try {
-            if (frame.contentDocument && frame.contentDocument.title === '404 Not Found') {
-              frame.style.display = 'none';
-              if (err) err.style.display = '';
-            }
-          } catch(e) { /* cross-origin — file exists, leave visible */ }
-        });
-        var s = frame.src; frame.src = ''; frame.src = s;
-      }
-    });
-    ['app_arch', 'uc_flows'].forEach(function(diag) {
-      var frame = document.getElementById('arch-frame-' + diag);
-      var err   = document.getElementById('arch-err-' + diag);
-      if (frame) {
-        frame.addEventListener('load', function onLoad() {
-          frame.removeEventListener('load', onLoad);
-          try {
-            if (frame.contentDocument && frame.contentDocument.title === '404 Not Found') {
-              frame.style.display = 'none';
-              if (err) err.style.display = '';
-            }
-          } catch(e) { /* cross-origin — file exists */ }
-        });
-        var s = frame.src; frame.src = ''; frame.src = s;
-      }
-    });
+    _refreshCodeAssets();
   }
+}
+
+// Bust browser cache on all Code-tab assets so freshly generated files appear.
+function _refreshCodeAssets() {
+  var t = '?t=' + Date.now();
+
+  // SVG dependency graph images
+  ['apis', 'usecases'].forEach(function(pkg) {
+    var img = document.getElementById('pydeps-img-' + pkg);
+    if (!img) return;
+    var base = img.src.split('?')[0];
+    img.style.display = 'block';
+    img.nextElementSibling && (img.nextElementSibling.style.display = 'none');
+    img.src = base + t;
+  });
+
+  // Arch diagram iframes
+  ['app_arch', 'uc_flows'].forEach(function(diag) {
+    var frame = document.getElementById('arch-frame-' + diag);
+    var err   = document.getElementById('arch-err-' + diag);
+    if (!frame) return;
+    var base = (frame.getAttribute('data-base-src') || frame.src.split('?')[0]);
+    frame.setAttribute('data-base-src', base);
+    frame.addEventListener('load', function onLoad() {
+      frame.removeEventListener('load', onLoad);
+      try {
+        if (frame.contentDocument && frame.contentDocument.title === '404 Not Found') {
+          frame.style.display = 'none';
+          if (err) err.style.display = '';
+        } else {
+          frame.style.display = 'block';
+          if (err) err.style.display = 'none';
+        }
+      } catch(e) { /* cross-origin */ }
+    });
+    frame.src = base + t;
+  });
 }
 
 function loadHistoryPage(page) {
@@ -1128,6 +1133,7 @@ async function poll() {
       execBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Execute';
       _wasRunning = false;
       _clearRunningHighlight();
+      _refreshCodeAssets();  // bust cache so Code tab shows new output immediately
       return;
     }
     if (execBtn) execBtn.disabled = false;
