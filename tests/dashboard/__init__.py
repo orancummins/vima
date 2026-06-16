@@ -210,7 +210,8 @@ def run_trigger():
     else:
         install_flag    = "--existing"
         scope_flag      = "--full" if scope == "full" else "--smoke"
-        extra_flags     = []
+        lint_tools      = request.form.get("lint_tools", "").strip()
+        extra_flags     = (["--lint-tools", lint_tools] if lint_tools else [])
         needs_no_server = True  # existing always reuses the running server
 
     no_server_flags = ["--no-server"] if needs_no_server else []

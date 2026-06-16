@@ -270,8 +270,9 @@
       padding: 2px 7px; border-radius: 4px;
       background: var(--bg3); border: 1px solid var(--line); color: var(--text3);
     }
-    .suite-cat-tag.functional { color: #7dd3fc; border-color: #075985; background: #082f49; }
-    .suite-cat-tag.analysis   { color: #d8b4fe; border-color: #6b21a8; background: #2e1065; }
+    .suite-cat-tag.functional  { color: #7dd3fc; border-color: #075985; background: #082f49; }
+    .suite-cat-tag.analysis    { color: #d8b4fe; border-color: #6b21a8; background: #2e1065; }
+    .suite-cat-tag.performance { color: #fde68a; border-color: #92400e; background: #451a03; }
     .suite-panels { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 8px; }
     .suite-panel {
       background: var(--card); border: 1px solid var(--line); border-radius: 10px;
@@ -379,7 +380,7 @@
     <!-- Test suite selection -->
     <div class="suite-panels" style="margin-bottom:24px">
 
-      <div class="suite-panel selected" data-scope="smoke" data-group="functional">
+      <div class="suite-panel" data-scope="smoke" data-group="functional">
         <div class="suite-check"></div>
         <div class="suite-info">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
@@ -412,7 +413,7 @@
         </div>
       </div>
 
-      <div class="suite-panel selected" data-scope="lint-python" data-group="analysis">
+      <div class="suite-panel" data-scope="lint-python" data-group="analysis">
         <div class="suite-check"></div>
         <div class="suite-info">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
@@ -431,7 +432,7 @@
         </div>
       </div>
 
-      <div class="suite-panel selected" data-scope="lint-js" data-group="analysis">
+      <div class="suite-panel" data-scope="lint-js" data-group="analysis">
         <div class="suite-check"></div>
         <div class="suite-info">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
@@ -446,7 +447,7 @@
         </div>
       </div>
 
-      <div class="suite-panel selected" data-scope="lint-security" data-group="analysis">
+      <div class="suite-panel" data-scope="lint-security" data-group="analysis">
         <div class="suite-check"></div>
         <div class="suite-info">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
@@ -464,7 +465,7 @@
         </div>
       </div>
 
-      <div class="suite-panel selected" data-scope="lint-vulture" data-group="analysis">
+      <div class="suite-panel" data-scope="lint-vulture" data-group="analysis">
         <div class="suite-check"></div>
         <div class="suite-info">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
@@ -477,6 +478,40 @@
             <span class="suite-tag">usecases/</span>
             <span class="suite-tag">app.py</span>
             <span class="suite-tag">&ge;80% confidence</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="suite-panel" data-scope="lint-scalene" data-group="performance">
+        <div class="suite-check"></div>
+        <div class="suite-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div class="suite-panel-name" style="margin:0">Runtime Performance</div>
+            <span class="suite-cat-tag performance">Performance</span>
+          </div>
+          <div class="suite-panel-desc">Scalene runtime profiler &mdash; identifies CPU and memory hotspots across the Flask startup path and core request handlers. No server required.</div>
+          <div class="suite-panel-tags">
+            <span class="suite-tag">apis/</span>
+            <span class="suite-tag">usecases/</span>
+            <span class="suite-tag">app.py</span>
+            <span class="suite-tag">CPU + memory</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="suite-panel" data-scope="lint-radon" data-group="analysis">
+        <div class="suite-check"></div>
+        <div class="suite-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div class="suite-panel-name" style="margin:0">Code Complexity</div>
+            <span class="suite-cat-tag analysis">Code Analysis</span>
+          </div>
+          <div class="suite-panel-desc">Radon cyclomatic complexity (CC) and maintainability index (MI). Reports blocks ranked C&ndash;F (CC&nbsp;&ge;&nbsp;11) and files with low maintainability.</div>
+          <div class="suite-panel-tags">
+            <span class="suite-tag">apis/</span>
+            <span class="suite-tag">usecases/</span>
+            <span class="suite-tag">app.py</span>
+            <span class="suite-tag">CC + MI</span>
           </div>
         </div>
       </div>
@@ -904,10 +939,10 @@ document.addEventListener('DOMContentLoaded', function() {
       var scopes = Array.from(panels).map(function(p){ return p.dataset.scope; });
       // Map combinations to a single scope string the backend understands
       var hasSmoke = scopes.includes('smoke'), hasFull = scopes.includes('full');
-      var hasPyLint = scopes.includes('lint-python'), hasJsLint = scopes.includes('lint-js'), hasSec = scopes.includes('lint-security'), hasVulture = scopes.includes('lint-vulture');
-      var allAnalysis = hasPyLint && hasJsLint && hasSec && hasVulture;
+      var hasPyLint = scopes.includes('lint-python'), hasJsLint = scopes.includes('lint-js'), hasSec = scopes.includes('lint-security'), hasVulture = scopes.includes('lint-vulture'), hasScalene = scopes.includes('lint-scalene'), hasRadon = scopes.includes('lint-radon');
+      var allAnalysis = hasPyLint && hasJsLint && hasSec && hasVulture && hasScalene && hasRadon;
       var anyFunctional = hasSmoke || hasFull;
-      var anyAnalysis   = hasPyLint || hasJsLint || hasSec || hasVulture;
+      var anyAnalysis   = hasPyLint || hasJsLint || hasSec || hasVulture || hasScalene || hasRadon;
 
       var scope;
       if (anyFunctional && anyAnalysis) {
@@ -925,6 +960,8 @@ document.addEventListener('DOMContentLoaded', function() {
       if (hasJsLint)   lintTools.push('js');
       if (hasSec)      lintTools.push('security');
       if (hasVulture)  lintTools.push('vulture');
+      if (hasScalene)  lintTools.push('scalene');
+      if (hasRadon)    lintTools.push('radon');
 
       // Reset UI
       var pbar = document.getElementById('run-pbar-inner');
@@ -943,7 +980,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       var body = new URLSearchParams();
       body.append('scope', scope);
-      if (scope === 'lint' && lintTools.length) body.append('lint_tools', lintTools.join(','));
+      if (lintTools.length) body.append('lint_tools', lintTools.join('+'));
       try {
         var r = await fetch('/vima/test/run', { method: 'POST', body: body });
         var j = await r.json();

@@ -14,9 +14,7 @@
   Work dir:      C:\Users\e031093\dev\vima
   Server:        http://127.0.0.1:9021
 
-[1m>> Starting Flask server on port 9021[0m
-  Waiting for server at http://127.0.0.1:9021 …
-  [32m[OK]  Server ready.[0m
+[1m>> Skipping server start (--no-server)[0m
 
 [1m>> Smoke tests[0m
 
@@ -42,35 +40,6 @@
 
 [1m[36m>> BIN Lookup Use Case[0m[0m
   [32m[PASS][0m /bin_lookup/index.html loads (200)
-
-============================================================
-Solution Studio
-============================================================
-  + Open Finance US      (57 operations)
-  + Open Finance Australia (9 operations)
-  + Open Finance Europe  (12 operations)
-  + BIN Lookup           (1 operations)
-  + Merchant Identifier  (3 operations)
-  + Automatic Billing Updater (4 operations)
-  + MATCH Pro            (6 operations)
-  + Consumer Clarity     (1 operations)
-  + Priceless Cities     (21 operations)
-  + Easy Savings         (4 operations)
-  + Places               (6 operations)
-  + Offers for Publishers (11 operations)
-  + Offers Merchant Content (10 operations)
-  + Transaction Notifications (8 operations)
-  + Benefits Eligibility (4 operations)
-  + Benefits Content Eligibility Service (1 operations)
-  + Enhanced Currency Conversion Calculator (4 operations)
-  - Carbon Calculator    (9 operations)
-  + Business Payment Controls (4 operations)
-
-Listening on http://0.0.0.0:9021
-============================================================
-
- * Serving Flask app 'app'
- * Debug mode: on
   [32m[PASS][0m BIN ranges status endpoint returns valid JSON
   [32m[PASS][0m Lookup action returns card data for BIN 543210
   [32m[PASS][0m Lookup action handles unknown BIN gracefully
@@ -145,8 +114,59 @@ Listening on http://0.0.0.0:9021
   [32m[PASS][0m All 104 file(s) clean — no dead code found
   [32m3/3 passed[0m
 
-[1m>> Stopping server[0m
-  [32m[OK]  Server stopped.[0m
+[1m>> Runtime Performance (Scalene)[0m
+
+[1m[36m>> Runtime Performance (Scalene)[0m[0m
+  [32m[PASS][0m scalene is installed
+  [32m[PASS][0m Profile target: Flask app startup + in-process requests
+  Target:    tests/lint/profile_target.py
+  Profiling: CPU time, memory allocation
+  Hotspot:   files >= 5% CPU; lines >= 2% CPU
+  [32m[PASS][0m Profile complete (3.48s, 4 file(s) sampled) — no file >= 5% CPU
+  [32m3/3 passed[0m
+
+[1m>> Code Complexity (Radon)[0m
+
+[1m[36m>> Code Complexity (Radon)[0m[0m
+  [32m[PASS][0m radon is installed
+  [32m[PASS][0m Scan scope: 7 target(s)
+  Targets:  apis, usecases, chat, simulator, app.py, clean_keys.py, live_demo.py
+  CC fail:  rank E/F (CC >= 21) — genuinely problematic
+  CC info:  rank C/D (CC 11–20) — visible, non-blocking
+  MI check: maintainability index, report rank C (MI < 10)
+  [31m[FAIL][0m apis/carbon_calculator/api.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line  272  CC  38  rank E  function execute[0m
+  [31m[FAIL][0m apis/open_finance/api.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line 1276  CC 151  rank F  function execute[0m
+  [31m[FAIL][0m apis/open_finance_au/api.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line  439  CC  49  rank F  function execute[0m
+  [31m[FAIL][0m apis/open_finance_eu/api.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line  620  CC  96  rank F  function execute[0m
+  [31m[FAIL][0m app.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line  618  CC  34  rank E  function explorer_run[0m
+  [31m[FAIL][0m chat/app.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line  293  CC  77  rank F  function _execute_tool[0m
+  [31m[FAIL][0m usecases/financeincolour/__init__.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line   59  CC  46  rank F  function get_data[0m
+  [31m[FAIL][0m usecases/pfm/__init__.py: 2 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line  194  CC  45  rank F  function do_action
+  line   60  CC  40  rank E  function get_data[0m
+  [31m[FAIL][0m usecases/places/__init__.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line   84  CC  38  rank E  function _shape[0m
+  [31m[FAIL][0m usecases/recurring/__init__.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line   68  CC  39  rank E  function do_action[0m
+  [31m[FAIL][0m usecases/specials/__init__.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line   50  CC  37  rank E  function _search[0m
+  [32m[PASS][0m 77 moderate-complexity block(s) [rank C/D, CC 11–20 — informational]
+  [31m[FAIL][0m apis/open_finance/api.py: low maintainability
+    [2m  MI 0.7  rank C[0m
+  [31m[FAIL][0m apis/transaction_notifications/api.py: low maintainability
+    [2m  MI 7.8  rank C[0m
+  [31m[FAIL][0m app.py: low maintainability
+    [2m  MI 0.0  rank C[0m
+  [31m[FAIL][0m chat/app.py: low maintainability
+    [2m  MI 8.0  rank C[0m
+  [31m3/18 passed[0m
   [32m[OK]  Run recorded in dashboard DB (run #{run_id}).[0m
 
 ============================================================
@@ -161,7 +181,9 @@ Listening on http://0.0.0.0:9021
   [32m[OK][0m  JavaScript Lint (ESLint)            2/2
   [32m[OK][0m  Security (Bandit)                   4/4
   [32m[OK][0m  Dead Code (Vulture)                 3/3
+  [32m[OK][0m  Runtime Performance (Scalene)       3/3
+  [31m[FAIL][0m  Code Complexity (Radon)             3/18
 ------------------------------------------------------------
-[32m[1m  28/28 passed[0m[0m
+[31m[1m  34/49 passed[0m[0m
 ============================================================
 
