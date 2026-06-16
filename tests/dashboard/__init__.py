@@ -59,6 +59,26 @@ def run_list():
     )
 
 
+# ── History fragment (AJAX refresh) ───────────────────────────────────────────
+
+@test_bp.route("/history_fragment", methods=["GET"])
+def history_fragment():
+    """Returns just the inner HTML of the history section for client-side refresh."""
+    page = max(1, int(request.args.get("page", 1)))
+    total = count_runs()
+    total_pages = max(1, math.ceil(total / _PAGE_SIZE))
+    page = min(page, total_pages)
+    runs = list_runs(page=page, page_size=_PAGE_SIZE)
+    return render_template(
+        "_history_fragment.html",
+        runs=runs,
+        page=page,
+        total_pages=total_pages,
+        total=total,
+        page_size=_PAGE_SIZE,
+    )
+
+
 # ── Detail view ────────────────────────────────────────────────────────────────
 
 @test_bp.route("/<int:run_id>", methods=["GET"])
@@ -163,8 +183,9 @@ def run_trigger():
         # Pass --lint --no-server --existing so run.py takes the lint-only path.
         install_flag    = "--existing"
         scope_flag      = "--lint"
-        extra_flags     = []
         needs_no_server = True
+        lint_tools      = request.form.get("lint_tools", "").strip()
+        extra_flags     = (["--lint-tools", lint_tools] if lint_tools else [])
 
     elif scope == "clean":
         portal_cfg    = load_config()
@@ -356,3 +377,73 @@ def run_status():
         progress = {"total": 0, "passed": 0, "failed": 0, "suites": []}
 
     return jsonify({"ok": True, "pid": pid, "running": running, "log": tail_lines, "progress": progress})
+
+
+# ── Codebase stats (used by Run tab) ──────────────────────────────────────────
+
+@test_bp.route("/codebase_stats", methods=["GET"])
+def codebase_stats():
+    """Walk the source tree and return per-language file + line counts."""
+    import re as _re
+
+    # Anchor to repo root via __file__ — os.getcwd() is unreliable inside
+    # Flask's test client and when the app is launched from a different directory.
+    root = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    _SKIP_DIRS = {".venv", "__pycache__", ".git", "node_modules", "tests", "tools", ".mypy_cache"}
+    _TARGETS = ["apis", "usecases", "chat", "simulator", "static", "templates", "app.py", "clean_keys.py", "live_demo.py"]
+    _EXT_LANG = {
+        ".py":   "Python",
+        ".js":   "JavaScript",
+        ".html": "HTML",
+        ".css":  "CSS",
+        ".json": "JSON",
+        ".sh":   "Shell",
+        ".bat":  "Batch",
+        ".md":   "Markdown",
+        ".toml": "TOML",
+        ".txt":  "Text",
+    }
+
+    counts: dict[str, dict] = {}  # lang -> {files, lines}
+
+    def _scan(path: str) -> None:
+        if os.path.isfile(path):
+            ext = os.path.splitext(path)[1].lower()
+            lang = _EXT_LANG.get(ext)
+            if not lang:
+                return
+            try:
+                with open(path, encoding="utf-8", errors="replace") as fh:
+                    n = sum(1 for _ in fh)
+            except OSError:
+                n = 0
+            if lang not in counts:
+                counts[lang] = {"files": 0, "lines": 0}
+            counts[lang]["files"] += 1
+            counts[lang]["lines"] += n
+        elif os.path.isdir(path):
+            try:
+                entries = os.listdir(path)
+            except OSError:
+                return
+            for entry in entries:
+                if entry in _SKIP_DIRS or entry.startswith("."):
+                    continue
+                _scan(os.path.join(path, entry))
+
+    for t in _TARGETS:
+        full = os.path.join(root, t)
+        if os.path.exists(full):
+            _scan(full)
+
+    # Sort by lines descending for display
+    ordered = sorted(counts.items(), key=lambda x: -x[1]["lines"])
+    total_files = sum(v["files"] for v in counts.values())
+    total_lines = sum(v["lines"] for v in counts.values())
+
+    return jsonify({
+        "ok": True,
+        "languages": [{"lang": k, "files": v["files"], "lines": v["lines"]} for k, v in ordered],
+        "total_files": total_files,
+        "total_lines": total_lines,
+    })

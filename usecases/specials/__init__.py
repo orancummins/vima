@@ -98,7 +98,6 @@ def _search(params: dict[str, Any]) -> dict[str, Any]:
     if live_total < _MIN_LIVE_ITEMS:
         curated = _curated_dataset(
             destination=base["destination_markets"],
-            eligible=base["eligible_markets"],
             product=base["mastercard_product"],
             category=base["category"],
         )
@@ -276,7 +275,6 @@ _CATEGORIES = ["Dining", "Shopping", "Travel", "Entertainment", "Sports", "Welln
 
 def _curated_dataset(
     destination: str,
-    eligible: str,
     product: str,
     category: str = "",
 ) -> dict[str, list[dict[str, Any]]]:

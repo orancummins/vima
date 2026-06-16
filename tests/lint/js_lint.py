@@ -70,16 +70,14 @@ def run(base_url: str = "") -> TestRunner:  # base_url unused — linting is ser
         return runner
 
     # ── Run ESLint with JSON formatter ──────────────────────────
-    # Collect JS files explicitly via Python glob so ESLint can't skip them
-    # regardless of config format.  ESLint v9 with flat config silently ignores
-    # .eslintrc.json and returns [] when given a directory path.
+    # Collect JS files explicitly via Python glob — passing explicit file paths
+    # works with both ESLint 8 and 9 (directory scanning in v9 flat-config mode
+    # silently skips files not matched by the config).
     import glob as _glob
-    js_files = sorted(
+    js_files = sorted(set(
         _glob.glob(os.path.join(js_dir, "**", "*.js"), recursive=True)
         + _glob.glob(os.path.join(js_dir, "*.js"))
-    )
-    # De-dup (glob may return overlapping results)
-    js_files = sorted(set(js_files))
+    ))
 
     if not js_files:
         def _no_js_files():
@@ -87,22 +85,18 @@ def run(base_url: str = "") -> TestRunner:  # base_url unused — linting is ser
         runner.run(f"{_JS_TARGET} — no .js files found", _no_js_files)
         return runner
 
-    # Check ESLint version — v9+ uses flat config by default and ignores
-    # .eslintrc.json, so we need --flag or the legacy config option.
-    ver_result = subprocess.run(
-        [npx, "--yes", "eslint@8", "--version"],
-        capture_output=True, text=True, encoding="utf-8", cwd=root,
-    )
-    eslint_v9 = ver_result.stdout.strip().startswith("v9") if ver_result.returncode == 0 else False
+    # Pass relative paths from cwd — absolute Windows paths with backslashes
+    # are silently rejected by some ESLint versions.
+    js_files_rel = [os.path.relpath(f, root).replace("\\", "/") for f in js_files]
 
-    eslint_args = [npx, "--yes", "eslint@8"] + js_files + ["--format", "json"]
-    if not eslint_v9:
-        # ESLint 8: use --ext to be explicit (directory args may need it on some platforms)
-        eslint_args = [npx, "--yes", "eslint@8", "--ext", ".js"] + js_files + ["--format", "json"]
+    # ESLINT_USE_FLAT_CONFIG=false forces legacy .eslintrc.json behaviour on
+    # both ESLint 8 and 9 without requiring a specific version download.
+    eslint_env = {**os.environ, "ESLINT_USE_FLAT_CONFIG": "false"}
 
     result = subprocess.run(
-        eslint_args,
+        [npx, "--yes", "eslint"] + js_files_rel + ["--format", "json"],
         capture_output=True, text=True, encoding="utf-8",
+        env=eslint_env,
         cwd=root,
     )
 
@@ -144,7 +138,7 @@ def run(base_url: str = "") -> TestRunner:  # base_url unused — linting is ser
     if not files_with_issues:
         def _all_clean():
             pass
-        runner.run(f"All {len(file_results)} JS file(s) are lint-clean", _all_clean)
+        runner.run(f"All {len(js_files)} JS file(s) are lint-clean", _all_clean)
     else:
         for file_entry in sorted(files_with_issues, key=lambda x: x.get("filePath", "")):
             try:

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Email Settings — Test Dashboard</title>
+  <title>Settings — Testing</title>
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
@@ -17,19 +17,20 @@
       --mono: "JetBrains Mono", ui-monospace, monospace;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { min-height: 100%; }
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
     body {
       font-family: "Inter", -apple-system, sans-serif;
       background: var(--bg); color: var(--text); font-size: 14px;
+      display: flex; flex-direction: column;
     }
     .header {
-      position: sticky; top: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
       padding: 12px 24px;
       background: rgba(0,0,0,0.92);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
     }
     .brand { display: flex; align-items: center; gap: 14px; }
     .brand-marks { display: flex; gap: 5px; }
@@ -49,9 +50,21 @@
     .nav-btn:hover { background: var(--line); color: var(--text); }
     .nav-btn.active { background: var(--line); color: var(--text); font-weight: 600; }
 
-    .page-content { padding: 28px 32px; max-width: 640px; margin: 0 auto; }
+    .page-content {
+      flex: 1; overflow-y: auto;
+      padding: 28px 32px; max-width: 640px; margin: 0 auto;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.10) transparent;
+    }
+    .page-content::-webkit-scrollbar { width: 5px; }
+    .page-content::-webkit-scrollbar-track { background: transparent; }
+    .page-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 3px; }
     .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 6px; }
-    .page-meta { font-size: 13px; color: var(--text3); margin-bottom: 28px; }
+    .page-meta  { font-size: 13px; color: var(--text3); margin-bottom: 28px; }
+    .section-heading {
+      font-size: 16px; font-weight: 700; letter-spacing: -0.02em;
+      margin: 32px 0 6px;
+    }
+    .section-heading:first-of-type { margin-top: 0; }
 
     /* ── Alert banners ── */
     .banner {
@@ -111,6 +124,12 @@
     .btn-ghost { background: var(--line); color: var(--text2); border-color: var(--line); }
     .btn-ghost:hover { background: #333; color: var(--text); }
 
+    .section-heading {
+      font-size: 16px; font-weight: 700; letter-spacing: -0.02em;
+      margin: 32px 0 6px;
+    }
+    .section-heading:first-of-type { margin-top: 0; }
+
     /* ── Config file path note ── */
     .config-path-note {
       margin-top: 20px; padding: 12px 16px;
@@ -135,11 +154,12 @@
     </div>
     <div>
       <div class="brand-title">Mastercard Solution Studio</div>
-      <div class="brand-sub">Test Results Dashboard</div>
+      <div class="brand-sub">Testing</div>
     </div>
   </div>
   <nav class="header-nav">
-    <a href="{{ url_for('test_dashboard.run_list') }}" class="nav-btn">Runs</a>
+    <a href="{{ url_for('test_dashboard.run_list') }}" class="nav-btn">Run</a>
+    <a href="{{ url_for('test_dashboard.run_list') }}#history" class="nav-btn">History</a>
     <a href="{{ url_for('test_dashboard.stats') }}" class="nav-btn">Stats</a>
     <a href="{{ url_for('test_dashboard.config') }}" class="nav-btn active">Settings</a>
     <a href="/" class="nav-btn">&#8592; Back to App</a>
@@ -147,8 +167,8 @@
 </header>
 
 <main class="page-content">
-  <h1 class="page-title">Email Settings</h1>
-  <p class="page-meta">Configure SMTP to receive test completion alerts with pass/fail details.</p>
+  <h1 class="page-title">Settings</h1>
+  <p class="page-meta">Configure test runner behaviour, provisioning credentials, and email notifications.</p>
 
   {% if saved %}
   <div class="banner banner-ok">
@@ -170,6 +190,66 @@
   </div>
   {% endif %}
   {% endif %}
+
+  <!-- ──────────────────────── CLEAN RUN ──────────────────────── -->
+  <h2 class="section-heading">Clean Run — provisioning</h2>
+  <p style="font-size:13px;color:var(--text3);margin-bottom:20px">
+    Clean Run clones the repo, starts a temporary server on a separate port, provisions fresh
+    <code style="font-family:var(--mono)">SST-*</code> API keys into that server, runs the full test suite,
+    then shuts everything down. Your running app's keys are never touched.
+    Enter your Mastercard Developers credentials here so the browser automation can log in automatically.
+  </p>
+  <form method="POST">
+    <input type="hidden" name="section" value="portal" />
+    <div class="form-card">
+
+      <div class="form-section">
+        <div class="section-title">Mastercard Developers account</div>
+        <div class="section-desc">Used only during Clean Run provisioning — never stored in version control.</div>
+        <div class="field-row">
+          <div class="field" style="flex:2">
+            <label for="portal_email">Portal email</label>
+            <input type="email" id="portal_email" name="portal_email"
+                   value="{{ cfg.portal_email }}" placeholder="you@mastercard.com" />
+          </div>
+          <div class="field" style="flex:1">
+            <label for="key_password">Key password (.p12)</label>
+            <input type="text" id="key_password" name="key_password"
+                   value="{{ cfg.key_password or 'foobar!!' }}" placeholder="foobar!!" autocomplete="off" />
+            <div class="hint">Password for provisioned .p12 certificates.</div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="checkbox-row">
+            <input type="checkbox" id="portal_sso" name="portal_sso"
+                   {% if cfg.portal_sso in ('1', 'true', 'yes', 'on', '') %}checked{% endif %} />
+            <label class="checkbox-label" for="portal_sso">Use SSO login (corporate / federated)</label>
+          </div>
+          <div class="hint">If unchecked, add your portal password to <code style="font-family:var(--mono)">config/.env</code> as <code style="font-family:var(--mono)">MCD_PORTAL_PASSWORD</code>.</div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-title">Test server port</div>
+        <div class="section-desc">The temporary server started during Clean Run listens on this port. Must differ from your main app port (9021).</div>
+        <div class="field" style="max-width:160px">
+          <label for="test_port">Port</label>
+          <input type="number" id="test_port" name="test_port"
+                 value="{{ cfg.test_port or '9022' }}" min="1024" max="65535" />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" name="action" value="save" class="btn btn-primary">Save</button>
+        <a href="{{ url_for('test_dashboard.run_list') }}" class="btn btn-ghost">Cancel</a>
+      </div>
+
+    </div>
+  </form>
+
+  <!-- ──────────────────── EMAIL SETTINGS ──────────────────── -->
+  <h2 class="section-heading">Email Settings</h2>
+  <p style="font-size:13px;color:var(--text3);margin-bottom:20px">Configure SMTP to receive test completion alerts with pass/fail details.</p>
 
   <form method="POST">
     <div class="form-card">
@@ -233,60 +313,9 @@
         </div>
       </div>
 
-    </div>
-  </form>
-
-  <!-- Portal credentials (separate form so password managers don't interfere) -->
-  <h2 style="font-size:16px;font-weight:700;letter-spacing:-0.02em;margin:32px 0 6px">Clean Run — provisioning</h2>
-  <p style="font-size:13px;color:var(--text3);margin-bottom:20px">
-    Clean Run clones the repo, starts a temporary server on a separate port, provisions fresh
-    <code style="font-family:var(--mono)">SST-*</code> API keys into that server, runs the full test suite,
-    then shuts everything down. Your running app's keys are never touched.
-    Enter your Mastercard Developers credentials here so the browser automation can log in automatically.
-  </p>
-  <form method="POST">
-    <input type="hidden" name="section" value="portal" />
-    <div class="form-card">
-
-      <div class="form-section">
-        <div class="section-title">Mastercard Developers account</div>
-        <div class="section-desc">Used only during Clean Run provisioning — never stored in version control.</div>
-        <div class="field-row">
-          <div class="field" style="flex:2">
-            <label for="portal_email">Portal email</label>
-            <input type="email" id="portal_email" name="portal_email"
-                   value="{{ cfg.portal_email }}" placeholder="you@mastercard.com" />
-          </div>
-          <div class="field" style="flex:1">
-            <label for="key_password">Key password (.p12)</label>
-            <input type="text" id="key_password" name="key_password"
-                   value="{{ cfg.key_password or 'foobar!!' }}" placeholder="foobar!!" autocomplete="off" />
-            <div class="hint">Password for provisioned .p12 certificates.</div>
-          </div>
-        </div>
-        <div class="field">
-          <div class="checkbox-row">
-            <input type="checkbox" id="portal_sso" name="portal_sso"
-                   {% if cfg.portal_sso in ('1', 'true', 'yes', 'on', '') %}checked{% endif %} />
-            <label class="checkbox-label" for="portal_sso">Use SSO login (corporate / federated)</label>
-          </div>
-          <div class="hint">If unchecked, add your portal password to <code style="font-family:var(--mono)">config/.env</code> as <code style="font-family:var(--mono)">MCD_PORTAL_PASSWORD</code>.</div>
-        </div>
-      </div>
-
-      <div class="form-section">
-        <div class="section-title">Test server port</div>
-        <div class="section-desc">The temporary server started during Clean Run listens on this port. Must differ from your main app port (9021).</div>
-        <div class="field" style="max-width:160px">
-          <label for="test_port">Port</label>
-          <input type="number" id="test_port" name="test_port"
-                 value="{{ cfg.test_port or '9022' }}" min="1024" max="65535" />
-        </div>
-      </div>
-
       <div class="form-actions">
-        <button type="submit" name="action" value="save" class="btn btn-primary">Save settings</button>
-        <a href="{{ url_for('test_dashboard.run_list') }}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" name="action" value="save" class="btn btn-primary">Save</button>
+        <button type="submit" name="action" value="test_email" class="btn btn-ghost">Send test email</button>
       </div>
 
     </div>

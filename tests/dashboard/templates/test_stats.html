@@ -116,11 +116,12 @@
     </div>
     <div>
       <div class="brand-title">Mastercard Solution Studio</div>
-      <div class="brand-sub">Test Results Dashboard</div>
+      <div class="brand-sub">Testing</div>
     </div>
   </div>
   <nav class="header-nav">
-    <a href="{{ url_for('test_dashboard.run_list') }}" class="nav-btn">Runs</a>
+    <a href="{{ url_for('test_dashboard.run_list') }}" class="nav-btn">Run</a>
+    <a href="{{ url_for('test_dashboard.run_list') }}#history" class="nav-btn">History</a>
     <a href="{{ url_for('test_dashboard.stats') }}" class="nav-btn active">Stats</a>
     <a href="{{ url_for('test_dashboard.config') }}" class="nav-btn">Settings</a>
     <a href="/" class="nav-btn">&#8592; Back to App</a>

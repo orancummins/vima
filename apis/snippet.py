@@ -380,7 +380,7 @@ def _capture_call(
                 _cls = None
             if _cls is not None and hasattr(_cls, "_get_token"):
                 _orig = _cls._get_token
-                _cls._get_token = lambda self, *a, **kw: "snippet-dry-run-token"
+                _cls._get_token = lambda self, *a, **_kw: "snippet-dry-run-token"
                 of_client_restore.append((_cls, _orig))
         if hasattr(mod, "_client"):
             saved_cached_client = mod._client
