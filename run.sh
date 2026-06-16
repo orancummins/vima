@@ -13,8 +13,22 @@ kill_port() {
   pids=$(lsof -ti tcp:"$port" 2>/dev/null || true)
   if [[ -n "$pids" ]]; then
     echo "Stopping process on port $port..."
-    echo "$pids" | xargs kill -9 2>/dev/null || true
-    sleep 0.5
+    # Try graceful shutdown first
+    echo "$pids" | xargs kill -TERM 2>/dev/null || true
+    # Wait for processes to exit gracefully
+    for i in 1 2 3 4 5; do
+      sleep 0.5
+      remaining=$(lsof -ti tcp:"$port" 2>/dev/null || true)
+      if [[ -z "$remaining" ]]; then
+        break
+      fi
+    done
+    # Force kill if still running
+    remaining=$(lsof -ti tcp:"$port" 2>/dev/null || true)
+    if [[ -n "$remaining" ]]; then
+      echo "Forcing kill on port $port..."
+      echo "$remaining" | xargs kill -9 2>/dev/null || true
+    fi
   fi
 }
 
