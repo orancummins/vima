@@ -40,3 +40,6 @@ cli/ofin/sdk/_vendor/*_client.py
 # Test results dashboard
 tests/results.db
 tests/test_config.ini
+# Runtime test run artifacts (don't track)
+tests/last_run.log
+tests/last_run.pid
