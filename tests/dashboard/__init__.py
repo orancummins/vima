@@ -305,7 +305,14 @@ def run_status():
                         running = False
                 else:
                     os.kill(pid, 0)
-                    running = True
+                    # Also try to reap zombie children — bash spawned with
+                    # start_new_session=True stays as a zombie in our process
+                    # table after it exits, making os.kill still return 0.
+                    try:
+                        wpid, _ = os.waitpid(pid, os.WNOHANG)
+                        running = (wpid != pid)  # reaped → finished
+                    except Exception:
+                        running = True
             except Exception:
                 running = False
     except Exception:

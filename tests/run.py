@@ -271,6 +271,18 @@ def main() -> None:
     args = _parse_args()
     _run_start_time = time.time()
     install_type = args.install_type.upper()
+
+    # Register the done-sentinel writer immediately so it fires on ALL exit
+    # paths (sys.exit, exceptions, early returns) — not just the happy path.
+    import atexit as _atexit
+    _done_path = os.path.join(_ROOT, "tests", "last_run.done")
+    def _write_done():
+        try:
+            with open(_done_path, "w") as _f:
+                _f.write("done")
+        except Exception:
+            pass
+    _atexit.register(_write_done)
     # Normalize work_dir: strip trailing separator (Windows %~dp0 quirk) and
     # resolve to absolute path so subprocess.Popen(cwd=) never sees a stale cwd.
     work_dir = os.path.normpath(os.path.abspath(args.work_dir.strip('\"')))
@@ -355,15 +367,6 @@ def main() -> None:
             summary.add(r)
             r.print_summary()
 
-        import atexit as _atexit
-        _done_path = os.path.join(_ROOT, "tests", "last_run.done")
-        def _write_done():
-            try:
-                with open(_done_path, "w") as _f:
-                    _f.write("done")
-            except Exception:
-                pass
-        _atexit.register(_write_done)
         _record_run(summary, args, install_type, _run_start_time)
         summary.print_and_exit()
 
@@ -584,18 +587,6 @@ def main() -> None:
             print(f"  {yellow('[INFO] work-dir is the original repo — skipping directory removal.')}")
 
     # ── Final summary ──────────────────────────────────────────
-    # Register a sentinel so the dashboard knows the run completed even if
-    # the PID gets recycled by Windows before the next poll.
-    import atexit as _atexit
-    _done_path = os.path.join(_ROOT, "tests", "last_run.done")
-    def _write_done():
-        try:
-            with open(_done_path, "w") as _f:
-                _f.write("done")
-        except Exception:
-            pass
-    _atexit.register(_write_done)
-
     _record_run(summary, args, install_type, _run_start_time)
     summary.print_and_exit()
 
