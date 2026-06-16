@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Run #{{ run.id }} — Test Results</title>
+  <title>Run #{{ run.id }} — Testing</title>
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -194,11 +194,12 @@
     </div>
     <div>
       <div class="brand-title">Mastercard Solution Studio</div>
-      <div class="brand-sub">Test Results Dashboard</div>
+      <div class="brand-sub">Testing</div>
     </div>
   </div>
   <nav class="header-nav">
-    <a href="{{ url_for('test_dashboard.run_list') }}" class="nav-btn">All Runs</a>
+    <a href="{{ url_for('test_dashboard.run_list') }}" class="nav-btn">Run</a>
+    <a href="{{ url_for('test_dashboard.run_list') }}#history" class="nav-btn">History</a>
     <a href="{{ url_for('test_dashboard.stats') }}" class="nav-btn">Stats</a>
     <a href="{{ url_for('test_dashboard.config') }}" class="nav-btn">Settings</a>
     <a href="/" class="nav-btn">&#8592; Back to App</a>

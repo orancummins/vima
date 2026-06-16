@@ -42,7 +42,6 @@
 
 [1m[36m>> BIN Lookup Use Case[0m[0m
   [32m[PASS][0m /bin_lookup/index.html loads (200)
-  [32m[PASS][0m BIN ranges status endpoint returns valid JSON
 
 ============================================================
 Solution Studio
@@ -72,6 +71,7 @@ Listening on http://0.0.0.0:9021
 
  * Serving Flask app 'app'
  * Debug mode: on
+  [32m[PASS][0m BIN ranges status endpoint returns valid JSON
   [32m[PASS][0m Lookup action returns card data for BIN 543210
   [32m[PASS][0m Lookup action handles unknown BIN gracefully
   [32m4/4 passed[0m
@@ -103,18 +103,18 @@ Listening on http://0.0.0.0:9021
 [1m>> JavaScript Lint (ESLint)[0m
 
 [1m[36m>> JavaScript Lint (ESLint)[0m[0m
-  [32m[PASS][0m Scan scope: 0 JS file(s) in static/js
+  [32m[PASS][0m Scan scope: 25 JS file(s) in static/js
   Config:   .eslintrc.json (eslint:recommended)
   Checks:   best-practices, no-unused-vars, no-undef, consistent syntax
   Findings: 0 error(s), 0 warning(s)
-  [32m[PASS][0m All 0 JS file(s) are lint-clean
+  [32m[PASS][0m All 25 JS file(s) are lint-clean
   [32m2/2 passed[0m
 
 [1m>> Security (Bandit)[0m
 
 [1m[36m>> Security (Bandit)[0m[0m
   [32m[PASS][0m bandit is installed
-  [32m[PASS][0m Scan scope: 104 file(s), 22,343 lines of code
+  [32m[PASS][0m Scan scope: 104 file(s), 22,341 lines of code
   Targets:   apis, usecases, chat, simulator, app.py, clean_keys.py, live_demo.py
   Threshold: severity >=MEDIUM, confidence >=MEDIUM
   Checks:    B1xx (injection), B2xx (shell), B3xx (imports), B4xx (ciphers),
@@ -134,6 +134,17 @@ Listening on http://0.0.0.0:9021
   [33m[INFO] 73 low-severity/confidence finding(s) below threshold — run bandit manually to review[0m
   [32m4/4 passed[0m
 
+[1m>> Dead Code (Vulture)[0m
+
+[1m[36m>> Dead Code (Vulture)[0m[0m
+  [32m[PASS][0m vulture is installed
+  [32m[PASS][0m Scan scope: 104 file(s)
+  Targets:        apis, usecases, chat, simulator, app.py, clean_keys.py, live_demo.py
+  Min confidence: 80%
+  Checks:         unused functions, classes, variables, imports, attributes
+  [32m[PASS][0m All 104 file(s) clean — no dead code found
+  [32m3/3 passed[0m
+
 [1m>> Stopping server[0m
   [32m[OK]  Server stopped.[0m
   [32m[OK]  Run recorded in dashboard DB (run #{run_id}).[0m
@@ -149,7 +160,8 @@ Listening on http://0.0.0.0:9021
   [32m[OK][0m  Python Lint (Ruff)                  3/3
   [32m[OK][0m  JavaScript Lint (ESLint)            2/2
   [32m[OK][0m  Security (Bandit)                   4/4
+  [32m[OK][0m  Dead Code (Vulture)                 3/3
 ------------------------------------------------------------
-[32m[1m  25/25 passed[0m[0m
+[32m[1m  28/28 passed[0m[0m
 ============================================================
 
