@@ -7,7 +7,7 @@ CLI can persist an "active" customer between invocations.
 """
 from __future__ import annotations
 
-from typing import Any, List, Optional
+from typing import Any
 
 from ._imports import USClientCls
 from .base import Result, first
@@ -19,7 +19,7 @@ class USClient:
     region = "us"
 
     def __init__(self, partner_id: str, partner_secret: str, app_key: str,
-                 base_url: str = "https://api.finicity.com", timeout: Optional[int] = None) -> None:
+                 base_url: str = "https://api.finicity.com", timeout: int | None = None) -> None:
         self._c = USClientCls(partner_id, partner_secret, app_key, base_url=base_url)
         self._timeout = timeout
 
@@ -58,7 +58,7 @@ class USClient:
         return self._wrap(body, status)
 
     # -- data connect -------------------------------------------------------
-    def generate_connect_url(self, customer_id: str, experience: Optional[str] = None) -> Result:
+    def generate_connect_url(self, customer_id: str, experience: str | None = None) -> Result:
         body, status = self._c.generate_connect_url(customer_id, experience=experience)
         hints = {}
         if 200 <= status < 300:
@@ -95,7 +95,7 @@ class USClient:
         return self._wrap(body, status)
 
     # -- reports ------------------------------------------------------------
-    def generate_voa(self, customer_id: str, account_ids: Optional[List[str]] = None) -> Result:
+    def generate_voa(self, customer_id: str, account_ids: list[str] | None = None) -> Result:
         body, status = self._c.generate_voa_report(customer_id, account_ids=account_ids)
         updates = {}
         if 200 <= status < 300:
@@ -104,7 +104,7 @@ class USClient:
                 updates = {"report_id": str(rid)}
         return self._wrap(body, status, state_updates=updates)
 
-    def generate_voi(self, customer_id: str, account_ids: Optional[List[str]] = None) -> Result:
+    def generate_voi(self, customer_id: str, account_ids: list[str] | None = None) -> Result:
         body, status = self._c.generate_voi_report(customer_id, account_ids=account_ids)
         updates = {}
         if 200 <= status < 300:

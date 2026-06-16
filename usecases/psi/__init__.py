@@ -8,9 +8,9 @@ Results are shaped for a day-by-day settlement confidence timeline in the UI.
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "psi",
     "name": "Payment Success Indicator",
     "description": (
@@ -25,13 +25,11 @@ MANIFEST: Dict[str, Any] = {
     "render": "psi",
 }
 
-
 def _client():
     from apis.open_finance import api as ofin_api
     return ofin_api._get_client()
 
-
-def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
     client = _client()
     if client is None:
         return {"error": "Open Finance API is not configured. Please add OPEN_FINANCE_PARTNER_ID, OPEN_FINANCE_PARTNER_SECRET and OPEN_FINANCE_APP_KEY to your config."}
@@ -78,7 +76,7 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
         if status >= 400:
             return {"error": f"API returned {status}", "detail": data}
         eligible_types = {"checking", "savings", "moneyMarket"}
-        accounts: List[Dict[str, Any]] = [
+        accounts: list[dict[str, Any]] = [
             {
                 "id":       str(a["id"]),
                 "name":     a.get("name", "Account"),
@@ -111,7 +109,7 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
             return {"error": f"PSI API returned {status}", "detail": data}
 
         # Poll if async
-        pay_request_id: Optional[str] = data.get("payRequestId")
+        pay_request_id: str | None = data.get("payRequestId")
         for _ in range(8):
             if data.get("status") == "SUCCESS":
                 break
@@ -127,18 +125,17 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
     return {"error": f"Unknown action: {action}"}
 
-
 # ---------------------------------------------------------------------------
 # Shape the raw PSI response into a frontend-friendly dict
 # ---------------------------------------------------------------------------
-def _shape_result(raw: Dict[str, Any]) -> Dict[str, Any]:
+def _shape_result(raw: dict[str, Any]) -> dict[str, Any]:
     nsf      = raw.get("nsfReturnRisk")    or {}
     unauth   = raw.get("unauthorizedReturnRisk") or {}
     nsf_res  = nsf.get("result")   or {}
     unauth_res = unauth.get("result") or {}
 
-    daily_raw: List[Dict] = nsf_res.get("dailyResults") or []
-    daily: List[Dict[str, Any]] = []
+    daily_raw: list[dict] = nsf_res.get("dailyResults") or []
+    daily: list[dict[str, Any]] = []
     for d in daily_raw:
         nsf_score  = d.get("score", 0)
         confidence = round(nsf_score, 1)
@@ -182,7 +179,6 @@ def _shape_result(raw: Dict[str, Any]) -> Dict[str, Any]:
             "riskLevel": _indicator_level(unauth_ind),
         } if unauth_score is not None else None,
     }
-
 
 def _indicator_level(indicator: str) -> str:
     ind = (indicator or "").lower()

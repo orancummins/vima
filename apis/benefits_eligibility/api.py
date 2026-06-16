@@ -20,8 +20,7 @@ from __future__ import annotations
 import json
 import os
 import uuid
-from typing import Any, Dict, List, Optional
-
+from typing import Any
 
 _PROD_BASE    = "https://api.mastercard.com/loyalty/eligibility"
 _SANDBOX_BASE = "https://sandbox.api.mastercard.com/loyalty/eligibility"
@@ -44,7 +43,7 @@ def is_configured() -> bool:
     return _configured() or is_simulated("benefits_eligibility")
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured()}
 
 
@@ -103,7 +102,7 @@ _HOW_TO = (
 )
 
 
-_BENEFIT_PARAMS: List[Dict[str, Any]] = [
+_BENEFIT_PARAMS: list[dict[str, Any]] = [
     {"name": "cardNumber",          "label": "Card number / BIN",     "type": "select", "default": "5416116000000233", "required": False, "options": _CARD_OPTIONS, "help": "6-digit BIN or 12–19-digit PAN. Provide this OR cardNumberId."},
     {"name": "cardNumberId",        "label": "Card number ID (UUID)", "type": "text",   "default": "", "required": False, "help": "36–40 char UUID returned by /card-identifiers."},
     {"name": "effectiveDate",       "label": "Effective date",        "type": "text",   "default": "", "required": False, "help": "YYYY-MM-DD. Defaults to today."},
@@ -112,14 +111,14 @@ _BENEFIT_PARAMS: List[Dict[str, Any]] = [
     {"name": "benefitCode",         "label": "Benefit code",          "type": "text",   "default": "", "required": False, "help": "Optional — 3-char alpha benefit code (e.g. CDW)."},
 ]
 
-_PRODUCT_PARAMS: List[Dict[str, Any]] = [
+_PRODUCT_PARAMS: list[dict[str, Any]] = [
     {"name": "cardNumber",    "label": "Card number / BIN",     "type": "select", "default": "5416116000000233", "required": False, "options": _CARD_OPTIONS},
     {"name": "cardNumberId",  "label": "Card number ID (UUID)", "type": "text",   "default": "", "required": False},
     {"name": "effectiveDate", "label": "Effective date",        "type": "text",   "default": "", "required": False, "help": "YYYY-MM-DD. Defaults to today."},
 ]
 
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "benefits_eligibility",
     "name": "Benefits Eligibility",
     "description": (
@@ -177,7 +176,7 @@ MANIFEST: Dict[str, Any] = {
 }
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if op_id == "search_benefits":
         return _search_benefits(params)
     if op_id == "search_products":
@@ -199,13 +198,13 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     return {"success": False, "error": f"Unknown operation: {op_id}"}
 
 
-def _search_benefits(params: Dict[str, Any]) -> Dict[str, Any]:
+def _search_benefits(params: dict[str, Any]) -> dict[str, Any]:
     card_number    = (params.get("cardNumber") or "").strip()
     card_number_id = (params.get("cardNumberId") or "").strip()
     if not card_number and not card_number_id:
         return {"success": False, "error": "Provide cardNumber or cardNumberId."}
 
-    body: Dict[str, Any] = {}
+    body: dict[str, Any] = {}
     if card_number_id:
         body["cardNumberId"] = card_number_id
     else:
@@ -222,13 +221,13 @@ def _search_benefits(params: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def _search_products(params: Dict[str, Any]) -> Dict[str, Any]:
+def _search_products(params: dict[str, Any]) -> dict[str, Any]:
     card_number    = (params.get("cardNumber") or "").strip()
     card_number_id = (params.get("cardNumberId") or "").strip()
     if not card_number and not card_number_id:
         return {"success": False, "error": "Provide cardNumber or cardNumberId."}
 
-    body: Dict[str, Any] = {}
+    body: dict[str, Any] = {}
     if card_number_id:
         body["cardNumberId"] = card_number_id
     else:
@@ -241,12 +240,12 @@ def _search_products(params: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request("POST", "/products/searches", body=body)
 
 
-def _access_token(_params: Dict[str, Any]) -> Dict[str, Any]:
+def _access_token(_params: dict[str, Any]) -> dict[str, Any]:
     return _signed_request("GET", "/widgets/access-tokens")
 
 
-def _capture_ids(body: Any) -> Dict[str, Any]:
-    out: Dict[str, Any] = {}
+def _capture_ids(body: Any) -> dict[str, Any]:
+    out: dict[str, Any] = {}
     keymap = {
         "benefitBundleId": "lastBundleId",
         "benefitCode":     "lastBenefitCode",
@@ -272,9 +271,9 @@ def _signed_request(
     method: str,
     path: str,
     *,
-    body: Optional[Dict[str, Any]] = None,
-    query: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    body: dict[str, Any] | None = None,
+    query: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("benefits_eligibility"):
         return {
@@ -286,6 +285,7 @@ def _signed_request(
         }
 
     from urllib.parse import urlencode
+
     import requests
 
     url = f"{_base()}{path}"
@@ -295,7 +295,7 @@ def _signed_request(
     body_str = json.dumps(body) if body is not None else None
 
     if is_simulated("benefits_eligibility"):
-        headers: Dict[str, str] = {
+        headers: dict[str, str] = {
             "Accept": "application/json",
             "x-openapi-transid": str(uuid.uuid4()),
         }

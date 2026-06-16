@@ -13,19 +13,18 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .client import OpenFinanceAUClient
-
 
 # ---------------------------------------------------------------------------
 # Client (singleton)
 # ---------------------------------------------------------------------------
 
-_client: Optional[OpenFinanceAUClient] = None
+_client: OpenFinanceAUClient | None = None
 
 
-def _get_client() -> Optional[OpenFinanceAUClient]:
+def _get_client() -> OpenFinanceAUClient | None:
     global _client
     from simulator.switcher import is_simulated
     if is_simulated("open_finance_au"):
@@ -56,7 +55,7 @@ def is_configured() -> bool:
 # Per-API state
 # ---------------------------------------------------------------------------
 
-STATE: Dict[str, Any] = {
+STATE: dict[str, Any] = {
     "customer_id": None,
     "customer_username": None,
     "institution_id": None,
@@ -80,7 +79,7 @@ TEST_USERS_DOCS_URL = (
     "integration-and-testing/test-the-apis/"
 )
 
-TEST_USERS: List[Dict[str, Any]] = [
+TEST_USERS: list[dict[str, Any]] = [
     {"username": "profile_4110", "password": "profile_4110",
      "kind": "Consumer",
      "scenario": "Default rich consumer profile (savings + transaction accounts)",
@@ -111,7 +110,7 @@ TEST_PROVIDERS_NOTE = (
 )
 
 
-def _test_credentials_payload() -> Dict[str, Any]:
+def _test_credentials_payload() -> dict[str, Any]:
     """Compact representation of the AU CDR sandbox test profiles.
 
     Returned as a hint on Generate Connect URL so the UI can surface the
@@ -140,7 +139,7 @@ def _test_credentials_payload() -> Dict[str, Any]:
 # Manifest
 # ---------------------------------------------------------------------------
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "open_finance_au",
     "name": "Open Finance Australia",
     "description": (
@@ -403,13 +402,13 @@ MANIFEST: Dict[str, Any] = {
 # Dispatcher
 # ---------------------------------------------------------------------------
 
-def _err(msg: str, code: int = 400) -> Dict[str, Any]:
+def _err(msg: str, code: int = 400) -> dict[str, Any]:
     return {"status": "error", "code": code, "data": {"error": msg},
             "state_updates": {}, "hints": {}}
 
 
-def _ok(data: Any, code: int = 200, state_updates: Optional[Dict[str, Any]] = None,
-        hints: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def _ok(data: Any, code: int = 200, state_updates: dict[str, Any] | None = None,
+        hints: dict[str, Any] | None = None) -> dict[str, Any]:
     # Mutate the module-level STATE so the UI's get_state() snapshot reflects
     # produced values on the next poll (in addition to returning them in the
     # envelope for any callers that read state_updates directly).
@@ -426,7 +425,7 @@ def _ok(data: Any, code: int = 200, state_updates: Optional[Dict[str, Any]] = No
     }
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     """Return a UI-safe snapshot of state for the explorer state panel."""
     return {
         "customer_id": STATE.get("customer_id"),
@@ -437,7 +436,7 @@ def get_state() -> Dict[str, Any]:
     }
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     """Dispatch operation by id; returns {status, code, data, state_updates}."""
     p = params or {}
 
@@ -479,7 +478,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
                 email=p.get("email") or "alex.smith@example.com",
                 phone=p.get("phone") or "+61400000000",
             )
-            state: Dict[str, Any] = {}
+            state: dict[str, Any] = {}
             if isinstance(data, dict) and data.get("id"):
                 state["customer_id"] = str(data["id"])
                 state["customer_username"] = data.get("username") or username
@@ -517,7 +516,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
                 webhook_url=p.get("webhook_url", ""),
             )
             state = {}
-            hints: Dict[str, Any] = {"test_credentials": _test_credentials_payload()}
+            hints: dict[str, Any] = {"test_credentials": _test_credentials_payload()}
             if isinstance(data, dict) and data.get("link"):
                 state["connect_url"] = data["link"]
                 hints["open_link"] = data["link"]

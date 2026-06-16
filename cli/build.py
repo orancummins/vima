@@ -61,7 +61,7 @@ def vendor_clients() -> None:
     for src, dst_name in VENDOR_SOURCES:
         if not os.path.isfile(src):
             raise SystemExit(f"Missing source client: {src}")
-        with open(src, "r", encoding="utf-8") as fh:
+        with open(src, encoding="utf-8") as fh:
             code = fh.read()
         # The clients use only stdlib + requests + cryptography (no relative
         # imports today). Defensively neutralise any future ``from .x`` import.
@@ -71,10 +71,10 @@ def vendor_clients() -> None:
         log(f"vendored {os.path.relpath(src, REPO_ROOT)} -> sdk/_vendor/{dst_name}")
 
 
-def parse_env(path: str) -> "list[tuple[str, str]]":
+def parse_env(path: str) -> list[tuple[str, str]]:
     """Read KEY=VALUE lines, preserving order. Comments/blanks dropped."""
     out = []
-    with open(path, "r", encoding="utf-8") as fh:
+    with open(path, encoding="utf-8") as fh:
         for raw in fh:
             line = raw.strip()
             if not line or line.startswith("#") or "=" not in line:

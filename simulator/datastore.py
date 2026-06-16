@@ -1,5 +1,6 @@
 """Simulator data store — one SQLite DB per API, committed to source control."""
 from __future__ import annotations
+
 import json
 import sqlite3
 import threading

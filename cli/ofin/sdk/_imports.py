@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Type
 
 
 def _ensure_repo_on_path() -> None:
@@ -50,8 +49,8 @@ def _load_clients():
 
     # 2) Vendored clients (bundled .pyz). Created by cli/build.py.
     try:
-        from ._vendor.open_finance_client import OpenFinanceClient as _US  # type: ignore
         from ._vendor.open_finance_au_client import OpenFinanceAUClient as _AU  # type: ignore
+        from ._vendor.open_finance_client import OpenFinanceClient as _US  # type: ignore
         from ._vendor.open_finance_eu_client import OpenFinanceEUClient as _EU  # type: ignore
         return _US, _AU, _EU
     except Exception as exc:  # noqa: BLE001
@@ -63,9 +62,9 @@ def _load_clients():
         ) from exc
 
 
-USClientCls: Type
-AUClientCls: Type
-EUClientCls: Type
+USClientCls: type
+AUClientCls: type
+EUClientCls: type
 USClientCls, AUClientCls, EUClientCls = _load_clients()
 
 __all__ = ["USClientCls", "AUClientCls", "EUClientCls"]

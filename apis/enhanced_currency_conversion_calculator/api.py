@@ -13,10 +13,10 @@ Operations (all GET):
 from __future__ import annotations
 
 import os
-from typing import Any, Dict
+from typing import Any
 from urllib.parse import urlencode
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "enhanced_currency_conversion_calculator",
     "name": "Enhanced Currency Conversion Calculator",
     "description": (
@@ -200,11 +200,11 @@ def is_configured() -> bool:
     return _configured() or is_simulated(_SIM_SLUG)
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured()}
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if op_id == "summary_rate":
         return _get(
             "/summary-rates",
@@ -229,7 +229,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     return {"success": False, "error": f"Unknown operation: {op_id}"}
 
 
-def _get(path: str, query: Dict[str, str]) -> Dict[str, Any]:
+def _get(path: str, query: dict[str, str]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
 
     if not _configured() and not is_simulated(_SIM_SLUG):

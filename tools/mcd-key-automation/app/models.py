@@ -39,6 +39,9 @@ class AppConfig(BaseModel):
     login_url: str = "https://developer.mastercard.com/account/log-in"
     dashboard_url_pattern: str = "**/dashboard**"
     key_password: str = "foobar!!"
+    # Prefix used when naming portal projects.  App-provisioned projects use
+    # "SS" (→ "SS-<api>-<ts>"); test-provisioned projects use "SST" (→ "SST-…").
+    project_prefix: str = "SS"
     projects: list[ProjectSpec] = Field(default_factory=list)
 
     @field_validator("projects")

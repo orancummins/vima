@@ -1,5 +1,7 @@
 import uuid
-from flask import request, jsonify
+
+from flask import jsonify, request
+
 from simulator.datastore import store
 
 API = "easy_savings"

@@ -25,8 +25,7 @@ from __future__ import annotations
 
 import datetime
 import hashlib
-from typing import Iterable, Mapping, Optional
-
+from collections.abc import Iterable
 
 SPOTLIGHTS: dict[str, dict[str, str]] = {
     "open_finance": {
@@ -347,8 +346,8 @@ def for_api(api_id: str) -> dict[str, str]:
 def pick_today(
     api_ids: Iterable[str],
     *,
-    today: Optional[datetime.date] = None,
-) -> Optional[str]:
+    today: datetime.date | None = None,
+) -> str | None:
     """Pick the API id to spotlight on ``today`` (UTC by default).
 
     Deterministic per calendar day: hashes the ISO date string against the

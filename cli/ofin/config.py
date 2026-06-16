@@ -18,17 +18,16 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from typing import Dict, List, Optional
 
 
 # ---------------------------------------------------------------------------
 # .env parsing + discovery
 # ---------------------------------------------------------------------------
-def parse_env_file(path: str) -> Dict[str, str]:
+def parse_env_file(path: str) -> dict[str, str]:
     """Parse a ``KEY=VALUE`` file. Ignores blanks/comments; strips quotes."""
-    out: Dict[str, str] = {}
+    out: dict[str, str] = {}
     try:
-        with open(path, "r", encoding="utf-8") as fh:
+        with open(path, encoding="utf-8") as fh:
             for raw in fh:
                 line = raw.strip()
                 if not line or line.startswith("#"):
@@ -47,9 +46,9 @@ def parse_env_file(path: str) -> Dict[str, str]:
     return out
 
 
-def _candidate_repo_envs() -> List[str]:
+def _candidate_repo_envs() -> list[str]:
     """Return plausible repo ``config/.env`` paths, nearest first."""
-    candidates: List[str] = []
+    candidates: list[str] = []
     # Walk up from the current working directory.
     cwd = os.path.abspath(os.getcwd())
     node = cwd
@@ -78,13 +77,13 @@ def _bundled_config_path() -> str:
     return os.path.join(here, "_bundled_config.env")
 
 
-def config_sources(env_file: Optional[str] = None) -> List[str]:
+def config_sources(env_file: str | None = None) -> list[str]:
     """Return the human-readable list of config files actually in effect.
 
     Useful for the no-args welcome / ``config show`` so users can see exactly
     where credentials are being read from, in precedence order (highest first).
     """
-    sources: List[str] = []
+    sources: list[str] = []
     if any(k.startswith("OPEN_FINANCE") for k in os.environ):
         sources.append("OS environment variables")
     if env_file and os.path.isfile(env_file):
@@ -99,13 +98,13 @@ def config_sources(env_file: Optional[str] = None) -> List[str]:
     return sources
 
 
-def build_env(env_file: Optional[str] = None) -> Dict[str, str]:
+def build_env(env_file: str | None = None) -> dict[str, str]:
     """Build the effective environment mapping per the documented precedence.
 
     OS environment wins; then ``env_file``; then the nearest repo ``config/.env``;
     then the bundled config. Returns a plain dict (a snapshot, not ``os.environ``).
     """
-    merged: Dict[str, str] = {}
+    merged: dict[str, str] = {}
 
     # Lowest precedence: bundled config.
     bundled = _bundled_config_path()
@@ -137,7 +136,7 @@ def build_env(env_file: Optional[str] = None) -> Dict[str, str]:
 _PLACEHOLDERS = {"", "your_partner_id_here", "your_client_id_here", "changeme"}
 
 
-def _resolve_key_path(path: str, env_file: Optional[str] = None) -> str:
+def _resolve_key_path(path: str, env_file: str | None = None) -> str:
     """Resolve an EU key/cert path to an on-disk location.
 
     Absolute paths that exist pass through. Relative paths are resolved against
@@ -155,7 +154,7 @@ def _resolve_key_path(path: str, env_file: Optional[str] = None) -> str:
         return path
     if os.path.isabs(path) and os.path.exists(path):
         return path
-    bases: List[str] = []
+    bases: list[str] = []
     if env_file:
         bases.append(os.path.dirname(os.path.abspath(env_file)))
     for cand in _candidate_repo_envs():
@@ -237,10 +236,10 @@ class Config:
     us: USConfig
     au: AUConfig
     eu: EUConfig
-    source_env: Dict[str, str]
+    source_env: dict[str, str]
 
     @classmethod
-    def resolve(cls, env_file: Optional[str] = None) -> "Config":
+    def resolve(cls, env_file: str | None = None) -> Config:
         env = build_env(env_file)
         us = USConfig(
             partner_id=env.get("OPEN_FINANCE_PARTNER_ID", ""),

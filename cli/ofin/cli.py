@@ -4,15 +4,14 @@ from __future__ import annotations
 import argparse
 import sys
 from dataclasses import dataclass
-from typing import Optional
 
 from . import __version__
+from .commands import au_cmd, common_cmd, eu_cmd, us_cmd
 from .config import Config, config_sources
 from .errors import ConfigError, OfinError
 from .output import Printer
 from .sdk import OfinClient
 from .state import State
-from .commands import au_cmd, common_cmd, eu_cmd, us_cmd
 
 
 @dataclass
@@ -23,8 +22,8 @@ class Context:
     state: State
     printer: Printer
     verbose: bool
-    timeout: Optional[int]
-    _client: Optional[OfinClient] = None
+    timeout: int | None
+    _client: OfinClient | None = None
 
     @property
     def client(self) -> OfinClient:
@@ -57,7 +56,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _welcome(ctx: "Context", env_file: Optional[str]) -> None:
+def _welcome(ctx: Context, env_file: str | None) -> None:
     """Print a friendly getting-started screen when no command is given."""
     p = ctx.printer
     b = p.bold
@@ -97,7 +96,7 @@ def _welcome(ctx: "Context", env_file: Optional[str]) -> None:
            "--state-file PATH  --timeout N  -v")
 
 
-def main(argv: Optional[list] = None) -> int:
+def main(argv: list | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     parser = build_parser()
     args = parser.parse_args(argv)

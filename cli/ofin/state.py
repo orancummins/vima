@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import os
 import tempfile
-from typing import Any, Dict, Optional
+from typing import Any
 
 _DEFAULT_KEYS_BY_REGION = ("us", "au", "eu")
 
@@ -28,14 +28,14 @@ def default_state_path() -> str:
 class State:
     """A JSON-backed dict of ``{region: {key: value}}``."""
 
-    def __init__(self, path: Optional[str] = None) -> None:
+    def __init__(self, path: str | None = None) -> None:
         self.path = path or default_state_path()
-        self._data: Dict[str, Dict[str, Any]] = {r: {} for r in _DEFAULT_KEYS_BY_REGION}
+        self._data: dict[str, dict[str, Any]] = {r: {} for r in _DEFAULT_KEYS_BY_REGION}
         self._load()
 
     def _load(self) -> None:
         try:
-            with open(self.path, "r", encoding="utf-8") as fh:
+            with open(self.path, encoding="utf-8") as fh:
                 loaded = json.load(fh)
             if isinstance(loaded, dict):
                 for region, vals in loaded.items():
@@ -56,7 +56,7 @@ class State:
             pass  # Best-effort; never break a command because state can't persist.
 
     # -- accessors ----------------------------------------------------------
-    def region(self, region: str) -> Dict[str, Any]:
+    def region(self, region: str) -> dict[str, Any]:
         return self._data.setdefault(region, {})
 
     def get(self, region: str, key: str, default: Any = None) -> Any:
@@ -65,15 +65,15 @@ class State:
     def set(self, region: str, key: str, value: Any) -> None:
         self.region(region)[key] = value
 
-    def update(self, region: str, updates: Dict[str, Any]) -> None:
+    def update(self, region: str, updates: dict[str, Any]) -> None:
         if updates:
             self.region(region).update({k: v for k, v in updates.items() if v is not None})
 
-    def clear(self, region: Optional[str] = None) -> None:
+    def clear(self, region: str | None = None) -> None:
         if region:
             self._data[region] = {}
         else:
             self._data = {r: {} for r in _DEFAULT_KEYS_BY_REGION}
 
-    def as_dict(self) -> Dict[str, Dict[str, Any]]:
+    def as_dict(self) -> dict[str, dict[str, Any]]:
         return {r: dict(v) for r, v in self._data.items() if v}

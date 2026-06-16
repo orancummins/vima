@@ -118,14 +118,14 @@ class TestFindArtifact:
 # Project name truncation (50-char portal limit)
 # ---------------------------------------------------------------------------
 
-def _portal_name(project_name: str, ts: str = "20260528103531") -> str:
+def _portal_name(project_name: str, ts: str = "20260528103531", prefix: str = "SS") -> str:
     """Mirror of the truncation logic in project_workflow.py:ensure_project_with_api."""
-    portal_name = f"SS-{project_name}-{ts}"
+    portal_name = f"{prefix}-{project_name}-{ts}"
     _MAX = 50
     if len(portal_name) > _MAX:
         overflow = len(portal_name) - _MAX
         trimmed = project_name[: max(1, len(project_name) - overflow)]
-        portal_name = f"SS-{trimmed}-{ts}"
+        portal_name = f"{prefix}-{trimmed}-{ts}"
     return portal_name
 
 
@@ -158,6 +158,17 @@ class TestPortalNameTruncation:
         result = _portal_name(name, ts)
         assert result == f"SS-{name}-{ts}"
         assert len(result) == 50
+
+    def test_sst_prefix_for_tests(self):
+        result = _portal_name("bin-lookup", prefix="SST")
+        assert result == "SST-bin-lookup-20260528103531"
+        assert len(result) <= 50
+
+    def test_sst_long_name_truncated_to_50(self):
+        result = _portal_name("enhanced-currency-conversion-calculator", prefix="SST")
+        assert len(result) == 50
+        assert result.startswith("SST-")
+        assert result.endswith("-20260528103531")
 
 
 # ---------------------------------------------------------------------------

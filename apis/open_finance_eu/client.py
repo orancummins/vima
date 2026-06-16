@@ -21,7 +21,7 @@ import json
 import os
 import time
 import uuid
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import requests
 from cryptography.hazmat.primitives import hashes, serialization
@@ -60,22 +60,22 @@ class OpenFinanceEUClient:
         # Issued by the EU onboarding officer alongside the clientId.
         self.application_id = application_id
 
-        self._private_key: Optional[rsa.RSAPrivateKey] = None
-        self._kid: Optional[str] = None
-        self._token: Optional[str] = None
+        self._private_key: rsa.RSAPrivateKey | None = None
+        self._kid: str | None = None
+        self._token: str | None = None
         self._token_expiry: float = 0.0
-        self._last_request: Optional[Dict[str, Any]] = None
-        self._last_response: Optional[Dict[str, Any]] = None
+        self._last_request: dict[str, Any] | None = None
+        self._last_response: dict[str, Any] | None = None
 
     # ------------------------------------------------------------------
     # Introspection
     # ------------------------------------------------------------------
     @property
-    def last_request(self) -> Optional[Dict[str, Any]]:
+    def last_request(self) -> dict[str, Any] | None:
         return self._last_request
 
     @property
-    def last_response(self) -> Optional[Dict[str, Any]]:
+    def last_response(self) -> dict[str, Any] | None:
         return self._last_response
 
     # ------------------------------------------------------------------
@@ -148,7 +148,7 @@ class OpenFinanceEUClient:
     # Token
     # ------------------------------------------------------------------
     def _get_token(self, force_refresh: bool = False,
-                   scopes: Optional[List[str]] = None) -> str:
+                   scopes: list[str] | None = None) -> str:
         # Reuse cached token until 5 min before expiry.
         if not force_refresh and self._token and time.time() < (self._token_expiry - 300):
             return self._token
@@ -205,11 +205,11 @@ class OpenFinanceEUClient:
         method: str,
         endpoint: str,
         *,
-        data: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        scopes: Optional[List[str]] = None,
-        extra_headers: Optional[Dict[str, str]] = None,
-    ) -> Tuple[Any, int]:
+        data: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+        scopes: list[str] | None = None,
+        extra_headers: dict[str, str] | None = None,
+    ) -> tuple[Any, int]:
         token = self._get_token(scopes=scopes)
         url = f"{self.api_base_url}{endpoint}"
         headers = {
@@ -248,7 +248,7 @@ class OpenFinanceEUClient:
     # ------------------------------------------------------------------
     # Operations
     # ------------------------------------------------------------------
-    def create_token(self) -> Tuple[Dict[str, Any], int]:
+    def create_token(self) -> tuple[dict[str, Any], int]:
         """Force a fresh access token. Smoke-test op — needs only clientId+key."""
         self._token = None
         token = self._get_token(force_refresh=True)
@@ -257,14 +257,14 @@ class OpenFinanceEUClient:
                  "kid": self._compute_kid(),
                  "message": "Token created successfully"}, 200)
 
-    def get_providers(self, country: str = "", limit: int = 25) -> Tuple[Any, int]:
-        params: Dict[str, Any] = {"limit": limit}
+    def get_providers(self, country: str = "", limit: int = 25) -> tuple[Any, int]:
+        params: dict[str, Any] = {"limit": limit}
         if country:
             params["country"] = country
         return self._request("GET", "/providers", params=params,
                              scopes=["ob_providers"])
 
-    def get_provider_groups(self, country: str = "") -> Tuple[Any, int]:
+    def get_provider_groups(self, country: str = "") -> tuple[Any, int]:
         params = {"country": country} if country else None
         return self._request("GET", "/provider-groups", params=params,
                              scopes=["ob_providers"])
@@ -274,8 +274,8 @@ class OpenFinanceEUClient:
         use_case_configuration_id: str,
         end_user_id: str,
         end_user_email: str,
-        idempotency_key: Optional[str] = None,
-    ) -> Tuple[Any, int]:
+        idempotency_key: str | None = None,
+    ) -> tuple[Any, int]:
         """POST /consents per the Mastercard Open Finance Europe docs.
 
         Body shape (verified from the Account Opening Guide cURL sample
@@ -287,7 +287,7 @@ class OpenFinanceEUClient:
         The provider/bank is chosen later by the End User inside the Aiia
         managed flow UI — it is *not* part of the consent creation body.
         """
-        body: Dict[str, Any] = {
+        body: dict[str, Any] = {
             "useCaseConfigurationId": use_case_configuration_id,
             "endUsers": [{
                 "identifier": end_user_id,
@@ -298,10 +298,10 @@ class OpenFinanceEUClient:
         return self._request("POST", "/consents", data=body,
                              scopes=["ob_data"], extra_headers=headers)
 
-    def get_consent(self, consent_id: str) -> Tuple[Any, int]:
+    def get_consent(self, consent_id: str) -> tuple[Any, int]:
         return self._request("GET", f"/consents/{consent_id}", scopes=["ob_data"])
 
-    def revoke_consent(self, consent_id: str) -> Tuple[Any, int]:
+    def revoke_consent(self, consent_id: str) -> tuple[Any, int]:
         return self._request("DELETE", f"/consents/{consent_id}",
                              scopes=["ob_data"])
 
@@ -312,7 +312,7 @@ class OpenFinanceEUClient:
         flow_type: str = "CONNECT_ACCOUNTS",
         language: str = "en",
         provider_id: str = "",
-    ) -> Tuple[Any, int]:
+    ) -> tuple[Any, int]:
         """POST /consents/{consent_id}/managed-flows per the official docs.
 
         Body shape (verified):
@@ -326,7 +326,7 @@ class OpenFinanceEUClient:
         it to skip the bank-selection step, but it is silently ignored if
         not supported by the current tenant configuration.
         """
-        body: Dict[str, Any] = {
+        body: dict[str, Any] = {
             "type": flow_type,
             "endUser": {"identifier": end_user_id},
             "language": language,
@@ -340,25 +340,25 @@ class OpenFinanceEUClient:
 
     def get_accounts(self, consent_id: str,
                      include: str = "balances,holders,identifiers,additionalInformation",
-                     limit: int = 10, offset: int = 0) -> Tuple[Any, int]:
+                     limit: int = 10, offset: int = 0) -> tuple[Any, int]:
         """GET /data/accounts — the X-Consent-Id header scopes the call to
         the End User who granted the consent. The ``include`` query expands
         the response with optional sub-resources.
         """
-        params: Dict[str, Any] = {"include": include, "limit": limit, "offset": offset}
+        params: dict[str, Any] = {"include": include, "limit": limit, "offset": offset}
         return self._request("GET", "/data/accounts", params=params,
                              scopes=["ob_data"],
                              extra_headers={"X-Consent-Id": consent_id})
 
-    def get_account(self, account_id: str, consent_id: str) -> Tuple[Any, int]:
+    def get_account(self, account_id: str, consent_id: str) -> tuple[Any, int]:
         return self._request("GET", f"/data/accounts/{account_id}",
                              scopes=["ob_data"],
                              extra_headers={"X-Consent-Id": consent_id})
 
     def get_transactions(self, account_id: str, consent_id: str,
                          from_date: str = "", to_date: str = "",
-                         limit: int = 50) -> Tuple[Any, int]:
-        params: Dict[str, Any] = {"limit": limit}
+                         limit: int = 50) -> tuple[Any, int]:
+        params: dict[str, Any] = {"limit": limit}
         if from_date:
             params["from"] = from_date
         if to_date:
@@ -368,7 +368,7 @@ class OpenFinanceEUClient:
                              extra_headers={"X-Consent-Id": consent_id})
 
     def check_balance(self, account_id: str, consent_id: str,
-                      max_age: str = "PT15M") -> Tuple[Any, int]:
+                      max_age: str = "PT15M") -> tuple[Any, int]:
         # The Accounts API requires a freshness policy. ``PT0S`` forces a live
         # provider call; any other ISO 8601 duration (e.g. ``PT15M``) lets the
         # service return the cached balance if it is fresher than ``maxAge``.
@@ -382,13 +382,13 @@ class OpenFinanceEUClient:
                              extra_headers=headers)
 
     def verify_account_ownership(self, consent_id: str, customer_name: str,
-                                 account_ids: Optional[List[str]] = None
-                                 ) -> Tuple[Any, int]:
+                                 account_ids: list[str] | None = None
+                                 ) -> tuple[Any, int]:
         # The Insights API lives under the ``/insights`` server prefix and
         # expects ``customerName`` (string) plus optional ``accountIds``
         # (array of UUIDs). Omitting ``accountIds`` matches against every
         # authorized account on the consent.
-        body: Dict[str, Any] = {"customerName": customer_name}
+        body: dict[str, Any] = {"customerName": customer_name}
         if account_ids:
             body["accountIds"] = [a for a in account_ids if a]
         return self._request("POST", "/insights/account-ownership-verifications",
@@ -397,7 +397,7 @@ class OpenFinanceEUClient:
 
     def get_account_ownership_verification(self, verification_id: str,
                                            consent_id: str
-                                           ) -> Tuple[Any, int]:
+                                           ) -> tuple[Any, int]:
         return self._request("GET",
                              f"/insights/account-ownership-verifications/{verification_id}",
                              scopes=["ob_data"],

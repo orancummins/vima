@@ -7,11 +7,10 @@ metadata: NFC support, payment capabilities, business status, etc.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List
-
+from typing import Any
 
 # Industry code labels used in the UI dropdown.
-INDUSTRY_PRESETS: List[Dict[str, str]] = [
+INDUSTRY_PRESETS: list[dict[str, str]] = [
     {"value": "EAP", "label": "Eating Places & Restaurants"},
     {"value": "SHS", "label": "Shoe Stores"},
     {"value": "GRS", "label": "Grocery Stores & Supermarkets"},
@@ -20,8 +19,7 @@ INDUSTRY_PRESETS: List[Dict[str, str]] = [
     {"value": "",    "label": "All industries"},
 ]
 
-
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "places",
     "name": "Places",
     "description": (
@@ -44,8 +42,7 @@ MANIFEST: Dict[str, Any] = {
     },
 }
 
-
-def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
     from apis.places import api as places_api
 
     if action == "search":
@@ -84,8 +81,7 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
     return {"error": f"Unknown action: {action}"}
 
-
-def _shape(item: Dict[str, Any]) -> Dict[str, Any]:
+def _shape(item: dict[str, Any]) -> dict[str, Any]:
     """Normalize a raw Places item into a UI-friendly dict."""
     name = (
         item.get("cleansedMerchantName")
