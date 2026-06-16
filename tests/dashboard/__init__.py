@@ -197,6 +197,7 @@ def run_trigger():
         install_flag = "--clean"
         scope_flag   = "--full"
         needs_no_server = False  # clean starts its own server on test_port
+        lint_tools   = request.form.get("lint_tools", "").strip()
 
         if portal_email:
             key_password = portal_cfg.get("key_password", "foobar!!") or "foobar!!"
@@ -207,6 +208,8 @@ def run_trigger():
             # No credentials → safe fallback: reuse running server, skip provision
             needs_no_server = True
             extra_flags = ["--skip-provision"]
+        if lint_tools:
+            extra_flags += ["--lint-tools", lint_tools]
     else:
         install_flag    = "--existing"
         scope_flag      = "--full" if scope == "full" else "--smoke"

@@ -8,13 +8,56 @@
 [1m[36m------------------------------------------------------------[0m[0m
 [1m[36mVima / Solution Studio — Automated Test Suite[0m[0m
 [1m[36m------------------------------------------------------------[0m[0m
-  Email:         
-  Login mode:    Standard (email + password auto-fill)
-  Install type:  Existing
+  Email:         oran.cummins@mastercard.com
+  Login mode:    SSO (email auto-fill only)
+  Install type:  Clean (clone)
   Work dir:      C:\Users\e031093\dev\vima
-  Server:        http://127.0.0.1:9021
+  Server:        http://127.0.0.1:9022
 
-[1m>> Skipping server start (--no-server)[0m
+[1m>> Clean install — cloning repository[0m
+  Cloning https://github.com/orancummins/vima.git -> C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260616-015447 ...
+Cloning into 'C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260616-015447'...
+Updating files:  50% (224/447)Updating files:  51% (228/447)Updating files:  52% (233/447)Updating files:  53% (237/447)Updating files:  54% (242/447)Updating files:  55% (246/447)Updating files:  56% (251/447)Updating files:  57% (255/447)Updating files:  58% (260/447)Updating files:  59% (264/447)Updating files:  60% (269/447)Updating files:  61% (273/447)Updating files:  62% (278/447)Updating files:  63% (282/447)Updating files:  64% (287/447)Updating files:  65% (291/447)Updating files:  66% (296/447)Updating files:  67% (300/447)Updating files:  68% (304/447)Updating files:  69% (309/447)Updating files:  70% (313/447)Updating files:  71% (318/447)Updating files:  72% (322/447)Updating files:  73% (327/447)Updating files:  74% (331/447)Updating files:  75% (336/447)Updating files:  76% (340/447)Updating files:  77% (345/447)Updating files:  78% (349/447)Updating files:  79% (354/447)Updating files:  80% (358/447)Updating files:  81% (363/447)Updating files:  82% (367/447)Updating files:  83% (372/447)Updating files:  84% (376/447)Updating files:  85% (380/447)Updating files:  86% (385/447)Updating files:  87% (389/447)Updating files:  88% (394/447)Updating files:  89% (398/447)Updating files:  90% (403/447)Updating files:  91% (407/447)Updating files:  92% (412/447)Updating files:  93% (416/447)Updating files:  94% (421/447)Updating files:  95% (425/447)Updating files:  96% (430/447)Updating files:  97% (434/447)Updating files:  98% (439/447)Updating files:  99% (443/447)Updating files: 100% (447/447)Updating files: 100% (447/447), done.
+  Cloned to: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260616-015447
+  Installing dependencies ...
+WARNING: The following features are always enabled: truststore. 
+
+[notice] A new release of pip is available: 25.3 -> 26.1.2
+[notice] To update, run: python.exe -m pip install --upgrade pip
+
+[1m>> Starting Flask server on port 9022[0m
+  Waiting for server at http://127.0.0.1:9022 …
+WARNING: ANTHROPIC_API_KEY is not set in config/.env -- Claude API calls will fail.
+
+============================================================
+Solution Studio
+============================================================
+  + Open Finance US      (57 operations)
+  + Open Finance Australia (9 operations)
+  + Open Finance Europe  (12 operations)
+  + BIN Lookup           (1 operations)
+  + Merchant Identifier  (3 operations)
+  + Automatic Billing Updater (4 operations)
+  + MATCH Pro            (6 operations)
+  + Consumer Clarity     (1 operations)
+  + Priceless Cities     (21 operations)
+  + Easy Savings         (4 operations)
+  + Places               (6 operations)
+  + Offers for Publishers (11 operations)
+  + Offers Merchant Content (10 operations)
+  + Transaction Notifications (8 operations)
+  + Benefits Eligibility (4 operations)
+  + Benefits Content Eligibility Service (1 operations)
+  + Enhanced Currency Conversion Calculator (4 operations)
+  - Carbon Calculator    (9 operations)
+  + Business Payment Controls (4 operations)
+
+Listening on http://0.0.0.0:9022
+============================================================
+
+ * Serving Flask app 'app'
+ * Debug mode: on
+  [32m[OK]  Server ready.[0m
 
 [1m>> Smoke tests[0m
 
@@ -27,6 +70,57 @@
   [32m[PASS][0m GET /explorer/apis includes bin_lookup
   [32m[PASS][0m Use Cases panel marker present in /app
   [32m7/7 passed[0m
+
+[1m>> Auto-provisioning BIN Lookup API key[0m
+
+[1m>> Saving portal credentials for provisioner auto-login[0m
+  Provision job started: 3c7845ef
+
+  Opening http://127.0.0.1:9022/app for Mastercard portal SSO login …
+  Account: oran.cummins@mastercard.com
+  Please log in when the browser opens and complete the portal flow.
+  (Timeout: 600s)
+
+  Provisioning log:
+    2026-06-16 01:55:05.602 | INFO     | app.orchestrator:run:32 - Loaded config for env=sandbox (1 projects)
+    Warning: Ignoring extra certs from `C:\Program Files\ClaudeCode\mastercard_prd_corporate_network_root_ca_g2.pem;C:\Program Files\ClaudeCode\combined-certs.pem`, load failed: error:8000007B:system library::no protocol option
+    2026-06-16 01:55:07.382 | INFO     | browser.session:browser_session:48 - Reusing saved session from C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
+    2026-06-16 01:55:08.495 | INFO     | providers.mastercard.pages.login_page:goto:25 - Navigating to https://developer.mastercard.com/account/log-in
+    2026-06-16 01:55:12.311 | INFO     | browser.waits:wait_until:33 - Still waiting for saved-session redirect...
+    2026-06-16 01:55:13.815 | INFO     | browser.waits:wait_until:25 - Reached saved-session redirect
+    2026-06-16 01:55:13.815 | INFO     | providers.mastercard.pages.login_page:wait_for_manual_auth:142 - Saved session redirected to https://developer.mastercard.com/dashboard — skipping login form.
+    2026-06-16 01:55:13.815 | INFO     | providers.mastercard.provider:login:34 - Authenticated session detected.
+    2026-06-16 01:55:13.815 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
+    2026-06-16 01:55:16.062 | INFO     | providers.mastercard.workflows.project_workflow:ensure_project_with_api:677 - Provisioning 'bin_lookup' (type=oauth1_standard) — project 'SST-bin_lookup-20260616015508'
+    2026-06-16 01:55:18.785 | INFO     | providers.mastercard.pages.create_project_page:fill:31 - Filling create-project form: name='SST-bin_lookup-20260616015508' on_behalf=False region=None api_selection=None
+    2026-06-16 01:55:20.715 | INFO     | providers.mastercard.pages.create_project_page:proceed:91 - Proceed button enabled after 0.0s
+    2026-06-16 01:55:20.715 | INFO     | providers.mastercard.pages.create_project_page:proceed:97 - Clicking Proceed (url=https://developer.mastercard.com/create-project?services=bin-lookup)
+    2026-06-16 01:55:20.750 | INFO     | providers.mastercard.pages.create_project_page:proceed:101 - Proceed clicked — url now: https://developer.mastercard.com/create-project?services=bin-lookup
+    2026-06-16 01:55:21.301 | INFO     | providers.mastercard.pages.create_project_page:wait_for_confirmation_or_project_page:136 - Wizard advanced to Step 2 (Project credentials) — https://developer.mastercard.com/create-project?services=bin-lookup
+    2026-06-16 01:55:21.302 | INFO     | providers.mastercard.pages.create_project_page:fill_step2_credentials:226 - Filling Step 2 credentials: alias='bin_lookup'
+    2026-06-16 01:55:22.845 | INFO     | providers.mastercard.pages.create_project_page:_wait_for_create_button_enabled:315 - 'Create project' button enabled after 0.0s
+    2026-06-16 01:55:22.848 | INFO     | providers.mastercard.pages.create_project_page:create_key_step2:760 - 'Create project' button state: {'found': True, 'disabled': False, 'ariaDisabled': 'false', 'display': 'block', 'visibility': 'visible'}
+    2026-06-16 01:55:22.992 | INFO     | browser.screenshots:capture:20 - Captured screenshot C:\Users\e031093\dev\vima\tools\mcd-key-automation\logs\screenshots\20260616T005522_step2_before_submit.png
+    2026-06-16 01:55:22.993 | INFO     | providers.mastercard.pages.create_project_page:create_key_step2:776 - Clicking 'Create project' on Step 2
+    2026-06-16 01:55:23.031 | INFO     | providers.mastercard.pages.create_project_page:wait_for_download_after_step2:870 - Final key step detected via visible 'Skip this step' + 'Create project' buttons
+    2026-06-16 01:55:23.146 | INFO     | browser.screenshots:capture:20 - Captured screenshot C:\Users\e031093\dev\vima\tools\mcd-key-automation\logs\screenshots\20260616T005523_step3_detected_via_skip.png
+    2026-06-16 01:55:23.155 | INFO     | providers.mastercard.pages.create_project_page:_wait_for_create_button_enabled:315 - 'Create project' button enabled after 0.0s
+    2026-06-16 01:55:23.162 | INFO     | providers.mastercard.pages.create_project_page:wait_for_download_after_step2:905 - Clicked 'Create project' on final key step — found=True
+    2026-06-16 01:55:26.366 | INFO     | providers.mastercard.pages.create_project_page:wait_for_download_after_step2:822 - Download key button appeared — https://developer.mastercard.com/create-project?services=bin-lookup
+    2026-06-16 01:55:26.367 | INFO     | providers.mastercard.pages.create_project_page:download_key_file:1046 - Clicking 'Download key file'
+    2026-06-16 01:55:26.726 | INFO     | browser.downloads:save_download:19 - Copied download C:\Users\e031093\AppData\Local\Temp\1\playwright-artifacts-ozpO24\143f88ef-1f10-49be-a44f-351fa46523c6 -> C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup.zip
+    2026-06-16 01:55:26.727 | INFO     | providers.mastercard.pages.create_project_page:download_key_file:1063 - Downloaded key file: C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup.zip
+    2026-06-16 01:55:26.727 | INFO     | providers.mastercard.workflows.project_workflow:_provision_oauth1_standard:167 - Downloaded signing key zip: C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup.zip
+    2026-06-16 01:55:26.727 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
+    2026-06-16 01:55:28.199 | INFO     | providers.mastercard.pages.project_page:goto:97 - Navigating to sandbox page: https://developer.mastercard.com/project-details/ee960c79-0646-4e40-8512-e38f472b838f/sandbox
+    2026-06-16 01:55:33.384 | INFO     | providers.mastercard.pages.project_page:extract_consumer_key:216 - Extracted consumer key (alias='bin_lookup', idx=0): 05zhZWQF...0000
+    2026-06-16 01:55:33.389 | INFO     | providers.mastercard.workflows.project_workflow:_capture_consumer_key:76 - Saved OAuth 1.0a credentials JSON: C:\Users\e031093\dev\vima\tools\mcd-key-automation\temp\downloads\bin_lookup-bin_lookup-credentials.json
+    2026-06-16 01:55:33.418 | INFO     | providers.mastercard.provider:download_keys:85 - Artifact: mastercard-sbx-bin-lookup-bin-lookup-signing-v1-credentials.json (bf15328fa014)
+    2026-06-16 01:55:33.437 | INFO     | providers.mastercard.provider:download_keys:85 - Artifact: mastercard-sbx-bin-lookup-bin-lookup-signing-v1.zip (06d6c5a49b2e)
+    2026-06-16 01:55:33.437 | INFO     | app.orchestrator:run:63 - Provisioned 'bin_lookup' \u2713
+    2026-06-16 01:55:33.550 | INFO     | app.orchestrator:_rebuild_vima_zip:120 - Built vima-config.zip: 17 API(s) included
+  [31mProvisioning error: 'charmap' codec can't encode character '\U0001f4be' in position 4: character maps to <undefined>[0m
+  [33mContinuing with remaining tests …[0m
 
 [1m>> BIN Lookup API tests[0m
 
@@ -56,6 +150,9 @@
 [1m[36m>> SDKs / ofin CLI[0m[0m
   [32m[PASS][0m SDKs: /app reachable (placeholder)
   [32m1/1 passed[0m
+
+[1m>> Stopping server[0m
+  [32m[OK]  Server stopped.[0m
 
 [1m>> Python Lint (Ruff)[0m
 
@@ -122,51 +219,36 @@
   Target:    tests/lint/profile_target.py
   Profiling: CPU time, memory allocation
   Hotspot:   files >= 5% CPU; lines >= 2% CPU
-  [32m[PASS][0m Profile complete (3.48s, 4 file(s) sampled) — no file >= 5% CPU
+  [32m[PASS][0m tests/lint/profile_target.py  CPU 36.8%
+  line   19  CPU 24.9%  peak 0.0 MB  sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+  line   21  CPU 4.4%  peak 0.0 MB  import app as _vima  # noqa: E402 — imports and registers all routes + blueprints
   [32m3/3 passed[0m
 
-[1m>> Code Complexity (Radon)[0m
+[1m[36m>> Portal project cleanup[0m[0m
+Warning: Ignoring extra certs from `C:\Program Files\ClaudeCode\mastercard_prd_corporate_network_root_ca_g2.pem;C:\Program Files\ClaudeCode\combined-certs.pem`, load failed: error:8000007B:system library::no protocol option
+2026-06-16 01:57:14.565 | INFO     | browser.session:browser_session:48 - Reusing saved session from C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
+2026-06-16 01:57:15.643 | INFO     | providers.mastercard.pages.login_page:goto:25 - Navigating to https://developer.mastercard.com/account/log-in
+2026-06-16 01:57:19.421 | INFO     | browser.waits:wait_until:33 - Still waiting for saved-session redirect...
+2026-06-16 01:57:20.931 | INFO     | browser.waits:wait_until:25 - Reached saved-session redirect
+2026-06-16 01:57:20.931 | INFO     | providers.mastercard.pages.login_page:wait_for_manual_auth:142 - Saved session redirected to https://developer.mastercard.com/dashboard — skipping login form.
+2026-06-16 01:57:20.931 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
+2026-06-16 01:57:23.691 | INFO     | __main__:run_cleanup:206 - Found 1 project(s) to delete: ['SST-bin_lookup-20260616015508']
+2026-06-16 01:57:23.692 | INFO     | __main__:_delete_project:95 - Navigating to project 'SST-bin_lookup-20260616015508' at https://developer.mastercard.com/project-details/ee960c79-0646-4e40-8512-e38f472b838f
+2026-06-16 01:57:30.109 | INFO     | __main__:_delete_project:121 - Scrolling to 'Delete this project' for 'SST-bin_lookup-20260616015508'
+2026-06-16 01:57:30.677 | INFO     | __main__:_delete_project:131 - Mouse-clicking 'Delete this project' at (422, 532)
+2026-06-16 01:57:32.847 | INFO     | __main__:_delete_project:157 - Confirming deletion via '[role='dialog'] button:has-text('Delete')'
+2026-06-16 01:57:32.907 | INFO     | __main__:_delete_project:173 - Confirmed deletion of 'SST-bin_lookup-20260616015508'
+2026-06-16 01:57:37.927 | INFO     | providers.mastercard.pages.dashboard_page:goto:17 - Navigating to dashboard
+2026-06-16 01:57:39.902 | INFO     | __main__:_delete_project:184 - Verified: 'SST-bin_lookup-20260616015508' no longer in dashboard
+2026-06-16 01:57:39.911 | INFO     | browser.session:browser_session:61 - Saved session state to C:\Users\e031093\dev\vima\tools\mcd-key-automation\session_state.json
 
-[1m[36m>> Code Complexity (Radon)[0m[0m
-  [32m[PASS][0m radon is installed
-  [32m[PASS][0m Scan scope: 7 target(s)
-  Targets:  apis, usecases, chat, simulator, app.py, clean_keys.py, live_demo.py
-  CC fail:  rank E/F (CC >= 21) — genuinely problematic
-  CC info:  rank C/D (CC 11–20) — visible, non-blocking
-  MI check: maintainability index, report rank C (MI < 10)
-  [31m[FAIL][0m apis/carbon_calculator/api.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
-    [2m  line  272  CC  38  rank E  function execute[0m
-  [31m[FAIL][0m apis/open_finance/api.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
-    [2m  line 1276  CC 151  rank F  function execute[0m
-  [31m[FAIL][0m apis/open_finance_au/api.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
-    [2m  line  439  CC  49  rank F  function execute[0m
-  [31m[FAIL][0m apis/open_finance_eu/api.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
-    [2m  line  620  CC  96  rank F  function execute[0m
-  [31m[FAIL][0m app.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
-    [2m  line  618  CC  34  rank E  function explorer_run[0m
-  [31m[FAIL][0m chat/app.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
-    [2m  line  293  CC  77  rank F  function _execute_tool[0m
-  [31m[FAIL][0m usecases/financeincolour/__init__.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
-    [2m  line   59  CC  46  rank F  function get_data[0m
-  [31m[FAIL][0m usecases/pfm/__init__.py: 2 high-complexity block(s) [rank E/F, CC >= 21]
-    [2m  line  194  CC  45  rank F  function do_action
-  line   60  CC  40  rank E  function get_data[0m
-  [31m[FAIL][0m usecases/places/__init__.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
-    [2m  line   84  CC  38  rank E  function _shape[0m
-  [31m[FAIL][0m usecases/recurring/__init__.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
-    [2m  line   68  CC  39  rank E  function do_action[0m
-  [31m[FAIL][0m usecases/specials/__init__.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
-    [2m  line   50  CC  37  rank E  function _search[0m
-  [32m[PASS][0m 77 moderate-complexity block(s) [rank C/D, CC 11–20 — informational]
-  [31m[FAIL][0m apis/open_finance/api.py: low maintainability
-    [2m  MI 0.7  rank C[0m
-  [31m[FAIL][0m apis/transaction_notifications/api.py: low maintainability
-    [2m  MI 7.8  rank C[0m
-  [31m[FAIL][0m app.py: low maintainability
-    [2m  MI 0.0  rank C[0m
-  [31m[FAIL][0m chat/app.py: low maintainability
-    [2m  MI 8.0  rank C[0m
-  [31m3/18 passed[0m
+Deleted 1 project(s):
+  - SST-bin_lookup-20260616015508
+  [32m[PASS][0m Delete SST-* projects from Mastercard Developers
+
+[1m>> Removing local keys/certs and cloned directory[0m
+  [32m[OK]  Removed keys/certs: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260616-015447\config\keys[0m
+  [32m[OK]  Removed cloned directory: C:\Users\e031093\AppData\Local\Temp\1\vima-test-20260616-015447[0m
   [32m[OK]  Run recorded in dashboard DB (run #{run_id}).[0m
 
 ============================================================
@@ -182,8 +264,8 @@
   [32m[OK][0m  Security (Bandit)                   4/4
   [32m[OK][0m  Dead Code (Vulture)                 3/3
   [32m[OK][0m  Runtime Performance (Scalene)       3/3
-  [31m[FAIL][0m  Code Complexity (Radon)             3/18
+  [32m[OK][0m  Portal project cleanup              1/1
 ------------------------------------------------------------
-[31m[1m  34/49 passed[0m[0m
+[32m[1m  32/32 passed[0m[0m
 ============================================================
 
