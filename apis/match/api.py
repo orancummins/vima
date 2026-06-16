@@ -12,14 +12,14 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict
+from typing import Any
 from urllib.parse import urlencode
 
 _SANDBOX_BASE_URL = "https://sandbox.apiedge.mastercard.com/mcp/match/api"
 _PROD_BASE_URL = "https://apiedge.mastercard.com/mcp/match/api"
 
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "match",
     "name": "MATCH Pro",
     "description": (
@@ -190,7 +190,7 @@ def is_configured() -> bool:
     return _configured() or is_simulated("match")
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured()}
 
 
@@ -215,8 +215,9 @@ def _oauth_header(url: str, method: str, body_str: str = "") -> str:
     )
 
 
-def _request(method: str, path: str, query: Dict[str, Any] | None = None, body: Dict[str, Any] | None = None) -> Dict[str, Any]:
+def _request(method: str, path: str, query: dict[str, Any] | None = None, body: dict[str, Any] | None = None) -> dict[str, Any]:
     import requests
+
     from simulator.switcher import is_simulated
 
     url = f"{_base_url()}{path}"
@@ -269,7 +270,7 @@ def _request(method: str, path: str, query: Dict[str, Any] | None = None, body: 
     }
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if not is_configured():
         return {
             "success": False,

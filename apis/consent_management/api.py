@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict
+from typing import Any
 
 _SANDBOX_BASE_URL = "https://sandbox.api.mastercard.com/openapis/authentication"
 _PROD_BASE_URL    = "https://api.mastercard.com/openapis/authentication"
@@ -32,13 +32,13 @@ _PROD_BASE_URL    = "https://api.mastercard.com/openapis/authentication"
 try:
     from apis.transaction_notifications.api import STATE  # noqa: F401
 except Exception:
-    STATE: Dict[str, Any] = {
+    STATE: dict[str, Any] = {
         "card_ref":           "",
         "consent_id":        "",
         "verify_auth_params": "{}",
     }
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "consent_management",
     "name": "Consent Management",
     "description": (
@@ -368,7 +368,7 @@ def is_configured() -> bool:
     return _configured() or is_simulated("consent_management")
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured(), **STATE}
 
 
@@ -389,7 +389,7 @@ def _get_auth_header(url: str, method: str, body_str: str | None = None) -> str:
     return OAuth.get_authorization_header(url, method, body_str, consumer_key, signing_key)
 
 
-def _not_configured_error() -> Dict[str, Any]:
+def _not_configured_error() -> dict[str, Any]:
     return {
         "success": False,
         "error": (
@@ -400,7 +400,7 @@ def _not_configured_error() -> Dict[str, Any]:
     }
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if op_id == "create_consent":
         return _create_consent(params)
     if op_id == "get_consents":
@@ -416,10 +416,10 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     return {"success": False, "error": f"Unknown operation: {op_id}"}
 
 
-def _encrypt_body(body: Dict, cert_path: str) -> str:
+def _encrypt_body(body: dict, cert_path: str) -> str:
     """JWE-encrypt the request body using the Mastercard JWE encryption library."""
-    from client_encryption.jwe_encryption_config import JweEncryptionConfig
     from client_encryption.jwe_encryption import encrypt_payload
+    from client_encryption.jwe_encryption_config import JweEncryptionConfig
 
     config = JweEncryptionConfig({
         "paths": {
@@ -435,7 +435,7 @@ def _encrypt_body(body: Dict, cert_path: str) -> str:
     return json.dumps(encrypted)
 
 
-def _http(method: str, url: str, body: Dict | None = None, _body_str: str | None = None) -> Dict[str, Any]:
+def _http(method: str, url: str, body: dict | None = None, _body_str: str | None = None) -> dict[str, Any]:
     """Execute a signed OAuth 1.0a HTTP request and return a result envelope.
 
     Pass ``_body_str`` to use a pre-serialized (e.g. JWE-encrypted) body string
@@ -483,7 +483,7 @@ def _http(method: str, url: str, body: Dict | None = None, _body_str: str | None
     }
 
 
-def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
+def _create_consent(params: dict[str, Any]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("consent_management"):
         return _not_configured_error()
@@ -502,7 +502,7 @@ def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
     cardholder_name = (params.get("cardholder_name") or "").strip() or None
     consent_name    = (params.get("consent_name") or "notification").strip()
 
-    card_details: Dict[str, Any] = {
+    card_details: dict[str, Any] = {
         "pan":         pan,
         "expiryMonth": expiry_month,
         "expiryYear":  expiry_year,
@@ -564,10 +564,10 @@ def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
             if STATE["card_ref"]:
                 from urllib.parse import urlencode
                 q = {"card_ref": STATE["card_ref"]}
-                if method_url:  q["method_url"]  = method_url
-                if method_data: q["method_data"] = method_data
-                if trans_id:    q["trans_id"]    = trans_id
-                if method_notify: q["method_notify"] = method_notify
+                if method_url:  q["method_url"]  = method_url  # noqa: E701
+                if method_data: q["method_data"] = method_data  # noqa: E701
+                if trans_id:    q["trans_id"]    = trans_id    # noqa: E701
+                if method_notify: q["method_notify"] = method_notify  # noqa: E701
                 launch_path = "/explorer/consent/3ds-flow?" + urlencode(q)
                 result["hints"] = {
                     "browser_launch_url": launch_path,
@@ -582,7 +582,7 @@ def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
         return {"success": False, "error": f"JWE encryption failed: {e}"}
 
 
-def _get_consents(params: Dict[str, Any]) -> Dict[str, Any]:
+def _get_consents(params: dict[str, Any]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("consent_management"):
         return _not_configured_error()
@@ -615,7 +615,7 @@ def _resolve_cert_path() -> str | None:
     return cert_path if os.path.exists(cert_path) else None
 
 
-def _http_encrypted(method: str, url: str, body: Dict) -> Dict[str, Any]:
+def _http_encrypted(method: str, url: str, body: dict) -> dict[str, Any]:
     """POST/PUT with JWE encryption if cert is configured, else plain JSON."""
     from simulator.switcher import is_simulated
     if is_simulated("consent_management"):
@@ -630,7 +630,7 @@ def _http_encrypted(method: str, url: str, body: Dict) -> Dict[str, Any]:
     return _http(method, url, body)
 
 
-def _start_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
+def _start_authentication(params: dict[str, Any]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("consent_management"):
         return _not_configured_error()
@@ -716,7 +716,7 @@ def _start_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def _verify_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
+def _verify_authentication(params: dict[str, Any]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("consent_management"):
         return _not_configured_error()
@@ -778,7 +778,7 @@ def _verify_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def _delete_consents(params: Dict[str, Any]) -> Dict[str, Any]:
+def _delete_consents(params: dict[str, Any]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("consent_management"):
         return _not_configured_error()
@@ -791,7 +791,7 @@ def _delete_consents(params: Dict[str, Any]) -> Dict[str, Any]:
     return _http("DELETE", url)
 
 
-def _delete_single_consent(params: Dict[str, Any]) -> Dict[str, Any]:
+def _delete_single_consent(params: dict[str, Any]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("consent_management"):
         return _not_configured_error()

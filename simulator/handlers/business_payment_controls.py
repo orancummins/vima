@@ -5,7 +5,9 @@ Mirrors a useful subset of the BPC endpoints under
 without the manual Commercial Products onboarding.
 """
 import uuid
-from flask import request, jsonify
+
+from flask import jsonify, request
+
 from simulator.datastore import store
 
 API = "business_payment_controls"

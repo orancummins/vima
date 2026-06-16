@@ -15,8 +15,6 @@ Example::
 """
 from __future__ import annotations
 
-from typing import Optional
-
 from ..errors import ConfigError
 from .au import AUClient
 from .base import Result
@@ -25,19 +23,18 @@ from .us import USClient
 
 __all__ = ["OfinClient", "USClient", "AUClient", "EUClient", "Result"]
 
-
 class OfinClient:
     """Facade exposing the three Open Finance regions: ``.us``, ``.au``, ``.eu``."""
 
-    def __init__(self, config, timeout: Optional[int] = None) -> None:
+    def __init__(self, config, timeout: int | None = None) -> None:
         self._config = config
         self._timeout = timeout
-        self._us: Optional[USClient] = None
-        self._au: Optional[AUClient] = None
-        self._eu: Optional[EUClient] = None
+        self._us: USClient | None = None
+        self._au: AUClient | None = None
+        self._eu: EUClient | None = None
 
     @classmethod
-    def from_env(cls, env_file: Optional[str] = None, timeout: Optional[int] = None) -> "OfinClient":
+    def from_env(cls, env_file: str | None = None, timeout: int | None = None) -> OfinClient:
         """Build a client with credentials auto-discovered from the environment.
 
         Resolves the same way the CLI does: OS env vars, then an optional

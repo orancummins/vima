@@ -31,14 +31,15 @@ import os
 from typing import Any
 
 from apis.catalog import (
+    AUTH_JWT_RS256,
     AUTH_OAUTH1,
     AUTH_OAUTH1_ENC,
     AUTH_OAUTH2,
-    AUTH_JWT_RS256,
     ApiCatalogEntry,
+)
+from apis.catalog import (
     get as get_catalog_entry,
 )
-
 
 _SENTINEL_PLACEHOLDERS = {
     "",

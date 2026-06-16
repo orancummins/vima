@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict
+from typing import Any
 from urllib.parse import urlencode
 
 _MANIFEST_DESC = (
@@ -15,7 +15,7 @@ _SANDBOX_DATASET_URL = (
     "merchant-identifier-sandbox-merchant-descriptors.xlsx"
 )
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "merchant_identifier",
     "name": "Merchant Identifier",
     "description": _MANIFEST_DESC,
@@ -141,11 +141,11 @@ def is_configured() -> bool:
     return _configured() or is_simulated("merchant_identifier")
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured()}
 
 
-def _not_configured_err() -> Dict[str, Any]:
+def _not_configured_err() -> dict[str, Any]:
     return {
         "success": False,
         "error": (
@@ -162,9 +162,10 @@ def _resolve_key_path(path: str) -> str:
     return os.path.join(project_root, path)
 
 
-def _signed_request(url: str) -> Dict[str, Any]:
-    from simulator.switcher import is_simulated
+def _signed_request(url: str) -> dict[str, Any]:
     import requests
+
+    from simulator.switcher import is_simulated
 
     headers = {"Accept": "application/json"}
 
@@ -206,7 +207,7 @@ def _signed_request(url: str) -> Dict[str, Any]:
     }
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if op_id == "match_merchants":
         return _match_merchants(params)
     if op_id == "match_by_card_acceptor_ids":
@@ -216,7 +217,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     return {"success": False, "error": f"Unknown operation: {op_id}"}
 
 
-def _match_merchants(params: Dict[str, Any]) -> Dict[str, Any]:
+def _match_merchants(params: dict[str, Any]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("merchant_identifier"):
         return _not_configured_err()
@@ -229,7 +230,7 @@ def _match_merchants(params: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request(f"{_base_url()}/merchants?{qs}")
 
 
-def _match_by_card_acceptor_ids(params: Dict[str, Any]) -> Dict[str, Any]:
+def _match_by_card_acceptor_ids(params: dict[str, Any]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("merchant_identifier"):
         return _not_configured_err()
@@ -250,7 +251,7 @@ def _match_by_card_acceptor_ids(params: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request(f"{_base_url()}/merchants-by-card-acceptor-ids?{qs}")
 
 
-def _match_by_tax_ids(params: Dict[str, Any]) -> Dict[str, Any]:
+def _match_by_tax_ids(params: dict[str, Any]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("merchant_identifier"):
         return _not_configured_err()

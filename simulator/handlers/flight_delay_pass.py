@@ -4,7 +4,9 @@ Mirrors the live sandbox endpoints under ``/loyalty/flight-delay-pass`` so
 local development can run without portal credentials.
 """
 import uuid
-from flask import request, jsonify
+
+from flask import jsonify, request
+
 from simulator.datastore import store
 
 API = "flight_delay_pass"

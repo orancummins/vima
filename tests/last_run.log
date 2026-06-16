@@ -1,538 +1,167 @@
 
 ============================================================
- Vima / Solution Studio — Test Suite
+ Vima / Solution Studio - Test Suite
 ============================================================
 
 
 
-------------------------------------------------------------
-Vima / Solution Studio — Automated Test Suite
-------------------------------------------------------------
+[1m[36m------------------------------------------------------------[0m[0m
+[1m[36mVima / Solution Studio � Automated Test Suite[0m[0m
+[1m[36m------------------------------------------------------------[0m[0m
   Email:         
   Login mode:    Standard (email + password auto-fill)
   Install type:  Existing
-  Work dir:      /Users/orancummins/dev/vima
+  Work dir:      C:\Users\e031093\dev\vima
   Server:        http://127.0.0.1:9021
 
->> Skipping server start (--no-server)
+[1m>> Starting Flask server on port 9021[0m
+  Waiting for server at http://127.0.0.1:9021 �
+  [32m[OK]  Server ready.[0m
 
->> Smoke tests
+[1m>> Smoke tests[0m
 
->> Smoke — Home / APIs / Use Cases
-  [PASS] GET /app returns 200
-  [PASS] GET /app has no server error
-  [PASS] GET /app contains all navigation panels
-  [PASS] GET /explorer/apis returns 200
-  [PASS] GET /explorer/apis returns a non-empty list
-  [PASS] GET /explorer/apis includes bin_lookup
-  [PASS] Use Cases panel marker present in /app
-  7/7 passed
+[1m[36m>> Smoke � Home / APIs / Use Cases[0m[0m
+  [32m[PASS][0m GET /app returns 200
+  [32m[PASS][0m GET /app has no server error
+  [32m[PASS][0m GET /app contains all navigation panels
+  [32m[PASS][0m GET /explorer/apis returns 200
+  [32m[PASS][0m GET /explorer/apis returns a non-empty list
+  [32m[PASS][0m GET /explorer/apis includes bin_lookup
+  [32m[PASS][0m Use Cases panel marker present in /app
+  [32m7/7 passed[0m
 
->> BIN Lookup API tests
+[1m>> BIN Lookup API tests[0m
 
->> BIN Lookup API
-  [PASS] BIN Lookup is configured
-  [FAIL] Execute lookup_bin (BIN 543210)
-    execute lookup_bin returned success=false after retry. Response: {'data': {}, 'error': {'Error': [{'Description': 'Unauthorized - Access Not Granted', 'Details': None, 'ReasonCode': 'DECLINED', 'Recoverable': False, 'Source': 'Gateway'}]}, 'request': {'body': [{'key': 'binNum', 'value': '543210'}], 'headers': {'Accept': 'application/json', 'Accept-Encoding': 'gzip, deflate, zstd', 'Connection': 'keep-alive', 'Content-Length': '38', 'Content-Type': 'application/json', 'User-Agent': 'python-requests/2.31.0'}, 'method': 'POST', 'url': 'https://sandbox.api.mastercard.com/bin-resources/bin-ranges?page=1&size=10'}, 'response': {'body': {'Errors': {'Error': [{'Description': 'Unauthorized - Access Not Granted', 'Details': None, 'ReasonCode': 'DECLINED', 'Recoverable': False, 'Source': 'Gateway'}]}}, 'headers': {'Connection': 'close', 'Content-Length': '153', 'Content-Type': 'application/json', 'Date': 'Sun, 14 Jun 2026 22:34:58 GMT', 'X-EdgeConnect-MidMile-RTT': '86', 'X-EdgeConnect-Origin-MEX-Latency': '84', 'X-MC-Correlation-ID': '0.c63e1202.1781476498.794d5ba0', 'correlation-id': '0.c63e1202.1781476498.794d5ba0'}, 'status_code': 401}, 'state': {'configured': True}, 'state_updates': {}, 'success': False}
-  [PASS] Get Code snippet contains valid Python
-  2/3 passed
+[1m[36m>> BIN Lookup API[0m[0m
+  [32m[PASS][0m BIN Lookup is configured
+  [32m[PASS][0m Execute lookup_bin (BIN 543210)
+  [32m[PASS][0m Get Code snippet contains valid Python
+  [32m3/3 passed[0m
 
->> BIN Lookup Use Case tests
+[1m>> BIN Lookup Use Case tests[0m
 
->> BIN Lookup Use Case
-  [PASS] /bin_lookup/index.html loads (200)
-  [PASS] BIN ranges status endpoint returns valid JSON
-  [FAIL] Lookup action returns card data for BIN 543210
-    BIN lookup action: expected found=true for BIN 543210. Response: {'error': {'Error': [{'Description': 'Unauthorized - Access Not Granted', 'Details': None, 'ReasonCode': 'DECLINED', 'Recoverable': False, 'Source': 'Gateway'}]}, 'found': False}
-  [PASS] Lookup action handles unknown BIN gracefully
-  3/4 passed
-
->> Bundles tests
-
->> Bundles
-  [PASS] Bundles: /explorer/apis reachable (placeholder)
-  1/1 passed
-
->> SDK tests
-
->> SDKs / ofin CLI
-  [PASS] SDKs: /app reachable (placeholder)
-  1/1 passed
-  [OK]  Run recorded in dashboard DB (run #{run_id}).
+[1m[36m>> BIN Lookup Use Case[0m[0m
+  [32m[PASS][0m /bin_lookup/index.html loads (200)
 
 ============================================================
-Test Summary
+Solution Studio
 ============================================================
-  [OK]  Smoke — Home / APIs / Use Cases     7/7
-  [FAIL]  BIN Lookup API                      2/3
-  [FAIL]  BIN Lookup Use Case                 3/4
-  [OK]  Bundles                             1/1
-  [OK]  SDKs / ofin CLI                     1/1
+  + Open Finance US      (57 operations)
+  + Open Finance Australia (9 operations)
+  + Open Finance Europe  (12 operations)
+  + BIN Lookup           (1 operations)
+  + Merchant Identifier  (3 operations)
+  + Automatic Billing Updater (4 operations)
+  + MATCH Pro            (6 operations)
+  + Consumer Clarity     (1 operations)
+  + Priceless Cities     (21 operations)
+  + Easy Savings         (4 operations)
+  + Places               (6 operations)
+  + Offers for Publishers (11 operations)
+  + Offers Merchant Content (10 operations)
+  + Transaction Notifications (8 operations)
+  + Benefits Eligibility (4 operations)
+  + Benefits Content Eligibility Service (1 operations)
+  + Enhanced Currency Conversion Calculator (4 operations)
+  - Carbon Calculator    (9 operations)
+  + Business Payment Controls (4 operations)
+
+Listening on http://0.0.0.0:9021
+============================================================
+
+ * Serving Flask app 'app'
+ * Debug mode: on
+  [32m[PASS][0m BIN ranges status endpoint returns valid JSON
+  [32m[PASS][0m Lookup action returns card data for BIN 543210
+  [32m[PASS][0m Lookup action handles unknown BIN gracefully
+  [32m4/4 passed[0m
+
+[1m>> Bundles tests[0m
+
+[1m[36m>> Bundles[0m[0m
+  [32m[PASS][0m Bundles: /explorer/apis reachable (placeholder)
+  [32m1/1 passed[0m
+
+[1m>> SDK tests[0m
+
+[1m[36m>> SDKs / ofin CLI[0m[0m
+  [32m[PASS][0m SDKs: /app reachable (placeholder)
+  [32m1/1 passed[0m
+
+[1m>> Python Lint (Ruff)[0m
+
+[1m[36m>> Python Lint (Ruff)[0m[0m
+  [32m[PASS][0m ruff is installed
+  [32m[PASS][0m Scan scope: 104 Python file(s) across 7 target(s)
+  Targets: apis, usecases, chat, simulator, app.py, clean_keys.py, live_demo.py
+  Rules:   E(style), F(Pyflakes), W(warnings), I(imports), B(bugbear), UP(pyupgrade)
+  Ignored: E501, B008
+  Issues:  0 total across 0 file(s)
+  [32m[PASS][0m All 7 target(s) are lint-clean
+  [32m3/3 passed[0m
+
+[1m>> JavaScript Lint (ESLint)[0m
+
+[1m[36m>> JavaScript Lint (ESLint)[0m[0m
+  [32m[PASS][0m Scan scope: 25 JS file(s) in static/js
+  Config:   .eslintrc.json (eslint:recommended)
+  Checks:   best-practices, no-unused-vars, no-undef, consistent syntax
+  Findings: 0 error(s), 0 warning(s)
+  [32m[PASS][0m All 25 JS file(s) are lint-clean
+  [32m2/2 passed[0m
+
+[1m>> Security (Bandit)[0m
+
+[1m[36m>> Security (Bandit)[0m[0m
+  [32m[PASS][0m bandit is installed
+  [32m[PASS][0m Scan scope: 104 file(s), 22,341 lines of code
+  Targets:   apis, usecases, chat, simulator, app.py, clean_keys.py, live_demo.py
+  Threshold: severity >=MEDIUM, confidence >=MEDIUM
+  Checks:    B1xx (injection), B2xx (shell), B3xx (imports), B4xx (ciphers),
+             B5xx (assert/try), B6xx (crypto/ssl), B7xx (xml/yaml)
+  Findings:  0 HIGH, 2 MEDIUM, 71 LOW (all severities, before filter)
+  [32m[PASS][0m No medium/high security issues in 7 target(s)
+  [32m[PASS][0m Suppressions (9 # nosec annotation(s)):
+  apis/snippet.py:297  f"{env_prefix}_SIGNING_KEY_PATH": "/tmp/snippet-dry-run.p12",  # nosec B108 � placeholder path, never created
+  apis/snippet.py:318  f"{env_prefix}_PRIVATE_KEY_PATH": "/tmp/snippet-dry-run-key.pem",  # nosec B108 � placeholder path, never created
+  apis/snippet.py:319  f"{env_prefix}_PUBLIC_CERT_PATH": "/tmp/snippet-dry-run-cert.pem",  # nosec B108 � placeholder path, never created
+  app.py:94  _INTERNAL_HOSTS = ("localhost", "127.0.0.1", "0.0.0.0", "::1", "cloudflare.com")  # nosec B104
+  app.py:200  default=os.environ.get("HOST", "0.0.0.0"),  # nosec B104 � configurable dev server binding
+  app.py:293  resp = _requests.get(url, timeout=4.0, verify=False)  # nosec B501
+  app.py:1889  "INSERT INTO bin_ranges VALUES (" + ",".join(["?"] * 32) + ")",  # nosec B608 � values via ? params
+  app.py:3120  app.run(host=host, port=port, debug=True, use_reloader=False)  # nosec B201 � local dev server only
+  clean_keys.py:77  with urllib.request.urlopen(req, timeout=2) as resp:  # nosec B310 � localhost only
+  [33m[INFO] 73 low-severity/confidence finding(s) below threshold � run bandit manually to review[0m
+  [32m4/4 passed[0m
+
+[1m>> Dead Code (Vulture)[0m
+
+[1m[36m>> Dead Code (Vulture)[0m[0m
+  [32m[PASS][0m vulture is installed
+  [32m[PASS][0m Scan scope: 104 file(s)
+  Targets:        apis, usecases, chat, simulator, app.py, clean_keys.py, live_demo.py
+  Min confidence: 80%
+  Checks:         unused functions, classes, variables, imports, attributes
+  [32m[PASS][0m All 104 file(s) clean � no dead code found
+  [32m3/3 passed[0m
+
+[1m>> Stopping server[0m
+  [32m[OK]  Server stopped.[0m
+  [32m[OK]  Run recorded in dashboard DB (run #{run_id}).[0m
+
+============================================================
+[1mTest Summary[0m
+============================================================
+  [32m[OK][0m  Smoke � Home / APIs / Use Cases     7/7
+  [32m[OK][0m  BIN Lookup API                      3/3
+  [32m[OK][0m  BIN Lookup Use Case                 4/4
+  [32m[OK][0m  Bundles                             1/1
+  [32m[OK][0m  SDKs / ofin CLI                     1/1
+  [32m[OK][0m  Python Lint (Ruff)                  3/3
+  [32m[OK][0m  JavaScript Lint (ESLint)            2/2
+  [32m[OK][0m  Security (Bandit)                   4/4
+  [32m[OK][0m  Dead Code (Vulture)                 3/3
 ------------------------------------------------------------
-  14/16 passed
-============================================================
-
-
-============================================================
- Vima / Solution Studio — Test Suite
-============================================================
-
-
-
-------------------------------------------------------------
-Vima / Solution Studio — Automated Test Suite
-------------------------------------------------------------
-  Email:         
-  Login mode:    Standard (email + password auto-fill)
-  Install type:  Existing
-  Work dir:      /Users/orancummins/dev/vima
-  Server:        http://127.0.0.1:9021
-
->> Skipping server start (--no-server)
-
->> Smoke tests
-
->> Smoke — Home / APIs / Use Cases
-  [PASS] GET /app returns 200
-  [PASS] GET /app has no server error
-  [PASS] GET /app contains all navigation panels
-  [PASS] GET /explorer/apis returns 200
-  [PASS] GET /explorer/apis returns a non-empty list
-  [PASS] GET /explorer/apis includes bin_lookup
-  [PASS] Use Cases panel marker present in /app
-  7/7 passed
-
->> BIN Lookup API tests
-
->> BIN Lookup API
-  [PASS] BIN Lookup is configured
-  [FAIL] Execute lookup_bin (BIN 543210)
-    execute lookup_bin returned success=false after retry. Response: {'data': {}, 'error': {'Error': [{'Description': 'Unauthorized - Access Not Granted', 'Details': None, 'ReasonCode': 'DECLINED', 'Recoverable': False, 'Source': 'Gateway'}]}, 'request': {'body': [{'key': 'binNum', 'value': '543210'}], 'headers': {'Accept': 'application/json', 'Accept-Encoding': 'gzip, deflate, zstd', 'Connection': 'keep-alive', 'Content-Length': '38', 'Content-Type': 'application/json', 'User-Agent': 'python-requests/2.31.0'}, 'method': 'POST', 'url': 'https://sandbox.api.mastercard.com/bin-resources/bin-ranges?page=1&size=10'}, 'response': {'body': {'Errors': {'Error': [{'Description': 'Unauthorized - Access Not Granted', 'Details': None, 'ReasonCode': 'DECLINED', 'Recoverable': False, 'Source': 'Gateway'}]}}, 'headers': {'Connection': 'close', 'Content-Length': '153', 'Content-Type': 'application/json', 'Date': 'Sun, 14 Jun 2026 22:37:02 GMT', 'X-EdgeConnect-MidMile-RTT': '88', 'X-EdgeConnect-Origin-MEX-Latency': '31', 'X-MC-Correlation-ID': '0.c63e1202.1781476622.79508401', 'correlation-id': '0.c63e1202.1781476622.79508401'}, 'status_code': 401}, 'state': {'configured': True}, 'state_updates': {}, 'success': False}
-  [PASS] Get Code snippet contains valid Python
-  2/3 passed
-
->> BIN Lookup Use Case tests
-
->> BIN Lookup Use Case
-  [PASS] /bin_lookup/index.html loads (200)
-  [PASS] BIN ranges status endpoint returns valid JSON
-  [FAIL] Lookup action returns card data for BIN 543210
-    BIN lookup action: expected found=true for BIN 543210. Response: {'error': {'Error': [{'Description': 'Unauthorized - Access Not Granted', 'Details': None, 'ReasonCode': 'DECLINED', 'Recoverable': False, 'Source': 'Gateway'}]}, 'found': False}
-  [PASS] Lookup action handles unknown BIN gracefully
-  3/4 passed
-
->> Bundles tests
-
->> Bundles
-  [PASS] Bundles: /explorer/apis reachable (placeholder)
-  1/1 passed
-
->> SDK tests
-
->> SDKs / ofin CLI
-  [PASS] SDKs: /app reachable (placeholder)
-  1/1 passed
-  [OK]  Run recorded in dashboard DB (run #{run_id}).
-
-============================================================
-Test Summary
-============================================================
-  [OK]  Smoke — Home / APIs / Use Cases     7/7
-  [FAIL]  BIN Lookup API                      2/3
-  [FAIL]  BIN Lookup Use Case                 3/4
-  [OK]  Bundles                             1/1
-  [OK]  SDKs / ofin CLI                     1/1
-------------------------------------------------------------
-  14/16 passed
-============================================================
-
-
-============================================================
- Vima / Solution Studio — Test Suite
-============================================================
-
-
-
-------------------------------------------------------------
-Vima / Solution Studio — Automated Test Suite
-------------------------------------------------------------
-  Email:         
-  Login mode:    Standard (email + password auto-fill)
-  Install type:  Existing
-  Work dir:      /Users/orancummins/dev/vima
-  Server:        http://127.0.0.1:9021
-
->> Skipping server start (--no-server)
-
->> Smoke tests
-
->> Smoke — Home / APIs / Use Cases
-  [PASS] GET /app returns 200
-  [PASS] GET /app has no server error
-  [PASS] GET /app contains all navigation panels
-  [PASS] GET /explorer/apis returns 200
-  [PASS] GET /explorer/apis returns a non-empty list
-  [PASS] GET /explorer/apis includes bin_lookup
-  [PASS] Use Cases panel marker present in /app
-  7/7 passed
-
->> BIN Lookup API tests
-
->> BIN Lookup API
-  [PASS] BIN Lookup is configured
-  [PASS] Execute lookup_bin (BIN 543210)
-  [PASS] Get Code snippet contains valid Python
-  3/3 passed
-
->> BIN Lookup Use Case tests
-
->> BIN Lookup Use Case
-  [PASS] /bin_lookup/index.html loads (200)
-  [PASS] BIN ranges status endpoint returns valid JSON
-  [PASS] Lookup action returns card data for BIN 543210
-  [PASS] Lookup action handles unknown BIN gracefully
-  4/4 passed
-
->> Bundles tests
-
->> Bundles
-  [PASS] Bundles: /explorer/apis reachable (placeholder)
-  1/1 passed
-
->> SDK tests
-
->> SDKs / ofin CLI
-  [PASS] SDKs: /app reachable (placeholder)
-  1/1 passed
-  [OK]  Run recorded in dashboard DB (run #{run_id}).
-
-============================================================
-Test Summary
-============================================================
-  [OK]  Smoke — Home / APIs / Use Cases     7/7
-  [OK]  BIN Lookup API                      3/3
-  [OK]  BIN Lookup Use Case                 4/4
-  [OK]  Bundles                             1/1
-  [OK]  SDKs / ofin CLI                     1/1
-------------------------------------------------------------
-  16/16 passed
-============================================================
-
-
-============================================================
- Vima / Solution Studio — Test Suite
-============================================================
-
-
-
-------------------------------------------------------------
-Vima / Solution Studio — Automated Test Suite
-------------------------------------------------------------
-  Email:         
-  Login mode:    Standard (email + password auto-fill)
-  Install type:  Existing
-  Work dir:      /Users/orancummins/dev/vima
-  Server:        http://127.0.0.1:9021
-
->> Skipping server start (--no-server)
-
->> Smoke tests
-
->> Smoke — Home / APIs / Use Cases
-  [PASS] GET /app returns 200
-  [PASS] GET /app has no server error
-  [PASS] GET /app contains all navigation panels
-  [PASS] GET /explorer/apis returns 200
-  [PASS] GET /explorer/apis returns a non-empty list
-  [PASS] GET /explorer/apis includes bin_lookup
-  [PASS] Use Cases panel marker present in /app
-  7/7 passed
-
->> BIN Lookup API tests
-
->> BIN Lookup API
-  [PASS] BIN Lookup is configured
-  [PASS] Execute lookup_bin (BIN 543210)
-  [PASS] Get Code snippet contains valid Python
-  3/3 passed
-
->> BIN Lookup Use Case tests
-
->> BIN Lookup Use Case
-  [PASS] /bin_lookup/index.html loads (200)
-  [PASS] BIN ranges status endpoint returns valid JSON
-  [PASS] Lookup action returns card data for BIN 543210
-  [PASS] Lookup action handles unknown BIN gracefully
-  4/4 passed
-
->> Bundles tests
-
->> Bundles
-  [PASS] Bundles: /explorer/apis reachable (placeholder)
-  1/1 passed
-
->> SDK tests
-
->> SDKs / ofin CLI
-  [PASS] SDKs: /app reachable (placeholder)
-  1/1 passed
-  [OK]  Run recorded in dashboard DB (run #{run_id}).
-
-============================================================
-Test Summary
-============================================================
-  [OK]  Smoke — Home / APIs / Use Cases     7/7
-  [OK]  BIN Lookup API                      3/3
-  [OK]  BIN Lookup Use Case                 4/4
-  [OK]  Bundles                             1/1
-  [OK]  SDKs / ofin CLI                     1/1
-------------------------------------------------------------
-  16/16 passed
-============================================================
-
-W i n d o w s   S u b s y s t e m   f o r   L i n u x   h a s   n o   i n s t a l l e d   d i s t r i b u t i o n s . 
- 
- Y o u   c a n   r e s o l v e   t h i s   b y   i n s t a l l i n g   a   d i s t r i b u t i o n   w i t h   t h e   i n s t r u c t i o n s   b e l o w : 
- 
- 
- 
- U s e   ' w s l . e x e   - - l i s t   - - o n l i n e '   t o   l i s t   a v a i l a b l e   d i s t r i b u t i o n s 
- 
- a n d   ' w s l . e x e   - - i n s t a l l   < D i s t r o > '   t o   i n s t a l l . 
- 
- W i n d o w s   S u b s y s t e m   f o r   L i n u x   h a s   n o   i n s t a l l e d   d i s t r i b u t i o n s . 
- 
- Y o u   c a n   r e s o l v e   t h i s   b y   i n s t a l l i n g   a   d i s t r i b u t i o n   w i t h   t h e   i n s t r u c t i o n s   b e l o w : 
- 
- 
- 
- U s e   ' w s l . e x e   - - l i s t   - - o n l i n e '   t o   l i s t   a v a i l a b l e   d i s t r i b u t i o n s 
- 
- a n d   ' w s l . e x e   - - i n s t a l l   < D i s t r o > '   t o   i n s t a l l . 
- 
- W i n d o w s   S u b s y s t e m   f o r   L i n u x   h a s   n o   i n s t a l l e d   d i s t r i b u t i o n s . 
- 
- Y o u   c a n   r e s o l v e   t h i s   b y   i n s t a l l i n g   a   d i s t r i b u t i o n   w i t h   t h e   i n s t r u c t i o n s   b e l o w : 
- 
- 
- 
- U s e   ' w s l . e x e   - - l i s t   - - o n l i n e '   t o   l i s t   a v a i l a b l e   d i s t r i b u t i o n s 
- 
- a n d   ' w s l . e x e   - - i n s t a l l   < D i s t r o > '   t o   i n s t a l l . 
- 
- 
-============================================================
- Vima / Solution Studio — Test Suite
-============================================================
-
-
-
-------------------------------------------------------------
-Vima / Solution Studio — Automated Test Suite
-------------------------------------------------------------
-  Email:         
-  Login mode:    Standard (email + password auto-fill)
-  Install type:  Existing
-  Work dir:      /Users/orancummins/dev/vima
-  Server:        http://127.0.0.1:9021
-
->> Skipping server start (--no-server)
-
->> Smoke tests
-
->> Smoke — Home / APIs / Use Cases
-  [PASS] GET /app returns 200
-  [PASS] GET /app has no server error
-  [PASS] GET /app contains all navigation panels
-  [PASS] GET /explorer/apis returns 200
-  [PASS] GET /explorer/apis returns a non-empty list
-  [PASS] GET /explorer/apis includes bin_lookup
-  [PASS] Use Cases panel marker present in /app
-  7/7 passed
-
->> BIN Lookup API tests
-
->> BIN Lookup API
-  [PASS] BIN Lookup is configured
-  [PASS] Execute lookup_bin (BIN 543210)
-  [PASS] Get Code snippet contains valid Python
-  3/3 passed
-
->> BIN Lookup Use Case tests
-
->> BIN Lookup Use Case
-  [PASS] /bin_lookup/index.html loads (200)
-  [PASS] BIN ranges status endpoint returns valid JSON
-  [PASS] Lookup action returns card data for BIN 543210
-  [PASS] Lookup action handles unknown BIN gracefully
-  4/4 passed
-
->> Bundles tests
-
->> Bundles
-  [PASS] Bundles: /explorer/apis reachable (placeholder)
-  1/1 passed
-
->> SDK tests
-
->> SDKs / ofin CLI
-  [PASS] SDKs: /app reachable (placeholder)
-  1/1 passed
-  [OK]  Run recorded in dashboard DB (run #{run_id}).
-
-============================================================
-Test Summary
-============================================================
-  [OK]  Smoke — Home / APIs / Use Cases     7/7
-  [OK]  BIN Lookup API                      3/3
-  [OK]  BIN Lookup Use Case                 4/4
-  [OK]  Bundles                             1/1
-  [OK]  SDKs / ofin CLI                     1/1
-------------------------------------------------------------
-  16/16 passed
-============================================================
-
-
-============================================================
- Vima / Solution Studio — Test Suite
-============================================================
-
-
-
-------------------------------------------------------------
-Vima / Solution Studio — Automated Test Suite
-------------------------------------------------------------
-  Email:         
-  Login mode:    Standard (email + password auto-fill)
-  Install type:  Existing
-  Work dir:      /Users/orancummins/dev/vima
-  Server:        http://127.0.0.1:9021
-
->> Skipping server start (--no-server)
-
->> Smoke tests
-
->> Smoke — Home / APIs / Use Cases
-  [PASS] GET /app returns 200
-  [PASS] GET /app has no server error
-  [PASS] GET /app contains all navigation panels
-  [PASS] GET /explorer/apis returns 200
-  [PASS] GET /explorer/apis returns a non-empty list
-  [PASS] GET /explorer/apis includes bin_lookup
-  [PASS] Use Cases panel marker present in /app
-  7/7 passed
-
->> BIN Lookup API tests
-
->> BIN Lookup API
-  [PASS] BIN Lookup is configured
-  [PASS] Execute lookup_bin (BIN 543210)
-  [PASS] Get Code snippet contains valid Python
-  3/3 passed
-
->> BIN Lookup Use Case tests
-
->> BIN Lookup Use Case
-  [PASS] /bin_lookup/index.html loads (200)
-  [PASS] BIN ranges status endpoint returns valid JSON
-  [PASS] Lookup action returns card data for BIN 543210
-  [PASS] Lookup action handles unknown BIN gracefully
-  4/4 passed
-
->> Bundles tests
-
->> Bundles
-  [PASS] Bundles: /explorer/apis reachable (placeholder)
-  1/1 passed
-
->> SDK tests
-
->> SDKs / ofin CLI
-  [PASS] SDKs: /app reachable (placeholder)
-  1/1 passed
-  [OK]  Run recorded in dashboard DB (run #{run_id}).
-
-============================================================
-Test Summary
-============================================================
-  [OK]  Smoke — Home / APIs / Use Cases     7/7
-  [OK]  BIN Lookup API                      3/3
-  [OK]  BIN Lookup Use Case                 4/4
-  [OK]  Bundles                             1/1
-  [OK]  SDKs / ofin CLI                     1/1
-------------------------------------------------------------
-  16/16 passed
-============================================================
-
-
-============================================================
- Vima / Solution Studio — Test Suite
-============================================================
-
-
-
-------------------------------------------------------------
-Vima / Solution Studio — Automated Test Suite
-------------------------------------------------------------
-  Email:         
-  Login mode:    Standard (email + password auto-fill)
-  Install type:  Existing
-  Work dir:      /Users/orancummins/dev/vima
-  Server:        http://127.0.0.1:9021
-
->> Skipping server start (--no-server)
-
->> Smoke tests
-
->> Smoke — Home / APIs / Use Cases
-  [PASS] GET /app returns 200
-  [PASS] GET /app has no server error
-  [PASS] GET /app contains all navigation panels
-  [PASS] GET /explorer/apis returns 200
-  [PASS] GET /explorer/apis returns a non-empty list
-  [PASS] GET /explorer/apis includes bin_lookup
-  [PASS] Use Cases panel marker present in /app
-  7/7 passed
-
->> BIN Lookup API tests
-
->> BIN Lookup API
-  [PASS] BIN Lookup is configured
-  [PASS] Execute lookup_bin (BIN 543210)
-  [PASS] Get Code snippet contains valid Python
-  3/3 passed
-
->> BIN Lookup Use Case tests
-
->> BIN Lookup Use Case
-  [PASS] /bin_lookup/index.html loads (200)
-  [PASS] BIN ranges status endpoint returns valid JSON
-  [PASS] Lookup action returns card data for BIN 543210
-  [PASS] Lookup action handles unknown BIN gracefully
-  4/4 passed
-
->> Bundles tests
-
->> Bundles
-  [PASS] Bundles: /explorer/apis reachable (placeholder)
-  1/1 passed
-
->> SDK tests
-
->> SDKs / ofin CLI
-  [PASS] SDKs: /app reachable (placeholder)
-  1/1 passed
-  [OK]  Run recorded in dashboard DB (run #{run_id}).
-
-============================================================
-Test Summary
-============================================================
-  [OK]  Smoke — Home / APIs / Use Cases     7/7
-  [OK]  BIN Lookup API                      3/3
-  [OK]  BIN Lookup Use Case                 4/4
-  [OK]  Bundles                             1/1
-  [OK]  SDKs / ofin CLI                     1/1
-------------------------------------------------------------
-  16/16 passed
+[32m[1m  28/28 passed[0m[0m
 ============================================================
 

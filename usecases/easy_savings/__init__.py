@@ -5,10 +5,9 @@ clean offer-browsing experience for the Use Cases tab.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
-
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "easy_savings",
     "name": "Easy Savings",
     "description": (
@@ -27,8 +26,7 @@ MANIFEST: Dict[str, Any] = {
     },
 }
 
-
-def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
     from apis.easy_savings import api as es_api
 
     if action == "browse":
@@ -60,8 +58,7 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
     return {"error": f"Unknown action: {action}"}
 
-
-def _shape_offer(o: Dict[str, Any]) -> Dict[str, Any]:
+def _shape_offer(o: dict[str, Any]) -> dict[str, Any]:
     merchant = o.get("merchant") or {}
     return {
         "id": o.get("id") or o.get("offerId") or "",
@@ -79,8 +76,7 @@ def _shape_offer(o: Dict[str, Any]) -> Dict[str, Any]:
         "redemptionChannel": o.get("redemptionChannel") or "",
     }
 
-
-def _shape_redemption(data: Dict[str, Any]) -> Dict[str, Any]:
+def _shape_redemption(data: dict[str, Any]) -> dict[str, Any]:
     return {
         "orderId": data.get("orderId") or data.get("order_id") or "",
         "status": data.get("status") or "unknown",

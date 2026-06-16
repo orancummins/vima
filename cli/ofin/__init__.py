@@ -11,7 +11,7 @@ buildable into a portable, no-binary artifact via ``cli/build.py``.
 
 __version__ = "0.1.0"
 
-from .sdk import OfinClient, Result  # noqa: E402
 from .config import Config  # noqa: E402
+from .sdk import OfinClient, Result  # noqa: E402
 
 __all__ = ["__version__", "OfinClient", "Result", "Config"]

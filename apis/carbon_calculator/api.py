@@ -36,8 +36,7 @@ from __future__ import annotations
 import json
 import os
 import uuid
-from typing import Any, Dict, List, Optional
-
+from typing import Any
 
 _PROD_BASE    = "https://api.mastercard.com/carbon"
 _SANDBOX_BASE = "https://sandbox.api.mastercard.com/carbon"
@@ -60,7 +59,7 @@ def is_configured() -> bool:
     return _configured() or is_simulated("carbon_calculator")
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured()}
 
 
@@ -138,28 +137,28 @@ _ENC_KEY_MISSING = (
 
 # --- params -----------------------------------------------------------------
 
-_SP_UPDATE_PARAMS: List[Dict[str, Any]] = [
+_SP_UPDATE_PARAMS: list[dict[str, Any]] = [
     {"name": "legalName", "label": "Legal name",           "type": "text", "default": "Test Issuer", "required": False},
     {"name": "country",   "label": "Country (ISO-3166-1)", "type": "text", "default": "USA",         "required": False},
 ]
 
-_BULK_CARDS_PARAMS: List[Dict[str, Any]] = [
+_BULK_CARDS_PARAMS: list[dict[str, Any]] = [
     {"name": "primaryAccountNumbers", "label": "PANs (comma-separated)", "type": "text",
      "default": "5204735874100012", "required": True,
      "help": "Sandbox PANs only. Encrypted as a JWE on the wire."},
 ]
 
-_DELETE_CARD_PARAMS: List[Dict[str, Any]] = [
+_DELETE_CARD_PARAMS: list[dict[str, Any]] = [
     {"name": "paymentCardId", "label": "Payment card ID", "type": "text", "default": "", "required": True},
 ]
 
-_HISTORICAL_PARAMS: List[Dict[str, Any]] = [
+_HISTORICAL_PARAMS: list[dict[str, Any]] = [
     {"name": "paymentCardId", "label": "Payment card ID", "type": "text", "default": "", "required": True},
     {"name": "fromDate",      "label": "From date (YYYY-MM-DD)", "type": "text", "default": "", "required": False},
     {"name": "toDate",        "label": "To date (YYYY-MM-DD)",   "type": "text", "default": "", "required": False},
 ]
 
-_AGGREGATE_PARAMS: List[Dict[str, Any]] = [
+_AGGREGATE_PARAMS: list[dict[str, Any]] = [
     {"name": "paymentCardIds", "label": "Payment card IDs (comma-separated)",
      "type": "text", "default": "", "required": True},
     {"name": "aggregation",    "label": "Aggregation",
@@ -167,7 +166,7 @@ _AGGREGATE_PARAMS: List[Dict[str, Any]] = [
      "options": [{"value": "WEEKLY", "label": "Weekly"}, {"value": "MONTHLY", "label": "Monthly"}]},
 ]
 
-_TXN_FOOTPRINT_PARAMS: List[Dict[str, Any]] = [
+_TXN_FOOTPRINT_PARAMS: list[dict[str, Any]] = [
     {"name": "amount",        "label": "Amount",              "type": "number", "default": 42.50, "required": True},
     {"name": "currency",      "label": "Currency (ISO-4217)", "type": "text",   "default": "USD", "required": True},
     {"name": "mcc",           "label": "MCC",                 "type": "text",   "default": "5411", "required": True,
@@ -176,7 +175,7 @@ _TXN_FOOTPRINT_PARAMS: List[Dict[str, Any]] = [
 ]
 
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "carbon_calculator",
     "name": "Carbon Calculator",
     "description": (
@@ -270,7 +269,7 @@ MANIFEST: Dict[str, Any] = {
 }
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if op_id == "get_service_provider":
         return _signed_request("GET", "/service-providers")
     if op_id == "update_service_provider":
@@ -285,7 +284,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
         cid = (params.get("paymentCardId") or "").strip()
         if not cid:
             return {"success": False, "error": "paymentCardId is required."}
-        q: Dict[str, Any] = {}
+        q: dict[str, Any] = {}
         for k in ("fromDate", "toDate"):
             v = (params.get(k) or "").strip()
             if v:
@@ -352,7 +351,7 @@ _FLE_CONFIG_DICT = {
 }
 
 
-def _bulk_register_live(pans: List[str]) -> Dict[str, Any]:
+def _bulk_register_live(pans: list[str]) -> dict[str, Any]:
     """POST /service-providers/payment-cards with FLE-encrypted PAN list.
 
     In simulator mode the body is sent unencrypted (the simulator does not
@@ -373,8 +372,8 @@ def _bulk_register_live(pans: List[str]) -> Dict[str, Any]:
         enc_path = os.path.join(project_root, enc_path)
 
     try:
-        from client_encryption.field_level_encryption_config import FieldLevelEncryptionConfig
         from client_encryption.field_level_encryption import encrypt_payload
+        from client_encryption.field_level_encryption_config import FieldLevelEncryptionConfig
     except ImportError:
         return {"success": False, "error": "client_encryption library not installed."}
 
@@ -396,9 +395,9 @@ def _signed_request(
     method: str,
     path: str,
     *,
-    body: Optional[Dict[str, Any]] = None,
-    query: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    body: dict[str, Any] | None = None,
+    query: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("carbon_calculator"):
         return {
@@ -411,6 +410,7 @@ def _signed_request(
         }
 
     from urllib.parse import urlencode
+
     import requests
 
     url = f"{_base()}{path}"
@@ -420,7 +420,7 @@ def _signed_request(
     body_str = json.dumps(body) if body is not None else None
 
     if is_simulated("carbon_calculator"):
-        headers: Dict[str, str] = {
+        headers: dict[str, str] = {
             "Accept": "application/json",
             "x-openapi-transid": str(uuid.uuid4()),
         }
@@ -466,7 +466,7 @@ def _signed_request(
         return {"success": False, "error": f"Request failed: {e}"}
 
     success = 200 <= status_code < 300
-    state_updates: Dict[str, Any] = {}
+    state_updates: dict[str, Any] = {}
     if success and isinstance(resp_body, dict):
         card_id = resp_body.get("paymentCardId") or resp_body.get("id")
         if card_id:

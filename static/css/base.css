@@ -62,13 +62,16 @@ html:not(.theme-light) optgroup {
 .header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 24px;
-  background: #000;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: white;
   border-bottom: 1px solid transparent;
   transition: background 0.5s ease, color 0.25s ease, border-color 0.25s ease;
+  flex-shrink: 0;
 }
 .header.header--home {
-  background: #000;
+  background: rgba(0, 0, 0, 0.92);
 }
 .brand { display: flex; align-items: center; gap: 14px; }
 .brand-marks {
@@ -107,7 +110,7 @@ html:not(.theme-light) optgroup {
 .top-tab.active { background: var(--mc-orange); color: white; }
 
 html.theme-light .header:not(.header--home) {
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.94);
   color: var(--ink);
   border-bottom-color: var(--line);
 }

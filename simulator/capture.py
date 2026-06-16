@@ -6,7 +6,9 @@ capture_response(). CAPTURE_MAP maps (api_slug, op_id) → list of
 list of records from the raw response body and upserts them into the per-API DB.
 """
 from __future__ import annotations
-from typing import Any, Callable
+
+from collections.abc import Callable
+from typing import Any
 
 from simulator.datastore import store
 

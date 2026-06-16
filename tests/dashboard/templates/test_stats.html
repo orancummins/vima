@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Statistics — Mastercard Solution Studio Tests</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --mc-red: #eb001b; --mc-orange: #ff5f00; --mc-yellow: #f79e1b;
+      --bg: #111111; --bg2: #161616; --bg3: #1a1a1a;
+      --card: #1e1e1e; --line: #2a2a2a;
+      --text: #f4f0ea; --text2: #aaaaaa; --text3: #666666;
+      --ok: #1f9d55; --ok-dim: #14532d; --err: #eb001b; --err-dim: #450a0a;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; }
+    body { font-family: "Inter", -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; display: flex; flex-direction: column; }
+
+    /* ── Header ── */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 24px;
+      background: rgba(0,0,0,0.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--line); flex-shrink: 0;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-marks { position: relative; width: 36px; height: 22px; flex-shrink: 0; }
+    .brand-dot { position: absolute; top: 0; width: 22px; height: 22px; border-radius: 50%; }
+    .brand-dot-red  { left: 0; background: var(--mc-red); }
+    .brand-dot-yellow { left: 14px; background: var(--mc-yellow); mix-blend-mode: screen; }
+    .brand-title { font-weight: 700; font-size: 15px; letter-spacing: -0.02em; }
+    .brand-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+    .header-nav { display: flex; gap: 8px; }
+    .nav-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--text2); font-size: 13px; font-family: inherit;
+      padding: 6px 14px; border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+      text-decoration: none; display: inline-block;
+    }
+    .nav-btn:hover { background: var(--line); color: var(--text); }
+    .nav-btn.active { background: var(--line); color: var(--text); font-weight: 600; }
+
+    /* ── Page ── */
+    .page-content { flex: 1; padding: 28px 32px; max-width: 1280px; width: 100%; margin: 0 auto; }
+    .page-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
+    .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; }
+    .page-meta { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+    /* ── KPI row ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px; margin-bottom: 24px;
+    }
+    @media (min-width: 860px) { .kpi-grid { grid-template-columns: repeat(6, 1fr); } }
+    .kpi-card {
+      background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+      padding: 18px 20px;
+    }
+    .kpi-value { font-size: 28px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; margin-bottom: 6px; }
+    .kpi-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; }
+    .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+    /* ── Charts ── */
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .chart-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .card-head { padding: 14px 18px 10px; border-bottom: 1px solid var(--line); }
+    .card-title { font-size: 13px; font-weight: 600; }
+    .card-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+    .chart-wrap { position: relative; height: 190px; padding: 14px 16px 10px; }
+
+    /* ── Reliability ── */
+    .rel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .rel-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .rel-head { padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+    .rel-title { font-size: 13px; font-weight: 600; }
+    .rel-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 16px; border-bottom: 1px solid var(--line);
+    }
+    .rel-row:last-child { border-bottom: none; }
+    .rel-pct { font-size: 12px; font-weight: 700; font-family: var(--mono); min-width: 40px; flex-shrink: 0; }
+    .rel-bar-wrap { flex: 0 0 56px; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+    .rel-bar-fill { height: 100%; border-radius: 2px; }
+    .rel-name { font-size: 12px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+    .rel-suite { font-size: 10px; color: var(--text3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rel-count { font-size: 11px; color: var(--text3); font-family: var(--mono); flex-shrink: 0; }
+    .rel-empty { padding: 32px 16px; text-align: center; color: var(--text3); font-size: 13px; }
+
+    /* ── Breakdowns ── */
+    .breakdown-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .breakdown-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .breakdown-chart-wrap { padding: 12px 16px 16px; display: flex; justify-content: center; align-items: center; }
+
+    /* ── Empty state ── */
+    .empty-state { text-align: center; padding: 80px 24px; color: var(--text3); }
+    .empty-icon { font-size: 48px; margin-bottom: 20px; line-height: 1; }
+    .empty-title { font-size: 17px; font-weight: 600; color: var(--text2); margin-bottom: 8px; }
+    .empty-sub { font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="brand">
+    <canvas id="hdr-globe" width="36" height="36" style="flex-shrink:0;opacity:0.85"></canvas>
+    <div class="brand-marks">
+      <span class="brand-dot brand-dot-red"></span>
+      <span class="brand-dot brand-dot-yellow"></span>
+    </div>
+    <div>
+      <div class="brand-title">Mastercard Solution Studio</div>
+      <div class="brand-sub">Testing</div>
+    </div>
+  </div>
+  <nav class="header-nav">
+    <a href="{{ url_for('test_dashboard.run_list') }}" class="nav-btn">Run</a>
+    <a href="{{ url_for('test_dashboard.run_list') }}#history" class="nav-btn">History</a>
+    <a href="{{ url_for('test_dashboard.stats') }}" class="nav-btn active">Stats</a>
+    <a href="{{ url_for('test_dashboard.config') }}" class="nav-btn">Settings</a>
+    <a href="/" class="nav-btn">&#8592; Back to App</a>
+  </nav>
+</header>
+
+<main class="page-content">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Statistics</h1>
+      <p class="page-meta">Aggregated across {{ stats.summary.total_runs }} test run{{ 's' if stats.summary.total_runs != 1 else '' }}</p>
+    </div>
+  </div>
+
+  {% if stats.summary.total_runs == 0 %}
+  <div class="empty-state">
+    <div class="empty-icon">📊</div>
+    <div class="empty-title">No test data yet</div>
+    <div class="empty-sub">Run some tests to see statistics here.</div>
+  </div>
+  {% else %}
+
+  <!-- KPI row -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-value">{{ stats.summary.total_runs }}</div>
+      <div class="kpi-label">Total Runs</div>
+    </div>
+    <div class="kpi-card">
+      {% set apr = stats.summary.avg_pass_rate | float %}
+      <div class="kpi-value" style="color:{% if apr >= 95 %}#86efac{% elif apr >= 75 %}#fed7aa{% else %}#fca5a5{% endif %}">{{ apr | round(1) }}%</div>
+      <div class="kpi-label">Avg Pass Rate</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">{{ stats.summary.perfect_runs }}</div>
+      <div class="kpi-label">Perfect Runs</div>
+      <div class="kpi-sub">{{ (stats.summary.perfect_runs / stats.summary.total_runs * 100) | round(0) | int }}% of all runs</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">{{ stats.summary.total_tests_run }}</div>
+      <div class="kpi-label">Tests Executed</div>
+    </div>
+    <div class="kpi-card">
+      {% set ad = stats.summary.avg_duration | float %}
+      <div class="kpi-value">{% if ad >= 60 %}{{ (ad / 60) | round(1) }}m{% else %}{{ ad | round(0) | int }}s{% endif %}</div>
+      <div class="kpi-label">Avg Duration</div>
+    </div>
+    <div class="kpi-card">
+      {% set md = stats.summary.min_duration | float %}
+      <div class="kpi-value">{% if md >= 60 %}{{ (md / 60) | round(1) }}m{% else %}{{ md | round(0) | int }}s{% endif %}</div>
+      <div class="kpi-label">Fastest Run</div>
+    </div>
+  </div>
+
+  <!-- Trend charts -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="card-head">
+        <div class="card-title">Pass Rate Over Time</div>
+        <div class="card-sub">Last {{ stats.trend | length }} run{{ 's' if stats.trend | length != 1 else '' }}</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-passrate"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="card-head">
+        <div class="card-title">Duration Over Time</div>
+        <div class="card-sub">Seconds per run</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-duration"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Reliability tables -->
+  <div class="rel-grid">
+    <div class="rel-card">
+      <div class="rel-head">
+        <span class="rel-title">Most Reliable</span>
+        <span style="font-size:11px;color:var(--text3)">100% pass rate, most-run first</span>
+      </div>
+      {% if stats.most_reliable %}
+        {% for t in stats.most_reliable %}
+        <div class="rel-row">
+          <span class="rel-pct" style="color:#86efac">100%</span>
+          <div class="rel-bar-wrap"><div class="rel-bar-fill" style="width:100%;background:#22c55e"></div></div>
+          <div style="flex:1;min-width:0">
+            <div class="rel-name" title="{{ t.test_name }}">{{ t.test_name }}</div>
+            <div class="rel-suite">{{ t.suite }}</div>
+          </div>
+          <span class="rel-count">{{ t.total_runs }}&times;</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="rel-empty">No reliability data yet — run more tests</div>
+      {% endif %}
+    </div>
+
+    <div class="rel-card">
+      <div class="rel-head">
+        <span class="rel-title">Flakiest Tests</span>
+        <span style="font-size:11px;color:var(--text3)">Lowest pass rate</span>
+      </div>
+      {% if stats.least_reliable %}
+        {% for t in stats.least_reliable %}
+        {% set pct = t.pass_rate | round(0) | int %}
+        <div class="rel-row">
+          <span class="rel-pct" style="color:{% if pct < 50 %}#fca5a5{% else %}#fed7aa{% endif %}">{{ pct }}%</span>
+          <div class="rel-bar-wrap">
+            <div class="rel-bar-fill" style="width:{{ pct }}%;background:{% if pct < 50 %}#ef4444{% else %}#f79e1b{% endif %}"></div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div class="rel-name" title="{{ t.test_name }}">{{ t.test_name }}</div>
+            <div class="rel-suite">{{ t.suite }}</div>
+          </div>
+          <span class="rel-count">{{ t.total_runs }}&times;</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="rel-empty">All tests passing — nothing flaky &#127881;</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Breakdowns -->
+  <div class="breakdown-grid">
+    <div class="breakdown-card">
+      <div class="card-head"><div class="card-title">Operating System</div></div>
+      <div class="breakdown-chart-wrap"><canvas id="chart-os" width="260" height="130"></canvas></div>
+    </div>
+    <div class="breakdown-card">
+      <div class="card-head"><div class="card-title">Test Scope</div></div>
+      <div class="breakdown-chart-wrap"><canvas id="chart-scope" width="260" height="130"></canvas></div>
+    </div>
+    <div class="breakdown-card">
+      <div class="card-head"><div class="card-title">Install Type</div></div>
+      <div class="breakdown-chart-wrap"><canvas id="chart-install" width="260" height="130"></canvas></div>
+    </div>
+  </div>
+
+  {% endif %}
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+{% if stats.summary.total_runs > 0 %}
+const STATS = {{ stats | tojson }};
+
+Chart.defaults.color = '#555555';
+Chart.defaults.borderColor = '#222222';
+
+const TT = {
+  backgroundColor: '#1e1e1e',
+  borderColor: '#333333',
+  borderWidth: 1,
+  titleColor: '#f4f0ea',
+  bodyColor: '#aaaaaa',
+  padding: 10,
+  cornerRadius: 6,
+};
+
+// ── Pass rate chart ──────────────────────────────────────────────────────────
+(function() {
+  const el = document.getElementById('chart-passrate');
+  const trend = STATS.trend;
+  if (!el || !trend.length) return;
+
+  const labels = trend.map(r => '#' + r.id);
+  const data   = trend.map(r => r.total_tests > 0 ? +(r.passed_tests / r.total_tests * 100).toFixed(1) : null);
+
+  new Chart(el, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        borderColor: '#ff5f00',
+        backgroundColor: 'rgba(255,95,0,0.07)',
+        fill: true,
+        tension: 0.35,
+        pointRadius: trend.length > 20 ? 2 : 4,
+        pointHoverRadius: 6,
+        borderWidth: 2,
+        pointBackgroundColor: '#ff5f00',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          min: 0, max: 100,
+          ticks: { color: '#555', callback: v => v + '%', stepSize: 25, font: { size: 11 } },
+          grid: { color: '#1e1e1e' },
+        },
+        x: {
+          ticks: { color: '#555', maxRotation: 0, font: { size: 10 }, maxTicksLimit: 12 },
+          grid: { display: false },
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...TT, callbacks: { label: c => c.parsed.y + '% passed' } }
+      }
+    }
+  });
+})();
+
+// ── Duration chart ───────────────────────────────────────────────────────────
+(function() {
+  const el = document.getElementById('chart-duration');
+  const trend = STATS.trend;
+  if (!el || !trend.length) return;
+
+  new Chart(el, {
+    type: 'bar',
+    data: {
+      labels: trend.map(r => '#' + r.id),
+      datasets: [{
+        data: trend.map(r => r.duration_seconds > 0 ? Math.round(r.duration_seconds) : null),
+        backgroundColor: trend.map(r => r.failed_tests > 0 ? 'rgba(247,158,27,0.45)' : 'rgba(247,158,27,0.75)'),
+        borderColor: '#f79e1b',
+        borderWidth: 1,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          min: 0,
+          ticks: { color: '#555', callback: v => v + 's', font: { size: 11 } },
+          grid: { color: '#1e1e1e' },
+        },
+        x: {
+          ticks: { color: '#555', maxRotation: 0, font: { size: 10 }, maxTicksLimit: 12 },
+          grid: { display: false },
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...TT,
+          callbacks: {
+            label: c => {
+              const r = STATS.trend[c.dataIndex];
+              const line = [c.parsed.y + 's'];
+              if (r) line.push(r.passed_tests + '/' + r.total_tests + ' passed');
+              return line;
+            }
+          }
+        }
+      }
+    }
+  });
+})();
+
+// ── Donut helper ─────────────────────────────────────────────────────────────
+function mkDonut(id, items, labelKey, colors) {
+  const el = document.getElementById(id);
+  if (!el || !items.length) return;
+  const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+  new Chart(el, {
+    type: 'doughnut',
+    data: {
+      labels: items.map(d => cap(d[labelKey])),
+      datasets: [{
+        data: items.map(d => d.cnt),
+        backgroundColor: colors.slice(0, items.length),
+        borderWidth: 0,
+        hoverBorderWidth: 2,
+        hoverBorderColor: '#444',
+      }]
+    },
+    options: {
+      responsive: false,
+      cutout: '64%',
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            color: '#aaaaaa',
+            font: { size: 11, family: 'Inter, sans-serif' },
+            padding: 10,
+            boxWidth: 10,
+            boxHeight: 10,
+          }
+        },
+        tooltip: {
+          ...TT,
+          callbacks: {
+            label: c => ' ' + c.parsed + ' run' + (c.parsed !== 1 ? 's' : ''),
+          }
+        }
+      }
+    }
+  });
+}
+
+mkDonut('chart-os',      STATS.os_breakdown,      'label', ['#60a5fa','#34d399','#a78bfa','#fb923c','#f472b6','#facc15']);
+mkDonut('chart-scope',   STATS.scope_breakdown,   'label', ['#ff5f00','#f79e1b','#60a5fa']);
+mkDonut('chart-install', STATS.install_breakdown, 'label', ['#3b82f6','#22c55e','#a78bfa']);
+
+{% endif %}
+</script>
+
+<!-- Globe (same renderer as other dashboard pages) -->
+<script>
+(function(){
+  var c=document.getElementById('hdr-globe');if(!c)return;
+  var ctx=c.getContext('2d'),S=36,R=S*0.38,CX=S/2,CY=S/2,SPEED=0.004,ND=24;
+  var pts=[];for(var i=0;i<ND;i++){var phi=Math.acos(-1+(2*i)/ND),th=Math.sqrt(ND*Math.PI)*phi;pts.push({x:Math.cos(th)*Math.sin(phi),y:Math.sin(th)*Math.sin(phi),z:Math.cos(phi)});}
+  var rot=0,last=null;
+  function render(ts){
+    if(document.hidden){requestAnimationFrame(render);return;}
+    if(last&&(ts-last)<33){requestAnimationFrame(render);return;}
+    last=ts;ctx.clearRect(0,0,S,S);
+    var gO=0.15;ctx.lineWidth=0.5;
+    for(var lat=-60;lat<=60;lat+=30){var lR=lat*Math.PI/180;for(var seg=0;seg<360;seg+=10){var l0=(seg*Math.PI/180)+rot,l1=((seg+10)*Math.PI/180)+rot,z0=Math.cos(lR)*Math.sin(l0),z1=Math.cos(lR)*Math.sin(l1),a=gO*Math.max(0,Math.min(1,((z0+z1)/2+0.4)/0.8));if(a<0.005)continue;var s0=1/(1.8-z0),s1=1/(1.8-z1);ctx.strokeStyle='rgba(255,120,0,'+a+')';ctx.beginPath();ctx.moveTo(CX+Math.cos(lR)*Math.cos(l0)*R*s0,CY+Math.sin(lR)*R*s0);ctx.lineTo(CX+Math.cos(lR)*Math.cos(l1)*R*s1,CY+Math.sin(lR)*R*s1);ctx.stroke();}}
+    for(var lon=0;lon<360;lon+=30){for(var seg=-88;seg<90;seg+=10){var l0=seg*Math.PI/180,l1=(seg+10)*Math.PI/180,lR=(lon*Math.PI/180)+rot,z0=Math.cos(l0)*Math.sin(lR),z1=Math.cos(l1)*Math.sin(lR),a=gO*Math.max(0,Math.min(1,((z0+z1)/2+0.4)/0.8));if(a<0.005)continue;var s0=1/(1.8-z0),s1=1/(1.8-z1);ctx.strokeStyle='rgba(255,120,0,'+a+')';ctx.beginPath();ctx.moveTo(CX+Math.cos(l0)*Math.cos(lR)*R*s0,CY+Math.sin(l0)*R*s0);ctx.lineTo(CX+Math.cos(l1)*Math.cos(lR)*R*s1,CY+Math.sin(l1)*R*s1);ctx.stroke();}}
+    var proj=pts.map(function(p){var rx=p.x*Math.cos(rot)-p.z*Math.sin(rot),rz=p.x*Math.sin(rot)+p.z*Math.cos(rot),sc=1/(1.8-rz),fade=Math.max(0,Math.min(1,(rz+0.2)/0.4));return{px:CX+rx*R*sc,py:CY+p.y*R*sc,rz:rz,sc:sc,alpha:0.15+fade*0.85};});
+    proj.filter(function(p){return p.rz>-0.18;}).sort(function(a,b){return a.rz-b.rz;}).forEach(function(p){ctx.fillStyle='rgba(255,160,40,'+p.alpha+')';ctx.beginPath();ctx.arc(p.px,p.py,1.8*p.sc,0,Math.PI*2);ctx.fill();});
+    rot+=SPEED;requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+})();
+</script>
+</body>
+</html>

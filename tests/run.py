@@ -73,6 +73,10 @@ _api_bin    = _imp("tests.apis.bin_lookup")
 _uc_bin     = _imp("tests.usecases.bin_lookup")
 _bundles    = _imp("tests.bundles._placeholder")
 _sdks       = _imp("tests.sdks._placeholder")
+_py_lint    = _imp("tests.lint.python_lint")
+_js_lint    = _imp("tests.lint.js_lint")
+_security   = _imp("tests.lint.security_lint")
+_vulture    = _imp("tests.lint.vulture_lint")
 
 Summary            = _utils.Summary
 TestRunner         = _utils.TestRunner
@@ -96,6 +100,10 @@ def _parse_args() -> argparse.Namespace:
                         help="Run smoke tests (currently runs all tests; --full reserved for future expansion)")
     _scope.add_argument("--full",         action="store_true",
                         help="Reserved for future expansion (currently same as --smoke)")
+    _scope.add_argument("--lint",         action="store_true",
+                        help="Run static code analysis only (Ruff + ESLint) — no server required")
+    p.add_argument("--lint-tools",       default="",
+                   help="Comma-separated subset of lint tools to run: python,js,security,vulture (default: all)")
     p.add_argument("--install-type",     choices=["C", "c", "E", "e"], default="E")
     p.add_argument("--key-password", "--storepass",     default="foobar!!",
                    help="Password for provisioned .p12 certs (default: foobar!!)")
@@ -153,7 +161,7 @@ def _record_run(
             total_tests=total_p + total_f,
             passed_tests=total_p,
             failed_tests=total_f,
-            scope="full" if getattr(args, "full", False) else "smoke",
+            scope="lint" if getattr(args, "lint", False) else ("full" if getattr(args, "full", False) else "smoke"),
             base_url=getattr(args, "base_url", ""),
             results=all_results,
         )
@@ -171,7 +179,7 @@ def _record_run(
                 duration=duration,
                 install_type="clean" if install_type == "C" else "existing",
                 os_name=platform.system(),
-                scope="full" if getattr(args, "full", False) else "smoke",
+                scope="lint" if getattr(args, "lint", False) else ("full" if getattr(args, "full", False) else "smoke"),
                 suite_results=all_results,
             )
             update_email_status(run_id, ok, None if ok else msg)
@@ -204,7 +212,61 @@ def main() -> None:
     work_dir = os.path.normpath(os.path.abspath(args.work_dir.strip('\"')))
     base_url     = args.base_url.rstrip("/")
 
-    # Resolve test scope: flags accepted for future use; all tests run for now
+    # Extract port from base_url so start_server uses the same port.
+    # e.g. http://127.0.0.1:9022 → 9022
+    import re as _re
+    _port_match = _re.search(r':(\d+)$', base_url.rstrip('/'))
+    _server_port = int(_port_match.group(1)) if _port_match else 9021
+
+    summary = Summary()
+
+    # ── Lint-only short-circuit ────────────────────────────────
+    # When --lint is passed we skip the server entirely and run only static
+    # analysis.  Record to DB and exit — no provisioning, no Flask required.
+    if getattr(args, "lint", False):
+        _header("Vima / Solution Studio — Static Code Analysis")
+        print(f"  Work dir:      {work_dir}")
+
+        # Resolve which tools to run (empty = all)
+        _tools_arg = getattr(args, "lint_tools", "") or ""
+        _run_tools = {t.strip().lower() for t in _tools_arg.split(",") if t.strip()} or {"python", "js", "security", "vulture"}
+        print(f"  Tools:         {', '.join(sorted(_run_tools))}")
+
+        if "python" in _run_tools:
+            _step("Python Lint (Ruff)")
+            r = _py_lint.run()
+            summary.add(r)
+            r.print_summary()
+
+        if "js" in _run_tools:
+            _step("JavaScript Lint (ESLint)")
+            r = _js_lint.run()
+            summary.add(r)
+            r.print_summary()
+
+        if "security" in _run_tools:
+            _step("Security (Bandit)")
+            r = _security.run()
+            summary.add(r)
+            r.print_summary()
+
+        if "vulture" in _run_tools:
+            _step("Dead Code (Vulture)")
+            r = _vulture.run()
+            summary.add(r)
+            r.print_summary()
+
+        import atexit as _atexit
+        _done_path = os.path.join(_ROOT, "tests", "last_run.done")
+        def _write_done():
+            try:
+                with open(_done_path, "w") as _f:
+                    _f.write("done")
+            except Exception:
+                pass
+        _atexit.register(_write_done)
+        _record_run(summary, args, install_type, _run_start_time)
+        summary.print_and_exit()
 
     _header("Vima / Solution Studio — Automated Test Suite")
     print(f"  Email:         {args.email}")
@@ -213,7 +275,6 @@ def main() -> None:
     print(f"  Work dir:      {work_dir}")
     print(f"  Server:        {base_url}")
 
-    summary = Summary()
     server_proc = None
 
     try:
@@ -229,8 +290,8 @@ def main() -> None:
         if args.no_server:
             _step("Skipping server start (--no-server)")
         else:
-            _step("Starting Flask server")
-            server_proc = start_server(work_dir)
+            _step(f"Starting Flask server on port {_server_port}")
+            server_proc = start_server(work_dir, port=_server_port)
             print(f"  Waiting for server at {base_url} …")
             try:
                 wait_server_ready(base_url, timeout=30)
@@ -250,6 +311,11 @@ def main() -> None:
             print(f"\n{red('Smoke tests failed. Aborting further tests.')}")
             summary.print_and_exit()
 
+        # Smoke-only: stop here — no provisioning or further tests
+        if args.smoke:
+            _record_run(summary, args, install_type, _run_start_time)
+            summary.print_and_exit()
+
         # ── Step 4: Provision (clean install only) ────────────────
         if install_type == "C" and not args.skip_provision:
             _step("Auto-provisioning BIN Lookup API key")
@@ -264,7 +330,12 @@ def main() -> None:
                 portal_password = getattr(args, "portal_password", "") or ""
                 save_portal_credentials(base_url, args.email, portal_password)
 
-                job_id = start_provision_job(base_url, ["bin_lookup"], args.key_password)
+                job_id = start_provision_job(
+                    base_url,
+                    ["bin_lookup"],
+                    args.key_password,
+                    tool_dir=os.path.join(_ROOT, "tools", "mcd-key-automation"),
+                )
                 print(f"  Provision job started: {job_id}")
                 ok = wait_provision_complete(base_url, job_id, args.email)
                 if ok:
@@ -275,7 +346,7 @@ def main() -> None:
                     if server_proc is not None and not args.no_server:
                         _step("Restarting server to load provisioned credentials")
                         stop_server(server_proc)
-                        server_proc = start_server(work_dir)
+                        server_proc = start_server(work_dir, port=_server_port)
                         print(f"  Waiting for server at {base_url} …")
                         try:
                             wait_server_ready(base_url, timeout=30)
@@ -283,6 +354,35 @@ def main() -> None:
                         except RuntimeError as exc:
                             print(f"  {red(f'Server failed to restart: {exc}')}")
                             sys.exit(1)
+                    # Warm up BIN Lookup: the Mastercard gateway rejects the
+                    # first call(s) on a newly provisioned key.  Poll until the
+                    # gateway returns success so the actual tests always run
+                    # against an already-active key.
+                    _step("Waiting for BIN Lookup API to become active")
+                    import requests as _warmup_req
+                    import time as _warmup_time
+                    _warmup_ok = False
+                    _warmup_payload = {
+                        "operation": "lookup_bin",
+                        "params": {"account_range": "543210"},
+                    }
+                    for _attempt in range(8):
+                        try:
+                            _wr = _warmup_req.post(
+                                f"{base_url}/explorer/bin_lookup/execute",
+                                json=_warmup_payload,
+                                timeout=15,
+                            )
+                            if _wr.json().get("success"):
+                                print(f"  {green(f'[OK]  BIN Lookup active (attempt {_attempt + 1}).')}")
+                                _warmup_ok = True
+                                break
+                        except Exception:
+                            pass
+                        print(f"  Gateway not yet active (attempt {_attempt + 1}/8), retrying in 5 s …")
+                        _warmup_time.sleep(5)
+                    if not _warmup_ok:
+                        print(f"  {yellow('[WARN] BIN Lookup gateway did not confirm success — tests may fail.')}")
                 else:
                     print(f"  {yellow('Provisioning did not complete — API tests may fail.')}")
                     print(f"  {yellow('You can re-run with --skip-provision on an existing install.')}")
@@ -349,11 +449,21 @@ def main() -> None:
     if install_type == "C" and not args.nocleanup:
         _step("Removing local keys/certs and cloned directory")
         import shutil as _shutil
+        import stat as _stat
+
+        def _force_remove(func, path, exc_info):
+            """onerror handler: clear read-only flag (Windows .git pack files) and retry."""
+            try:
+                os.chmod(path, _stat.S_IWRITE)
+                func(path)
+            except Exception:
+                pass  # best-effort; already warned above
+
         # Remove keys directory (inside the cloned work_dir or the original)
         _keys_dir = os.path.join(work_dir, "config", "keys")
         if os.path.isdir(_keys_dir):
             try:
-                _shutil.rmtree(_keys_dir)
+                _shutil.rmtree(_keys_dir, onerror=_force_remove)
                 print(f"  {green('[OK]  Removed keys/certs: ' + _keys_dir)}")
             except Exception as exc:
                 print(f"  {yellow(f'[WARN] Could not remove keys dir: {exc}')}")
@@ -363,7 +473,7 @@ def main() -> None:
         _cur_work  = os.path.normpath(os.path.abspath(work_dir))
         if _cur_work != _orig_root:
             try:
-                _shutil.rmtree(_cur_work)
+                _shutil.rmtree(_cur_work, onerror=_force_remove)
                 print(f"  {green('[OK]  Removed cloned directory: ' + _cur_work)}")
             except Exception as exc:
                 print(f"  {yellow(f'[WARN] Could not remove cloned dir: {exc}')}")
@@ -371,6 +481,18 @@ def main() -> None:
             print(f"  {yellow('[INFO] work-dir is the original repo — skipping directory removal.')}")
 
     # ── Final summary ──────────────────────────────────────────
+    # Register a sentinel so the dashboard knows the run completed even if
+    # the PID gets recycled by Windows before the next poll.
+    import atexit as _atexit
+    _done_path = os.path.join(_ROOT, "tests", "last_run.done")
+    def _write_done():
+        try:
+            with open(_done_path, "w") as _f:
+                _f.write("done")
+        except Exception:
+            pass
+    _atexit.register(_write_done)
+
     _record_run(summary, args, install_type, _run_start_time)
     summary.print_and_exit()
 

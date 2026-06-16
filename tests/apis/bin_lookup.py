@@ -49,20 +49,16 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
     def _execute():
         payload = {"operation": OPERATION_ID, "params": {"account_range": TEST_BIN}}
         url = f"{base_url}/explorer/{API_ID}/execute"
+
+        # The Mastercard gateway rejects the very first call on a new key.
+        # Always send once and discard the result, then send again — the
+        # second call is the real test.
+        post(url, payload)
         resp = assert_status(post(url, payload), 200)
         data = assert_json(resp)
 
-        # Freshly provisioned BIN Lookup keys can fail on the very first call
-        # (Mastercard sandbox propagation delay).  Retry once and use the
-        # second result, ignoring the first failure.
-        if not data.get("success"):
-            import time as _time
-            _time.sleep(2)
-            resp = assert_status(post(url, payload), 200)
-            data = assert_json(resp)
-
         assert data.get("success"), (
-            f"execute {OPERATION_ID} returned success=false after retry. Response: {data}"
+            f"execute {OPERATION_ID} returned success=false. Response: {data}"
         )
         # Response envelope has a nested response.body from the Mastercard API
         assert_field(data, "response", msg="'response' key missing from execute result")

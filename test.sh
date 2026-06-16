@@ -35,6 +35,7 @@ TEST_SCOPE=""
 SKIP_PROVISION=""
 NO_SERVER=""
 NOCLEANUP=""
+BASE_URL=""
 _CLEAN_FLAGS=""
 
 # Portable uppercase helper for macOS / POSIX shells (bash 3.2 doesn't support ${VAR^^})
@@ -53,9 +54,11 @@ while [[ $# -gt 0 ]]; do
         --storepass)       KEY_PASSWORD="$2";     _CLEAN_FLAGS="1"; shift 2 ;;
         --smoke)           TEST_SCOPE="S";                           shift   ;;
         --full)            TEST_SCOPE="F";                           shift   ;;
+        --lint)            TEST_SCOPE="L";                           shift   ;;
         --skip-provision)  SKIP_PROVISION="1";    _CLEAN_FLAGS="1"; shift   ;;
         --no-server)       NO_SERVER="1";                            shift   ;;
         --nocleanup)       NOCLEANUP="1";         _CLEAN_FLAGS="1"; shift   ;;
+        --base-url)        BASE_URL="$2";                            shift 2 ;;
         *)
             echo "ERROR: Unknown flag: $1"
             exit 1
@@ -84,11 +87,16 @@ if [[ "$INSTALL_TYPE" == "E" ]]; then
         echo "ERROR: The following flags are only valid with --clean:"
         echo "         --email, --sso, --portal-password, --storepass,"
         echo "         --key-password, --skip-provision, --nocleanup"
-        echo "       For an existing install only --smoke and --full are accepted."
+        echo "       For an existing install only --smoke, --full and --lint are accepted."
         exit 1
     fi
 else
     # ── Clean install: collect email, SSO, portal password, key password ──
+    # When --skip-provision is set these credentials are never used,
+    # so skip collection entirely.
+    if [[ "$SKIP_PROVISION" == "1" ]]; then
+        : # nothing to collect
+    else
 
     # ── Collect: email ────────────────────────────────────────────
     while [[ -z "$EMAIL" ]]; do
@@ -124,6 +132,7 @@ else
         read -rp "Key password [default: foobar!!]: " KP_INPUT
         KEY_PASSWORD="${KP_INPUT:-foobar!!}"
     fi
+    fi  # end: not skip-provision credential collection
 fi
 
 # ── Collect: test scope ───────────────────────────────────────
@@ -134,12 +143,13 @@ if [[ -z "$TEST_SCOPE" ]]; then
     echo "Test scope:"
     echo "  S - Smoke  (connectivity + basic checks, fast)"
     echo "  F - Full   (smoke + API + use case + bundles + SDKs)"
+    echo "  L - Lint   (static code analysis only, no server needed)"
     echo ""
-    while [[ "$TEST_SCOPE" != "S" && "$TEST_SCOPE" != "F" ]]; do
-        read -rp "Choice [S/F, default S]: " TS_INPUT
+    while [[ "$TEST_SCOPE" != "S" && "$TEST_SCOPE" != "F" && "$TEST_SCOPE" != "L" ]]; do
+        read -rp "Choice [S/F/L, default S]: " TS_INPUT
         TEST_SCOPE="${TS_INPUT:-S}"
         TEST_SCOPE="$(upper "$TEST_SCOPE")"
-        [[ "$TEST_SCOPE" != "S" && "$TEST_SCOPE" != "F" ]] && echo "  Please enter S or F."
+        [[ "$TEST_SCOPE" != "S" && "$TEST_SCOPE" != "F" && "$TEST_SCOPE" != "L" ]] && echo "  Please enter S, F or L."
     done
 fi
 
@@ -164,7 +174,9 @@ if [[ "$INSTALL_TYPE" == "E" ]]; then
     EXTRA_ARGS=()
     [[ "$TEST_SCOPE" == "F" ]] && EXTRA_ARGS+=(--full)
     [[ "$TEST_SCOPE" == "S" ]] && EXTRA_ARGS+=(--smoke)
+    [[ "$TEST_SCOPE" == "L" ]] && EXTRA_ARGS+=(--lint)
     [[ "$NO_SERVER"  == "1" ]] && EXTRA_ARGS+=(--no-server)
+    [[ -n "$BASE_URL"       ]] && EXTRA_ARGS+=(--base-url "$BASE_URL")
     "$PYTHON" "$SCRIPT_DIR/tests/run.py" \
         --install-type E \
         --work-dir "$SCRIPT_DIR" \
@@ -178,9 +190,11 @@ EXTRA_ARGS=()
 [[ -n "$PORTAL_PASSWORD"    ]] && EXTRA_ARGS+=(--portal-password "$PORTAL_PASSWORD")
 [[ "$TEST_SCOPE"     == "F" ]] && EXTRA_ARGS+=(--full)
 [[ "$TEST_SCOPE"     == "S" ]] && EXTRA_ARGS+=(--smoke)
+[[ "$TEST_SCOPE"     == "L" ]] && EXTRA_ARGS+=(--lint)
 [[ "$SKIP_PROVISION" == "1" ]] && EXTRA_ARGS+=(--skip-provision)
 [[ "$NO_SERVER"      == "1" ]] && EXTRA_ARGS+=(--no-server)
 [[ "$NOCLEANUP"      == "1" ]] && EXTRA_ARGS+=(--nocleanup)
+[[ -n "$BASE_URL"           ]] && EXTRA_ARGS+=(--base-url "$BASE_URL")
 "$PYTHON" "$SCRIPT_DIR/tests/run.py" \
     --email "$EMAIL" \
     --install-type C \

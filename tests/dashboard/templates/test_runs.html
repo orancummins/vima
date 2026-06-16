@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Test Results — Mastercard Solution Studio</title>
+  <title>Testing — Mastercard Solution Studio</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -27,7 +28,9 @@
       --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; }
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    html { scrollbar-width: none; }
+    html::-webkit-scrollbar { display: none; }
     body {
       font-family: "Inter", -apple-system, sans-serif;
       background: var(--bg);
@@ -35,22 +38,23 @@
       font-size: 14px;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
     }
 
     /* ── Header ── */
     .header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 24px;
-      background: #000;
+      padding: 12px 24px;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--line);
       flex-shrink: 0;
     }
-    .brand { display: flex; align-items: center; gap: 14px; }
-    .brand-marks { display: flex; gap: 5px; align-items: center; }
-    .dot { width: 18px; height: 18px; border-radius: 50%; display: inline-block; }
-    .dot-red { background: var(--mc-red); }
-    .dot-yellow { background: var(--mc-yellow); }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-marks { position: relative; width: 36px; height: 22px; flex-shrink: 0; }
+    .brand-dot { position: absolute; top: 0; width: 22px; height: 22px; border-radius: 50%; }
+    .brand-dot-red  { left: 0; background: var(--mc-red); }
+    .brand-dot-yellow { left: 14px; background: var(--mc-yellow); mix-blend-mode: screen; }
     .brand-title { font-weight: 700; font-size: 15px; letter-spacing: -0.02em; }
     .brand-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
     .header-nav { display: flex; gap: 8px; }
@@ -67,15 +71,18 @@
     /* ── Page layout ── */
     .page-content {
       flex: 1;
+      overflow-y: auto;
       padding: 28px 32px;
       max-width: 1280px;
       width: 100%;
       margin: 0 auto;
+      scrollbar-width: none;
     }
+    .page-content::-webkit-scrollbar { display: none; }
 
     /* ── Page header ── */
     .page-header {
-      display: flex; align-items: flex-end; justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 24px;
       gap: 16px;
     }
@@ -89,8 +96,9 @@
       cursor: pointer; border: 1px solid transparent;
       text-decoration: none; transition: opacity 0.15s, background 0.15s;
     }
-    .btn-primary { background: var(--mc-yellow); color: #000; }
+    .btn-primary { background: var(--mc-orange); color: #fff; border-color: var(--mc-orange); }
     .btn-primary:hover { opacity: 0.88; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-ghost { background: var(--line); color: var(--text2); border-color: var(--line); }
     .btn-ghost:hover { background: #333; color: var(--text); }
 
@@ -230,6 +238,93 @@
     .page-btn:hover:not(.disabled):not(.active) { background: var(--line); color: var(--text); }
     .page-btn.active { background: var(--mc-yellow); border-color: var(--mc-yellow); color: #000; font-weight: 700; }
     .page-btn.disabled { opacity: 0.3; pointer-events: none; cursor: default; }
+
+    /* ── Section divider ── */
+    .section-divider {
+      border: none; border-top: 1px solid var(--line);
+      margin: 40px 0 32px;
+    }
+
+    /* ── Run tab: codebase card ── */
+    .codebase-card {
+      background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+      padding: 20px 24px; margin-bottom: 24px;
+    }
+    .codebase-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .codebase-title { font-size: 14px; font-weight: 600; }
+    .codebase-meta { font-size: 12px; color: var(--text3); }
+    .lang-rows { display: flex; flex-direction: column; gap: 8px; }
+    .lang-row { display: flex; align-items: center; gap: 12px; }
+    .lang-name { width: 96px; font-size: 12px; color: var(--text2); flex-shrink: 0; }
+    .lang-bar-wrap { flex: 1; height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; }
+    .lang-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+    .lang-nums { font-size: 11px; font-family: var(--mono); color: var(--text3); white-space: nowrap; min-width: 140px; text-align: right; }
+
+    /* ── Run tab: suite panels ── */
+    .suite-group-label { display: none; }
+    .suite-cat-tag {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+      padding: 2px 7px; border-radius: 4px;
+      background: var(--bg3); border: 1px solid var(--line); color: var(--text3);
+    }
+    .suite-cat-tag.functional { color: #7dd3fc; border-color: #075985; background: #082f49; }
+    .suite-cat-tag.analysis   { color: #d8b4fe; border-color: #6b21a8; background: #2e1065; }
+    .suite-panels { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 8px; }
+    .suite-panel {
+      background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+      padding: 14px 16px; cursor: pointer; transition: border-color 0.15s;
+      display: flex; gap: 12px; align-items: flex-start;
+      user-select: none;
+    }
+    .suite-panel:hover { border-color: rgba(255,255,255,0.18); }
+    .suite-panel.selected { border-color: var(--mc-orange); background: rgba(255,95,0,0.06); }
+    .suite-check {
+      width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0; margin-top: 2px;
+      border: 1.5px solid var(--text3); background: none; position: relative;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .suite-panel.selected .suite-check {
+      background: var(--mc-orange); border-color: var(--mc-orange);
+    }
+    .suite-panel.selected .suite-check::after {
+      content: ''; position: absolute; top: 2px; left: 4.5px;
+      width: 4px; height: 7px; border: 1.5px solid #fff; border-top: none; border-left: none;
+      transform: rotate(45deg);
+    }
+    .suite-info { flex: 1; min-width: 0; }
+    .suite-panel-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .suite-panel-desc { font-size: 11.5px; color: var(--text2); line-height: 1.5; margin-bottom: 8px; }
+    .suite-panel-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+    .suite-tag {
+      font-size: 10.5px; font-family: var(--mono); color: var(--text3);
+      background: var(--bg3); border: 1px solid var(--line);
+      border-radius: 4px; padding: 1px 6px;
+    }
+
+    /* ── Execute row (inline with Run heading) ── */
+    .install-toggle {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+      padding: 5px 10px;
+    }
+    .toggle-label { font-size: 12px; color: var(--text2); }
+    .toggle-track {
+      width: 34px; height: 18px; border-radius: 9px; background: var(--line);
+      position: relative; cursor: pointer; flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .toggle-track.on { background: #0369a1; }
+    .toggle-thumb {
+      position: absolute; top: 2px; left: 2px;
+      width: 14px; height: 14px; border-radius: 7px; background: #fff;
+      transition: left 0.2s; pointer-events: none;
+    }
+    .toggle-track.on .toggle-thumb { left: 18px; }
+    .toggle-value { font-size: 12px; font-weight: 600; color: var(--text); min-width: 56px; }
+    .selected-count { font-size: 12px; color: var(--text3); }
   </style>
 </head>
 <body>
@@ -237,288 +332,681 @@
 <!-- Header -->
 <header class="header">
   <div class="brand">
+    <canvas id="hdr-globe" width="36" height="36" style="flex-shrink:0;opacity:0.85"></canvas>
     <div class="brand-marks">
-      <span class="dot dot-red"></span>
-      <span class="dot dot-yellow"></span>
+      <span class="brand-dot brand-dot-red"></span>
+      <span class="brand-dot brand-dot-yellow"></span>
     </div>
     <div>
       <div class="brand-title">Mastercard Solution Studio</div>
-      <div class="brand-sub">Test Results Dashboard</div>
+      <div class="brand-sub">TESTING DASHBOARD</div>
     </div>
   </div>
   <nav class="header-nav">
-    <a href="{{ url_for('test_dashboard.run_list') }}" class="nav-btn active">Runs</a>
+    <button class="nav-btn active" id="run-nav-btn" onclick="showSection('run')">Run</button>
+    <button class="nav-btn" id="history-nav-btn" onclick="showSection('history')">History</button>
+    <a href="{{ url_for('test_dashboard.stats') }}" class="nav-btn">Stats</a>
     <a href="{{ url_for('test_dashboard.config') }}" class="nav-btn">Settings</a>
-    <a href="/" class="nav-btn">Back to App</a>
+    <a href="/" class="nav-btn">&#8592; Back to App</a>
   </nav>
 </header>
 
 <!-- Page content -->
 <main class="page-content">
 
-  <!-- Page header -->
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Test Runs</h1>
-      <p class="page-meta">All recorded test runs &mdash; {{ total }} total</p>
-    </div>
-    <div class="header-actions">
-      <button id="run-btn" class="btn btn-primary">Run Smoke Tests</button>
-      <div id="run-status" style="margin-left:12px;display:inline-block;color:var(--text2)"></div>
-      
-      <a href="{{ url_for('test_dashboard.config') }}" class="btn btn-ghost">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        Email settings
-      </a>
-    </div>
-  </div>
+  <!-- ════════════════════ RUN ════════════════════ -->
+  <div id="section-run">
 
-  <div id="run-progress" style="margin-bottom:18px;display:flex;gap:12px;align-items:flex-start;">
-    <div style="flex:0 0 320px;">
-      <div style="font-size:13px;margin-bottom:8px">Overall Progress</div>
-      <div style="background:var(--line);border-radius:8px;overflow:hidden;height:18px;margin-bottom:8px">
-        <div id="overall-fill" style="height:100%;width:0%;background:var(--ok);"></div>
+    <!-- Run section header -->
+    <div class="page-header" style="margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1">
+        <div class="install-toggle">
+          <span class="toggle-label">Source:</span>
+          <div class="toggle-track" id="install-toggle" title="Existing: run against the currently-running app&#10;Clean: clone from GitHub into a temp directory">
+            <div class="toggle-thumb"></div>
+          </div>
+          <span class="toggle-value" id="install-label">Existing</span>
+        </div>
+        <span id="clean-hint" style="font-size:11.5px;color:var(--text3);display:none">Clean run clones from GitHub into a temp directory &mdash; requires portal credentials in <a href="{{ url_for('test_dashboard.config') }}" style="color:var(--mc-yellow)">Settings</a></span>
+        <span class="selected-count" id="selected-count">3 suites selected</span>
       </div>
-      <div id="overall-text" style="font-size:12px;color:var(--text2);margin-bottom:8px">Idle</div>
-      <div id="suites-list" style="max-height:240px;overflow:auto"></div>
+      <button id="execute-btn" class="btn btn-primary" style="min-width:110px;justify-content:center;flex-shrink:0;align-self:center">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Execute
+      </button>
     </div>
-    <div style="flex:1;">
-      <div style="font-size:13px;margin-bottom:8px">Live Log</div>
-      <pre id="run-log" style="max-height:320px;overflow:auto;padding:12px;border-radius:8px;background:var(--card);border:1px solid var(--line);color:var(--text2);font-family:var(--mono);font-size:12px">Loading...</pre>
-    </div>
-  </div>
 
-  {% if error %}
-  <div class="alert alert-error">{{ error }}</div>
-  {% endif %}
+    <!-- Test suite selection -->
+    <div class="suite-panels" style="margin-bottom:24px">
 
-<script>
-  async function fetchStatus() {
-    try {
-      const res = await fetch('/vima/test/run_status');
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (e) { return null; }
-  }
-
-  function renderLog(lines) {
-    const el = document.getElementById('run-log');
-    if (!el) return;
-    el.textContent = lines.join('\n');
-    el.scrollTop = el.scrollHeight;
-  }
-
-  let pollTimer = null;
-  async function poll() {
-    const status = await fetchStatus();
-    if (!status) return;
-    const log = status.log || [];
-    renderLog(log);
-    const runBtn = document.getElementById('run-btn');
-    const runStatus = document.getElementById('run-status');
-    // Render structured progress if present
-    if (status.progress) {
-      const p = status.progress;
-      const overallFill = document.getElementById('overall-fill');
-      const overallText = document.getElementById('overall-text');
-      const suitesList = document.getElementById('suites-list');
-      if (overallFill && overallText) {
-        const pct = p.total > 0 ? Math.round((p.passed / p.total) * 100) : 0;
-        overallFill.style.width = pct + '%';
-        overallFill.style.background = p.failed > 0 ? 'var(--err)' : 'var(--ok)';
-        overallText.textContent = `${p.passed}/${p.total} passed (${pct}%)`;
-      }
-      if (suitesList) {
-        suitesList.innerHTML = '';
-        for (const s of p.suites) {
-          const div = document.createElement('div');
-          div.style.marginBottom = '8px';
-          div.innerHTML = `<div style="font-size:12px;color:var(--text);margin-bottom:4px">${s.name}</div>
-            <div style=\"background:var(--line);border-radius:6px;overflow:hidden;height:10px\">\n              <div style=\"height:100%;width:${s.pct}%;background:${s.failed>0? 'var(--err)': 'var(--ok)'}\"></div>\n            </div>
-            <div style=\"font-size:11px;color:var(--text2);margin-top:4px\">${s.passed}/${s.total} passed</div>`;
-          suitesList.appendChild(div);
-        }
-      }
-    }
-
-    if (status.running) {
-      if (runBtn) runBtn.disabled = true;
-      if (runStatus) runStatus.textContent = 'Running (pid ' + (status.pid || '') + ')';
-      pollTimer = setTimeout(poll, 2000);
-    } else {
-      if (runBtn) runBtn.disabled = false;
-      if (runStatus) runStatus.textContent = 'Idle';
-      // don't poll continuously when idle
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', function(){
-    const runBtn = document.getElementById('run-btn');
-    if (runBtn) {
-      runBtn.addEventListener('click', async function(){
-        runBtn.disabled = true;
-        runBtn.textContent = 'Starting...';
-        try {
-          const r = await fetch('/vima/test/run', { method: 'POST' });
-          const j = await r.json();
-          if (j.ok) {
-            document.getElementById('run-status').textContent = 'Started (pid ' + j.pid + ')';
-          } else {
-            document.getElementById('run-status').textContent = 'Failed to start';
-            runBtn.disabled = false;
-            runBtn.textContent = 'Run Smoke Tests';
-          }
-        } catch (e) {
-          document.getElementById('run-status').textContent = 'Error starting run';
-          runBtn.disabled = false;
-          runBtn.textContent = 'Run Smoke Tests';
-        }
-        poll();
-      });
-    }
-    // initial poll to load latest log
-    poll();
-  });
-</script>
-
-  <!-- Stats row (last run stats) -->
-  {% if runs %}
-  {% set latest = runs[0] %}
-  {% set pct = (latest.passed_tests / latest.total_tests * 100) | int if latest.total_tests > 0 else 0 %}
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-value" style="color:{{ '#86efac' if latest.failed_tests == 0 else '#fca5a5' }}">
-        {{ latest.passed_tests }}/{{ latest.total_tests }}
+      <div class="suite-panel selected" data-scope="smoke" data-group="functional">
+        <div class="suite-check"></div>
+        <div class="suite-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div class="suite-panel-name" style="margin:0">Smoke Tests</div>
+            <span class="suite-cat-tag functional">Functional</span>
+          </div>
+          <div class="suite-panel-desc">Quick end-to-end check across all registered APIs. Verifies auth, connectivity, and basic response shape. ~20 tests, runs in under a minute.</div>
+          <div class="suite-panel-tags">
+            <span class="suite-tag">apis/</span>
+            <span class="suite-tag">usecases/</span>
+            <span class="suite-tag">~1 min</span>
+          </div>
+        </div>
       </div>
-      <div class="stat-label">Last run score</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value">{{ total }}</div>
-      <div class="stat-label">Total runs</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value" style="color: var(--mc-yellow)">
-        {% set dur = latest.duration_seconds | int %}
-        {% if dur >= 60 %}{{ (dur // 60) }}m {{ dur % 60 }}s{% else %}{{ dur }}s{% endif %}
-      </div>
-      <div class="stat-label">Last run duration</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value" style="font-size:18px;padding-top:4px">{{ latest.run_at[:10] }}</div>
-      <div class="stat-label">Last run date</div>
-    </div>
-  </div>
-  {% endif %}
 
-  <!-- Results table -->
-  <div class="table-card">
-    <div class="table-toolbar">
-      <span>
-        {% if total > 0 %}
-          Showing {{ ((page-1) * 15) + 1 }}–{{ [page * 15, total] | min }} of {{ total }} runs
-        {% else %}
-          No runs recorded yet
-        {% endif %}
-      </span>
+      <div class="suite-panel" data-scope="full" data-group="functional">
+        <div class="suite-check"></div>
+        <div class="suite-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div class="suite-panel-name" style="margin:0">Full Tests</div>
+            <span class="suite-cat-tag functional">Functional</span>
+          </div>
+          <div class="suite-panel-desc">Extended suite including edge cases, pagination, error handling, and full usecase flows. Superset of smoke tests.</div>
+          <div class="suite-panel-tags">
+            <span class="suite-tag">apis/</span>
+            <span class="suite-tag">usecases/</span>
+            <span class="suite-tag">tests/apis/</span>
+            <span class="suite-tag">~5 min</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="suite-panel selected" data-scope="lint-python" data-group="analysis">
+        <div class="suite-check"></div>
+        <div class="suite-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div class="suite-panel-name" style="margin:0">Python Lint</div>
+            <span class="suite-cat-tag analysis">Code Analysis</span>
+          </div>
+          <div class="suite-panel-desc">Ruff static analysis: style (E/W), unused imports (F401), pyupgrade (UP), bugbear (B). Configured via <code style="font-size:10px;color:var(--text3)">ruff.toml</code>.</div>
+          <div class="suite-panel-tags">
+            <span class="suite-tag">apis/</span>
+            <span class="suite-tag">usecases/</span>
+            <span class="suite-tag">chat/</span>
+            <span class="suite-tag">simulator/</span>
+            <span class="suite-tag">app.py</span>
+            <span class="suite-tag">104 files</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="suite-panel selected" data-scope="lint-js" data-group="analysis">
+        <div class="suite-check"></div>
+        <div class="suite-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div class="suite-panel-name" style="margin:0">JavaScript Lint</div>
+            <span class="suite-cat-tag analysis">Code Analysis</span>
+          </div>
+          <div class="suite-panel-desc">ESLint with <code style="font-size:10px;color:var(--text3)">eslint:recommended</code> ruleset. Checks best-practices, unused vars, undefined references, and consistent syntax.</div>
+          <div class="suite-panel-tags">
+            <span class="suite-tag">static/js/</span>
+            <span class="suite-tag">25 files</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="suite-panel selected" data-scope="lint-security" data-group="analysis">
+        <div class="suite-check"></div>
+        <div class="suite-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div class="suite-panel-name" style="margin:0">Security Scan</div>
+            <span class="suite-cat-tag analysis">Code Analysis</span>
+          </div>
+          <div class="suite-panel-desc">Bandit SAST scan for injection (B1xx), insecure crypto (B4xx/B6xx), SSL misuse, and dangerous patterns. Reports MEDIUM+ severity findings.</div>
+          <div class="suite-panel-tags">
+            <span class="suite-tag">apis/</span>
+            <span class="suite-tag">usecases/</span>
+            <span class="suite-tag">app.py</span>
+            <span class="suite-tag">104 files</span>
+            <span class="suite-tag">22k LOC</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="suite-panel selected" data-scope="lint-vulture" data-group="analysis">
+        <div class="suite-check"></div>
+        <div class="suite-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div class="suite-panel-name" style="margin:0">Dead Code</div>
+            <span class="suite-cat-tag analysis">Code Analysis</span>
+          </div>
+          <div class="suite-panel-desc">Vulture static analysis for unreachable code &mdash; unused functions, classes, variables, imports, and attributes. Confidence threshold: 80%.</div>
+          <div class="suite-panel-tags">
+            <span class="suite-tag">apis/</span>
+            <span class="suite-tag">usecases/</span>
+            <span class="suite-tag">app.py</span>
+            <span class="suite-tag">&ge;80% confidence</span>
+          </div>
+        </div>
+      </div>
+
     </div>
+
+    <!-- Old group-label divs removed; panels now have inline category tags -->
+
+    <!-- Live run panel — always visible once a run has been started -->
+    <div id="run-panel" style="display:none;margin:0 0 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="run-spinner" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--mc-orange)"></span>
+          <span id="run-label" style="font-size:13px;font-weight:600">Running tests</span>
+          <span id="run-pid" style="font-size:11px;color:var(--text3);font-family:var(--mono)"></span>
+        </div>
+        <span id="run-score" style="font-size:12px;color:var(--text3);white-space:nowrap"></span>
+      </div>
+      <div id="run-pbar-track" style="height:3px;background:rgba(255,255,255,0.08);overflow:hidden">
+        <div id="run-pbar-inner" style="height:100%;width:100%;background:repeating-linear-gradient(-45deg,var(--mc-orange) 0,var(--mc-orange) 10px,rgba(255,127,0,0.35) 10px,rgba(255,127,0,0.35) 20px);background-size:40px 40px"></div>
+      </div>
+      <div style="display:flex;gap:0;min-height:0;border-top:1px solid var(--line)">
+        <div id="run-scripts" style="flex:0 0 260px;padding:14px 16px;border-right:1px solid var(--line);overflow-y:auto;max-height:320px">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Suites</div>
+          <div id="suites-list"></div>
+        </div>
+        <div style="flex:1;min-width:0;padding:14px 16px">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Live log</div>
+          <pre id="run-log" style="margin:0;max-height:280px;overflow-y:auto;font-family:var(--mono);font-size:11.5px;line-height:1.6;color:var(--text2);white-space:pre-wrap;word-break:break-all"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Codebase overview card -->
+    <div class="codebase-card">
+      <div class="codebase-header">
+        <div class="codebase-title">Codebase</div>
+        <p id="codebase-meta" class="codebase-meta">Loading&hellip;</p>
+      </div>
+      <div class="lang-rows" id="lang-rows">
+        <div style="color:var(--text3);font-size:12px">Scanning&hellip;</div>
+      </div>
+    </div>
+
+  </div><!-- /section-run -->
+
+  <!-- ════════════════════ HISTORY (hidden by default) ════════════════════ -->
+  <div id="section-history" style="display:none">
+
+    <div class="page-header" style="margin-top:32px">
+      <div>
+        <h1 class="page-title">History</h1>
+        <p class="page-meta">All recorded test runs &mdash; {{ total }} total</p>
+      </div>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
 
     {% if runs %}
-    <table>
-      <thead>
-        <tr>
-          <th style="width:52px">#</th>
-          <th>Date &amp; time</th>
-          <th>Install</th>
-          <th>OS</th>
-          <th>Score</th>
-          <th>Duration</th>
-          <th>Scope</th>
-          <th class="td-center">Alert</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for run in runs %}
-        {% set all_pass = run.failed_tests == 0 %}
-        {% set pct = (run.passed_tests / run.total_tests * 100) | int if run.total_tests > 0 else 0 %}
-        {% set dur = run.duration_seconds | int %}
-        <tr onclick="window.location='{{ url_for('test_dashboard.run_detail', run_id=run.id) }}'">
-          <td class="td-mono" style="color:var(--text3)">{{ run.id }}</td>
-          <td>
-            <span style="color:var(--text)">{{ run.run_at[:10] }}</span>
-            <span style="color:var(--text3);margin-left:6px;font-family:var(--mono);font-size:12px">{{ run.run_at[11:19] }}</span>
-          </td>
-          <td>
-            <span class="pill-install{% if run.install_type == 'clean' %} clean{% endif %}">{{ run.install_type }}</span>
-          </td>
-          <td style="color:var(--text2)">{{ run.os_name or '—' }}</td>
-          <td>
-            <div class="score-wrap">
-              <div class="score-bar">
-                <div class="score-fill{% if not all_pass %}{% if pct > 0 %} partial{% else %} fail{% endif %}{% endif %}"
-                     style="width:{{ pct }}%"></div>
-              </div>
-              <span class="score-text {% if all_pass %}ok{% elif run.failed_tests > 0 and run.passed_tests > 0 %}warn{% else %}fail{% endif %}">
-                {{ run.passed_tests }}/{{ run.total_tests }}
-              </span>
-            </div>
-          </td>
-          <td class="td-mono" style="color:var(--text2)">
-            {% if dur >= 60 %}{{ (dur // 60) }}m {{ dur % 60 }}s{% else %}{{ dur }}s{% endif %}
-          </td>
-          <td style="color:var(--text3);font-size:12px">{{ run.scope or 'smoke' }}</td>
-          <td class="td-center">
-            {% if run.email_sent %}
-              <span class="alert-cell sent" title="Email sent at {{ run.email_sent_at }}">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                Sent
-              </span>
-            {% elif run.email_error %}
-              <span class="alert-cell failed" title="{{ run.email_error }}">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                Failed
-              </span>
-            {% else %}
-              <span class="alert-cell" title="No email configured">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                &mdash;
-              </span>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    <!-- Pagination -->
-    {% if total_pages > 1 %}
-    <div class="pagination">
-      <span>Page {{ page }} of {{ total_pages }}</span>
-      <div class="page-btns">
-        <a href="{{ url_for('test_dashboard.run_list', page=1) }}"
-           class="page-btn {% if page == 1 %}disabled{% endif %}" title="First">&laquo;</a>
-        <a href="{{ url_for('test_dashboard.run_list', page=page-1) }}"
-           class="page-btn {% if page == 1 %}disabled{% endif %}" title="Previous">&lsaquo;</a>
-        {% for p in range([1, page-2]|max, [total_pages+1, page+3]|min) %}
-          <a href="{{ url_for('test_dashboard.run_list', page=p) }}"
-             class="page-btn {% if p == page %}active{% endif %}">{{ p }}</a>
-        {% endfor %}
-        <a href="{{ url_for('test_dashboard.run_list', page=page+1) }}"
-           class="page-btn {% if page == total_pages %}disabled{% endif %}" title="Next">&rsaquo;</a>
-        <a href="{{ url_for('test_dashboard.run_list', page=total_pages) }}"
-           class="page-btn {% if page == total_pages %}disabled{% endif %}" title="Last">&raquo;</a>
+    {% set latest = runs[0] %}
+    {% set pct = (latest.passed_tests / latest.total_tests * 100) | int if latest.total_tests > 0 else 0 %}
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" style="color:{{ '#86efac' if latest.failed_tests == 0 else '#fca5a5' }}">
+          {{ latest.passed_tests }}/{{ latest.total_tests }}
+        </div>
+        <div class="stat-label">Last run score</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ total }}</div>
+        <div class="stat-label">Total runs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color: var(--mc-yellow)">
+          {% set dur = latest.duration_seconds | int %}
+          {% if dur >= 60 %}{{ (dur // 60) }}m {{ dur % 60 }}s{% else %}{{ dur }}s{% endif %}
+        </div>
+        <div class="stat-label">Last run duration</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="font-size:18px;padding-top:4px">{{ latest.run_at[:10] }}</div>
+        <div class="stat-label">Last run date</div>
       </div>
     </div>
     {% endif %}
 
-    {% else %}
-    <div class="empty-state">
-      <div class="empty-state-icon">&#9711;</div>
-      <div class="empty-state-title">No test runs recorded yet</div>
-      <div class="empty-state-sub">Run <code>test.bat</code> or <code>./test.sh</code> to record your first run.</div>
+    <div class="table-card">
+      <div class="table-toolbar">
+        <span>
+          {% if total > 0 %}
+            Showing {{ ((page-1) * page_size) + 1 }}–{{ [page * page_size, total] | min }} of {{ total }} runs
+          {% else %}
+            No runs recorded yet
+          {% endif %}
+        </span>
+      </div>
+
+      {% if runs %}
+      <table>
+        <thead>
+          <tr>
+            <th style="width:52px">#</th>
+            <th>Date &amp; time</th>
+            <th>Install</th>
+            <th>OS</th>
+            <th>Score</th>
+            <th>Duration</th>
+            <th>Scope</th>
+            <th class="td-center">Alert</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for run in runs %}
+          {% set all_pass = run.failed_tests == 0 %}
+          {% set pct = (run.passed_tests / run.total_tests * 100) | int if run.total_tests > 0 else 0 %}
+          {% set dur = run.duration_seconds | int %}
+          <tr onclick="window.location='{{ url_for('test_dashboard.run_detail', run_id=run.id) }}'">
+            <td class="td-mono" style="color:var(--text3)">{{ run.id }}</td>
+            <td>
+              <span style="color:var(--text)">{{ run.run_at[:10] }}</span>
+              <span style="color:var(--text3);margin-left:6px;font-family:var(--mono);font-size:12px">{{ run.run_at[11:19] }}</span>
+            </td>
+            <td>
+              <span class="pill-install{% if run.install_type == 'clean' %} clean{% endif %}">{{ run.install_type }}</span>
+            </td>
+            <td style="color:var(--text2)">{{ run.os_name or '—' }}</td>
+            <td>
+              <div class="score-wrap">
+                <div class="score-bar">
+                  <div class="score-fill{% if not all_pass %}{% if pct > 0 %} partial{% else %} fail{% endif %}{% endif %}"
+                       style="width:{{ pct }}%"></div>
+                </div>
+                <span class="score-text {% if all_pass %}ok{% elif run.failed_tests > 0 and run.passed_tests > 0 %}warn{% else %}fail{% endif %}">
+                  {{ run.passed_tests }}/{{ run.total_tests }}
+                </span>
+              </div>
+            </td>
+            <td class="td-mono" style="color:var(--text2)">
+              {% if dur >= 60 %}{{ (dur // 60) }}m {{ dur % 60 }}s{% else %}{{ dur }}s{% endif %}
+            </td>
+            <td style="color:var(--text3);font-size:12px">{{ run.scope or 'smoke' }}</td>
+            <td class="td-center">
+              {% if run.email_sent %}
+                <span class="alert-cell sent" title="Email sent at {{ run.email_sent_at }}">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  Sent
+                </span>
+              {% elif run.email_error %}
+                <span class="alert-cell failed" title="{{ run.email_error }}">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                  Failed
+                </span>
+              {% else %}
+                <span class="alert-cell" title="No email configured">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  &mdash;
+                </span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% if total_pages > 1 %}
+      <div class="pagination">
+        <span>Page {{ page }} of {{ total_pages }}</span>
+        <div class="page-btns">
+          <a href="{{ url_for('test_dashboard.run_list', page=1) }}"
+             class="page-btn {% if page == 1 %}disabled{% endif %}" title="First">&laquo;</a>
+          <a href="{{ url_for('test_dashboard.run_list', page=page-1) }}"
+             class="page-btn {% if page == 1 %}disabled{% endif %}" title="Previous">&lsaquo;</a>
+          {% for p in range([1, page-2]|max, [total_pages+1, page+3]|min) %}
+            <a href="{{ url_for('test_dashboard.run_list', page=p) }}"
+               class="page-btn {% if p == page %}active{% endif %}">{{ p }}</a>
+          {% endfor %}
+          <a href="{{ url_for('test_dashboard.run_list', page=page+1) }}"
+             class="page-btn {% if page == total_pages %}disabled{% endif %}" title="Next">&rsaquo;</a>
+          <a href="{{ url_for('test_dashboard.run_list', page=total_pages) }}"
+             class="page-btn {% if page == total_pages %}disabled{% endif %}" title="Last">&raquo;</a>
+        </div>
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">&#9711;</div>
+        <div class="empty-state-title">No test runs recorded yet</div>
+        <div class="empty-state-sub">Use the <strong>Run</strong> tab to execute your first run.</div>
+      </div>
+      {% endif %}
     </div>
-    {% endif %}
-  </div>
+
+  </div><!-- /section-history -->
 
 </main>
+<style>
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+  @keyframes stripe-move { from{background-position:0 0} to{background-position:40px 0} }
+  #run-log, #run-scripts { scrollbar-width: none; }
+  #run-log::-webkit-scrollbar, #run-scripts::-webkit-scrollbar { display: none; }
+</style>
+<script>
+// ── Section switching (Run / History) ───────────────────────────────────────
+function showSection(name) {
+  var runSec  = document.getElementById('section-run');
+  var histSec = document.getElementById('section-history');
+  var runBtn  = document.getElementById('run-nav-btn');
+  var histBtn = document.getElementById('history-nav-btn');
+  var isRun   = name === 'run';
+  if (runSec)  runSec.style.display  = isRun  ? '' : 'none';
+  if (histSec) histSec.style.display = isRun  ? 'none' : '';
+  if (runBtn)  runBtn.classList.toggle('active',  isRun);
+  if (histBtn) histBtn.classList.toggle('active', !isRun);
+  if (!isRun && histSec) {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    histSec.innerHTML = '<div style="padding:40px 0;text-align:center;color:var(--text3);font-size:13px">Loading\u2026</div>';
+    fetch('/vima/test/history_fragment')
+      .then(function(r) { return r.ok ? r.text() : Promise.reject(r.status); })
+      .then(function(html) { histSec.innerHTML = html; })
+      .catch(function() { histSec.innerHTML = '<div style="padding:40px;color:var(--err)">Failed to load history.</div>'; });
+  }
+}
+
+// ── Suite panel selection ─────────────────────────────────────────────────────
+function updateSelectedCount() {
+  var selected = document.querySelectorAll('.suite-panel.selected').length;
+  var el = document.getElementById('selected-count');
+  if (el) el.textContent = selected + ' suite' + (selected === 1 ? '' : 's') + ' selected';
+}
+document.querySelectorAll('.suite-panel').forEach(function(panel) {
+  panel.addEventListener('click', function() {
+    panel.classList.toggle('selected');
+    updateSelectedCount();
+  });
+});
+
+// ── Install type toggle ───────────────────────────────────────────────────────
+var _isClean = false;
+var toggleTrack = document.getElementById('install-toggle');
+if (toggleTrack) {
+  toggleTrack.addEventListener('click', function() {
+    _isClean = !_isClean;
+    toggleTrack.classList.toggle('on', _isClean);
+    var lbl = document.getElementById('install-label');
+    if (lbl) lbl.textContent = _isClean ? 'Clean (GitHub)' : 'Existing';
+    var hint = document.getElementById('clean-hint');
+    if (hint) hint.style.display = _isClean ? '' : 'none';
+  });
+}
+
+// ── Codebase stats ────────────────────────────────────────────────────────────
+var _LANG_COLOURS = {
+  'Python':     '#3b82f6',
+  'JavaScript': '#eab308',
+  'HTML':       '#f97316',
+  'CSS':        '#a855f7',
+  'JSON':       '#14b8a6',
+  'Shell':      '#22c55e',
+  'Batch':      '#6b7280',
+  'Markdown':   '#94a3b8',
+  'TOML':       '#fb7185',
+  'Text':       '#64748b',
+};
+function renderCodebaseStats(data) {
+  var metaEl = document.getElementById('codebase-meta');
+  var rowsEl = document.getElementById('lang-rows');
+  if (!rowsEl) return;
+
+  if (metaEl) metaEl.textContent = data.total_files + ' files · ' + data.total_lines.toLocaleString() + ' lines of code';
+
+  var maxLines = data.languages.length ? data.languages[0].lines : 1;
+  rowsEl.innerHTML = data.languages.map(function(l) {
+    var pct = Math.max(2, Math.round(l.lines / maxLines * 100));
+    var col = _LANG_COLOURS[l.lang] || '#888';
+    return '<div class="lang-row">' +
+      '<span class="lang-name">' + l.lang + '</span>' +
+      '<div class="lang-bar-wrap"><div class="lang-bar-fill" style="width:' + pct + '%;background:' + col + '"></div></div>' +
+      '<span class="lang-nums">' + l.files + ' file' + (l.files === 1 ? '' : 's') + ' &nbsp;&middot;&nbsp; ' + l.lines.toLocaleString() + ' lines</span>' +
+    '</div>';
+  }).join('');
+}
+
+// ── Poll / run machinery ──────────────────────────────────────────────────────
+var _pollTimer = null;
+var _wasRunning = false;
+
+function _startAnimations() {
+  var sp = document.getElementById('run-spinner');
+  var pb = document.getElementById('run-pbar-inner');
+  if (sp) { sp.style.background = 'var(--mc-orange)'; sp.style.animation = 'pulse 1.2s ease-in-out infinite'; }
+  if (pb) pb.style.animation = 'stripe-move 0.6s linear infinite';
+}
+function _stopAnimations(spColor) {
+  var sp = document.getElementById('run-spinner');
+  var pb = document.getElementById('run-pbar-inner');
+  if (sp) { sp.style.animation = 'none'; if (spColor) sp.style.background = spColor; }
+  if (pb) pb.style.animation = 'none';
+}
+
+async function fetchStatus() {
+  try { var r = await fetch('/vima/test/run_status'); return r.ok ? await r.json() : null; }
+  catch(e) { return null; }
+}
+
+function colourLine(line) {
+  if (line.includes('[PASS]')) return 'color:#86efac';
+  if (line.includes('[FAIL]') || line.includes('[ERROR]')) return 'color:#fca5a5';
+  if (line.includes('[OK]') && !line.includes('[FAIL]')) return 'color:#86efac';
+  if (/^>>/.test(line.trim())) return 'color:var(--mc-yellow);font-weight:600';
+  if (/^={4,}|^-{4,}/.test(line.trim())) return 'color:var(--text3)';
+  return '';
+}
+
+function renderLog(lines) {
+  var el = document.getElementById('run-log');
+  if (!el) return;
+  el.innerHTML = lines.filter(function(l){ return l.trim().length > 0; }).map(function(l) {
+    var s = colourLine(l);
+    var esc = l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return s ? '<span style="' + s + '">' + esc + '</span>' : esc;
+  }).join('\n');
+  el.scrollTop = el.scrollHeight;
+}
+
+function renderProgress(p) {
+  var total = p.total || 0, passed = p.passed || 0, failed = p.failed || 0;
+  var score = document.getElementById('run-score');
+  if (score) {
+    if (total === 0) { score.textContent = 'Starting\u2026'; }
+    else {
+      score.innerHTML = '<span style="color:#86efac;font-weight:600">' + passed + ' \u2713</span>' +
+        (failed > 0 ? ' &middot; <span style="color:#fca5a5;font-weight:600">' + failed + ' \u2717</span>' : '');
+    }
+  }
+  var pbar = document.getElementById('run-pbar-inner');
+  if (pbar && total > 0) {
+    pbar.style.background = failed > 0
+      ? 'repeating-linear-gradient(-45deg,#ef4444 0,#ef4444 10px,rgba(239,68,68,0.4) 10px,rgba(239,68,68,0.4) 20px)'
+      : 'repeating-linear-gradient(-45deg,#22c55e 0,#22c55e 10px,rgba(34,197,94,0.4) 10px,rgba(34,197,94,0.4) 20px)';
+  }
+  var sl = document.getElementById('suites-list');
+  if (!sl) return;
+  sl.innerHTML = '';
+  (p.suites || []).forEach(function(s) {
+    if (s.total === 0) return;
+    var pp = s.total > 0 ? (s.passed / s.total * 100) : 0;
+    var fp = s.total > 0 ? (s.failed / s.total * 100) : 0;
+    var cnt = s.failed > 0
+      ? '<span style="color:#86efac">' + s.passed + '\u2713</span> <span style="color:#fca5a5">' + s.failed + '\u2717</span>'
+      : '<span style="color:#86efac">' + s.passed + '\u2713</span>';
+    var d = document.createElement('div');
+    d.style.cssText = 'margin-bottom:12px';
+    d.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">' +
+      '<div style="font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px" title="' + s.name + '">' + s.name + '</div>' +
+      '<div style="font-size:11px;font-family:var(--mono);flex-shrink:0;margin-left:6px">' + cnt + '</div></div>' +
+      '<div style="background:rgba(255,255,255,0.08);border-radius:3px;height:5px;overflow:hidden">' +
+        '<div style="height:100%;display:flex">' +
+          '<div style="width:' + pp + '%;background:#22c55e;transition:width .3s"></div>' +
+          '<div style="width:' + fp + '%;background:#ef4444;transition:width .3s"></div>' +
+        '</div></div>';
+    sl.appendChild(d);
+  });
+}
+
+async function poll() {
+  var status = await fetchStatus();
+  if (!status) return;
+  var panel = document.getElementById('run-panel');
+  var execBtn = document.getElementById('execute-btn');
+  if (status.progress) renderProgress(status.progress);
+  if (status.log && status.log.length) renderLog(status.log);
+
+  if (status.running) {
+    _wasRunning = true;
+    if (panel) panel.style.display = '';
+    _startAnimations();
+    if (execBtn) execBtn.disabled = true;
+    var pidEl = document.getElementById('run-pid');
+    if (pidEl && status.pid) pidEl.textContent = '(pid ' + status.pid + ')';
+    _pollTimer = setTimeout(poll, 800);
+  } else {
+    if (_wasRunning) {
+      if (panel) panel.style.display = '';
+      var failed = status.progress && status.progress.failed > 0;
+      _stopAnimations(failed ? '#ef4444' : '#22c55e');
+      var lbl = document.getElementById('run-label');
+      if (lbl) lbl.textContent = failed ? 'Run finished \u2014 failures detected' : 'Run complete \u2713';
+      if (execBtn) execBtn.disabled = false;
+      execBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Execute';
+      _wasRunning = false;
+      return;
+    }
+    if (execBtn) execBtn.disabled = false;
+  }
+}
+
+// ── Execute button ────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+
+  // Open history section if navigated here with #history hash
+  if (window.location.hash === '#history') {
+    showSection('history');
+    history.replaceState(null, '', window.location.pathname);
+  }
+
+  // Load codebase stats
+  fetch('/vima/test/codebase_stats').then(function(r){ return r.ok ? r.json() : null; }).then(function(data){
+    if (data && data.ok) renderCodebaseStats(data);
+    else {
+      var el = document.getElementById('lang-rows');
+      if (el) el.innerHTML = '<span style="color:var(--text3);font-size:12px">Could not load stats.</span>';
+    }
+  });
+
+  var execBtn = document.getElementById('execute-btn');
+  if (execBtn) {
+    execBtn.addEventListener('click', async function() {
+      var panels = document.querySelectorAll('.suite-panel.selected');
+      if (!panels.length) { alert('Select at least one suite to run.'); return; }
+
+      // Determine scope from selected panels
+      var scopes = Array.from(panels).map(function(p){ return p.dataset.scope; });
+      // Map combinations to a single scope string the backend understands
+      var hasSmoke = scopes.includes('smoke'), hasFull = scopes.includes('full');
+      var hasPyLint = scopes.includes('lint-python'), hasJsLint = scopes.includes('lint-js'), hasSec = scopes.includes('lint-security'), hasVulture = scopes.includes('lint-vulture');
+      var allAnalysis = hasPyLint && hasJsLint && hasSec && hasVulture;
+      var anyFunctional = hasSmoke || hasFull;
+      var anyAnalysis   = hasPyLint || hasJsLint || hasSec || hasVulture;
+
+      var scope;
+      if (anyFunctional && anyAnalysis) {
+        scope = hasFull ? 'full' : 'smoke';  // full/smoke already include lint
+      } else if (anyFunctional) {
+        scope = hasFull ? 'full' : 'smoke';
+      } else {
+        scope = 'lint';  // analysis only
+      }
+      if (_isClean && anyFunctional) scope = 'clean';
+
+      // Collect selected lint tool names for analysis-only runs
+      var lintTools = [];
+      if (hasPyLint)   lintTools.push('python');
+      if (hasJsLint)   lintTools.push('js');
+      if (hasSec)      lintTools.push('security');
+      if (hasVulture)  lintTools.push('vulture');
+
+      // Reset UI
+      var pbar = document.getElementById('run-pbar-inner');
+      if (pbar) pbar.style.background = 'repeating-linear-gradient(-45deg,var(--mc-orange) 0,var(--mc-orange) 10px,rgba(255,127,0,0.35) 10px,rgba(255,127,0,0.35) 20px)';
+      var score = document.getElementById('run-score');
+      if (score) score.textContent = 'Starting\u2026';
+      var sl = document.getElementById('suites-list');
+      if (sl) sl.innerHTML = '';
+      var rl = document.getElementById('run-log');
+      if (rl) rl.innerHTML = '';
+      var lbl = document.getElementById('run-label');
+      if (lbl) lbl.textContent = 'Running tests';
+      _startAnimations();
+      execBtn.disabled = true;
+      execBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="10" y1="15" x2="10" y2="9"/><line x1="14" y1="15" x2="14" y2="9"/></svg> Starting\u2026';
+
+      var body = new URLSearchParams();
+      body.append('scope', scope);
+      if (scope === 'lint' && lintTools.length) body.append('lint_tools', lintTools.join(','));
+      try {
+        var r = await fetch('/vima/test/run', { method: 'POST', body: body });
+        var j = await r.json();
+        if (!j.ok) {
+          alert('Failed to start: ' + (j.error || 'unknown error'));
+          execBtn.disabled = false;
+          execBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Execute';
+          return;
+        }
+      } catch(e) {
+        alert('Error: ' + e);
+        execBtn.disabled = false;
+        execBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Execute';
+        return;
+      }
+      if (_pollTimer) clearTimeout(_pollTimer);
+      var panel = document.getElementById('run-panel');
+      if (panel) panel.style.display = '';
+      _wasRunning = true;
+      poll();
+    });
+  }
+
+  // On page load: poll if a run is in progress, or show last run data
+  fetchStatus().then(function(status) {
+    if (!status) return;
+    if (status.running) {
+      _wasRunning = true;
+      var panel = document.getElementById('run-panel');
+      if (panel) panel.style.display = '';
+      _startAnimations();
+      poll();
+    } else if (status.progress && status.progress.total > 0) {
+      var panel = document.getElementById('run-panel');
+      if (panel) panel.style.display = '';
+      _stopAnimations(status.progress.failed > 0 ? '#ef4444' : '#22c55e');
+      var lbl = document.getElementById('run-label');
+      if (lbl) lbl.textContent = 'Last run';
+      if (status.log && status.log.length) renderLog(status.log);
+      renderProgress(status.progress);
+    }
+  });
+});
+</script>
+<script>
+(function(){
+  var c=document.getElementById('hdr-globe');if(!c)return;
+  var ctx=c.getContext('2d'),S=36,R=S*0.38,CX=S/2,CY=S/2,SPEED=0.004,ND=24;
+  var pts=[];for(var i=0;i<ND;i++){var phi=Math.acos(-1+(2*i)/ND),th=Math.sqrt(ND*Math.PI)*phi;pts.push({x:Math.cos(th)*Math.sin(phi),y:Math.sin(th)*Math.sin(phi),z:Math.cos(phi)});}
+  var rot=0,last=null;
+  function render(ts){
+    if(document.hidden){requestAnimationFrame(render);return;}
+    if(last&&(ts-last)<33){requestAnimationFrame(render);return;}
+    last=ts;ctx.clearRect(0,0,S,S);
+    var gO=0.15;ctx.lineWidth=0.5;
+    for(var lat=-60;lat<=60;lat+=30){var lR=lat*Math.PI/180;for(var seg=0;seg<360;seg+=10){var l0=(seg*Math.PI/180)+rot,l1=((seg+10)*Math.PI/180)+rot,z0=Math.cos(lR)*Math.sin(l0),z1=Math.cos(lR)*Math.sin(l1),a=gO*Math.max(0,Math.min(1,((z0+z1)/2+0.4)/0.8));if(a<0.005)continue;var s0=1/(1.8-z0),s1=1/(1.8-z1);ctx.strokeStyle='rgba(255,120,0,'+a+')';ctx.beginPath();ctx.moveTo(CX+Math.cos(lR)*Math.cos(l0)*R*s0,CY+Math.sin(lR)*R*s0);ctx.lineTo(CX+Math.cos(lR)*Math.cos(l1)*R*s1,CY+Math.sin(lR)*R*s1);ctx.stroke();}}
+    for(var lon=0;lon<360;lon+=30){for(var seg=-88;seg<90;seg+=10){var l0=seg*Math.PI/180,l1=(seg+10)*Math.PI/180,lR=(lon*Math.PI/180)+rot,z0=Math.cos(l0)*Math.sin(lR),z1=Math.cos(l1)*Math.sin(lR),a=gO*Math.max(0,Math.min(1,((z0+z1)/2+0.4)/0.8));if(a<0.005)continue;var s0=1/(1.8-z0),s1=1/(1.8-z1);ctx.strokeStyle='rgba(255,120,0,'+a+')';ctx.beginPath();ctx.moveTo(CX+Math.cos(l0)*Math.cos(lR)*R*s0,CY+Math.sin(l0)*R*s0);ctx.lineTo(CX+Math.cos(l1)*Math.cos(lR)*R*s1,CY+Math.sin(l1)*R*s1);ctx.stroke();}}
+    var proj=pts.map(function(p){var rx=p.x*Math.cos(rot)-p.z*Math.sin(rot),rz=p.x*Math.sin(rot)+p.z*Math.cos(rot),sc=1/(1.8-rz),fade=Math.max(0,Math.min(1,(rz+0.2)/0.4));return{px:CX+rx*R*sc,py:CY+p.y*R*sc,rz:rz,sc:sc,alpha:0.15+fade*0.85};});
+    proj.filter(function(p){return p.rz>-0.18;}).sort(function(a,b){return a.rz-b.rz;}).forEach(function(p){ctx.fillStyle='rgba(255,160,40,'+p.alpha+')';ctx.beginPath();ctx.arc(p.px,p.py,1.8*p.sc,0,Math.PI*2);ctx.fill();});
+    rot+=SPEED;requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+})();
+</script>
 </body>
 </html>

@@ -8,9 +8,9 @@ Composes the Open Finance API to power a phone-style PFM app:
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, List
+from typing import Any
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "pfm",
     "name": "Personal Finance Manager",
     "description": (
@@ -24,14 +24,12 @@ MANIFEST: Dict[str, Any] = {
     "render": "pfm",
 }
 
-
 def _client():
     # Defer import so the registry doesn't fail when OFIN isn't configured.
     from apis.open_finance import api as ofin_api
     return ofin_api._get_client()
 
-
-def _ofin_state() -> Dict[str, Any]:
+def _ofin_state() -> dict[str, Any]:
     """Snapshot of the Open Finance US module's shared context.
 
     The Open Finance tab populates ``STATE`` (customer_id, username, the
@@ -51,8 +49,7 @@ def _ofin_state() -> Dict[str, Any]:
     snapshot["raw_accounts"] = raw_state.get("accounts") or []
     return snapshot
 
-
-def _categorize(txn: Dict[str, Any]) -> str:
+def _categorize(txn: dict[str, Any]) -> str:
     cat = (txn.get("categorization") or {}).get("category")
     if cat:
         return cat
@@ -60,8 +57,7 @@ def _categorize(txn: Dict[str, Any]) -> str:
         return "Income"
     return "Other"
 
-
-def get_data(customer_id: str) -> Dict[str, Any]:
+def get_data(customer_id: str) -> dict[str, Any]:
     """Fetch and shape data for the PFM dashboard.
 
     Reads customer + accounts from the Open Finance US ``STATE`` context
@@ -115,7 +111,7 @@ def get_data(customer_id: str) -> Dict[str, Any]:
     transactions.sort(key=lambda t: t.get("transactionDate", 0), reverse=True)
 
     # Shape accounts
-    shaped_accounts: List[Dict[str, Any]] = []
+    shaped_accounts: list[dict[str, Any]] = []
     for a in accounts:
         shaped_accounts.append({
             "id": str(a.get("id")),
@@ -136,13 +132,13 @@ def get_data(customer_id: str) -> Dict[str, Any]:
     net_worth = assets + liabilities  # liabilities are already negative
 
     # Spend by category (debits only)
-    cat_totals: Dict[str, float] = {}
+    cat_totals: dict[str, float] = {}
     monthly_spend = 0.0
     monthly_income = 0.0
     now_dt = now
     one_month = now_dt - 30 * 24 * 3600
 
-    shaped_txns: List[Dict[str, Any]] = []
+    shaped_txns: list[dict[str, Any]] = []
     for t in transactions:
         amt = float(t.get("amount") or 0)
         ts = int(t.get("transactionDate") or 0)
@@ -195,8 +191,7 @@ def get_data(customer_id: str) -> Dict[str, Any]:
         "categories": top_categories,
     }
 
-
-def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
     """Backend actions for the PFM use case (used by the in-app Connect flow)."""
     client = _client()
 
@@ -263,7 +258,7 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
         data, status = client.enrich_transactions(api_txns)
         if status >= 400 or not isinstance(data, dict):
             return {"error": f"Enrichment API returned {status}", "enriched": {}}
-        enriched: Dict[str, Any] = {}
+        enriched: dict[str, Any] = {}
         for t in (data.get("transactions") or []):
             txn_id = t.get("externalTransactionId")
             if not txn_id:

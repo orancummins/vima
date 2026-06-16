@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict
+from typing import Any
 
 _SANDBOX_BASE_URL = "https://sandbox.api.mastercard.com/openapis"
 _PROD_BASE_URL    = "https://api.mastercard.com/openapis"
@@ -25,13 +25,13 @@ _CONSENT_SANDBOX_BASE_URL = "https://sandbox.api.mastercard.com/openapis/authent
 _CONSENT_PROD_BASE_URL    = "https://api.mastercard.com/openapis/authentication"
 
 # In-process state for card enrollment (consent lifecycle).
-STATE: Dict[str, Any] = {
+STATE: dict[str, Any] = {
     "card_ref":           "",
     "consent_id":        "",
     "verify_auth_params": "{}",
 }
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "transaction_notifications",
     "name": "Transaction Notifications",
     "description": (
@@ -520,7 +520,7 @@ def is_configured() -> bool:
     return _configured() or is_simulated("transaction_notifications")
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured(), **STATE}
 
 
@@ -537,7 +537,7 @@ def _is_consent_simulated() -> bool:
     return is_simulated("consent_management") or is_simulated("transaction_notifications")
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if op_id == "trigger_test_transaction":
         return _trigger_test_transaction(params)
     if op_id == "get_undelivered":
@@ -574,18 +574,18 @@ def _get_auth_header(url: str, method: str, body_str: str | None = None):
     return OAuth.get_authorization_header(url, method, body_str, consumer_key, signing_key)
 
 
-def _not_configured_error(op: str) -> Dict[str, Any]:
+def _not_configured_error(op: str) -> dict[str, Any]:
     return {
         "success": False,
         "error": (
-            f"Transaction Notifications is not configured. "
-            f"Set TRANSACTION_NOTIFICATIONS_CONSUMER_KEY and TRANSACTION_NOTIFICATIONS_SIGNING_KEY_PATH in .env, "
-            f"then restart the server."
+            "Transaction Notifications is not configured. "
+            "Set TRANSACTION_NOTIFICATIONS_CONSUMER_KEY and TRANSACTION_NOTIFICATIONS_SIGNING_KEY_PATH in .env, "
+            "then restart the server."
         ),
     }
 
 
-def _trigger_test_transaction(params: Dict[str, Any]) -> Dict[str, Any]:
+def _trigger_test_transaction(params: dict[str, Any]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("transaction_notifications"):
         return _not_configured_error("trigger_test_transaction")
@@ -681,7 +681,7 @@ def _trigger_test_transaction(params: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def _get_undelivered(params: Dict[str, Any]) -> Dict[str, Any]:
+def _get_undelivered(params: dict[str, Any]) -> dict[str, Any]:
     from simulator.switcher import is_simulated
     if not _configured() and not is_simulated("transaction_notifications"):
         return _not_configured_error("get_undelivered")
@@ -749,9 +749,9 @@ def _resolve_cert_path() -> str | None:
     return cert_path if os.path.exists(cert_path) else None
 
 
-def _encrypt_body(body: Dict, cert_path: str) -> str:
-    from client_encryption.jwe_encryption_config import JweEncryptionConfig
+def _encrypt_body(body: dict, cert_path: str) -> str:
     from client_encryption.jwe_encryption import encrypt_payload
+    from client_encryption.jwe_encryption_config import JweEncryptionConfig
     config = JweEncryptionConfig({
         "paths": {
             "$": {
@@ -766,8 +766,8 @@ def _encrypt_body(body: Dict, cert_path: str) -> str:
     return json.dumps(encrypted)
 
 
-def _consent_http(method: str, url: str, body: Dict | None = None,
-                  _body_str: str | None = None) -> Dict[str, Any]:
+def _consent_http(method: str, url: str, body: dict | None = None,
+                  _body_str: str | None = None) -> dict[str, Any]:
     """Execute a signed OAuth 1.0a request against the consent API."""
     import requests
 
@@ -810,7 +810,7 @@ def _consent_http(method: str, url: str, body: Dict | None = None,
     }
 
 
-def _consent_http_encrypted(method: str, url: str, body: Dict) -> Dict[str, Any]:
+def _consent_http_encrypted(method: str, url: str, body: dict) -> dict[str, Any]:
     if _is_consent_simulated():
         return _consent_http(method, url, body)
     cert_path = _resolve_cert_path()
@@ -823,7 +823,7 @@ def _consent_http_encrypted(method: str, url: str, body: Dict) -> Dict[str, Any]
     return _consent_http(method, url, body)
 
 
-def _consent_not_configured_error() -> Dict[str, Any]:
+def _consent_not_configured_error() -> dict[str, Any]:
     return {
         "success": False,
         "error": (
@@ -835,7 +835,7 @@ def _consent_not_configured_error() -> Dict[str, Any]:
     }
 
 
-def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
+def _create_consent(params: dict[str, Any]) -> dict[str, Any]:
     if not _configured() and not _is_consent_simulated():
         return _consent_not_configured_error()
 
@@ -853,7 +853,7 @@ def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
     cardholder_name = (params.get("cardholder_name") or "").strip() or None
     consent_name    = (params.get("consent_name") or "notification").strip()
 
-    card_details: Dict[str, Any] = {
+    card_details: dict[str, Any] = {
         "pan":         pan,
         "expiryMonth": expiry_month,
         "expiryYear":  expiry_year,
@@ -912,11 +912,11 @@ def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
             )
             if STATE["card_ref"]:
                 from urllib.parse import urlencode
-                q: Dict[str, str] = {"card_ref": STATE["card_ref"]}
-                if method_url:    q["method_url"]    = method_url
-                if method_data:   q["method_data"]   = method_data
-                if trans_id:      q["trans_id"]      = trans_id
-                if method_notify: q["method_notify"] = method_notify
+                q: dict[str, str] = {"card_ref": STATE["card_ref"]}
+                if method_url:    q["method_url"]    = method_url     # noqa: E701
+                if method_data:   q["method_data"]   = method_data    # noqa: E701
+                if trans_id:      q["trans_id"]      = trans_id       # noqa: E701
+                if method_notify: q["method_notify"] = method_notify  # noqa: E701
                 launch_path = "/explorer/consent/3ds-flow?" + urlencode(q)
                 result["hints"] = {
                     "browser_launch_url": launch_path,
@@ -930,7 +930,7 @@ def _create_consent(params: Dict[str, Any]) -> Dict[str, Any]:
         return {"success": False, "error": f"JWE encryption failed: {e}"}
 
 
-def _get_consents(params: Dict[str, Any]) -> Dict[str, Any]:
+def _get_consents(params: dict[str, Any]) -> dict[str, Any]:
     if not _configured() and not _is_consent_simulated():
         return _consent_not_configured_error()
     card_ref = (params.get("card_ref") or "").strip()
@@ -946,7 +946,7 @@ def _get_consents(params: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def _start_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
+def _start_authentication(params: dict[str, Any]) -> dict[str, Any]:
     if not _configured() and not _is_consent_simulated():
         return _consent_not_configured_error()
 
@@ -1019,7 +1019,7 @@ def _start_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def _verify_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
+def _verify_authentication(params: dict[str, Any]) -> dict[str, Any]:
     if not _configured() and not _is_consent_simulated():
         return _consent_not_configured_error()
 
@@ -1075,7 +1075,7 @@ def _verify_authentication(params: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def _delete_consents(params: Dict[str, Any]) -> Dict[str, Any]:
+def _delete_consents(params: dict[str, Any]) -> dict[str, Any]:
     if not _configured() and not _is_consent_simulated():
         return _consent_not_configured_error()
     card_ref = (params.get("card_ref") or "").strip()
@@ -1085,7 +1085,7 @@ def _delete_consents(params: Dict[str, Any]) -> Dict[str, Any]:
     return _consent_http("DELETE", url)
 
 
-def _delete_single_consent(params: Dict[str, Any]) -> Dict[str, Any]:
+def _delete_single_consent(params: dict[str, Any]) -> dict[str, Any]:
     if not _configured() and not _is_consent_simulated():
         return _consent_not_configured_error()
     card_ref   = (params.get("card_ref") or "").strip()

@@ -1,5 +1,7 @@
 import uuid
-from flask import request, jsonify
+
+from flask import jsonify
+
 from simulator.datastore import store
 
 API = "benefits_eligibility"
