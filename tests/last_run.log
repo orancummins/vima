@@ -122,8 +122,50 @@
   Target:    tests/lint/profile_target.py
   Profiling: CPU time, memory allocation
   Hotspot:   files >= 5% CPU; lines >= 2% CPU
-  [32m[PASS][0m Profile complete (4.77s, 3 file(s) sampled) — no file >= 5% CPU
+  [32m[PASS][0m tests/lint/profile_target.py  CPU 100.0%
+  line   24  CPU 6.3%  peak 10.7 MB      _client.get("/app")
   [32m3/3 passed[0m
+
+[1m>> Code Complexity (Radon)[0m
+
+[1m[36m>> Code Complexity (Radon)[0m[0m
+  [32m[PASS][0m radon is installed
+  [32m[PASS][0m Scan scope: 7 target(s)
+  Targets:  apis, usecases, chat, simulator, app.py, clean_keys.py, live_demo.py
+  CC fail:  rank E/F (CC >= 21) — genuinely problematic
+  CC info:  rank C/D (CC 11–20) — visible, non-blocking
+  MI check: maintainability index, report rank C (MI < 10)
+  [31m[FAIL][0m apis/carbon_calculator/api.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line  272  CC  38  rank E  function execute[0m
+  [31m[FAIL][0m apis/open_finance/api.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line 1276  CC 151  rank F  function execute[0m
+  [31m[FAIL][0m apis/open_finance_au/api.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line  439  CC  49  rank F  function execute[0m
+  [31m[FAIL][0m apis/open_finance_eu/api.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line  620  CC  96  rank F  function execute[0m
+  [31m[FAIL][0m chat/app.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line  293  CC  77  rank F  function _execute_tool[0m
+  [31m[FAIL][0m usecases/financeincolour/__init__.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line   59  CC  46  rank F  function get_data[0m
+  [31m[FAIL][0m usecases/pfm/__init__.py: 2 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line  194  CC  45  rank F  function do_action
+  line   60  CC  40  rank E  function get_data[0m
+  [31m[FAIL][0m usecases/places/__init__.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line   84  CC  38  rank E  function _shape[0m
+  [31m[FAIL][0m usecases/recurring/__init__.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line   68  CC  39  rank E  function do_action[0m
+  [31m[FAIL][0m usecases/specials/__init__.py: 1 high-complexity block(s) [rank E/F, CC >= 21]
+    [2m  line   50  CC  37  rank E  function _search[0m
+  [32m[PASS][0m 74 moderate-complexity block(s) [rank C/D, CC 11–20 — informational]
+  [31m[FAIL][0m apis/open_finance/api.py: low maintainability
+    [2m  MI 0.7  rank C[0m
+  [31m[FAIL][0m apis/transaction_notifications/api.py: low maintainability
+    [2m  MI 8.1  rank C[0m
+  [31m[FAIL][0m app.py: low maintainability
+    [2m  MI 0.0  rank C[0m
+  [31m[FAIL][0m chat/app.py: low maintainability
+    [2m  MI 8.0  rank C[0m
+  [31m3/17 passed[0m
 
 [1m>> Code Duplication[0m
 
@@ -257,6 +299,29 @@
   Findings: 0 active vulnerability/ies, 0 ignored
   [32m[PASS][0m All scanned packages are free of known vulnerabilities
   [32m3/3 passed[0m
+
+[1m>> Dependency Graph (pydeps)[0m
+
+[1m[36m>> Dependency Graph (pydeps)[0m[0m
+  [32m[PASS][0m pydeps is installed
+  [32m[PASS][0m apis: 54 modules, 54 dependency edges
+  Most imported: simulator(21), switcher(21), apis(4), catalog(3), bundles(2)
+  [32m[PASS][0m apis: no circular imports
+  [32m[PASS][0m apis: SVG written -> tests/output/pydeps/apis.svg
+  [32m[PASS][0m apis: interactive graph -> tests/output/pydeps/apis.html
+  [32m[PASS][0m usecases: 36 modules, 50 dependency edges
+  Most imported: apis(11), simulator(7), switcher(7), open_finance(5), api(5)
+  [32m[PASS][0m usecases: no circular imports
+  [32m[PASS][0m usecases: SVG written -> tests/output/pydeps/usecases.svg
+  [32m[PASS][0m usecases: interactive graph -> tests/output/pydeps/usecases.html
+  [32m9/9 passed[0m
+
+[1m>> Architecture Diagrams (Mermaid)[0m
+
+[1m[36m>> Architecture Diagrams (Mermaid)[0m[0m
+  [32m[PASS][0m app_arch: written -> tests/output/arch/app_arch.html
+  [32m[PASS][0m uc_flows: written -> tests/output/arch/uc_flows.html
+  [32m2/2 passed[0m
   [32m[OK]  Run recorded in dashboard DB (run #{run_id}).[0m
 
 ============================================================
@@ -272,9 +337,12 @@
   [32m[OK][0m  Security (Bandit)                   4/4
   [32m[OK][0m  Dead Code (Vulture)                 3/3
   [32m[OK][0m  Runtime Performance (Scalene)       3/3
+  [31m[FAIL][0m  Code Complexity (Radon)             3/17
   [32m[OK][0m  Code Duplication (pure Python)      17/17
   [32m[OK][0m  Safety (Dependency Vulnerabilities) 3/3
+  [32m[OK][0m  Dependency Graph (pydeps)           9/9
+  [32m[OK][0m  Architecture Diagrams (Mermaid)     2/2
 ------------------------------------------------------------
-[32m[1m  51/51 passed[0m[0m
+[31m[1m  65/79 passed[0m[0m
 ============================================================
 
