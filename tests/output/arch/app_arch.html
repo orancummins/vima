@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Application Architecture</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #0f172a; color: #e2e8f0;
+                  font-family: ui-sans-serif,system-ui,sans-serif;
+                  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent; }
+    html::-webkit-scrollbar { width: 5px; }
+    html::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+    html::-webkit-scrollbar-track { background: transparent; }
+    body { display: flex; flex-direction: column; }
+    .diagram   { flex: 1; overflow: auto; padding: 16px;
+                  display: flex; justify-content: center; align-items: flex-start; }
+    .mermaid   { width: 100%; }
+    /* Force the Mermaid-rendered SVG to fill available width */
+    .mermaid svg { width: 100% !important; height: auto !important;
+                    max-width: none !important; background: transparent !important; }
+    .fallback  { padding: 20px; }
+    .fallback pre { font-size: 12px; color: #94a3b8; white-space: pre-wrap;
+                     font-family: 'Cascadia Code','Fira Code',monospace;
+                     background: #1e293b; border: 1px solid #334155;
+                     border-radius: 8px; padding: 16px; }
+    .fallback-note { font-size: 12px; color: #f97316; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="diagram" style="">
+    <div class="mermaid">
+flowchart TB
+
+    %% ---- Entry point ----
+    BROWSER(["Browser"])
+    APP["Flask app.py\nport :9021"]
+    BROWSER --> APP
+
+    %% ---- Blueprints ----
+    BP_CHAT["chat blueprint\n/chat"]
+    BP_SIM["simulator blueprint\n/api-sim"]
+    BP_TEST["test dashboard\n/vima/test"]
+    BP_MAIN["main routes\n/  /explorer  /usecases"]
+    APP --> BP_CHAT
+    APP --> BP_SIM
+    APP --> BP_TEST
+    APP --> BP_MAIN
+
+    %% ---- Middleware / cross-cutting ----
+    MW_LOG["API call logger\n(monkey-patches requests)"]
+    MW_SIM["simulator switcher\n(intercepts /api-sim/)"]
+    MW_PROXY["ProxyFix middleware"]
+    APP -.-> MW_LOG
+    APP -.-> MW_SIM
+    APP -.-> MW_PROXY
+
+    %% ---- Registries ----
+    REG_API["apis.registry"]
+    REG_UC["usecases.registry"]
+    BP_MAIN --> REG_API
+    BP_MAIN --> REG_UC
+
+    subgraph Open_Banking_and_Open_Finance ["Open Banking & Open Finance"]
+        direction LR
+        Open_Finance_US["Open Finance US"]
+        Open_Finance_Australia["Open Finance Australia"]
+        Open_Finance_Europe["Open Finance Europe"]
+    end
+    REG_API --> Open_Banking_and_Open_Finance
+
+    subgraph Security_and_Risk ["Security & Risk"]
+        direction LR
+        MATCH_Pro["MATCH Pro"]
+        Business_Payment_Controls["Business Payment Controls"]
+    end
+    REG_API --> Security_and_Risk
+
+    subgraph Data_and_Insights ["Data & Insights"]
+        direction LR
+        BIN_Lookup["BIN Lookup"]
+        Merchant_Identifier["Merchant Identifier"]
+        Automatic_Billing_Updater["Automatic Billing Updater"]
+        Consumer_Clarity["Consumer Clarity"]
+        Places["Places"]
+        Transaction_Notifications["Transaction Notifications"]
+        Enhanced_Currency_Conversion_Calculator["Enhanced Currency Conversion Calculator"]
+        Carbon_Calculator["Carbon Calculator"]
+    end
+    REG_API --> Data_and_Insights
+
+    subgraph Loyalty_Offers_and_Benefits ["Loyalty, Offers & Benefits"]
+        direction LR
+        Priceless_Cities["Priceless Cities"]
+        Easy_Savings["Easy Savings"]
+        Offers_for_Publishers["Offers for Publishers"]
+        Offers_Merchant_Content["Offers Merchant Content"]
+        Benefits_Eligibility["Benefits Eligibility"]
+        Benefits_Content_Eligibility_Service["Benefits Content Eligibility Service"]
+    end
+    REG_API --> Loyalty_Offers_and_Benefits
+
+    subgraph USE_CASES ["Use Cases"]
+        direction LR
+        UC_pfm["Personal Finance Manager"]
+        UC_enrichment["Data Enrichment"]
+        UC_recurring["Recurring Transactions"]
+        UC_psi["Payment Success Indicator"]
+        UC_bin_lookup["BIN Lookup"]
+        UC_consumer_clarity["Consumer Clarity"]
+        UC_easy_savings["Easy Savings"]
+        UC_places["Places"]
+        UC_identity["Online Identity Verification"]
+        UC_specials["Priceless Concierge"]
+        UC_findacard["Find A Card"]
+        UC_sonic["Sonic Branding"]
+        UC_testchat["Test Chat"]
+        UC_the_wire["The Wire"]
+        UC_txnotify["Transaction Notifications Live"]
+    end
+    REG_UC --> USE_CASES
+
+    %% ---- Styling ----
+    classDef blueprint fill:#1e40af,stroke:#3b82f6,color:#fff
+    classDef middleware fill:#374151,stroke:#6b7280,color:#d1d5db
+    classDef registry fill:#065f46,stroke:#10b981,color:#fff
+    classDef entry fill:#1c1917,stroke:#f97316,color:#fdba74
+    class BP_CHAT,BP_SIM,BP_TEST,BP_MAIN blueprint
+    class MW_LOG,MW_SIM,MW_PROXY middleware
+    class REG_API,REG_UC registry
+    class APP,BROWSER entry
+    </div>
+  </div>
+  <div class="fallback" style="display:none">
+    <p class="fallback-note">Mermaid JS unavailable. Re-run the Architecture suite with network access to bundle it. Raw source:</p>
+    <pre>flowchart TB
+
+    %% ---- Entry point ----
+    BROWSER(["Browser"])
+    APP["Flask app.py\nport :9021"]
+    BROWSER --> APP
+
+    %% ---- Blueprints ----
+    BP_CHAT["chat blueprint\n/chat"]
+    BP_SIM["simulator blueprint\n/api-sim"]
+    BP_TEST["test dashboard\n/vima/test"]
+    BP_MAIN["main routes\n/  /explorer  /usecases"]
+    APP --> BP_CHAT
+    APP --> BP_SIM
+    APP --> BP_TEST
+    APP --> BP_MAIN
+
+    %% ---- Middleware / cross-cutting ----
+    MW_LOG["API call logger\n(monkey-patches requests)"]
+    MW_SIM["simulator switcher\n(intercepts /api-sim/)"]
+    MW_PROXY["ProxyFix middleware"]
+    APP -.-> MW_LOG
+    APP -.-> MW_SIM
+    APP -.-> MW_PROXY
+
+    %% ---- Registries ----
+    REG_API["apis.registry"]
+    REG_UC["usecases.registry"]
+    BP_MAIN --> REG_API
+    BP_MAIN --> REG_UC
+
+    subgraph Open_Banking_and_Open_Finance ["Open Banking & Open Finance"]
+        direction LR
+        Open_Finance_US["Open Finance US"]
+        Open_Finance_Australia["Open Finance Australia"]
+        Open_Finance_Europe["Open Finance Europe"]
+    end
+    REG_API --> Open_Banking_and_Open_Finance
+
+    subgraph Security_and_Risk ["Security & Risk"]
+        direction LR
+        MATCH_Pro["MATCH Pro"]
+        Business_Payment_Controls["Business Payment Controls"]
+    end
+    REG_API --> Security_and_Risk
+
+    subgraph Data_and_Insights ["Data & Insights"]
+        direction LR
+        BIN_Lookup["BIN Lookup"]
+        Merchant_Identifier["Merchant Identifier"]
+        Automatic_Billing_Updater["Automatic Billing Updater"]
+        Consumer_Clarity["Consumer Clarity"]
+        Places["Places"]
+        Transaction_Notifications["Transaction Notifications"]
+        Enhanced_Currency_Conversion_Calculator["Enhanced Currency Conversion Calculator"]
+        Carbon_Calculator["Carbon Calculator"]
+    end
+    REG_API --> Data_and_Insights
+
+    subgraph Loyalty_Offers_and_Benefits ["Loyalty, Offers & Benefits"]
+        direction LR
+        Priceless_Cities["Priceless Cities"]
+        Easy_Savings["Easy Savings"]
+        Offers_for_Publishers["Offers for Publishers"]
+        Offers_Merchant_Content["Offers Merchant Content"]
+        Benefits_Eligibility["Benefits Eligibility"]
+        Benefits_Content_Eligibility_Service["Benefits Content Eligibility Service"]
+    end
+    REG_API --> Loyalty_Offers_and_Benefits
+
+    subgraph USE_CASES ["Use Cases"]
+        direction LR
+        UC_pfm["Personal Finance Manager"]
+        UC_enrichment["Data Enrichment"]
+        UC_recurring["Recurring Transactions"]
+        UC_psi["Payment Success Indicator"]
+        UC_bin_lookup["BIN Lookup"]
+        UC_consumer_clarity["Consumer Clarity"]
+        UC_easy_savings["Easy Savings"]
+        UC_places["Places"]
+        UC_identity["Online Identity Verification"]
+        UC_specials["Priceless Concierge"]
+        UC_findacard["Find A Card"]
+        UC_sonic["Sonic Branding"]
+        UC_testchat["Test Chat"]
+        UC_the_wire["The Wire"]
+        UC_txnotify["Transaction Notifications Live"]
+    end
+    REG_UC --> USE_CASES
+
+    %% ---- Styling ----
+    classDef blueprint fill:#1e40af,stroke:#3b82f6,color:#fff
+    classDef middleware fill:#374151,stroke:#6b7280,color:#d1d5db
+    classDef registry fill:#065f46,stroke:#10b981,color:#fff
+    classDef entry fill:#1c1917,stroke:#f97316,color:#fdba74
+    class BP_CHAT,BP_SIM,BP_TEST,BP_MAIN blueprint
+    class MW_LOG,MW_SIM,MW_PROXY middleware
+    class REG_API,REG_UC registry
+    class APP,BROWSER entry</pre>
+  </div>
+  <script src="/vima/test/arch/mermaid.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1e40af', primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#3b82f6', lineColor: '#475569',
+      secondaryColor: '#065f46', tertiaryColor: '#1e293b',
+      background: '#0f172a', mainBkg: '#1e293b',
+      nodeBorder: '#475569', clusterBkg: '#1e293b',
+      titleColor: '#f8fafc', edgeLabelBackground: '#0f172a',
+    },
+    flowchart: { curve: 'basis', padding: 20 },
+  });
+</script>
+</body>
+</html>
