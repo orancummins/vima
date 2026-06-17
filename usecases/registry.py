@@ -6,7 +6,7 @@ import os
 from typing import Any
 
 # Each use case is a module under `usecases/` exposing at least a MANIFEST dict.
-USE_CASE_MODULES = ["pfm", "enrichment", "recurring", "psi", "bin_lookup", "consumer_clarity", "easy_savings", "places", "identity", "specials", "findacard", "sonic", "testchat", "the_wire", "txnotify"]
+USE_CASE_MODULES = ["pfm", "enrichment", "recurring", "psi", "bin_lookup", "consumer_clarity", "easy_savings", "places", "identity", "specials", "findacard", "sonic", "testchat", "txnotify"]
 
 
 _modules: dict[str, Any] = {}

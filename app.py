@@ -360,6 +360,7 @@ CSS_FILES = [
     "css/platform/launch-banner.css",
     "css/platform/sdk-panel.css",
     "css/platform/info-modal.css",
+    "css/platform/search.css",
 ]
 
 
