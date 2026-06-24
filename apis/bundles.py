@@ -184,6 +184,7 @@ _BUNDLES: tuple[Bundle, ...] = (
             "Branded benefit enrolment",
             "Merchant content management",
             "Trip-aware concierge experiences",
+            "Real-time offer redemption alerts",
         ),
         journey=(
             ("bin_lookup", "Identify the card programme",
@@ -202,6 +203,8 @@ _BUNDLES: tuple[Bundle, ...] = (
              "Operators add merchants, addresses and creative; categories and sources stay in sync."),
             ("flight_delay_pass", "Enrol high-tier benefit",
              "Premium cardholders are auto-registered for lounge access on qualifying flights."),
+            ("transaction_notifications", "Notify on redemption",
+             "Push a real-time notification the moment an offer is redeemed at the point of sale, closing the loop for the cardholder."),
         ),
         walkthroughs=(
             (
@@ -229,6 +232,7 @@ _BUNDLES: tuple[Bundle, ...] = (
             "bin_lookup",
             "places",
             "consumer_clarity",
+            "transaction_notifications",
         ),
     ),
     Bundle(

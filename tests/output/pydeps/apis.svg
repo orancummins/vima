@@ -1,29 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="950" style="background:#0f172a;font-family:ui-sans-serif,system-ui,sans-serif">
   <defs>
     <marker id="arr-root" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#f97316" fill-opacity="0.6"/></marker>
-    <marker id="arr-apis" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#3b82f6" fill-opacity="0.6"/></marker>
-    <marker id="arr-automatic_billing_updater" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#22c55e" fill-opacity="0.6"/></marker>
-    <marker id="arr-benefits_content_eligibility" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#a855f7" fill-opacity="0.6"/></marker>
-    <marker id="arr-benefits_eligibility" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#eab308" fill-opacity="0.6"/></marker>
-    <marker id="arr-bin_lookup" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#06b6d4" fill-opacity="0.6"/></marker>
-    <marker id="arr-business_payment_controls" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#ec4899" fill-opacity="0.6"/></marker>
-    <marker id="arr-carbon_calculator" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#10b981" fill-opacity="0.6"/></marker>
-    <marker id="arr-consent_management" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#6366f1" fill-opacity="0.6"/></marker>
-    <marker id="arr-consumer_clarity" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#f43f5e" fill-opacity="0.6"/></marker>
-    <marker id="arr-easy_savings" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#14b8a6" fill-opacity="0.6"/></marker>
-    <marker id="arr-enhanced_currency_conversion_calculator" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#8b5cf6" fill-opacity="0.6"/></marker>
-    <marker id="arr-flight_delay_pass" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#84cc16" fill-opacity="0.6"/></marker>
-    <marker id="arr-match" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#fb923c" fill-opacity="0.6"/></marker>
-    <marker id="arr-merchant_identifier" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#38bdf8" fill-opacity="0.6"/></marker>
-    <marker id="arr-offers_for_publishers" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#f97316" fill-opacity="0.6"/></marker>
-    <marker id="arr-offers_merchant_content" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#3b82f6" fill-opacity="0.6"/></marker>
-    <marker id="arr-open_finance" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#22c55e" fill-opacity="0.6"/></marker>
-    <marker id="arr-open_finance_au" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#a855f7" fill-opacity="0.6"/></marker>
-    <marker id="arr-open_finance_eu" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#eab308" fill-opacity="0.6"/></marker>
-    <marker id="arr-places" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#06b6d4" fill-opacity="0.6"/></marker>
-    <marker id="arr-priceless_cities" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#ec4899" fill-opacity="0.6"/></marker>
-    <marker id="arr-simulator" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#10b981" fill-opacity="0.6"/></marker>
-    <marker id="arr-transaction_notifications" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#6366f1" fill-opacity="0.6"/></marker>
+    <marker id="arr-Crypto" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#3b82f6" fill-opacity="0.6"/></marker>
+    <marker id="arr-apis" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#22c55e" fill-opacity="0.6"/></marker>
+    <marker id="arr-automatic_billing_updater" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#a855f7" fill-opacity="0.6"/></marker>
+    <marker id="arr-benefits_content_eligibility" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#eab308" fill-opacity="0.6"/></marker>
+    <marker id="arr-benefits_eligibility" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#06b6d4" fill-opacity="0.6"/></marker>
+    <marker id="arr-bin_lookup" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#ec4899" fill-opacity="0.6"/></marker>
+    <marker id="arr-business_payment_controls" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#10b981" fill-opacity="0.6"/></marker>
+    <marker id="arr-carbon_calculator" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#6366f1" fill-opacity="0.6"/></marker>
+    <marker id="arr-charset_normalizer" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#f43f5e" fill-opacity="0.6"/></marker>
+    <marker id="arr-client_encryption" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#14b8a6" fill-opacity="0.6"/></marker>
+    <marker id="arr-consent_management" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#8b5cf6" fill-opacity="0.6"/></marker>
+    <marker id="arr-consumer_clarity" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#84cc16" fill-opacity="0.6"/></marker>
+    <marker id="arr-cryptography" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#fb923c" fill-opacity="0.6"/></marker>
+    <marker id="arr-easy_savings" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#38bdf8" fill-opacity="0.6"/></marker>
+    <marker id="arr-enhanced_currency_conversion_calculator" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#f97316" fill-opacity="0.6"/></marker>
+    <marker id="arr-flight_delay_pass" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#3b82f6" fill-opacity="0.6"/></marker>
+    <marker id="arr-match" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#22c55e" fill-opacity="0.6"/></marker>
+    <marker id="arr-merchant_identifier" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#a855f7" fill-opacity="0.6"/></marker>
+    <marker id="arr-oauth1" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#eab308" fill-opacity="0.6"/></marker>
+    <marker id="arr-offers_for_publishers" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#06b6d4" fill-opacity="0.6"/></marker>
+    <marker id="arr-offers_merchant_content" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#ec4899" fill-opacity="0.6"/></marker>
+    <marker id="arr-open_finance" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#10b981" fill-opacity="0.6"/></marker>
+    <marker id="arr-open_finance_au" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#6366f1" fill-opacity="0.6"/></marker>
+    <marker id="arr-open_finance_eu" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#f43f5e" fill-opacity="0.6"/></marker>
+    <marker id="arr-places" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#14b8a6" fill-opacity="0.6"/></marker>
+    <marker id="arr-priceless_cities" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#8b5cf6" fill-opacity="0.6"/></marker>
+    <marker id="arr-requests" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#84cc16" fill-opacity="0.6"/></marker>
+    <marker id="arr-simulator" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#fb923c" fill-opacity="0.6"/></marker>
+    <marker id="arr-transaction_notifications" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#38bdf8" fill-opacity="0.6"/></marker>
+    <marker id="arr-urllib3" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 Z" fill="#f97316" fill-opacity="0.6"/></marker>
     <filter id='shadow' x='-20%' y='-20%' width='140%' height='140%'>
       <feDropShadow dx='0' dy='2' stdDeviation='3' flood-color='#000' flood-opacity='0.5'/>
     </filter>
@@ -31,270 +38,814 @@
   <rect x="1200" y="0" width="200" height="950" fill="#0a0f1e" rx="0"/>
   <line x1="1200" y1="0" x2="1200" y2="950" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
   <text x="600" y="34" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="20" font-weight="700" letter-spacing="0.5">apis - dependency graph</text>
-  <text x="600" y="54" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="12">54 modules &#183; 54 edges &#183; 24 sub-packages</text>
-  <path d="M97.5,103.4 C725.6,103.4 1102.5,382.1 1102.5,103.4 C1102.5,567.9 725.6,846.6 1102.5,846.6 C474.4,846.6 97.5,567.9 97.5,846.6 C97.5,382.1 474.4,103.4 97.5,103.4 Z" fill="#f97316" fill-opacity="0.07" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
-  <text x="600.0" y="106.0" text-anchor="middle" fill="#f97316" font-size="11" font-weight="600" fill-opacity="0.9">(root)</text>
-  <circle cx="720.2" cy="756.7" r="37.0" fill="#3b82f6" fill-opacity="0.06" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="720.2" y="712.7" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="600" fill-opacity="0.9">apis</text>
-  <circle cx="807.0" cy="252.1" r="32.5" fill="#22c55e" fill-opacity="0.06" stroke="#22c55e" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="807.0" y="212.6" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="600" fill-opacity="0.9">automatic_billing_updater</text>
-  <circle cx="999.6" cy="401.6" r="32.5" fill="#a855f7" fill-opacity="0.06" stroke="#a855f7" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="999.6" y="362.1" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="600" fill-opacity="0.9">benefits_content_eligibility</text>
-  <circle cx="1080.0" cy="280.0" r="32.5" fill="#eab308" fill-opacity="0.06" stroke="#eab308" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="1080.0" y="240.5" text-anchor="middle" fill="#eab308" font-size="11" font-weight="600" fill-opacity="0.9">benefits_eligibility</text>
-  <circle cx="1080.0" cy="407.9" r="32.5" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="1080.0" y="368.4" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="600" fill-opacity="0.9">bin_lookup</text>
-  <circle cx="983.6" cy="173.7" r="32.5" fill="#ec4899" fill-opacity="0.06" stroke="#ec4899" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="983.6" y="134.2" text-anchor="middle" fill="#ec4899" font-size="11" font-weight="600" fill-opacity="0.9">business_payment_controls</text>
-  <circle cx="1080.0" cy="454.2" r="32.5" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="1080.0" y="414.7" text-anchor="middle" fill="#10b981" font-size="11" font-weight="600" fill-opacity="0.9">carbon_calculator</text>
-  <circle cx="858.8" cy="547.7" r="32.5" fill="#6366f1" fill-opacity="0.06" stroke="#6366f1" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="858.8" y="508.2" text-anchor="middle" fill="#6366f1" font-size="11" font-weight="600" fill-opacity="0.9">consent_management</text>
-  <circle cx="994.4" cy="466.2" r="32.5" fill="#f43f5e" fill-opacity="0.06" stroke="#f43f5e" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="994.4" y="426.7" text-anchor="middle" fill="#f43f5e" font-size="11" font-weight="600" fill-opacity="0.9">consumer_clarity</text>
-  <circle cx="827.3" cy="393.5" r="32.5" fill="#14b8a6" fill-opacity="0.06" stroke="#14b8a6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="827.3" y="354.0" text-anchor="middle" fill="#14b8a6" font-size="11" font-weight="600" fill-opacity="0.9">easy_savings</text>
-  <circle cx="781.5" cy="331.4" r="32.5" fill="#8b5cf6" fill-opacity="0.06" stroke="#8b5cf6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="781.5" y="291.9" text-anchor="middle" fill="#8b5cf6" font-size="11" font-weight="600" fill-opacity="0.9">enhanced_currency_conversion_calculator</text>
-  <circle cx="893.2" cy="120.0" r="32.5" fill="#84cc16" fill-opacity="0.06" stroke="#84cc16" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="893.2" y="80.5" text-anchor="middle" fill="#84cc16" font-size="11" font-weight="600" fill-opacity="0.9">flight_delay_pass</text>
-  <circle cx="839.3" cy="120.0" r="32.5" fill="#fb923c" fill-opacity="0.06" stroke="#fb923c" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="839.3" y="80.5" text-anchor="middle" fill="#fb923c" font-size="11" font-weight="600" fill-opacity="0.9">match</text>
-  <circle cx="953.0" cy="120.0" r="32.5" fill="#38bdf8" fill-opacity="0.06" stroke="#38bdf8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="953.0" y="80.5" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="600" fill-opacity="0.9">merchant_identifier</text>
-  <circle cx="878.1" cy="182.8" r="32.5" fill="#f97316" fill-opacity="0.06" stroke="#f97316" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="878.1" y="143.3" text-anchor="middle" fill="#f97316" font-size="11" font-weight="600" fill-opacity="0.9">offers_for_publishers</text>
-  <circle cx="1080.0" cy="321.6" r="32.5" fill="#3b82f6" fill-opacity="0.06" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="1080.0" y="282.1" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="600" fill-opacity="0.9">offers_merchant_content</text>
-  <path d="M491.7,108.6 C648.9,178.9 648.9,178.9 743.2,221.1 C586.0,150.8 586.0,150.8 491.7,108.6 Z" fill="#22c55e" fill-opacity="0.07" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
-  <text x="617.4" y="106.0" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="600" fill-opacity="0.9">open_finance</text>
-  <path d="M565.9,114.1 C707.9,144.6 707.9,144.6 793.1,162.9 C651.1,132.4 651.1,132.4 565.9,114.1 Z" fill="#a855f7" fill-opacity="0.07" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
-  <text x="679.5" y="106.0" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="600" fill-opacity="0.9">open_finance_au</text>
-  <path d="M1023.7,95.7 C1067.6,172.4 1067.6,172.4 1093.9,218.4 C1050.0,141.7 1050.0,141.7 1023.7,95.7 Z" fill="#eab308" fill-opacity="0.07" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
-  <text x="1058.8" y="106.0" text-anchor="middle" fill="#eab308" font-size="11" font-weight="600" fill-opacity="0.9">open_finance_eu</text>
-  <circle cx="1080.0" cy="238.7" r="32.5" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="1080.0" y="199.2" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="600" fill-opacity="0.9">places</text>
-  <circle cx="1080.0" cy="363.9" r="32.5" fill="#ec4899" fill-opacity="0.06" stroke="#ec4899" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="1080.0" y="324.4" text-anchor="middle" fill="#ec4899" font-size="11" font-weight="600" fill-opacity="0.9">priceless_cities</text>
-  <path d="M905.4,321.9 C941.0,291.8 941.0,291.8 962.4,273.8 C926.8,303.8 926.8,303.8 905.4,321.9 Z" fill="#10b981" fill-opacity="0.07" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
-  <text x="933.9" y="277.9" text-anchor="middle" fill="#10b981" font-size="11" font-weight="600" fill-opacity="0.9">simulator</text>
-  <circle cx="895.7" cy="452.5" r="34.0" fill="#6366f1" fill-opacity="0.06" stroke="#6366f1" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <text x="895.7" y="411.5" text-anchor="middle" fill="#6366f1" font-size="11" font-weight="600" fill-opacity="0.9">transaction_notifications</text>
-  <path d="M807.0,252.1 Q877.2,261.2 920.9,285.9" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-automatic_billing_updater)"/>
-  <path d="M807.0,252.1 Q871.0,268.4 907.5,295.5" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-automatic_billing_updater)"/>
-  <path d="M999.6,401.6 Q961.5,351.4 950.9,310.4" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_content_eligibility)"/>
-  <path d="M999.6,401.6 Q955.4,358.5 939.3,320.7" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_content_eligibility)"/>
-  <path d="M1080.0,280.0 Q1011.5,297.1 961.9,290.1" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_eligibility)"/>
-  <path d="M1080.0,280.0 Q1005.3,304.2 947.5,300.6" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_eligibility)"/>
-  <path d="M1080.0,407.9 Q1001.2,361.0 957.1,305.3" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-bin_lookup)"/>
-  <path d="M1080.0,407.9 Q995.1,368.1 944.1,315.6" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-bin_lookup)"/>
-  <path d="M983.6,173.7 Q971.8,236.2 948.1,272.1" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-business_payment_controls)"/>
-  <path d="M983.6,173.7 Q965.6,243.3 935.2,284.6" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-business_payment_controls)"/>
-  <path d="M1080.0,454.2 Q997.5,384.1 954.7,307.8" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-carbon_calculator)"/>
-  <path d="M1080.0,454.2 Q991.4,391.3 941.8,318.5" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-carbon_calculator)"/>
-  <path d="M858.8,547.7 Q806.2,663.3 730.2,741.7" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
-  <path d="M858.8,547.7 Q880.3,648.5 868.6,736.1" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
-  <path d="M858.8,547.7 Q869.6,497.2 890.3,466.5" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
-  <path d="M858.8,547.7 Q879.4,413.2 934.6,311.8" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
-  <path d="M858.8,547.7 Q873.3,420.3 921.1,324.1" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
-  <path d="M994.4,466.2 Q953.8,383.3 947.2,311.9" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consumer_clarity)"/>
-  <path d="M994.4,466.2 Q947.6,390.4 934.9,323.2" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consumer_clarity)"/>
-  <path d="M646.0,830.0 Q677.2,787.4 707.4,769.3" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
-  <path d="M646.0,830.0 Q584.1,839.9 538.7,830.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
-  <path d="M827.3,393.5 Q876.0,333.6 925.4,305.8" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-easy_savings)"/>
-  <path d="M827.3,393.5 Q869.9,340.7 911.2,317.9" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-easy_savings)"/>
-  <path d="M781.5,331.4 Q858.1,298.9 920.6,296.9" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-enhanced_currency_conversion_calculator)"/>
-  <path d="M781.5,331.4 Q851.9,306.0 906.1,307.7" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-enhanced_currency_conversion_calculator)"/>
-  <path d="M893.2,120.0 Q930.9,202.1 935.4,271.6" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-flight_delay_pass)"/>
-  <path d="M893.2,120.0 Q924.7,209.2 923.0,283.2" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-flight_delay_pass)"/>
-  <path d="M839.3,120.0 Q903.9,197.8 930.3,273.8" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-match)"/>
-  <path d="M839.3,120.0 Q897.8,204.9 917.8,284.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-match)"/>
-  <path d="M953.0,120.0 Q960.8,206.9 942.5,270.9" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-merchant_identifier)"/>
-  <path d="M953.0,120.0 Q954.6,214.0 929.7,283.0" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-merchant_identifier)"/>
-  <path d="M878.1,182.8 Q918.3,232.3 930.5,273.7" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_for_publishers)"/>
-  <path d="M878.1,182.8 Q912.1,239.4 918.9,284.3" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_for_publishers)"/>
-  <path d="M1080.0,321.6 Q1008.1,317.9 961.5,296.3" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_merchant_content)"/>
-  <path d="M1080.0,321.6 Q1002.0,325.0 947.6,306.3" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_merchant_content)"/>
-  <path d="M717.7,209.7 Q610.3,180.9 530.9,126.1" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance)"/>
-  <path d="M717.7,209.7 Q835.9,232.9 921.3,284.6" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance)"/>
-  <path d="M717.7,209.7 Q829.7,240.0 907.6,295.2" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance)"/>
-  <path d="M765.7,157.0 Q676.6,152.3 608.0,123.1" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_au)"/>
-  <path d="M765.7,157.0 Q864.2,210.4 924.4,279.1" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_au)"/>
-  <path d="M765.7,157.0 Q858.0,217.6 911.3,289.7" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_au)"/>
-  <path d="M1080.0,194.1 Q1052.9,160.5 1045.1,133.0" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
-  <path d="M1080.0,194.1 Q1018.3,254.1 958.2,279.8" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
-  <path d="M1080.0,194.1 Q1012.2,261.2 943.9,291.6" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
-  <path d="M1080.0,238.7 Q1014.8,276.4 960.6,284.3" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-places)"/>
-  <path d="M1080.0,238.7 Q1008.6,283.5 946.1,295.6" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-places)"/>
-  <path d="M1080.0,363.9 Q1004.7,339.0 959.7,301.5" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-priceless_cities)"/>
-  <path d="M1080.0,363.9 Q998.6,346.1 946.3,311.5" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-priceless_cities)"/>
-  <path d="M578.4,830.0 Q643.4,782.0 704.2,764.9" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
-  <path d="M578.4,830.0 Q505.9,841.6 448.4,830.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
-  <path d="M578.4,830.0 Q550.3,834.5 538.7,830.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
-  <path d="M578.4,830.0 Q612.2,824.6 631.0,830.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
-  <path d="M895.7,452.5 Q905.5,368.6 935.3,312.1" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-transaction_notifications)"/>
-  <path d="M895.7,452.5 Q899.3,375.7 922.5,324.4" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-transaction_notifications)"/>
-  <circle cx="720.2" cy="756.7" r="20.0" fill="#3b82f6" fill-opacity="0.15" stroke="none"/>
-  <circle cx="720.2" cy="756.7" r="15.0" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis - imported by 4</title></circle>
-  <text x="740.2" y="756.7" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">apis</text>
-  <circle cx="1080.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.automatic_billing_updater - imported by 1</title></circle>
-  <text x="1095.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">automatic_billing_updater</text>
-  <circle cx="807.0" cy="252.1" r="10.5" fill="#22c55e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.automatic_billing_updater.api - imported by 1</title></circle>
-  <text x="791.5" y="252.1" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="1080.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.benefits_content_eligibility - imported by 1</title></circle>
-  <text x="1095.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">benefits_content_eligibility</text>
-  <circle cx="999.6" cy="401.6" r="10.5" fill="#a855f7" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.benefits_content_eligibility.api - imported by 1</title></circle>
-  <text x="1015.1" y="401.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <text x="600" y="54" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="12">116 modules &#183; 407 edges &#183; 31 sub-packages</text>
+  <path d="M93.4,719.5 C538.2,378.9 915.8,146.9 805.1,174.6 C989.6,128.4 1101.5,380.0 1100.3,100.7 C1102.2,566.2 725.4,844.8 1103.4,845.4 C473.5,844.4 94.8,797.1 95.6,843.7 C94.2,766.1 360.3,515.1 93.4,719.5 Z" fill="#f97316" fill-opacity="0.07" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="638.7" y="106.0" text-anchor="middle" fill="#f97316" font-size="11" font-weight="600" fill-opacity="0.9">(root)</text>
+  <path d="M185.5,426.6 C265.1,318.3 324.6,290.2 312.9,253.3 C332.4,314.8 315.0,390.2 344.0,351.8 C295.6,415.8 248.3,465.7 266.6,454.2 C236.1,473.3 205.7,463.0 217.9,484.8 C197.6,448.4 233.3,361.6 185.5,426.6 Z" fill="#3b82f6" fill-opacity="0.07" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="266.0" y="265.7" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="600" fill-opacity="0.9">Crypto</text>
+  <circle cx="576.5" cy="802.4" r="37.0" fill="#22c55e" fill-opacity="0.06" stroke="#22c55e" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="576.5" y="758.4" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="600" fill-opacity="0.9">apis</text>
+  <circle cx="778.0" cy="269.6" r="32.5" fill="#a855f7" fill-opacity="0.06" stroke="#a855f7" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="778.0" y="230.1" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="600" fill-opacity="0.9">automatic_billing_updater</text>
+  <circle cx="637.2" cy="352.0" r="32.5" fill="#eab308" fill-opacity="0.06" stroke="#eab308" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="637.2" y="312.5" text-anchor="middle" fill="#eab308" font-size="11" font-weight="600" fill-opacity="0.9">benefits_content_eligibility</text>
+  <circle cx="804.4" cy="277.4" r="32.5" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="804.4" y="237.9" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="600" fill-opacity="0.9">benefits_eligibility</text>
+  <circle cx="826.8" cy="295.2" r="32.5" fill="#ec4899" fill-opacity="0.06" stroke="#ec4899" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="826.8" y="255.7" text-anchor="middle" fill="#ec4899" font-size="11" font-weight="600" fill-opacity="0.9">bin_lookup</text>
+  <circle cx="840.0" cy="321.6" r="32.5" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="840.0" y="282.1" text-anchor="middle" fill="#10b981" font-size="11" font-weight="600" fill-opacity="0.9">business_payment_controls</text>
+  <circle cx="611.9" cy="361.3" r="32.5" fill="#6366f1" fill-opacity="0.06" stroke="#6366f1" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="611.9" y="321.8" text-anchor="middle" fill="#6366f1" font-size="11" font-weight="600" fill-opacity="0.9">carbon_calculator</text>
+  <circle cx="1080.0" cy="325.4" r="32.5" fill="#f43f5e" fill-opacity="0.06" stroke="#f43f5e" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="1080.0" y="285.9" text-anchor="middle" fill="#f43f5e" font-size="11" font-weight="600" fill-opacity="0.9">charset_normalizer</text>
+  <path d="M227.9,537.8 C248.0,419.9 316.0,309.2 260.0,349.2 C353.4,282.5 438.9,267.1 409.4,242.4 C458.7,283.6 495.3,344.9 488.2,308.3 C500.1,369.2 462.4,481.9 507.2,405.7 C432.5,532.8 327.8,582.3 387.7,609.0 C287.9,564.5 239.9,467.1 227.9,537.8 Z" fill="#14b8a6" fill-opacity="0.07" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="378.7" y="255.9" text-anchor="middle" fill="#14b8a6" font-size="11" font-weight="600" fill-opacity="0.9">client_encryption</text>
+  <circle cx="703.0" cy="608.1" r="32.5" fill="#8b5cf6" fill-opacity="0.06" stroke="#8b5cf6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="703.0" y="568.6" text-anchor="middle" fill="#8b5cf6" font-size="11" font-weight="600" fill-opacity="0.9">consent_management</text>
+  <circle cx="840.7" cy="347.6" r="32.5" fill="#84cc16" fill-opacity="0.06" stroke="#84cc16" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="840.7" y="308.1" text-anchor="middle" fill="#84cc16" font-size="11" font-weight="600" fill-opacity="0.9">consumer_clarity</text>
+  <path d="M249.9,112.8 C537.5,112.2 647.3,165.9 710.0,111.8 C605.5,202.0 521.4,260.2 542.8,256.2 C507.2,262.9 397.4,209.1 485.8,266.9 C338.4,170.6 422.5,112.4 249.9,112.8 Z" fill="#fb923c" fill-opacity="0.07" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="494.2" y="106.0" text-anchor="middle" fill="#fb923c" font-size="11" font-weight="600" fill-opacity="0.9">cryptography</text>
+  <circle cx="805.9" cy="315.3" r="32.5" fill="#38bdf8" fill-opacity="0.06" stroke="#38bdf8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="805.9" y="275.8" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="600" fill-opacity="0.9">easy_savings</text>
+  <circle cx="785.1" cy="368.6" r="32.5" fill="#f97316" fill-opacity="0.06" stroke="#f97316" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="785.1" y="329.1" text-anchor="middle" fill="#f97316" font-size="11" font-weight="600" fill-opacity="0.9">enhanced_currency_conversion_calculator</text>
+  <circle cx="833.8" cy="373.1" r="32.5" fill="#3b82f6" fill-opacity="0.06" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="833.8" y="333.6" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="600" fill-opacity="0.9">flight_delay_pass</text>
+  <circle cx="807.2" cy="350.8" r="32.5" fill="#22c55e" fill-opacity="0.06" stroke="#22c55e" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="807.2" y="311.3" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="600" fill-opacity="0.9">match</text>
+  <circle cx="751.1" cy="365.0" r="32.5" fill="#a855f7" fill-opacity="0.06" stroke="#a855f7" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="751.1" y="325.5" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="600" fill-opacity="0.9">merchant_identifier</text>
+  <path d="M666.9,311.2 C672.8,291.7 734.5,210.9 676.4,279.9 C773.2,164.9 798.9,195.2 831.3,95.9 C777.2,261.4 715.6,342.1 744.8,360.7 C696.1,329.7 670.5,299.5 666.9,311.2 Z" fill="#eab308" fill-opacity="0.07" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="737.7" y="106.0" text-anchor="middle" fill="#eab308" font-size="11" font-weight="600" fill-opacity="0.9">oauth1</text>
+  <circle cx="638.7" cy="372.4" r="32.5" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="638.7" y="332.9" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="600" fill-opacity="0.9">offers_for_publishers</text>
+  <circle cx="778.7" cy="329.0" r="32.5" fill="#ec4899" fill-opacity="0.06" stroke="#ec4899" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="778.7" y="289.5" text-anchor="middle" fill="#ec4899" font-size="11" font-weight="600" fill-opacity="0.9">offers_merchant_content</text>
+  <path d="M882.2,520.9 C978.6,449.6 978.6,449.6 1036.4,406.9 C940.0,478.1 940.0,478.1 882.2,520.9 Z" fill="#10b981" fill-opacity="0.07" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="959.3" y="409.5" text-anchor="middle" fill="#10b981" font-size="11" font-weight="600" fill-opacity="0.9">open_finance</text>
+  <path d="M910.5,480.3 C1007.4,408.6 1007.4,408.6 1065.5,365.6 C968.6,437.3 968.6,437.3 910.5,480.3 Z" fill="#6366f1" fill-opacity="0.07" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="988.0" y="368.3" text-anchor="middle" fill="#6366f1" font-size="11" font-weight="600" fill-opacity="0.9">open_finance_au</text>
+  <path d="M610.4,189.1 C662.0,354.4 662.0,354.4 692.9,453.6 C641.4,288.3 641.4,288.3 610.4,189.1 Z" fill="#f43f5e" fill-opacity="0.07" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="651.7" y="201.8" text-anchor="middle" fill="#f43f5e" font-size="11" font-weight="600" fill-opacity="0.9">open_finance_eu</text>
+  <circle cx="811.5" cy="390.3" r="32.5" fill="#14b8a6" fill-opacity="0.06" stroke="#14b8a6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="811.5" y="350.8" text-anchor="middle" fill="#14b8a6" font-size="11" font-weight="600" fill-opacity="0.9">places</text>
+  <circle cx="767.4" cy="297.4" r="32.5" fill="#8b5cf6" fill-opacity="0.06" stroke="#8b5cf6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="767.4" y="257.9" text-anchor="middle" fill="#8b5cf6" font-size="11" font-weight="600" fill-opacity="0.9">priceless_cities</text>
+  <path d="M841.6,269.7 C964.7,167.8 1063.1,125.5 1038.6,106.6 C1079.4,138.1 1102.1,211.1 1103.8,156.9 C1100.9,247.2 1002.6,289.4 1099.2,301.3 C938.2,281.5 915.5,208.5 841.6,269.7 Z" fill="#84cc16" fill-opacity="0.07" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="1015.2" y="119.9" text-anchor="middle" fill="#84cc16" font-size="11" font-weight="600" fill-opacity="0.9">requests</text>
+  <path d="M743.1,386.2 C775.3,414.9 775.3,414.9 794.6,432.1 C762.4,403.4 762.4,403.4 743.1,386.2 Z" fill="#fb923c" fill-opacity="0.07" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="768.8" y="390.8" text-anchor="middle" fill="#fb923c" font-size="11" font-weight="600" fill-opacity="0.9">simulator</text>
+  <circle cx="643.9" cy="404.8" r="34.0" fill="#38bdf8" fill-opacity="0.06" stroke="#38bdf8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="643.9" y="363.8" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="600" fill-opacity="0.9">transaction_notifications</text>
+  <path d="M670.9,128.1 C844.0,122.0 982.1,118.8 947.8,118.4 C1005.0,119.1 901.1,122.7 1039.3,119.5 C809.0,124.9 774.7,124.5 670.9,128.1 Z" fill="#f97316" fill-opacity="0.07" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="876.7" y="106.0" text-anchor="middle" fill="#f97316" font-size="11" font-weight="600" fill-opacity="0.9">urllib3</text>
+  <path d="M249.7,391.2 Q282.0,372.0 299.2,371.5" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-Crypto)"/>
+  <path d="M266.4,426.2 Q287.6,390.8 305.3,379.9" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-Crypto)"/>
+  <path d="M266.4,426.2 Q255.2,410.1 258.1,408.8" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-Crypto)"/>
+  <path d="M266.4,426.2 Q237.7,424.9 229.9,418.7" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-Crypto)"/>
+  <path d="M303.8,279.7 Q318.0,320.6 315.1,343.1" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-Crypto)"/>
+  <path d="M303.8,279.7 Q298.4,298.4 295.1,298.2" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-Crypto)"/>
+  <path d="M287.4,314.5 Q307.0,336.6 307.5,346.1" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-Crypto)"/>
+  <path d="M287.4,314.5 Q257.1,370.7 222.7,399.2" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-Crypto)"/>
+  <path d="M230.4,459.7 Q266.9,404.7 304.5,379.3" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-Crypto)"/>
+  <path d="M230.4,459.7 Q217.0,438.8 218.6,432.6" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-Crypto)"/>
+  <path d="M778.0,269.6 Q765.5,304.0 753.1,314.4" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-automatic_billing_updater)"/>
+  <path d="M778.0,269.6 Q735.2,288.7 709.0,288.1" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-automatic_billing_updater)"/>
+  <path d="M778.0,269.6 Q740.0,275.3 723.1,269.1" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-automatic_billing_updater)"/>
+  <path d="M778.0,269.6 Q822.3,258.0 847.2,262.8" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-automatic_billing_updater)"/>
+  <path d="M778.0,269.6 Q781.8,338.3 766.1,383.9" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-automatic_billing_updater)"/>
+  <path d="M778.0,269.6 Q787.3,341.9 774.3,392.5" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-automatic_billing_updater)"/>
+  <path d="M637.2,352.0 Q562.6,392.1 499.0,400.0" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_content_eligibility)"/>
+  <path d="M637.2,352.0 Q524.9,404.5 417.8,414.9" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_content_eligibility)"/>
+  <path d="M637.2,352.0 Q550.5,353.3 484.1,329.9" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_content_eligibility)"/>
+  <path d="M637.2,352.0 Q688.5,333.9 722.3,336.5" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_content_eligibility)"/>
+  <path d="M637.2,352.0 Q658.3,318.6 674.8,309.3" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_content_eligibility)"/>
+  <path d="M637.2,352.0 Q663.0,305.3 689.2,285.5" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_content_eligibility)"/>
+  <path d="M637.2,352.0 Q745.4,287.9 848.6,268.5" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_content_eligibility)"/>
+  <path d="M637.2,352.0 Q704.8,368.3 744.6,396.7" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_content_eligibility)"/>
+  <path d="M637.2,352.0 Q710.4,371.8 754.6,404.9" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_content_eligibility)"/>
+  <path d="M804.4,277.4 Q778.1,310.0 758.5,318.7" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_eligibility)"/>
+  <path d="M804.4,277.4 Q747.8,294.7 709.5,290.6" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_eligibility)"/>
+  <path d="M804.4,277.4 Q752.6,281.4 723.1,270.7" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_eligibility)"/>
+  <path d="M804.4,277.4 Q834.9,264.0 847.8,266.1" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_eligibility)"/>
+  <path d="M804.4,277.4 Q794.4,344.3 770.3,384.8" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_eligibility)"/>
+  <path d="M804.4,277.4 Q799.9,347.9 778.3,393.0" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-benefits_eligibility)"/>
+  <path d="M826.8,295.2 Q787.8,320.7 762.1,324.1" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-bin_lookup)"/>
+  <path d="M826.8,295.2 Q757.6,305.4 709.7,293.8" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-bin_lookup)"/>
+  <path d="M826.8,295.2 Q762.3,292.0 722.7,273.3" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-bin_lookup)"/>
+  <path d="M826.8,295.2 Q844.7,274.7 852.0,274.2" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-bin_lookup)"/>
+  <path d="M826.8,295.2 Q804.1,355.0 774.4,386.6" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-bin_lookup)"/>
+  <path d="M826.8,295.2 Q809.7,358.6 782.3,394.3" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-bin_lookup)"/>
+  <path d="M840.0,321.6 Q792.4,334.9 763.8,330.3" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-business_payment_controls)"/>
+  <path d="M840.0,321.6 Q762.1,319.7 709.3,297.4" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-business_payment_controls)"/>
+  <path d="M840.0,321.6 Q766.9,306.3 721.8,276.4" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-business_payment_controls)"/>
+  <path d="M840.0,321.6 Q849.2,289.0 859.3,279.9" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-business_payment_controls)"/>
+  <path d="M840.0,321.6 Q808.7,369.3 778.1,389.3" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-business_payment_controls)"/>
+  <path d="M840.0,321.6 Q814.2,372.8 786.0,396.5" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-business_payment_controls)"/>
+  <path d="M611.9,361.3 Q549.2,394.7 499.1,400.1" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-carbon_calculator)"/>
+  <path d="M611.9,361.3 Q482.9,416.5 356.3,425.4" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-carbon_calculator)"/>
+  <path d="M611.9,361.3 Q515.0,349.5 441.0,312.1" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-carbon_calculator)"/>
+  <path d="M611.9,361.3 Q675.1,336.5 722.4,337.2" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-carbon_calculator)"/>
+  <path d="M611.9,361.3 Q644.8,321.3 672.9,307.4" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-carbon_calculator)"/>
+  <path d="M611.9,361.3 Q649.6,307.9 687.5,284.0" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-carbon_calculator)"/>
+  <path d="M611.9,361.3 Q732.0,290.6 848.6,268.5" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-carbon_calculator)"/>
+  <path d="M611.9,361.3 Q691.4,370.9 743.8,399.0" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-carbon_calculator)"/>
+  <path d="M611.9,361.3 Q697.0,374.5 753.7,407.0" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-carbon_calculator)"/>
+  <path d="M703.0,608.1 Q655.3,715.4 586.3,787.4" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
+  <path d="M703.0,608.1 Q738.0,702.9 738.8,789.1" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
+  <path d="M703.0,608.1 Q657.2,511.2 648.1,419.2" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
+  <path d="M703.0,608.1 Q717.2,501.6 757.9,424.9" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
+  <path d="M703.0,608.1 Q722.8,505.1 766.5,433.2" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consent_management)"/>
+  <path d="M840.7,347.6 Q790.6,348.0 763.7,335.9" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consumer_clarity)"/>
+  <path d="M840.7,347.6 Q760.4,332.7 708.5,300.6" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consumer_clarity)"/>
+  <path d="M840.7,347.6 Q765.1,319.4 720.4,279.3" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consumer_clarity)"/>
+  <path d="M840.7,347.6 Q847.5,302.0 861.8,280.8" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consumer_clarity)"/>
+  <path d="M840.7,347.6 Q806.9,382.4 780.8,392.3" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consumer_clarity)"/>
+  <path d="M840.7,347.6 Q812.5,385.9 788.7,398.8" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-consumer_clarity)"/>
+  <path d="M474.5,830.0 Q523.3,808.1 559.1,807.1" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M474.5,830.0 Q426.8,837.6 395.7,830.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M805.9,315.3 Q775.8,329.1 763.2,327.1" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-easy_savings)"/>
+  <path d="M805.9,315.3 Q745.5,313.8 709.3,297.4" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-easy_savings)"/>
+  <path d="M805.9,315.3 Q750.3,300.4 721.3,277.5" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-easy_savings)"/>
+  <path d="M805.9,315.3 Q832.6,283.1 852.3,274.6" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-easy_savings)"/>
+  <path d="M805.9,315.3 Q792.1,363.4 772.9,385.8" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-easy_savings)"/>
+  <path d="M805.9,315.3 Q797.6,367.0 780.2,393.5" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-easy_savings)"/>
+  <path d="M785.1,368.6 Q761.2,354.0 758.9,346.3" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-enhanced_currency_conversion_calculator)"/>
+  <path d="M785.1,368.6 Q730.9,338.8 705.2,306.4" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-enhanced_currency_conversion_calculator)"/>
+  <path d="M785.1,368.6 Q735.7,325.4 715.6,285.1" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-enhanced_currency_conversion_calculator)"/>
+  <path d="M785.1,368.6 Q818.0,308.1 855.3,277.4" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-enhanced_currency_conversion_calculator)"/>
+  <path d="M785.1,368.6 Q777.5,388.4 774.6,386.7" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-enhanced_currency_conversion_calculator)"/>
+  <path d="M785.1,368.6 Q783.0,391.9 778.9,393.1" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-enhanced_currency_conversion_calculator)"/>
+  <path d="M833.8,373.1 Q785.1,360.2 762.1,341.2" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-flight_delay_pass)"/>
+  <path d="M833.8,373.1 Q754.9,344.9 707.1,303.6" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-flight_delay_pass)"/>
+  <path d="M833.8,373.1 Q759.7,331.6 718.6,282.0" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-flight_delay_pass)"/>
+  <path d="M833.8,373.1 Q842.0,314.2 862.0,280.9" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-flight_delay_pass)"/>
+  <path d="M833.8,373.1 Q801.4,394.5 783.1,396.1" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-flight_delay_pass)"/>
+  <path d="M833.8,373.1 Q807.0,398.1 791.1,401.8" fill="none" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-flight_delay_pass)"/>
+  <path d="M807.2,350.8 Q773.6,346.9 763.1,338.4" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-match)"/>
+  <path d="M807.2,350.8 Q743.4,331.7 707.6,302.7" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-match)"/>
+  <path d="M807.2,350.8 Q748.1,318.3 718.7,281.9" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-match)"/>
+  <path d="M807.2,350.8 Q830.5,301.0 856.4,278.2" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-match)"/>
+  <path d="M807.2,350.8 Q789.9,381.3 777.1,388.4" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-match)"/>
+  <path d="M807.2,350.8 Q795.5,384.8 783.6,395.0" fill="none" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-match)"/>
+  <path d="M751.1,365.0 Q744.4,349.5 748.1,353.1" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-merchant_identifier)"/>
+  <path d="M751.1,365.0 Q714.2,334.3 702.5,309.4" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-merchant_identifier)"/>
+  <path d="M751.1,365.0 Q718.9,320.9 711.7,287.7" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-merchant_identifier)"/>
+  <path d="M751.1,365.0 Q801.3,303.6 852.4,274.8" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-merchant_identifier)"/>
+  <path d="M751.1,365.0 Q760.7,383.9 757.5,384.8" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-merchant_identifier)"/>
+  <path d="M751.1,365.0 Q766.3,387.4 764.8,394.5" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-merchant_identifier)"/>
+  <path d="M638.7,372.4 Q561.7,402.4 499.7,402.5" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_for_publishers)"/>
+  <path d="M638.7,372.4 Q524.0,414.9 418.1,416.2" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_for_publishers)"/>
+  <path d="M638.7,372.4 Q549.6,363.6 483.8,331.7" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_for_publishers)"/>
+  <path d="M638.7,372.4 Q687.6,344.2 723.3,340.2" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_for_publishers)"/>
+  <path d="M638.7,372.4 Q657.4,329.0 677.4,311.3" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_for_publishers)"/>
+  <path d="M638.7,372.4 Q662.1,315.6 691.2,286.9" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_for_publishers)"/>
+  <path d="M638.7,372.4 Q744.5,298.3 849.2,270.0" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_for_publishers)"/>
+  <path d="M638.7,372.4 Q703.9,378.6 743.6,399.6" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_for_publishers)"/>
+  <path d="M638.7,372.4 Q709.5,382.2 753.6,407.4" fill="none" stroke="#06b6d4" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_for_publishers)"/>
+  <path d="M778.7,329.0 Q761.1,333.7 763.8,330.5" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_merchant_content)"/>
+  <path d="M778.7,329.0 Q730.9,318.5 708.2,301.2" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_merchant_content)"/>
+  <path d="M778.7,329.0 Q735.6,305.1 718.7,281.9" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_merchant_content)"/>
+  <path d="M778.7,329.0 Q818.0,287.7 851.4,273.5" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_merchant_content)"/>
+  <path d="M778.7,329.0 Q777.4,368.1 768.0,384.2" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_merchant_content)"/>
+  <path d="M778.7,329.0 Q783.0,371.6 775.0,392.5" fill="none" stroke="#ec4899" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-offers_merchant_content)"/>
+  <path d="M904.8,504.2 Q952.9,455.2 1001.8,432.4" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance)"/>
+  <path d="M904.8,504.2 Q826.4,465.8 781.1,416.9" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance)"/>
+  <path d="M904.8,504.2 Q832.0,469.3 791.0,425.4" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance)"/>
+  <path d="M1013.9,423.5 Q928.0,353.8 882.1,276.5" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance)"/>
+  <path d="M933.0,463.6 Q981.5,414.2 1030.9,391.2" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_au)"/>
+  <path d="M933.0,463.6 Q843.8,447.8 783.8,411.7" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_au)"/>
+  <path d="M933.0,463.6 Q849.3,451.3 793.7,419.8" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_au)"/>
+  <path d="M1043.0,382.3 Q945.8,335.5 885.4,272.8" fill="none" stroke="#6366f1" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_au)"/>
+  <path d="M684.6,426.9 Q634.8,326.6 623.2,230.1" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
+  <path d="M684.6,426.9 Q722.5,409.5 743.7,410.4" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
+  <path d="M684.6,426.9 Q728.1,413.1 752.9,416.6" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
+  <path d="M618.8,215.8 Q569.3,214.1 543.5,201.1" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
+  <path d="M618.8,215.8 Q556.2,220.8 516.1,207.7" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
+  <path d="M618.8,215.8 Q574.7,231.4 548.7,228.6" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
+  <path d="M618.8,215.8 Q605.7,168.8 610.3,140.9" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
+  <path d="M618.8,215.8 Q605.1,184.6 606.3,168.1" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
+  <path d="M618.8,215.8 Q573.9,173.9 557.3,136.6" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
+  <path d="M618.8,215.8 Q579.1,185.3 565.4,159.2" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
+  <path d="M618.8,215.8 Q555.5,237.9 509.1,235.4" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
+  <path d="M618.8,215.8 Q544.2,185.7 500.7,144.6" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
+  <path d="M618.8,215.8 Q747.0,218.4 847.5,257.1" fill="none" stroke="#f43f5e" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-open_finance_eu)"/>
+  <path d="M811.5,390.3 Q772.6,367.0 759.0,346.2" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-places)"/>
+  <path d="M811.5,390.3 Q742.4,351.7 705.2,306.5" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-places)"/>
+  <path d="M811.5,390.3 Q747.1,338.4 716.2,284.6" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-places)"/>
+  <path d="M811.5,390.3 Q829.5,321.0 859.7,280.1" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-places)"/>
+  <path d="M811.5,390.3 Q788.9,401.3 784.1,398.7" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-places)"/>
+  <path d="M811.5,390.3 Q794.5,404.9 791.6,402.5" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-places)"/>
+  <path d="M767.4,297.4 Q758.0,317.0 754.9,315.5" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-priceless_cities)"/>
+  <path d="M767.4,297.4 Q727.7,301.8 709.6,294.6" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-priceless_cities)"/>
+  <path d="M767.4,297.4 Q732.5,288.4 721.4,277.3" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-priceless_cities)"/>
+  <path d="M767.4,297.4 Q814.8,271.1 848.4,268.0" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-priceless_cities)"/>
+  <path d="M767.4,297.4 Q774.3,351.4 764.6,383.8" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-priceless_cities)"/>
+  <path d="M767.4,297.4 Q779.9,354.9 772.6,392.5" fill="none" stroke="#8b5cf6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-priceless_cities)"/>
+  <path d="M429.6,830.0 Q500.8,804.5 558.8,805.8" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M429.6,830.0 Q372.1,839.2 329.6,830.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M429.6,830.0 Q404.4,834.0 395.7,830.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M429.6,830.0 Q452.0,826.4 459.5,830.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M793.4,200.0 Q778.8,270.4 750.4,313.1" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M793.4,200.0 Q748.5,255.2 704.3,279.6" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M793.4,200.0 Q753.3,241.8 718.9,256.3" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M793.4,200.0 Q835.6,224.4 851.8,247.6" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-root)"/>
+  <path d="M643.9,404.8 Q561.7,419.0 500.2,406.6" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-transaction_notifications)"/>
+  <path d="M643.9,404.8 Q524.1,431.4 418.4,418.4" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-transaction_notifications)"/>
+  <path d="M643.9,404.8 Q549.7,380.2 482.9,334.1" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-transaction_notifications)"/>
+  <path d="M643.9,404.8 Q687.7,360.8 726.0,345.1" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-transaction_notifications)"/>
+  <path d="M643.9,404.8 Q657.4,345.6 680.8,313.0" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-transaction_notifications)"/>
+  <path d="M643.9,404.8 Q662.2,332.2 693.9,288.3" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-transaction_notifications)"/>
+  <path d="M643.9,404.8 Q744.5,314.8 850.5,272.2" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-transaction_notifications)"/>
+  <path d="M643.9,404.8 Q703.9,395.2 743.0,404.8" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-transaction_notifications)"/>
+  <path d="M643.9,404.8 Q709.5,398.7 752.8,412.1" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-transaction_notifications)"/>
+  <path d="M479.2,406.9 Q446.7,501.4 392.8,569.1" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M363.6,392.0 Q422.6,390.2 458.4,404.2" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M363.6,392.0 Q321.8,383.4 303.0,369.1" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M404.4,269.9 Q369.1,323.7 332.9,348.3" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M404.4,269.9 Q354.8,282.9 321.7,278.0" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M404.4,269.9 Q349.4,301.6 304.2,308.1" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M404.4,269.9 Q452.7,332.4 469.1,388.5" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M404.4,269.9 Q352.0,325.6 300.2,350.3" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M404.4,269.9 Q457.8,224.0 505.0,208.1" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M404.4,269.9 Q444.7,230.8 478.0,218.2" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M404.4,269.9 Q463.2,241.3 507.9,238.5" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M404.4,269.9 Q443.9,247.8 468.7,246.3" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M404.4,269.9 Q451.9,215.4 502.6,188.0" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M404.4,269.9 Q432.6,195.6 472.2,152.0" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M343.2,428.7 Q325.8,398.2 326.2,383.5" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M343.2,428.7 Q293.5,417.4 267.8,398.5" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M343.2,428.7 Q304.6,433.6 282.9,426.8" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M343.2,428.7 Q275.9,432.3 230.2,416.8" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M343.2,428.7 Q289.3,453.2 244.9,455.7" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M343.2,428.7 Q409.5,406.9 458.5,410.2" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M343.2,428.7 Q350.5,408.7 354.2,409.0" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M343.2,428.7 Q308.7,400.1 297.7,376.8" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M343.2,428.7 Q303.6,481.7 260.1,509.3" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M343.2,428.7 Q356.4,374.3 380.1,340.5" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M426.6,308.0 Q377.1,344.5 337.4,354.2" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M426.6,308.0 Q362.9,303.7 321.3,283.8" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M426.6,308.0 Q357.5,322.4 305.4,313.6" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M426.6,308.0 Q460.8,353.2 469.3,388.4" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M426.6,308.0 Q401.8,355.0 375.3,376.4" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M426.6,308.0 Q412.4,290.7 412.7,284.2" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M426.6,308.0 Q465.8,244.8 509.1,212.9" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M426.6,308.0 Q452.7,251.5 483.5,223.5" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M426.6,308.0 Q471.3,262.1 511.2,244.9" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M426.6,308.0 Q452.0,268.6 474.4,254.7" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M401.9,419.4 Q355.9,398.3 336.2,375.5" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M401.9,419.4 Q323.5,417.5 268.9,394.8" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M401.9,419.4 Q334.7,433.7 282.8,425.4" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M401.9,419.4 Q306.0,432.4 230.3,415.2" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M401.9,419.4 Q319.4,453.3 245.0,456.3" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M401.9,419.4 Q439.6,407.0 458.5,410.3" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M401.9,419.4 Q380.6,408.7 379.5,403.3" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M401.9,419.4 Q338.8,400.2 302.3,370.8" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M401.9,419.4 Q333.7,481.8 261.9,511.5" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M401.9,419.4 Q386.5,374.3 388.4,341.4" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M467.8,327.5 Q396.2,357.6 339.2,358.8" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M467.8,327.5 Q382.0,316.7 321.0,284.8" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M467.8,327.5 Q376.6,335.4 305.4,315.8" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M467.8,327.5 Q479.9,366.3 476.2,386.1" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M467.8,327.5 Q420.9,368.1 380.2,381.7" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M467.8,327.5 Q431.5,303.8 416.6,281.0" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M467.8,327.5 Q484.9,257.9 514.7,216.4" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M467.8,327.5 Q471.8,264.6 490.6,226.6" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M467.8,327.5 Q490.3,275.1 516.8,250.1" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M467.8,327.5 Q471.0,281.6 483.7,259.5" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M385.8,326.7 Q355.3,350.6 337.1,353.6" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M385.8,326.7 Q322.9,369.8 267.3,382.8" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M385.8,326.7 Q334.1,386.0 279.0,415.7" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M385.8,326.7 Q438.9,359.3 463.3,393.2" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M385.8,326.7 Q380.0,361.1 369.9,373.5" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M385.8,326.7 Q338.2,352.5 303.2,355.7" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M385.8,326.7 Q390.6,296.8 399.2,285.6" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M385.8,326.7 Q404.7,314.1 413.0,314.2" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M385.8,326.7 Q444.0,250.9 507.6,211.5" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M385.8,326.7 Q430.9,257.6 481.1,221.7" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M385.8,326.7 Q449.4,268.2 510.5,244.0" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M385.8,326.7 Q430.1,274.7 472.5,252.7" fill="none" stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-client_encryption)"/>
+  <path d="M522.8,197.1 Q393.8,178.2 289.9,124.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M446.0,174.0 Q486.3,179.4 502.7,191.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M446.0,174.0 Q473.2,186.1 477.6,194.6" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M446.0,174.0 Q439.5,147.3 443.4,140.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M446.0,174.0 Q420.9,150.3 417.2,136.6" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M446.0,174.0 Q491.7,196.6 510.9,220.2" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M446.0,174.0 Q496.1,150.5 530.8,149.7" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M446.0,174.0 Q448.0,146.0 453.9,140.4" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M601.8,150.7 Q566.0,180.2 541.0,186.4" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M601.8,150.7 Q552.9,186.9 513.8,196.4" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M601.8,150.7 Q571.4,197.5 542.1,216.8" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M601.8,150.7 Q640.1,128.8 669.2,125.3" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M601.8,150.7 Q602.4,134.9 603.8,140.6" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M601.8,150.7 Q570.6,139.9 562.9,129.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M601.8,150.7 Q575.8,151.4 571.8,146.7" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M544.4,120.0 Q539.8,160.3 528.5,176.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M544.4,120.0 Q526.7,167.0 505.6,187.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M544.4,120.0 Q493.0,128.2 462.7,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M544.4,120.0 Q474.4,131.2 425.3,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M544.4,120.0 Q545.2,177.5 531.1,211.6" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M544.4,120.0 Q613.8,108.9 668.3,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M544.4,120.0 Q499.5,154.9 460.5,166.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M544.4,120.0 Q576.2,114.9 587.0,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M544.4,120.0 Q502.4,140.7 470.3,142.8" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M544.4,120.0 Q549.6,131.4 545.4,123.6" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M456.0,147.2 Q493.4,166.8 506.0,184.5" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M456.0,147.2 Q480.3,173.5 483.6,188.6" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M456.0,147.2 Q446.7,134.8 451.4,138.6" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M456.0,147.2 Q428.0,137.8 422.9,129.8" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M456.0,147.2 Q498.8,184.1 514.5,216.4" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M456.0,147.2 Q503.2,138.0 530.0,144.6" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M551.0,143.9 Q541.2,172.7 532.7,178.5" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M551.0,143.9 Q528.1,179.5 509.2,190.5" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M551.0,143.9 Q494.4,140.7 462.2,124.5" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M551.0,143.9 Q475.7,143.7 425.1,123.4" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M551.0,143.9 Q502.9,139.3 479.0,125.3" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M488.4,239.1 Q502.3,215.3 509.5,213.3" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M488.4,239.1 Q489.2,222.0 491.0,226.7" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M488.4,239.1 Q507.7,232.6 507.3,235.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M488.4,239.1 Q462.0,209.9 455.0,187.8" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M488.4,239.1 Q422.8,213.5 380.0,175.5" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M488.4,239.1 Q500.4,188.3 522.4,156.3" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M368.4,168.7 Q447.9,170.5 502.2,193.3" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M368.4,168.7 Q434.8,177.2 475.1,200.1" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M368.4,168.7 Q401.1,138.5 424.2,131.6" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M368.4,168.7 Q382.5,141.4 391.9,136.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M514.1,178.4 Q520.0,187.0 514.0,178.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M514.1,178.4 Q506.9,193.7 507.0,188.8" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M514.1,178.4 Q473.2,155.0 458.0,133.2" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M514.1,178.4 Q454.6,158.0 422.9,129.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M514.1,178.4 Q525.4,204.3 522.8,212.1" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M514.1,178.4 Q479.7,181.6 462.5,175.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M514.1,178.4 Q556.4,141.7 590.2,131.1" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M514.1,178.4 Q524.6,146.8 534.7,138.6" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M514.1,178.4 Q506.1,210.8 496.6,219.7" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M514.1,178.4 Q494.8,158.6 494.8,150.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M527.6,143.8 Q529.5,170.8 524.7,176.2" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M527.6,143.8 Q516.4,177.5 504.9,187.5" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M527.6,143.8 Q534.9,188.1 527.9,211.4" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M527.6,143.8 Q565.9,125.5 587.9,126.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M527.6,143.8 Q565.2,141.3 583.8,149.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M527.6,143.8 Q534.1,130.5 532.3,137.1" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M527.6,143.8 Q492.0,151.2 471.0,146.5" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M527.6,143.8 Q539.3,142.0 530.0,143.8" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M527.6,143.8 Q515.6,194.6 496.4,219.6" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M527.6,143.8 Q491.2,137.4 478.5,126.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M482.7,133.8 Q507.8,162.2 511.6,179.3" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M482.7,133.8 Q498.7,124.2 504.3,125.1" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M482.7,133.8 Q453.0,131.5 440.1,123.5" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M482.7,133.8 Q491.2,125.4 488.5,129.6" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M482.7,133.8 Q431.0,135.0 397.9,122.2" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M482.7,133.8 Q476.5,127.7 483.2,134.5" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M482.7,133.8 Q447.3,132.4 433.2,123.8" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M482.7,133.8 Q421.8,136.5 376.5,121.5" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M516.8,120.0 Q526.0,158.1 521.2,176.1" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M516.8,120.0 Q512.9,164.8 500.3,185.7" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M516.8,120.0 Q479.3,126.0 462.7,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M516.8,120.0 Q460.6,129.0 425.3,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M516.8,120.0 Q531.4,175.3 525.9,211.5" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M516.8,120.0 Q562.4,112.7 587.0,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M516.8,120.0 Q561.8,128.6 584.8,144.6" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M516.8,120.0 Q530.6,117.8 523.4,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M516.8,120.0 Q535.8,129.2 533.8,131.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M516.8,120.0 Q487.8,124.7 479.7,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M516.8,120.0 Q500.9,129.6 502.2,125.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M516.8,120.0 Q509.3,121.2 518.4,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M516.8,120.0 Q494.7,123.5 490.6,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M516.8,120.0 Q465.5,128.2 433.6,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M425.5,120.0 Q480.3,150.8 506.4,184.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M425.5,120.0 Q467.2,157.5 482.0,189.8" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M425.5,120.0 Q433.6,118.7 420.7,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M425.5,120.0 Q414.9,121.7 425.3,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M425.5,120.0 Q442.1,117.3 437.7,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M501.9,120.0 Q518.5,156.9 517.3,176.8" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M501.9,120.0 Q505.4,163.6 496.8,185.2" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M501.9,120.0 Q471.8,124.8 462.7,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M501.9,120.0 Q453.1,127.8 425.3,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M501.9,120.0 Q523.9,174.1 523.3,211.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M501.9,120.0 Q554.9,111.5 587.0,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M501.9,120.0 Q523.1,116.6 523.4,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M501.9,120.0 Q504.7,180.6 490.8,218.2" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M501.9,120.0 Q480.3,123.5 479.7,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M501.9,120.0 Q493.4,128.4 499.7,121.5" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M501.9,120.0 Q463.7,126.1 440.5,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M501.9,120.0 Q441.7,129.6 398.1,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M501.9,120.0 Q487.2,122.3 490.6,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M501.9,120.0 Q458.0,127.0 433.6,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M381.6,120.0 Q458.4,147.2 504.4,187.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M381.6,120.0 Q433.2,118.8 461.9,130.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M381.6,120.0 Q427.1,112.7 454.6,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M381.6,120.0 Q397.8,117.4 394.6,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M472.6,120.0 Q503.9,154.5 511.4,179.5" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M472.6,120.0 Q490.8,161.2 489.9,185.8" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M472.6,120.0 Q457.1,122.5 462.7,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M472.6,120.0 Q438.5,125.5 425.3,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M472.6,120.0 Q465.6,121.1 479.7,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M472.6,120.0 Q478.8,126.1 470.3,116.8" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M472.6,120.0 Q443.4,124.7 433.6,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M414.1,120.0 Q474.6,149.8 505.7,184.9" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M414.1,120.0 Q461.5,156.6 480.8,190.8" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M363.1,120.0 Q449.1,145.8 503.9,188.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M363.1,120.0 Q436.0,152.5 477.6,194.6" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M363.1,120.0 Q402.4,113.7 420.7,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M363.1,120.0 Q383.7,116.7 383.3,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M363.1,120.0 Q424.0,117.3 461.8,131.4" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M363.1,120.0 Q372.3,118.5 365.1,120.0" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-cryptography)"/>
+  <path d="M688.7,293.5 Q598.0,258.6 541.0,207.6" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-oauth1)"/>
+  <path d="M688.7,293.5 Q584.9,265.3 514.3,214.7" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-oauth1)"/>
+  <path d="M688.7,293.5 Q603.5,275.8 547.7,239.9" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-oauth1)"/>
+  <path d="M688.7,293.5 Q584.2,282.3 508.7,244.6" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-oauth1)"/>
+  <path d="M688.7,293.5 Q592.2,249.9 526.7,186.6" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-oauth1)"/>
+  <path d="M702.1,269.0 Q606.7,247.4 542.3,204.9" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-oauth1)"/>
+  <path d="M702.1,269.0 Q593.6,254.1 515.3,212.2" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-oauth1)"/>
+  <path d="M702.1,269.0 Q612.2,264.6 548.6,236.7" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-oauth1)"/>
+  <path d="M702.1,269.0 Q643.2,202.0 619.2,137.8" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-oauth1)"/>
+  <path d="M702.1,269.0 Q642.5,217.9 613.4,164.4" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-oauth1)"/>
+  <path d="M702.1,269.0 Q616.5,218.5 567.1,157.3" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-oauth1)"/>
+  <path d="M702.1,269.0 Q727.6,297.6 731.6,315.0" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-oauth1)"/>
+  <path d="M702.1,269.0 Q747.7,185.3 808.8,130.7" fill="none" stroke="#eab308" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-oauth1)"/>
+  <path d="M868.1,260.8 Q979.2,276.2 1067.1,321.5" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M868.1,260.8 Q690.4,256.6 543.5,200.9" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M868.1,260.8 Q970.8,223.5 1065.3,223.0" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M868.1,260.8 Q938.8,240.9 998.8,245.6" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M868.1,260.8 Q940.2,184.2 1018.3,144.9" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M868.1,260.8 Q924.9,202.2 981.6,175.9" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M868.1,260.8 Q975.7,253.9 1066.6,279.6" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M868.1,260.8 Q941.6,219.7 1010.2,208.7" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M868.1,260.8 Q966.9,199.3 1064.8,178.1" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M868.1,260.8 Q922.7,215.0 974.7,196.9" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M868.1,260.8 Q882.7,186.3 912.6,139.7" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M868.1,260.8 Q910.4,181.8 966.2,131.9" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M868.1,260.8 Q772.8,207.6 709.4,135.7" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M868.1,260.8 Q928.4,179.0 998.4,132.6" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M1012.2,244.0 Q941.5,263.9 889.0,258.4" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M1012.2,244.0 Q998.3,205.3 1000.8,183.3" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M1012.2,244.0 Q1015.0,222.8 1020.0,218.0" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M1032.5,133.9 Q1017.3,151.9 1012.0,151.5" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M1032.5,133.9 Q975.1,136.0 940.7,122.6" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M1032.5,133.9 Q1020.8,128.7 1026.3,129.9" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M997.2,164.2 Q940.4,222.8 884.9,248.2" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M997.2,164.2 Q1012.4,146.2 1018.8,145.6" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M997.2,164.2 Q1039.2,161.3 1063.6,170.2" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M997.2,164.2 Q994.9,177.0 994.2,172.8" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M997.2,164.2 Q955.0,148.3 938.1,130.4" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M997.2,164.2 Q1000.7,141.0 1005.8,137.1" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M1024.3,203.6 Q950.8,244.7 887.8,253.6" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M1024.3,203.6 Q1022.8,168.1 1030.4,151.8" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M1024.3,203.6 Q1007.6,186.0 1008.2,180.2" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M1024.3,203.6 Q1049.6,183.2 1065.7,179.9" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M1024.3,203.6 Q1005.4,198.8 1004.0,194.9" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M988.8,188.4 Q934.3,234.3 886.1,250.0" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M988.8,188.4 Q1037.0,197.0 1065.8,215.2" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M988.8,188.4 Q1006.3,157.7 1021.3,148.0" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M988.8,188.4 Q991.1,175.6 990.8,182.6" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M988.8,188.4 Q948.9,159.7 934.8,134.8" fill="none" stroke="#84cc16" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-requests)"/>
+  <path d="M919.9,120.0 Q947.6,115.6 960.3,120.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-urllib3)"/>
+  <path d="M919.9,120.0 Q965.6,112.7 993.3,120.0" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-urllib3)"/>
+  <path d="M698.8,127.3 Q616.4,176.3 542.4,189.3" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-urllib3)"/>
+  <path d="M698.8,127.3 Q591.3,147.8 503.7,133.2" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-urllib3)"/>
+  <path d="M698.8,127.3 Q599.8,139.4 518.4,120.6" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-urllib3)"/>
+  <path d="M698.8,127.3 Q808.8,106.0 898.9,120.7" fill="none" stroke="#f97316" stroke-opacity="0.35" stroke-width="1.2" marker-end="url(#arr-urllib3)"/>
+  <circle cx="318.8" cy="363.8" r="23.0" fill="#3b82f6" fill-opacity="0.15" stroke="none"/>
+  <circle cx="318.8" cy="363.8" r="18.0" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>Crypto - imported by 11</title></circle>
+  <text x="295.8" y="363.8" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">Crypto</text>
+  <circle cx="249.7" cy="391.2" r="21.5" fill="#3b82f6" fill-opacity="0.15" stroke="none"/>
+  <circle cx="249.7" cy="391.2" r="16.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>Crypto.Cipher - imported by 5</title></circle>
+  <text x="228.2" y="391.2" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">Cipher</text>
+  <circle cx="266.4" cy="426.2" r="18.5" fill="#3b82f6" fill-opacity="0.15" stroke="none"/>
+  <circle cx="266.4" cy="426.2" r="13.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>Crypto.Cipher.AES - imported by 3</title></circle>
+  <text x="247.9" y="426.2" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">AES</text>
+  <circle cx="303.8" cy="279.7" r="20.0" fill="#3b82f6" fill-opacity="0.15" stroke="none"/>
+  <circle cx="303.8" cy="279.7" r="15.0" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>Crypto.Hash - imported by 4</title></circle>
+  <text x="283.8" y="279.7" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">Hash</text>
+  <circle cx="287.4" cy="314.5" r="20.0" fill="#3b82f6" fill-opacity="0.15" stroke="none"/>
+  <circle cx="287.4" cy="314.5" r="15.0" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>Crypto.Hash.SHA256 - imported by 4</title></circle>
+  <text x="267.4" y="314.5" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">SHA256</text>
+  <circle cx="210.8" cy="414.7" r="21.5" fill="#3b82f6" fill-opacity="0.15" stroke="none"/>
+  <circle cx="210.8" cy="414.7" r="16.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>Crypto.Util - imported by 5</title></circle>
+  <text x="189.3" y="414.7" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">Util</text>
+  <circle cx="230.4" cy="459.7" r="12.0" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>Crypto.Util.Padding - imported by 2</title></circle>
+  <text x="213.4" y="459.7" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">Padding</text>
+  <circle cx="576.5" cy="802.4" r="20.0" fill="#22c55e" fill-opacity="0.15" stroke="none"/>
+  <circle cx="576.5" cy="802.4" r="15.0" fill="#22c55e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis - imported by 4</title></circle>
+  <text x="596.5" y="802.4" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">apis</text>
+  <circle cx="1080.0" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.automatic_billing_updater - imported by 1</title></circle>
+  <text x="1095.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">automatic_billing_updater</text>
+  <circle cx="778.0" cy="269.6" r="10.5" fill="#a855f7" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.automatic_billing_updater.api - imported by 1</title></circle>
+  <text x="793.5" y="269.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="1080.0" cy="763.9" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.benefits_content_eligibility - imported by 1</title></circle>
+  <text x="1095.5" y="763.9" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">benefits_content_eligibility</text>
+  <circle cx="637.2" cy="352.0" r="10.5" fill="#eab308" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.benefits_content_eligibility.api - imported by 1</title></circle>
+  <text x="621.7" y="352.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="1080.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.benefits_eligibility - imported by 1</title></circle>
   <text x="1095.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">benefits_eligibility</text>
-  <circle cx="1080.0" cy="280.0" r="10.5" fill="#eab308" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.benefits_eligibility.api - imported by 1</title></circle>
-  <text x="1095.5" y="280.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="804.4" cy="277.4" r="10.5" fill="#06b6d4" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.benefits_eligibility.api - imported by 1</title></circle>
+  <text x="819.9" y="277.4" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
   <circle cx="1080.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.bin_lookup - imported by 1</title></circle>
   <text x="1095.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">bin_lookup</text>
-  <circle cx="1080.0" cy="407.9" r="10.5" fill="#06b6d4" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.bin_lookup.api - imported by 1</title></circle>
-  <text x="1095.5" y="407.9" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="433.4" cy="830.0" r="12.0" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.bundles - imported by 2</title></circle>
-  <text x="416.4" y="830.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">bundles</text>
-  <circle cx="970.2" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.business_payment_controls - imported by 1</title></circle>
-  <text x="985.7" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">business_payment_controls</text>
-  <circle cx="983.6" cy="173.7" r="10.5" fill="#ec4899" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.business_payment_controls.api - imported by 1</title></circle>
-  <text x="999.1" y="173.7" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="242.1" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.carbon_calculator - imported by 1</title></circle>
-  <text x="257.6" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">carbon_calculator</text>
-  <circle cx="1080.0" cy="454.2" r="10.5" fill="#10b981" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.carbon_calculator.api - imported by 1</title></circle>
-  <text x="1095.5" y="454.2" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="522.2" cy="830.0" r="18.5" fill="#f97316" fill-opacity="0.15" stroke="none"/>
-  <circle cx="522.2" cy="830.0" r="13.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.catalog - imported by 3</title></circle>
-  <text x="503.7" y="830.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">catalog</text>
-  <circle cx="175.5" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.consent_management - imported by 1</title></circle>
-  <text x="191.0" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">consent_management</text>
-  <circle cx="858.8" cy="547.7" r="10.5" fill="#6366f1" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.consent_management.api - imported by 1</title></circle>
-  <text x="843.3" y="547.7" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="120.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.consumer_clarity - imported by 1</title></circle>
-  <text x="135.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">consumer_clarity</text>
-  <circle cx="994.4" cy="466.2" r="10.5" fill="#f43f5e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.consumer_clarity.api - imported by 1</title></circle>
-  <text x="1009.9" y="466.2" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="646.0" cy="830.0" r="12.0" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.credentials - imported by 2</title></circle>
-  <text x="663.0" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">credentials</text>
+  <circle cx="826.8" cy="295.2" r="10.5" fill="#ec4899" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.bin_lookup.api - imported by 1</title></circle>
+  <text x="842.3" y="295.2" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="314.6" cy="830.0" r="12.0" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.bundles - imported by 2</title></circle>
+  <text x="297.6" y="830.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">bundles</text>
+  <circle cx="1080.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.business_payment_controls - imported by 1</title></circle>
+  <text x="1095.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">business_payment_controls</text>
+  <circle cx="840.0" cy="321.6" r="10.5" fill="#10b981" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.business_payment_controls.api - imported by 1</title></circle>
+  <text x="855.5" y="321.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="1023.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.carbon_calculator - imported by 1</title></circle>
+  <text x="1038.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">carbon_calculator</text>
+  <circle cx="611.9" cy="361.3" r="10.5" fill="#6366f1" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.carbon_calculator.api - imported by 1</title></circle>
+  <text x="596.4" y="361.3" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="379.2" cy="830.0" r="18.5" fill="#f97316" fill-opacity="0.15" stroke="none"/>
+  <circle cx="379.2" cy="830.0" r="13.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.catalog - imported by 3</title></circle>
+  <text x="360.7" y="830.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">catalog</text>
+  <circle cx="1080.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.consent_management - imported by 1</title></circle>
+  <text x="1095.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">consent_management</text>
+  <circle cx="703.0" cy="608.1" r="10.5" fill="#8b5cf6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.consent_management.api - imported by 1</title></circle>
+  <text x="718.5" y="608.1" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="1080.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.consumer_clarity - imported by 1</title></circle>
+  <text x="1095.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">consumer_clarity</text>
+  <circle cx="840.7" cy="347.6" r="10.5" fill="#84cc16" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.consumer_clarity.api - imported by 1</title></circle>
+  <text x="856.2" y="347.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="474.5" cy="830.0" r="12.0" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.credentials - imported by 2</title></circle>
+  <text x="491.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">credentials</text>
   <circle cx="120.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.easy_savings - imported by 1</title></circle>
   <text x="135.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">easy_savings</text>
-  <circle cx="827.3" cy="393.5" r="10.5" fill="#14b8a6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.easy_savings.api - imported by 1</title></circle>
-  <text x="811.8" y="393.5" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="120.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.enhanced_currency_conversion_calculator - imported by 1</title></circle>
-  <text x="135.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">enhanced_currency_conversion_calculator</text>
-  <circle cx="781.5" cy="331.4" r="10.5" fill="#8b5cf6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.enhanced_currency_conversion_calculator.api - imported by 1</title></circle>
-  <text x="766.0" y="331.4" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="120.0" cy="708.6" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.flight_delay_pass - imported by 1</title></circle>
-  <text x="135.5" y="708.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">flight_delay_pass</text>
-  <circle cx="893.2" cy="120.0" r="10.5" fill="#84cc16" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.flight_delay_pass.api - imported by 1</title></circle>
-  <text x="877.7" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="120.0" cy="590.8" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.match - imported by 1</title></circle>
-  <text x="135.5" y="590.8" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">match</text>
-  <circle cx="839.3" cy="120.0" r="10.5" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.match.api - imported by 1</title></circle>
-  <text x="823.8" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="120.0" cy="440.5" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.merchant_identifier - imported by 1</title></circle>
-  <text x="135.5" y="440.5" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">merchant_identifier</text>
-  <circle cx="953.0" cy="120.0" r="10.5" fill="#38bdf8" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.merchant_identifier.api - imported by 1</title></circle>
-  <text x="968.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="120.0" cy="288.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.offers_for_publishers - imported by 1</title></circle>
-  <text x="135.5" y="288.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">offers_for_publishers</text>
-  <circle cx="878.1" cy="182.8" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.offers_for_publishers.api - imported by 1</title></circle>
-  <text x="862.6" y="182.8" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="120.0" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.offers_merchant_content - imported by 1</title></circle>
-  <text x="135.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">offers_merchant_content</text>
-  <circle cx="1080.0" cy="321.6" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.offers_merchant_content.api - imported by 1</title></circle>
-  <text x="1095.5" y="321.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="120.0" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance - imported by 1</title></circle>
-  <text x="135.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">open_finance</text>
-  <circle cx="717.7" cy="209.7" r="10.5" fill="#22c55e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance.api - imported by 1</title></circle>
-  <text x="702.2" y="209.7" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="517.2" cy="120.0" r="12.0" fill="#22c55e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance.client - imported by 2</title></circle>
-  <text x="500.2" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">client</text>
-  <circle cx="120.0" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_au - imported by 1</title></circle>
-  <text x="135.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">open_finance_au</text>
-  <circle cx="765.7" cy="157.0" r="10.5" fill="#a855f7" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_au.api - imported by 1</title></circle>
-  <text x="750.2" y="157.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="593.3" cy="120.0" r="12.0" fill="#a855f7" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_au.client - imported by 2</title></circle>
-  <text x="576.3" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">client</text>
-  <circle cx="170.5" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_eu - imported by 1</title></circle>
-  <text x="186.0" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">open_finance_eu</text>
-  <circle cx="1080.0" cy="194.1" r="10.5" fill="#eab308" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_eu.api - imported by 1</title></circle>
-  <text x="1095.5" y="194.1" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="1037.6" cy="120.0" r="12.0" fill="#eab308" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_eu.client - imported by 2</title></circle>
-  <text x="1020.6" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">client</text>
-  <circle cx="230.8" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.places - imported by 1</title></circle>
-  <text x="246.3" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">places</text>
-  <circle cx="1080.0" cy="238.7" r="10.5" fill="#06b6d4" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.places.api - imported by 1</title></circle>
-  <text x="1095.5" y="238.7" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="1080.0" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.priceless_cities - imported by 1</title></circle>
-  <text x="1095.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">priceless_cities</text>
-  <circle cx="1080.0" cy="363.9" r="10.5" fill="#ec4899" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.priceless_cities.api - imported by 1</title></circle>
-  <text x="1095.5" y="363.9" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="578.4" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.registry - imported by 1</title></circle>
-  <text x="562.9" y="830.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">registry</text>
-  <circle cx="1080.0" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.snippet - imported by 1</title></circle>
-  <text x="1095.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">snippet</text>
-  <circle cx="1080.0" cy="120.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.spotlights - imported by 1</title></circle>
-  <text x="1095.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">spotlights</text>
-  <circle cx="869.4" cy="751.1" r="12.0" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.transaction_notifications - imported by 2</title></circle>
-  <text x="886.4" y="751.1" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">transaction_notifications</text>
-  <circle cx="895.7" cy="452.5" r="12.0" fill="#6366f1" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.transaction_notifications.api - imported by 2</title></circle>
-  <text x="878.7" y="452.5" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
-  <circle cx="941.0" cy="291.9" r="23.0" fill="#10b981" fill-opacity="0.15" stroke="none"/>
-  <circle cx="941.0" cy="291.9" r="18.0" fill="#10b981" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>simulator - imported by 21</title></circle>
-  <text x="964.0" y="291.9" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">simulator</text>
-  <circle cx="926.8" cy="303.8" r="23.0" fill="#10b981" fill-opacity="0.15" stroke="none"/>
-  <circle cx="926.8" cy="303.8" r="18.0" fill="#10b981" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>simulator.switcher - imported by 21</title></circle>
-  <text x="903.8" y="303.8" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">switcher</text>
+  <circle cx="805.9" cy="315.3" r="10.5" fill="#38bdf8" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.easy_savings.api - imported by 1</title></circle>
+  <text x="821.4" y="315.3" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="978.7" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.enhanced_currency_conversion_calculator - imported by 1</title></circle>
+  <text x="994.2" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">enhanced_currency_conversion_calculator</text>
+  <circle cx="785.1" cy="368.6" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.enhanced_currency_conversion_calculator.api - imported by 1</title></circle>
+  <text x="800.6" y="368.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="120.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.flight_delay_pass - imported by 1</title></circle>
+  <text x="135.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">flight_delay_pass</text>
+  <circle cx="833.8" cy="373.1" r="10.5" fill="#3b82f6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.flight_delay_pass.api - imported by 1</title></circle>
+  <text x="849.3" y="373.1" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="1080.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.match - imported by 1</title></circle>
+  <text x="1095.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">match</text>
+  <circle cx="807.2" cy="350.8" r="10.5" fill="#22c55e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.match.api - imported by 1</title></circle>
+  <text x="822.7" y="350.8" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="120.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.merchant_identifier - imported by 1</title></circle>
+  <text x="135.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">merchant_identifier</text>
+  <circle cx="751.1" cy="365.0" r="10.5" fill="#a855f7" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.merchant_identifier.api - imported by 1</title></circle>
+  <text x="735.6" y="365.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="120.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.offers_for_publishers - imported by 1</title></circle>
+  <text x="135.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">offers_for_publishers</text>
+  <circle cx="638.7" cy="372.4" r="10.5" fill="#06b6d4" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.offers_for_publishers.api - imported by 1</title></circle>
+  <text x="623.2" y="372.4" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="204.4" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.offers_merchant_content - imported by 1</title></circle>
+  <text x="219.9" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">offers_merchant_content</text>
+  <circle cx="778.7" cy="329.0" r="10.5" fill="#ec4899" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.offers_merchant_content.api - imported by 1</title></circle>
+  <text x="794.2" y="329.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="120.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance - imported by 1</title></circle>
+  <text x="135.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">open_finance</text>
+  <circle cx="904.8" cy="504.2" r="10.5" fill="#10b981" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance.api - imported by 1</title></circle>
+  <text x="920.3" y="504.2" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="1013.9" cy="423.5" r="12.0" fill="#10b981" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance.client - imported by 2</title></circle>
+  <text x="1030.9" y="423.5" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">client</text>
+  <circle cx="120.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_au - imported by 1</title></circle>
+  <text x="135.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">open_finance_au</text>
+  <circle cx="933.0" cy="463.6" r="10.5" fill="#6366f1" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_au.api - imported by 1</title></circle>
+  <text x="948.5" y="463.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="1043.0" cy="382.3" r="12.0" fill="#6366f1" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_au.client - imported by 2</title></circle>
+  <text x="1060.0" y="382.3" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">client</text>
+  <circle cx="120.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_eu - imported by 1</title></circle>
+  <text x="135.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">open_finance_eu</text>
+  <circle cx="684.6" cy="426.9" r="10.5" fill="#f43f5e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_eu.api - imported by 1</title></circle>
+  <text x="669.1" y="426.9" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="618.8" cy="215.8" r="12.0" fill="#f43f5e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.open_finance_eu.client - imported by 2</title></circle>
+  <text x="635.8" y="215.8" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">client</text>
+  <circle cx="120.0" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.places - imported by 1</title></circle>
+  <text x="135.5" y="830.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">places</text>
+  <circle cx="811.5" cy="390.3" r="10.5" fill="#14b8a6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.places.api - imported by 1</title></circle>
+  <text x="827.0" y="390.3" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="120.0" cy="710.6" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.priceless_cities - imported by 1</title></circle>
+  <text x="135.5" y="710.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">priceless_cities</text>
+  <circle cx="767.4" cy="297.4" r="10.5" fill="#8b5cf6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.priceless_cities.api - imported by 1</title></circle>
+  <text x="782.9" y="297.4" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="429.6" cy="830.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.registry - imported by 1</title></circle>
+  <text x="414.1" y="830.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">registry</text>
+  <circle cx="793.4" cy="200.0" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.snippet - imported by 1</title></circle>
+  <text x="808.9" y="200.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">snippet</text>
+  <circle cx="120.0" cy="757.1" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.spotlights - imported by 1</title></circle>
+  <text x="135.5" y="757.1" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">spotlights</text>
+  <circle cx="741.7" cy="803.8" r="12.0" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.transaction_notifications - imported by 2</title></circle>
+  <text x="758.7" y="803.8" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">transaction_notifications</text>
+  <circle cx="643.9" cy="404.8" r="12.0" fill="#38bdf8" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>apis.transaction_notifications.api - imported by 2</title></circle>
+  <text x="626.9" y="404.8" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="1080.0" cy="325.4" r="10.5" fill="#f43f5e" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>charset_normalizer - imported by 1</title></circle>
+  <text x="1095.5" y="325.4" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">charset_normalizer</text>
+  <circle cx="479.2" cy="406.9" r="23.0" fill="#14b8a6" fill-opacity="0.15" stroke="none"/>
+  <circle cx="479.2" cy="406.9" r="18.0" fill="#14b8a6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>client_encryption - imported by 12</title></circle>
+  <text x="502.2" y="406.9" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">client_encryption</text>
+  <circle cx="363.6" cy="392.0" r="21.5" fill="#14b8a6" fill-opacity="0.15" stroke="none"/>
+  <circle cx="363.6" cy="392.0" r="16.5" fill="#14b8a6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>client_encryption.encoding_utils - imported by 5</title></circle>
+  <text x="342.1" y="392.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">encoding_utils</text>
+  <circle cx="284.8" cy="362.2" r="21.5" fill="#14b8a6" fill-opacity="0.15" stroke="none"/>
+  <circle cx="284.8" cy="362.2" r="16.5" fill="#14b8a6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>client_encryption.encryption_exception - imported by 5</title></circle>
+  <text x="263.3" y="362.2" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">encryption_exception</text>
+  <circle cx="404.4" cy="269.9" r="18.5" fill="#14b8a6" fill-opacity="0.15" stroke="none"/>
+  <circle cx="404.4" cy="269.9" r="13.5" fill="#14b8a6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>client_encryption.encryption_utils - imported by 3</title></circle>
+  <text x="385.9" y="269.9" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">encryption_utils</text>
+  <circle cx="343.2" cy="428.7" r="10.5" fill="#14b8a6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>client_encryption.field_level_encryption - imported by 1</title></circle>
+  <text x="358.7" y="428.7" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">field_level_encryption</text>
+  <circle cx="426.6" cy="308.0" r="12.0" fill="#14b8a6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>client_encryption.field_level_encryption_config - imported by 2</title></circle>
+  <text x="409.6" y="308.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">field_level_encryption_config</text>
+  <circle cx="249.4" cy="519.8" r="12.0" fill="#14b8a6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>client_encryption.json_path_utils - imported by 2</title></circle>
+  <text x="232.4" y="519.8" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">json_path_utils</text>
+  <circle cx="401.9" cy="419.4" r="18.5" fill="#14b8a6" fill-opacity="0.15" stroke="none"/>
+  <circle cx="401.9" cy="419.4" r="13.5" fill="#14b8a6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>client_encryption.jwe_encryption - imported by 3</title></circle>
+  <text x="420.4" y="419.4" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">jwe_encryption</text>
+  <circle cx="467.8" cy="327.5" r="18.5" fill="#14b8a6" fill-opacity="0.15" stroke="none"/>
+  <circle cx="467.8" cy="327.5" r="13.5" fill="#14b8a6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>client_encryption.jwe_encryption_config - imported by 3</title></circle>
+  <text x="449.3" y="327.5" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">jwe_encryption_config</text>
+  <circle cx="385.8" cy="326.7" r="12.0" fill="#14b8a6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>client_encryption.session_key_params - imported by 2</title></circle>
+  <text x="368.8" y="326.7" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">session_key_params</text>
+  <circle cx="386.4" cy="581.0" r="10.5" fill="#14b8a6" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>client_encryption.version - imported by 1</title></circle>
+  <text x="370.9" y="581.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">version</text>
+  <circle cx="522.8" cy="197.1" r="23.0" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="522.8" cy="197.1" r="18.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography - imported by 27</title></circle>
+  <text x="545.8" y="197.1" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">cryptography</text>
+  <circle cx="277.0" cy="120.0" r="10.5" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.__about__ - imported by 1</title></circle>
+  <text x="261.5" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">__about__</text>
+  <circle cx="495.2" cy="206.1" r="23.0" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="495.2" cy="206.1" r="18.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.hazmat - imported by 22</title></circle>
+  <text x="518.2" y="206.1" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">hazmat</text>
+  <circle cx="441.7" cy="120.0" r="23.0" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="441.7" cy="120.0" r="18.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.hazmat.bindings - imported by 11</title></circle>
+  <text x="418.7" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">bindings</text>
+  <circle cx="404.3" cy="120.0" r="23.0" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="404.3" cy="120.0" r="18.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.hazmat.bindings._rust - imported by 11</title></circle>
+  <text x="381.3" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">_rust</text>
+  <circle cx="528.0" cy="232.4" r="23.0" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="528.0" cy="232.4" r="18.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.hazmat.primitives - imported by 16</title></circle>
+  <text x="551.0" y="232.4" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">primitives</text>
+  <circle cx="683.3" cy="120.0" r="12.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.hazmat.primitives._asymmetric - imported by 2</title></circle>
+  <text x="700.3" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">_asymmetric</text>
+  <circle cx="446.0" cy="174.0" r="18.5" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="446.0" cy="174.0" r="13.5" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.hazmat.primitives._serialization - imported by 3</title></circle>
+  <text x="427.5" y="174.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">_serialization</text>
+  <circle cx="608.0" cy="120.0" r="23.0" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="608.0" cy="120.0" r="18.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.hazmat.primitives.asymmetric - imported by 8</title></circle>
+  <text x="631.0" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">asymmetric</text>
+  <circle cx="601.8" cy="150.7" r="20.0" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="601.8" cy="150.7" r="15.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.hazmat.primitives.asymmetric.padding - imported by 4</title></circle>
+  <text x="621.8" y="150.7" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">padding</text>
+  <circle cx="544.4" cy="120.0" r="23.0" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="544.4" cy="120.0" r="18.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.hazmat.primitives.asymmetric.rsa - imported by 6</title></circle>
+  <text x="567.4" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">rsa</text>
+  <circle cx="456.0" cy="147.2" r="12.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.hazmat.primitives.asymmetric.utils - imported by 2</title></circle>
+  <text x="439.0" y="147.2" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">utils</text>
+  <circle cx="551.0" cy="143.9" r="23.0" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="551.0" cy="143.9" r="18.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.hazmat.primitives.hashes - imported by 8</title></circle>
+  <text x="574.0" y="143.9" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">hashes</text>
+  <circle cx="488.4" cy="239.1" r="23.0" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="488.4" cy="239.1" r="18.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.hazmat.primitives.serialization - imported by 10</title></circle>
+  <text x="465.4" y="239.1" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">serialization</text>
+  <circle cx="368.4" cy="168.7" r="10.5" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.hazmat.primitives.serialization.base - imported by 1</title></circle>
+  <text x="352.9" y="168.7" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">base</text>
+  <circle cx="514.1" cy="178.4" r="12.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.hazmat.primitives.serialization.pkcs12 - imported by 2</title></circle>
+  <text x="531.1" y="178.4" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">pkcs12</text>
+  <circle cx="527.6" cy="143.8" r="10.5" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.hazmat.primitives.serialization.ssh - imported by 1</title></circle>
+  <text x="543.1" y="143.8" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">ssh</text>
+  <circle cx="458.7" cy="120.0" r="23.0" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="458.7" cy="120.0" r="18.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.utils - imported by 7</title></circle>
+  <text x="435.7" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">utils</text>
+  <circle cx="482.7" cy="133.8" r="23.0" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="482.7" cy="133.8" r="18.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.x509 - imported by 10</title></circle>
+  <text x="505.7" y="133.8" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">x509</text>
+  <circle cx="516.8" cy="120.0" r="10.5" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.x509.base - imported by 1</title></circle>
+  <text x="532.3" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">base</text>
+  <circle cx="425.5" cy="120.0" r="12.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.x509.certificate_transparency - imported by 2</title></circle>
+  <text x="408.5" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">certificate_transparency</text>
+  <circle cx="501.9" cy="120.0" r="18.5" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="501.9" cy="120.0" r="13.5" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.x509.extensions - imported by 3</title></circle>
+  <text x="520.4" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">extensions</text>
+  <circle cx="381.6" cy="120.0" r="18.5" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="381.6" cy="120.0" r="13.5" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.x509.general_name - imported by 3</title></circle>
+  <text x="363.1" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">general_name</text>
+  <circle cx="472.6" cy="120.0" r="20.0" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="472.6" cy="120.0" r="15.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.x509.name - imported by 4</title></circle>
+  <text x="492.6" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">name</text>
+  <circle cx="414.1" cy="120.0" r="21.5" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="414.1" cy="120.0" r="16.5" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.x509.oid - imported by 5</title></circle>
+  <text x="392.6" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">oid</text>
+  <circle cx="363.1" cy="120.0" r="10.5" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>cryptography.x509.verification - imported by 1</title></circle>
+  <text x="347.6" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">verification</text>
+  <circle cx="742.9" cy="332.7" r="23.0" fill="#eab308" fill-opacity="0.15" stroke="none"/>
+  <circle cx="742.9" cy="332.7" r="18.0" fill="#eab308" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>oauth1 - imported by 19</title></circle>
+  <text x="719.9" y="332.7" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">oauth1</text>
+  <circle cx="688.7" cy="293.5" r="23.0" fill="#eab308" fill-opacity="0.15" stroke="none"/>
+  <circle cx="688.7" cy="293.5" r="18.0" fill="#eab308" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>oauth1.authenticationutils - imported by 18</title></circle>
+  <text x="665.7" y="293.5" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">authenticationutils</text>
+  <circle cx="817.0" cy="120.0" r="10.5" fill="#eab308" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>oauth1.coreutils - imported by 1</title></circle>
+  <text x="832.5" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">coreutils</text>
+  <circle cx="702.1" cy="269.0" r="23.0" fill="#eab308" fill-opacity="0.15" stroke="none"/>
+  <circle cx="702.1" cy="269.0" r="18.0" fill="#eab308" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>oauth1.oauth - imported by 18</title></circle>
+  <text x="679.1" y="269.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">oauth</text>
+  <circle cx="868.1" cy="260.8" r="23.0" fill="#84cc16" fill-opacity="0.15" stroke="none"/>
+  <circle cx="868.1" cy="260.8" r="18.0" fill="#84cc16" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>requests - imported by 26</title></circle>
+  <text x="845.1" y="260.8" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">requests</text>
+  <circle cx="1080.0" cy="220.1" r="12.0" fill="#84cc16" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>requests.__version__ - imported by 2</title></circle>
+  <text x="1097.0" y="220.1" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">__version__</text>
+  <circle cx="1012.2" cy="244.0" r="10.5" fill="#84cc16" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>requests.api - imported by 1</title></circle>
+  <text x="1027.7" y="244.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">api</text>
+  <circle cx="1032.5" cy="133.9" r="20.0" fill="#84cc16" fill-opacity="0.15" stroke="none"/>
+  <circle cx="1032.5" cy="133.9" r="15.0" fill="#84cc16" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>requests.exceptions - imported by 4</title></circle>
+  <text x="1052.5" y="133.9" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">exceptions</text>
+  <circle cx="997.2" cy="164.2" r="21.5" fill="#84cc16" fill-opacity="0.15" stroke="none"/>
+  <circle cx="997.2" cy="164.2" r="16.5" fill="#84cc16" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>requests.models - imported by 5</title></circle>
+  <text x="1018.7" y="164.2" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">models</text>
+  <circle cx="1080.0" cy="280.9" r="10.5" fill="#84cc16" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>requests.packages - imported by 1</title></circle>
+  <text x="1095.5" y="280.9" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">packages</text>
+  <circle cx="1024.3" cy="203.6" r="12.0" fill="#84cc16" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>requests.sessions - imported by 2</title></circle>
+  <text x="1041.3" y="203.6" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">sessions</text>
+  <circle cx="1080.0" cy="171.7" r="18.5" fill="#84cc16" fill-opacity="0.15" stroke="none"/>
+  <circle cx="1080.0" cy="171.7" r="13.5" fill="#84cc16" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>requests.status_codes - imported by 3</title></circle>
+  <text x="1098.5" y="171.7" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">status_codes</text>
+  <circle cx="988.8" cy="188.4" r="18.5" fill="#84cc16" fill-opacity="0.15" stroke="none"/>
+  <circle cx="988.8" cy="188.4" r="13.5" fill="#84cc16" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>requests.utils - imported by 3</title></circle>
+  <text x="1007.3" y="188.4" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">utils</text>
+  <circle cx="764.0" cy="404.8" r="23.0" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="764.0" cy="404.8" r="18.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>simulator - imported by 21</title></circle>
+  <text x="741.0" y="404.8" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">simulator</text>
+  <circle cx="773.7" cy="413.5" r="23.0" fill="#fb923c" fill-opacity="0.15" stroke="none"/>
+  <circle cx="773.7" cy="413.5" r="18.0" fill="#fb923c" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>simulator.switcher - imported by 21</title></circle>
+  <text x="796.7" y="413.5" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">switcher</text>
+  <circle cx="919.9" cy="120.0" r="23.0" fill="#f97316" fill-opacity="0.15" stroke="none"/>
+  <circle cx="919.9" cy="120.0" r="18.0" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>urllib3 - imported by 6</title></circle>
+  <text x="896.9" y="120.0" text-anchor="end" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">urllib3</text>
+  <circle cx="975.3" cy="120.0" r="12.0" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>urllib3.contrib - imported by 2</title></circle>
+  <text x="992.3" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">contrib</text>
+  <circle cx="698.8" cy="127.3" r="10.5" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>urllib3.contrib.pyopenssl - imported by 1</title></circle>
+  <text x="714.3" y="127.3" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">pyopenssl</text>
+  <circle cx="1011.3" cy="120.0" r="20.0" fill="#f97316" fill-opacity="0.15" stroke="none"/>
+  <circle cx="1011.3" cy="120.0" r="15.0" fill="#f97316" fill-opacity="0.85" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"><title>urllib3.exceptions - imported by 4</title></circle>
+  <text x="1031.3" y="120.0" text-anchor="start" dominant-baseline="central" fill="rgba(255,255,255,0.82)" font-size="11" paint-order="stroke" stroke="#0f172a" stroke-width="3">exceptions</text>
   <text x="1218" y="50" fill="rgba(255,255,255,0.55)" font-size="11" font-weight="700" letter-spacing="1">SUB-PACKAGES</text>
   <rect x="1218" y="68" width="10" height="10" rx="2" fill="#f97316" fill-opacity="0.85"/>
   <text x="1233" y="77" fill="rgba(255,255,255,0.72)" font-size="11">apis (root) <tspan fill="rgba(255,255,255,0.35)">(27)</tspan></text>
   <rect x="1218" y="86" width="10" height="10" rx="2" fill="#3b82f6" fill-opacity="0.85"/>
-  <text x="1233" y="95" fill="rgba(255,255,255,0.72)" font-size="11">apis <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="95" fill="rgba(255,255,255,0.72)" font-size="11">Crypto <tspan fill="rgba(255,255,255,0.35)">(7)</tspan></text>
   <rect x="1218" y="104" width="10" height="10" rx="2" fill="#22c55e" fill-opacity="0.85"/>
-  <text x="1233" y="113" fill="rgba(255,255,255,0.72)" font-size="11">automatic_billing_updater <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="113" fill="rgba(255,255,255,0.72)" font-size="11">apis <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="122" width="10" height="10" rx="2" fill="#a855f7" fill-opacity="0.85"/>
-  <text x="1233" y="131" fill="rgba(255,255,255,0.72)" font-size="11">benefits_content_eligibility <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="131" fill="rgba(255,255,255,0.72)" font-size="11">automatic_billing_updater <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="140" width="10" height="10" rx="2" fill="#eab308" fill-opacity="0.85"/>
-  <text x="1233" y="149" fill="rgba(255,255,255,0.72)" font-size="11">benefits_eligibility <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="149" fill="rgba(255,255,255,0.72)" font-size="11">benefits_content_eligibility <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="158" width="10" height="10" rx="2" fill="#06b6d4" fill-opacity="0.85"/>
-  <text x="1233" y="167" fill="rgba(255,255,255,0.72)" font-size="11">bin_lookup <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="167" fill="rgba(255,255,255,0.72)" font-size="11">benefits_eligibility <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="176" width="10" height="10" rx="2" fill="#ec4899" fill-opacity="0.85"/>
-  <text x="1233" y="185" fill="rgba(255,255,255,0.72)" font-size="11">business_payment_controls <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="185" fill="rgba(255,255,255,0.72)" font-size="11">bin_lookup <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="194" width="10" height="10" rx="2" fill="#10b981" fill-opacity="0.85"/>
-  <text x="1233" y="203" fill="rgba(255,255,255,0.72)" font-size="11">carbon_calculator <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="203" fill="rgba(255,255,255,0.72)" font-size="11">business_payment_controls <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="212" width="10" height="10" rx="2" fill="#6366f1" fill-opacity="0.85"/>
-  <text x="1233" y="221" fill="rgba(255,255,255,0.72)" font-size="11">consent_management <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="221" fill="rgba(255,255,255,0.72)" font-size="11">carbon_calculator <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="230" width="10" height="10" rx="2" fill="#f43f5e" fill-opacity="0.85"/>
-  <text x="1233" y="239" fill="rgba(255,255,255,0.72)" font-size="11">consumer_clarity <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="239" fill="rgba(255,255,255,0.72)" font-size="11">charset_normalizer <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="248" width="10" height="10" rx="2" fill="#14b8a6" fill-opacity="0.85"/>
-  <text x="1233" y="257" fill="rgba(255,255,255,0.72)" font-size="11">easy_savings <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="257" fill="rgba(255,255,255,0.72)" font-size="11">client_encryption <tspan fill="rgba(255,255,255,0.35)">(11)</tspan></text>
   <rect x="1218" y="266" width="10" height="10" rx="2" fill="#8b5cf6" fill-opacity="0.85"/>
-  <text x="1233" y="275" fill="rgba(255,255,255,0.72)" font-size="11">enhanced_currency_conversion_calculator <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="275" fill="rgba(255,255,255,0.72)" font-size="11">consent_management <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="284" width="10" height="10" rx="2" fill="#84cc16" fill-opacity="0.85"/>
-  <text x="1233" y="293" fill="rgba(255,255,255,0.72)" font-size="11">flight_delay_pass <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="293" fill="rgba(255,255,255,0.72)" font-size="11">consumer_clarity <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="302" width="10" height="10" rx="2" fill="#fb923c" fill-opacity="0.85"/>
-  <text x="1233" y="311" fill="rgba(255,255,255,0.72)" font-size="11">match <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="311" fill="rgba(255,255,255,0.72)" font-size="11">cryptography <tspan fill="rgba(255,255,255,0.35)">(26)</tspan></text>
   <rect x="1218" y="320" width="10" height="10" rx="2" fill="#38bdf8" fill-opacity="0.85"/>
-  <text x="1233" y="329" fill="rgba(255,255,255,0.72)" font-size="11">merchant_identifier <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="329" fill="rgba(255,255,255,0.72)" font-size="11">easy_savings <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="338" width="10" height="10" rx="2" fill="#f97316" fill-opacity="0.85"/>
-  <text x="1233" y="347" fill="rgba(255,255,255,0.72)" font-size="11">offers_for_publishers <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="347" fill="rgba(255,255,255,0.72)" font-size="11">enhanced_currency_conversion_calculator <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="356" width="10" height="10" rx="2" fill="#3b82f6" fill-opacity="0.85"/>
-  <text x="1233" y="365" fill="rgba(255,255,255,0.72)" font-size="11">offers_merchant_content <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="365" fill="rgba(255,255,255,0.72)" font-size="11">flight_delay_pass <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="374" width="10" height="10" rx="2" fill="#22c55e" fill-opacity="0.85"/>
-  <text x="1233" y="383" fill="rgba(255,255,255,0.72)" font-size="11">open_finance <tspan fill="rgba(255,255,255,0.35)">(2)</tspan></text>
+  <text x="1233" y="383" fill="rgba(255,255,255,0.72)" font-size="11">match <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="392" width="10" height="10" rx="2" fill="#a855f7" fill-opacity="0.85"/>
-  <text x="1233" y="401" fill="rgba(255,255,255,0.72)" font-size="11">open_finance_au <tspan fill="rgba(255,255,255,0.35)">(2)</tspan></text>
+  <text x="1233" y="401" fill="rgba(255,255,255,0.72)" font-size="11">merchant_identifier <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="410" width="10" height="10" rx="2" fill="#eab308" fill-opacity="0.85"/>
-  <text x="1233" y="419" fill="rgba(255,255,255,0.72)" font-size="11">open_finance_eu <tspan fill="rgba(255,255,255,0.35)">(2)</tspan></text>
+  <text x="1233" y="419" fill="rgba(255,255,255,0.72)" font-size="11">oauth1 <tspan fill="rgba(255,255,255,0.35)">(4)</tspan></text>
   <rect x="1218" y="428" width="10" height="10" rx="2" fill="#06b6d4" fill-opacity="0.85"/>
-  <text x="1233" y="437" fill="rgba(255,255,255,0.72)" font-size="11">places <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="437" fill="rgba(255,255,255,0.72)" font-size="11">offers_for_publishers <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="446" width="10" height="10" rx="2" fill="#ec4899" fill-opacity="0.85"/>
-  <text x="1233" y="455" fill="rgba(255,255,255,0.72)" font-size="11">priceless_cities <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <text x="1233" y="455" fill="rgba(255,255,255,0.72)" font-size="11">offers_merchant_content <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
   <rect x="1218" y="464" width="10" height="10" rx="2" fill="#10b981" fill-opacity="0.85"/>
-  <text x="1233" y="473" fill="rgba(255,255,255,0.72)" font-size="11">simulator <tspan fill="rgba(255,255,255,0.35)">(2)</tspan></text>
+  <text x="1233" y="473" fill="rgba(255,255,255,0.72)" font-size="11">open_finance <tspan fill="rgba(255,255,255,0.35)">(2)</tspan></text>
   <rect x="1218" y="482" width="10" height="10" rx="2" fill="#6366f1" fill-opacity="0.85"/>
-  <text x="1233" y="491" fill="rgba(255,255,255,0.72)" font-size="11">transaction_notifications <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
-  <text x="1218" y="510" fill="rgba(255,255,255,0.55)" font-size="11" font-weight="700" letter-spacing="1">NODE SIZE</text>
-  <text x="1218" y="526" fill="rgba(255,255,255,0.45)" font-size="10">= fan-in (imports by others)</text>
+  <text x="1233" y="491" fill="rgba(255,255,255,0.72)" font-size="11">open_finance_au <tspan fill="rgba(255,255,255,0.35)">(2)</tspan></text>
+  <rect x="1218" y="500" width="10" height="10" rx="2" fill="#f43f5e" fill-opacity="0.85"/>
+  <text x="1233" y="509" fill="rgba(255,255,255,0.72)" font-size="11">open_finance_eu <tspan fill="rgba(255,255,255,0.35)">(2)</tspan></text>
+  <rect x="1218" y="518" width="10" height="10" rx="2" fill="#14b8a6" fill-opacity="0.85"/>
+  <text x="1233" y="527" fill="rgba(255,255,255,0.72)" font-size="11">places <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <rect x="1218" y="536" width="10" height="10" rx="2" fill="#8b5cf6" fill-opacity="0.85"/>
+  <text x="1233" y="545" fill="rgba(255,255,255,0.72)" font-size="11">priceless_cities <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <rect x="1218" y="554" width="10" height="10" rx="2" fill="#84cc16" fill-opacity="0.85"/>
+  <text x="1233" y="563" fill="rgba(255,255,255,0.72)" font-size="11">requests <tspan fill="rgba(255,255,255,0.35)">(9)</tspan></text>
+  <rect x="1218" y="572" width="10" height="10" rx="2" fill="#fb923c" fill-opacity="0.85"/>
+  <text x="1233" y="581" fill="rgba(255,255,255,0.72)" font-size="11">simulator <tspan fill="rgba(255,255,255,0.35)">(2)</tspan></text>
+  <rect x="1218" y="590" width="10" height="10" rx="2" fill="#38bdf8" fill-opacity="0.85"/>
+  <text x="1233" y="599" fill="rgba(255,255,255,0.72)" font-size="11">transaction_notifications <tspan fill="rgba(255,255,255,0.35)">(1)</tspan></text>
+  <rect x="1218" y="608" width="10" height="10" rx="2" fill="#f97316" fill-opacity="0.85"/>
+  <text x="1233" y="617" fill="rgba(255,255,255,0.72)" font-size="11">urllib3 <tspan fill="rgba(255,255,255,0.35)">(4)</tspan></text>
+  <text x="1218" y="636" fill="rgba(255,255,255,0.55)" font-size="11" font-weight="700" letter-spacing="1">NODE SIZE</text>
+  <text x="1218" y="652" fill="rgba(255,255,255,0.45)" font-size="10">= fan-in (imports by others)</text>
 </svg>
