@@ -360,6 +360,7 @@ CSS_FILES = [
     "css/platform/launch-banner.css",
     "css/platform/sdk-panel.css",
     "css/platform/info-modal.css",
+    "css/platform/search.css",
 ]
 
 
@@ -1632,9 +1633,12 @@ def usecase_action(uc_id: str):
 # TxPush listener  (use as callback URL with ngrok)
 # ----------------------------------------------------------------------------
 
-@app.route("/txpush-listener", methods=["POST"])
+@app.route("/txpush-listener", methods=["GET", "POST"])
 def txpush_listener():
     """Receive TxPush notifications from Finicity and store them."""
+    if request.method == "GET":
+        code = request.args.get("txpush_verification_code", "")
+        return code, 200, {"Content-Type": "text/plain"}
     import datetime
     payload = request.get_json(silent=True) or request.get_data(as_text=True)
     _txpush_events.appendleft({
