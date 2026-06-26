@@ -44,9 +44,11 @@ import './features/bundles.js';
 import './features/autoProvision.js';
 import './features/infoModal.js';
 import './features/apiGuide.js';
+import { initSearch } from './features/search.js';
 
 (() => {
   initTheme();
+  initSearch();
 
   function _markRuntimeBlockedMenuItems() {
     if (!NON_US_MODE) return;
@@ -292,7 +294,7 @@ import './features/apiGuide.js';
   // Use cases
   // ---------------------------------------------------------------------
   // US Open Finance use cases — require a US IP address.
-  const _US_OF_RENDER_KEYS = new Set(['pfm', 'enrichment', 'recurring', 'psi', 'financeincolour', 'the_wire']);
+  const _US_OF_RENDER_KEYS = new Set(['pfm', 'enrichment', 'recurring', 'psi', 'financeincolour']);
 
   function _setUsIpBannerVisible(visible) {
     const banner = document.getElementById('uc-us-ip-banner');
@@ -358,8 +360,6 @@ import './features/apiGuide.js';
       renderTxNotify();
     } else if (uc.render === "testchat") {
       renderTestChat();
-    } else if (uc.render === "the_wire") {
-      renderTheWire();
     } else if (uc.render === "financeincolour") {
       _renderCachedWebview('financeincolour', 'financeincolour-webview-frame', _appPath('/financeincolour/index.html'), 'Finance In Colour');
     } else {
@@ -3231,14 +3231,6 @@ import './features/apiGuide.js';
 
   function renderFindACard() {
     _renderCachedWebview('findacard', 'findacard-webview-frame', _appPath('/findacard/index.html'), 'Find A Card');
-  }
-
-  // ===================== The Wire Use Case =====================
-  // Rendered as a sandboxed iframe pointing to /the_wire/index.html.
-  // All The Wire UI lives in usecases/the_wire/ — edit there to change the look.
-
-  function renderTheWire() {
-    _renderCachedWebview('the_wire', 'the-wire-webview-frame', _appPath('/the_wire/index.html'), 'The Wire');
   }
 
   // ===================== Sonic Branding Use Case =====================

@@ -28,6 +28,12 @@ export function loadUseCases() {
 export function getBundlesCache() { return _bundlesCache; }
 export function getUseCasesCache() { return _useCasesCache; }
 
+// Seed from the server-inlined data (window.__BUNDLES__ / window.__USE_CASES__)
+// so synchronous callers like the search index always get data immediately,
+// even before the async fetch resolves.
+if (!_bundlesCache && window.__BUNDLES__) _bundlesCache = window.__BUNDLES__;
+if (!_useCasesCache && window.__USE_CASES__) _useCasesCache = window.__USE_CASES__;
+
 // Warm both caches at startup, matching the original eager load.
 loadBundles();
 loadUseCases();
