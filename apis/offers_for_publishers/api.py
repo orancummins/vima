@@ -266,7 +266,7 @@ def _presentment_url(path: str) -> str:
     from simulator.switcher import is_simulated
     if is_simulated("offers_for_publishers"):
         port = int(os.environ.get("PORT", 9021))
-        return f"http://localhost:{port}/api-sim/ofpub/presentment{path}"
+        return f"http://localhost:{port}/api-sim/offers_for_publishers/presentment{path}"
     base = _PROD_BASE if _is_prod() else _SANDBOX_BASE
     return f"{base}{_PRESENTMENT_SUFFIX}{path}"
 
@@ -275,7 +275,7 @@ def _admin_url(path: str) -> str:
     from simulator.switcher import is_simulated
     if is_simulated("offers_for_publishers"):
         port = int(os.environ.get("PORT", 9021))
-        return f"http://localhost:{port}/api-sim/ofpub/admin{path}"
+        return f"http://localhost:{port}/api-sim/offers_for_publishers/admin{path}"
     base = _PROD_BASE if _is_prod() else _SANDBOX_BASE
     return f"{base}{path}"
 
