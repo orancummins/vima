@@ -5,9 +5,10 @@ explorer. The service must be running locally for this use case to work;
 if it is not reachable the UI shows an offline state.
 """
 from __future__ import annotations
-from typing import Any, Dict
 
-MANIFEST: Dict[str, Any] = {
+from typing import Any
+
+MANIFEST: dict[str, Any] = {
     "id": "findacard",
     "name": "Find A Card",
     "description": (
@@ -16,7 +17,7 @@ MANIFEST: Dict[str, Any] = {
         "This UI is built to illustrate how the agent would work, it will have the ability "
         "to fully autonomously source and provision a card to your wallet."
     ),
-    "apis": ["Open Finance", "MDES", "Offers", "Rewards"],
+    "apis": ["open_finance", "offers_for_publishers"],
     "render": "findacard",
     "local_port": 5432,
 }

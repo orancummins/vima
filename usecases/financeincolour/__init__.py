@@ -17,10 +17,9 @@ fingerprint summary tailored to the visualisations.
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, List
+from typing import Any
 
-
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "financeincolour",
     "name": "Finance In Colour",
     "description": (
@@ -33,24 +32,21 @@ MANIFEST: Dict[str, Any] = {
         "the above into one personalised graphic — so a single glance "
         "tells you who this customer is, financially."
     ),
-    "apis": ["ofin"],
+    "apis": ["open_finance"],
     "render": "financeincolour",
 }
 
-
 def _client():
-    from apis.ofin import api as ofin_api
+    from apis.open_finance import api as ofin_api
     return ofin_api._get_client()
 
-
-def _categorize(txn: Dict[str, Any]) -> str:
+def _categorize(txn: dict[str, Any]) -> str:
     cat = (txn.get("categorization") or {}).get("category")
     if cat:
         return cat
     if txn.get("amount", 0) > 0:
         return "Income"
     return "Other"
-
 
 def _day_key(ts: int) -> str:
     # YYYY-MM-DD in UTC for grouping
@@ -60,8 +56,7 @@ def _day_key(ts: int) -> str:
     except Exception:
         return "1970-01-01"
 
-
-def get_data(customer_id: str) -> Dict[str, Any]:
+def get_data(customer_id: str) -> dict[str, Any]:
     """Fetch and shape data for the Finance In Colour dashboard."""
     client = _client()
 
@@ -104,13 +99,13 @@ def get_data(customer_id: str) -> Dict[str, Any]:
             break
 
     # ── Daily flow series ─────────────────────────────────────────────
-    daily: Dict[str, Dict[str, float]] = {}
-    cat_totals: Dict[str, float] = {}
+    daily: dict[str, dict[str, float]] = {}
+    cat_totals: dict[str, float] = {}
     total_in = 0.0
     total_out = 0.0
     txn_count_in = 0
     txn_count_out = 0
-    shaped_txns: List[Dict[str, Any]] = []
+    shaped_txns: list[dict[str, Any]] = []
 
     for t in transactions:
         amt = float(t.get("amount") or 0)
@@ -139,7 +134,7 @@ def get_data(customer_id: str) -> Dict[str, Any]:
 
     # Fill in zero-value days so the chart has a continuous x-axis
     import datetime
-    series: List[Dict[str, Any]] = []
+    series: list[dict[str, Any]] = []
     start_dt = datetime.datetime.utcfromtimestamp(past).date()
     end_dt = datetime.datetime.utcfromtimestamp(now).date()
     cur = start_dt
@@ -175,11 +170,11 @@ def get_data(customer_id: str) -> Dict[str, Any]:
         amt = float(t.get("amount") or 0)
         ts = int(t.get("transactionDate") or 0)
         if ts >= cutoff_recent:
-            if amt < 0: recent_out += abs(amt)
-            else:       recent_in  += amt
+            if amt < 0: recent_out += abs(amt)  # noqa: E701
+            else:       recent_in  += amt        # noqa: E701
         elif ts >= cutoff_prior:
-            if amt < 0: prior_out += abs(amt)
-            else:       prior_in  += amt
+            if amt < 0: prior_out += abs(amt)    # noqa: E701
+            else:       prior_in  += amt         # noqa: E701
 
     def _pct_change(now_v: float, prev_v: float) -> float:
         if prev_v <= 0:
@@ -256,8 +251,7 @@ def get_data(customer_id: str) -> Dict[str, Any]:
         "fingerprint": fingerprint,
     }
 
-
-def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
     """Backend actions for the Finance In Colour connect flow."""
     client = _client()
 

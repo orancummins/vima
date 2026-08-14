@@ -1,0 +1,16 @@
+{
+  "customers": [
+    {"id": "1005061234", "username": "au_demo_customer_1", "type": "testing", "createdDate": 1735660800, "firstName": "Alice", "lastName": "Smith"},
+    {"id": "1005061235", "username": "au_demo_customer_2", "type": "testing", "createdDate": 1735660900, "firstName": "Bob", "lastName": "Jones"}
+  ],
+  "accounts": [
+    {"id": "5011648377", "number": "8000001234", "accountNumberDisplay": "1234-9", "realAccountNumberLast4": "5678", "name": "Super Transaction", "balance": 401.26, "type": "transaction", "aggregationStatusCode": 0, "status": "active", "customerId": "1005061234", "institutionId": "4222", "currency": "AUD", "createdDate": 1735660800, "lastUpdatedDate": 1748131200, "institutionLoginId": 1007302745},
+    {"id": "5011648378", "number": "1000002222", "accountNumberDisplay": "2222", "name": "FinBank Aus Savings", "balance": 10500.00, "type": "savings", "aggregationStatusCode": 0, "status": "active", "customerId": "1005061234", "institutionId": "4222", "currency": "AUD", "createdDate": 1735660800, "lastUpdatedDate": 1748131200, "institutionLoginId": 1007302745},
+    {"id": "5011648379", "number": "4100007777", "accountNumberDisplay": "7777", "name": "FinBank Aus Credit Card", "balance": -429.29, "type": "creditCard", "aggregationStatusCode": 0, "status": "active", "customerId": "1005061234", "institutionId": "4222", "currency": "AUD", "createdDate": 1735660800, "lastUpdatedDate": 1748131200, "institutionLoginId": 1007302745}
+  ],
+  "institutions": [
+    {"id": "4222", "name": "Finbank Aus OAuth", "voa": true, "voi": true, "transAgg": true, "accountTypeDescription": "Personal", "phone": "+61 1300 000 000", "urlHomeApp": "https://finbank-aus.example", "urlLogonApp": "https://finbank-aus.example/login", "oauthEnabled": true, "currency": "AUD", "address": {"city": "Sydney", "state": "NSW", "country": "AUS", "postalCode": "2000"}, "status": "online"},
+    {"id": "4223", "name": "Commonwealth Test Bank", "voa": true, "voi": true, "transAgg": true, "accountTypeDescription": "Personal", "phone": "+61 1300 000 001", "urlHomeApp": "https://ctb.example", "urlLogonApp": "https://ctb.example/login", "oauthEnabled": true, "currency": "AUD", "address": {"city": "Sydney", "state": "NSW", "country": "AUS", "postalCode": "2000"}, "status": "online"},
+    {"id": "4224", "name": "ANZ Test Online", "voa": false, "voi": true, "transAgg": true, "accountTypeDescription": "Personal", "phone": "+61 1300 000 002", "urlHomeApp": "https://anz-test.example", "urlLogonApp": "https://anz-test.example/login", "oauthEnabled": true, "currency": "AUD", "address": {"city": "Melbourne", "state": "VIC", "country": "AUS", "postalCode": "3000"}, "status": "online"}
+  ]
+}

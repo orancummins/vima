@@ -1,0 +1,126 @@
+/* ==========================================================================
+   Vima Chat / Global Edit modal — shared modal styles
+   (Used by the global "Edit with Claude" button in the header)
+   ========================================================================== */
+
+.tc-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.tc-modal-backdrop--open { opacity: 1; }
+
+.tc-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(47vw, 557px);
+  height: min(85vh, 820px);
+  background: linear-gradient(170deg, #161310 0%, #0f0f0f 60%);
+  border: 1px solid rgba(255, 150, 60, 0.22);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 150, 60, 0.08),
+    inset 0 1px 0 rgba(255, 200, 140, 0.06);
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tc-modal-backdrop--open .tc-modal {
+  transform: translateY(0) scale(1);
+}
+
+.tc-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 150, 60, 0.18);
+  background: linear-gradient(180deg, rgba(255, 95, 0, 0.10) 0%, rgba(255, 95, 0, 0) 100%);
+  flex-shrink: 0;
+}
+.tc-modal-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.02em;
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Pulsing orange dot prefix — matches the .aotd-modal-eyebrow-dot so
+   Edit-with-Claude reads as the same family as API of the Day. */
+.tc-modal-title::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff6a00;
+  box-shadow: 0 0 10px rgba(255, 106, 0, 0.85);
+  animation: aotdPulse 2.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.tc-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.tc-modal-close:hover {
+  background: rgba(255, 95, 0, 0.14);
+  color: #ffb070;
+}
+
+.tc-modal-iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #fff;
+}
+
+.tc-modal-banner {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.tc-modal-banner--hidden { display: none; }
+.tc-modal-banner--restart {
+  background: #3a1a1a;
+  color: #fca5a5;
+  border-top-color: #7f1d1d;
+}
+.tc-modal-banner--refresh {
+  background: #1a2a3a;
+  color: #93c5fd;
+  border-top-color: #1e3a5f;
+}
+.tc-modal-banner--done {
+  background: #1a2e1f;
+  color: #86efac;
+  border-top-color: #14532d;
+}
+.tc-modal-banner svg { flex-shrink: 0; opacity: 0.85; }
+

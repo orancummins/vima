@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Globe</title>
+  <script src="/static/js/usecase-theme.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #ffffff;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    }
+    canvas {
+      display: block;
+      position: absolute;
+    }
+    
+    /* Settings Panel */
+    .settings-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 20px;
+      width: 320px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      color: #1a1a2e;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+    
+    .settings-header {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e8e8e8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #1a1a2e;
+    }
+    
+
+    
+    .setting-group {
+      margin-bottom: 20px;
+    }
+    
+    .setting-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #2a2a3e;
+    }
+    
+    .setting-value {
+      font-size: 12px;
+      color: #888;
+      margin-left: 8px;
+    }
+    
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #e0e0e0;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #10b981;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #10b981;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    input[type="color"] {
+      width: 100%;
+      height: 40px;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      background: #f8f8f8;
+      cursor: pointer;
+    }
+    
+    select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      background: #f8f8f8;
+      color: #1a1a2e;
+      font-size: 13px;
+      cursor: pointer;
+      outline: none;
+    }
+    
+    select option {
+      background: #ffffff;
+      color: #1a1a2e;
+    }
+    
+    .checkbox-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #10b981;
+    }
+    
+    .reset-btn {
+      width: 100%;
+      padding: 10px;
+      background: #f0f0f5;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      color: #1a1a2e;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .reset-btn:hover {
+      background: #e4e4ee;
+      border-color: #b0b0c0;
+    }
+    
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f0f0f0;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #c0c0c0;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a0a0a0;
+    }
+
+    canvas { cursor: pointer; }
+
+    html:not(.theme-light),
+    html:not(.theme-light) body {
+      background: #0a0a0a;
+      color: #f1ede8;
+    }
+
+    html:not(.theme-light) .settings-panel {
+      background: rgba(17, 17, 17, 0.94);
+      border-color: rgba(255, 255, 255, 0.08);
+      color: #f1ede8;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+    }
+
+    html:not(.theme-light) .settings-header {
+      color: #f1ede8;
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    html:not(.theme-light) .setting-label {
+      color: #d6cfc7;
+    }
+
+    html:not(.theme-light) .setting-value {
+      color: #a59c93;
+    }
+
+    html:not(.theme-light) input[type="range"] {
+      background: #2a2a2a;
+    }
+
+    html:not(.theme-light) input[type="color"],
+    html:not(.theme-light) select,
+    html:not(.theme-light) .reset-btn {
+      background: #171717;
+      border-color: rgba(255, 255, 255, 0.1);
+      color: #f1ede8;
+    }
+
+    html:not(.theme-light) select option {
+      background: #111111;
+      color: #f1ede8;
+    }
+
+    html:not(.theme-light) .reset-btn:hover {
+      background: #1d1d1d;
+      border-color: rgba(255, 140, 74, 0.35);
+    }
+
+    html:not(.theme-light) .setting-label[style] {
+      border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    html:not(.theme-light) ::-webkit-scrollbar-track {
+      background: #151515;
+    }
+
+    html:not(.theme-light) ::-webkit-scrollbar-thumb {
+      background: #3a3a3a;
+    }
+
+    html:not(.theme-light) ::-webkit-scrollbar-thumb:hover {
+      background: #4a4a4a;
+    }
+
+  </style>
+</head>
+<body>
+  <canvas id="globe"></canvas>
+
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-header">
+      <span>Globe Settings</span>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Globe Color
+      </label>
+      <input type="color" id="globeColor" value="#10b981">
+    </div>
+
+    <div class="setting-group">
+      <label class="setting-label">Quick Presets</label>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">
+        <button class="preset-swatch" data-color="#3b82f6" style="height:32px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#3b82f6;cursor:pointer;"></button>
+        <button class="preset-swatch" data-color="#06b6d4" style="height:32px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#06b6d4;cursor:pointer;"></button>
+        <button class="preset-swatch" data-color="#a855f7" style="height:32px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#a855f7;cursor:pointer;"></button>
+        <button class="preset-swatch" data-color="#10b981" style="height:32px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#10b981;cursor:pointer;"></button>
+        <button class="preset-swatch" data-color="#f59e0b" style="height:32px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#f59e0b;cursor:pointer;"></button>
+      </div>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Background Style
+      </label>
+      <select id="bgStyle">
+        <option value="purple">Purple Gradient</option>
+        <option value="blue">Blue Gradient</option>
+        <option value="dark">Dark</option>
+        <option value="cosmic">Cosmic</option>
+        <option value="aurora">Aurora</option>
+      </select>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Spin Rate <span class="setting-value" id="spinValue">1.0x</span>
+      </label>
+      <input type="range" id="spinRate" min="0" max="5" step="0.1" value="1">
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Globe Size <span class="setting-value" id="sizeValue">95%</span>
+      </label>
+      <input type="range" id="globeSize" min="30" max="200" step="5" value="95">
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Glow Intensity <span class="setting-value" id="glowValue">90%</span>
+      </label>
+      <input type="range" id="glowIntensity" min="0" max="200" step="10" value="90">
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Grid Opacity <span class="setting-value" id="gridValue">18%</span>
+      </label>
+      <input type="range" id="gridOpacity" min="0" max="100" step="5" value="18">
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Grid Density
+      </label>
+      <select id="gridDensity">
+        <option value="10">Very Dense</option>
+        <option value="15">Dense</option>
+        <option value="20" selected>Normal</option>
+        <option value="30">Sparse</option>
+        <option value="45">Very Sparse</option>
+      </select>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Point Count <span class="setting-value" id="pointValue">80</span>
+      </label>
+      <input type="range" id="pointCount" min="20" max="200" step="10" value="80">
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Point Size <span class="setting-value" id="pointSizeValue">2.5</span>
+      </label>
+      <input type="range" id="pointSize" min="0.5" max="8" step="0.5" value="2.5">
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Grid Line Width <span class="setting-value" id="lineWidthValue">0.8</span>
+      </label>
+      <input type="range" id="lineWidth" min="0.2" max="3" step="0.2" value="0.8">
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        Rotation Axis
+      </label>
+      <select id="rotationAxis">
+        <option value="y" selected>Y-Axis (Vertical)</option>
+        <option value="x">X-Axis (Horizontal)</option>
+        <option value="z">Z-Axis (Forward)</option>
+        <option value="xy">XY Diagonal</option>
+        <option value="xyz">All Axes</option>
+      </select>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="autoRotate" checked>
+          <span>Auto Rotate</span>
+        </div>
+      </label>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="showPoints" checked>
+          <span>Show Points</span>
+        </div>
+      </label>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="showGrid" checked>
+          <span>Show Grid</span>
+        </div>
+      </label>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="showGlow" checked>
+          <span>Show Glow</span>
+        </div>
+      </label>
+    </div>
+    
+    <div class="setting-group">
+      <label class="setting-label">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="pulseMode">
+          <span>Pulse Mode (heartbeat)</span>
+        </div>
+      </label>
+    </div>
+
+    <div class="setting-group">
+      <label class="setting-label">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="wobbleMode">
+          <span>Wobble (floaty drift)</span>
+        </div>
+      </label>
+    </div>
+
+    <div class="setting-group">
+      <label class="setting-label">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="rainbowMode">
+          <span>Rainbow Color Shift</span>
+        </div>
+      </label>
+    </div>
+
+    <div class="setting-group">
+      <label class="setting-label">
+        Rainbow Speed <span class="setting-value" id="rainbowValue">1.0x</span>
+      </label>
+      <input type="range" id="rainbowSpeed" min="0.1" max="5" step="0.1" value="1">
+    </div>
+
+    <div class="setting-group">
+      <button class="reset-btn" id="reverseBtn">&#x27F2; Reverse Spin</button>
+    </div>
+
+    <!-- Sphere Positioning -->
+    <div class="setting-group">
+      <label class="setting-label" style="font-size:14px;font-weight:700;border-bottom:1px solid #e8e8e8;padding-bottom:6px;display:block;margin-bottom:12px;">Sphere Positioning</label>
+
+      <label class="setting-label">
+        Horizontal Offset <span class="setting-value" id="sphereXValue">0</span>
+      </label>
+      <input type="range" id="sphereOffsetX" min="-400" max="400" step="5" value="0">
+    </div>
+
+    <div class="setting-group">
+      <label class="setting-label">
+        Vertical Offset <span class="setting-value" id="sphereYValue">0</span>
+      </label>
+      <input type="range" id="sphereOffsetY" min="-400" max="400" step="5" value="0">
+    </div>
+
+    <div class="setting-group">
+      <button class="reset-btn" id="resetPositionBtn">&#x2316; Reset Position</button>
+    </div>
+
+    <div class="setting-group">
+      <button class="reset-btn" id="resetBtn">Reset to Defaults</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('globe');
+      const ctx = canvas.getContext('2d');
+      
+      // Settings state
+      const settings = {
+        speed: 0.003,
+        glow: 0.9,
+        size: 0.95,
+        color: '#10b981',
+        bgStyle: 'purple',
+        gridOpacity: 0.18,
+        gridDensity: 20,
+        pointCount: 80,
+        pointSize: 2.5,
+        lineWidth: 0.8,
+        rotationAxis: 'y',
+        autoRotate: true,
+        showPoints: true,
+        showGrid: true,
+        showGlow: true,
+        pulseMode: false,
+        wobbleMode: false,
+        rainbowMode: false,
+        rainbowSpeed: 1,
+        spinDir: 1,
+        sphereOffsetX: 0,
+        sphereOffsetY: 0
+      };
+      
+      const defaults = { ...settings };
+      const SETTINGS_STORAGE_KEY = 'vima:testchat:settings';
+
+      function persistSettings() {
+        try {
+          localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+        } catch (_) {}
+      }
+
+      function restoreSettings() {
+        try {
+          const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== 'object') return;
+          Object.keys(defaults).forEach((key) => {
+            if (Object.prototype.hasOwnProperty.call(parsed, key)) {
+              settings[key] = parsed[key];
+            }
+          });
+        } catch (_) {}
+      }
+
+      restoreSettings();
+      
+      // Settings panel (always visible — no toggle)
+      
+      // Setting controls
+      const globeColorInput = document.getElementById('globeColor');
+      const bgStyleInput = document.getElementById('bgStyle');
+      const spinRateInput = document.getElementById('spinRate');
+      const globeSizeInput = document.getElementById('globeSize');
+      const glowIntensityInput = document.getElementById('glowIntensity');
+      const gridOpacityInput = document.getElementById('gridOpacity');
+      const gridDensityInput = document.getElementById('gridDensity');
+      const pointCountInput = document.getElementById('pointCount');
+      const pointSizeInput = document.getElementById('pointSize');
+      const lineWidthInput = document.getElementById('lineWidth');
+      const rotationAxisInput = document.getElementById('rotationAxis');
+      const autoRotateInput = document.getElementById('autoRotate');
+      const showPointsInput = document.getElementById('showPoints');
+      const showGridInput = document.getElementById('showGrid');
+      const showGlowInput = document.getElementById('showGlow');
+      const resetBtn = document.getElementById('resetBtn');
+      const pulseModeInput = document.getElementById('pulseMode');
+      const wobbleModeInput = document.getElementById('wobbleMode');
+      const rainbowModeInput = document.getElementById('rainbowMode');
+      const rainbowSpeedInput = document.getElementById('rainbowSpeed');
+      const rainbowValue = document.getElementById('rainbowValue');
+      const reverseBtn = document.getElementById('reverseBtn');
+      const sphereOffsetXInput = document.getElementById('sphereOffsetX');
+      const sphereOffsetYInput = document.getElementById('sphereOffsetY');
+      const sphereXValue = document.getElementById('sphereXValue');
+      const sphereYValue = document.getElementById('sphereYValue');
+      const resetPositionBtn = document.getElementById('resetPositionBtn');
+      const presetSwatches = document.querySelectorAll('.preset-swatch');
+      
+      // Value displays
+      const spinValue = document.getElementById('spinValue');
+      const sizeValue = document.getElementById('sizeValue');
+      const glowValue = document.getElementById('glowValue');
+      const gridValue = document.getElementById('gridValue');
+      const pointValue = document.getElementById('pointValue');
+      const pointSizeValue = document.getElementById('pointSizeValue');
+      const lineWidthValue = document.getElementById('lineWidthValue');
+
+      function syncControlsFromSettings() {
+        globeColorInput.value = settings.color;
+        bgStyleInput.value = settings.bgStyle;
+        spinRateInput.value = (settings.speed / 0.003).toFixed(1);
+        globeSizeInput.value = String(Math.round(settings.size * 100));
+        glowIntensityInput.value = String(Math.round(settings.glow * 100));
+        gridOpacityInput.value = String(Math.round(settings.gridOpacity * 100));
+        gridDensityInput.value = String(settings.gridDensity);
+        pointCountInput.value = String(settings.pointCount);
+        pointSizeInput.value = String(settings.pointSize);
+        lineWidthInput.value = String(settings.lineWidth);
+        rotationAxisInput.value = settings.rotationAxis;
+        autoRotateInput.checked = settings.autoRotate;
+        showPointsInput.checked = settings.showPoints;
+        showGridInput.checked = settings.showGrid;
+        showGlowInput.checked = settings.showGlow;
+        pulseModeInput.checked = settings.pulseMode;
+        wobbleModeInput.checked = settings.wobbleMode;
+        rainbowModeInput.checked = settings.rainbowMode;
+        rainbowSpeedInput.value = String(settings.rainbowSpeed);
+
+        spinValue.textContent = (settings.speed / 0.003).toFixed(1) + 'x';
+        sizeValue.textContent = Math.round(settings.size * 100) + '%';
+        glowValue.textContent = Math.round(settings.glow * 100) + '%';
+        gridValue.textContent = Math.round(settings.gridOpacity * 100) + '%';
+        pointValue.textContent = String(settings.pointCount);
+        pointSizeValue.textContent = Number(settings.pointSize).toFixed(1).replace(/\.0$/, '.0');
+        lineWidthValue.textContent = Number(settings.lineWidth).toFixed(1).replace(/\.0$/, '.0');
+        rainbowValue.textContent = Number(settings.rainbowSpeed).toFixed(1) + 'x';
+        sphereOffsetXInput.value = String(settings.sphereOffsetX);
+        sphereOffsetYInput.value = String(settings.sphereOffsetY);
+        sphereXValue.textContent = (settings.sphereOffsetX >= 0 ? '+' : '') + settings.sphereOffsetX + 'px';
+        sphereYValue.textContent = (settings.sphereOffsetY >= 0 ? '+' : '') + settings.sphereOffsetY + 'px';
+      }
+
+      syncControlsFromSettings();
+      
+      // Event listeners
+      globeColorInput.addEventListener('input', (e) => {
+        settings.color = e.target.value;
+        persistSettings();
+      });
+      
+      bgStyleInput.addEventListener('change', (e) => {
+        settings.bgStyle = e.target.value;
+        updateBackground();
+        persistSettings();
+      });
+      
+      spinRateInput.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        settings.speed = 0.003 * value;
+        spinValue.textContent = value.toFixed(1) + 'x';
+        persistSettings();
+      });
+      
+      globeSizeInput.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        settings.size = value / 100;
+        sizeValue.textContent = value + '%';
+        resize();
+        persistSettings();
+      });
+      
+      glowIntensityInput.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        settings.glow = value / 100;
+        glowValue.textContent = value + '%';
+        persistSettings();
+      });
+      
+      gridOpacityInput.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        settings.gridOpacity = value / 100;
+        gridValue.textContent = value + '%';
+        persistSettings();
+      });
+      
+      gridDensityInput.addEventListener('change', (e) => {
+        settings.gridDensity = parseInt(e.target.value);
+        persistSettings();
+      });
+      
+      pointCountInput.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        settings.pointCount = value;
+        pointValue.textContent = value;
+        generatePoints();
+        persistSettings();
+      });
+      
+      pointSizeInput.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        settings.pointSize = value;
+        pointSizeValue.textContent = value.toFixed(1);
+        persistSettings();
+      });
+      
+      lineWidthInput.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        settings.lineWidth = value;
+        lineWidthValue.textContent = value.toFixed(1);
+        persistSettings();
+      });
+      
+      rotationAxisInput.addEventListener('change', (e) => {
+        settings.rotationAxis = e.target.value;
+        persistSettings();
+      });
+      
+      autoRotateInput.addEventListener('change', (e) => {
+        settings.autoRotate = e.target.checked;
+        persistSettings();
+      });
+      
+      showPointsInput.addEventListener('change', (e) => {
+        settings.showPoints = e.target.checked;
+        persistSettings();
+      });
+      
+      showGridInput.addEventListener('change', (e) => {
+        settings.showGrid = e.target.checked;
+        persistSettings();
+      });
+      
+      showGlowInput.addEventListener('change', (e) => {
+        settings.showGlow = e.target.checked;
+        persistSettings();
+      });
+      
+      // New creative controls
+      pulseModeInput.addEventListener('change', (e) => {
+        settings.pulseMode = e.target.checked;
+        persistSettings();
+      });
+      wobbleModeInput.addEventListener('change', (e) => {
+        settings.wobbleMode = e.target.checked;
+        persistSettings();
+      });
+      rainbowModeInput.addEventListener('change', (e) => {
+        settings.rainbowMode = e.target.checked;
+        persistSettings();
+      });
+      rainbowSpeedInput.addEventListener('input', (e) => {
+        const v = parseFloat(e.target.value);
+        settings.rainbowSpeed = v;
+        rainbowValue.textContent = v.toFixed(1) + 'x';
+        persistSettings();
+      });
+      reverseBtn.addEventListener('click', () => {
+        settings.spinDir *= -1;
+        persistSettings();
+      });
+      sphereOffsetXInput.addEventListener('input', (e) => {
+        const v = parseInt(e.target.value);
+        settings.sphereOffsetX = v;
+        sphereXValue.textContent = (v >= 0 ? '+' : '') + v + 'px';
+        resize();
+        persistSettings();
+      });
+      sphereOffsetYInput.addEventListener('input', (e) => {
+        const v = parseInt(e.target.value);
+        settings.sphereOffsetY = v;
+        sphereYValue.textContent = (v >= 0 ? '+' : '') + v + 'px';
+        resize();
+        persistSettings();
+      });
+      resetPositionBtn.addEventListener('click', () => {
+        settings.sphereOffsetX = 0;
+        settings.sphereOffsetY = 0;
+        sphereOffsetXInput.value = '0';
+        sphereOffsetYInput.value = '0';
+        sphereXValue.textContent = '+0px';
+        sphereYValue.textContent = '+0px';
+        resize();
+        persistSettings();
+      });
+      presetSwatches.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const c = btn.dataset.color;
+          settings.color = c;
+          globeColorInput.value = c;
+          // Turn off rainbow if user picks manual color
+          settings.rainbowMode = false;
+          rainbowModeInput.checked = false;
+          persistSettings();
+        });
+      });
+
+      // Click on ball detection
+      canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        const r  = Math.min(rect.width, rect.height) * 0.5;
+        const dx = x - cx, dy = y - cy;
+        if (dx * dx + dy * dy <= r * r) {
+        }
+      });
+
+      resetBtn.addEventListener('click', () => {
+        Object.assign(settings, defaults);
+        syncControlsFromSettings();
+        updateBackground();
+        generatePoints();
+        persistSettings();
+      });
+      
+      function updateBackground() {
+        if (!document.documentElement.classList.contains('theme-light')) {
+          document.body.style.background = '#000000';
+          return;
+        }
+        const gradients = {
+          purple: '#ffffff',
+          blue: '#ffffff',
+          dark: '#ffffff',
+          cosmic: '#ffffff',
+          aurora: '#ffffff'
+        };
+        document.body.style.background = gradients[settings.bgStyle] || '#ffffff';
+      }
+
+      function resize() {
+        // Account for the use-case menu on the left (~280px) and settings panel on the right (320px wide + 20px gap = 340px)
+        const menuW     = 280;
+        const panelW    = 340;
+        const padding   = 16; // breathing room on each side
+        const leftEdge  = menuW + padding;
+        const rightEdge = window.innerWidth - panelW - padding;
+        const availW    = rightEdge - leftEdge;
+        const availH    = window.innerHeight;
+        const s = Math.min(availW, availH) * settings.size;
+        canvas.width  = s;
+        canvas.height = s;
+        // Centre the canvas in the gap between menu and panel
+        canvas.style.left = (leftEdge + (availW - s) / 2 + settings.sphereOffsetX) + 'px';
+        canvas.style.top  = ((availH - s) / 2 + settings.sphereOffsetY) + 'px';
+      }
+      resize();
+      updateBackground();
+      window.addEventListener('resize', resize);
+      new MutationObserver(() => updateBackground())
+        .observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+      // Fibonacci lattice points
+      let pts = [];
+      
+      function generatePoints() {
+        pts = [];
+        const TOTAL = settings.pointCount;
+        for (let i = 0; i < TOTAL; i++) {
+          const phi   = Math.acos(-1 + (2 * i) / TOTAL);
+          const theta = Math.sqrt(TOTAL * Math.PI) * phi;
+          pts.push({
+            x: Math.cos(theta) * Math.sin(phi),
+            y: Math.sin(theta) * Math.sin(phi),
+            z: Math.cos(phi),
+          });
+        }
+      }
+      
+      generatePoints();
+
+      let rotX = 0, rotY = 0, rotZ = 0, lastT = null;
+
+      function frame(ts) {
+        const delta = lastT ? Math.min((ts - lastT) / 16.667, 2) : 1;
+        lastT = ts;
+
+        // Rainbow color shift
+        if (settings.rainbowMode) {
+          const hue = (ts * 0.05 * settings.rainbowSpeed) % 360;
+          settings.color = hslToHex(hue, 80, 60);
+        }
+
+        const SIZE = canvas.width;
+        // Pulse scale modifier (visual radius oscillation)
+        const pulse = settings.pulseMode
+          ? 1 + 0.08 * Math.sin(ts * 0.006) + 0.04 * Math.sin(ts * 0.018)
+          : 1;
+        const R  = SIZE * 0.5 * pulse;
+        // Wobble drift offset
+        const wob = settings.wobbleMode
+          ? { x: Math.sin(ts * 0.0011) * SIZE * 0.04, y: Math.cos(ts * 0.0009) * SIZE * 0.03 }
+          : { x: 0, y: 0 };
+        const cx = SIZE / 2 + wob.x, cy = SIZE / 2 + wob.y;
+
+        ctx.clearRect(0, 0, SIZE, SIZE);
+
+        // Radial glow
+        if (settings.showGlow) {
+          const g = ctx.createRadialGradient(cx, cy, R * 0.2, cx, cy, R);
+          const rgb = hexToRgb(settings.color);
+          g.addColorStop(0,    `rgba(${rgb.r},${rgb.g},${rgb.b},${0.18 * settings.glow})`);
+          g.addColorStop(0.45, `rgba(${rgb.r},${rgb.g},${rgb.b},${0.10 * settings.glow})`);
+          g.addColorStop(1,    'rgba(0,0,0,0)');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(cx, cy, R * 1.35, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Grid
+        if (settings.showGrid) {
+          const ga = settings.gridOpacity * settings.glow;
+          ctx.lineWidth = settings.lineWidth;
+          const density = settings.gridDensity;
+
+          for (let lat = -80; lat <= 80; lat += density) {
+            const lr = lat * Math.PI / 180;
+            for (let seg = 0; seg < 360; seg += 4) {
+              const l0 = seg       * Math.PI / 180 + rotY;
+              const l1 = (seg + 4) * Math.PI / 180 + rotY;
+              
+              let p0 = rotatePoint(Math.cos(lr) * Math.cos(l0), Math.sin(lr), Math.cos(lr) * Math.sin(l0));
+              let p1 = rotatePoint(Math.cos(lr) * Math.cos(l1), Math.sin(lr), Math.cos(lr) * Math.sin(l1));
+              
+              const z0 = p0.z;
+              const z1 = p1.z;
+              const a  = ga * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
+              if (a < 0.005) continue;
+              const s0 = 1 / (1.8 - z0), s1 = 1 / (1.8 - z1);
+              const rgb = hexToRgb(settings.color);
+              ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${a})`;
+              ctx.beginPath();
+              ctx.moveTo(cx + p0.x * R * s0, cy + p0.y * R * s0);
+              ctx.lineTo(cx + p1.x * R * s1, cy + p1.y * R * s1);
+              ctx.stroke();
+            }
+          }
+
+          for (let lon = 0; lon < 360; lon += density) {
+            for (let seg = -88; seg < 90; seg += 4) {
+              const la0 = seg       * Math.PI / 180;
+              const la1 = (seg + 4) * Math.PI / 180;
+              const lr  = lon * Math.PI / 180 + rotY;
+              
+              let p0 = rotatePoint(Math.cos(la0) * Math.cos(lr), Math.sin(la0), Math.cos(la0) * Math.sin(lr));
+              let p1 = rotatePoint(Math.cos(la1) * Math.cos(lr), Math.sin(la1), Math.cos(la1) * Math.sin(lr));
+              
+              const z0 = p0.z;
+              const z1 = p1.z;
+              const a   = ga * Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
+              if (a < 0.005) continue;
+              const s0 = 1 / (1.8 - z0), s1 = 1 / (1.8 - z1);
+              const rgb = hexToRgb(settings.color);
+              ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${a})`;
+              ctx.beginPath();
+              ctx.moveTo(cx + p0.x * R * s0, cy + p0.y * R * s0);
+              ctx.lineTo(cx + p1.x * R * s1, cy + p1.y * R * s1);
+              ctx.stroke();
+            }
+          }
+        }
+
+        // Dots
+        if (settings.showPoints) {
+          const rgb = hexToRgb(settings.color);
+          pts.map(p => {
+            const rotated = rotatePoint(p.x, p.y, p.z);
+            const sc = 1 / (1.8 - rotated.z);
+            const op = 0.15 + Math.max(0, Math.min(1, (rotated.z + 0.2) / 0.4)) * 0.85;
+            return { 
+              px: cx + rotated.x * R * sc, 
+              py: cy + rotated.y * R * sc, 
+              rz: rotated.z, 
+              sc, 
+              op, 
+              v: rotated.z > -0.18 
+            };
+          }).filter(p => p.v).sort((a, b) => a.rz - b.rz).forEach(p => {
+            ctx.save();
+            ctx.shadowColor = `rgba(${rgb.r},${rgb.g},${rgb.b},0.95)`;
+            ctx.shadowBlur  = 8 * p.sc;
+            ctx.fillStyle   = `rgba(${rgb.r},${rgb.g},${rgb.b},${p.op})`;
+            ctx.beginPath();
+            ctx.arc(p.px, p.py, settings.pointSize * p.sc, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          });
+        }
+
+        if (settings.autoRotate) {
+          const s = settings.speed * delta * settings.spinDir;
+          if (settings.rotationAxis === 'y') {
+            rotY += s;
+          } else if (settings.rotationAxis === 'x') {
+            rotX += s;
+          } else if (settings.rotationAxis === 'z') {
+            rotZ += s;
+          } else if (settings.rotationAxis === 'xy') {
+            rotX += s * 0.5;
+            rotY += s;
+          } else if (settings.rotationAxis === 'xyz') {
+            rotX += s * 0.3;
+            rotY += s;
+            rotZ += s * 0.2;
+          }
+        }
+        
+        requestAnimationFrame(frame);
+      }
+      
+      function rotatePoint(x, y, z) {
+        // Rotate around Y axis
+        let x1 = x * Math.cos(rotY) - z * Math.sin(rotY);
+        let z1 = x * Math.sin(rotY) + z * Math.cos(rotY);
+        
+        // Rotate around X axis
+        let y1 = y * Math.cos(rotX) - z1 * Math.sin(rotX);
+        let z2 = y * Math.sin(rotX) + z1 * Math.cos(rotX);
+        
+        // Rotate around Z axis
+        let x2 = x1 * Math.cos(rotZ) - y1 * Math.sin(rotZ);
+        let y2 = x1 * Math.sin(rotZ) + y1 * Math.cos(rotZ);
+        
+        return { x: x2, y: y2, z: z2 };
+      }
+      
+      function hslToHex(h, s, l) {
+        s /= 100; l /= 100;
+        const k = n => (n + h / 30) % 12;
+        const a = s * Math.min(l, 1 - l);
+        const f = n => {
+          const c = l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+          return Math.round(c * 255).toString(16).padStart(2, '0');
+        };
+        return `#${f(0)}${f(8)}${f(4)}`;
+      }
+
+      function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16)
+        } : { r: 255, g: 255, b: 255 };
+      }
+
+      requestAnimationFrame(frame);
+    }());
+  </script>
+</body>
+</html>

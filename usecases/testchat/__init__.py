@@ -1,8 +1,9 @@
 """Test Chat — revolving globe interface placeholder."""
 from __future__ import annotations
-from typing import Any, Dict
 
-MANIFEST: Dict[str, Any] = {
+from typing import Any
+
+MANIFEST: dict[str, Any] = {
     "id": "testchat",
     "name": "Test Chat",
     "description": (

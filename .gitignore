@@ -1,13 +1,47 @@
-.env
+config/.env
+config/.env.*
 .venv/
 venv/
 __pycache__/
 *.pyc
 .DS_Store
+open_finance_state.json
+open_finance.db
+simulator/db/*.db
 
 # Signing keys / certificates
+config/keys/
 *.p12
 *.pkcs12
+*.pem
+private.key
 
 # Local enrichment cache
 usecases/.enrichment_cache.json
+
+# vima-chat runtime artifacts
+chat/server.log
+chat/.server.pid
+chat/.env
+
+# Local pip install target used during development/testing
+.pylibs/
+
+# Config zip bundles
+vima-config*
+
+# ofin CLI portable build output (assembled by cli/build.py)
+cli/dist/
+cli/ofin/sdk/_vendor/*_client.py
+
+# Local-only docs / plans (not for commit)
+*.local.md
+
+# Test results dashboard
+tests/results.db
+tests/test_config.ini
+# Runtime test run artifacts (don't track)
+tests/last_run.log
+tests/last_run.pid
+tests/last_run.done
+tests/last_run.scope

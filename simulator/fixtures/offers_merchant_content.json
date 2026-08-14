@@ -1,0 +1,18 @@
+{
+  "categories": [
+    {"uuid": "cat-uuid-001", "name": "Shoes", "parentCategory": null, "categoryType": "CATEGORY", "subCategories": [{"uuid": "subcat-uuid-001", "name": "Athletic Shoes", "categoryType": "CATEGORY"}]},
+    {"uuid": "cat-uuid-002", "name": "Electronics", "parentCategory": null, "categoryType": "CATEGORY", "subCategories": []},
+    {"uuid": "cat-uuid-003", "name": "Dining", "parentCategory": null, "categoryType": "CATEGORY", "subCategories": []}
+  ],
+  "sources": [
+    {"uuid": "src-uuid-001", "name": "Acme Publisher", "type": "SINGLE_SOURCE", "publishers": [{"uuid": "pub-uuid-001", "name": "Main Publisher", "programmes": [{"uuid": "prog-uuid-001", "name": "Standard Programme"}]}]},
+    {"uuid": "src-uuid-002", "name": "Global Offers Network", "type": "MULTI_SOURCE", "publishers": []}
+  ],
+  "merchants": [
+    {"uuid": "mer-uuid-001", "name": "acme_shoes", "displayName": "Acme Shoes", "externalMerchantId": "ext-001", "country": "USA", "language": "en-US", "channel": "ONLINE", "sourceType": "SINGLE_SOURCE", "status": "ACTIVE", "websiteUrl": "https://acmeshoes.example.com", "category": "Shoes"},
+    {"uuid": "mer-uuid-002", "name": "tech_world", "displayName": "Tech World", "externalMerchantId": "ext-002", "country": "USA", "language": "en-US", "channel": "ONLINE", "sourceType": "SINGLE_SOURCE", "status": "ACTIVE", "websiteUrl": "https://techworld.example.com", "category": "Electronics"}
+  ],
+  "offers": [
+    {"uuid": "off-uuid-001", "name": "sample_offer", "headline": "Save 10% at Acme Shoes", "merchant": {"uuid": "mer-uuid-001"}, "source": {"uuid": "src-uuid-001"}, "currency": "USD", "redemptionChannel": "ONLINE", "eventStartDate": "2026-01-01", "eventEndDate": "2026-12-31", "status": "ACTIVE"}
+  ]
+}

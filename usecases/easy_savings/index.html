@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Easy Savings — Mastercard Solution Studio</title>
+  <script src="/static/js/usecase-theme.js"></script>
+  <link rel="stylesheet" href="/easy_savings/style.css">
+  <link rel="stylesheet" href="/static/css/usecase-theme.css">
+</head>
+<body>
+  <div id="uc-body"></div>
+
+<script>
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function $(id) { return document.getElementById(id); }
+
+function escapeHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+const ES = {
+  bin: "52345678",
+  country: "IND",
+  language: "en-US",
+  offers: [],
+  total: 0,
+  loading: false,
+  redeeming: null,   // offer id currently being redeemed
+  redemption: null,  // last redemption result
+  error: null,
+};
+
+// ─── Bootstrap ────────────────────────────────────────────────────────────────
+function renderEasySavings() {
+  esRender();
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function esRender() {
+  const body = $("uc-body");
+  if (!body) return;
+
+  body.innerHTML = `
+    <div class="es-stage">
+      <div class="es-form-card">
+        <div class="es-form-header">
+          <div class="es-form-title">Browse Merchant Offers</div>
+          <div class="es-form-sub">Enter a BIN and country to discover available SME savings.</div>
+        </div>
+        <div class="es-form-row">
+          <div class="es-field">
+            <label for="es-bin">BIN (8 digits)</label>
+            <input id="es-bin" type="text" value="${escapeHtml(ES.bin)}" placeholder="e.g. 52345678" maxlength="8">
+          </div>
+          <div class="es-field">
+            <label for="es-country">Country (ISO-3)</label>
+            <input id="es-country" type="text" value="${escapeHtml(ES.country)}" placeholder="e.g. IND" maxlength="3">
+          </div>
+          <div class="es-field">
+            <label for="es-lang">Language</label>
+            <input id="es-lang" type="text" value="${escapeHtml(ES.language)}" placeholder="e.g. en-US" maxlength="10">
+          </div>
+          <button class="es-btn es-btn--primary" id="es-browse-btn"${ES.loading ? " disabled" : ""}>
+            ${ES.loading
+              ? '<span class="es-spinner"></span>Searching&hellip;'
+              : '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>Browse'}
+          </button>
+        </div>
+      </div>
+      <div class="es-result" id="es-result">
+        ${esResultHtml()}
+      </div>
+    </div>`;
+  esWire();
+}
+
+function esResultHtml() {
+  if (ES.loading) {
+    return '<div class="es-loading"><div class="es-spinner es-spinner--lg"></div><p>Fetching offers&hellip;</p></div>';
+  }
+  if (ES.error) {
+    return '<div class="es-error">' + escapeHtml(String(ES.error)) + '</div>';
+  }
+  if (!ES.offers.length) {
+    return esHeroHtml();
+  }
+
+  let redemptionBanner = "";
+  if (ES.redemption) {
+    const r = ES.redemption;
+    redemptionBanner = `
+      <div class="es-redemption-banner">
+        <div class="es-redemption-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <div class="es-redemption-body">
+          <div class="es-redemption-title">Offer redeemed successfully</div>
+          ${r.orderId ? '<div class="es-redemption-detail"><span class="es-detail-label">Order ID</span> <code>' + escapeHtml(r.orderId) + '</code></div>' : ""}
+          ${r.voucherCode ? '<div class="es-redemption-detail"><span class="es-detail-label">Voucher</span> <code class="es-voucher-code">' + escapeHtml(r.voucherCode) + '</code></div>' : ""}
+          ${r.status ? '<div class="es-redemption-detail"><span class="es-detail-label">Status</span> ' + escapeHtml(r.status) + '</div>' : ""}
+          ${r.redemptionUrl ? '<a class="es-link" href="' + escapeHtml(r.redemptionUrl) + '" target="_blank" rel="noopener">Redeem at merchant &#8599;</a>' : ""}
+        </div>
+        <button class="es-banner-close" id="es-banner-close" title="Dismiss">&times;</button>
+      </div>`;
+  }
+
+  return `
+    ${redemptionBanner}
+    <div class="es-summary-strip">
+      <div class="es-summary-item">
+        <label>Offers found</label>
+        <span>${ES.total}</span>
+      </div>
+      <div class="es-summary-item">
+        <label>BIN</label>
+        <span><code>${escapeHtml(ES.bin)}</code></span>
+      </div>
+      <div class="es-summary-item">
+        <label>Country</label>
+        <span>${escapeHtml(ES.country)}</span>
+      </div>
+    </div>
+    <div class="es-offer-grid">
+      ${ES.offers.map(esOfferCardHtml).join("")}
+    </div>`;
+}
+
+function esOfferCardHtml(offer) {
+  const isRedeeming = ES.redeeming === offer.id;
+  const initials = (offer.merchantName || "?").slice(0, 2).toUpperCase();
+  const logo = offer.merchantLogo
+    ? '<img src="' + escapeHtml(offer.merchantLogo) + '" alt="' + escapeHtml(offer.merchantName) + '" class="es-offer-logo-img" loading="lazy" onerror="this.outerHTML=\'<div class=&quot;es-offer-logo-fallback&quot;>' + escapeHtml(initials) + '</div>\'">'
+    : '<div class="es-offer-logo-fallback">' + escapeHtml(initials) + '</div>';
+
+  const discount = offer.discountValue
+    ? '<span class="es-offer-discount">' + escapeHtml(offer.discountValue) + (offer.discountType ? " " + escapeHtml(offer.discountType) : "") + '</span>'
+    : "";
+
+  const dates = [];
+  if (offer.startDate) dates.push("From " + escapeHtml(offer.startDate));
+  if (offer.endDate) dates.push("Until " + escapeHtml(offer.endDate));
+  const dateHtml = dates.length
+    ? '<div class="es-offer-dates">' + dates.join(" &middot; ") + '</div>'
+    : "";
+
+  return `
+    <div class="es-offer-card" data-offer-id="${escapeHtml(offer.id)}">
+      <div class="es-offer-top">
+        <div class="es-offer-logo">${logo}</div>
+        <div class="es-offer-name-block">
+          <div class="es-offer-merchant">${escapeHtml(offer.merchantName)}</div>
+          ${offer.category ? '<div class="es-offer-cat">' + escapeHtml(offer.category) + '</div>' : ""}
+        </div>
+        ${discount}
+      </div>
+      <div class="es-offer-title">${escapeHtml(offer.title)}</div>
+      ${offer.description ? '<div class="es-offer-desc">' + escapeHtml(offer.description) + '</div>' : ""}
+      ${dateHtml}
+      <div class="es-offer-actions">
+        <button class="es-btn es-btn--redeem" data-redeem-id="${escapeHtml(offer.id)}"${isRedeeming ? " disabled" : ""}>
+          ${isRedeeming
+            ? '<span class="es-spinner"></span>Redeeming&hellip;'
+            : '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;flex-shrink:0"><path d="M5 10h10M10 5v10"/></svg>Redeem'}
+        </button>
+        ${offer.termsUrl ? '<a class="es-terms-link" href="' + escapeHtml(offer.termsUrl) + '" target="_blank" rel="noopener">Terms</a>' : ""}
+      </div>
+    </div>`;
+}
+
+function esHeroHtml() {
+  return `
+    <div class="es-hero">
+      <div class="es-hero-icon">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="6" y="12" width="36" height="24" rx="4"/>
+          <path d="M6 20h36"/>
+          <circle cx="34" cy="30" r="3"/>
+        </svg>
+      </div>
+      <h3>Discover card-linked merchant savings</h3>
+      <p>Enter a BIN and country above, then click <strong>Browse</strong> to explore available SME offers &mdash; discounts, vouchers, and promotions that cardholders can redeem instantly.</p>
+      <div class="es-hero-chips">
+        <span class="es-hero-chip">Local SME offers</span>
+        <span class="es-hero-chip">Instant vouchers</span>
+        <span class="es-hero-chip">No cost to issuers</span>
+        <span class="es-hero-chip">Global coverage</span>
+      </div>
+    </div>`;
+}
+
+function esWire() {
+  const binInput = $("es-bin");
+  const countryInput = $("es-country");
+  const langInput = $("es-lang");
+
+  if (binInput) binInput.addEventListener("input", () => { ES.bin = binInput.value.trim(); });
+  if (countryInput) countryInput.addEventListener("input", () => { ES.country = countryInput.value.trim(); });
+  if (langInput) langInput.addEventListener("input", () => { ES.language = langInput.value.trim(); });
+
+  const browseBtn = $("es-browse-btn");
+  if (browseBtn) browseBtn.addEventListener("click", () => esBrowse());
+
+  document.querySelectorAll("[data-redeem-id]").forEach(btn => {
+    btn.addEventListener("click", () => esRedeem(btn.dataset.redeemId));
+  });
+
+  const closeBtn = $("es-banner-close");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      ES.redemption = null;
+      esRender();
+    });
+  }
+}
+
+function esBrowse() {
+  if (!ES.bin || !ES.country || !ES.language) return;
+  ES.loading = true;
+  ES.offers = [];
+  ES.error = null;
+  ES.redemption = null;
+  esRender();
+
+  fetch("/usecases/easy_savings/action", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "browse", params: { bin: ES.bin, country: ES.country, language: ES.language } }),
+  })
+    .then(r => r.json())
+    .then(d => {
+      ES.loading = false;
+      if (d.error) {
+        ES.error = typeof d.error === "string" ? d.error : JSON.stringify(d.error);
+      } else {
+        ES.offers = d.offers || [];
+        ES.total = d.total || ES.offers.length;
+      }
+      esRender();
+    })
+    .catch(err => {
+      ES.loading = false;
+      ES.error = err.message || String(err);
+      esRender();
+    });
+}
+
+function esRedeem(offerId) {
+  if (!offerId || ES.redeeming) return;
+  ES.redeeming = offerId;
+  ES.redemption = null;
+  esRender();
+
+  fetch("/usecases/easy_savings/action", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "redeem", params: { bin: ES.bin, offer_id: offerId } }),
+  })
+    .then(r => r.json())
+    .then(d => {
+      ES.redeeming = null;
+      if (d.error) {
+        ES.error = typeof d.error === "string" ? d.error : JSON.stringify(d.error);
+      } else {
+        ES.redemption = d.redemption || {};
+      }
+      esRender();
+    })
+    .catch(err => {
+      ES.redeeming = null;
+      ES.error = err.message || String(err);
+      esRender();
+    });
+}
+
+document.addEventListener("DOMContentLoaded", renderEasySavings);
+</script>
+</body>
+</html>

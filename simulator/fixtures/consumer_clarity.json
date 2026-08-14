@@ -1,0 +1,124 @@
+{
+  "merchants": [
+    {
+      "preset": "shoe_store",
+      "cardAcceptorName": "SHOE STORE 1234",
+      "searchResults": [
+        {
+          "recordId": "sim-record-001",
+          "resultStatus": {"code": "MERCHANT_FOUND"},
+          "merchantResult": {
+            "merchantName": "The Shoe Store",
+            "address": "123 Congress Ave, Austin, TX 78701, USA",
+            "merchantCategory": {"code": "5661", "description": "Shoe Store"},
+            "logos": [{"url": "https://example.com/logos/shoe-store.png", "type": "MERCHANT"}],
+            "websiteUrl": "https://theshoestore.com",
+            "merchantLocation": {"latitude": 30.2672, "longitude": -97.7431},
+            "resultStatus": {"code": "MERCHANT_FOUND"}
+          },
+          "purchaseReceipt": {"resultStatus": {"code": "RECEIPT_NOT_AVAILABLE"}, "receiptUrl": null}
+        }
+      ]
+    },
+    {
+      "preset": "academy_ny",
+      "cardAcceptorName": "ZZZ*ACADEMY",
+      "searchResults": [
+        {
+          "recordId": "sim-record-002",
+          "resultStatus": {"code": "MERCHANT_FOUND"},
+          "merchantResult": {
+            "merchantName": "Ziggy's School Center",
+            "address": "456 Fifth Ave, New York, NY 10018, USA",
+            "merchantCategory": {"code": "8299", "description": "Schools and Educational Services"},
+            "logos": [{"url": "https://example.com/logos/academy.png", "type": "MERCHANT"}],
+            "websiteUrl": "https://ziggysschool.com",
+            "merchantLocation": {"latitude": 40.7549, "longitude": -73.9840},
+            "resultStatus": {"code": "MERCHANT_FOUND"}
+          },
+          "purchaseReceipt": {"resultStatus": {"code": "RECEIPT_AVAILABLE"}, "receiptUrl": "https://receipts.ethoca.com/abc123"}
+        }
+      ]
+    },
+    {
+      "preset": "bakery_leeds",
+      "cardAcceptorName": "ANT*156LE",
+      "searchResults": [
+        {
+          "recordId": "sim-record-003",
+          "resultStatus": {"code": "MERCHANT_FOUND"},
+          "merchantResult": {
+            "merchantName": "Antler's Bakery",
+            "address": "78 Boar Lane, Leeds, LS1 6HW, United Kingdom",
+            "merchantCategory": {"code": "5462", "description": "Bakeries"},
+            "logos": [{"url": "https://example.com/logos/antlers.png", "type": "MERCHANT"}],
+            "websiteUrl": "https://antlersbakery.co.uk",
+            "merchantLocation": {"latitude": 53.7960, "longitude": -1.5491},
+            "resultStatus": {"code": "MERCHANT_FOUND"}
+          },
+          "purchaseReceipt": {"resultStatus": {"code": "RECEIPT_NOT_AVAILABLE"}, "receiptUrl": null}
+        }
+      ]
+    },
+    {
+      "preset": "applhmk_ny",
+      "cardAcceptorName": "APPLHMK",
+      "searchResults": [
+        {
+          "recordId": "sim-record-004",
+          "resultStatus": {"code": "MERCHANT_FOUND"},
+          "merchantResult": {
+            "merchantName": "Apple Hammock's",
+            "address": "800 Fifth Ave, New York, NY 10065, USA",
+            "merchantCategory": {"code": "5411", "description": "Grocery Stores"},
+            "logos": [],
+            "websiteUrl": null,
+            "merchantLocation": {"latitude": 40.7636, "longitude": -73.9729},
+            "resultStatus": {"code": "MERCHANT_FOUND"}
+          },
+          "purchaseReceipt": {"resultStatus": {"code": "RECEIPT_NOT_AVAILABLE"}, "receiptUrl": null}
+        }
+      ]
+    },
+    {
+      "preset": "my_chur_z_gr",
+      "cardAcceptorName": "MY CHUR-Z",
+      "searchResults": [
+        {
+          "recordId": "sim-record-005",
+          "resultStatus": {"code": "MERCHANT_FOUND"},
+          "merchantResult": {
+            "merchantName": "My Churroz",
+            "address": "12 Ippodromou, Pastida 851 02, Greece",
+            "merchantCategory": {"code": "5812", "description": "Eating Places and Restaurants"},
+            "logos": [{"url": "https://example.com/logos/churroz.png", "type": "MERCHANT"}],
+            "websiteUrl": null,
+            "merchantLocation": {"latitude": 36.3791, "longitude": 28.1944},
+            "resultStatus": {"code": "MERCHANT_FOUND"}
+          },
+          "purchaseReceipt": {"resultStatus": {"code": "RECEIPT_NOT_AVAILABLE"}, "receiptUrl": null}
+        }
+      ]
+    },
+    {
+      "preset": "warehouse_nzl",
+      "cardAcceptorName": "THE WAREHOUSE",
+      "searchResults": [
+        {
+          "recordId": "sim-record-006",
+          "resultStatus": {"code": "MERCHANT_FOUND"},
+          "merchantResult": {
+            "merchantName": "The Warehouse",
+            "address": "Cnr Queen St & Blenheim Rd, Richmond 7020, New Zealand",
+            "merchantCategory": {"code": "5331", "description": "Variety Stores"},
+            "logos": [{"url": "https://example.com/logos/warehouse-nz.png", "type": "MERCHANT"}],
+            "websiteUrl": "https://www.thewarehouse.co.nz",
+            "merchantLocation": {"latitude": -41.3479, "longitude": 173.9664},
+            "resultStatus": {"code": "MERCHANT_FOUND"}
+          },
+          "purchaseReceipt": {"resultStatus": {"code": "RECEIPT_NOT_AVAILABLE"}, "receiptUrl": null}
+        }
+      ]
+    }
+  ]
+}

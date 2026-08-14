@@ -1,0 +1,17 @@
+{
+  "countries": [
+    {"countryCode": "IND", "countryName": "India", "languages": [{"languageCode": "en-US", "languageName": "English (US)"}, {"languageCode": "hi-IN", "languageName": "Hindi"}]},
+    {"countryCode": "GBR", "countryName": "United Kingdom", "languages": [{"languageCode": "en-GB", "languageName": "English (UK)"}]},
+    {"countryCode": "USA", "countryName": "United States", "languages": [{"languageCode": "en-US", "languageName": "English (US)"}]},
+    {"countryCode": "SGP", "countryName": "Singapore", "languages": [{"languageCode": "en-US", "languageName": "English (US)"}]},
+    {"countryCode": "AUS", "countryName": "Australia", "languages": [{"languageCode": "en-AU", "languageName": "English (AU)"}]}
+  ],
+  "offers": [
+    {"id": "QDWC0NRZmyabde", "title": "20% off at Coffee Beans Co.", "description": "Get 20% off your next purchase at Coffee Beans Co. with your Mastercard.", "merchantName": "Coffee Beans Co.", "discountType": "PERCENTAGE", "discountValue": 20, "currency": "INR", "country": "IND", "language": "en-US", "bin": "52345678", "startDate": "2026-01-01", "endDate": "2026-12-31", "termsAndConditions": "Valid on weekdays only. One use per card per month.", "redemptionType": "VOUCHER_CODE"},
+    {"id": "ABCD1234567890", "title": "15% off at TechMart", "description": "Save 15% on electronics at TechMart stores.", "merchantName": "TechMart", "discountType": "PERCENTAGE", "discountValue": 15, "currency": "INR", "country": "IND", "language": "en-US", "bin": "52345678", "startDate": "2026-01-01", "endDate": "2026-06-30", "termsAndConditions": "Valid in-store only. Minimum spend ₹2000.", "redemptionType": "VOUCHER_CODE"},
+    {"id": "EFGH9876543210", "title": "₹500 off at FoodWorld", "description": "Get ₹500 off orders above ₹3000 at FoodWorld.", "merchantName": "FoodWorld", "discountType": "ABSOLUTE", "discountValue": 500, "currency": "INR", "country": "IND", "language": "en-US", "bin": "52345678", "startDate": "2026-02-01", "endDate": "2026-08-31", "termsAndConditions": "Minimum order ₹3000. Valid for delivery and pickup.", "redemptionType": "VOUCHER_CODE"}
+  ],
+  "redemptions": [
+    {"id": "QDWC0NRZmyabde", "orderId": "QDWC0NRZmyabde", "status": "SUCCESS", "voucherCode": "SIM-VOUCHER-001", "offerId": "QDWC0NRZmyabde", "merchantName": "Coffee Beans Co.", "discountValue": 20, "currency": "INR", "redeemedAt": "2026-05-23T10:00:00Z"}
+  ]
+}

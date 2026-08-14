@@ -16,10 +16,9 @@ and participating merchants for that combination.
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, List
+from typing import Any
 
-
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "specials",
     "name": "Priceless Concierge",
     "description": (
@@ -28,7 +27,7 @@ MANIFEST: Dict[str, Any] = {
         "programs available in your destination. Pick your card and where "
         "you're going — the concierge does the rest."
     ),
-    "apis": ["Priceless Specials"],
+    "apis": ["priceless_cities"],
     "render": "specials",
     "defaults": {
         "eligible_markets": "US",
@@ -39,28 +38,51 @@ MANIFEST: Dict[str, Any] = {
     },
 }
 
-
 # --- Action dispatcher ----------------------------------------------------
 
-def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
     if action == "search":
         return _search(params)
     return {"error": f"Unknown action: {action}"}
 
-
 # --- Search ---------------------------------------------------------------
 
-def _search(params: Dict[str, Any]) -> Dict[str, Any]:
-    from apis.priceless import api as p_api
+def _shape_results(results: dict[str, dict[str, Any]]) -> tuple[list, list, list, list]:
+    """Shape raw API results into filtered item lists for each feed."""
+    offers    = [s for s in (_shape_offer(o)    for o in _items(results["offers"].get("data")))    if _meaningful_offer(s)]
+    benefits  = [s for s in (_shape_benefit(b)  for b in _items(results["benefits"].get("data")))  if _meaningful_benefit(s)]
+    programs  = [s for s in (_shape_program(p)  for p in _items(results["programs"].get("data")))  if _meaningful_program(s)]
+    merchants = [s for s in (_shape_merchant(m) for m in _items(results["merchants"].get("data"))) if _meaningful_merchant(s)]
+    return offers, benefits, programs, merchants
 
-    base: Dict[str, Any] = {
+
+def _demo_reason(all_failed: bool, live_total: int, first_err: Any) -> str:
+    """Return a user-facing explanation for why demo mode was activated."""
+    if all_failed:
+        return _stringify_error(first_err) or "Priceless Specials API not reachable."
+    if live_total == 0:
+        return "Sandbox returned no live perks for this combination."
+    return "Sandbox returned only sparse rows — showing curated demo perks."
+
+
+def _partial_errors(results: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    return {
+        key: _stringify_error(r.get("error"))
+        for key, r in results.items()
+        if not r.get("success")
+    }
+
+
+def _search(params: dict[str, Any]) -> dict[str, Any]:
+    from apis.priceless_cities import api as p_api
+
+    base: dict[str, Any] = {
         "language":            params.get("language") or "en-US",
         "eligible_markets":    params.get("eligible_markets") or "",
         "destination_markets": params.get("destination_markets") or "",
         "category":            params.get("category") or "",
         "mastercard_product":  params.get("mastercard_product") or "",
     }
-    # Drop empties for the merchants & programs feeds that don't use category etc.
     merchants_params = {k: v for k, v in base.items() if v}
     programs_params  = {k: v for k, v in {
         "language":         base["language"],
@@ -74,7 +96,7 @@ def _search(params: Dict[str, Any]) -> Dict[str, Any]:
         "merchants": ("specials_merchants", merchants_params),
     }
 
-    results: Dict[str, Dict[str, Any]] = {}
+    results: dict[str, dict[str, Any]] = {}
     with ThreadPoolExecutor(max_workers=4) as ex:
         futures = {key: ex.submit(p_api.execute, op, p) for key, (op, p) in feeds.items()}
         for key, fut in futures.items():
@@ -84,43 +106,23 @@ def _search(params: Dict[str, Any]) -> Dict[str, Any]:
                 results[key] = {"success": False, "error": str(e)}
 
     all_failed = all(not r.get("success") for r in results.values())
-    first_err = next((r.get("error") for r in results.values() if r.get("error")), None)
+    first_err  = next((r.get("error") for r in results.values() if r.get("error")), None)
 
-    # Shape & drop ghost rows the sandbox often emits (rows with no usable
-    # content). The UI was rendering those as empty cards.
-    offers    = [s for s in (_shape_offer(o)    for o in _items(results["offers"].get("data")))    if _meaningful_offer(s)]
-    benefits  = [s for s in (_shape_benefit(b)  for b in _items(results["benefits"].get("data")))  if _meaningful_benefit(s)]
-    programs  = [s for s in (_shape_program(p)  for p in _items(results["programs"].get("data")))  if _meaningful_program(s)]
-    merchants = [s for s in (_shape_merchant(m) for m in _items(results["merchants"].get("data"))) if _meaningful_merchant(s)]
-
+    offers, benefits, programs, merchants = _shape_results(results)
     live_total = len(offers) + len(benefits) + len(programs) + len(merchants)
 
-    # Hybrid behaviour: if the live API gave us nothing usable (or it failed
-    # outright), drop in a curated demo dataset so the use case is still a
-    # compelling demo. We tag the response so the UI can show a notice.
     if live_total < _MIN_LIVE_ITEMS:
         curated = _curated_dataset(
             destination=base["destination_markets"],
-            eligible=base["eligible_markets"],
             product=base["mastercard_product"],
             category=base["category"],
         )
-        if all_failed:
-            demo_reason = _stringify_error(first_err) or "Priceless Specials API not reachable."
-        elif live_total == 0:
-            demo_reason = "Sandbox returned no live perks for this combination."
-        else:
-            demo_reason = "Sandbox returned only sparse rows — showing curated demo perks."
         return {
             **curated,
-            "demo_mode": True,
-            "demo_reason": demo_reason,
-            "live_total": live_total,
-            "partial_errors": {
-                key: _stringify_error(r.get("error"))
-                for key, r in results.items()
-                if not r.get("success")
-            },
+            "demo_mode":     True,
+            "demo_reason":   _demo_reason(all_failed, live_total, first_err),
+            "live_total":    live_total,
+            "partial_errors": _partial_errors(results),
         }
 
     return {
@@ -129,47 +131,37 @@ def _search(params: Dict[str, Any]) -> Dict[str, Any]:
         "programs":  programs,
         "merchants": merchants,
         "demo_mode": False,
-        "partial_errors": {
-            key: _stringify_error(r.get("error"))
-            for key, r in results.items()
-            if not r.get("success")
-        },
+        "partial_errors": _partial_errors(results),
     }
-
 
 # --- Filters: drop ghost rows --------------------------------------------
 
-def _meaningful_offer(o: Dict[str, Any]) -> bool:
+def _meaningful_offer(o: dict[str, Any]) -> bool:
     title_ok = bool(o.get("title")) and o.get("title") != "Untitled offer"
     has_body = bool(o.get("description") or o.get("discount") or o.get("redemptionUrl"))
     return title_ok and has_body
 
-
-def _meaningful_benefit(b: Dict[str, Any]) -> bool:
+def _meaningful_benefit(b: dict[str, Any]) -> bool:
     title_ok = bool(b.get("title")) and b.get("title") != "Benefit"
     has_body = bool(b.get("description") or b.get("url"))
     return title_ok and has_body
 
-
-def _meaningful_program(p: Dict[str, Any]) -> bool:
+def _meaningful_program(p: dict[str, Any]) -> bool:
     title_ok = bool(p.get("title")) and p.get("title") != "Program"
     has_body = bool(p.get("description") or p.get("image") or p.get("url"))
     return title_ok and has_body
 
-
-def _meaningful_merchant(m: Dict[str, Any]) -> bool:
+def _meaningful_merchant(m: dict[str, Any]) -> bool:
     name_ok = bool(m.get("name")) and m.get("name") != "Merchant"
     return name_ok and bool(m.get("category") or m.get("logo"))
-
 
 # Hybrid threshold: if live data has fewer than this many usable items across
 # all four feeds combined, swap in the curated demo dataset.
 _MIN_LIVE_ITEMS = 4
 
-
 # --- Helpers --------------------------------------------------------------
 
-def _items(data: Any) -> List[Dict[str, Any]]:
+def _items(data: Any) -> list[dict[str, Any]]:
     """Normalize any Priceless Specials response shape to a flat list."""
     if data is None:
         return []
@@ -198,16 +190,14 @@ def _items(data: Any) -> List[Dict[str, Any]]:
                         return [iv]
     return []
 
-
-def _first(d: Dict[str, Any], *keys: str, default: str = "") -> str:
+def _first(d: dict[str, Any], *keys: str, default: str = "") -> str:
     for k in keys:
         v = d.get(k)
         if v not in (None, "", []):
             return str(v) if not isinstance(v, (dict, list)) else default
     return default
 
-
-def _shape_offer(o: Dict[str, Any]) -> Dict[str, Any]:
+def _shape_offer(o: dict[str, Any]) -> dict[str, Any]:
     merchant = o.get("merchant") or o.get("Merchant") or {}
     if not isinstance(merchant, dict):
         merchant = {}
@@ -229,8 +219,7 @@ def _shape_offer(o: Dict[str, Any]) -> Dict[str, Any]:
         "tags":         _list_str(o.get("tags") or o.get("Tags")),
     }
 
-
-def _shape_benefit(b: Dict[str, Any]) -> Dict[str, Any]:
+def _shape_benefit(b: dict[str, Any]) -> dict[str, Any]:
     return {
         "id":          _first(b, "id", "benefitId", "BenefitId"),
         "title":       _first(b, "benefitTitle", "title", "Title", "name", default="Benefit"),
@@ -241,8 +230,7 @@ def _shape_benefit(b: Dict[str, Any]) -> Dict[str, Any]:
         "endDate":     _first(b, "endDate", "expiryDate"),
     }
 
-
-def _shape_program(p: Dict[str, Any]) -> Dict[str, Any]:
+def _shape_program(p: dict[str, Any]) -> dict[str, Any]:
     return {
         "id":          _first(p, "id", "programId", "ProgramId"),
         "title":       _first(p, "programTitle", "title", "Name", "name", default="Program"),
@@ -251,8 +239,7 @@ def _shape_program(p: Dict[str, Any]) -> Dict[str, Any]:
         "url":         _first(p, "programUrl", "url"),
     }
 
-
-def _shape_merchant(m: Dict[str, Any]) -> Dict[str, Any]:
+def _shape_merchant(m: dict[str, Any]) -> dict[str, Any]:
     return {
         "id":       _first(m, "id", "merchantId", "MerchantId"),
         "name":     _first(m, "merchantName", "name", "Name", default="Merchant"),
@@ -261,14 +248,12 @@ def _shape_merchant(m: Dict[str, Any]) -> Dict[str, Any]:
         "country":  _first(m, "country", "countryCode"),
     }
 
-
-def _list_str(v: Any) -> List[str]:
+def _list_str(v: Any) -> list[str]:
     if isinstance(v, list):
         return [str(x) for x in v if x is not None]
     if isinstance(v, str):
         return [t.strip() for t in v.split(",") if t.strip()]
     return []
-
 
 def _stringify_error(err: Any) -> str:
     if err is None:
@@ -281,7 +266,6 @@ def _stringify_error(err: Any) -> str:
     except Exception:
         return str(err)[:400]
 
-
 # --- Curated demo dataset -------------------------------------------------
 #
 # The Priceless Specials sandbox returns very sparse rows (lots of empty
@@ -291,13 +275,11 @@ def _stringify_error(err: Any) -> str:
 
 _CATEGORIES = ["Dining", "Shopping", "Travel", "Entertainment", "Sports", "Wellness", "Lifestyle"]
 
-
 def _curated_dataset(
     destination: str,
-    eligible: str,
     product: str,
     category: str = "",
-) -> Dict[str, List[Dict[str, Any]]]:
+) -> dict[str, list[dict[str, Any]]]:
     """Return a curated set of offers/benefits/programs/merchants for a destination."""
     dest = (destination or "").upper()
     pack = _DEMO_PACKS.get(dest) or _DEMO_PACKS["_DEFAULT"]
@@ -318,8 +300,8 @@ def _curated_dataset(
             return (item.get("category") or "").lower() == cat.lower()
         offers_f    = [o for o in offers    if _matches(o)]
         merchants_f = [m for m in merchants if _matches(m)]
-        if len(offers_f) >= 2:    offers = offers_f
-        if len(merchants_f) >= 2: merchants = merchants_f
+        if len(offers_f) >= 2:    offers = offers_f        # noqa: E701
+        if len(merchants_f) >= 2: merchants = merchants_f  # noqa: E701
 
     return {
         "offers":    offers,
@@ -327,7 +309,6 @@ def _curated_dataset(
         "programs":  programs,
         "merchants": merchants,
     }
-
 
 # Tier benefits — these are universal across markets.
 _DEMO_BENEFITS_CORE = [
@@ -360,9 +341,8 @@ _DEMO_BENEFITS_PREMIUM = _DEMO_BENEFITS_CORE + [
      "icon": "", "url": "", "endDate": ""},
 ]
 
-
 # Per-destination packs — offers, programs, merchants. Light, illustrative.
-_DEMO_PACKS: Dict[str, Dict[str, List[Dict[str, Any]]]] = {
+_DEMO_PACKS: dict[str, dict[str, list[dict[str, Any]]]] = {
     "JP": {
         "offers": [
             {"id": "jp-o1", "title": "10% off omakase tasting menu",

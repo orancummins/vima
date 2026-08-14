@@ -1,0 +1,385 @@
+/* ================================================================
+   The Wire — x-ray of a single Open Banking transaction's journey.
+   Dark cockpit aesthetic with a glowing wire and an animated packet.
+   ================================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0; height: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #e9e9ea;
+  background:
+    radial-gradient(circle at 25% 12%, rgba(255, 106, 0, 0.10) 0%, transparent 38%),
+    radial-gradient(circle at 78% 88%, rgba(255, 60, 0, 0.08) 0%, transparent 45%),
+    linear-gradient(180deg, #0a0908 0%, #0f0d0b 100%);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ----------- 3-column app shell ----------- */
+.wire-app {
+  display: grid;
+  grid-template-columns: 280px 1fr 360px;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* =====================================================
+   LEFT — transaction picker
+   ===================================================== */
+.wire-picker {
+  border-right: 1px solid rgba(255, 150, 60, 0.10);
+  padding: 32px 22px 22px;
+  display: flex; flex-direction: column;
+  background: linear-gradient(180deg, rgba(255, 95, 0, 0.04) 0%, transparent 100%);
+  overflow-y: auto;
+}
+.wire-picker-eyebrow {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  color: #ff9a55; text-transform: uppercase; margin-bottom: 6px;
+}
+.wire-picker-title {
+  font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px;
+}
+.wire-picker-sub {
+  font-size: 12px; color: #8a8580; line-height: 1.5; margin-bottom: 22px;
+}
+.wire-picker-list {
+  display: flex; flex-direction: column; gap: 6px;
+  flex: 1 1 auto;
+}
+.wire-tx {
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #d8d4cf;
+  padding: 12px 14px; border-radius: 9px;
+  font-family: inherit; font-size: 13px; font-weight: 500;
+  cursor: pointer; text-align: left;
+  transition: all 0.18s ease;
+}
+.wire-tx:hover {
+  background: rgba(255, 150, 60, 0.06);
+  border-color: rgba(255, 150, 60, 0.30);
+  color: #fff;
+  transform: translateX(2px);
+}
+.wire-tx--active {
+  background: linear-gradient(90deg, rgba(255, 106, 0, 0.18), rgba(255, 106, 0, 0.05));
+  border-color: rgba(255, 150, 60, 0.55);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(255, 95, 0, 0.18), inset 0 1px 0 rgba(255, 200, 140, 0.06);
+}
+.wire-tx-arrow {
+  font-size: 14px; color: #ff8a3a; opacity: 0.5;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.wire-tx:hover .wire-tx-arrow, .wire-tx--active .wire-tx-arrow {
+  opacity: 1; transform: translateX(2px);
+}
+.wire-picker-footer {
+  margin-top: 20px; padding-top: 16px;
+  font-size: 11px; line-height: 1.55; color: #6b6660;
+  border-top: 1px dashed rgba(255, 150, 60, 0.12);
+}
+
+/* =====================================================
+   CENTER — the wire stage
+   ===================================================== */
+.wire-stage {
+  display: flex; flex-direction: column;
+  padding: 32px 24px 28px;
+  overflow-y: auto;
+  position: relative;
+}
+.wire-stage-header { text-align: center; margin-bottom: 18px; }
+.wire-stage-eyebrow {
+  font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  color: #ff9a55; text-transform: uppercase; margin-bottom: 6px;
+}
+.wire-stage-title {
+  font-size: 24px; font-weight: 800; color: #fff;
+  margin: 0 0 6px; letter-spacing: -0.01em;
+}
+.wire-stage-sub {
+  font-size: 12px; color: #8a8580; line-height: 1.5;
+  margin: 0 auto; max-width: 480px;
+}
+.wire-replay-btn {
+  margin-top: 14px;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255, 150, 60, 0.10);
+  border: 1px solid rgba(255, 150, 60, 0.30);
+  color: #ffb070;
+  font-family: inherit; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 7px 14px; border-radius: 999px;
+  cursor: pointer; transition: all 0.18s ease;
+}
+.wire-replay-btn:hover {
+  background: rgba(255, 150, 60, 0.18);
+  border-color: rgba(255, 150, 60, 0.55);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(255, 95, 0, 0.25);
+}
+.wire-replay-icon { font-size: 13px; display: inline-block; }
+.wire-replay-btn:hover .wire-replay-icon {
+  animation: wire-spin 0.6s ease;
+}
+@keyframes wire-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ----------- the wire track itself ----------- */
+.wire-track {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 520px;
+  margin: 12px auto 0;
+  width: 100%;
+  max-width: 540px;
+}
+/* The vertical rail (dim background line) */
+.wire-rail {
+  position: absolute;
+  left: 50%; top: 8px; bottom: 8px;
+  width: 2px; transform: translateX(-50%);
+  background:
+    linear-gradient(180deg,
+      rgba(255, 150, 60, 0.35) 0%,
+      rgba(255, 150, 60, 0.15) 50%,
+      rgba(255, 150, 60, 0.35) 100%);
+  border-radius: 2px;
+  box-shadow:
+    0 0 12px rgba(255, 95, 0, 0.18),
+    0 0 30px rgba(255, 95, 0, 0.10);
+}
+.wire-rail::after {
+  /* Subtle moving "data stream" effect — barely-there dashed overlay */
+  content: '';
+  position: absolute; inset: 0;
+  background-image: linear-gradient(180deg,
+    transparent 0%, transparent 40%,
+    rgba(255, 220, 180, 0.55) 50%,
+    transparent 60%, transparent 100%);
+  background-size: 100% 30px;
+  animation: wire-flow 1.6s linear infinite;
+  border-radius: 2px;
+  opacity: 0.45;
+}
+@keyframes wire-flow {
+  from { background-position: 0 -30px; }
+  to   { background-position: 0 30px; }
+}
+
+/* ----------- animated packet (glowing dot) ----------- */
+.wire-packet {
+  position: absolute;
+  left: 50%; top: 0;
+  width: 14px; height: 14px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, #ffb070 35%, #ff6a00 70%);
+  box-shadow:
+    0 0 12px rgba(255, 200, 140, 0.95),
+    0 0 32px rgba(255, 106, 0, 0.65),
+    0 0 60px rgba(255, 106, 0, 0.35);
+  z-index: 5;
+  transition: top 0.9s cubic-bezier(.55, .08, .25, 1);
+  pointer-events: none;
+}
+.wire-packet--pulse {
+  animation: wire-packet-burst 0.6s ease;
+}
+@keyframes wire-packet-burst {
+  0%   { box-shadow: 0 0 12px rgba(255, 200, 140, 0.95),
+                     0 0 32px rgba(255, 106, 0, 0.65),
+                     0 0 60px rgba(255, 106, 0, 0.35); }
+  50%  { box-shadow: 0 0 22px rgba(255, 230, 200, 1),
+                     0 0 58px rgba(255, 130, 30, 0.85),
+                     0 0 110px rgba(255, 106, 0, 0.55); }
+  100% { box-shadow: 0 0 12px rgba(255, 200, 140, 0.95),
+                     0 0 32px rgba(255, 106, 0, 0.65),
+                     0 0 60px rgba(255, 106, 0, 0.35); }
+}
+
+/* ----------- nodes (5 evenly spaced) ----------- */
+.wire-nodes {
+  position: relative;
+  width: 100%; height: 100%;
+}
+.wire-node {
+  position: absolute;
+  /* spread evenly: top = i / (count - 1) * 100% */
+  top: calc(var(--stage-i) / (var(--stage-count) - 1) * 100%);
+  left: 0; width: 100%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: 0; padding: 0; cursor: pointer;
+  color: inherit; font: inherit;
+  display: flex; align-items: center;
+  /* alternate sides: even = right of rail, odd = left of rail */
+}
+.wire-node:nth-child(odd) {
+  flex-direction: row;
+  justify-content: flex-end;
+  padding-right: calc(50% + 24px);
+}
+.wire-node:nth-child(odd) .wire-node-card { text-align: right; align-items: flex-end; }
+.wire-node:nth-child(even) {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  padding-left: calc(50% + 24px);
+}
+.wire-node:nth-child(even) .wire-node-card { text-align: left; align-items: flex-start; }
+
+/* The dot on the rail */
+.wire-node-dot {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #0f0d0b;
+  border: 2px solid rgba(255, 150, 60, 0.45);
+  transition: all 0.25s ease;
+  z-index: 3;
+}
+.wire-node:hover .wire-node-dot {
+  border-color: #ffb070;
+  box-shadow: 0 0 12px rgba(255, 150, 60, 0.5);
+}
+.wire-node--past .wire-node-dot {
+  background: rgba(255, 106, 0, 0.55);
+  border-color: rgba(255, 150, 60, 0.7);
+}
+.wire-node--active .wire-node-dot {
+  background: #fff;
+  border-color: #ff6a00;
+  box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.22),
+              0 0 22px rgba(255, 106, 0, 0.85);
+  animation: wire-node-pulse 1.4s ease-in-out infinite;
+}
+@keyframes wire-node-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.22),
+                          0 0 22px rgba(255, 106, 0, 0.85); }
+  50%      { box-shadow: 0 0 0 7px rgba(255, 106, 0, 0.12),
+                          0 0 34px rgba(255, 106, 0, 1); }
+}
+
+/* The label card */
+.wire-node-card {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 10px 14px;
+  background: rgba(20, 17, 15, 0.85);
+  border: 1px solid rgba(255, 150, 60, 0.14);
+  border-radius: 10px;
+  min-width: 180px; max-width: 230px;
+  transition: all 0.22s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+.wire-node:hover .wire-node-card {
+  background: rgba(28, 23, 19, 0.92);
+  border-color: rgba(255, 150, 60, 0.40);
+  transform: translateX(0) scale(1.02);
+}
+.wire-node:nth-child(odd):hover .wire-node-card { transform: translateX(-3px) scale(1.02); }
+.wire-node:nth-child(even):hover .wire-node-card { transform: translateX(3px) scale(1.02); }
+.wire-node--active .wire-node-card {
+  background: linear-gradient(135deg, rgba(255, 106, 0, 0.20), rgba(20, 17, 15, 0.92));
+  border-color: rgba(255, 150, 60, 0.65);
+  box-shadow: 0 6px 28px rgba(255, 95, 0, 0.30),
+              inset 0 1px 0 rgba(255, 200, 140, 0.08);
+}
+.wire-node-step {
+  font-size: 9px; font-weight: 700; letter-spacing: 1.2px;
+  color: #ff9a55; text-transform: uppercase;
+}
+.wire-node-label {
+  font-size: 13px; font-weight: 700; color: #fff;
+}
+.wire-node-sub {
+  font-size: 10px; line-height: 1.4; color: #8a8580;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+.wire-node--active .wire-node-sub { color: #c5b8a8; }
+
+/* =====================================================
+   RIGHT — JSON inspector
+   ===================================================== */
+.wire-inspector {
+  border-left: 1px solid rgba(255, 150, 60, 0.10);
+  padding: 32px 22px 22px;
+  display: flex; flex-direction: column;
+  background: linear-gradient(180deg, rgba(255, 95, 0, 0.04) 0%, transparent 100%);
+  overflow: hidden;
+}
+.wire-inspector-eyebrow {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  color: #ff9a55; text-transform: uppercase; margin-bottom: 6px;
+}
+.wire-inspector-title {
+  font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px;
+}
+.wire-inspector-sub {
+  font-size: 11px; color: #8a8580; line-height: 1.5;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  margin-bottom: 16px;
+  word-break: break-word;
+}
+.wire-inspector-json {
+  flex: 1 1 auto;
+  margin: 0; padding: 14px;
+  background: #0a0908;
+  border: 1px solid rgba(255, 150, 60, 0.12);
+  border-radius: 9px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11.5px; line-height: 1.55;
+  color: #cfc8be;
+  overflow: auto;
+  white-space: pre-wrap; word-break: break-word;
+  box-shadow: inset 0 1px 0 rgba(255, 200, 140, 0.04);
+}
+.wire-inspector-hint {
+  margin-top: 12px; font-size: 10px; color: #6b6660;
+  text-align: center; font-style: italic;
+}
+
+/* JSON syntax colours — warm, on-brand */
+.j-key  { color: #ffb070; }
+.j-str  { color: #b6e0a0; }
+.j-num  { color: #ffd980; }
+.j-bool { color: #ff8a3a; font-weight: 600; }
+.j-null { color: #6b6660; font-style: italic; }
+
+/* ----------- custom scrollbars ----------- */
+.wire-picker::-webkit-scrollbar,
+.wire-inspector::-webkit-scrollbar,
+.wire-inspector-json::-webkit-scrollbar,
+.wire-stage::-webkit-scrollbar { width: 8px; height: 8px; }
+.wire-picker::-webkit-scrollbar-thumb,
+.wire-inspector::-webkit-scrollbar-thumb,
+.wire-inspector-json::-webkit-scrollbar-thumb,
+.wire-stage::-webkit-scrollbar-thumb {
+  background: rgba(255, 150, 60, 0.20);
+  border-radius: 4px;
+}
+.wire-picker::-webkit-scrollbar-thumb:hover,
+.wire-inspector::-webkit-scrollbar-thumb:hover,
+.wire-inspector-json::-webkit-scrollbar-thumb:hover,
+.wire-stage::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 150, 60, 0.40);
+}
+
+/* ----------- responsive (narrow viewports) ----------- */
+@media (max-width: 1100px) {
+  .wire-app { grid-template-columns: 240px 1fr 300px; }
+  .wire-node-card { min-width: 150px; max-width: 190px; }
+}
+@media (max-width: 880px) {
+  .wire-app { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+  .wire-picker, .wire-inspector { border: none; }
+  .wire-inspector { border-top: 1px solid rgba(255, 150, 60, 0.10); }
+}

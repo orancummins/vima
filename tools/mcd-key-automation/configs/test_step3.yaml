@@ -1,0 +1,6 @@
+environment: sandbox
+projects:
+  - name: eligibility
+    apis: [eligibility]
+  - name: bces
+    apis: [bces]

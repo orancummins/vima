@@ -1,0 +1,129 @@
+/* =================================================================
+   Mastercard Connect (mcc-*) — branded shell wrapping the 4-step
+   identity check inside the relying party's page (Medicare).
+   ================================================================= */
+.med-page-verify { background: #f3f4f6; }
+
+.mcc-shell {
+  max-width: 760px;
+  margin: 28px auto;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06), 0 2px 6px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+
+.mcc-header {
+  background: linear-gradient(120deg, #0d0d0d 0%, #1a1a1a 100%);
+  color: #fff;
+  padding: 18px 24px;
+  display: flex; flex-direction: column; gap: 14px;
+  position: relative;
+}
+.mcc-header::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: linear-gradient(90deg, #eb001b 0%, #ff5f00 50%, #f79e1b 100%);
+}
+.mcc-brand { display: flex; align-items: center; gap: 14px; }
+.mcc-logo {
+  width: 44px; height: 28px; position: relative; flex-shrink: 0;
+}
+.mcc-logo .r, .mcc-logo .y {
+  position: absolute; top: 2px; width: 24px; height: 24px; border-radius: 50%;
+}
+.mcc-logo .r { left: 0;  background: #eb001b; }
+.mcc-logo .y { left: 18px; background: #f79e1b; mix-blend-mode: screen; }
+.mcc-brand-text { display: flex; flex-direction: column; gap: 2px; }
+.mcc-brand-text strong { font-size: 15px; font-weight: 800; letter-spacing: 0.2px; }
+.mcc-brand-text span { font-size: 12px; color: rgba(255,255,255,0.75); }
+.mcc-brand-text em { font-style: normal; color: #fff; font-weight: 600; }
+
+.mcc-pair {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-size: 12px;
+}
+.mcc-pair-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 12px 5px 5px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 999px;
+  color: #fff; font-weight: 600;
+}
+.mcc-pair-dot {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 11px; font-weight: 700;
+}
+.mcc-pair-card {
+  width: 26px; height: 18px; border-radius: 3px;
+  background: #fff;
+  position: relative; flex-shrink: 0;
+}
+.mcc-pair-card .r, .mcc-pair-card .y {
+  position: absolute; top: 4px; width: 10px; height: 10px; border-radius: 50%;
+}
+.mcc-pair-card .r { left: 3px;  background: #eb001b; }
+.mcc-pair-card .y { left: 11px; background: #f79e1b; mix-blend-mode: multiply; }
+.mcc-pair-link { color: rgba(255,255,255,0.55); font-size: 14px; }
+
+/* Inline stepper */
+.mcc-stepper {
+  display: flex; align-items: center; gap: 4px;
+  padding: 14px 24px;
+  background: #fafbfc;
+  border-bottom: 1px solid #eef0f3;
+  flex-wrap: nowrap; min-width: 0;
+}
+.mcc-step {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px; font-weight: 600;
+  color: #6b7280;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  white-space: nowrap; flex-shrink: 0;
+}
+.mcc-step-num {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #e5e7eb; color: #6b7280;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 10.5px; font-weight: 700;
+}
+.mcc-step-active { color: #0b0f1a; border-color: #0b0f1a; }
+.mcc-step-active .mcc-step-num { background: #ff5f00; color: #fff; }
+.mcc-step-done { color: #047857; border-color: #d1fae5; background: #ecfdf5; }
+.mcc-step-done .mcc-step-num { background: #10b981; color: #fff; }
+.mcc-step-sep {
+  flex: 0 0 10px; height: 1px; background: #e5e7eb;
+}
+
+.mcc-body {
+  padding: 28px 28px 8px;
+  background: #fff;
+}
+/* Tighten the embedded step screens (they were designed for a fuller width) */
+.mcc-body .idv-screen { max-width: none; }
+.mcc-body .idv-brand {
+  margin-bottom: 20px; padding-bottom: 14px;
+}
+.mcc-body .idv-screen-title { margin-top: 8px; }
+
+.mcc-foot {
+  padding: 12px 24px;
+  background: #fafbfc;
+  border-top: 1px solid #eef0f3;
+  font-size: 12px; color: #6b7280;
+  display: flex; align-items: center; gap: 8px;
+}
+.mcc-foot-lock { color: #047857; }
+
+@media (max-width: 720px) {
+  .mcc-shell { margin: 16px 12px; }
+  .mcc-body { padding: 20px 18px 4px; }
+  .mcc-stepper { padding: 10px 14px; gap: 3px; overflow-x: auto; }
+  .mcc-pair { font-size: 11px; }
+}
+

@@ -1,0 +1,14 @@
+{
+  "benefits": [
+    {"cardNumber": "5416116000000233", "id": "hmb-001", "benefitBundleId": "BUNDLE-HMB-001", "benefitID": "HMB-ID-001", "benefitCode": "HMB", "benefitDescription": "Hotel & Motel Benefits", "productCode": "MWE", "serviceProviderCode": "6", "effectiveDate": "2026-01-01", "expirationDate": "2027-01-01", "status": "ACTIVE", "policyDetails": {"coverageAmount": 500, "currency": "USD", "maxNightsPerStay": 7}},
+    {"cardNumber": "5416116000000233", "id": "cdw-001", "benefitBundleId": "BUNDLE-CDW-001", "benefitID": "CDW-ID-001", "benefitCode": "CDW", "benefitDescription": "Collision Damage Waiver", "productCode": "MWE", "serviceProviderCode": "6", "effectiveDate": "2026-01-01", "expirationDate": "2027-01-01", "status": "ACTIVE", "policyDetails": {"coverageAmount": 50000, "currency": "USD"}},
+    {"cardNumber": "5341676355168133", "id": "hmb-002", "benefitBundleId": "BUNDLE-HMB-002", "benefitID": "HMB-ID-002", "benefitCode": "HMB", "benefitDescription": "Hotel & Motel Benefits", "productCode": "MPL", "serviceProviderCode": "6", "effectiveDate": "2026-01-01", "expirationDate": "2027-01-01", "status": "ACTIVE", "policyDetails": {"coverageAmount": 250, "currency": "USD"}}
+  ],
+  "products": [
+    {"cardNumber": "5416116000000233", "id": "prod-001", "ica": "12345", "productCode": "MWE", "productDescription": "World Elite Mastercard", "effectiveDate": "2020-01-01", "expirationDate": "2030-01-01"},
+    {"cardNumber": "5341676355168133", "id": "prod-002", "ica": "12345", "productCode": "MPL", "productDescription": "Platinum Mastercard", "effectiveDate": "2021-06-01", "expirationDate": "2031-06-01"}
+  ],
+  "access_tokens": [
+    {"id": "token-001", "token": "sim-widget-access-token-abc123xyz", "expiresAt": "2026-05-23T12:00:00Z"}
+  ]
+}

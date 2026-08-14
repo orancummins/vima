@@ -1,0 +1,100 @@
+{
+  "places": [
+    {
+      "locationId": "300945305",
+      "latitude": 38.7468,
+      "longitude": -90.7461,
+      "mccCode": "5812",
+      "countryCode": "US",
+      "postalCode": "63368",
+      "streetAddress": "101 Main St",
+      "industry": "EAP",
+      "status": "A",
+      "merchantName": "O'Fallon Diner",
+      "cityName": "O'Fallon",
+      "stateProvinceCode": "MO"
+    },
+    {
+      "locationId": "300945306",
+      "latitude": 38.7502,
+      "longitude": -90.7439,
+      "mccCode": "5812",
+      "countryCode": "US",
+      "postalCode": "63368",
+      "streetAddress": "250 Highway 40",
+      "industry": "EAP",
+      "status": "A",
+      "merchantName": "The Burger Barn",
+      "cityName": "O'Fallon",
+      "stateProvinceCode": "MO"
+    },
+    {
+      "locationId": "300945307",
+      "latitude": 38.7445,
+      "longitude": -90.7512,
+      "mccCode": "5812",
+      "countryCode": "US",
+      "postalCode": "63366",
+      "streetAddress": "789 Pizza Lane",
+      "industry": "EAP",
+      "status": "A",
+      "merchantName": "Pizza Palace",
+      "cityName": "O'Fallon",
+      "stateProvinceCode": "MO"
+    },
+    {
+      "locationId": "300945308",
+      "latitude": 38.7489,
+      "longitude": -90.749,
+      "mccCode": "5812",
+      "countryCode": "US",
+      "postalCode": "63368",
+      "streetAddress": "500 Sushi Blvd",
+      "industry": "EAP",
+      "status": "A",
+      "merchantName": "Sushi World",
+      "cityName": "O'Fallon",
+      "stateProvinceCode": "MO"
+    }
+  ],
+  "mcc_codes": [
+    {
+      "merchantCategoryCode": "5812",
+      "merchantCategoryName": "Eating Places and Restaurants"
+    },
+    {
+      "merchantCategoryCode": "5411",
+      "merchantCategoryName": "Grocery Stores, Supermarkets"
+    },
+    {
+      "merchantCategoryCode": "5661",
+      "merchantCategoryName": "Shoe Stores"
+    },
+    {
+      "merchantCategoryCode": "5999",
+      "merchantCategoryName": "Miscellaneous and Specialty Retail Stores"
+    },
+    {
+      "merchantCategoryCode": "4111",
+      "merchantCategoryName": "Local and Suburban Commuter Passenger Transportation"
+    }
+  ],
+  "industry_codes": [
+    {
+      "industry": "EAP",
+      "industryName": "Eating and Drinking Places"
+    },
+    {
+      "industry": "RET",
+      "industryName": "Retail Stores"
+    },
+    {
+      "industry": "TRV",
+      "industryName": "Travel and Entertainment"
+    },
+    {
+      "industry": "FIN",
+      "industryName": "Financial Services"
+    }
+  ]
+}

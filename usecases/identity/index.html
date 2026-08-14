@@ -3,11 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Online Identity Verification — vima</title>
+  <title>Online Identity Verification — Mastercard Solution Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="/static/js/usecase-theme.js"></script>
   <link rel="stylesheet" href="/identity/style.css">
+  <link rel="stylesheet" href="/static/css/usecase-theme.css">
 </head>
 <body>
   <div id="uc-body"></div>
@@ -472,8 +474,10 @@ function idvBankModal() {
   } else if (stage === 'connecting') {
     body = `
       <div class="idv-modal-body idv-modal-center">
-        <div class="idv-spinner-lg"></div>
-        <h4>Sharing account ownership…</h4>
+        <div class="idv-progress-heading">
+          <div class="idv-spinner-lg idv-spinner-inline"></div>
+          <h4>Sharing account ownership…</h4>
+        </div>
         <ul class="idv-verify-list">
           <li class="idv-vli idv-vli-done">Signed in to ${escapeHtml(sel.name)}</li>
           <li class="idv-vli idv-vli-done">Consent recorded with US Open Finance</li>

@@ -1,0 +1,14 @@
+environment: sandbox
+organization: mastercard
+
+login_url: https://developer.mastercard.com/account/log-in
+dashboard_url_pattern: "**/dashboard**"
+key_password: "foobar!!"
+
+# Single project containing both Transaction Notifications and Consent Management.
+# Both APIs share the same signing key; the Consent Management wizard also
+# downloads the client encryption PEM needed for JWE payload encryption.
+projects:
+  - name: transaction_notifications
+    description: Mastercard Transaction Notifications + Consent Management
+    apis: [transaction_notifications, consent_management]

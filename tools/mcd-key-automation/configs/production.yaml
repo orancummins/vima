@@ -1,0 +1,8 @@
+environment: production
+organization: mastercard
+
+login_url: https://developer.mastercard.com/account/log-in
+dashboard_url_pattern: "**/dashboard**"
+key_password: "foobar!!"
+
+projects: []

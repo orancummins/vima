@@ -1,0 +1,35 @@
+{
+  "summary_rates": [
+    {"transCurr": "USD", "crdhldBillCurr": "EUR", "conversionRate": 0.9180, "ecbReferenceRate": 0.9105, "ecbReferenceRateDate": "2026-05-27"},
+    {"transCurr": "GBP", "crdhldBillCurr": "EUR", "conversionRate": 1.1740, "ecbReferenceRate": 1.1680, "ecbReferenceRateDate": "2026-05-27"},
+    {"transCurr": "JPY", "crdhldBillCurr": "EUR", "conversionRate": 0.0062, "ecbReferenceRate": 0.0061, "ecbReferenceRateDate": "2026-05-27"},
+    {"transCurr": "CHF", "crdhldBillCurr": "EUR", "conversionRate": 1.0340, "ecbReferenceRate": 1.0275, "ecbReferenceRateDate": "2026-05-27"},
+    {"transCurr": "USD", "crdhldBillCurr": "GBP", "conversionRate": 0.7820, "ecbReferenceRate": 0.7795, "ecbReferenceRateDate": "2026-05-27"},
+    {"transCurr": "EUR", "crdhldBillCurr": "SEK", "conversionRate": 11.2400, "ecbReferenceRate": 11.2180, "ecbReferenceRateDate": "2026-05-27"},
+    {"transCurr": "EUR", "crdhldBillCurr": "PLN", "conversionRate": 4.2680, "ecbReferenceRate": 4.2540, "ecbReferenceRateDate": "2026-05-27"}
+  ],
+  "mc_currencies": [
+    {"currencyCode": "USD", "currencyName": "US Dollar"},
+    {"currencyCode": "EUR", "currencyName": "Euro"},
+    {"currencyCode": "GBP", "currencyName": "British Pound"},
+    {"currencyCode": "JPY", "currencyName": "Japanese Yen"},
+    {"currencyCode": "CHF", "currencyName": "Swiss Franc"},
+    {"currencyCode": "SEK", "currencyName": "Swedish Krona"},
+    {"currencyCode": "PLN", "currencyName": "Polish Zloty"},
+    {"currencyCode": "CAD", "currencyName": "Canadian Dollar"},
+    {"currencyCode": "AUD", "currencyName": "Australian Dollar"}
+  ],
+  "ecb_currencies": [
+    {"currencyCode": "EUR", "currencyName": "Euro"},
+    {"currencyCode": "GBP", "currencyName": "British Pound"},
+    {"currencyCode": "SEK", "currencyName": "Swedish Krona"},
+    {"currencyCode": "PLN", "currencyName": "Polish Zloty"},
+    {"currencyCode": "DKK", "currencyName": "Danish Krone"},
+    {"currencyCode": "CZK", "currencyName": "Czech Koruna"},
+    {"currencyCode": "HUF", "currencyName": "Hungarian Forint"},
+    {"currencyCode": "RON", "currencyName": "Romanian Leu"},
+    {"currencyCode": "NOK", "currencyName": "Norwegian Krone"},
+    {"currencyCode": "ISK", "currencyName": "Icelandic Krona"},
+    {"currencyCode": "CHF", "currencyName": "Swiss Franc"}
+  ]
+}

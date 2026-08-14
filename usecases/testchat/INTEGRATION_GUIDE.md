@@ -169,7 +169,7 @@ function _tcOpenEditModal() {
   const modal = document.getElementById('tc-modal');
   const iframe = document.getElementById('tc-modal-iframe');
   if (!modal || !iframe) return;
-  iframe.src = 'http://localhost:3333/simple';
+  iframe.src = '/chat/simple';
   modal.style.display = 'flex';
   requestAnimationFrame(() => modal.classList.add('tc-modal-backdrop--open'));
 }

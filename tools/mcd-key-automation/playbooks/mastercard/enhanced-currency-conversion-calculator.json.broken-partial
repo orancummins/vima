@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "organization": "mastercard",
+  "api_slug": "enhanced-currency-conversion-calculator",
+  "recorded_at": "2026-05-28T09:08:41Z",
+  "start_url": "https://developer.mastercard.com/create-project?services=enhanced-currency-conversion-calculator",
+  "variables": [
+    "project_name",
+    "alias",
+    "key_password",
+    "contact_email",
+    "ica"
+  ],
+  "steps": [
+    {
+      "action": "wait_for",
+      "selector": "input[data-testid='project-name']"
+    },
+    {
+      "action": "fill",
+      "selector": "input[data-testid='project-name']",
+      "value": "testcalculator"
+    },
+    {
+      "action": "wait_for",
+      "selector": "input[data-testid='key-alias-input']"
+    },
+    {
+      "action": "fill",
+      "selector": "input[data-testid='key-alias-input']",
+      "value": "testalias"
+    },
+    {
+      "action": "wait_for",
+      "selector": "input[data-testid='key-store-password-input']"
+    },
+    {
+      "action": "fill",
+      "selector": "input[data-testid='key-store-password-input']",
+      "value": "foobar!!"
+    }
+  ]
+}

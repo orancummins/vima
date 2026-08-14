@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BIN Lookup — Mastercard Solution Studio</title>
+  <script src="/static/js/usecase-theme.js"></script>
+  <link rel="stylesheet" href="/bin_lookup/style.css">
+  <link rel="stylesheet" href="/static/css/usecase-theme.css">
+</head>
+<body>
+  <div id="uc-body"></div>
+
+<script>
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function $(id) { return document.getElementById(id); }
+
+function escapeHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+const BIN = { bin: "543210", card: null, loading: false };
+const BIN_DB = { status: "idle", count: 0, loadedAt: null, error: null, searchQuery: "", results: [], searching: false, expandedIdx: null, page: 1, pages: 0, total: 0, persisted: false };
+let BIN_TAB = "lookup"; // "lookup" | "batch"
+
+const BIN_PRESET_OPTIONS = [
+  { value: "543210", label: "543210 — Buckeye State Credit Union (US)" },
+  { value: "111102", label: "111102 — Arab Bank PLC (JO)" },
+  { value: "356600", label: "356600 — Credencial Argentina SA (AR)" },
+  { value: "520000", label: "520000 — Orange Bank (FR)" },
+  { value: "541111", label: "541111 — Entropay Limited (CH)" },
+];
+
+// ─── Main render ──────────────────────────────────────────────────────────────
+function renderBinLookup() {
+  const body = $("uc-body");
+  if (!body) return;
+  body.innerHTML = `
+    <div class="bin-stage">
+      <nav class="bin-tabs" role="tablist">
+        <button class="bin-tab${BIN_TAB === "lookup" ? " bin-tab--active" : ""}" id="bin-tab-lookup" role="tab">
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="16" height="12" rx="2"/><path d="M6 9h8M6 13h4" stroke-linecap="round"/></svg>
+          Single Lookup
+        </button>
+        <button class="bin-tab${BIN_TAB === "batch" ? " bin-tab--active" : ""}" id="bin-tab-batch" role="tab">
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="10" cy="5" rx="7" ry="3"/><path d="M3 5v4c0 1.657 3.134 3 7 3s7-1.343 7-3V5"/><path d="M3 9v4c0 1.657 3.134 3 7 3s7-1.343 7-3V9"/></svg>
+          Batch Search
+          ${BIN_DB.status === "loaded" ? `<span class="bin-tab-badge">${BIN_DB.count.toLocaleString()}</span>` : ""}
+        </button>
+      </nav>
+      <div class="bin-tab-content">
+        ${BIN_TAB === "lookup" ? _binLookupPanelHtml() : binDbPanelHtml()}
+      </div>
+    </div>`;
+  // Tab switching
+  document.getElementById("bin-tab-lookup")?.addEventListener("click", () => {
+    if (BIN_TAB === "lookup") return;
+    BIN_TAB = "lookup";
+    renderBinLookup();
+  });
+  document.getElementById("bin-tab-batch")?.addEventListener("click", () => {
+    if (BIN_TAB === "batch") return;
+    BIN_TAB = "batch";
+    renderBinLookup();
+    _binDbSyncStatus();
+  });
+  if (BIN_TAB === "lookup") {
+    binWire();
+  } else {
+    binDbWire();
+  }
+}
+
+function _binLookupPanelHtml() {
+  return `
+    <div class="bin-form-row">
+      <div class="bin-field">
+        <label for="bin-select">BIN / Issuer</label>
+        <select id="bin-select">
+          ${BIN_PRESET_OPTIONS.map(o =>
+            `<option value="${escapeHtml(o.value)}"${o.value === BIN.bin ? " selected" : ""}>${escapeHtml(o.label)}</option>`
+          ).join("")}
+        </select>
+      </div>
+      <button class="bin-lookup-btn" id="bin-lookup-btn"${BIN.loading ? " disabled" : ""}>
+        ${BIN.loading
+          ? `<span class="psi-spinner"></span>Looking up…`
+          : `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>Look Up Card`}
+      </button>
+    </div>
+    <div class="bin-scene" id="bin-scene">
+      ${BIN.card ? binSceneHtml(BIN.card) : ""}
+    </div>`;
+}
+
+function binEmptySceneHtml() {
+  return `
+    <div class="bin-card-wrap" id="bin-card-wrap">
+      <div class="bin-card bin-card--empty">
+        <div class="bin-card-gloss"></div>
+        <div class="bin-card-inner">
+          <div class="bin-card-top-row">
+            <div class="bin-issuer-line">SELECT A BIN TO BEGIN</div>
+            ${_binContactlessSvg()}
+          </div>
+          <div class="bin-chip-row">${_binChipSvg()}</div>
+          <div class="bin-number-row"><span class="bin-num-placeholder">•••• •••• •••• ••••</span></div>
+          <div class="bin-card-footer-row">
+            <div><div class="bin-card-sublabel">CARD HOLDER</div><div class="bin-card-name">VALUED CUSTOMER</div></div>
+            <div><div class="bin-card-sublabel">EXPIRES</div><div class="bin-card-expiry">••/••</div></div>
+            <div class="bin-card-netlogo"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="bin-empty-hint">Choose a BIN above and click <strong>Look Up Card</strong>.</p>`;
+}
+
+function binSceneHtml(card) {
+  const grad = `linear-gradient(135deg, ${escapeHtml(card.color1)} 0%, ${escapeHtml(card.color2)} 100%)`;
+  const funding = (card.fundingSource || "").toLowerCase();
+  const fundingLabel = { credit: "Credit", debit: "Debit", prepaid: "Prepaid", none: "None" }[funding] || card.fundingSource || "—";
+  const clipPath = _binCardClipPath(funding);
+  return `
+    <div class="bin-annotated-layout">
+      <!-- Left callouts: Issuer · Brand · ICA -->
+      <div class="bin-callouts bin-callouts--left">
+        ${_binCallout("Issuer",   escapeHtml(card.issuerName),  "left",  0)}
+        ${_binCallout("Brand",    escapeHtml(card.brandLabel),  "left",  1)}
+        ${card.ica ? _binCallout("ICA", escapeHtml(card.ica),  "left",  2) : ""}
+      </div>
+
+      <!-- Card -->
+      <div class="bin-card-wrap" id="bin-card-wrap" style="opacity:0;transform:translateY(18px) scale(0.97)">
+        <div class="bin-card" style="background:${grad};${clipPath ? 'clip-path:' + clipPath : ''}">
+          <div class="bin-card-gloss"></div>
+          <div class="bin-card-inner">
+            <div class="bin-card-top-row">
+              <div class="bin-issuer-line">${escapeHtml(card.displayName.toUpperCase())}</div>
+              ${_binContactlessSvg()}
+            </div>
+            <div class="bin-chip-row">${_binChipSvg()}</div>
+            <div class="bin-number-row" id="bin-number-row">${_binNumberHtml(card.binNum)}</div>
+            <div class="bin-card-footer-row">
+              <div class="bin-card-product-badge">${escapeHtml(card.product)}</div>
+              <div class="bin-card-country-tag">${card.flagEmoji ? card.flagEmoji + " " : ""}${escapeHtml(card.countryName)}</div>
+              <div class="bin-card-netlogo">${_binNetworkSvg(card.network)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right callouts: Country · Funding · Segment -->
+      <div class="bin-callouts bin-callouts--right">
+        ${_binCallout("Country",  (card.flagEmoji ? card.flagEmoji + " " : "") + escapeHtml(card.countryName), "right", 0)}
+        ${_binCallout("Funding",  fundingLabel, "right", 1, funding ? "bin-callout-value--" + funding : "")}
+        ${_binCallout("Segment",  escapeHtml(card.consumerLabel), "right", 2)}
+      </div>
+    </div>
+
+    <!-- Capabilities grid -->
+    <div class="bin-capability-grid" id="bin-cap-grid">
+      ${card.productCode ? _binCapChip("Product", card.productCode + " — " + card.product, "neutral") : _binCapChip("Product", card.product, "neutral")}
+      ${card.billingCurrency ? _binCapChip("Billing Currency", card.billingCurrency, "neutral") : ""}
+      ${_binCapChip("Local Use",   card.localUse        ? "Domestic Only"          : "International",  card.localUse        ? "warn" : "ok")}
+      ${_binCapChip("MoneySend",   card.moneySend       ? "Enabled"                : "Not Enabled",    card.moneySend       ? "ok"   : "dim")}
+      ${_binCapChip("Fast Fund",   card.fastFund        ? (card.fastFundDomesticOnly ? "Domestic Only" : "Full Support") : "Not Supported", card.fastFund ? "ok" : "dim")}
+      ${_binCapChip("DCC",         card.dccEnabled      ? "Supported"              : "Not Supported",  card.dccEnabled      ? "ok"   : "dim")}
+      ${card.authorizationOnly ? _binCapChip("Auth Only", "Yes", "warn") : _binCapChip("Auth Only", "No", "")}
+      ${funding === 'prepaid' ? _binCapChip("Reloadable", card.nonReloadable ? "No" : "Yes", card.nonReloadable ? "warn" : "ok") : (card.nonReloadable ? _binCapChip("Non-Reloadable", "Yes", "warn") : "")}
+      ${card.governmentRange       ? _binCapChip("Government",      "Public Sector","info") : ""}
+      ${_binCapChip("Smart Data",  card.smartData       ? "Enrolled"               : "Not Enrolled",   card.smartData       ? "ok"   : "dim")}
+      ${card.isToken               ? _binCapChip("Token BIN",       "Network Token","info") : ""}
+    </div>
+
+    <!-- Mobile chip grid (shown only on narrow screens) -->
+    <div class="bin-chips-mobile">
+      ${_binChip("Issuer",    card.issuerName, 0)}
+      ${_binChip("Network",   card.network,    1)}
+      ${_binChip("Country",   (card.flagEmoji ? card.flagEmoji + " " : "") + card.countryName, 2)}
+      ${_binChip("Product",   card.product,    3)}
+      ${_binChip("Segment",   card.consumerLabel, 4)}
+      ${_binChip("Funding",   fundingLabel,    5)}
+      ${_binChip("BIN",       card.binNum,     6)}
+      ${card.productCode ? _binChip("Product Code", card.productCode, 7) : ""}
+    </div>
+  `;
+}
+
+// ─── HTML helpers ─────────────────────────────────────────────────────────────
+
+function _binCallout(label, value, side, idx, valueCls) {
+  return `
+    <div class="bin-callout bin-callout--${side}" data-co-idx="${idx}" style="opacity:0">
+      <div class="bin-callout-text">
+        <div class="bin-callout-label">${escapeHtml(label)}</div>
+        <div class="bin-callout-value${valueCls ? " " + valueCls : ""}">${value}</div>
+      </div>
+      <div class="bin-callout-line"></div>
+      <div class="bin-callout-dot"></div>
+    </div>`;
+}
+
+function _binChip(label, value, idx) {
+  return `
+    <div class="bin-chip" data-chip-idx="${idx}" style="opacity:0;transform:translateY(10px)">
+      <div class="bin-chip-label">${escapeHtml(label)}</div>
+      <div class="bin-chip-value">${value}</div>
+    </div>`;
+}
+
+function _binCapChip(label, value, modifier) {
+  return `<div class="bin-cap-chip${modifier ? " bin-cap-chip--" + modifier : ""}" data-cap-idx style="opacity:0;transform:translateY(12px) scale(0.95)">
+    <div class="bin-cap-label">${escapeHtml(label)}</div>
+    <div class="bin-cap-value">${escapeHtml(value)}</div>
+  </div>`;
+}
+
+function _binNumberHtml(bin) {
+  const padded = String(bin).padEnd(16, "x");
+  let mIdx = 0;
+  const groups = [padded.slice(0,4), padded.slice(4,8), padded.slice(8,12), padded.slice(12,16)];
+  return groups.map((grp, gi) => {
+    const chars = grp.split("").map((ch, ci) => {
+      const pos = gi * 4 + ci;
+      const real = pos < bin.length;
+      if (real) {
+        return `<span class="bin-digit bin-digit--real" data-pos="${pos}">${ch}</span>`;
+      } else {
+        const n = (mIdx++ % 9) + 1;
+        return `<span class="bin-digit bin-digit--masked" data-pos="${pos}" data-n="${n}">${n}</span>`;
+      }
+    }).join("");
+    return `<span class="bin-grp">${chars}</span>`;
+  }).join('<span class="bin-grp-space"> </span>');
+}
+
+function _binNetworkSvg(network) {
+  if (network === "Mastercard") return `
+    <svg viewBox="0 0 52 34" class="bin-net-svg" aria-label="Mastercard">
+      <circle cx="19" cy="17" r="13" fill="#eb001b" opacity="0.93"/>
+      <circle cx="33" cy="17" r="13" fill="#f79e1b" opacity="0.93"/>
+      <path d="M26 7a13 13 0 0 1 0 20A13 13 0 0 1 26 7z" fill="#ff5f00" opacity="0.86"/>
+    </svg>`;
+  if (network === "Visa") return `
+    <svg viewBox="0 0 72 24" class="bin-net-svg" aria-label="Visa">
+      <text x="1" y="20" font-family="Arial,sans-serif" font-size="22" font-style="italic" font-weight="900" fill="white" letter-spacing="-1">VISA</text>
+    </svg>`;
+  if (network === "Amex") return `
+    <svg viewBox="0 0 72 24" class="bin-net-svg" aria-label="American Express">
+      <text x="1" y="19" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="white" letter-spacing="1">AMEX</text>
+    </svg>`;
+  if (network === "Discover") return `
+    <svg viewBox="0 0 72 24" class="bin-net-svg" aria-label="Discover">
+      <text x="1" y="19" font-family="Arial,sans-serif" font-size="11" font-weight="700" fill="white">DISCOVER</text>
+    </svg>`;
+  return `<svg viewBox="0 0 72 24" class="bin-net-svg"><text x="1" y="19" font-family="Arial,sans-serif" font-size="11" fill="white">${escapeHtml(network)}</text></svg>`;
+}
+
+function _binChipSvg() {
+  return `<svg viewBox="0 0 44 34" class="bin-chip-svg" aria-hidden="true">
+    <rect width="44" height="34" rx="5" fill="#c8a830"/>
+    <rect x="3" y="3" width="38" height="28" rx="4" fill="#e2bb44" stroke="#a88820" stroke-width="0.6"/>
+    <line x1="3"  y1="12" x2="41" y2="12" stroke="#a88820" stroke-width="0.6"/>
+    <line x1="3"  y1="22" x2="41" y2="22" stroke="#a88820" stroke-width="0.6"/>
+    <line x1="15" y1="3"  x2="15" y2="31" stroke="#a88820" stroke-width="0.6"/>
+    <line x1="29" y1="3"  x2="29" y2="31" stroke="#a88820" stroke-width="0.6"/>
+    <rect x="15" y="12" width="14" height="10" rx="1.5" fill="#c8a420" stroke="#a88820" stroke-width="0.4"/>
+  </svg>`;
+}
+
+function _binCardClipPath(funding) {
+  const W = 342, H = 215, R = 17;
+  const base = `M ${R} 0 L ${W-R} 0 Q ${W} 0 ${W} ${R} `;
+  const tail = ` L ${W} ${H-R} Q ${W} ${H} ${W-R} ${H} L ${R} ${H} Q 0 ${H} 0 ${H-R} L 0 ${R} Q 0 0 ${R} 0 Z`;
+  let notch = '';
+  if (funding === 'debit') {
+    const cy2 = 150, dHalf = 35.3, dDepth = 5.75;
+    const dR = (dHalf*dHalf + dDepth*dDepth) / (2*dDepth);
+    const dyt = (cy2 - dHalf).toFixed(1);
+    const dyb = (cy2 + dHalf).toFixed(1);
+    notch = `L ${W} ${dyt} A ${dR.toFixed(1)} ${dR.toFixed(1)} 0 0 0 ${W} ${dyb}`;
+  } else if (funding === 'credit') {
+    const ccy = 150, cnd = 5.75, cs = 54.25;
+    const citx = W - cnd;
+    const dyOff = cnd / Math.tan(72 * Math.PI / 180);
+    const eyT = ccy - cs / 2;
+    const eyB = ccy + cs / 2;
+    const iyT = eyT + dyOff;
+    const iyB = eyB - dyOff;
+    notch = `L ${W} ${eyT.toFixed(1)} L ${citx} ${iyT.toFixed(1)} L ${citx} ${iyB.toFixed(1)} L ${W} ${eyB.toFixed(1)}`;
+  } else if (funding === 'prepaid') {
+    const pcy = 150, pnd = 5.75, pOpen = 70;
+    const py1 = pcy - pOpen / 2;
+    const py2 = pcy + pOpen / 2;
+    const pA = (-pOpen + Math.sqrt(4*pOpen*pOpen - 9*pnd*pnd)) / 3;
+    notch = `L ${W} ${py1.toFixed(1)} L ${(W-pnd).toFixed(1)} ${(py1+pA).toFixed(1)} L ${W} ${py2.toFixed(1)}`;
+  } else {
+    return '';
+  }
+  return `path('${base}${notch}${tail}')`;
+}
+
+function _binContactlessSvg() {
+  return `<svg viewBox="0 0 24 24" class="bin-contactless-svg" fill="none" aria-hidden="true">
+    <path d="M12 5a7 7 0 0 1 0 14" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M12 8.5a3.5 3.5 0 0 1 0 7" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="12" cy="12" r="1.5" fill="rgba(255,255,255,0.45)"/>
+  </svg>`;
+}
+
+// ─── Animation ────────────────────────────────────────────────────────────────
+function binAnimateIn() {
+  const wrap = document.getElementById("bin-card-wrap");
+  if (wrap) {
+    wrap.style.opacity = "0";
+    wrap.style.transform = "translateY(18px) scale(0.97)";
+    wrap.style.transition = "none";
+    void wrap.offsetWidth;
+    wrap.style.transition = "opacity 0.5s ease, transform 0.5s cubic-bezier(0.22,1,0.36,1)";
+    wrap.style.opacity = "1";
+    wrap.style.transform = "translateY(0) scale(1)";
+  }
+  document.querySelectorAll("#bin-number-row .bin-digit--real").forEach((el, i) => {
+    el.style.opacity = "0";
+    el.style.transform = "translateY(6px)";
+    setTimeout(() => {
+      el.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+      el.style.opacity = "1";
+      el.style.transform = "translateY(0)";
+    }, 220 + i * 45);
+  });
+  const maskedEls = document.querySelectorAll("#bin-number-row .bin-digit--masked");
+  maskedEls.forEach((el, i) => {
+    const finalN = parseInt(el.dataset.n, 10);
+    const delay = 280 + i * 40;
+    const cycles = 6;
+    let tick = 0;
+    el.style.opacity = "0";
+    setTimeout(() => {
+      el.style.transition = "opacity 0.15s ease";
+      el.style.opacity = "1";
+      const interval = setInterval(() => {
+        tick++;
+        el.textContent = ((tick % 9) + 1).toString();
+        if (tick >= cycles) {
+          clearInterval(interval);
+          el.textContent = finalN.toString();
+        }
+      }, 60);
+    }, delay);
+  });
+  document.querySelectorAll(".bin-callout").forEach(el => {
+    const idx = parseInt(el.dataset.coIdx || "0");
+    const left = el.classList.contains("bin-callout--left");
+    el.style.opacity = "0";
+    el.style.transform = `translateX(${left ? -18 : 18}px)`;
+    setTimeout(() => {
+      el.style.transition = "opacity 0.38s ease, transform 0.42s cubic-bezier(0.22,1,0.36,1)";
+      el.style.opacity = "1";
+      el.style.transform = "translateX(0)";
+    }, 480 + idx * 90);
+  });
+  document.querySelectorAll(".bin-chip").forEach(el => {
+    const idx = parseInt(el.dataset.chipIdx || "0");
+    el.style.opacity = "0";
+    el.style.transform = "translateY(10px)";
+    setTimeout(() => {
+      el.style.transition = "opacity 0.35s ease, transform 0.35s ease";
+      el.style.opacity = "1";
+      el.style.transform = "translateY(0)";
+    }, 380 + idx * 75);
+  });
+  document.querySelectorAll(".bin-cap-chip").forEach((el, i) => {
+    el.style.opacity = "0";
+    el.style.transform = "translateY(12px) scale(0.95)";
+    setTimeout(() => {
+      el.style.transition = "opacity 0.30s ease, transform 0.35s cubic-bezier(0.34,1.1,0.64,1)";
+      el.style.opacity = "1";
+      el.style.transform = "translateY(0) scale(1)";
+    }, 700 + i * 55);
+  });
+}
+
+// ─── BIN Ranges DB panel ──────────────────────────────────────────────────────
+function binDbStatusHtml() {
+  const s = BIN_DB.status;
+  if (s === "loaded") {
+    const ago = BIN_DB.loadedAt ? _binTimeAgo(BIN_DB.loadedAt) : "";
+    const diskNote = BIN_DB.persisted
+      ? ` <span class="bin-db-badge-disk" title="Restored from local database"><svg width="10" height="10" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="10" cy="6" rx="7" ry="3"/><path d="M3 6v4c0 1.657 3.134 3 7 3s7-1.343 7-3V6"/><path d="M3 10v4c0 1.657 3.134 3 7 3s7-1.343 7-3v-4"/></svg> Saved locally</span>`
+      : "";
+    return `<span class="bin-db-badge bin-db-badge--ok">
+      <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#1f9d55"/></svg>
+      ${BIN_DB.count.toLocaleString()} ranges loaded${ago ? " · " + ago : ""}
+    </span>${diskNote}`;
+  }
+  if (s === "loading") {
+    return `<span class="bin-db-badge bin-db-badge--loading">
+      <span class="psi-spinner" style="width:10px;height:10px;border-width:1.5px"></span> Loading…
+    </span>`;
+  }
+  if (s === "error") {
+    return `<span class="bin-db-badge bin-db-badge--err">
+      <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#eb001b"/></svg>
+      Error${BIN_DB.error ? ": " + escapeHtml(BIN_DB.error) : ""}
+    </span>`;
+  }
+  return `<span class="bin-db-badge bin-db-badge--idle">
+    <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#aaa"/></svg>
+    Not loaded
+  </span>`;
+}
+
+function _binDbPaginationHtml() {
+  if (BIN_DB.pages <= 1) return "";
+  const p = BIN_DB.page, pp = BIN_DB.pages;
+  const btns = [];
+  const win = 2;
+  let prev = null;
+  for (let i = 1; i <= pp; i++) {
+    if (i === 1 || i === pp || (i >= p - win && i <= p + win)) {
+      if (prev !== null && i > prev + 1) btns.push(null);
+      btns.push(i);
+      prev = i;
+    }
+  }
+  const pageNums = btns.map(i =>
+    i === null
+      ? `<span class="bin-db-pg-ellipsis">…</span>`
+      : `<button class="bin-db-pg-btn${i === p ? " bin-db-pg-btn--active" : ""}" data-pg="${i}">${i}</button>`
+  ).join("");
+  return `
+    <div class="bin-db-pagination">
+      <button class="bin-db-pg-btn bin-db-pg-nav" data-pg="${p - 1}"${p <= 1 ? " disabled" : ""}>
+        <svg width="12" height="12" viewBox="0 0 12 12"><path d="M8 2L4 6l4 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      ${pageNums}
+      <button class="bin-db-pg-btn bin-db-pg-nav" data-pg="${p + 1}"${p >= pp ? " disabled" : ""}>
+        <svg width="12" height="12" viewBox="0 0 12 12"><path d="M4 2l4 4-4 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="bin-db-pg-info">${BIN_DB.total.toLocaleString()} result${BIN_DB.total === 1 ? "" : "s"}</span>
+    </div>`;
+}
+
+function binDbResultsHtml() {
+  if (BIN_DB.searching) {
+    return `<div class="bin-db-results-placeholder"><span class="psi-spinner"></span> Searching…</div>`;
+  }
+  if (!BIN_DB.searchQuery) return "";
+  if (!BIN_DB.results.length) {
+    return `<div class="bin-db-results-placeholder">No results for <strong>${escapeHtml(BIN_DB.searchQuery)}</strong></div>`;
+  }
+  const rows = BIN_DB.results.map((r, i) => {
+    const country = r.country && typeof r.country === "object" ? r.country.name : String(r.country || "—");
+    const expanded = BIN_DB.expandedIdx === i;
+    const low = r.lowAccountRange || "";
+    const high = r.highAccountRange || "";
+    const range = low === high ? low : `${low}–${high.slice(-6)}`;
+    return `
+      <tr class="bin-db-row${expanded ? " bin-db-row--open" : ""}" data-idx="${i}">
+        <td class="bin-db-cell bin-db-cell--bin">${escapeHtml(String(r.binNum || ""))}</td>
+        <td class="bin-db-cell">${escapeHtml(r.customerName || "—")}</td>
+        <td class="bin-db-cell">${escapeHtml(country)}</td>
+        <td class="bin-db-cell">${escapeHtml(r.acceptanceBrand || "—")}</td>
+        <td class="bin-db-cell">${escapeHtml(r.fundingSource || "—")}</td>
+        <td class="bin-db-cell bin-db-cell--expand">${expanded ? "▲" : "▼"}</td>
+      </tr>
+      ${expanded ? `<tr class="bin-db-expand-row">
+        <td colspan="6">
+          <div class="bin-db-expand-body">
+            <div class="bin-db-expand-grid">
+              ${_binDbDetailPair("Range", escapeHtml(range))}
+              ${_binDbDetailPair("BIN Length", escapeHtml(String(r.binLength || "—")))}
+              ${_binDbDetailPair("Product", escapeHtml(r.productDescription || "—"))}
+              ${_binDbDetailPair("Product Code", escapeHtml(r.productCode || "—"))}
+              ${_binDbDetailPair("ICA", escapeHtml(String(r.ica || "—")))}
+              ${_binDbDetailPair("Country Code", escapeHtml(r.country && r.country.alpha3 ? r.country.alpha3 : "—"))}
+              ${_binDbDetailPair("Funding", escapeHtml(r.fundingSource || "—"))}
+              ${_binDbDetailPair("Consumer Type", escapeHtml(r.consumerType || "—"))}
+              ${_binDbDetailPair("Prepaid", escapeHtml(r.anonymousPrepaidIndicator || "—"))}
+              ${_binDbDetailPair("Smart Data", escapeHtml(String(r.smartDataEnabled ?? "—")))}
+              ${_binDbDetailPair("Local Use", escapeHtml(String(r.localUse ?? "—")))}
+              ${_binDbDetailPair("Auth Only", escapeHtml(String(r.authorizationOnly ?? "—")))}
+              ${_binDbDetailPair("Govt Range", escapeHtml(String(r.governmentRange ?? "—")))}
+              ${_binDbDetailPair("Program", escapeHtml(r.programName || "—"))}
+              ${_binDbDetailPair("Vertical", escapeHtml(r.vertical || "—"))}
+            </div>
+            <div class="bin-db-expand-actions">
+              <button class="bin-db-visualize-btn" data-visualize-bin="${escapeHtml(String(r.binNum || ""))}" data-visualize-label="${escapeHtml((r.binNum ? String(r.binNum) : "") + (r.customerName ? " — " + r.customerName : "") + (r.country && r.country.alpha3 ? " (" + r.country.alpha3 + ")" : ""))}">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0"><rect x="2" y="5" width="16" height="11" rx="2"/><path d="M2 9h16" stroke-linecap="round"/><circle cx="6" cy="13" r="1" fill="currentColor" stroke="none"/></svg>
+                Visualize as Card
+              </button>
+            </div>
+          </div>
+        </td>
+      </tr>` : ""}
+    `;
+  }).join("");
+  const topPagination = _binDbPaginationHtml();
+  const bottomPagination = BIN_DB.pages > 1 ? `<div class="bin-db-results-footer">${_binDbPaginationHtml()}</div>` : "";
+  return `
+    ${topPagination}
+    <table class="bin-db-table">
+      <thead><tr>
+        <th>BIN</th><th>Issuer</th><th>Country</th><th>Brand</th><th>Funding</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${bottomPagination}`;
+}
+
+function _binDbDetailPair(label, value) {
+  return `<div class="bin-db-detail-pair"><span class="bin-db-detail-label">${label}</span><span class="bin-db-detail-value">${value}</span></div>`;
+}
+
+function _binTimeAgo(ts) {
+  const sec = Math.floor(Date.now() / 1000) - ts;
+  if (sec < 60) return "just now";
+  if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
+  if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
+  return `${Math.floor(sec / 86400)}d ago`;
+}
+
+function binDbPanelHtml() {
+  const s = BIN_DB.status;
+  const loaded = s === "loaded";
+  const loading = s === "loading";
+  return `
+    <div class="bin-db-panel">
+      <div class="bin-db-panel-header">
+        <div class="bin-db-panel-title">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="10" cy="5" rx="7" ry="3"/><path d="M3 5v5c0 1.657 3.134 3 7 3s7-1.343 7-3V5"/><path d="M3 10v5c0 1.657 3.134 3 7 3s7-1.343 7-3v-5"/></svg>
+          BIN Ranges Database
+        </div>
+        <div class="bin-db-panel-actions">
+          <a class="bin-db-csv-btn" href="/usecases/bin_lookup/download-bins" download="bin_ranges.csv"
+             title="Download all BIN ranges as CSV${loaded ? " (" + BIN_DB.count.toLocaleString() + " rows)" : ""}">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 3v10M6 9l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 17h14" stroke-linecap="round"/></svg>
+            CSV
+          </a>
+          <button class="bin-db-load-btn" id="bin-db-load-btn"${loading ? " disabled" : ""}>
+            ${loading
+              ? `<span class="psi-spinner" style="width:12px;height:12px;border-width:1.5px"></span> Loading…`
+              : loaded
+                ? `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/><path d="M4 10l-2-2 2-2"/></svg> Reload`
+                : `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/><path d="M4 10l-2-2 2-2"/></svg> Load into Studio`}
+          </button>
+        </div>
+      </div>
+      <div class="bin-db-status-row" id="bin-db-status-row">${binDbStatusHtml()}</div>
+      ${loaded ? `
+      <div class="bin-db-search-row">
+        <div class="bin-db-search-wrap">
+          <svg class="bin-db-search-icon" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>
+          <input class="bin-db-search-input" id="bin-db-search-input" type="text"
+            placeholder='Search BIN, issuer, country… or "Exact Issuer Name"'
+            value="${escapeHtml(BIN_DB.searchQuery)}" autocomplete="off">
+          ${BIN_DB.searchQuery ? `<button class="bin-db-search-clear" id="bin-db-search-clear" title="Clear">✕</button>` : ""}
+        </div>
+      </div>
+      <div class="bin-db-results" id="bin-db-results">${binDbResultsHtml()}</div>
+      ` : ""}
+    </div>`;
+}
+
+let _binDbPollTimer = null;
+
+function binDbWire() {
+  const loadBtn = document.getElementById("bin-db-load-btn");
+  if (loadBtn) {
+    loadBtn.addEventListener("click", async () => {
+      const r = await fetch("/usecases/bin_lookup/bin-ranges/load", { method: "POST" });
+      const d = await r.json();
+      if (d.ok || d.message === "Already loading") {
+        BIN_DB.status = "loading";
+        _binDbRefreshStatus();
+        _binDbStartPoll();
+      }
+    });
+  }
+
+  const inp = document.getElementById("bin-db-search-input");
+  if (inp) {
+    inp.addEventListener("input", _binDbOnSearch);
+    inp.addEventListener("keydown", e => { if (e.key === "Escape") { BIN_DB.searchQuery = ""; _binDbRefreshResults(); } });
+  }
+  const clearBtn = document.getElementById("bin-db-search-clear");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => { BIN_DB.searchQuery = ""; BIN_DB.results = []; _binDbRefreshAll(); });
+  }
+
+  const tbody = document.querySelector(".bin-db-table tbody");
+  if (tbody) {
+    tbody.addEventListener("click", e => {
+      const vbtn = e.target.closest("[data-visualize-bin]");
+      if (vbtn) {
+        e.stopPropagation();
+        const bn = vbtn.getAttribute("data-visualize-bin");
+        const lbl = vbtn.getAttribute("data-visualize-label") || bn;
+        if (bn) _binVisualizeFromBatch(bn, lbl);
+        return;
+      }
+      const row = e.target.closest("tr.bin-db-row");
+      if (!row) return;
+      const idx = parseInt(row.dataset.idx, 10);
+      BIN_DB.expandedIdx = BIN_DB.expandedIdx === idx ? null : idx;
+      _binDbRefreshResults();
+    });
+  }
+
+  _binDbSyncStatus();
+}
+
+let _binDbSearchTimer = null;
+function _binDbOnSearch(e) {
+  BIN_DB.searchQuery = e.target.value;
+  BIN_DB.page = 1;
+  clearTimeout(_binDbSearchTimer);
+  if (!BIN_DB.searchQuery) {
+    BIN_DB.results = [];
+    BIN_DB.total = 0;
+    BIN_DB.pages = 0;
+    BIN_DB.expandedIdx = null;
+    _binDbRefreshAll();
+    return;
+  }
+  BIN_DB.searching = true;
+  _binDbRefreshResults();
+  _binDbSearchTimer = setTimeout(() => _binDbExecSearch(1), 250);
+}
+
+async function _binDbExecSearch(page) {
+  const q = BIN_DB.searchQuery;
+  if (!q) return;
+  const pg = page || BIN_DB.page || 1;
+  const r = await fetch(`/usecases/bin_lookup/bin-ranges/search?q=${encodeURIComponent(q)}&page=${pg}`);
+  const d = await r.json();
+  if (BIN_DB.searchQuery !== q) return;
+  BIN_DB.searching = false;
+  BIN_DB.expandedIdx = null;
+  BIN_DB.results = d.results || [];
+  BIN_DB.total = d.total || 0;
+  BIN_DB.page = d.page || pg;
+  BIN_DB.pages = d.pages || 0;
+  _binDbRefreshResults();
+}
+
+function _binDbRefreshStatus() {
+  const el = document.getElementById("bin-db-status-row");
+  if (el) el.innerHTML = binDbStatusHtml();
+  const loadBtn = document.getElementById("bin-db-load-btn");
+  if (loadBtn) {
+    const loading = BIN_DB.status === "loading";
+    const loaded = BIN_DB.status === "loaded";
+    loadBtn.disabled = loading;
+    loadBtn.innerHTML = loading
+      ? `<span class="psi-spinner" style="width:12px;height:12px;border-width:1.5px"></span> Loading…`
+      : loaded
+        ? `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/><path d="M4 10l-2-2 2-2"/></svg> Reload`
+        : `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10a6 6 0 1 1 12 0" stroke-linecap="round"/><path d="M4 10l-2-2 2-2"/></svg> Load into MSS`;
+  }
+}
+
+function _binDbRefreshResults() {
+  const el = document.getElementById("bin-db-results");
+  if (el) el.innerHTML = binDbResultsHtml();
+  const tbody = el && el.querySelector(".bin-db-table tbody");
+  if (tbody) {
+    tbody.addEventListener("click", e => {
+      const vbtn = e.target.closest("[data-visualize-bin]");
+      if (vbtn) {
+        e.stopPropagation();
+        const bn = vbtn.getAttribute("data-visualize-bin");
+        const lbl = vbtn.getAttribute("data-visualize-label") || bn;
+        if (bn) _binVisualizeFromBatch(bn, lbl);
+        return;
+      }
+      const row = e.target.closest("tr.bin-db-row");
+      if (!row) return;
+      const idx = parseInt(row.dataset.idx, 10);
+      BIN_DB.expandedIdx = BIN_DB.expandedIdx === idx ? null : idx;
+      _binDbRefreshResults();
+    });
+  }
+  const clearBtn = document.getElementById("bin-db-search-clear");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      BIN_DB.searchQuery = ""; BIN_DB.results = []; BIN_DB.total = 0;
+      BIN_DB.pages = 0; BIN_DB.page = 1; _binDbRefreshAll();
+    });
+  }
+  el && el.querySelectorAll(".bin-db-pg-btn[data-pg]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (btn.disabled) return;
+      const pg = parseInt(btn.dataset.pg, 10);
+      if (isNaN(pg) || pg < 1 || pg > BIN_DB.pages) return;
+      BIN_DB.page = pg;
+      BIN_DB.expandedIdx = null;
+      BIN_DB.searching = true;
+      _binDbRefreshResults();
+      await _binDbExecSearch(pg);
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  });
+}
+
+function _binDbRefreshAll() {
+  const tc = document.querySelector(".bin-tab-content");
+  if (!tc) { renderBinLookup(); return; }
+  tc.innerHTML = binDbPanelHtml();
+  binDbWire();
+}
+
+function _binDbStartPoll() {
+  clearInterval(_binDbPollTimer);
+  _binDbPollTimer = setInterval(_binDbSyncStatus, 2000);
+}
+
+async function _binDbSyncStatus() {
+  try {
+    const r = await fetch("/usecases/bin_lookup/bin-ranges/status");
+    const d = await r.json();
+    const prev = BIN_DB.status;
+    BIN_DB.status = d.status;
+    BIN_DB.count = d.count;
+    BIN_DB.loadedAt = d.loaded_at;
+    BIN_DB.error = d.error;
+    BIN_DB.persisted = d.persisted || false;
+    if (d.status !== "loading") {
+      clearInterval(_binDbPollTimer);
+      _binDbPollTimer = null;
+      if ((prev === "loading" || prev === "idle") && d.status === "loaded") {
+        const tabBatchBtn = document.getElementById("bin-tab-batch");
+        if (tabBatchBtn) {
+          const badge = tabBatchBtn.querySelector(".bin-tab-badge");
+          if (badge) badge.textContent = BIN_DB.count.toLocaleString();
+          else tabBatchBtn.insertAdjacentHTML("beforeend", `<span class="bin-tab-badge">${BIN_DB.count.toLocaleString()}</span>`);
+        }
+        if (BIN_TAB === "batch") {
+          const tc = document.querySelector(".bin-tab-content");
+          if (tc) { tc.innerHTML = binDbPanelHtml(); binDbWire(); return; }
+        }
+        renderBinLookup();
+        return;
+      }
+    }
+    _binDbRefreshStatus();
+  } catch (_) {}
+}
+
+// ─── Targeted refresh helpers ─────────────────────────────────────────────────
+function _binRefreshLookupPanel() {
+  const tc = document.querySelector(".bin-tab-content");
+  if (!tc) { renderBinLookup(); return; }
+  tc.innerHTML = _binLookupPanelHtml();
+  binWire();
+}
+
+async function _binVisualizeFromBatch(binNum, label) {
+  if (!BIN_PRESET_OPTIONS.some(o => o.value === binNum)) {
+    BIN_PRESET_OPTIONS.unshift({ value: binNum, label: label || binNum });
+  }
+  BIN_TAB = "lookup";
+  BIN.bin = binNum;
+  BIN.loading = true;
+  BIN.card = null;
+  renderBinLookup();
+  try {
+    const r = await fetch("/usecases/bin_lookup/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "lookup", params: { account_range: binNum } }),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+    const d = await r.json();
+    BIN.loading = false;
+    if (d.error) {
+      BIN.card = null;
+      _binRefreshLookupPanel();
+      const scene = document.getElementById("bin-scene");
+      if (scene) scene.insertAdjacentHTML("beforeend", `<div class="bin-error-msg">${escapeHtml(String(d.error))}</div>`);
+    } else if (!d.found) {
+      BIN.card = null;
+      _binRefreshLookupPanel();
+      const scene = document.getElementById("bin-scene");
+      if (scene) scene.insertAdjacentHTML("beforeend", `<div class="bin-notfound-msg">${escapeHtml(d.note || "No matching BIN found.")}</div>`);
+    } else {
+      BIN.card = d.card;
+      _binRefreshLookupPanel();
+      requestAnimationFrame(() => setTimeout(binAnimateIn, 30));
+    }
+  } catch (e) {
+    BIN.loading = false;
+    BIN.card = null;
+    _binRefreshLookupPanel();
+    const scene = document.getElementById("bin-scene");
+    if (scene) scene.insertAdjacentHTML("beforeend", `<div class="bin-error-msg">Error: ${escapeHtml(String(e.message))}</div>`);
+  }
+}
+
+// ─── Wiring ───────────────────────────────────────────────────────────────────
+function binWire() {
+  const sel = document.getElementById("bin-select");
+  if (sel) sel.addEventListener("change", () => { BIN.bin = sel.value; });
+
+  const btn = document.getElementById("bin-lookup-btn");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    const selEl = document.getElementById("bin-select");
+    if (selEl) BIN.bin = selEl.value;
+    if (!BIN.bin) return;
+
+    BIN.loading = true;
+    BIN.card = null;
+    _binRefreshLookupPanel();
+
+    try {
+      const r = await fetch("/usecases/bin_lookup/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "lookup", params: { account_range: BIN.bin } }),
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+      const d = await r.json();
+      BIN.loading = false;
+      if (d.error) {
+        BIN.card = null;
+        _binRefreshLookupPanel();
+        const scene = document.getElementById("bin-scene");
+        if (scene) scene.insertAdjacentHTML("beforeend", `<div class="bin-error-msg">${escapeHtml(String(d.error))}</div>`);
+      } else if (!d.found) {
+        BIN.card = null;
+        _binRefreshLookupPanel();
+        const scene = document.getElementById("bin-scene");
+        if (scene) scene.insertAdjacentHTML("beforeend", `<div class="bin-notfound-msg">${escapeHtml(d.note || "No matching BIN found.")}</div>`);
+      } else {
+        BIN.card = d.card;
+        _binRefreshLookupPanel();
+        requestAnimationFrame(() => setTimeout(binAnimateIn, 30));
+      }
+    } catch (e) {
+      BIN.loading = false;
+      BIN.card = null;
+      _binRefreshLookupPanel();
+      const scene = document.getElementById("bin-scene");
+      if (scene) scene.insertAdjacentHTML("beforeend", `<div class="bin-error-msg">Error: ${escapeHtml(String(e.message))}</div>`);
+    }
+  });
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", renderBinLookup);
+</script>
+</body>
+</html>

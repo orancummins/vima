@@ -1,0 +1,20 @@
+{
+  "providers": [
+    {"id": "dk-nordea", "name": "Nordea DK (Aiia Test)", "country": "DK", "logo_url": "", "supports_ais": true, "supports_pis": true, "status": "active"},
+    {"id": "dk-danske", "name": "Danske Bank DK (Aiia Test)", "country": "DK", "logo_url": "", "supports_ais": true, "supports_pis": true, "status": "active"},
+    {"id": "se-handelsbanken", "name": "Handelsbanken SE (Aiia Test)", "country": "SE", "logo_url": "", "supports_ais": true, "supports_pis": false, "status": "active"},
+    {"id": "de-deutsche", "name": "Deutsche Bank DE (Aiia Test)", "country": "DE", "logo_url": "", "supports_ais": true, "supports_pis": true, "status": "active"},
+    {"id": "uk-monzo", "name": "Monzo UK (Aiia Test)", "country": "UK", "logo_url": "", "supports_ais": true, "supports_pis": true, "status": "active"}
+  ],
+  "accounts": [
+    {"id": "acc_eu_001", "name": "Aiia Test Current Account", "iban": "DK5000400440116243", "currency": "DKK", "balance": 12450.55, "type": "current", "status": "active", "provider_id": "dk-nordea", "holder_name": "Alex Müller"},
+    {"id": "acc_eu_002", "name": "Aiia Test Savings Account", "iban": "DK5000400440116244", "currency": "DKK", "balance": 38900.00, "type": "savings", "status": "active", "provider_id": "dk-nordea", "holder_name": "Alex Müller"},
+    {"id": "acc_eu_003", "name": "Aiia Test Credit Card", "iban": "DK5000400440116245", "currency": "DKK", "balance": -245.32, "type": "credit", "status": "active", "provider_id": "dk-nordea", "holder_name": "Alex Müller"}
+  ],
+  "transactions": [
+    {"id": "tx_eu_0001", "account_id": "acc_eu_001", "date": "2026-05-26", "amount": -42.50, "currency": "DKK", "description": "Netto Supermarked", "category": "groceries", "type": "card"},
+    {"id": "tx_eu_0002", "account_id": "acc_eu_001", "date": "2026-05-25", "amount": -799.00, "currency": "DKK", "description": "DSB togbillet Aarhus", "category": "transport", "type": "card"},
+    {"id": "tx_eu_0003", "account_id": "acc_eu_001", "date": "2026-05-24", "amount": 5000.00, "currency": "DKK", "description": "Løn maj", "category": "salary", "type": "credit_transfer"},
+    {"id": "tx_eu_0004", "account_id": "acc_eu_001", "date": "2026-05-22", "amount": -1250.00, "currency": "DKK", "description": "Husleje", "category": "rent", "type": "direct_debit"}
+  ]
+}

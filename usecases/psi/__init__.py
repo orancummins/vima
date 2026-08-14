@@ -8,9 +8,9 @@ Results are shaped for a day-by-day settlement confidence timeline in the UI.
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "psi",
     "name": "Payment Success Indicator",
     "description": (
@@ -21,18 +21,49 @@ MANIFEST: Dict[str, Any] = {
         "can move confidently, approve more good payments, and dramatically cut costly return rates "
         "— all from a single, low-friction API call before a transaction is ever submitted."
     ),
-    "apis": ["ofin"],
+    "apis": ["open_finance", "consent_management"],
     "render": "psi",
 }
 
-
 def _client():
-    from apis.ofin import api as ofin_api
+    from apis.open_finance import api as ofin_api
     return ofin_api._get_client()
 
-
-def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
     client = _client()
+    if client is None:
+        return {"error": "Open Finance API is not configured. Please add OPEN_FINANCE_PARTNER_ID, OPEN_FINANCE_PARTNER_SECRET and OPEN_FINANCE_APP_KEY to your config."}
+
+    # ------------------------------------------------------------------
+    # create_customer / connect_url — powers the in-app "Connect New
+    # Bank Account" flow. Mirrors the PFM use case so the same Finicity
+    # Connect popup pattern is available here. The returned customer_id
+    # is auto-propagated to the shared Open Finance STATE by the
+    # /usecases/<uc_id>/action route, so the next session resumes with
+    # this customer already linked.
+    # ------------------------------------------------------------------
+    if action == "create_customer":
+        import secrets
+        username = params.get("username") or f"vima_{secrets.token_hex(4)}"
+        data, status = client.add_testing_customer(username)
+        if status >= 400 or not isinstance(data, dict):
+            return {"error": "Could not create customer", "status": status, "detail": data}
+        return {
+            "customer_id": str(data.get("id")),
+            "username": data.get("username") or username,
+        }
+
+    if action == "connect_url":
+        customer_id = params.get("customer_id")
+        if not customer_id:
+            return {"error": "'customer_id' is required"}
+        data, status = client.generate_connect_url(str(customer_id))
+        if status >= 400 or not isinstance(data, dict):
+            return {"error": "Could not generate Connect URL", "status": status, "detail": data}
+        return {
+            "link": data.get("link"),
+            "connect_url": data.get("link"),
+        }
 
     # ------------------------------------------------------------------
     # get_accounts — returns checking/savings accounts for a customer
@@ -45,7 +76,7 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
         if status >= 400:
             return {"error": f"API returned {status}", "detail": data}
         eligible_types = {"checking", "savings", "moneyMarket"}
-        accounts: List[Dict[str, Any]] = [
+        accounts: list[dict[str, Any]] = [
             {
                 "id":       str(a["id"]),
                 "name":     a.get("name", "Account"),
@@ -78,7 +109,7 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
             return {"error": f"PSI API returned {status}", "detail": data}
 
         # Poll if async
-        pay_request_id: Optional[str] = data.get("payRequestId")
+        pay_request_id: str | None = data.get("payRequestId")
         for _ in range(8):
             if data.get("status") == "SUCCESS":
                 break
@@ -94,21 +125,20 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
     return {"error": f"Unknown action: {action}"}
 
-
 # ---------------------------------------------------------------------------
 # Shape the raw PSI response into a frontend-friendly dict
 # ---------------------------------------------------------------------------
-def _shape_result(raw: Dict[str, Any]) -> Dict[str, Any]:
+def _shape_result(raw: dict[str, Any]) -> dict[str, Any]:
     nsf      = raw.get("nsfReturnRisk")    or {}
     unauth   = raw.get("unauthorizedReturnRisk") or {}
     nsf_res  = nsf.get("result")   or {}
     unauth_res = unauth.get("result") or {}
 
-    daily_raw: List[Dict] = nsf_res.get("dailyResults") or []
-    daily: List[Dict[str, Any]] = []
+    daily_raw: list[dict] = nsf_res.get("dailyResults") or []
+    daily: list[dict[str, Any]] = []
     for d in daily_raw:
         nsf_score  = d.get("score", 0)
-        confidence = round(100 - nsf_score, 1)
+        confidence = round(nsf_score, 1)
         indicator  = d.get("indicator", "")
         risk_level = _indicator_level(indicator)
         reasons    = d.get("reasons") or {}
@@ -149,7 +179,6 @@ def _shape_result(raw: Dict[str, Any]) -> Dict[str, Any]:
             "riskLevel": _indicator_level(unauth_ind),
         } if unauth_score is not None else None,
     }
-
 
 def _indicator_level(indicator: str) -> str:
     ind = (indicator or "").lower()

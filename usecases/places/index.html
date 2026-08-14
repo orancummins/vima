@@ -9,7 +9,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="/static/js/usecase-theme.js"></script>
   <link rel="stylesheet" href="/places/style.css">
+  <link rel="stylesheet" href="/static/css/usecase-theme.css">
 </head>
 <body>
   <div id="uc-body"></div>
@@ -50,6 +52,55 @@
       detailLoading: false,
       detail: null,
     };
+
+    let plThemeObserver = null;
+
+    function plIsLightTheme() {
+      return document.documentElement.classList.contains("theme-light");
+    }
+
+    function plTileConfig() {
+      if (plIsLightTheme()) {
+        return {
+          url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          options: {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          },
+        };
+      }
+      return {
+        url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        options: {
+          subdomains: "abcd",
+          maxZoom: 20,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        },
+      };
+    }
+
+    function plApplyThemeTileLayer(map) {
+      if (!map || typeof L === "undefined") return;
+      const cfg = plTileConfig();
+      if (map._plThemeTileLayer) map.removeLayer(map._plThemeTileLayer);
+      map._plThemeTileLayer = L.tileLayer(cfg.url, cfg.options).addTo(map);
+    }
+
+    function plSyncMapTheme() {
+      ["pl-leaflet-map", "pl-detail-leaflet-map"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el && el._plMap) plApplyThemeTileLayer(el._plMap);
+      });
+    }
+
+    function plEnsureThemeObserver() {
+      if (plThemeObserver) return;
+      plThemeObserver = new MutationObserver(() => plSyncMapTheme());
+      plThemeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class", "data-theme"],
+      });
+    }
 
     function renderPlaces() {
       plRender();
@@ -315,16 +366,16 @@
         return;
       }
 
+      plEnsureThemeObserver();
+
       const mapEl = document.getElementById("pl-leaflet-map");
       if (mapEl && !mapEl._plInited) {
         mapEl._plInited = true;
         const centerLat = parseFloat(mapEl.dataset.centerLat);
         const centerLng = parseFloat(mapEl.dataset.centerLng);
         const map = L.map(mapEl, { scrollWheelZoom: false }).setView([centerLat, centerLng], 12);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          maxZoom: 19,
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        }).addTo(map);
+        mapEl._plMap = map;
+        plApplyThemeTileLayer(map);
 
         const markers = [];
         const orangeIcon = L.icon({
@@ -366,10 +417,8 @@
         const name = detailEl.dataset.name || "";
         if (!isNaN(lat) && !isNaN(lng)) {
           const map = L.map(detailEl, { scrollWheelZoom: false }).setView([lat, lng], 15);
-          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            maxZoom: 19,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          }).addTo(map);
+          detailEl._plMap = map;
+          plApplyThemeTileLayer(map);
           const orangeIcon = L.icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
             shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',

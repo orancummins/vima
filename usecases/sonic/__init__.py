@@ -12,9 +12,10 @@ This use case is front-end only — the entire UI lives in
 ``usecases/sonic/index.html`` and is served from ``/sonic/`` by Flask.
 """
 from __future__ import annotations
-from typing import Any, Dict
 
-MANIFEST: Dict[str, Any] = {
+from typing import Any
+
+MANIFEST: dict[str, Any] = {
     "id": "sonic",
     "name": "Sonic Branding",
     "description": (
