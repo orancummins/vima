@@ -33,9 +33,22 @@ cd /d "%SCRIPT_DIR%"
 REM Try venv python, then py launcher, then python on PATH
 if exist "%SCRIPT_DIR%.venv\Scripts\python.exe" (
     "%SCRIPT_DIR%.venv\Scripts\python.exe" app.py
-) else (
-    py app.py
+    goto :end
 )
+
+where py >nul 2>&1
+if not errorlevel 1 (
+    py app.py
+    goto :end
+)
+
+where python >nul 2>&1
+if not errorlevel 1 (
+    python app.py
+    goto :end
+)
+
+echo ERROR: No Python found. Install Python or create a .venv in %SCRIPT_DIR%
 
 :end
 endlocal
