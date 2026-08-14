@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mastercard Solution Studio Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script>
+    (() => {
+      try {
+        if (localStorage.getItem('vima:theme') === 'light') {
+          document.documentElement.classList.add('theme-light');
+        }
+      } catch (_) {}
+    })();
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange: #ff5f00;
+      --green:  #2ea043;
+      --ink:    #f1ede8;
+      --bg:     #0b0b0d;
+      --card:   #151516;
+      --line:   rgba(255, 255, 255, 0.08);
+      --muted:  #a59c93;
+      --radius: 8px;
+      --mono:   "JetBrains Mono", monospace;
+      --surface-soft: #101011;
+      --surface-hover: #1b1b1d;
+      --surface-warm: rgba(255, 95, 0, 0.12);
+      --surface-warm-text: #ffbe8a;
+      --surface-warm-line: rgba(255, 173, 120, 0.22);
+      --placeholder: #7f756b;
+      --code-inline: rgba(255, 255, 255, 0.08);
+      --pre-bg: #050505;
+      --success-bg: rgba(46, 160, 67, 0.16);
+      --success-line: rgba(46, 160, 67, 0.42);
+      --success-text: #8ee5a6;
+      --danger-bg: rgba(196, 68, 68, 0.14);
+      --danger-line: rgba(196, 68, 68, 0.36);
+      --danger-text: #ff9b9b;
+      --modal-card: #161617;
+      --modal-copy: #d8d0c7;
+      color-scheme: dark;
+    }
+
+    html.theme-light {
+      --ink: #141414;
+      --bg: #f7f7f8;
+      --card: #ffffff;
+      --line: #e5e5e5;
+      --muted: #767676;
+      --surface-soft: #f7f7f8;
+      --surface-hover: #333333;
+      --surface-warm: #fffbf8;
+      --surface-warm-text: #7a3c00;
+      --surface-warm-line: #ffd9be;
+      --placeholder: #999999;
+      --code-inline: rgba(0, 0, 0, 0.07);
+      --pre-bg: #1a1a1a;
+      --success-bg: #edfaf3;
+      --success-line: #22a562;
+      --success-text: #1a7a47;
+      --danger-bg: color-mix(in srgb, #c44 8%, transparent);
+      --danger-line: color-mix(in srgb, #c44 40%, transparent);
+      --danger-text: #c44;
+      --modal-card: #ffffff;
+      --modal-copy: #3f3f46;
+      color-scheme: light;
+    }
+
+    html, body { height: 100%; font-family: Inter, system-ui, sans-serif; font-size: 14px; color: var(--ink); background: var(--bg); overflow: hidden; }
+
+    /* ── Layout ── */
+    .chat-wrap { display: flex; flex-direction: column; height: 100vh; }
+
+    /* ── Top bar ── */
+    .top-bar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      height: 46px;
+      background: var(--card);
+      border-bottom: 1px solid var(--line);
+      gap: 10px;
+    }
+
+    .path-area {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+    .path-icon { color: var(--muted); flex-shrink: 0; }
+    .path-text {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 4px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      transition: color .15s, background .15s;
+    }
+    .btn-icon:hover { color: var(--ink); background: var(--bg); }
+
+    /* type switcher */
+    .type-switcher {
+      display: flex;
+      background: var(--surface-soft);
+      border-radius: 20px;
+      padding: 2px;
+      flex-shrink: 0;
+    }
+    .type-btn {
+      padding: 5px 14px;
+      border: none;
+      border-radius: 18px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      background: transparent;
+      color: var(--muted);
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .type-btn.active { background: var(--orange); color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+
+    /* model picker */
+    .model-picker {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .model-picker select {
+      font: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 22px 4px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--card) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23767676' stroke-width='1.4' fill='none' stroke-linecap='round'/></svg>") no-repeat right 6px center;
+      color: var(--ink);
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      outline: none;
+      transition: border-color .15s;
+      color-scheme: inherit;
+    }
+    .model-picker select:hover, .model-picker select:focus { border-color: var(--orange); }
+    .model-picker select option,
+    .model-picker select optgroup {
+      background-color: var(--card);
+      color: var(--ink);
+    }
+    .model-cost {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ── Dir edit row ── */
+    .dir-edit-row {
+      flex-shrink: 0;
+      display: flex;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+      align-items: center;
+    }
+    .dir-edit-row.hidden { display: none; }
+    .dir-edit-row input {
+      flex: 1;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 6px 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--ink);
+      background: var(--card);
+      outline: none;
+      transition: border-color .15s;
+    }
+    .dir-edit-row input:focus { border-color: var(--orange); }
+    .btn-load {
+      background: var(--ink);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+    .btn-load:hover { background: #333; }
+    .btn-load:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Item bar ── */
+    .item-bar {
+      flex-shrink: 0;
+      background: var(--card);
+      border-bottom: 1px solid var(--line);
+      padding: 8px 16px;
+    }
+    .item-scroll {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      min-height: 30px;
+    }
+    .item-chip {
+      padding: 5px 13px;
+      border-radius: 20px;
+      border: 1.5px solid var(--line);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      background: transparent;
+      color: var(--muted);
+      transition: all .15s;
+      white-space: nowrap;
+      line-height: 1;
+    }
+    .item-chip:hover { border-color: var(--orange); color: var(--orange); }
+    .item-chip.active { background: var(--orange); color: #fff; border-color: var(--orange); }
+    .item-chip.active:hover { opacity: .9; }
+    .empty-note { font-size: 12px; color: var(--muted); font-style: italic; }
+
+    /* ── Messages ── */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 16px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+    }
+
+    /* Empty state */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--muted);
+      text-align: center;
+      padding: 40px 0;
+      pointer-events: none;
+    }
+    .empty-state svg { opacity: .25; }
+    .empty-state p { font-size: 13px; line-height: 1.5; }
+
+    /* Message bubbles */
+    .msg { display: flex; flex-direction: column; gap: 4px; max-width: 86%; }
+    .msg.user { align-self: flex-end; align-items: flex-end; }
+    .msg.assistant { align-self: flex-start; }
+    .msg-role { font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); padding: 0 3px; }
+    .msg-bubble {
+      padding: 10px 14px;
+      border-radius: 14px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+    .msg.user .msg-bubble { background: var(--ink); color: #fff; border-bottom-right-radius: 4px; }
+    .msg.assistant .msg-bubble { background: var(--card); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+    .msg.done { align-items: center; justify-content: center; }
+    .msg.done .msg-role { display: none; }
+    .msg.done .msg-bubble { background: var(--success-bg); border: 1.5px solid var(--success-line); color: var(--success-text); font-weight: 600; font-size: 13px; padding: 7px 18px; border-radius: 20px; text-align: center; }
+    .msg-bubble p { margin-bottom: 6px; } .msg-bubble p:last-child { margin-bottom: 0; }
+    .msg-bubble code { font-family: var(--mono); font-size: .83em; background: var(--code-inline); padding: 1px 5px; border-radius: 4px; }
+    .msg.user .msg-bubble code { background: rgba(255,255,255,.15); }
+    .msg-bubble pre { background: var(--pre-bg); color: #e4e4e4; font-family: var(--mono); font-size: .80em; padding: 11px 13px; border-radius: 8px; overflow-x: auto; margin: 8px 0; }
+    .msg-bubble pre code { background: none; padding: 0; color: inherit; }
+    .msg-bubble strong { font-weight: 600; }
+    .msg-bubble ul, .msg-bubble ol { padding-left: 18px; margin: 4px 0; }
+
+    /* Tool rows */
+    .tool-row {
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 5px 11px;
+      font-size: 11.5px;
+      font-family: var(--mono);
+      color: var(--muted);
+      max-width: 92%;
+    }
+    .tool-name { color: var(--orange); font-weight: 600; flex-shrink: 0; }
+    .tool-args { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tool-row.failed {
+      background: var(--danger-bg);
+      border-color: var(--danger-line);
+    }
+    .tool-row.failed .tool-name { color: var(--danger-text); }
+    .tool-row .tool-error {
+      width: 100%;
+      flex-basis: 100%;
+      color: var(--danger-text);
+      white-space: pre-wrap;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    /* ── Done summary ── */
+    .done-summary {
+      align-self: flex-start;
+      background: var(--success-bg);
+      border: 1px solid var(--success-line);
+      border-radius: 8px;
+      padding: 8px 14px;
+      margin-top: 4px;
+      max-width: 92%;
+    }
+    .done-badge {
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--green, #2ea043);
+    }
+    .done-changes {
+      margin-top: 4px;
+      font-size: 11.5px;
+      font-family: var(--mono);
+    }
+    .done-change-row {
+      padding: 1px 0;
+      color: var(--muted);
+    }
+    .done-tool { color: var(--orange); font-weight: 600; }
+    .done-path { color: var(--fg); }
+
+    /* ── Status strip ── */
+    .status-strip {
+      flex-shrink: 0;
+      height: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      background: var(--card);
+      border-top: 1px solid transparent;
+      font-size: 12px;
+      color: var(--muted);
+      transition: height .2s, border-color .2s;
+    }
+    .status-strip.working, .status-strip.done { height: 30px; border-top-color: var(--line); }
+    .s-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .status-strip.working .s-dot { background: var(--orange); animation: pulse 1.2s ease-in-out infinite; }
+    .status-strip.done .s-dot { background: #22a562; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(.65)} }
+    .s-text { font-weight: 500; color: var(--ink); }
+
+    /* ── Compose area ── */
+    .compose-area {
+      flex-shrink: 0;
+      background: var(--card);
+      border-top: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Prefix bar */
+    .compose-prefix-bar {
+      padding: 9px 16px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: var(--muted);
+      user-select: none;
+      border-bottom: 1px solid var(--line);
+      transition: background .2s, color .2s;
+    }
+    .compose-prefix-bar.has-item { background: var(--surface-warm); color: var(--surface-warm-text); border-bottom-color: var(--surface-warm-line); }
+    .compose-prefix-bar.has-item strong { color: var(--orange); font-weight: 600; }
+    .compose-prefix-bar.placeholder { color: var(--placeholder); background: var(--bg); font-style: italic; }
+
+    /* Inputs */
+    textarea.compose-input {
+      width: 100%;
+      resize: none;
+      border: none;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 16px;
+      font-family: Inter, sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+      color: var(--ink);
+      background: var(--card);
+      outline: none;
+      transition: background .15s;
+    }
+    textarea.compose-input:focus { background: var(--surface-warm); }
+    textarea.compose-input::placeholder { color: var(--placeholder); }
+
+
+    /* Preview */
+    .compose-preview-wrap {
+      padding: 8px 16px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+    }
+    .preview-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .preview-text {
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.55;
+      color: var(--placeholder);
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 160px;
+      overflow-y: auto;
+      user-select: all;
+      scrollbar-width: thin;
+      scrollbar-color: var(--line) transparent;
+    }
+    .preview-text::-webkit-scrollbar { width: 4px; }
+    .preview-text::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+
+    /* Footer */
+    .compose-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 10px 16px;
+    }
+    .btn-send {
+      background: var(--orange);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity .15s;
+    }
+    .btn-send:hover { opacity: .88; }
+    .btn-send:disabled { opacity: .35; cursor: not-allowed; }
+    .btn-clear {
+      background: none;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      border-radius: var(--radius);
+      padding: 8px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-clear:hover { border-color: var(--ink); color: var(--ink); }
+
+    /* ── First-run advisory modal ─────────────────────────────── */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      display: none; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal-card {
+      background: var(--modal-card); border-radius: 12px; max-width: 480px; width: calc(100% - 40px);
+      padding: 24px 26px 20px; box-shadow: 0 12px 40px rgba(0,0,0,.18);
+      font-size: 13px; line-height: 1.55; color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    .modal-card h2 {
+      margin: 0 0 10px; font-size: 16px; font-weight: 700; letter-spacing: -.01em;
+    }
+    .modal-card p { margin: 0 0 10px; color: var(--modal-copy); }
+    .modal-card ul { margin: 0 0 12px 18px; padding: 0; color: var(--modal-copy); }
+    .modal-card li { margin: 2px 0; }
+    .modal-foot {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 14px; gap: 16px;
+    }
+    .modal-foot label {
+      display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--modal-copy);
+      cursor: pointer; user-select: none;
+    }
+    .modal-foot button {
+      padding: 7px 16px; background: var(--orange); color: #fff; border: none;
+      border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .modal-foot button:hover { opacity: .9; }
+  </style>
+</head>
+<body>
+<!-- First-run advisory -->
+<div class="modal-backdrop" id="advisoryModal" role="dialog" aria-modal="true" aria-labelledby="advisoryTitle">
+  <div class="modal-card">
+    <h2 id="advisoryTitle">Heads up — this chat is best for quick edits</h2>
+    <p>This in-app assistant is tuned for small, targeted changes to a single use case or API file:</p>
+    <ul>
+      <li>Renaming a button, swapping a colour, tweaking copy</li>
+      <li>Adding or removing a small UI element</li>
+      <li>Adjusting a handler or a short block of logic</li>
+    </ul>
+    <p>For larger refactors, multi-file changes, or anything where you want to review a diff before it lands, use <b>GitHub Copilot</b> in VS Code, the <b>Claude</b> desktop app, or another full-featured coding agent.</p>
+    <div class="modal-foot">
+      <label><input type="checkbox" id="advisoryDontShow"> Don't show again</label>
+      <button id="advisoryOk">Got it</button>
+    </div>
+  </div>
+</div>
+<div class="chat-wrap">
+
+  <!-- Top bar: model picker only (type/item are locked to URL params) -->
+  <header class="top-bar">
+    <div class="model-picker" id="modelPicker">
+      <select id="modelSelect" title="Loading models…"></select>
+      <span class="model-cost" id="modelCost"></span>
+    </div>
+  </header>
+
+  <!-- Messages -->
+  <div class="messages" id="messages">
+    <div class="empty-state" id="emptyState">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+      <p>Loading use case…</p>
+    </div>
+  </div>
+
+  <!-- Status strip -->
+  <div id="status-strip" class="status-strip" aria-live="polite"></div>
+
+  <!-- Compose area -->
+  <div class="compose-area">
+    <div class="compose-prefix-bar placeholder" id="composePrefixBar">
+      Select an item above to begin
+    </div>
+    <textarea class="compose-input" id="userInput" rows="3"
+      placeholder="Describe the change…" disabled></textarea>
+    <div class="compose-preview-wrap">
+      <div class="preview-label">Full message to Claude</div>
+      <div class="preview-text" id="composePreview">—</div>
+    </div>
+    <div class="compose-footer">
+      <button class="btn-clear" id="btnClear">Clear</button>
+      <button class="btn-send" id="btnSend" disabled>
+        Send
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M2 8h12M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* ── URL params: allow programmatic launch ── */
+  const _p        = new URLSearchParams(location.search);
+  const _paramType = _p.get('type');  // 'usecases' | 'apis'
+  const _paramItem = _p.get('item');  // item name to auto-select
+
+  /* ── State ── */
+  let sessionId   = crypto.randomUUID();
+  let currentItem = null;
+  let currentType = 'usecases';  // always use cases; APIs not permitted
+  let allItems    = { usecases: [], apis: [] };
+
+  function applyThemeMode(theme) {
+    const resolvedTheme = theme === 'light' ? 'light' : 'dark';
+    const isLight = resolvedTheme === 'light';
+    document.documentElement.classList.toggle('theme-light', isLight);
+    document.body?.setAttribute('data-theme', resolvedTheme);
+  }
+
+  applyThemeMode(document.documentElement.classList.contains('theme-light') ? 'light' : 'dark');
+
+  window.addEventListener('message', (event) => {
+    if (event.origin !== window.location.origin) return;
+    if (!event.data || event.data.type !== 'vima:theme') return;
+    applyThemeMode(event.data.theme);
+  });
+
+  window.addEventListener('storage', (event) => {
+    if (event.key !== 'vima:theme') return;
+    applyThemeMode(event.newValue === 'light' ? 'light' : 'dark');
+  });
+
+  /* ── DOM refs ── */
+  const messagesEl   = document.getElementById('messages');
+  const emptyStateEl = document.getElementById('emptyState');
+  const statusEl     = document.getElementById('status-strip');
+  const prefixBarEl  = document.getElementById('composePrefixBar');
+  const userInput    = document.getElementById('userInput');
+  const previewEl    = document.getElementById('composePreview');
+  const btnClear     = document.getElementById('btnClear');
+  const btnSend      = document.getElementById('btnSend');
+  const modelSelect  = document.getElementById('modelSelect');
+  const modelCostEl  = document.getElementById('modelCost');
+
+  /* ── Models ── */
+  let availableModels = [];
+  let selectedModelId = null;
+
+  async function loadModels() {
+    try {
+      const resp = await fetch('/chat/api/simple/models');
+      const data = await resp.json();
+      availableModels = data.models || [];
+      selectedModelId = data.default || (availableModels[0] && availableModels[0].id);
+      modelSelect.innerHTML = '';
+      availableModels.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = `${m.name} — ${m.tier}`;
+        opt.title = `${m.blurb}\n$${m.input_per_mtok} in · $${m.output_per_mtok} out per MTok`;  
+        if (m.id === selectedModelId) opt.selected = true;
+        modelSelect.appendChild(opt);
+      });
+      modelSelect.removeAttribute('title');
+      updateModelCost();
+    } catch (e) {
+      modelSelect.innerHTML = '<option>Sonnet (default)</option>';
+    }
+  }
+
+  function updateModelCost() {
+    const m = availableModels.find(x => x.id === selectedModelId);
+    if (!m) { modelCostEl.textContent = ''; return; }
+    modelCostEl.textContent = `$${m.input_per_mtok}↑ $${m.output_per_mtok}↓ /MTok`;  
+    modelCostEl.title = m.blurb + '\nCached input is billed at ~10% of input rate.';
+  }
+
+  modelSelect.addEventListener('change', () => {
+    selectedModelId = modelSelect.value;
+    updateModelCost();
+  });
+
+  /* ── Status bar ── */
+  let _sTimer = null;
+  function setStatus(state, text) {
+    clearTimeout(_sTimer);
+    statusEl.className = 'status-strip' + (state ? ' ' + state : '');
+    if (state === 'working') {
+      statusEl.innerHTML = `<div class="s-dot"></div><span class="s-text">${escHtml(text || 'Working\u2026')}</span>`;
+    } else if (state === 'done') {
+      statusEl.innerHTML = '<div class="s-dot"></div><span class="s-text">Done</span>';
+      _sTimer = setTimeout(() => setStatus(''), 8000);
+    } else {
+      statusEl.innerHTML = '';
+    }
+  }
+
+  /* ── Utilities ── */
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function renderMd(raw) {
+    let html = raw
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/```(\w*)\n([\s\S]*?)```/g, (_, _l, code) => `<pre><code>${code.trimEnd()}</code></pre>`)
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^#{1,3} (.+)$/gm, '<strong>$1</strong>')
+      .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>[\s\S]+?<\/li>)/g, '<ul>$1</ul>')
+      .replace(/\n\n+/g, '</p><p>')
+      .replace(/\n/g, '<br>');
+    return '<p>' + html + '</p>';
+  }
+
+  function scrollBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
+
+  /* ── Load items from backend and auto-select the URL-param item ── */
+  async function loadItems() {
+    try {
+      const resp = await fetch('/chat/api/simple/items');
+      const data = await resp.json();
+      if (!resp.ok) {
+        emptyStateEl.querySelector('p').textContent = data.error || 'Failed to load items';
+        return;
+      }
+      const allUsecases = data.usecases || [];
+      const base = data.base || '';
+      if (_paramItem) {
+        const found = allUsecases.find(i => i.name === _paramItem);
+        if (found) {
+          selectItem(found, base);
+          return;
+        }
+      }
+      emptyStateEl.querySelector('p').textContent = 'No use case selected';
+    } catch (e) {
+      emptyStateEl.querySelector('p').textContent = 'Error loading: ' + e.message;
+    }
+  }
+
+  function selectItem(item, base) {
+    let itemPath = item.path;
+    if (!itemPath && base) {
+      itemPath = base.replace(/[\\/]+$/, '') + '/usecases';
+    }
+    currentItem = { ...item, type: 'usecase', path: itemPath };
+    updateCompose();
+    userInput.focus();
+  }
+
+  /* ── Compose ── */
+  function updateCompose() {
+    const hasItem = !!currentItem;
+    userInput.disabled = !hasItem;
+    btnSend.disabled = !hasItem;
+
+    if (hasItem) {
+      prefixBarEl.className = 'compose-prefix-bar has-item';
+      prefixBarEl.innerHTML = `Update <strong>${escHtml(currentItem.name)}</strong> Use Case only with the following:`;
+      userInput.placeholder = 'Describe the change…';
+    } else {
+      prefixBarEl.className = 'compose-prefix-bar placeholder';
+      prefixBarEl.innerHTML = 'Loading use case…';
+      userInput.placeholder = 'Describe the change…';
+    }
+    updatePreview();
+  }
+
+  function buildMessage() {
+    if (!currentItem) return '';
+    const userText = userInput.value.trim();
+    return `Update ${currentItem.name} Use Case only with the following: ` + userText;
+  }
+
+  function updatePreview() {
+    previewEl.textContent = buildMessage() || '\u2014';
+  }
+
+  userInput.addEventListener('input', updatePreview);
+  userInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  /* ── Messages ── */
+  function ensureMessagesVisible() {
+    if (emptyStateEl.parentNode === messagesEl) {
+      messagesEl.removeChild(emptyStateEl);
+    }
+  }
+
+  function addMsg(role, html) {
+    ensureMessagesVisible();
+    const wrap = document.createElement('div');
+    wrap.className = `msg ${role}`;
+    const roleLabel = role === 'user' ? 'You' : role === 'done' ? '' : 'Claude';
+    wrap.innerHTML = `<div class="msg-role">${roleLabel}</div><div class="msg-bubble">${html}</div>`;
+    messagesEl.appendChild(wrap);
+    scrollBottom();
+    return wrap.querySelector('.msg-bubble');
+  }
+
+  function addToolRow(name, args) {
+    ensureMessagesVisible();
+    const el = document.createElement('div');
+    el.className = 'tool-row';
+    el.style.flexWrap = 'wrap';
+    el.innerHTML = `<span class="tool-name">${escHtml(name)}</span><span class="tool-args">${escHtml(args)}</span>`;
+    messagesEl.appendChild(el);
+    scrollBottom();
+    return el;
+  }
+
+  function markToolRowFailed(el, errorMsg) {
+    if (!el) return;
+    el.classList.add('failed');
+    const errEl = document.createElement('span');
+    errEl.className = 'tool-error';
+    errEl.textContent = String(errorMsg).slice(0, 400);
+    el.appendChild(errEl);
+  }
+
+  function _fmtCost(usage) {
+    if (!usage) return '';
+    const model = availableModels.find(m => m.id === usage.model);
+    if (!model) return '';
+    const inRate = model.input_per_mtok;
+    const outRate = model.output_per_mtok;
+    // Cache reads are ~10% of input rate; cache creation is ~125% of input rate.
+    const inCost = ((usage.input || 0) * inRate) / 1e6;
+    const outCost = ((usage.output || 0) * outRate) / 1e6;
+    const cacheReadCost = ((usage.cache_read || 0) * inRate * 0.1) / 1e6;
+    const cacheCreateCost = ((usage.cache_creation || 0) * inRate * 1.25) / 1e6;
+    const total = inCost + outCost + cacheReadCost + cacheCreateCost;
+    const parts = [];
+    parts.push(`in ${usage.input || 0}`);
+    if (usage.cache_read) parts.push(`cached ${usage.cache_read}`);
+    parts.push(`out ${usage.output || 0}`);
+    parts.push(`\u2248 $${total.toFixed(4)}`);
+    return parts.join(' \u00b7 ');
+  }
+
+  function addDoneSummary(changes, usage) {
+    ensureMessagesVisible();
+    const el = document.createElement('div');
+    el.className = 'msg done-summary';
+    const successful = changes.filter(c => !c.failed);
+    const failed = changes.filter(c => c.failed);
+    let badge = '✓ Complete';
+    let warn = false;
+    if (successful.length === 0 && failed.length === 0) {
+      badge = '⚠ No files were modified — the model did not call patch_file or write_file. Try rephrasing (e.g. point at a specific line or string) and re-send.';
+      warn = true;
+    } else if (successful.length === 0 && failed.length > 0) {
+      badge = '⚠ No changes written — all edits failed';
+      warn = true;
+    } else if (failed.length > 0) {
+      badge = `✓ Complete (${failed.length} edit(s) failed)`;
+    }
+    if (warn) {
+      el.style.background = 'color-mix(in srgb, #c44 8%, transparent)';
+      el.style.borderColor = 'color-mix(in srgb, #c44 30%, transparent)';
+    }
+    let html = `<div class="done-badge"${warn ? ' style="color:#c44"' : ''}>${escHtml(badge)}</div>`;
+    if (successful.length) {
+      html += '<div class="done-changes">';
+      successful.forEach(c => {
+        html += `<div class="done-change-row"><span class="done-tool">${escHtml(c.tool)}</span> <span class="done-path">${escHtml(c.path)}</span></div>`;
+      });
+      html += '</div>';
+    }
+    const costLine = _fmtCost(usage);
+    if (costLine) {
+      html += `<div class="done-usage" style="margin-top:6px;font-size:11px;color:#888">${escHtml(costLine)}</div>`;
+    }
+    el.innerHTML = html;
+    messagesEl.appendChild(el);
+    scrollBottom();
+  }
+
+  /* ── SSE event handler ── */
+  // Track file changes across the current response so we can summarise at the end
+  const _mutatingTools = new Set(['patch_file', 'replace_lines', 'write_file', 'multi_edit']);
+
+  function handleSSEEvent(data, ctx) {
+    switch (data.type) {
+      case 'text':
+        if (!ctx.bubble) { ctx.bubble = addMsg('assistant', ''); ctx.raw = ''; }
+        ctx.raw += data.content;
+        ctx.bubble.innerHTML = renderMd(ctx.raw);
+        setStatus('working', 'Writing\u2026');
+        scrollBottom();
+        break;
+      case 'tool_start':
+        setStatus('working', `Tool: ${data.name}`);
+        break;
+      case 'tool_executing':
+        setStatus('working', `Running ${data.name}\u2026`);
+        // Only show tool rows for mutating operations
+        if (_mutatingTools.has(data.name)) {
+          ctx.changes = ctx.changes || [];
+          if (data.name === 'multi_edit' && data.input && Array.isArray(data.input.edits)) {
+            // Render one row per edit so the user sees what's about to happen.
+            const group = [];
+            data.input.edits.forEach(e => {
+              const label = `multi_edit (${e.op || '?'})`;
+              const row = addToolRow(label, e.path || '');
+              const change = { tool: label, path: e.path || '', row: row, failed: false };
+              ctx.changes.push(change);
+              group.push(change);
+            });
+            ctx.lastMutating = group; // array signals "group"
+          } else {
+            const path = data.input && (data.input.path || data.input.command || '');
+            const row = addToolRow(data.name, path);
+            const change = { tool: data.name, path: path, row: row, failed: false };
+            ctx.changes.push(change);
+            ctx.lastMutating = change;
+          }
+        } else {
+          ctx.lastMutating = null;
+        }
+        break;
+      case 'tool_result':
+        setStatus('working', 'Thinking\u2026');
+        if (ctx.lastMutating && data.result && data.result.error) {
+          const msg = data.result.error;
+          if (Array.isArray(ctx.lastMutating)) {
+            ctx.lastMutating.forEach(c => { c.failed = true; c.error = msg; markToolRowFailed(c.row, msg); });
+          } else {
+            ctx.lastMutating.failed = true;
+            ctx.lastMutating.error = msg;
+            markToolRowFailed(ctx.lastMutating.row, msg);
+          }
+        }
+        ctx.lastMutating = null;
+        break;
+      case 'usage':
+        ctx.usage = data;
+        break;
+      case 'error':
+        setStatus('');
+        addMsg('assistant', `<span style="color:#c44">${escHtml(data.message)}</span>`);
+        updatePreview(); // unfreeze
+        break;
+      case 'done':
+        setStatus('done');
+        addDoneSummary(ctx.changes || [], ctx.usage);
+        ctx.bubble = null; ctx.raw = '';
+        updatePreview(); // unfreeze
+        break;
+    }
+  }
+
+  /* ── Send ── */
+  async function sendMessage() {
+    if (!currentItem || btnSend.disabled) return;
+    const userTyped = userInput.value.trim();
+    if (!userTyped) return;
+    const fullMessage = buildMessage();
+
+    // Each send is a fresh conversation. The UI is single-shot ("Update X with:")
+    // so persisting history across sends only causes the model to falsely confirm
+    // prior in-flight attempts ("already done") and skip the actual edit.
+    sessionId = crypto.randomUUID();
+
+    addMsg('user', escHtml(userTyped).replace(/\n/g, '<br>'));
+    userInput.value = '';
+    // Freeze preview to show the full message sent while Claude is working
+    previewEl.textContent = fullMessage;
+    btnSend.disabled = true;
+    setStatus('working', 'Thinking\u2026');
+
+    const ctx = { bubble: null, raw: '' };
+    try {
+      const resp = await fetch('/chat/api/simple/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId,
+          message: fullMessage,
+          work_dir: currentItem.path,
+          item_name: currentItem.name,
+          item_type: currentItem.type,
+          item_file: currentItem.file || null,
+          model: selectedModelId,
+        }),
+      });
+
+      if (!resp.ok) {
+        setStatus('');
+        let detail = `HTTP ${resp.status}`;
+        try {
+          const ct = resp.headers.get('content-type') || '';
+          if (ct.includes('application/json')) {
+            const j = await resp.json();
+            if (j && j.error) detail = j.error;
+          } else {
+            const t = (await resp.text()).trim();
+            if (t) detail = t.slice(0, 300);
+          }
+        } catch (_) {}
+        addMsg('assistant', `<span style="color:#c44">Request failed: ${escHtml(detail)}</span>`);
+        return;
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const parts = buf.split('\n\n');
+        buf = parts.pop();
+        for (const part of parts) {
+          const line = part.trim();
+          if (!line.startsWith('data:')) continue;
+          try { handleSSEEvent(JSON.parse(line.slice(5).trim()), ctx); } catch {}
+        }
+      }
+    } catch (err) {
+      setStatus('');
+      addMsg('assistant', `<span style="color:#c44">Error: ${escHtml(String(err))}</span>`);
+    } finally {
+      // Always re-enable the send button FIRST so a later error can't strand it.
+      btnSend.disabled = false;
+      // If stream ended without a 'done' or 'error' event, clear the thinking state.
+      try {
+        if (statusEl.classList.contains('working')) {
+          setStatus('');
+          addMsg('assistant', '<span style="color:#c44">Connection lost — the response stream ended unexpectedly. Check that the API key is valid.</span>');
+        }
+      } catch (_) { /* never let status cleanup strand the UI */ }
+    }
+  }
+
+  /* ── Clear ── */
+  async function clearChat() {
+    await fetch('/chat/api/simple/chat/clear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId }),
+    });
+    sessionId = crypto.randomUUID();
+    messagesEl.innerHTML = '';
+    messagesEl.appendChild(emptyStateEl);
+    setStatus('');
+  }
+
+  btnSend.addEventListener('click', sendMessage);
+  btnClear.addEventListener('click', clearChat);
+
+  /* ── Init ── */
+  updateCompose();
+  loadModels();
+  loadItems();
+
+  /* ── First-run advisory ── */
+  (function showAdvisoryIfNeeded() {
+    try {
+      if (localStorage.getItem('vimaChatAdvisoryDismissed') === '1') return;
+    } catch (_) { /* localStorage blocked — show anyway */ }
+    const modal = document.getElementById('advisoryModal');
+    const okBtn = document.getElementById('advisoryOk');
+    const cb    = document.getElementById('advisoryDontShow');
+    if (!modal || !okBtn) return;
+    modal.classList.add('show');
+    okBtn.addEventListener('click', function () {
+      modal.classList.remove('show');
+      if (cb && cb.checked) {
+        try { localStorage.setItem('vimaChatAdvisoryDismissed', '1'); } catch (_) {}
+      }
+    });
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) okBtn.click();
+    });
+  })();
+</script>
+</body>
+</html>

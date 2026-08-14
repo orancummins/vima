@@ -1,0 +1,32 @@
+# Ruff configuration — static analysis only (no formatting)
+# Run: ruff check .
+line-length = 120
+
+exclude = [
+    ".venv",
+    "tests/",
+    "tools/",
+    "usecases/sonic/kicks/",
+]
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes (undefined names, unused imports, etc.)
+    "W",   # pycodestyle warnings
+    "I",   # isort (import order)
+    "B",   # flake8-bugbear (common bugs)
+    "UP",  # pyupgrade (outdated syntax)
+]
+ignore = [
+    "E501",  # line too long (covered by line-length above)
+    "B008",  # do not perform function calls in default arguments (common in Flask)
+]
+
+[lint.per-file-ignores]
+# app.py runs truststore.inject_into_ssl() before imports — E402 is intentional
+"app.py" = ["E402"]
+# chat app has the same pattern
+"chat/app.py" = ["E402"]
+# open_finance module-level state reload runs after OS path constants are set
+"apis/open_finance/api.py" = ["E402"]

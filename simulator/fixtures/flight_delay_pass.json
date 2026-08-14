@@ -1,0 +1,49 @@
+{
+  "eligibility": [
+    {
+      "id": "elig-AA-100-JFK-LHR",
+      "carrierCode": "AA",
+      "flightNumber": "100",
+      "departureDate": "2026-06-15",
+      "departureAirport": "JFK",
+      "arrivalAirport": "LHR",
+      "eligible": true,
+      "provider": {"name": "DragonPass", "code": "DP"},
+      "lounges": [
+        {"airport": "JFK", "terminal": "8", "name": "American Airlines Flagship Lounge"}
+      ]
+    },
+    {
+      "id": "elig-BA-178-JFK-LHR",
+      "carrierCode": "BA",
+      "flightNumber": "178",
+      "departureDate": "2026-06-20",
+      "departureAirport": "JFK",
+      "arrivalAirport": "LHR",
+      "eligible": true,
+      "provider": {"name": "DragonPass", "code": "DP"},
+      "lounges": [
+        {"airport": "JFK", "terminal": "7", "name": "British Airways Galleries Lounge"}
+      ]
+    }
+  ],
+  "registrations": [
+    {
+      "id": "FDP-SEED000001",
+      "registrationId": "FDP-SEED000001",
+      "status": "REGISTERED",
+      "carrierCode": "AA",
+      "flightNumber": "100",
+      "departureDate": "2026-06-15",
+      "departureAirport": "JFK",
+      "arrivalAirport": "LHR",
+      "passenger": {
+        "firstName": "Test",
+        "lastName": "Cardholder",
+        "email": "test@example.com",
+        "phoneNumber": "+15555550100"
+      },
+      "createdAt": "2026-05-28T00:00:00Z"
+    }
+  ]
+}

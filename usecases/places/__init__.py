@@ -7,11 +7,10 @@ metadata: NFC support, payment capabilities, business status, etc.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List
-
+from typing import Any
 
 # Industry code labels used in the UI dropdown.
-INDUSTRY_PRESETS: List[Dict[str, str]] = [
+INDUSTRY_PRESETS: list[dict[str, str]] = [
     {"value": "EAP", "label": "Eating Places & Restaurants"},
     {"value": "SHS", "label": "Shoe Stores"},
     {"value": "GRS", "label": "Grocery Stores & Supermarkets"},
@@ -20,8 +19,7 @@ INDUSTRY_PRESETS: List[Dict[str, str]] = [
     {"value": "",    "label": "All industries"},
 ]
 
-
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "places",
     "name": "Places",
     "description": (
@@ -44,8 +42,7 @@ MANIFEST: Dict[str, Any] = {
     },
 }
 
-
-def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
     from apis.places import api as places_api
 
     if action == "search":
@@ -84,52 +81,51 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
 
     return {"error": f"Unknown action: {action}"}
 
+def _build_address_parts(item: dict[str, Any]) -> list[str]:
+    """Build ordered address components from a raw Places item."""
+    parts: list[str] = []
+    street = item.get("cleansedStreetAddress") or item.get("streetAddress")
+    if street:
+        parts.append(street)
+    city  = item.get("cleansedCityName") or item.get("cityName")
+    state = item.get("cleansedStateProvinceCode") or item.get("stateProvinceCode")
+    city_state = " ".join(x for x in [city, state] if x)
+    if city_state:
+        parts.append(city_state)
+    postal  = item.get("cleansedPostalCode") or item.get("postalCode")
+    country = item.get("cleansedCountryCode") or item.get("countryCode")
+    if postal:
+        parts.append(postal)
+    if country:
+        parts.append(country)
+    return parts
 
-def _shape(item: Dict[str, Any]) -> Dict[str, Any]:
+
+def _build_caps(item: dict[str, Any]) -> list[str]:
+    """Return a list of payment capability labels present on a Places item."""
+    _flag_labels = [
+        ("hasNfc",         "NFC / Contactless"),
+        ("hasEmv",         "EMV Chip"),
+        ("hasApplePay",    "Apple Pay"),
+        ("hasAndroidPay",  "Google Pay"),
+        ("hasSamsungPay",  "Samsung Pay"),
+        ("hasCashBack",    "Cash Back"),
+        ("hasPayAtThePump","Pay at Pump"),
+        ("isEcommerce",    "E-commerce"),
+        ("isBrickAndMortar","In-store"),
+    ]
+    return [label for flag, label in _flag_labels if item.get(flag)]
+
+
+def _shape(item: dict[str, Any]) -> dict[str, Any]:
     """Normalize a raw Places item into a UI-friendly dict."""
     name = (
         item.get("cleansedMerchantName")
         or item.get("merchantName")
         or "Unknown Merchant"
     )
-    address_parts = []
-    street = item.get("cleansedStreetAddress") or item.get("streetAddress")
-    if street:
-        address_parts.append(street)
-    city = item.get("cleansedCityName") or item.get("cityName")
-    state = item.get("cleansedStateProvinceCode") or item.get("stateProvinceCode")
-    postal = item.get("cleansedPostalCode") or item.get("postalCode")
-    country = item.get("cleansedCountryCode") or item.get("countryCode")
-    city_state = " ".join(x for x in [city, state] if x)
-    if city_state:
-        address_parts.append(city_state)
-    if postal:
-        address_parts.append(postal)
-    if country:
-        address_parts.append(country)
-
-    phone = item.get("cleansedTelephoneNumber") or item.get("telephoneNumber")
-    url = item.get("cleansedMerchantUrl") or ""
-
-    caps = []
-    if item.get("hasNfc"):
-        caps.append("NFC / Contactless")
-    if item.get("hasEmv"):
-        caps.append("EMV Chip")
-    if item.get("hasApplePay"):
-        caps.append("Apple Pay")
-    if item.get("hasAndroidPay"):
-        caps.append("Google Pay")
-    if item.get("hasSamsungPay"):
-        caps.append("Samsung Pay")
-    if item.get("hasCashBack"):
-        caps.append("Cash Back")
-    if item.get("hasPayAtThePump"):
-        caps.append("Pay at Pump")
-    if item.get("isEcommerce"):
-        caps.append("E-commerce")
-    if item.get("isBrickAndMortar"):
-        caps.append("In-store")
+    address_parts = _build_address_parts(item)
+    caps = _build_caps(item)
 
     return {
         "locationId": item.get("locationId"),
@@ -137,8 +133,8 @@ def _shape(item: Dict[str, Any]) -> Dict[str, Any]:
         "legalName": item.get("cleansedLegalCorporateName") or item.get("legalCorporateName") or "",
         "address": ", ".join(address_parts),
         "addressParts": address_parts,
-        "phone": phone or "",
-        "website": url,
+        "phone": item.get("cleansedTelephoneNumber") or item.get("telephoneNumber") or "",
+        "website": item.get("cleansedMerchantUrl") or "",
         "lat": item.get("latitude"),
         "lng": item.get("longitude"),
         "industry": item.get("industry") or "",

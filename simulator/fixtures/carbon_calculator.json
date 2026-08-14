@@ -1,0 +1,36 @@
+{
+  "service_providers": [
+    {
+      "id": "sp-001",
+      "customerId": "CID-SANDBOX-001",
+      "legalName": "Test Issuer Inc.",
+      "country": "USA",
+      "binRanges": ["52047358-52047360"],
+      "createdAt": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "payment_cards": [
+    {"id": "pc-seed-1", "paymentCardId": "PC-SEED000001", "status": "REGISTERED"}
+  ],
+  "footprints": [
+    {"transactionId": "txn-001", "date": "2026-05-20", "amount": 42.50, "currency": "USD", "mcc": "5411", "carbonEmissionInGrams": 12750, "merchantName": "Sample Grocery"},
+    {"transactionId": "txn-002", "date": "2026-05-21", "amount": 18.75, "currency": "USD", "mcc": "5812", "carbonEmissionInGrams": 10312, "merchantName": "Sample Restaurant"},
+    {"transactionId": "txn-003", "date": "2026-05-22", "amount": 60.00, "currency": "USD", "mcc": "5541", "carbonEmissionInGrams": 72000, "merchantName": "Sample Fuel"}
+  ],
+  "aggregates": [
+    {"period": "2026-05", "carbonEmissionInGrams": 95062, "transactionCount": 3},
+    {"period": "2026-04", "carbonEmissionInGrams": 81450, "transactionCount": 5}
+  ],
+  "currencies": [
+    {"code": "USD", "name": "United States Dollar"},
+    {"code": "EUR", "name": "Euro"},
+    {"code": "GBP", "name": "Pound Sterling"},
+    {"code": "AUD", "name": "Australian Dollar"}
+  ],
+  "mccs": [
+    {"code": "5411", "name": "Grocery Stores, Supermarkets"},
+    {"code": "5812", "name": "Eating Places, Restaurants"},
+    {"code": "4111", "name": "Transportation - Suburban / Local"},
+    {"code": "5541", "name": "Service Stations (with or without Ancillary Services)"}
+  ]
+}

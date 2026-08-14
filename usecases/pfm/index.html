@@ -3,18 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Personal Finance Manager — vima</title>
+  <title>Personal Finance Manager — Mastercard Solution Studio</title>
+  <script src="/static/js/usecase-theme.js"></script>
   <link rel="stylesheet" href="/pfm/style.css">
+  <link rel="stylesheet" href="/static/css/usecase-theme.css">
 </head>
 <body>
-  <!-- Description text — pfmRender() reads this, then clears it -->
-  <p id="uc-desc" style="display:none">Transform raw transaction data into a rich,
-    real-time money management experience. By connecting a customer's accounts through
-    the Open Finance API, this use case delivers live balances, intelligent spend
-    categorisation across dozens of merchant types, and a full scrollable transaction
-    history — the complete building blocks of a world-class personal finance app,
-    powered by a single Mastercard integration.</p>
-
   <!-- pfmRender() fills this container -->
   <div id="uc-body"></div>
 
@@ -147,26 +141,19 @@ const PFM = {
 // ─── Entry point ──────────────────────────────────────────────────────────────
 function pfmRender(initialCustomerId) {
   const body = $("uc-body");
-  const descEl = $("uc-desc");
-  const descText = descEl ? descEl.textContent.trim() : "";
-  if (descEl) descEl.textContent = "";
   body.innerHTML = `
     <div class="pfm-stage">
       <div class="pfm-info">
-        <div>
-          <h1 style="font-size: 22px; font-weight: 700; margin: 0 0 10px; color: #18181b; letter-spacing: -0.02em;">Personal Finance Manager</h1>
-          <p class="pfm-info-desc">${escapeHtml(descText)}</p>
-        </div>
         <div class="pfm-controlbar">
           <div>
             <div class="label">Customer ID</div>
             <input id="pfm-cid" placeholder="e.g. 9013023139" value="${escapeHtml(initialCustomerId || "")}" />
           </div>
           <button class="btn btn-primary" id="pfm-load">Load Customer Data</button>
-          <div style="position: relative; margin: 8px 0;">
-            <div style="position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line);"></div>
-            <div style="position: relative; text-align: center;">
-              <span style="background: white; padding: 0 12px; font-size: 12px; color: var(--muted); font-weight: 500;">OR</span>
+          <div class="pfm-divider">
+            <div class="pfm-divider-line"></div>
+            <div class="pfm-divider-content">
+              <span class="pfm-divider-label" style="background: var(--surface, #fff); color: var(--muted);">OR</span>
             </div>
           </div>
           <button class="btn" id="pfm-connect-btn">Connect New Bank Account</button>
@@ -403,10 +390,35 @@ function pfmLazyLoad(cid, txns) {
   });
 }
 
+function pfmConnectPopupFeatures() {
+  const w = 480, h = 760;
+  const left = Math.max(0, window.screenX + (window.outerWidth - w) / 2);
+  const top = Math.max(0, window.screenY + (window.outerHeight - h) / 2);
+  return [
+    "popup=yes", `width=${w}`, `height=${h}`, `left=${left}`, `top=${top}`,
+    "resizable=yes", "scrollbars=yes", "menubar=no", "toolbar=no",
+    "location=no", "status=no", "noopener=no",
+  ].join(",");
+}
+
+// Open a blank popup *synchronously* inside the click handler so it is tied to
+// the user gesture. If we waited until after the create_customer/connect_url
+// fetches resolved, the browser's popup blocker would reject window.open().
+function pfmOpenBlankConnectPopup() {
+  try {
+    const win = window.open("about:blank", "vima-connect", pfmConnectPopupFeatures());
+    if (win) { try { win.focus(); } catch (_) {} }
+    return win;
+  } catch (_) { return null; }
+}
+
 function pfmStartConnect() {
   const app = document.getElementById("pfm-app");
   if (!app) return;
   const cidInput = $("pfm-cid");
+
+  // Must happen now, while the user-activation from the button click is live.
+  const popup = pfmOpenBlankConnectPopup();
 
   pfmShowConnectWaiting("Preparing Connect\u2026", null);
   pfmIslandFlash("Open Finance \u00b7 Connect");
@@ -435,24 +447,27 @@ function pfmStartConnect() {
         throw new Error(res && res.error ? res.error : "Could not generate Connect URL");
       }
       PFM._connectUrl = res.connect_url;
-      pfmOpenConnectPopup(res.connect_url);
+      pfmOpenConnectPopup(res.connect_url, popup);
       pfmShowConnectWaiting(`Customer ${PFM.cid}`, res.connect_url);
       pfmPollForAccounts(PFM.cid);
     })
-    .catch((e) => pfmShowConnect("Connect error: " + e.message));
+    .catch((e) => {
+      if (popup && !popup.closed) { try { popup.close(); } catch (_) {} }
+      pfmShowConnect("Connect error: " + e.message);
+    });
 }
 
-function pfmOpenConnectPopup(url) {
+function pfmOpenConnectPopup(url, existing) {
   try {
-    const w = 480, h = 760;
-    const left = Math.max(0, window.screenX + (window.outerWidth - w) / 2);
-    const top = Math.max(0, window.screenY + (window.outerHeight - h) / 2);
-    const features = [
-      "popup=yes", `width=${w}`, `height=${h}`, `left=${left}`, `top=${top}`,
-      "resizable=yes", "scrollbars=yes", "menubar=no", "toolbar=no",
-      "location=no", "status=no", "noopener=no",
-    ].join(",");
-    const win = window.open(url, "vima-connect", features);
+    // Reuse the blank popup opened on click if it's still around; otherwise
+    // fall back to opening one now (may be blocked, but best effort).
+    let win = existing && !existing.closed ? existing : null;
+    if (win) {
+      try { win.location.href = url; } catch (_) { win = null; }
+    }
+    if (!win) {
+      win = window.open(url, "vima-connect", pfmConnectPopupFeatures());
+    }
     if (!win) return null;
     try { win.focus(); } catch (_) {}
     PFM._connectWin = win;
@@ -1135,14 +1150,31 @@ function pfmCloseSheet() {
 }
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
+// PFM is a thin visualisation over the Open Finance US API context. On
+// load we ask the API module for its current customer_id (set by the
+// API tab or the background seeder) and render the dashboard against
+// that. The seeder runs in a background thread, so on a cold start the
+// customer_id may not be ready on the first request — we poll a few times
+// before giving up. If no customer ever appears we render the Connect
+// screen (rather than a hard-coded demo id that may not exist in this
+// tenant) so the user can link a bank.
 document.addEventListener("DOMContentLoaded", () => {
-  fetch("/explorer/ofin/state")
-    .then(r => r.json())
-    .then(d => {
-      const cid = (d.state || {}).customer_id || PFM_DEFAULT_CID;
-      pfmRender(cid);
-    })
-    .catch(() => pfmRender(PFM_DEFAULT_CID));
+  const MAX_TRIES = 6, RETRY_MS = 500;
+  function boot(attempt) {
+    fetch("/explorer/open_finance/state")
+      .then(r => r.json())
+      .then(d => {
+        const cid = (d.state || {}).customer_id;
+        if (cid) { pfmRender(String(cid)); return; }
+        if (attempt < MAX_TRIES) { setTimeout(() => boot(attempt + 1), RETRY_MS); return; }
+        pfmRender("");
+      })
+      .catch(() => {
+        if (attempt < MAX_TRIES) { setTimeout(() => boot(attempt + 1), RETRY_MS); return; }
+        pfmRender("");
+      });
+  }
+  boot(0);
 });
 </script>
 </body>

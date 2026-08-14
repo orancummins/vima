@@ -7,7 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="/static/js/usecase-theme.js"></script>
   <link rel="stylesheet" href="/recurring/style.css">
+  <link rel="stylesheet" href="/static/css/usecase-theme.css">
 </head>
 <body>
   <div id="uc-body"></div>
@@ -76,10 +78,36 @@
     }
 
     function renderRecurring() {
-      fetch("/explorer/ofin/state").then(r => r.json()).then(d => {
-        REC.cid = (d.state || {}).customer_id || REC.cid;
-        recRender();
+      // Boot from shared Open Finance STATE so Recurring inherits whoever
+      // the user last connected — across sessions, thanks to the on-disk
+      // persistence layer in apis/open_finance/api.py.
+      fetch("/explorer/open_finance/state").then(r => r.json()).then(d => {
+        const cid = (d.state || {}).customer_id;
+        if (cid) {
+          REC.cid = String(cid);
+          recRender();
+          // Auto-load accounts so a returning user lands on a ready view
+          // instead of having to click "Load Accounts" each session.
+          recAutoLoadAccounts();
+        } else {
+          recRender();
+        }
       }).catch(() => recRender());
+    }
+
+    async function recAutoLoadAccounts() {
+      try {
+        const r = await fetch("/usecases/recurring/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_accounts", params: { customer_id: REC.cid } }),
+        });
+        const d = await r.json();
+        if (!d || d.error) return;
+        REC.accounts = d.accounts || [];
+        REC.selectedAccount = "";
+        recRender();
+      } catch (_) { /* silent — user can still click Load Accounts */ }
     }
 
     function recRender() {
@@ -201,6 +229,16 @@
                 <input id="rec-cid" type="text" value="${escapeHtml(REC.cid)}" placeholder="e.g. 9013023139" style="width:160px">
               </div>
               <button class="rec-btn rec-btn--secondary" id="rec-load-accts">Load Accounts</button>
+            </div>
+            <div class="rec-or-divider" aria-hidden="true">
+              <span class="rec-or-line"></span>
+              <span class="rec-or-text">OR</span>
+              <span class="rec-or-line"></span>
+            </div>
+            <div class="rec-controls-row">
+              <button class="rec-btn rec-btn--secondary" id="rec-connect-btn" style="flex:1" title="Create a new sandbox customer and link a bank account via the Mastercard Open Finance Connect popup">Connect New Bank Account</button>
+            </div>
+            <div class="rec-controls-row">
               <div class="rec-field rec-field--grow" id="rec-acct-wrap" style="display:none">
                 <label>Account (optional filter)</label>
                 <select id="rec-acct-select" style="min-width:220px">
@@ -302,12 +340,119 @@
       wrap.style.display = "";
     }
 
+    // ─── Connect New Bank Account flow (mirrors PFM) ─────────────────────
+    // Creates a sandbox customer, opens the Mastercard Open Finance Connect
+    // popup, then polls for accounts. The returned customer_id is
+    // auto-promoted to the shared Open Finance STATE (and persisted to
+    // disk) by the /usecases/<uc_id>/action route, so PFM / PSI / Use
+    // Cases all inherit the same active customer across sessions.
+
+    const REC_CONNECT = { pollStop: false, connectWin: null, connectWatcher: null };
+
+    function recStartConnect() {
+      // Don't mutate the visible Customer ID until the connect flow
+      // successfully links accounts — if the user cancels mid-flow they
+      // keep their original CID. We track the pending CID locally and
+      // only commit on success.
+      let pendingCid = null;
+      const cidInput = document.getElementById("rec-cid");
+      const hintEl = document.querySelector(".rec-hint");
+      if (hintEl) hintEl.textContent = "Preparing Connect…";
+
+      fetch("/usecases/recurring/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create_customer", params: {} }),
+      }).then(r => r.json())
+        .then(res => {
+          if (!res || res.error || !res.customer_id) {
+            throw new Error((res && res.error) || "Could not create customer");
+          }
+          pendingCid = String(res.customer_id);
+          return fetch("/usecases/recurring/action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "connect_url", params: { customer_id: pendingCid } }),
+          }).then(r => r.json());
+        })
+        .then(res => {
+          if (!res || res.error || !res.connect_url) {
+            throw new Error((res && res.error) || "Could not generate Connect URL");
+          }
+          recOpenConnectPopup(res.connect_url, pendingCid);
+          const hint2 = document.querySelector(".rec-hint");
+          if (hint2) hint2.textContent = `New customer ${pendingCid} created — select your bank in the popup. Your Customer ID will switch once accounts are linked.`;
+          recPollForAccounts(pendingCid);
+        })
+        .catch(e => alert("Connect error: " + e.message));
+    }
+
+    function recOpenConnectPopup(url, pendingCid) {
+      try {
+        const w = 480, h = 760;
+        const left = Math.max(0, window.screenX + (window.outerWidth - w) / 2);
+        const top  = Math.max(0, window.screenY + (window.outerHeight - h) / 2);
+        const features = [
+          "popup=yes", `width=${w}`, `height=${h}`, `left=${left}`, `top=${top}`,
+          "resizable=yes", "scrollbars=yes", "menubar=no", "toolbar=no",
+          "location=no", "status=no", "noopener=no",
+        ].join(",");
+        const win = window.open(url, "vima-connect", features);
+        if (!win) return null;
+        try { win.focus(); } catch (_) {}
+        REC_CONNECT.connectWin = win;
+        const watch = setInterval(() => {
+          try {
+            if (win.closed) {
+              clearInterval(watch);
+              setTimeout(() => recPollForAccounts(pendingCid || REC.cid), 1500);
+            }
+          } catch (_) { clearInterval(watch); }
+        }, 800);
+        REC_CONNECT.connectWatcher = watch;
+        return win;
+      } catch (_) { return null; }
+    }
+
+    function recPollForAccounts(cid) {
+      REC_CONNECT.pollStop = false;
+      const started = Date.now();
+      const tick = () => {
+        if (REC_CONNECT.pollStop) return;
+        if (Date.now() - started > 5 * 60 * 1000) return;
+        fetch("/usecases/recurring/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_accounts", params: { customer_id: cid } }),
+        }).then(r => r.json()).then(d => {
+          if (REC_CONNECT.pollStop) return;
+          if (d && Array.isArray(d.accounts) && d.accounts.length > 0) {
+            // Connect succeeded — NOW commit the new customer_id to state
+            // and the visible input. If the user cancelled, their original
+            // CID stays put.
+            REC.cid = String(cid);
+            const cidInput = document.getElementById("rec-cid");
+            if (cidInput) cidInput.value = REC.cid;
+            REC.accounts = d.accounts;
+            REC.selectedAccount = "";
+            recRender();
+            return;
+          }
+          setTimeout(tick, 4000);
+        }).catch(() => setTimeout(tick, 6000));
+      };
+      setTimeout(tick, 2500);
+    }
+
     function recWire() {
       const cidInput = document.getElementById("rec-cid");
       const loadBtn  = document.getElementById("rec-load-accts");
+      const connectBtn = document.getElementById("rec-connect-btn");
       const goBtn    = document.getElementById("rec-go");
 
       if (cidInput) cidInput.addEventListener("input", () => { REC.cid = cidInput.value.trim(); });
+
+      if (connectBtn) connectBtn.addEventListener("click", () => recStartConnect());
 
       if (loadBtn) loadBtn.addEventListener("click", async () => {
         const cid = (document.getElementById("rec-cid") || {}).value || REC.cid;

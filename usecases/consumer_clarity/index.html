@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Consumer Clarity — Mastercard Solution Studio</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="/static/js/usecase-theme.js"></script>
+  <link rel="stylesheet" href="/consumer_clarity/style.css">
+  <link rel="stylesheet" href="/static/css/usecase-theme.css">
+</head>
+<body>
+  <div id="uc-body"></div>
+
+<script>
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function $(id) { return document.getElementById(id); }
+
+function escapeHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+const CLARITY = {
+  presetKey: null,
+  loading: false,
+  result: null,   // { found, raw, merchant, note }
+  presets: [],    // populated from /usecases on init
+};
+
+let clarityThemeObserver = null;
+
+function clarityIsLightTheme() {
+  return document.documentElement.classList.contains("theme-light");
+}
+
+function clarityTileConfig() {
+  if (clarityIsLightTheme()) {
+    return {
+      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      options: {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      },
+    };
+  }
+  return {
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    options: {
+      subdomains: "abcd",
+      maxZoom: 20,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    },
+  };
+}
+
+function clarityApplyThemeTileLayer(map) {
+  if (!map || typeof L === "undefined") return;
+  const cfg = clarityTileConfig();
+  if (map._clarityThemeTileLayer) map.removeLayer(map._clarityThemeTileLayer);
+  map._clarityThemeTileLayer = L.tileLayer(cfg.url, cfg.options).addTo(map);
+}
+
+function claritySyncMapTheme() {
+  const mapEl = document.getElementById("clarity-leaflet-map");
+  if (mapEl && mapEl._clarityMap) clarityApplyThemeTileLayer(mapEl._clarityMap);
+}
+
+function clarityEnsureThemeObserver() {
+  if (clarityThemeObserver) return;
+  clarityThemeObserver = new MutationObserver(() => claritySyncMapTheme());
+  clarityThemeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class", "data-theme"],
+  });
+}
+
+// ─── Bootstrap: fetch presets then render ─────────────────────────────────────
+function renderClarity() {
+  fetch("/usecases")
+    .then(r => r.json())
+    .then(d => {
+      const uc = (d.use_cases || []).find(u => u.id === "consumer_clarity");
+      if (uc && Array.isArray(uc.presets)) CLARITY.presets = uc.presets;
+      if (!CLARITY.presetKey && CLARITY.presets.length) {
+        CLARITY.presetKey = CLARITY.presets[0].value;
+      }
+      clarityRender();
+    })
+    .catch(() => clarityRender());
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function clarityRender() {
+  const body = $("uc-body");
+  if (!body) return;
+  const presets = CLARITY.presets;
+  body.innerHTML = `
+    <div class="clarity-stage">
+      <div class="clarity-form-card">
+        <div class="clarity-form-header">
+          <div class="clarity-form-title">Statement descriptor lookup</div>
+          <div class="clarity-form-sub">Pick a sandbox transaction to enrich.</div>
+        </div>
+        <div class="clarity-form-row">
+          <div class="clarity-field">
+            <label for="clarity-select">Transaction</label>
+            <select id="clarity-select">
+              ${presets.map(p =>
+                `<option value="${escapeHtml(p.value)}"${p.value === CLARITY.presetKey ? " selected" : ""}>${escapeHtml(p.label)}</option>`
+              ).join("")}
+            </select>
+          </div>
+          <button class="clarity-btn" id="clarity-btn"${CLARITY.loading ? " disabled" : ""}>
+            ${CLARITY.loading
+              ? `<span class="clarity-spinner"></span>Enriching&hellip;`
+              : `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3" stroke-linecap="round"/></svg>Enrich`}
+          </button>
+        </div>
+      </div>
+      <div class="clarity-result" id="clarity-result">
+        ${clarityResultHtml()}
+      </div>
+    </div>`;
+  clarityWire();
+  clarityInitMaps();
+}
+
+function clarityResultHtml() {
+  if (CLARITY.loading) {
+    return `<div class="clarity-loading"><div class="clarity-spinner clarity-spinner--lg"></div><p>Calling Consumer Clarity API&hellip;</p></div>`;
+  }
+  if (!CLARITY.result) {
+    return clarityHeroHtml();
+  }
+  if (CLARITY.result.error) {
+    return `<div class="clarity-error">${escapeHtml(String(CLARITY.result.error))}</div>`;
+  }
+
+  const raw = CLARITY.result.raw || {};
+  const rawText = (raw.cardAcceptorName || "\u2014").toUpperCase();
+  const rawSub = [raw.cardAcceptorLocation, raw.cardAcceptorRegionCode, raw.cardAcceptorCountryCode]
+    .filter(Boolean).join(" \u00B7 ");
+
+  if (!CLARITY.result.found) {
+    return `
+      <div class="clarity-grid">
+        ${clarityRawCardHtml(rawText, rawSub)}
+        <div class="clarity-arrow">${_clarityArrowSvg()}</div>
+        <div class="clarity-merchant-card clarity-merchant-card--empty">
+          <div class="clarity-empty-icon">
+            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="14" cy="14" r="10"/><path d="M22 22l6 6" stroke-linecap="round"/></svg>
+          </div>
+          <div class="clarity-empty-title">No match</div>
+          <div class="clarity-empty-sub">${escapeHtml(CLARITY.result.note || "No matching merchant found.")}</div>
+        </div>
+      </div>`;
+  }
+
+  const m = CLARITY.result.merchant || {};
+  return `
+    <div class="clarity-grid">
+      ${clarityRawCardHtml(rawText, rawSub)}
+      <div class="clarity-arrow">${_clarityArrowSvg()}</div>
+      ${clarityMerchantCardHtml(m)}
+    </div>
+    ${clarityFieldsHtml(m)}`;
+}
+
+function clarityRawCardHtml(name, sub) {
+  return `
+    <div class="clarity-raw-card">
+      <div class="clarity-raw-label">Raw descriptor</div>
+      <div class="clarity-raw-name">${escapeHtml(name)}</div>
+      ${sub ? `<div class="clarity-raw-sub">${escapeHtml(sub)}</div>` : ""}
+      <div class="clarity-raw-tag">Card statement</div>
+    </div>`;
+}
+
+function clarityMerchantCardHtml(m) {
+  const initials = (m.name || "?").slice(0, 2).toUpperCase();
+  const logo = m.merchantLogo
+    ? `<img src="${escapeHtml(m.merchantLogo)}" alt="${escapeHtml(m.name)}" class="clarity-merchant-logo-img" loading="lazy" onerror="this.outerHTML='<div class=&quot;clarity-merchant-logo-fallback&quot;>${escapeHtml(initials)}</div>'">`
+    : `<div class="clarity-merchant-logo-fallback">${escapeHtml(initials)}</div>`;
+  const addr = (m.addressLines || []).map(l => `<div class="clarity-addr-line">${escapeHtml(l)}</div>`).join("");
+  const cat = m.categoryName
+    ? `<span class="clarity-chip clarity-chip--cat">${escapeHtml(m.categoryName)}${m.categoryCode ? ` &middot; MCC ${escapeHtml(String(m.categoryCode))}` : ""}</span>`
+    : "";
+  const receipt = m.receiptStatus === "RECEIPT_FOUND" || m.receiptUrl
+    ? `<span class="clarity-chip clarity-chip--ok">Digital receipt available</span>` : "";
+  const website = m.websiteUrl
+    ? `<a class="clarity-link" href="${escapeHtml(m.websiteUrl)}" target="_blank" rel="noopener">Visit website &#8599;</a>`
+    : "";
+  return `
+    <div class="clarity-merchant-card">
+      <div class="clarity-merchant-head">
+        <div class="clarity-merchant-logo">${logo}</div>
+        <div class="clarity-merchant-name-block">
+          <div class="clarity-merchant-name">${escapeHtml(m.name)}</div>
+          <div class="clarity-merchant-tag">Enriched merchant</div>
+        </div>
+      </div>
+      ${addr ? `<div class="clarity-merchant-addr">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" style="width:14px;height:14px;flex-shrink:0;margin-top:2px;color:var(--muted)"><path d="M10 18s-6-5.5-6-10a6 6 0 0112 0c0 4.5-6 10-6 10z"/><circle cx="10" cy="8" r="2"/></svg>
+        <div>${addr}</div>
+      </div>` : ""}
+      <div class="clarity-merchant-chips">
+        ${cat}${receipt}
+      </div>
+      ${website ? `<div class="clarity-merchant-actions">${website}</div>` : ""}
+    </div>`;
+}
+
+function clarityFieldsHtml(m) {
+  const rows = [];
+  if (m.categoryCode) rows.push(["Category code (MCC)", String(m.categoryCode)]);
+  if (m.categoryName) rows.push(["Category", m.categoryName]);
+  if (m.lat != null && m.lng != null) rows.push(["Coordinates", `${m.lat}, ${m.lng}`]);
+  if (m.merchantStatus) rows.push(["Merchant status", m.merchantStatus]);
+  if (m.receiptStatus) rows.push(["Receipt status", m.receiptStatus]);
+
+  const hasMap = m.lat != null && m.lng != null;
+  const hasIndustryLogo = !!m.industryLogo;
+  const hasMedia = hasMap || hasIndustryLogo;
+
+  let mediaHtml = "";
+  if (hasMedia) {
+    const mapHtml = hasMap ? clarityMapHtml(m.lat, m.lng, m.name) : "";
+    const logoHtml = hasIndustryLogo ? `
+      <div class="clarity-media-card">
+        <div class="clarity-media-label">Industry logo</div>
+        <div class="clarity-industry-logo-box">
+          <img src="${escapeHtml(m.industryLogo)}" alt="Industry logo" class="clarity-industry-logo-img" loading="lazy">
+        </div>
+      </div>` : "";
+    mediaHtml = `<div class="clarity-media-grid${hasMap && hasIndustryLogo ? "" : " clarity-media-grid--single"}">${mapHtml}${logoHtml}</div>`;
+  }
+
+  const detailsHtml = rows.length ? `
+    <div class="clarity-details">
+      <div class="clarity-details-title">Details</div>
+      <div class="clarity-details-grid">
+        ${rows.map(([k, v]) => `
+          <div class="clarity-details-key">${escapeHtml(k)}</div>
+          <div class="clarity-details-val">${escapeHtml(v)}</div>
+        `).join("")}
+      </div>
+    </div>` : "";
+
+  return mediaHtml + detailsHtml;
+}
+
+function clarityMapHtml(lat, lng, name) {
+  const dLat = parseFloat(lat);
+  const dLng = parseFloat(lng);
+  if (!isFinite(dLat) || !isFinite(dLng)) return "";
+  const link = `https://www.openstreetmap.org/?mlat=${dLat}&mlon=${dLng}#map=15/${dLat}/${dLng}`;
+  return `
+    <div class="clarity-media-card">
+      <div class="clarity-media-label">Location</div>
+      <div class="clarity-map-box">
+        <div class="clarity-map-frame" id="clarity-leaflet-map" data-lat="${dLat}" data-lng="${dLng}" data-name="${escapeHtml(name || "Merchant location")}"></div>
+      </div>
+      <a class="clarity-link clarity-map-link" href="${escapeHtml(link)}" target="_blank" rel="noopener">View larger map &#8599;</a>
+    </div>`;
+}
+
+function clarityInitMaps() {
+  if (typeof L === "undefined") {
+    setTimeout(clarityInitMaps, 80);
+    return;
+  }
+  clarityEnsureThemeObserver();
+  const mapEl = document.getElementById("clarity-leaflet-map");
+  if (!mapEl || mapEl._clarityInited) return;
+  const lat = parseFloat(mapEl.dataset.lat);
+  const lng = parseFloat(mapEl.dataset.lng);
+  const name = mapEl.dataset.name || "Merchant location";
+  if (!isFinite(lat) || !isFinite(lng)) return;
+  mapEl._clarityInited = true;
+  const map = L.map(mapEl, { scrollWheelZoom: false }).setView([lat, lng], 15);
+  mapEl._clarityMap = map;
+  clarityApplyThemeTileLayer(map);
+
+  const orangeIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+  L.marker([lat, lng], { icon: orangeIcon }).addTo(map).bindPopup("<b>" + escapeHtml(name) + "</b>").openPopup();
+  setTimeout(() => map.invalidateSize(), 220);
+}
+
+function clarityHeroHtml() {
+  return `
+    <div class="clarity-hero">
+      <div class="clarity-hero-icon">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="8" y="14" width="32" height="22" rx="3"/>
+          <path d="M8 22h32M14 30h6"/>
+        </svg>
+      </div>
+      <h3>Turn cryptic statements into clear merchant identities</h3>
+      <p>Pick a sandbox transaction above and click <strong>Enrich</strong> to see a raw descriptor transformed into a recognisable merchant &mdash; complete with logo, address, category, and receipt link.</p>
+      <div class="clarity-hero-chips">
+        <span class="clarity-hero-chip">Clean merchant name</span>
+        <span class="clarity-hero-chip">Logo &amp; category</span>
+        <span class="clarity-hero-chip">Address &amp; map</span>
+        <span class="clarity-hero-chip">Digital receipts</span>
+      </div>
+    </div>`;
+}
+
+function _clarityArrowSvg() {
+  return `<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16h20M20 10l6 6-6 6"/></svg>`;
+}
+
+function clarityWire() {
+  const sel = document.getElementById("clarity-select");
+  if (sel) {
+    sel.addEventListener("change", () => {
+      CLARITY.presetKey = sel.value;
+    });
+  }
+  const btn = document.getElementById("clarity-btn");
+  if (!btn) return;
+  btn.addEventListener("click", async () => {
+    if (!CLARITY.presetKey) return;
+    CLARITY.loading = true;
+    CLARITY.result = null;
+    clarityRender();
+    try {
+      const r = await fetch("/usecases/consumer_clarity/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "lookup", params: { preset: CLARITY.presetKey } }),
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+      const d = await r.json();
+      CLARITY.loading = false;
+      CLARITY.result = d;
+      clarityRender();
+    } catch (e) {
+      console.error("Clarity lookup error:", e);
+      CLARITY.loading = false;
+      CLARITY.result = { error: e.message || String(e) };
+      clarityRender();
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded", renderClarity);
+</script>
+</body>
+</html>

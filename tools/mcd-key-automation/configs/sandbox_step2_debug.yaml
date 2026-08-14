@@ -1,0 +1,15 @@
+environment: sandbox
+organization: mastercard
+
+login_url: https://developer.mastercard.com/account/log-in
+dashboard_url_pattern: "**/dashboard**"
+key_password: "foobar!!"
+
+projects:
+  - name: clarity
+    description: Mastercard Consumer Clarity
+    apis: [clarity]
+
+  - name: txnotify
+    description: Mastercard Transaction Notifications
+    apis: [txnotify]

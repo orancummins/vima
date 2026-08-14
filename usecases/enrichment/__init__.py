@@ -13,9 +13,9 @@ from __future__ import annotations
 import json
 import os
 import time
-from typing import Any, Dict, List
+from typing import Any
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "enrichment",
     "name": "Data Enrichment",
     "description": (
@@ -25,7 +25,7 @@ MANIFEST: Dict[str, Any] = {
         "confidence scores — turning opaque payment data into powerful, actionable intelligence "
         "that drives better customer experiences, richer analytics, and stronger engagement."
     ),
-    "apis": ["ofin"],
+    "apis": ["open_finance", "consumer_clarity", "merchant_identifier"],
     "render": "enrichment",
 }
 
@@ -44,12 +44,11 @@ _RAW_TRANSACTIONS = [
     {"id": "t8", "description": "TARGET 00012345 SAN FRANCISCO CA","amount": -52.14, "date": "May 2",  "ts": "2026-05-02T09:00:00Z"},
 ]
 
-
 # ---------------------------------------------------------------------------
 # Bundled fallback — real API responses baked in so the demo works even when
 # the API quota is exhausted or the on-disk cache has been cleared.
 # ---------------------------------------------------------------------------
-_FALLBACK_DATA: Dict[str, Dict[str, Any]] = {
+_FALLBACK_DATA: dict[str, dict[str, Any]] = {
     "t1": {"name": "Starbucks",          "category": "Coffee Shops",       "categoryGroup": "Groceries & Dining",          "confidence": 100.0, "categoryScore": 84.5,  "logoUrl": "https://institution-branding-assets-cf.openbanking.mastercard.com/merchants/MTc1ODA5NDU0MTYwNjM1OTA0MA==/logo.png",  "website": "https://www.starbucks.com",            "location": None,                 "isRecurring": False, "isEcommerce": False, "_cachedAt": 0},
     "t2": {"name": "Amazon",             "category": "Shopping",           "categoryGroup": "Shopping & Retail",           "confidence": 100.0, "categoryScore": 100.0, "logoUrl": "https://institution-branding-assets-cf.openbanking.mastercard.com/merchants/MTc1ODA5MjMzNjI1Mzg5ODc1Mg==/logo.png",  "website": "https://www.amazon.com",               "location": None,                 "isRecurring": False, "isEcommerce": False, "_cachedAt": 0},
     "t3": {"name": "Uber",               "category": "Rental Car & Taxi",  "categoryGroup": "Travel & Vacation",           "confidence": 100.0, "categoryScore": 100.0, "logoUrl": "https://institution-branding-assets-cf.openbanking.mastercard.com/merchants/MTc1ODA5NDg1MzUxOTk3MDMwNA==/logo.png",  "website": "https://www.uber.com",                 "location": None,                 "isRecurring": False, "isEcommerce": False, "_cachedAt": 0},
@@ -68,15 +67,14 @@ _FALLBACK_DATA: Dict[str, Dict[str, Any]] = {
 # demo never calls the API unnecessarily.
 # ---------------------------------------------------------------------------
 _CACHE_PATH = os.path.join(os.path.dirname(__file__), ".enrichment_cache.json")
-_cache: Dict[str, Dict[str, Any]] | None = None
+_cache: dict[str, dict[str, Any]] | None = None
 
-
-def _load_cache() -> Dict[str, Dict[str, Any]]:
+def _load_cache() -> dict[str, dict[str, Any]]:
     global _cache
     if _cache is not None:
         return _cache
     try:
-        with open(_CACHE_PATH, "r", encoding="utf-8") as fh:
+        with open(_CACHE_PATH, encoding="utf-8") as fh:
             _cache = json.load(fh) or {}
     except (FileNotFoundError, json.JSONDecodeError, OSError):
         _cache = {}
@@ -90,7 +88,6 @@ def _load_cache() -> Dict[str, Dict[str, Any]]:
         _save_cache()
     return _cache
 
-
 def _save_cache() -> None:
     if _cache is None:
         return
@@ -100,14 +97,11 @@ def _save_cache() -> None:
     except OSError:
         pass
 
-
 def _client():
-    from apis.ofin import api as ofin_api
+    from apis.open_finance import api as ofin_api
     return ofin_api._get_client()
 
-
-
-def _shape_row(raw: Dict[str, Any], enriched: Dict[str, Any]) -> Dict[str, Any]:
+def _shape_row(raw: dict[str, Any], enriched: dict[str, Any]) -> dict[str, Any]:
     """Combine a raw preset and a cached/enriched payload into a UI row."""
     return {
         "id":     raw["id"],
@@ -117,8 +111,7 @@ def _shape_row(raw: Dict[str, Any], enriched: Dict[str, Any]) -> Dict[str, Any]:
         "enriched": enriched,
     }
 
-
-def _shape_api_response(api: Dict[str, Any], raw: Dict[str, Any]) -> Dict[str, Any]:
+def _shape_api_response(api: dict[str, Any], raw: dict[str, Any]) -> dict[str, Any]:
     """Shape one Mastercard API transaction record into a flat enriched dict."""
     entities: list = api.get("entities") or []
     primary = entities[0] if entities else {}
@@ -145,14 +138,13 @@ def _shape_api_response(api: Dict[str, Any], raw: Dict[str, Any]) -> Dict[str, A
         "_cachedAt":       int(time.time()),
     }
 
-
-def get_enrichment_data() -> Dict[str, Any]:
+def get_enrichment_data() -> dict[str, Any]:
     """Return the raw transaction list — does NOT call the enrichment API.
 
     The UI renders the raw transactions immediately and only calls the
     enrichment API (via ``do_action``) when the user clicks Enrich.
     """
-    transactions: List[Dict[str, Any]] = [
+    transactions: list[dict[str, Any]] = [
         {
             "id":     t["id"],
             "raw":    t["description"],
@@ -164,8 +156,7 @@ def get_enrichment_data() -> Dict[str, Any]:
     ]
     return {"transactions": transactions}
 
-
-def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
     """Run the enrichment API on demand, with a smart per-transaction cache.
 
     Action ``enrich`` accepts:
@@ -202,9 +193,9 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
         return {"transactions": []}
 
     # Split into cached (served instantly) and uncached (need API call)
-    results_by_id: Dict[str, Dict[str, Any]] = {}
-    cache_hits: List[str] = []
-    needs_api: List[Dict[str, Any]] = []
+    results_by_id: dict[str, dict[str, Any]] = {}
+    cache_hits: list[str] = []
+    needs_api: list[dict[str, Any]] = []
 
     for raw in targets:
         if not force and raw["id"] in cache:
@@ -213,7 +204,7 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
         else:
             needs_api.append(raw)
 
-    api_error: Dict[str, Any] | None = None
+    api_error: dict[str, Any] | None = None
 
     if needs_api:
         client = _client()
@@ -249,7 +240,7 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
                     "failedIds": still_failed,
                 }
         else:
-            api_by_id: Dict[str, Any] = {
+            api_by_id: dict[str, Any] = {
                 t["externalTransactionId"]: t
                 for t in (data.get("transactions") or [])
             }
@@ -263,7 +254,7 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
     # Preserve original input order
     transactions = [results_by_id[t["id"]] for t in targets if t["id"] in results_by_id]
 
-    response: Dict[str, Any] = {
+    response: dict[str, Any] = {
         "transactions": transactions,
         "cacheHits":    cache_hits,
         "fromApi":      [t["id"] for t in needs_api if t["id"] in results_by_id],

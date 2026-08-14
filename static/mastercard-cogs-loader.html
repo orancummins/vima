@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mastercard Solution Studio — Processing</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0a0a0a 0%, #0f0a00 60%, #1a0f00 100%);
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(255,95,0,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .rings {
+      position: relative;
+      width: 160px;
+      height: 160px;
+    }
+
+    .rings svg {
+      position: absolute;
+      inset: 0;
+    }
+
+    @keyframes spin-cw  { to { transform: rotate(360deg);  } }
+    @keyframes spin-ccw { to { transform: rotate(-360deg); } }
+
+    .ring-outer { animation: spin-cw  3s   linear infinite; transform-origin: 50% 50%; }
+    .ring-mid   { animation: spin-ccw 2s   linear infinite; transform-origin: 50% 50%; }
+    .ring-inner { animation: spin-cw  1.4s linear infinite; transform-origin: 50% 50%; }
+
+    .mc-mark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 48px;
+      height: 28px;
+    }
+
+    .label { text-align: center; }
+
+    .label-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      background: linear-gradient(100deg, #ff6a00 0%, #ffb347 55%, #ffd280 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .label-sub {
+      font-size: 12px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.25);
+      letter-spacing: 0.04em;
+    }
+
+    .dots {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      justify-content: center;
+    }
+
+    .dot { width: 5px; height: 5px; border-radius: 50%; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0);   opacity: 0.35; }
+      40%           { transform: translateY(-6px); opacity: 1;    }
+    }
+
+    .dot:nth-child(1) { background: #eb001b; animation: bounce 1.2s ease-in-out infinite 0s;    }
+    .dot:nth-child(2) { background: #ff5f00; animation: bounce 1.2s ease-in-out infinite 0.15s; }
+    .dot:nth-child(3) { background: #f79e1b; animation: bounce 1.2s ease-in-out infinite 0.30s; }
+  </style>
+</head>
+<body>
+
+  <div class="loader">
+    <div class="rings">
+
+      <!-- Faint track rings -->
+      <svg viewBox="0 0 160 160" fill="none">
+        <circle cx="80" cy="80" r="72" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        <circle cx="80" cy="80" r="56" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+        <circle cx="80" cy="80" r="40" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+      </svg>
+
+      <!-- Outer arc: orange, 75% filled, clockwise 3 s -->
+      <!-- r=72  circ≈452  75%≈339 -->
+      <svg class="ring-outer" viewBox="0 0 160 160" fill="none">
+        <circle cx="80" cy="80" r="72"
+          stroke="#ff5f00" stroke-width="3" stroke-linecap="round"
+          stroke-dasharray="339 113" opacity="0.9"/>
+      </svg>
+
+      <!-- Mid arc: red, 55% filled, counter-clockwise 2 s -->
+      <!-- r=56  circ≈352  55%≈194 -->
+      <svg class="ring-mid" viewBox="0 0 160 160" fill="none">
+        <circle cx="80" cy="80" r="56"
+          stroke="#eb001b" stroke-width="2.5" stroke-linecap="round"
+          stroke-dasharray="194 158" opacity="0.75"/>
+      </svg>
+
+      <!-- Inner arc: amber, 33% filled, clockwise 1.4 s -->
+      <!-- r=40  circ≈251  33%≈84 -->
+      <svg class="ring-inner" viewBox="0 0 160 160" fill="none">
+        <circle cx="80" cy="80" r="40"
+          stroke="#f79e1b" stroke-width="2" stroke-linecap="round"
+          stroke-dasharray="84 168" opacity="0.6"/>
+      </svg>
+
+      <!-- Mastercard mark: two overlapping circles + lens highlight -->
+      <svg class="mc-mark" viewBox="0 0 48 28">
+        <circle cx="16" cy="14" r="13" fill="#eb001b" opacity="0.92"/>
+        <circle cx="32" cy="14" r="13" fill="#f79e1b" opacity="0.92"/>
+        <!-- lens intersection (r=13, centers 16px apart, intersection x=24, y=14±10.24) -->
+        <path d="M24 3.76 A13 13 0 0 1 24 24.24 A13 13 0 0 1 24 3.76 Z" fill="#ff5f00" opacity="0.85"/>
+      </svg>
+
+    </div>
+
+    <div class="label">
+      <div class="label-title">Processing</div>
+      <div class="label-sub">Connecting to Mastercard APIs</div>
+      <div class="dots">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0a0a0a 0%, #0f0a00 60%, #1a0f00 100%);
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Subtle ambient radial glow behind the spinner */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 50%, rgba(255,95,0,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── Spinner ── */
+    .loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .rings {
+      position: relative;
+      width: 160px;
+      height: 160px;
+    }
+
+    /* SVG rings sit perfectly centred */
+    .rings svg {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Outer arc — orange, clockwise, 3 s */
+    @keyframes spin-cw  { to { transform: rotate(360deg);  } }
+    @keyframes spin-ccw { to { transform: rotate(-360deg); } }
+
+    .ring-outer { animation: spin-cw  3s linear infinite; transform-origin: 50% 50%; }
+    .ring-mid   { animation: spin-ccw 2s linear infinite; transform-origin: 50% 50%; }
+    .ring-inner { animation: spin-cw  1.4s linear infinite; transform-origin: 50% 50%; }
+
+    /* Mastercard mark — two overlapping circles, centred, static */
+    .mc-mark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 48px;
+      height: 28px;
+    }
+
+    /* ── Text block ── */
+    .label {
+      text-align: center;
+    }
+
+    .label-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      background: linear-gradient(100deg, #ff6a00 0%, #ffb347 55%, #ffd280 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .label-sub {
+      font-size: 12px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.25);
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Dots ── */
+    .dots {
+      display: flex;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0);    opacity: 0.35; }
+      40%           { transform: translateY(-6px);  opacity: 1;    }
+    }
+
+    .dot:nth-child(1) { background: #eb001b; animation: bounce 1.2s ease-in-out infinite 0s;     }
+    .dot:nth-child(2) { background: #ff5f00; animation: bounce 1.2s ease-in-out infinite 0.15s;  }
+    .dot:nth-child(3) { background: #f79e1b; animation: bounce 1.2s ease-in-out infinite 0.30s;  }
+  </style>
+</head>
+<body>
+
+  <div class="loader">
+
+    <div class="rings">
+
+      <!-- Outer ring: orange arc, 270° visible -->
+      <svg class="ring-outer" viewBox="0 0 160 160" fill="none">
+        <circle cx="80" cy="80" r="72"
+          stroke="#ff5f00"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-dasharray="339 113"   <!-- 75% of circumference 452 -->
+          opacity="0.9"
+        />
+      </svg>
+
+      <!-- Mid ring: red arc, 200° visible -->
+      <svg class="ring-mid" viewBox="0 0 160 160" fill="none">
+        <circle cx="80" cy="80" r="56"
+          stroke="#eb001b"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-dasharray="195 157"   <!-- 55% of circumference 352 -->
+          opacity="0.75"
+        />
+      </svg>
+
+      <!-- Inner ring: amber arc, 120° visible -->
+      <svg class="ring-inner" viewBox="0 0 160 160" fill="none">
+        <circle cx="80" cy="80" r="40"
+          stroke="#f79e1b"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-dasharray="84 168"    <!-- 33% of circumference 251 -->
+          opacity="0.6"
+        />
+      </svg>
+
+      <!-- Track rings (static, very faint) -->
+      <svg viewBox="0 0 160 160" fill="none" style="position:absolute;inset:0">
+        <circle cx="80" cy="80" r="72" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+        <circle cx="80" cy="80" r="56" stroke="rgba(255,255,255,0.04)" stroke-width="1" />
+        <circle cx="80" cy="80" r="40" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
+      </svg>
+
+      <!-- Mastercard two-circle mark, centred -->
+      <svg class="mc-mark" viewBox="0 0 48 28" fill="none">
+        <circle cx="16" cy="14" r="13" fill="#eb001b" opacity="0.9"/>
+        <circle cx="32" cy="14" r="13" fill="#f79e1b" opacity="0.9"/>
+        <!-- overlap blend — just the intersection in orange -->
+        <path d="M24 4.06a13 13 0 0 1 0 19.88A13 13 0 0 1 24 4.06Z" fill="#ff5f00" opacity="0.85"/>
+      </svg>
+
+    </div>
+
+    <div class="label">
+      <div class="label-title">Processing</div>
+      <div class="label-sub">Connecting to Mastercard APIs</div>
+      <div class="dots">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

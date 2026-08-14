@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>The Wire — Open Banking transaction journey</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="/static/js/usecase-theme.js"></script>
+  <link rel="stylesheet" href="/the_wire/style.css" />
+  <link rel="stylesheet" href="/static/css/usecase-theme.css" />
+</head>
+<body>
+  <div class="wire-app">
+    <!-- Left: transaction picker -->
+    <aside class="wire-picker" id="wire-picker">
+      <div class="wire-picker-eyebrow">Pick a transaction</div>
+      <div class="wire-picker-title">Recent activity</div>
+      <div class="wire-picker-sub">Real shape, real plumbing. Tap one to trace it.</div>
+      <div class="wire-picker-list" id="wire-picker-list"></div>
+      <div class="wire-picker-footer">
+        Each transaction takes the same five-hop journey from your bank to your phone — but the data at every stop is different.
+      </div>
+    </aside>
+
+    <!-- Center: the wire itself -->
+    <main class="wire-stage">
+      <div class="wire-stage-header">
+        <div class="wire-stage-eyebrow">The Wire</div>
+        <h1 class="wire-stage-title" id="wire-stage-title">Blue Bottle Coffee &nbsp;·&nbsp; $4.50</h1>
+        <div class="wire-stage-sub">Trace this transaction from raw POS string to the line on your phone.</div>
+        <button class="wire-replay-btn" id="wire-replay-btn" type="button">
+          <span class="wire-replay-icon">↻</span> Replay journey
+        </button>
+      </div>
+
+      <div class="wire-track" id="wire-track">
+        <!-- Background rail -->
+        <div class="wire-rail"></div>
+        <!-- Animated packet (glowing dot that travels) -->
+        <div class="wire-packet" id="wire-packet"></div>
+        <!-- Nodes injected by JS -->
+        <div class="wire-nodes" id="wire-nodes"></div>
+      </div>
+    </main>
+
+    <!-- Right: JSON inspector for the selected stage -->
+    <aside class="wire-inspector" id="wire-inspector">
+      <div class="wire-inspector-eyebrow" id="wire-inspector-eyebrow">Stage 1 of 5</div>
+      <div class="wire-inspector-title" id="wire-inspector-title">Bank terminal</div>
+      <div class="wire-inspector-sub" id="wire-inspector-sub">Raw POS descriptor from the issuer</div>
+      <pre class="wire-inspector-json" id="wire-inspector-json"></pre>
+      <div class="wire-inspector-hint">Click any node on the wire to inspect its payload.</div>
+    </aside>
+  </div>
+
+  <script>
+  (function () {
+    const $ = (id) => document.getElementById(id);
+
+    // ---------------- state ----------------
+    let TRANSACTIONS = [];
+    let currentTx = null;
+    let currentStageIdx = 0;
+    let animTimer = null;
+
+    // ---------------- helpers ----------------
+    function escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // Syntax-highlight a JSON object into colorised HTML.
+    function highlight(obj) {
+      const json = JSON.stringify(obj, null, 2);
+      return escapeHtml(json).replace(
+        /("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)/g,
+        (m) => {
+          let cls = 'j-num';
+          if (/^"/.test(m)) cls = /:$/.test(m) ? 'j-key' : 'j-str';
+          else if (/true|false/.test(m)) cls = 'j-bool';
+          else if (/null/.test(m)) cls = 'j-null';
+          return `<span class="${cls}">${m}</span>`;
+        }
+      );
+    }
+
+    // ---------------- render ----------------
+    function renderPicker() {
+      const root = $('wire-picker-list');
+      root.innerHTML = TRANSACTIONS.map((t, i) => `
+        <button class="wire-tx ${currentTx && currentTx.id === t.id ? 'wire-tx--active' : ''}" data-tx-id="${t.id}">
+          <span class="wire-tx-summary">${escapeHtml(t.summary)}</span>
+          <span class="wire-tx-arrow">→</span>
+        </button>
+      `).join('');
+      root.querySelectorAll('[data-tx-id]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.txId;
+          const tx = TRANSACTIONS.find((t) => t.id === id);
+          if (tx) selectTx(tx);
+        });
+      });
+    }
+
+    function renderNodes() {
+      const root = $('wire-nodes');
+      root.innerHTML = currentTx.stages.map((s, i) => `
+        <button class="wire-node ${i === currentStageIdx ? 'wire-node--active' : ''}"
+                data-stage-idx="${i}"
+                style="--stage-i:${i};--stage-count:${currentTx.stages.length};">
+          <span class="wire-node-dot"></span>
+          <span class="wire-node-card">
+            <span class="wire-node-step">Stage ${i + 1}</span>
+            <span class="wire-node-label">${escapeHtml(s.label)}</span>
+            <span class="wire-node-sub">${escapeHtml(s.sub)}</span>
+          </span>
+        </button>
+      `).join('');
+      root.querySelectorAll('[data-stage-idx]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const i = Number(btn.dataset.stageIdx);
+          stopAnim();
+          selectStage(i);
+        });
+      });
+    }
+
+    function renderInspector() {
+      const s = currentTx.stages[currentStageIdx];
+      $('wire-inspector-eyebrow').textContent =
+        `Stage ${currentStageIdx + 1} of ${currentTx.stages.length}`;
+      $('wire-inspector-title').textContent = s.label;
+      $('wire-inspector-sub').textContent = s.sub;
+      $('wire-inspector-json').innerHTML = highlight(s.blob);
+    }
+
+    function updateActiveNode() {
+      document.querySelectorAll('.wire-node').forEach((n, i) => {
+        n.classList.toggle('wire-node--active', i === currentStageIdx);
+        n.classList.toggle('wire-node--past', i < currentStageIdx);
+      });
+    }
+
+    function movePacket() {
+      const count = currentTx.stages.length;
+      // Packet rides 0%..100% of the rail; nodes are evenly spaced.
+      // Slight offset so the packet sits right inside the active node.
+      const t = count > 1 ? currentStageIdx / (count - 1) : 0;
+      const packet = $('wire-packet');
+      packet.style.top = `calc(${t * 100}% )`;
+      packet.classList.add('wire-packet--pulse');
+      clearTimeout(packet._pulseT);
+      packet._pulseT = setTimeout(() => packet.classList.remove('wire-packet--pulse'), 600);
+    }
+
+    function selectStage(i) {
+      currentStageIdx = Math.max(0, Math.min(currentTx.stages.length - 1, i));
+      updateActiveNode();
+      movePacket();
+      renderInspector();
+    }
+
+    function selectTx(tx) {
+      currentTx = tx;
+      currentStageIdx = 0;
+      $('wire-stage-title').innerHTML = escapeHtml(tx.summary).replace('·', '&nbsp;·&nbsp;');
+      renderPicker();
+      renderNodes();
+      renderInspector();
+      // Reset packet to top, then animate.
+      const packet = $('wire-packet');
+      packet.style.top = '0%';
+      requestAnimationFrame(() => {
+        startAnim();
+      });
+    }
+
+    function stopAnim() {
+      if (animTimer) { clearInterval(animTimer); animTimer = null; }
+    }
+
+    function startAnim() {
+      stopAnim();
+      const count = currentTx.stages.length;
+      let i = 0;
+      selectStage(0);
+      animTimer = setInterval(() => {
+        i += 1;
+        if (i >= count) { stopAnim(); return; }
+        selectStage(i);
+      }, 1100);
+    }
+
+    // ---------------- boot ----------------
+    function boot() {
+      fetch('/usecases/the_wire/data')
+        .then((r) => r.json())
+        .then((d) => {
+          TRANSACTIONS = (d && d.transactions) || [];
+          if (!TRANSACTIONS.length) {
+            $('wire-stage-title').textContent = 'No transactions available';
+            return;
+          }
+          selectTx(TRANSACTIONS[0]);
+        })
+        .catch(() => {
+          $('wire-stage-title').textContent = 'Failed to load transactions';
+        });
+
+      $('wire-replay-btn').addEventListener('click', () => {
+        if (!currentTx) return;
+        const packet = $('wire-packet');
+        packet.style.top = '0%';
+        startAnim();
+      });
+    }
+
+    boot();
+  })();
+  </script>
+</body>
+</html>

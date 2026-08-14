@@ -4,24 +4,81 @@ A small Flask app on port 9021 that exposes a tabbed UI for testing
 Mastercard Developer APIs (Open Finance, BIN Lookup, …) and demoing use
 cases composed from them.
 """
-import os
-import time
-import threading
+import warnings
+
+warnings.filterwarnings("ignore", message="resource_tracker", category=UserWarning)
+import argparse
 import json
+import os
+import queue
+import subprocess
+import sys
+import threading
+import time
+import uuid
 from collections import deque
+from functools import wraps
+
+import truststore
+
+truststore.inject_into_ssl()
 
 import requests as _requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template, request, redirect, send_from_directory
+from flask import Flask, jsonify, redirect, render_template, request, send_from_directory, url_for
 
-load_dotenv()
+_CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
+load_dotenv(os.path.join(_CONFIG_DIR, ".env"))
 
+import live_demo  # noqa: E402
 from apis import registry as api_registry  # noqa: E402
+from apis import spotlights as api_spotlights  # noqa: E402
+from simulator.blueprint import sim_bp  # noqa: E402
+from simulator.capture import capture_response  # noqa: E402
+from simulator.switcher import is_simulated  # noqa: E402
 from usecases import registry as usecase_registry  # noqa: E402
 
-
 app = Flask(__name__)
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+# Suppress Werkzeug's per-request stdout log lines ("GET /... 200")
+import logging as _logging
+
+_logging.getLogger("werkzeug").setLevel(_logging.ERROR)
+
+# Register the in-process Vima Chat blueprint at /chat. Vima Chat is no
+# longer a standalone service — it lives inside Mastercard Solution Studio.
+from chat.app import chat_bp  # noqa: E402
+
+app.register_blueprint(chat_bp)
 app.secret_key = os.environ.get("SECRET_KEY", "vima-dev-secret")
+app.register_blueprint(sim_bp)
+
+# Test results dashboard — mounted at /vima/test
+# Lives in tests/ to keep it separate from production app code.
+# The DB (tests/results.db) and config (tests/test_config.ini) are gitignored.
+try:
+    from tests.dashboard import test_bp as _test_bp  # noqa: E402
+    app.register_blueprint(_test_bp)
+except Exception as _e:  # pragma: no cover
+    import logging as _lg
+    _lg.getLogger(__name__).warning("Test dashboard unavailable: %s", _e)
+
+# Eagerly trigger Open Finance customer seeding in the background so that
+# the state strip is populated by the time the user navigates to the tab.
+def _eager_seed_ofin():
+    try:
+        ofin_mod = api_registry.get_module("open_finance")
+        if ofin_mod and hasattr(ofin_mod, "_trigger_background_seed"):
+            ofin_mod._trigger_background_seed()
+    except Exception:
+        pass
+
+import threading as _threading
+
+_threading.Thread(target=_eager_seed_ofin, daemon=True, name="ofin-eager-seed").start()
 
 # In-memory store for TxPush events (last 50)
 _txpush_events: deque = deque(maxlen=50)
@@ -34,16 +91,18 @@ _api_call_seq = 0
 _api_call_lock = threading.Lock()
 
 # URLs containing these substrings are considered "internal" and are skipped
-_INTERNAL_HOSTS = ("localhost", "127.0.0.1", "0.0.0.0", "::1", "cloudflare.com")
+_INTERNAL_HOSTS = ("localhost", "127.0.0.1", "0.0.0.0", "::1", "cloudflare.com")  # nosec B104
 
 _orig_send = _requests.Session.send  # keep reference before patching
 
 
 def _patched_send(self, prepared_request, **kwargs):
     url = prepared_request.url or ""
-    # Only log outbound calls to external APIs, not loopback traffic
-    is_external = not any(h in url for h in _INTERNAL_HOSTS)
+    # Log simulator requests (/api-sim/) even though they're on localhost
+    is_simulator = "/api-sim/" in url
+    is_external = is_simulator or not any(h in url for h in _INTERNAL_HOSTS)
 
+    # Skip internal-only requests (no capturing needed)
     if not is_external:
         return _orig_send(self, prepared_request, **kwargs)
 
@@ -74,14 +133,16 @@ def _patched_send(self, prepared_request, **kwargs):
         "method": (prepared_request.method or "").upper(),
         "url": url,
         "requestBody": req_body,
+        "requestHeaders": {k: v for k, v in prepared_request.headers.items() if k.lower() != "authorization"},
         "status": None,
         "responseBody": None,
+        "responseHeaders": None,
         "elapsed_ms": None,
     }
 
     try:
         resp = _orig_send(self, prepared_request, **kwargs)
-    except Exception as exc:
+    except Exception:
         entry["status"] = "ERR"
         entry["elapsed_ms"] = round((time.time() - t0) * 1000)
         with _api_call_lock:
@@ -92,6 +153,7 @@ def _patched_send(self, prepared_request, **kwargs):
 
     entry["status"] = resp.status_code
     entry["elapsed_ms"] = round((time.time() - t0) * 1000)
+    entry["responseHeaders"] = dict(resp.headers)
     try:
         entry["responseBody"] = resp.json()
     except Exception:
@@ -116,6 +178,101 @@ _ip_status_cache = {
 }
 
 
+def _parse_runtime_flags(argv: list[str]) -> argparse.Namespace:
+    """Parse runtime flags used when launching app.py directly.
+
+    parse_known_args is used so unknown flags from external launchers do not
+    break startup.
+    """
+    parser = argparse.ArgumentParser(add_help=True)
+    parser.add_argument(
+        "--server",
+        action="store_true",
+        help="Run in server mode: hide/disable sensitive config surfaces.",
+    )
+    parser.add_argument(
+        "--non-us",
+        action="store_true",
+        help="Force non-US behavior: disable Open Finance US API and dependent use cases.",
+    )
+    parser.add_argument(
+        "--host",
+        default=os.environ.get("HOST", "0.0.0.0"),  # nosec B104 — configurable dev server binding
+        help="Host interface to bind.",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.environ.get("PORT", "9021")),
+        help="Port to bind.",
+    )
+    args, _ = parser.parse_known_args(argv)
+    return args
+
+
+_RUNTIME_FLAGS = _parse_runtime_flags(sys.argv[1:] if __name__ == "__main__" else [])
+_SERVER_MODE = _RUNTIME_FLAGS.server or os.environ.get("VIMA_SERVER_MODE", "").strip().lower() in {
+    "1", "true", "yes", "on"
+}
+_FORCE_NON_US = _RUNTIME_FLAGS.non_us or os.environ.get("VIMA_NON_US", "").strip().lower() in {
+    "1", "true", "yes", "on"
+}
+_OPEN_FINANCE_US_API_ID = "open_finance"
+_NON_US_DISABLED_HINT = (
+    "Disabled in --non-us mode. This Open Finance US capability requires a US IP. "
+    "If running on a US IP, this item would be enabled."
+)
+
+
+def _server_mode_enabled() -> bool:
+    return bool(_SERVER_MODE)
+
+
+def _non_us_mode_enabled() -> bool:
+    return bool(_FORCE_NON_US)
+
+
+def _server_mode_forbidden_response():
+    return jsonify({"error": "Disabled in server mode."}), 403
+
+
+def _non_us_forbidden_response():
+    return jsonify({
+        "error": _NON_US_DISABLED_HINT
+    }), 403
+
+
+def _require_not_server_mode(fn):
+    @wraps(fn)
+    def _wrapped(*args, **kwargs):
+        if _server_mode_enabled():
+            return _server_mode_forbidden_response()
+        return fn(*args, **kwargs)
+    return _wrapped
+
+
+def _is_non_us_blocked_api(api_id: str) -> bool:
+    return _non_us_mode_enabled() and api_id == _OPEN_FINANCE_US_API_ID
+
+
+def _is_non_us_blocked_usecase(uc_id: str) -> bool:
+    if not _non_us_mode_enabled():
+        return False
+    mod = usecase_registry.get_module(uc_id)
+    if mod is None:
+        return False
+    manifest = getattr(mod, "MANIFEST", {}) or {}
+    return _OPEN_FINANCE_US_API_ID in (manifest.get("apis") or [])
+
+
+@app.before_request
+def _enforce_server_mode_surfaces():
+    """Block sensitive surfaces that must be unavailable in server mode."""
+    if _server_mode_enabled() and request.path.startswith("/chat"):
+        return _server_mode_forbidden_response()
+    return None
+
+
 def _fetch_geo_payload(client_ip: str) -> dict:
     """Resolve country and public IP using external geo services."""
     # Prefer a plain-text trace endpoint that exposes the egress country directly.
@@ -133,7 +290,7 @@ def _fetch_geo_payload(client_ip: str) -> dict:
             # carry no credentials so disabling verification here is safe.
             import urllib3
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-            resp = _requests.get(url, timeout=4.0, verify=False)
+            resp = _requests.get(url, timeout=4.0, verify=False)  # nosec B501
             resp.raise_for_status()
             raw = resp.text
             if provider == "cloudflare-trace":
@@ -177,20 +334,126 @@ def _fetch_geo_payload(client_ip: str) -> dict:
 # Pages
 # ----------------------------------------------------------------------------
 
+# Ordered stylesheet list (loaded as individual <link>s in this exact order so
+# the cascade matches the former single styles.css). base.css must stay first.
+CSS_FILES = [
+    "css/base.css",
+    "css/features/enrichment.css",
+    "css/features/psi.css",
+    "css/platform/api-calls.css",
+    "css/features/bin-lookup.css",
+    "css/features/consumer-clarity.css",
+    "css/features/easy-savings.css",
+    "css/platform/chat-modal.css",
+    "css/features/sonic.css",
+    "css/platform/home.css",
+    "css/platform/config-modal.css",
+    "css/features/idv.css",
+    "css/features/medicare.css",
+    "css/features/mastercard-connect.css",
+    "css/platform/about-panel.css",
+    "css/platform/provision.css",
+    "css/platform/explorer-dark.css",
+    "css/platform/bundles.css",
+    "css/platform/theme-coverage.css",
+    "css/platform/api-guide.css",
+    "css/platform/launch-banner.css",
+    "css/platform/sdk-panel.css",
+    "css/platform/info-modal.css",
+    "css/platform/search.css",
+]
+
+
+def _css_bust() -> int:
+    """Newest mtime across the split stylesheets, for cache-busting links."""
+    base = os.path.dirname(__file__)
+    newest = 0.0
+    for rel in CSS_FILES:
+        try:
+            newest = max(newest, os.path.getmtime(os.path.join(base, "static", *rel.split("/"))))
+        except OSError:
+            pass
+    return int(newest)
+
+
 @app.route("/")
 def home():
-    return redirect("/app")
+    return redirect(url_for("index"))
 
 
 @app.route("/app")
 def index():
+    _apis = api_registry.manifests()
     return render_template(
         "index.html",
-        apis=api_registry.manifests(),
+        apis=_apis,
+        api_groups=api_registry.manifests_grouped(),
+        solutions=api_registry.solutions(),
+        bundles=api_registry.solutions(),
         use_cases=usecase_registry.manifests(),
-        cache_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'js', 'app.js'))),
-        css_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'css', 'styles.css'))),
+        spotlight=_build_spotlight(_apis),
+        provision_catalog=_build_provision_catalog(),
+        runtime_mode={
+            "server_mode": _server_mode_enabled(),
+            "non_us_mode": _non_us_mode_enabled(),
+        },
+        cache_bust=int(os.path.getmtime(os.path.join(os.path.dirname(__file__), 'static', 'js', 'app', 'main.js'))),
+        css_files=CSS_FILES,
+        css_bust=_css_bust(),
     )
+
+
+def _build_spotlight(apis):
+    """Combine today's spotlight pick with its catalog metadata.
+
+    Returns ``None`` when no APIs are registered (fresh install) so the
+    template can render a graceful no-op rather than a broken card.
+
+    The returned dict also carries an ``all`` list — every registered API
+    with its spotlight content — so the modal can let users browse every
+    "API of the day" with prev/next navigation. The ``index`` field marks
+    where today's pick sits in that list so the modal can open on it.
+    """
+    if not apis:
+        return None
+    spotlight_id = api_spotlights.pick_today([a["id"] for a in apis])
+    if not spotlight_id:
+        return None
+    api = next((a for a in apis if a["id"] == spotlight_id), None)
+    if not api:
+        return None
+    content = api_spotlights.for_api(spotlight_id)
+
+    def _entry(a):
+        c = api_spotlights.for_api(a["id"])
+        return {
+            "id": a["id"],
+            "name": a.get("name", a["id"]),
+            "group": a.get("group", ""),
+            "docs_url": a.get("docs_url", ""),
+            "configured": bool(a.get("configured")),
+            "insight": c["insight"],
+            "example": c["example"],
+        }
+
+    all_entries = [_entry(a) for a in apis]
+    today_index = next(
+        (i for i, e in enumerate(all_entries) if e["id"] == spotlight_id),
+        0,
+    )
+
+    return {
+        "id": api["id"],
+        "name": api.get("name", api["id"]),
+        "group": api.get("group", ""),
+        "docs_url": api.get("docs_url", ""),
+        "configured": bool(api.get("configured")),
+        "insight": content["insight"],
+        "example": content["example"],
+        "studio_url": f"/app?tab=apis&api={api['id']}",
+        "all": all_entries,
+        "index": today_index,
+    }
 
 
 # ----------------------------------------------------------------------------
@@ -207,13 +470,29 @@ def explorer_apis():
 def diagnostics_us_ip_status():
     """Return whether the caller appears to be on a US IP address."""
     now = time.time()
+    if _non_us_mode_enabled():
+        payload = {
+            "success": True,
+            "is_us": False,
+            "country_code": "NON-US",
+            "ip": "runtime-flag",
+            "provider": "runtime-flag",
+            "source": "runtime-flag",
+            "checked_at": int(now),
+            "forced": True,
+        }
+        resp = jsonify(payload)
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+
+    client_ip = (request.remote_addr or "").strip()
     cached = _ip_status_cache.get("payload")
     if cached and (now - float(_ip_status_cache.get("ts") or 0)) < 20:
         resp = jsonify(cached)
         resp.headers["Cache-Control"] = "no-store"
         return resp
 
-    geo = _fetch_geo_payload((request.remote_addr or "").strip())
+    geo = _fetch_geo_payload(client_ip)
     country = (geo.get("country_code") or "").upper()
     is_us = country == "US"
 
@@ -235,6 +514,8 @@ def diagnostics_us_ip_status():
 
 @app.route("/explorer/<api_id>/state")
 def explorer_state(api_id: str):
+    if _is_non_us_blocked_api(api_id):
+        return _non_us_forbidden_response()
     mod = api_registry.get_module(api_id)
     if mod is None:
         return jsonify({"error": "Unknown API"}), 404
@@ -242,9 +523,481 @@ def explorer_state(api_id: str):
     return jsonify({"state": state})
 
 
+def _api_credentials(
+    api_id: str,
+    manifest: dict,
+    resolve_paths: bool = False,
+) -> tuple[str, list[str], list[str], list[tuple[str, str]]]:
+    """Return (env_prefix, var_names, packages, env_pairs) for an API.
+
+    Used by /explorer/<api_id>/setup and /explorer/<api_id>/run so both
+    routes resolve credentials identically without duplicating the logic.
+    When *resolve_paths* is True, relative *_PATH env vars are resolved to
+    absolute paths against the project root (needed when spawning a terminal
+    that runs from a temp directory).
+    """
+    from apis import snippet as api_snippet
+
+    env_prefix = manifest.get("env_prefix") or api_id.upper()
+    of_runtime = (
+        api_snippet.of_runtime_for_prefix(env_prefix)
+        if api_id.startswith("open_finance")
+        else None
+    )
+    if of_runtime:
+        var_names: list[str] = of_runtime["env_var_names"]
+        packages: list[str] = of_runtime["packages"]
+    else:
+        var_names = [
+            f"{env_prefix}_CONSUMER_KEY",
+            f"{env_prefix}_SIGNING_KEY_PATH",
+            f"{env_prefix}_SIGNING_KEY_PASSWORD",
+        ]
+        packages = ["requests", "mastercard-oauth1-signer"]
+
+    env_pairs: list[tuple[str, str]] = [(n, os.environ.get(n, "")) for n in var_names]
+    if resolve_paths:
+        project_root = os.path.dirname(os.path.abspath(__file__))
+        resolved: list[tuple[str, str]] = []
+        for name, val in env_pairs:
+            if val and name.endswith("_PATH") and not os.path.isabs(val):
+                candidate = os.path.normpath(os.path.join(project_root, val))
+                if os.path.exists(candidate):
+                    val = candidate
+            resolved.append((name, val))
+        env_pairs = resolved
+
+    return env_prefix, var_names, packages, env_pairs
+@app.route("/explorer/<api_id>/snippet")
+def explorer_snippet(api_id: str):
+    """Return an authentic Python snippet showing how to call the
+    underlying Mastercard API directly (OAuth1 signing or vendor-specific
+    auth) — bypassing the Solution Studio proxy.
+
+    Query string: ``op=<operation_id>`` (defaults to the first operation
+    declared in the API's MANIFEST).
+    """
+    from apis import snippet as api_snippet
+    mod = api_registry.get_module(api_id)
+    if mod is None:
+        return jsonify({"error": "Unknown API"}), 404
+    manifest = next(
+        (m for m in api_registry.manifests() if m.get("id") == api_id),
+        None,
+    )
+    if manifest is None:
+        return jsonify({"error": "API manifest unavailable"}), 404
+    op_id = (request.args.get("op") or "").strip()
+    if not op_id and manifest.get("operations"):
+        op_id = manifest["operations"][0]["id"]
+    if not op_id:
+        return jsonify({"error": "No operations defined"}), 404
+    return jsonify(api_snippet.build_snippet(api_id, op_id, mod=mod, manifest=manifest))
+
+
+@app.route("/explorer/<api_id>/setup")
+@_require_not_server_mode
+def explorer_setup(api_id: str):
+    """Return OS-specific shell commands that install the snippet's
+    dependencies and export the credentials the snippet needs.
+
+    The values come from the local Solution Studio config (the same env
+    vars Solution Studio itself reads), so the commands are ready to
+    paste into a fresh terminal on the demo machine. Disabled in server
+    mode — credentials must never leave the host that way.
+    """
+    manifest = next(
+        (m for m in api_registry.manifests() if m.get("id") == api_id),
+        None,
+    )
+    if manifest is None:
+        return jsonify({"error": "Unknown API"}), 404
+
+    env_prefix, var_names, packages, env_pairs = _api_credentials(
+        api_id, manifest, resolve_paths=True
+    )
+
+    env: list[dict[str, str]] = [
+        {
+            "name": name,
+            "value": val,
+            "set": name in os.environ and bool(os.environ.get(name)),
+        }
+        for name, val in env_pairs
+    ]
+
+    return jsonify({
+        "api_id": api_id,
+        "env_prefix": env_prefix,
+        "packages": packages,
+        "env": env,
+    })
+
+
+@app.route("/explorer/<api_id>/run", methods=["POST"])
+@_require_not_server_mode
+def explorer_run(api_id: str):
+    """Write the runnable snippet to a temp script and launch the host
+    OS's native terminal so the user can watch it execute.
+
+    The script does the full set-env / pip-install / run-snippet flow
+    using the same credentials the rest of Solution Studio reads. After
+    the snippet finishes, the terminal pauses so the user can read the
+    request + response printout before the window closes.
+
+    Disabled in server mode — spawning a terminal on the host only ever
+    makes sense for the local demo workflow.
+    """
+    import platform
+    import shlex
+    import subprocess
+    import tempfile
+    from pathlib import Path
+
+    from apis import snippet as api_snippet
+
+    mod = api_registry.get_module(api_id)
+    if mod is None:
+        return jsonify({"error": "Unknown API"}), 404
+    manifest = next(
+        (m for m in api_registry.manifests() if m.get("id") == api_id),
+        None,
+    )
+    if manifest is None:
+        return jsonify({"error": "API manifest unavailable"}), 404
+
+    body = request.get_json(silent=True) or {}
+    op_id = (body.get("operation") or "").strip()
+    if not op_id and manifest.get("operations"):
+        op_id = manifest["operations"][0]["id"]
+    if not op_id:
+        return jsonify({"error": "No operations defined"}), 400
+
+    # Allow the UI to send an edited version of the snippet. If the
+    # caller provides a `code` string, run that verbatim; otherwise
+    # build the canonical snippet for this operation.
+    override_code = body.get("code")
+    if isinstance(override_code, str) and override_code.strip():
+        code = override_code
+    else:
+        snippet_payload = api_snippet.build_snippet(api_id, op_id, mod=mod, manifest=manifest)
+        code = snippet_payload.get("snippet") or ""
+
+    # Resolve credentials using the same helper as /setup so the spawned
+    # terminal sees what the local server sees, with paths made absolute.
+    _env_prefix, _var_names, packages, env_pairs = _api_credentials(
+        api_id, manifest, resolve_paths=True
+    )
+
+    system = platform.system().lower()
+    tmpdir = Path(tempfile.gettempdir()) / "vima-snippets"
+    tmpdir.mkdir(parents=True, exist_ok=True)
+
+    if system == "windows":
+        # PowerShell script: set env vars, install deps via `py -m pip`
+        # (works around corporate AV blocking pip.exe), write the snippet
+        # to a .py file next to the .ps1, run it, then pause.
+        py_path = tmpdir / f"{api_id}_{op_id}.py"
+        ps1_path = tmpdir / f"{api_id}_{op_id}.ps1"
+        py_path.write_text(code, encoding="utf-8")
+
+        def _ps_quote(v: str) -> str:
+            return "'" + (v or "").replace("'", "''") + "'"
+
+        lines = [
+            "$ErrorActionPreference = 'Continue'",
+            "Write-Host 'Mastercard Solution Studio - running snippet for " + api_id + "' -ForegroundColor Cyan",
+            "Write-Host ''",
+            # The Flask process that launched this terminal may itself be
+            # running inside a venv (e.g. tools/mcd-key-automation/.venv).
+            # That venv leaks via VIRTUAL_ENV/PYTHONHOME into the child
+            # shell, which makes `pip install --user` fail with
+            # "User site-packages are not visible in this virtualenv".
+            # Scrub the venv env vars so `py` picks the system Python
+            # cleanly and --user installs into the user site as intended.
+            "Remove-Item Env:VIRTUAL_ENV    -ErrorAction SilentlyContinue",
+            "Remove-Item Env:PYTHONHOME     -ErrorAction SilentlyContinue",
+            "Remove-Item Env:VIRTUAL_ENV_PROMPT -ErrorAction SilentlyContinue",
+        ]
+        for name, val in env_pairs:
+            lines.append(f"$env:{name} = {_ps_quote(val)}")
+        if packages:
+            lines.append("Write-Host 'Installing dependencies...' -ForegroundColor DarkGray")
+            lines.append(f"py -m pip install --user --quiet {' '.join(packages)}")
+        lines += [
+            "Write-Host ''",
+            f"py {_ps_quote(str(py_path))}",
+            "$code = $LASTEXITCODE",
+            "Write-Host ''",
+            "Write-Host ('Exit code: ' + $code) -ForegroundColor Cyan",
+            "Write-Host 'Press Enter to close...' -ForegroundColor DarkGray",
+            "Read-Host | Out-Null",
+        ]
+        ps1_path.write_text("\r\n".join(lines), encoding="utf-8")
+
+        # Launch a new PowerShell window. Prefer Windows Terminal (wt.exe)
+        # if available because it stays visible and looks better; fall
+        # back to conhost-hosted powershell.exe.
+        powershell_args = [
+            "powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass",
+            "-File", str(ps1_path),
+        ]
+        try:
+            subprocess.Popen(
+                ["wt.exe", "new-tab", "--title", f"Mastercard Solution Studio: {api_id}", *powershell_args],
+                close_fds=True,
+            )
+            launcher = "wt"
+        except FileNotFoundError:
+            subprocess.Popen(
+                powershell_args,
+                creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0),
+                close_fds=True,
+            )
+            launcher = "powershell"
+
+    elif system == "darwin":
+        sh_path = tmpdir / f"{api_id}_{op_id}.sh"
+        py_path = tmpdir / f"{api_id}_{op_id}.py"
+        py_path.write_text(code, encoding="utf-8")
+        lines = [
+            "#!/bin/bash",
+            "set +e",
+            f"echo 'Mastercard Solution Studio - running snippet for {api_id}'",
+            # See the Windows branch for why we scrub these — the Flask
+            # process may have been launched inside a venv, and that
+            # makes `pip install --user` refuse to run.
+            "unset VIRTUAL_ENV PYTHONHOME VIRTUAL_ENV_PROMPT",
+            "",
+        ]
+        for name, val in env_pairs:
+            lines.append(f"export {name}={shlex.quote(val)}")
+        if packages:
+            lines.append("echo 'Installing dependencies...'")
+            lines.append(f"python3 -m pip install --user --quiet {' '.join(packages)}")
+        lines += ["echo", f"python3 {shlex.quote(str(py_path))}",
+                  "echo", "echo 'Press Enter to close...'", "read"]
+        sh_path.write_text("\n".join(lines), encoding="utf-8")
+        sh_path.chmod(0o755)
+        subprocess.Popen(["open", "-a", "Terminal", str(sh_path)], close_fds=True)
+        launcher = "Terminal.app"
+
+    else:  # Linux + other POSIX
+        sh_path = tmpdir / f"{api_id}_{op_id}.sh"
+        py_path = tmpdir / f"{api_id}_{op_id}.py"
+        py_path.write_text(code, encoding="utf-8")
+        lines = [
+            "#!/bin/bash",
+            "set +e",
+            f"echo 'Mastercard Solution Studio - running snippet for {api_id}'",
+            # See the Windows branch for why we scrub these.
+            "unset VIRTUAL_ENV PYTHONHOME VIRTUAL_ENV_PROMPT",
+            "",
+        ]
+        for name, val in env_pairs:
+            lines.append(f"export {name}={shlex.quote(val)}")
+        if packages:
+            lines.append("echo 'Installing dependencies...'")
+            lines.append(f"python3 -m pip install --user --quiet {' '.join(packages)}")
+        lines += ["echo", f"python3 {shlex.quote(str(py_path))}",
+                  "echo", "echo 'Press Enter to close...'", "read"]
+        sh_path.write_text("\n".join(lines), encoding="utf-8")
+        sh_path.chmod(0o755)
+        spawned = False
+        # Try common terminal emulators in order of likelihood.
+        for term, args in [
+            ("x-terminal-emulator", ["-e", "bash", str(sh_path)]),
+            ("gnome-terminal", ["--", "bash", str(sh_path)]),
+            ("konsole", ["-e", "bash", str(sh_path)]),
+            ("xterm", ["-e", "bash", str(sh_path)]),
+        ]:
+            try:
+                subprocess.Popen([term, *args], close_fds=True)
+                launcher = term
+                spawned = True
+                break
+            except FileNotFoundError:
+                continue
+        if not spawned:
+            return jsonify({
+                "error": (
+                    "No supported terminal emulator found "
+                    "(tried x-terminal-emulator, gnome-terminal, konsole, xterm)."
+                ),
+                "script": str(sh_path),
+            }), 500
+
+    return jsonify({
+        "ok": True,
+        "launcher": launcher,
+        "platform": system,
+    })
+
+
+@app.route("/sdk/run", methods=["POST"])
+@_require_not_server_mode
+def sdk_run():
+    """Write the Open Finance SDK snippet to a temp script and launch the
+    host OS's native terminal so the user can watch it install deps and run.
+
+    Mirrors /explorer/<api_id>/run, but for the standalone ofin SDK: it
+    pip-installs requests + cryptography, then runs the snippet. The repo's
+    cli/ directory is injected onto sys.path (absolute) so the script works
+    from the temp dir, and credentials are auto-discovered from config/.env.
+
+    Disabled in server mode — spawning a terminal on the host only ever
+    makes sense for the local demo workflow.
+    """
+    import platform
+    import shlex
+    import subprocess
+    import tempfile
+    from pathlib import Path
+
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    cli_dir = os.path.join(project_root, "cli")
+    packages = ["requests", "cryptography"]
+
+    body = request.get_json(silent=True) or {}
+    override_code = body.get("code")
+    default_code = (
+        "from ofin import OfinClient\n\n"
+        "# Credentials auto-loaded from config/.env - one client, three continents\n"
+        "client = OfinClient.from_env()\n\n"
+        'for region in ("us", "au", "eu"):\n'
+        "    res = client.region(region).auth_token(); "
+        'print(f"{region}  ->  {res.status}  -  {res.token}")\n'
+    )
+    snippet = override_code if isinstance(override_code, str) and override_code.strip() else default_code
+
+    # Always inject the absolute cli/ path first so the script imports the
+    # ofin SDK regardless of the temp dir it runs from.
+    code = (
+        "import sys\n"
+        f"sys.path.insert(0, {json.dumps(cli_dir)})\n\n"
+        + snippet
+    )
+
+    system = platform.system().lower()
+    tmpdir = Path(tempfile.gettempdir()) / "vima-snippets"
+    tmpdir.mkdir(parents=True, exist_ok=True)
+
+    if system == "windows":
+        py_path = tmpdir / "ofin_sdk.py"
+        ps1_path = tmpdir / "ofin_sdk.ps1"
+        py_path.write_text(code, encoding="utf-8")
+        lines = [
+            "$ErrorActionPreference = 'Continue'",
+            "Write-Host 'Mastercard Solution Studio - Open Finance SDK' -ForegroundColor Cyan",
+            "Write-Host ''",
+            "Remove-Item Env:VIRTUAL_ENV    -ErrorAction SilentlyContinue",
+            "Remove-Item Env:PYTHONHOME     -ErrorAction SilentlyContinue",
+            "Remove-Item Env:VIRTUAL_ENV_PROMPT -ErrorAction SilentlyContinue",
+            "Write-Host 'Installing dependencies...' -ForegroundColor DarkGray",
+            f"py -m pip install --user --quiet {' '.join(packages)}",
+            "Write-Host ''",
+            "py '" + str(py_path).replace("'", "''") + "'",
+            "$code = $LASTEXITCODE",
+            "Write-Host ''",
+            "Write-Host ('Exit code: ' + $code) -ForegroundColor Cyan",
+            "Write-Host 'Press Enter to close...' -ForegroundColor DarkGray",
+            "Read-Host | Out-Null",
+        ]
+        ps1_path.write_text("\r\n".join(lines), encoding="utf-8")
+        powershell_args = [
+            "powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass",
+            "-File", str(ps1_path),
+        ]
+        try:
+            subprocess.Popen(
+                ["wt.exe", "new-tab", "--title", "Mastercard Solution Studio: Open Finance SDK", *powershell_args],
+                close_fds=True,
+            )
+            launcher = "wt"
+        except FileNotFoundError:
+            subprocess.Popen(
+                powershell_args,
+                creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0),
+                close_fds=True,
+            )
+            launcher = "powershell"
+
+    elif system == "darwin":
+        sh_path = tmpdir / "ofin_sdk.sh"
+        py_path = tmpdir / "ofin_sdk.py"
+        py_path.write_text(code, encoding="utf-8")
+        lines = [
+            "#!/bin/bash",
+            "set +e",
+            "echo 'Mastercard Solution Studio - Open Finance SDK'",
+            "unset VIRTUAL_ENV PYTHONHOME VIRTUAL_ENV_PROMPT",
+            "echo 'Installing dependencies...'",
+            f"python3 -m pip install --user --quiet {' '.join(packages)}",
+            "echo",
+            f"python3 {shlex.quote(str(py_path))}",
+            "echo", "echo 'Press Enter to close...'", "read",
+        ]
+        sh_path.write_text("\n".join(lines), encoding="utf-8")
+        sh_path.chmod(0o755)
+        subprocess.Popen(["open", "-a", "Terminal", str(sh_path)], close_fds=True)
+        launcher = "Terminal.app"
+
+    else:  # Linux + other POSIX
+        sh_path = tmpdir / "ofin_sdk.sh"
+        py_path = tmpdir / "ofin_sdk.py"
+        py_path.write_text(code, encoding="utf-8")
+        lines = [
+            "#!/bin/bash",
+            "set +e",
+            "echo 'Mastercard Solution Studio - Open Finance SDK'",
+            "unset VIRTUAL_ENV PYTHONHOME VIRTUAL_ENV_PROMPT",
+            "echo 'Installing dependencies...'",
+            f"python3 -m pip install --user --quiet {' '.join(packages)}",
+            "echo",
+            f"python3 {shlex.quote(str(py_path))}",
+            "echo", "echo 'Press Enter to close...'", "read",
+        ]
+        sh_path.write_text("\n".join(lines), encoding="utf-8")
+        sh_path.chmod(0o755)
+        spawned = False
+        for term, args in [
+            ("x-terminal-emulator", ["-e", "bash", str(sh_path)]),
+            ("gnome-terminal", ["--", "bash", str(sh_path)]),
+            ("konsole", ["-e", "bash", str(sh_path)]),
+            ("xterm", ["-e", "bash", str(sh_path)]),
+        ]:
+            try:
+                subprocess.Popen([term, *args], close_fds=True)
+                launcher = term
+                spawned = True
+                break
+            except FileNotFoundError:
+                continue
+        if not spawned:
+            return jsonify({
+                "error": (
+                    "No supported terminal emulator found "
+                    "(tried x-terminal-emulator, gnome-terminal, konsole, xterm)."
+                ),
+                "script": str(sh_path),
+            }), 500
+
+    return jsonify({
+        "ok": True,
+        "launcher": launcher,
+        "platform": system,
+    })
+
+
 @app.route("/explorer/<api_id>/execute", methods=["POST"])
 def explorer_execute(api_id: str):
-    mod = api_registry.get_module(api_id)
+    # Backward-compatible API aliases (e.g. older pages still posting to
+    # /explorer/consent/execute).
+    resolved_api_id = "transaction_notifications" if api_id in ("consent", "consent_management") else api_id
+
+    if _is_non_us_blocked_api(resolved_api_id):
+        return _non_us_forbidden_response()
+    mod = api_registry.get_module(resolved_api_id)
     if mod is None:
         return jsonify({"error": "Unknown API"}), 404
     body = request.get_json(silent=True) or {}
@@ -252,13 +1005,127 @@ def explorer_execute(api_id: str):
     params = body.get("params") or {}
     if not op_id:
         return jsonify({"error": "'operation' is required"}), 400
+    # Snapshot the call-log watermark so we can backfill request/response below.
+    with _api_call_lock:
+        seq_before = _api_call_seq
     try:
         result = mod.execute(op_id, params)
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+    # Capture live responses into the simulator DB (non-simulated calls only)
+    if result.get("success") and not is_simulated(resolved_api_id):
+        resp_body = (result.get("response") or {}).get("body") or result.get("data")
+        try:
+            capture_response(resolved_api_id, op_id, resp_body)
+        except Exception:
+            pass
+    # If the API module did not include the 'request' or 'response' envelope
+    # that the UI needs to render the panels, backfill from the HTTP-level
+    # interceptor log.  This means new APIs don't have to remember to build
+    # those dicts themselves — we derive them from the real HTTP exchange.
+    # Also backfill headers even when the API provided its own envelope body,
+    # so "Show Headers" always works regardless of which API built the envelope.
+    with _api_call_lock:
+        new_entries = [e for e in _api_call_log if e.get("seq", 0) > seq_before]
+    if new_entries:
+        first_call = new_entries[-1]
+        last_call  = new_entries[0]
+        if not result.get("request"):
+            result["request"] = {
+                "method":  first_call.get("method"),
+                "url":     first_call.get("url"),
+                "body":    first_call.get("requestBody"),
+                "headers": first_call.get("requestHeaders"),
+            }
+        elif not result["request"].get("headers"):
+            result["request"]["headers"] = first_call.get("requestHeaders")
+        if not result.get("response"):
+            result["response"] = {
+                "status_code": last_call.get("status"),
+                "body":        last_call.get("responseBody"),
+                "headers":     last_call.get("responseHeaders"),
+            }
+        elif not result["response"].get("headers"):
+            result["response"]["headers"] = last_call.get("responseHeaders")
+    # Last-resort synthesis: if the executor returned WITHOUT making an HTTP
+    # call (e.g. a stub, a validation short-circuit, a not_configured error),
+    # the panels would otherwise be empty. Synthesize a minimal envelope from
+    # the executor's input/output so the user always sees something — the
+    # error message, the stub note, the unknown-operation hint, etc.
+    if not result.get("request"):
+        result["request"] = {
+            "method": "(no HTTP call)",
+            "url": f"explorer://{api_id}/{op_id}",
+            "body": params,
+        }
+    if not result.get("response"):
+        # Build a synthetic response body from the result minus the envelope
+        # keys the UI handles separately.
+        synthetic_body = {
+            k: v for k, v in result.items()
+            if k not in ("request", "response", "state", "state_updates")
+        }
+        # Derive a plausible status: explicit success → 200, explicit failure
+        # markers → 400, otherwise blank.
+        if result.get("success") is True or result.get("ok") is True:
+            synth_status = 200
+        elif (
+            result.get("success") is False
+            or result.get("ok") is False
+            or result.get("error")
+        ):
+            synth_status = 400
+        else:
+            synth_status = None
+        result["response"] = {
+            "status_code": synth_status,
+            "body": synthetic_body,
+            "synthetic": True,
+            "note": (
+                "No outbound HTTP call was made — this envelope was synthesized "
+                "from the executor return value."
+            ),
+        }
     # Merge in latest state snapshot for the UI
     result["state"] = getattr(mod, "get_state", lambda: {})()
     return jsonify(result)
+
+
+# ---------------------------------------------------------------------------
+# Live Demo — real Open Finance bank linking across US / AU / EU
+# ---------------------------------------------------------------------------
+@app.route("/live-demo/state")
+def live_demo_state():
+    return jsonify(live_demo.get_public_state())
+
+
+@app.route("/live-demo/enable", methods=["POST"])
+def live_demo_enable():
+    body = request.get_json(silent=True) or {}
+    region = str(body.get("region") or "")
+    enabled = bool(body.get("enabled"))
+    return jsonify(live_demo.set_enabled(region, enabled))
+
+
+@app.route("/live-demo/connect", methods=["POST"])
+def live_demo_connect():
+    body = request.get_json(silent=True) or {}
+    region = str(body.get("region") or "")
+    return jsonify(live_demo.start_connect(region))
+
+
+@app.route("/live-demo/poll", methods=["POST"])
+def live_demo_poll():
+    body = request.get_json(silent=True) or {}
+    region = str(body.get("region") or "")
+    return jsonify(live_demo.poll_connect(region))
+
+
+@app.route("/live-demo/refresh", methods=["POST"])
+def live_demo_refresh():
+    body = request.get_json(silent=True) or {}
+    region = str(body.get("region") or "")
+    return jsonify(live_demo.refresh(region))
 
 
 @app.route("/explorer/consent/3ds-flow")
@@ -293,15 +1160,18 @@ def consent_3ds_flow():
     method_url  = request.args.get("method_url", "")
     method_data = request.args.get("method_data", "")
     trans_id    = request.args.get("trans_id", "")
+    method_notify = request.args.get("method_notify", "")
     if not card_ref:
         return "Missing card_ref", 400
 
-    import html as _html, json as _json
+    import html as _html
+    import json as _json
     safe = {
         "card_ref":    _html.escape(card_ref, quote=True),
         "method_url":  _html.escape(method_url, quote=True),
         "method_data": _html.escape(method_data, quote=True),
         "trans_id":    _html.escape(trans_id, quote=True),
+        "method_notify": _html.escape(method_notify, quote=True),
     }
     cfg_json = _json.dumps(safe)
 
@@ -429,8 +1299,14 @@ def consent_3ds_flow():
           '<script>document.addEventListener("DOMContentLoaded",function(){'
           + 'var f=document.createElement("form");f.method="POST";'
           + 'f.action=' + JSON.stringify(CFG.method_url) + ';'
+                    + 'if(' + JSON.stringify(CFG.method_notify) + '){'
+                    + 'var n=document.createElement("input");n.name="threeDSMethodNotificationURL";'
+                    + 'n.value=' + JSON.stringify(CFG.method_notify) + ';f.appendChild(n);}'
           + 'var i=document.createElement("input");i.name="threeDSMethodData";'
           + 'i.value=' + JSON.stringify(CFG.method_data) + ';'
+                    + 'if(' + JSON.stringify(CFG.trans_id) + '){'
+                    + 'var t=document.createElement("input");t.name="threeDSServerTransID";'
+                    + 't.value=' + JSON.stringify(CFG.trans_id) + ';f.appendChild(t);}'
           + 'f.appendChild(i);document.body.appendChild(f);f.submit();'
           + '});<\\/script>';
         var iframe = document.getElementById('fp-frame');
@@ -473,7 +1349,7 @@ def consent_3ds_flow():
       setStatus('Running 3DS Method (device fingerprint)…');
       doFingerprint().then(function(fpStatus) {
         setStatus('Calling start-authentication (' + fpStatus + ')…');
-        return post('/explorer/consent/execute', {
+        return post('/explorer/transaction_notifications/execute', {
           operation: 'start_authentication',
           params: Object.assign(
             { card_ref: CFG.card_ref, auth_type: 'THREEDS',
@@ -520,7 +1396,7 @@ def consent_3ds_flow():
         var creq   = params.encodedCReq || params.creq;
         return doChallenge(acsUrl, creq).then(function() {
           setStatus('Verifying authentication…');
-          return post('/explorer/consent/execute', {
+          return post('/explorer/transaction_notifications/execute', {
             operation: 'verify_authentication',
             params: { card_ref: CFG.card_ref, auth_type: 'THREEDS', auth_params: '{}' },
           });
@@ -559,105 +1435,89 @@ def consent_3ds_flow():
 def testchat_files(filename: str):
     """Serve files from the self-contained testchat use-case directory."""
     directory = os.path.join(os.path.dirname(__file__), "usecases", "testchat")
-    return send_from_directory(directory, filename)
+    return _serve_prefixed_static(directory, filename)
 
 
 @app.route("/sonic/<path:filename>")
 def sonic_files(filename: str):
     """Serve files from the self-contained sonic use-case directory."""
     directory = os.path.join(os.path.dirname(__file__), "usecases", "sonic")
+    return _serve_prefixed_static(directory, filename)
+
+
+# ---------------------------------------------------------------------------
+# Dynamic per-usecase static-asset routes.
+# Every folder under ``usecases/`` containing an ``index.html`` is mounted at
+# ``/<folder>/<path:filename>``.  Adding a new usecase only requires creating
+# the folder — no edits here.
+# ---------------------------------------------------------------------------
+
+def _script_root_prefix() -> str:
+    return (request.script_root or "").rstrip("/")
+
+
+def _prefix_html_routes(html: str) -> str:
+    prefix = _script_root_prefix()
+    if not prefix:
+        return html
+    replacements = (
+        ('href="/', f'href="{prefix}/'),
+        ("href='/", f"href='{prefix}/"),
+        ('src="/', f'src="{prefix}/'),
+        ("src='/", f"src='{prefix}/"),
+        ('action="/', f'action="{prefix}/'),
+        ("action='/", f"action='{prefix}/"),
+        ('fetch("/', f'fetch("{prefix}/'),
+        ("fetch('/", f"fetch('{prefix}/"),
+    )
+    for old, new in replacements:
+        html = html.replace(old, new)
+    return html
+
+
+def _serve_prefixed_static(directory: str, filename: str):
+    if filename.lower().endswith('.html'):
+        path = os.path.join(directory, filename)
+        if os.path.isfile(path):
+            with open(path, encoding='utf-8') as f:
+                html = f.read()
+            return _prefix_html_routes(html), 200, {"Content-Type": "text/html; charset=utf-8"}
     return send_from_directory(directory, filename)
 
+def _register_usecase_static_routes() -> None:
+    usecases_dir = os.path.join(os.path.dirname(__file__), "usecases")
+    if not os.path.isdir(usecases_dir):
+        return
+    for name in sorted(os.listdir(usecases_dir)):
+        folder = os.path.join(usecases_dir, name)
+        if not os.path.isdir(folder) or name.startswith(("_", ".")):
+            continue
+        # Skip the special static-route names already mounted explicitly above.
+        if name in {"sonic"}:
+            continue
+        endpoint = f"usecase_files__{name}"
 
-@app.route("/pfm/<path:filename>")
-def pfm_files(filename: str):
-    """Serve files from the self-contained pfm use-case directory."""
-    directory = os.path.join(os.path.dirname(__file__), "usecases", "pfm")
-    return send_from_directory(directory, filename)
+        def _make_view(_dir: str):
+            def _view(filename: str):
+                return _serve_prefixed_static(_dir, filename)
+            return _view
 
-
-@app.route("/enrichment/<path:filename>")
-def enrichment_files(filename: str):
-    """Serve files from the self-contained enrichment use-case directory."""
-    directory = os.path.join(os.path.dirname(__file__), "usecases", "enrichment")
-    return send_from_directory(directory, filename)
-
-
-@app.route("/binlookup/<path:filename>")
-def binlookup_files(filename: str):
-    """Serve files from the self-contained binlookup use-case directory."""
-    directory = os.path.join(os.path.dirname(__file__), "usecases", "binlookup")
-    return send_from_directory(directory, filename)
-
-
-@app.route("/clarity/<path:filename>")
-def clarity_files(filename: str):
-    """Serve files from the self-contained clarity use-case directory."""
-    directory = os.path.join(os.path.dirname(__file__), "usecases", "clarity")
-    return send_from_directory(directory, filename)
+        app.add_url_rule(
+            f"/{name}/<path:filename>",
+            endpoint=endpoint,
+            view_func=_make_view(folder),
+        )
 
 
-@app.route("/easysavings/<path:filename>")
-def easysavings_files(filename: str):
-    """Serve files from the self-contained easysavings use-case directory."""
-    directory = os.path.join(os.path.dirname(__file__), "usecases", "easysavings")
-    return send_from_directory(directory, filename)
-
-
-@app.route("/identity/<path:filename>")
-def identity_files(filename: str):
-    """Serve files from the self-contained identity use-case directory."""
-    directory = os.path.join(os.path.dirname(__file__), "usecases", "identity")
-    return send_from_directory(directory, filename)
-
-
-@app.route("/psi/<path:filename>")
-def psi_files(filename: str):
-    """Serve files from the self-contained psi use-case directory."""
-    directory = os.path.join(os.path.dirname(__file__), "usecases", "psi")
-    return send_from_directory(directory, filename)
-
-
-@app.route("/places/<path:filename>")
-def places_files(filename: str):
-    """Serve files from the self-contained places use-case directory."""
-    directory = os.path.join(os.path.dirname(__file__), "usecases", "places")
-    return send_from_directory(directory, filename)
-
-
-@app.route("/recurring/<path:filename>")
-def recurring_files(filename: str):
-    """Serve files from the self-contained recurring use-case directory."""
-    directory = os.path.join(os.path.dirname(__file__), "usecases", "recurring")
-    return send_from_directory(directory, filename)
-
-
-@app.route("/specials/<path:filename>")
-def specials_files(filename: str):
-    """Serve files from the self-contained specials use-case directory."""
-    directory = os.path.join(os.path.dirname(__file__), "usecases", "specials")
-    return send_from_directory(directory, filename)
-
-
-@app.route("/findacard/<path:filename>")
-def findacard_files(filename: str):
-    """Serve files from the self-contained findacard use-case directory."""
-    directory = os.path.join(os.path.dirname(__file__), "usecases", "findacard")
-    return send_from_directory(directory, filename)
-
-
-@app.route("/financeincolour/<path:filename>")
-def financeincolour_files(filename: str):
-    """Serve files from the self-contained financeincolour use-case directory."""
-    directory = os.path.join(os.path.dirname(__file__), "usecases", "financeincolour")
-    return send_from_directory(directory, filename)
+_register_usecase_static_routes()
 
 
 @app.route("/catalog")
 def catalog():
-    """Unified catalog of all registered APIs and Use Cases."""
+    """Unified catalog of all registered APIs, Use Cases and Solutions."""
     apis = api_registry.manifests()
     use_cases = usecase_registry.manifests()
+    solutions = api_registry.solutions()
     return jsonify({
         "apis": [
             {
@@ -666,6 +1526,9 @@ def catalog():
                 "configured": a.get("configured", False),
                 "categories": a.get("categories", []),
                 "operations": [op["id"] for op in a.get("operations", [])],
+                "complements": a.get("complements", []),
+                "requires": a.get("requires", []),
+                "bundles": a.get("bundles", []),
             }
             for a in apis
         ],
@@ -678,12 +1541,25 @@ def catalog():
             }
             for u in use_cases
         ],
+        "solutions": solutions,
         "summary": {
             "total_apis": len(apis),
             "configured_apis": sum(1 for a in apis if a.get("configured")),
             "total_use_cases": len(use_cases),
+            "total_solutions": len(solutions),
         },
     })
+
+
+@app.route("/catalog/bundles")
+def catalog_bundles():
+    """Return solution-shaped bundles enriched with per-bundle status.
+
+    See :func:`apis.registry.solutions` for the response shape. Drives the
+    Solutions sidebar section in the explorer and feeds the chat agent's
+    "what should I add next?" recommendations.
+    """
+    return jsonify({"bundles": api_registry.solutions()})
 
 
 @app.route("/usecases")
@@ -693,6 +1569,8 @@ def usecases_list():
 
 @app.route("/usecases/<uc_id>/data")
 def usecase_data(uc_id: str):
+    if _is_non_us_blocked_usecase(uc_id):
+        return _non_us_forbidden_response()
     mod = usecase_registry.get_module(uc_id)
     if mod is None:
         return jsonify({"error": "Unknown use case"}), 404
@@ -704,24 +1582,29 @@ def usecase_data(uc_id: str):
             return jsonify({"error": str(e)}), 500
     if not hasattr(mod, "get_data"):
         return jsonify({"error": "Unknown use case"}), 404
-    # Resolve customer_id: explicit query param wins, else fall back to OFIN's active state.
+    # Resolve customer_id: explicit query param wins, else fall back to Open Finance's active state.
     customer_id = request.args.get("customer_id")
     if not customer_id:
-        ofin_mod = api_registry.get_module("ofin")
+        ofin_mod = api_registry.get_module("open_finance")
         if ofin_mod is not None:
             state = getattr(ofin_mod, "get_state", lambda: {})()
             customer_id = state.get("customer_id")
-    if not customer_id:
+    # Use cases can opt out of the customer-required gate (curated/offline demos)
+    # by exposing ``REQUIRES_CUSTOMER = False`` at module level.
+    requires_customer = getattr(mod, "REQUIRES_CUSTOMER", True)
+    if not customer_id and requires_customer:
         return jsonify({"error": "No customer linked. Use the Open Finance tab "
                                  "to create or select a customer first."}), 400
     try:
-        return jsonify(mod.get_data(customer_id))
+        return jsonify(mod.get_data(customer_id or ""))
     except Exception as e:  # pragma: no cover
         return jsonify({"error": str(e)}), 500
 
 
 @app.route("/usecases/<uc_id>/action", methods=["POST"])
 def usecase_action(uc_id: str):
+    if _is_non_us_blocked_usecase(uc_id):
+        return _non_us_forbidden_response()
     mod = usecase_registry.get_module(uc_id)
     if mod is None or not hasattr(mod, "do_action"):
         return jsonify({"error": "Unknown action"}), 404
@@ -731,7 +1614,17 @@ def usecase_action(uc_id: str):
     if not action:
         return jsonify({"error": "'action' is required"}), 400
     try:
-        return jsonify(mod.do_action(action, params))
+        result = mod.do_action(action, params)
+        # If the use case produced a customer_id, propagate it to Open Finance STATE
+        # so it becomes the global default for all APIs and use cases.
+        cid = result.get("customer_id") if isinstance(result, dict) else None
+        if cid and not result.get("error"):
+            ofin_mod = api_registry.get_module("open_finance")
+            if ofin_mod is not None and hasattr(ofin_mod, "STATE"):
+                ofin_mod.STATE["customer_id"] = str(cid)
+                if result.get("username") and not ofin_mod.STATE.get("customer_username"):
+                    ofin_mod.STATE["customer_username"] = result["username"]
+        return jsonify(result)
     except Exception as e:  # pragma: no cover
         return jsonify({"error": str(e)}), 500
 
@@ -740,9 +1633,12 @@ def usecase_action(uc_id: str):
 # TxPush listener  (use as callback URL with ngrok)
 # ----------------------------------------------------------------------------
 
-@app.route("/txpush-listener", methods=["POST"])
+@app.route("/txpush-listener", methods=["GET", "POST"])
 def txpush_listener():
     """Receive TxPush notifications from Finicity and store them."""
+    if request.method == "GET":
+        code = request.args.get("txpush_verification_code", "")
+        return code, 200, {"Content-Type": "text/plain"}
     import datetime
     payload = request.get_json(silent=True) or request.get_data(as_text=True)
     _txpush_events.appendleft({
@@ -756,6 +1652,132 @@ def txpush_listener():
 def txpush_events():
     """Return the last received TxPush events (for the UI to poll)."""
     return jsonify({"events": list(_txpush_events)})
+
+
+# ----------------------------------------------------------------------------
+# Transaction Notifications webhook receiver
+# ----------------------------------------------------------------------------
+
+@app.route("/txnotify/webhook", methods=["GET", "POST"])
+def txnotify_webhook():
+    """Receive Mastercard transaction notifications forwarded via ngrok.
+
+    GET  — health-check used by Mastercard during webhook registration.
+    POST — the actual notification payload; stored in the txnotify inbox
+           so the live-demo use-case UI can pick it up via polling.
+    """
+    if request.method == "GET":
+        return jsonify({"ok": True, "endpoint": "Transaction Notifications webhook receiver"})
+    payload = request.get_json(silent=True) or {}
+    mod = usecase_registry.get_module("txnotify")
+    if mod and hasattr(mod, "receive_webhook"):
+        mod.receive_webhook(payload)
+    return "", 200
+
+
+@app.route("/txnotify/launch-ngrok", methods=["POST"])
+@_require_not_server_mode
+def txnotify_launch_ngrok():
+    """Open a native terminal running: ngrok http <port>
+
+    Points ngrok at this Solution Studio instance so Mastercard can POST
+    transaction notifications to /txnotify/webhook via the tunnel URL.
+    """
+    import platform
+    import subprocess
+    import tempfile
+    from pathlib import Path
+
+    system = platform.system().lower()
+    port = int(os.environ.get("PORT", "9021"))
+    webhook_path = "/txnotify/webhook"
+    tmpdir = Path(tempfile.gettempdir()) / "vima-snippets"
+    tmpdir.mkdir(parents=True, exist_ok=True)
+
+    if system == "windows":
+        ps1_path = tmpdir / "txnotify_ngrok.ps1"
+        lines = [
+            "$ErrorActionPreference = 'Continue'",
+            "Write-Host 'Mastercard Solution Studio — ngrok webhook tunnel' -ForegroundColor Cyan",
+            "Write-Host ''",
+            f"Write-Host 'Exposing port {port}  →  public HTTPS URL' -ForegroundColor DarkGray",
+            f"Write-Host 'After it starts, copy the Forwarding HTTPS URL and append: {webhook_path}' -ForegroundColor Yellow",
+            "Write-Host ''",
+            f"ngrok http {port}",
+            "Write-Host ''",
+            "Write-Host 'ngrok exited. Press Enter to close...' -ForegroundColor DarkGray",
+            "Read-Host | Out-Null",
+        ]
+        ps1_path.write_text("\r\n".join(lines), encoding="utf-8")
+        powershell_args = [
+            "powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass",
+            "-File", str(ps1_path),
+        ]
+        try:
+            subprocess.Popen(
+                ["wt.exe", "new-tab", "--title", "ngrok — Transaction Notifications", *powershell_args],
+                close_fds=True,
+            )
+            launcher = "wt"
+        except FileNotFoundError:
+            subprocess.Popen(
+                powershell_args,
+                creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0),
+                close_fds=True,
+            )
+            launcher = "powershell"
+
+    elif system == "darwin":
+        sh_path = tmpdir / "txnotify_ngrok.sh"
+        lines = [
+            "#!/bin/bash",
+            "set +e",
+            "echo 'Mastercard Solution Studio — ngrok webhook tunnel'",
+            f"echo 'After it starts, copy the Forwarding URL and append: {webhook_path}'",
+            "echo ''",
+            f"ngrok http {port}",
+            "echo ''",
+            "echo 'Press Enter to close...'",
+            "read",
+        ]
+        sh_path.write_text("\n".join(lines), encoding="utf-8")
+        sh_path.chmod(0o755)
+        subprocess.Popen(["open", "-a", "Terminal", str(sh_path)], close_fds=True)
+        launcher = "Terminal.app"
+
+    else:  # Linux / other POSIX
+        sh_path = tmpdir / "txnotify_ngrok.sh"
+        lines = [
+            "#!/bin/bash",
+            "set +e",
+            "echo 'Mastercard Solution Studio — ngrok webhook tunnel'",
+            f"echo 'After it starts, copy the Forwarding URL and append: {webhook_path}'",
+            "echo ''",
+            f"ngrok http {port}",
+            "echo ''",
+            "echo 'Press Enter to close...'",
+            "read",
+        ]
+        sh_path.write_text("\n".join(lines), encoding="utf-8")
+        sh_path.chmod(0o755)
+        spawned = False
+        for term, args in [
+            ("x-terminal-emulator", ["-e", "bash", str(sh_path)]),
+            ("gnome-terminal",      ["--", "bash", str(sh_path)]),
+            ("konsole",             ["-e", "bash", str(sh_path)]),
+            ("xterm",               ["-e", "bash", str(sh_path)]),
+        ]:
+            try:
+                subprocess.Popen([term, *args], close_fds=True)
+                launcher = term
+                spawned = True
+                break
+            except FileNotFoundError:
+                continue
+        if not spawned:
+            return jsonify({"error": "No terminal emulator found"}), 500
+
+    return jsonify({"ok": True, "launcher": launcher, "platform": system})
 
 
 # ----------------------------------------------------------------------------
@@ -859,7 +1881,7 @@ def _bin_build_sqlite(rows):
         ))
 
     conn.executemany(
-        "INSERT INTO bin_ranges VALUES (" + ",".join(["?"] * 32) + ")",
+        "INSERT INTO bin_ranges VALUES (" + ",".join(["?"] * 32) + ")",  # nosec B608 — values via ? params
         records,
     )
     conn.execute("INSERT INTO bin_fts(bin_fts) VALUES('rebuild')")
@@ -901,14 +1923,15 @@ def _bin_cache_do_load():
     """Background thread: fetch all BIN range pages and load into SQLite."""
     global _BIN_DB_CONN
     import ast
-    import requests as _req
+
     import oauth1.authenticationutils as authutils
+    import requests as _req
     from oauth1.oauth import OAuth
 
-    consumer_key = os.environ.get("BINLOOKUP_CONSUMER_KEY", "")
-    key_path = os.environ.get("BINLOOKUP_SIGNING_KEY_PATH", "")
-    key_password = os.environ.get("BINLOOKUP_SIGNING_KEY_PASSWORD", "keystorepassword")
-    env = os.environ.get("BINLOOKUP_ENV", "sandbox").lower()
+    consumer_key = os.environ.get("BIN_LOOKUP_CONSUMER_KEY", "")
+    key_path = os.environ.get("BIN_LOOKUP_SIGNING_KEY_PATH", "")
+    key_password = os.environ.get("BIN_LOOKUP_SIGNING_KEY_PASSWORD", "keystorepassword")
+    env = os.environ.get("BIN_LOOKUP_ENV", "sandbox").lower()
     base_url = (
         "https://api.mastercard.com/bin-resources"
         if env == "production"
@@ -978,7 +2001,7 @@ def _bin_cache_do_load():
             pass
 
 
-@app.route("/usecases/binlookup/bin-ranges/status")
+@app.route("/usecases/bin_lookup/bin-ranges/status")
 def binlookup_bin_ranges_status():
     with _BIN_CACHE_LOCK:
         return jsonify({
@@ -990,7 +2013,7 @@ def binlookup_bin_ranges_status():
         })
 
 
-@app.route("/usecases/binlookup/bin-ranges/load", methods=["POST"])
+@app.route("/usecases/bin_lookup/bin-ranges/load", methods=["POST"])
 def binlookup_bin_ranges_load():
     with _BIN_CACHE_LOCK:
         if _BIN_CACHE["status"] == "loading":
@@ -1002,7 +2025,7 @@ def binlookup_bin_ranges_load():
     return jsonify({"ok": True, "message": "Loading started"})
 
 
-@app.route("/usecases/binlookup/bin-ranges/search")
+@app.route("/usecases/bin_lookup/bin-ranges/search")
 def binlookup_bin_ranges_search():
     q = request.args.get("q", "").strip()
     per_page = 50
@@ -1072,21 +2095,21 @@ def binlookup_bin_ranges_search():
 # BIN Lookup — download all BIN ranges as CSV
 # ----------------------------------------------------------------------------
 
-@app.route("/usecases/binlookup/download-bins")
+@app.route("/usecases/bin_lookup/download-bins")
 def binlookup_download_bins():
     """Stream all BIN ranges from the Mastercard BIN Resource API as a CSV."""
     import csv
     import io
-    import json as _json
-    import requests as _req
-    import oauth1.authenticationutils as authutils
-    from oauth1.oauth import OAuth
-    from flask import Response, stream_with_context
 
-    consumer_key = os.environ.get("BINLOOKUP_CONSUMER_KEY", "")
-    key_path = os.environ.get("BINLOOKUP_SIGNING_KEY_PATH", "")
-    key_password = os.environ.get("BINLOOKUP_SIGNING_KEY_PASSWORD", "keystorepassword")
-    env = os.environ.get("BINLOOKUP_ENV", "sandbox").lower()
+    import oauth1.authenticationutils as authutils
+    import requests as _req
+    from flask import Response, stream_with_context
+    from oauth1.oauth import OAuth
+
+    consumer_key = os.environ.get("BIN_LOOKUP_CONSUMER_KEY", "")
+    key_path = os.environ.get("BIN_LOOKUP_SIGNING_KEY_PATH", "")
+    key_password = os.environ.get("BIN_LOOKUP_SIGNING_KEY_PASSWORD", "keystorepassword")
+    env = os.environ.get("BIN_LOOKUP_ENV", "sandbox").lower()
     base_url = "https://api.mastercard.com/bin-resources" if env == "production" else "https://sandbox.api.mastercard.com/bin-resources"
 
     if not consumer_key or consumer_key == "your-consumer-key-here" or not key_path:
@@ -1127,10 +2150,10 @@ def binlookup_download_bins():
                     writer = csv.DictWriter(output, fieldnames=list(item.keys()), extrasaction="ignore")
                     writer.writeheader()
                     yield output.getvalue()
-                    output.seek(0); output.truncate(0)
+                    output.seek(0); output.truncate(0)  # noqa: E702
                 writer.writerow(item)
                 yield output.getvalue()
-                output.seek(0); output.truncate(0)
+                output.seek(0); output.truncate(0)  # noqa: E702
 
             page += 1
 
@@ -1148,9 +2171,18 @@ def findacard_health():
     try:
         sock = socket.create_connection(("127.0.0.1", 5432), timeout=1)
         sock.close()
-        return jsonify({"online": True})
-    except (socket.timeout, ConnectionRefusedError, OSError):
-        return jsonify({"online": False})
+        # If request came through a reverse proxy, the browser must reach fac
+        # via an absolute URL so path-rewriting patches don't corrupt it.
+        # fac lives at nginx-level /fac, outside the /vima/ proxy.
+        proto = request.headers.get("X-Forwarded-Proto", "")
+        host = request.headers.get("X-Forwarded-Host") or request.headers.get("Host", "")
+        if proto and host:
+            url = f"{proto}://{host}/fac"
+        else:
+            url = "http://localhost:5432"
+        return jsonify({"online": True, "url": url})
+    except (TimeoutError, ConnectionRefusedError, OSError):
+        return jsonify({"online": False, "url": "http://localhost:5432"})
 
 
 @app.route("/api-call-log")
@@ -1166,113 +2198,115 @@ def api_call_log():
 # Config management
 # ----------------------------------------------------------------------------
 
-_ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+_ENV_PATH = os.path.join(_CONFIG_DIR, ".env")
+_KEYS_DIR = os.path.join(_CONFIG_DIR, "keys")
 
-_CONFIG_SCHEMA = [
-    {
-        "id": "open_banking",
-        "title": "Open Banking",
-        "subtitle": "Mastercard Open Banking (Finicity)",
-        "docs_url": "https://developer.mastercard.com/open-banking-us/documentation/",
+
+def _build_config_schema() -> list[dict]:
+    """Build the Settings UI schema dynamically from ``apis.catalog``.
+
+    Each catalog entry produces one group with the appropriate set of fields
+    for its auth scheme (OAuth 1.0a, OAuth 1.0a + client-encryption, OAuth 2.0).
+    Adding a new API to the catalog automatically surfaces it in Settings.
+    """
+    from apis.catalog import (
+        AUTH_JWT_RS256,
+        AUTH_OAUTH1,
+        AUTH_OAUTH1_ENC,
+        AUTH_OAUTH2,
+        iter_ordered,
+    )
+
+    groups: list[dict] = []
+    for entry in iter_ordered():
+        # consent_management is merged into transaction_notifications —
+        # its credentials are shown under the TxNotify group instead.
+        if entry.id == "consent_management":
+            continue
+        p = entry.env_prefix
+        fields: list[dict] = []
+        if entry.auth in (AUTH_OAUTH1, AUTH_OAUTH1_ENC):
+            fields = [
+                {"key": f"{p}_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": f"OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the {entry.display_name} API, and copy the Consumer Key."},
+                {"key": f"{p}_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. Click 'Generate signing keys' in your Mastercard Developers project to download it."},
+                {"key": f"{p}_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
+                {"key": f"{p}_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
+                {"key": f"{p}_ENV",                  "label": "Environment",      "type": "text",     "info": "API environment: 'sandbox' or 'production'."},
+            ]
+            if entry.auth == AUTH_OAUTH1_ENC:
+                fields.append(
+                    {"key": f"{p}_ENCRYPTION_KEY_PATH", "label": "Client Encryption Key", "type": "file", "info": "Client encryption .pem file. Download from your Mastercard Developers project under 'Client Encryption Keys → Actions → Download'."}
+                )
+        elif entry.auth == AUTH_OAUTH2:
+            fields = [
+                {"key": f"{p}_PARTNER_ID",     "label": "Partner ID",     "type": "text",     "info": f"{entry.display_name} Partner ID from your Mastercard Developers project credentials."},
+                {"key": f"{p}_PARTNER_SECRET", "label": "Partner Secret", "type": "password", "info": "Partner Secret paired with the Partner ID. Keep this confidential."},
+                {"key": f"{p}_APP_KEY",        "label": "App Key",        "type": "password", "info": "Application key for your project, alongside the Partner ID in the portal."},
+                {"key": f"{p}_API_BASE_URL",   "label": "API Base URL",   "type": "text",     "info": "Base URL for the API. Use https://api.finicity.com for production or the sandbox URL for testing."},
+                {"key": f"{p}_SIG_KEY_PATH",   "label": "Signature Verification Key", "type": "file", "info": "Optional public key (.pem) used to verify webhook signatures from the platform."},
+            ]
+        elif entry.auth == AUTH_JWT_RS256:
+            # Mastercard Open Finance Europe (Aiia) — OAuth 2.0 client_credentials
+            # with an RS256-signed JWT client assertion. Manual onboarding only:
+            # generate an RSA-4096 keypair, email the public PEM to
+            # openbankingeu_support@mastercard.com, then paste the returned
+            # clientId below.
+            fields = [
+                {"key": f"{p}_CLIENT_ID",        "label": "Client ID",        "type": "text",     "info": f"{entry.display_name} clientId issued by Mastercard's EU onboarding officer after they add your public RSA cert to the sandbox trust list. UUID format."},
+                {"key": f"{p}_APPLICATION_ID",   "label": "Application ID",   "type": "text",     "info": f"{entry.display_name} applicationId. Sent on every consent / data call as the X-Application-Id header. Issued by the EU onboarding officer alongside the clientId. UUID format."},
+                {"key": f"{p}_USE_CASE_ID",      "label": "Use Case Configuration ID", "type": "text", "info": "useCaseConfigurationId provisioned by Mastercard onboarding. Sent as the request body field `useCaseConfigurationId` on Create Consent. UUID format."},
+                {"key": f"{p}_REDIRECT_URL",     "label": "Redirect URL",     "type": "text",     "info": "Whitelisted return URL for the hosted Aiia Flow. Pre-configured on the use-case configuration by Mastercard onboarding (not sent per request). Example: https://httpbun.com/any/*"},
+                {"key": f"{p}_PRIVATE_KEY_PATH", "label": "Private Key File", "type": "file",     "info": "RSA private key (.key / .pem). Generate locally with: openssl req -x509 -sha256 -nodes -newkey rsa:4096 -keyout private.key -days 730 -out public.pem"},
+                {"key": f"{p}_PUBLIC_CERT_PATH", "label": "Public Certificate", "type": "file",    "info": "Public X.509 certificate (.pem) matching the private key. Email this file to openbankingeu_support@mastercard.com to be added to the trust list — the JWT kid is its SHA-256 thumbprint."},
+                {"key": f"{p}_AUTH_BASE_URL",    "label": "Auth Base URL",    "type": "text",     "info": "OAuth token endpoint host. Sandbox: https://mtf.auth.openbanking.mastercard.eu"},
+                {"key": f"{p}_API_BASE_URL",     "label": "API Base URL",     "type": "text",     "info": "Open Finance API host. Sandbox: https://mtf.api.openbanking.mastercard.eu"},
+            ]
+        groups.append({
+            "id": entry.id,
+            "title": entry.display_name,
+            "subtitle": f"Mastercard {entry.display_name} API",
+            "docs_url": entry.docs_url,
+            "fields": fields,
+        })
+
+    # Mastercard Developer portal login — required for automated provisioning.
+    groups.insert(0, {
+        "id": "mastercard_portal",
+        "title": "Mastercard Developer Portal",
+        "subtitle": "Login credentials for automated API key provisioning",
+        "docs_url": "https://developer.mastercard.com/account/log-in",
         "fields": [
-            {"key": "PARTNER_ID",     "label": "Partner ID",     "type": "text",     "info": "Your Finicity Partner ID. Sign up at developer.mastercard.com, create an Open Banking project, and copy the Partner ID from your project credentials."},
-            {"key": "PARTNER_SECRET", "label": "Partner Secret", "type": "password", "info": "Finicity Partner Secret, paired with your Partner ID. Available in your project credentials on Mastercard Developers. Keep this confidential."},
-            {"key": "APP_KEY",        "label": "App Key",        "type": "password", "info": "Application key for your Open Banking project. Found alongside your Partner ID in the Mastercard Developers portal."},
-            {"key": "API_BASE_URL",   "label": "API Base URL",   "type": "text",     "info": "Base URL for the Open Banking API. Use https://api.finicity.com for production or the sandbox URL for testing."},
+            {"key": "MCD_PORTAL_EMAIL",    "label": "Portal Email",    "type": "text",
+             "info": "Your Mastercard Developer account email (e.g. you@company.com). Used to log in to developer.mastercard.com and provision API keys automatically."},
+            {"key": "MCD_PORTAL_PASSWORD", "label": "Portal Password", "type": "password",
+             "info": "Your Mastercard Developer account password. Stored locally in config/.env and never sent anywhere except the Mastercard login page."},
         ],
-    },
-    {
-        "id": "binlookup",
-        "title": "BIN Lookup",
-        "subtitle": "Mastercard BIN Lookup API",
-        "docs_url": "https://developer.mastercard.com/bin-lookup/documentation/",
+    })
+
+    # Non-API tools shown in the same Settings UI but excluded from export.
+    groups.append({
+        "id": "claude_chat",
+        "title": "Claude Chat",
+        "subtitle": "Anthropic Claude API for the embedded coding assistant",
+        "docs_url": "https://console.anthropic.com/",
+        "exclude_export": True,
         "fields": [
-            {"key": "BINLOOKUP_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the BIN Lookup API, and copy the Consumer Key from the project overview page."},
-            {"key": "BINLOOKUP_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' and download the .p12 file."},
-            {"key": "BINLOOKUP_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file — usually the lowercase project name (e.g. 'binlookup'). Shown when generating keys on Mastercard Developers."},
-            {"key": "BINLOOKUP_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default for Mastercard Developer-generated keys is 'keystorepassword'."},
+            {"key": "ANTHROPIC_API_KEY", "label": "API Key", "type": "password",
+             "info": "Your Anthropic API key. Sign up at console.anthropic.com, go to Settings → API Keys, and create a new key. Keys start with 'sk-ant-'."},
         ],
-    },
-    {
-        "id": "consumerclarity",
-        "title": "Consumer Clarity",
-        "subtitle": "Mastercard Consumer Clarity API",
-        "docs_url": "https://developer.mastercard.com/consumer-clarity-us/documentation/",
-        "fields": [
-            {"key": "CONSUMERCLARITY_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Consumer Clarity API, and copy the Consumer Key."},
-            {"key": "CONSUMERCLARITY_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
-            {"key": "CONSUMERCLARITY_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file — usually the lowercase project name. Shown when generating keys on Mastercard Developers."},
-            {"key": "CONSUMERCLARITY_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default for Mastercard Developer-generated keys is 'keystorepassword'."},
-        ],
-    },
-    {
-        "id": "easysavings",
-        "title": "Easy Savings",
-        "subtitle": "Mastercard Easy Savings API",
-        "docs_url": "https://developer.mastercard.com/easy-savings/documentation/",
-        "fields": [
-            {"key": "EASYSAVINGS_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Easy Savings API, and copy the Consumer Key."},
-            {"key": "EASYSAVINGS_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
-            {"key": "EASYSAVINGS_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
-            {"key": "EASYSAVINGS_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
-        ],
-    },
-    {
-        "id": "places",
-        "title": "Places",
-        "subtitle": "Mastercard Places API",
-        "docs_url": "https://developer.mastercard.com/places/documentation/",
-        "fields": [
-            {"key": "PLACES_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Places API, and copy the Consumer Key."},
-            {"key": "PLACES_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
-            {"key": "PLACES_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
-            {"key": "PLACES_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
-        ],
-    },
-    {
-        "id": "priceless",
-        "title": "Priceless Cities",
-        "subtitle": "Mastercard Priceless Cities API",
-        "docs_url": "https://developer.mastercard.com/priceless-cities/documentation/",
-        "fields": [
-            {"key": "PRICELESS_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Priceless Cities API, and copy the Consumer Key."},
-            {"key": "PRICELESS_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
-            {"key": "PRICELESS_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
-            {"key": "PRICELESS_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
-        ],
-    },
-    {
-        "id": "eligibility",
-        "title": "Benefits Eligibility",
-        "subtitle": "Mastercard Benefits Eligibility API",
-        "docs_url": "https://developer.mastercard.com/eligibility-api/documentation/",
-        "fields": [
-            {"key": "ELIGIBILITY_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Benefits Eligibility API, and copy the Consumer Key."},
-            {"key": "ELIGIBILITY_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
-            {"key": "ELIGIBILITY_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
-            {"key": "ELIGIBILITY_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
-        ],
-    },
-    {
-        "id": "bces",
-        "title": "Benefits Content Eligibility",
-        "subtitle": "Mastercard Benefits Content Eligibility Service (BCES)",
-        "docs_url": "https://developer.mastercard.com/bces-service/documentation/",
-        "fields": [
-            {"key": "BCES_CONSUMER_KEY",        "label": "Consumer Key",     "type": "password", "info": "OAuth 1.0a Consumer Key. Create a project on developer.mastercard.com, add the Benefits Content Eligibility Service API, and copy the Consumer Key."},
-            {"key": "BCES_SIGNING_KEY_PATH",     "label": "Signing Key File", "type": "file",     "info": "PKCS12 (.p12) signing key file. In your Mastercard Developers project, click 'Generate signing keys' to download this file."},
-            {"key": "BCES_SIGNING_KEY_ALIAS",    "label": "Key Alias",        "type": "text",     "info": "Alias for the private key within the .p12 file. Shown when generating keys on Mastercard Developers."},
-            {"key": "BCES_SIGNING_KEY_PASSWORD", "label": "Key Password",     "type": "password", "info": "Password protecting the .p12 key file. The default is 'keystorepassword'."},
-        ],
-    },
-]
+    })
+
+    return groups
+
+
+_CONFIG_SCHEMA = _build_config_schema()
 
 
 def _read_env_values() -> dict:
     """Parse .env file, return {KEY: value} preserving raw values."""
     result: dict = {}
     try:
-        with open(_ENV_PATH, "r", encoding="utf-8") as fh:
+        with open(_ENV_PATH, encoding="utf-8") as fh:
             for line in fh:
                 s = line.strip()
                 if s and not s.startswith("#") and "=" in s:
@@ -1286,7 +2320,7 @@ def _read_env_values() -> dict:
 def _write_env_values(updates: dict) -> None:
     """Write updated key=value pairs into .env, preserving comments and order."""
     try:
-        with open(_ENV_PATH, "r", encoding="utf-8") as fh:
+        with open(_ENV_PATH, encoding="utf-8") as fh:
             lines = fh.readlines()
     except OSError:
         lines = []
@@ -1304,15 +2338,21 @@ def _write_env_values(updates: dict) -> None:
                 continue
         new_lines.append(line)
 
+    # Section headers to prepend when adding a key for the first time
+    _SECTION_HEADERS = {
+        "ANTHROPIC_API_KEY": "\n# CLAUDE / VIMA CHAT\n",
+    }
     for key, val in updates.items():
         if key not in written:
+            if key in _SECTION_HEADERS:
+                new_lines.append(_SECTION_HEADERS[key])
             new_lines.append(f"{key}={val}\n")
 
-    with open(_ENV_PATH, "w", encoding="utf-8") as fh:
-        fh.writelines(new_lines)
+    _atomic_write_text(_ENV_PATH, "".join(new_lines))
 
 
 @app.route("/config", methods=["GET"])
+@_require_not_server_mode
 def config_get():
     env = _read_env_values()
     groups = []
@@ -1333,10 +2373,13 @@ def config_get():
             "docs_url": g["docs_url"],
             "fields":   fields,
         })
-    return jsonify({"groups": groups})
+    resp = jsonify({"groups": groups})
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 @app.route("/config", methods=["POST"])
+@_require_not_server_mode
 def config_save_route():
     body = request.get_json(silent=True) or {}
     updates = body.get("updates") or {}
@@ -1349,11 +2392,290 @@ def config_save_route():
         _write_env_values(filtered)
     except OSError as exc:
         return jsonify({"error": str(exc)}), 500
-    load_dotenv(override=True)
+    load_dotenv(_ENV_PATH, override=True)
     return jsonify({"saved": list(filtered.keys())})
 
 
+@app.route("/config/export", methods=["GET"])
+@_require_not_server_mode
+def config_export():
+    """Export config/keys + .env (with ANTHROPIC_API_KEY redacted) as a zip."""
+    import io
+    import re as _re
+    import zipfile
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        # .env — redact ANTHROPIC_API_KEY
+        if os.path.isfile(_ENV_PATH):
+            with open(_ENV_PATH, encoding="utf-8") as fh:
+                env_text = fh.read()
+            env_text = _re.sub(
+                r"(?m)^(ANTHROPIC_API_KEY\s*=\s*).*$",
+                r"\1YOUR_ANTHROPIC_API_KEY_HERE",
+                env_text,
+            )
+            zf.writestr("config/.env", env_text)
+        # all key files — always use forward slashes in zip entries (cross-platform)
+        if os.path.isdir(_KEYS_DIR):
+            for fname in os.listdir(_KEYS_DIR):
+                fpath = os.path.join(_KEYS_DIR, fname)
+                if os.path.isfile(fpath):
+                    zf.write(fpath, "config/keys/" + fname)
+
+    buf.seek(0)
+    from flask import send_file
+    return send_file(
+        buf,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name="vima-config.zip",
+    )
+
+
+def _merge_env_text(existing_text: str, new_text: str) -> str:
+    """Merge two .env file texts into a canonical, catalog-ordered layout.
+
+    Values from ``new_text`` take precedence for keys that appear in both.
+    Keys that only exist in ``existing_text`` are preserved so previously
+    configured APIs are not wiped when provisioning a subset.
+
+    The output is always re-rendered in catalog order with a short header
+    for each API and a blank line between API blocks. Each env var is
+    matched to the catalog entry with the **longest** matching prefix —
+    e.g. ``OPEN_FINANCE_AU_PARTNER_ID`` is assigned to ``OPEN_FINANCE_AU``
+    rather than the shorter ``OPEN_FINANCE`` prefix it also starts with.
+    Keys that don't belong to any catalogued API (e.g. ``ANTHROPIC_API_KEY``)
+    are emitted in a trailing ``# Other`` block, also one variable per line.
+    """
+    import re as _re
+
+    from apis.catalog import iter_ordered
+
+    _KEY_RE = _re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)=(.*)$")
+
+    def _extract(text: str) -> dict[str, str]:
+        out: dict[str, str] = {}
+        for raw_line in text.splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            m = _KEY_RE.match(line)
+            if m:
+                out[m.group(1)] = m.group(2)
+        return out
+
+    # New wins where both define the same key; otherwise preserve old.
+    merged: dict[str, str] = {**_extract(existing_text), **_extract(new_text)}
+
+    # Build display order + a longest-first prefix list so that
+    # OPEN_FINANCE_AU_* is captured by OPEN_FINANCE_AU, not OPEN_FINANCE.
+    entries = list(iter_ordered())
+    prefix_to_entry = {entry.env_prefix: entry for entry in entries}
+    prefixes_longest_first = sorted(prefix_to_entry, key=len, reverse=True)
+    display_order = [entry.env_prefix for entry in entries]
+
+    def _match_prefix(key: str) -> str | None:
+        for p in prefixes_longest_first:
+            if key == p or key.startswith(p + "_"):
+                return p
+        return None
+
+    grouped: dict[str, list[str]] = {p: [] for p in display_order}
+    other_keys: list[str] = []
+    for k in sorted(merged):
+        p = _match_prefix(k)
+        if p is None:
+            other_keys.append(k)
+        else:
+            grouped[p].append(k)
+
+    lines: list[str] = ["# Generated by vima — do not hand-edit lightly.", ""]
+    for prefix in display_order:
+        keys = grouped.get(prefix) or []
+        if not keys:
+            continue
+        lines.append(f"# {prefix_to_entry[prefix].display_name}")
+        for k in keys:
+            lines.append(f"{k}={merged[k]}")
+        lines.append("")
+
+    if other_keys:
+        lines.append("# Other")
+        for k in other_keys:
+            lines.append(f"{k}={merged[k]}")
+        lines.append("")
+
+    # Collapse any accidental trailing blank lines down to exactly one newline.
+    while len(lines) >= 2 and lines[-1] == "" and lines[-2] == "":
+        lines.pop()
+    return "\n".join(lines)
+
+
+def _atomic_write_text(path: str, text: str) -> None:
+    """Write ``text`` to ``path`` atomically.
+
+    Writes to a sibling temp file in the same directory, fsyncs it, then
+    os.replace()s it over the target. This guarantees readers either see
+    the previous fully-written file or the new fully-written file — never
+    a truncated/partial state if the process is killed mid-write
+    (e.g. user cancels provisioning).
+    """
+    import tempfile
+    parent = os.path.dirname(os.path.abspath(path)) or "."
+    os.makedirs(parent, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(
+        prefix=".env.", suffix=".tmp", dir=parent,
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(text)
+            fh.flush()
+            try:
+                os.fsync(fh.fileno())
+            except OSError:
+                pass
+        os.replace(tmp_path, path)
+    except Exception:
+        try:
+            os.remove(tmp_path)
+        except OSError:
+            pass
+        raise
+
+
+def _atomic_write_bytes(path: str, data: bytes) -> None:
+    """Binary counterpart of ``_atomic_write_text`` for key files."""
+    import tempfile
+    parent = os.path.dirname(os.path.abspath(path)) or "."
+    os.makedirs(parent, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(
+        prefix=os.path.basename(path) + ".", suffix=".tmp", dir=parent,
+    )
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(data)
+            fh.flush()
+            try:
+                os.fsync(fh.fileno())
+            except OSError:
+                pass
+        os.replace(tmp_path, path)
+    except Exception:
+        try:
+            os.remove(tmp_path)
+        except OSError:
+            pass
+        raise
+
+
+@app.route("/config/import", methods=["POST"])
+@_require_not_server_mode
+def config_import():
+    """Import a vima-config.zip or upload_bundle_xxx.zip — merges into existing .env."""
+    import importlib.util as _ilu
+    import io as _io
+    import tempfile
+    import zipfile
+    from pathlib import Path as _Path
+
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+    fobj = request.files["file"]
+    try:
+        data = fobj.read()
+        with zipfile.ZipFile(_io.BytesIO(data)) as zf:
+            names = zf.namelist()
+            norm_names = {n: n.replace("\\", "/") for n in names}
+            norm_set = set(norm_names.values())
+
+            # ----------------------------------------------------------------
+            # Detect upload_bundle_xxx format: has manifest.json + certs/ dir
+            # ----------------------------------------------------------------
+            is_bundle_format = (
+                any(v == "manifest.json" for v in norm_set) and
+                any(v.startswith("certs/") for v in norm_set)
+            )
+
+            if is_bundle_format:
+                # Extract certs/* to a temp directory so export_vima_config.py
+                # can process them (it expects the same normalized-dir layout)
+                with tempfile.TemporaryDirectory() as _tmp:
+                    norm_dir = _Path(_tmp) / "normalized"
+                    norm_dir.mkdir()
+                    for orig, name in norm_names.items():
+                        if name.startswith("certs/") and not name.endswith("/"):
+                            fname = name.split("/", 1)[-1]
+                            if fname:
+                                with open(norm_dir / fname, "wb") as fh:
+                                    fh.write(zf.read(orig))
+
+                    # Determine keystore password: reuse any existing value in .env
+                    _password = "foobar!!"
+                    if os.path.isfile(_ENV_PATH):
+                        import re as _re
+                        _env_text = open(_ENV_PATH, encoding="utf-8").read()
+                        _m = _re.search(r"_SIGNING_KEY_PASSWORD=(.+)", _env_text)
+                        if _m:
+                            _password = _m.group(1).strip()
+
+                    # Convert to vima-config.zip using export_vima_config.py
+                    _tool_dir = os.path.join(os.path.dirname(__file__),
+                                             "tools", "mcd-key-automation")
+                    _ec_file = os.path.join(_tool_dir, "export_vima_config.py")
+                    _spec = _ilu.spec_from_file_location("export_vima_config", _ec_file)
+                    _mod = _ilu.module_from_spec(_spec)
+                    _spec.loader.exec_module(_mod)
+
+                    _out_zip = _Path(_tmp) / "vima-config.zip"
+                    _mod.build_vima_config_zip(norm_dir, _password, _out_zip)
+                    data = _out_zip.read_bytes()
+
+            # ----------------------------------------------------------------
+            # Import vima-config layout (config/.env + config/keys/*)
+            # ----------------------------------------------------------------
+            with zipfile.ZipFile(_io.BytesIO(data)) as zf2:
+                names2 = zf2.namelist()
+                norm2 = {n: n.replace("\\", "/") for n in names2}
+
+                valid_entries = [v for v in norm2.values()
+                                 if v.startswith("config/.env") or v.startswith("config/keys/")]
+                if not valid_entries:
+                    return jsonify({"error": "Zip does not contain a valid vima config layout"}), 400
+
+                os.makedirs(_KEYS_DIR, exist_ok=True)
+                imported = []
+                for orig, name in norm2.items():
+                    if name == "config/.env":
+                        new_env_text = zf2.read(orig).decode("utf-8")
+                        if os.path.isfile(_ENV_PATH):
+                            existing = open(_ENV_PATH, encoding="utf-8").read()
+                            env_text = _merge_env_text(existing, new_env_text)
+                        else:
+                            env_text = new_env_text
+                        _atomic_write_text(_ENV_PATH, env_text)
+                        load_dotenv(_ENV_PATH, override=True)
+                        imported.append(".env")
+                    elif name.startswith("config/keys/") and not name.endswith("/"):
+                        fname = name.split("/")[-1]
+                        if not fname:
+                            continue
+                        ext = os.path.splitext(fname)[1].lower()
+                        if ext not in (".p12", ".pkcs12", ".pem", ".key"):
+                            continue
+                        dest = os.path.join(_KEYS_DIR, fname)
+                        _atomic_write_bytes(dest, zf2.read(orig))
+                        imported.append("config/keys/" + fname)
+
+        return jsonify({"imported": imported})
+    except zipfile.BadZipFile:
+        return jsonify({"error": "Not a valid zip file"}), 400
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
 @app.route("/config/upload-key", methods=["POST"])
+@_require_not_server_mode
 def config_upload_key():
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
@@ -1362,25 +2684,432 @@ def config_upload_key():
     if not fname:
         return jsonify({"error": "Empty filename"}), 400
     ext = os.path.splitext(fname)[1].lower()
-    if ext not in (".p12", ".pkcs12"):
-        return jsonify({"error": "Only .p12 or .pkcs12 files are accepted"}), 400
+    if ext not in (".p12", ".pkcs12", ".pem", ".key"):
+        return jsonify({"error": "Only .p12, .pkcs12, .pem, or .key files are accepted"}), 400
     # Use only basename to prevent path traversal
     safe_name = os.path.basename(fname)
-    save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), safe_name)
+    os.makedirs(_KEYS_DIR, exist_ok=True)
+    save_path = os.path.join(_KEYS_DIR, safe_name)
     fobj.save(save_path)
-    return jsonify({"filename": safe_name, "path": safe_name})
+    # Always use forward slashes — works on Windows, Mac, and Linux
+    rel_path = "config/keys/" + safe_name
+    return jsonify({"filename": safe_name, "path": rel_path})
+
+
+# ----------------------------------------------------------------------------
+# Auto-provision endpoints
+# ----------------------------------------------------------------------------
+
+@app.route("/config/purge", methods=["POST"])
+@_require_not_server_mode
+def config_purge():
+    """Remove all provisioned keys and .env files, then clear matching env vars from memory."""
+    import shutil
+    removed = []
+
+    # Clear key files
+    if os.path.isdir(_KEYS_DIR):
+        shutil.rmtree(_KEYS_DIR)
+        os.makedirs(_KEYS_DIR, exist_ok=True)
+        removed.append("keys")
+
+    # Remove .env and any stale .env.TEMP
+    for env_file in [_ENV_PATH, _ENV_PATH + ".TEMP"]:
+        if os.path.isfile(env_file):
+            os.remove(env_file)
+            removed.append(os.path.basename(env_file))
+
+    # Clear all credential-related env vars from the running process
+    prefixes_to_clear = [
+        "BIN_LOOKUP_", "PLACES_", "EASY_SAVINGS_", "CONSUMER_CLARITY_",
+        "PRICELESS_CITIES_", "TRANSACTION_NOTIFICATIONS_", "CONSENT_MANAGEMENT_",
+        "OFFERS_FOR_PUBLISHERS_", "OFFERS_MERCHANT_CONTENT_", "BENEFITS_ELIGIBILITY_",
+        "BENEFITS_CONTENT_ELIGIBILITY_", "OPEN_FINANCE_",
+        # Legacy prefixes
+        "BINLOOKUP_", "CLARITY_", "EASYSAVINGS_", "PRICELESS_", "TXNOTIFY_",
+        "CONSENT_", "OFPUB_", "OFMC_", "ELIGIBILITY_", "BCES_", "OFIN_",
+    ]
+    cleared = []
+    for key in list(os.environ.keys()):
+        if any(key.startswith(p) for p in prefixes_to_clear):
+            del os.environ[key]
+            cleared.append(key)
+
+    return jsonify({"removed": removed, "env_vars_cleared": len(cleared)})
+
+
+_provision_jobs: dict = {}
+
+
+def _tool_setup_command() -> str:
+    """Return the user-facing command that prepares the key automation tool."""
+    return "run.bat" if os.name == "nt" else "./run.sh"
+
+
+def _provisioner_python(tool_dir: str) -> str:
+    """Return the platform-specific key automation venv Python path."""
+    if os.name == "nt":
+        return os.path.join(tool_dir, ".venv", "Scripts", "python.exe")
+    return os.path.join(tool_dir, ".venv", "bin", "python")
+
+
+def _provisioner_setup_error(tool_dir: str) -> str | None:
+    """Return a setup error if the key automation tool is missing/incomplete."""
+    python_bin = _provisioner_python(tool_dir)
+    setup_cmd = _tool_setup_command()
+    if not os.path.isfile(python_bin):
+        return (
+            "Mastercard key automation is not set up. "
+            f"Run `{setup_cmd}` from the repo root, then try provisioning again."
+        )
+
+    main_path = os.path.join(tool_dir, "app", "main.py")
+    if not os.path.isfile(main_path):
+        return (
+            "Mastercard key automation files are missing. "
+            f"Run `{setup_cmd}` from the repo root, then try provisioning again."
+        )
+
+    try:
+        subprocess.run(
+            [
+                python_bin,
+                "-c",
+                "import cryptography, loguru, playwright, typer, yaml",
+            ],
+            cwd=tool_dir,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=10,
+            check=True,
+        )
+    except Exception:
+        return (
+            "Mastercard key automation dependencies are incomplete. "
+            f"Run `{setup_cmd}` from the repo root so the tool venv can be repaired, "
+            "then try provisioning again."
+        )
+    return None
+
+
+def _build_provision_catalog() -> list[dict]:
+    """Return canonical API metadata for the auto-provisioning UI."""
+    from apis.catalog import DISABLED_API_IDS, iter_ordered
+
+    apis = api_registry.manifests()
+    by_id = {a.get("id"): a for a in apis}
+    catalog: list[dict] = []
+    for entry in iter_ordered():
+        api_id = entry.id
+        if api_id in DISABLED_API_IDS:
+            continue
+        api = by_id.get(api_id, {})
+        note = entry.provision_note or ""
+        # consent_management is provisioned as part of the Transaction
+        # Notifications project — surface a note on the TxNotify entry.
+        if api_id == "transaction_notifications":
+            note = (
+                (note + " " if note else "") +
+                "Consent Management is automatically added to this project — "
+                "both APIs share the same signing key."
+            )
+        catalog.append({
+            "id": api_id,
+            "legacy_id": entry.legacy_id,
+            "name": api.get("name") or entry.display_name,
+            "configured": bool(api.get("configured")),
+            "docs_url": entry.docs_url,
+            "requires_owner_approval": bool(note),
+            "provision_note": note,
+            "auto_provisionable": bool(entry.auto_provisionable) and api_id != "consent_management",
+            "manual_onboarding_url": entry.manual_onboarding_url or "",
+            "disabled_in_non_us": _is_non_us_blocked_api(api_id),
+            "disabled_reason": _NON_US_DISABLED_HINT if _is_non_us_blocked_api(api_id) else "",
+        })
+    return catalog
+
+
+@app.route("/provision/catalog")
+@_require_not_server_mode
+def provision_catalog():
+    """Return canonical API metadata used by the auto-provisioning modal."""
+    resp = jsonify({"apis": _build_provision_catalog()})
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
+@app.route("/provision/status")
+@_require_not_server_mode
+def provision_status():
+    has_env = os.path.isfile(_ENV_PATH)
+    apis = api_registry.manifests()
+    configured = sum(1 for a in apis if a.get("configured"))
+    needs_setup = not has_env or configured == 0
+    resp = jsonify({"needs_setup": needs_setup, "configured": configured, "total": len(apis), "apis": apis})
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
+@app.route("/provision/start", methods=["POST"])
+@_require_not_server_mode
+def provision_start():
+    body = request.get_json(silent=True) or {}
+    selected_apis = body.get("apis", [])
+    password = body.get("password", "foobar!!")
+    if not selected_apis:
+        return jsonify({"error": "No APIs selected"}), 400
+    if _non_us_mode_enabled() and _OPEN_FINANCE_US_API_ID in selected_apis:
+        return _non_us_forbidden_response()
+
+    # Allow the caller (e.g. tests/run.py in a clean run) to override the tool
+    # directory so the cloned temp server can use the original repo's .venv
+    # rather than failing because the clone doesn't have a .venv installed.
+    _default_tool_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools", "mcd-key-automation")
+    override_tool_dir = (body.get("tool_dir") or "").strip()
+    if override_tool_dir and os.path.isdir(override_tool_dir):
+        tool_dir = os.path.normpath(os.path.abspath(override_tool_dir))
+    else:
+        tool_dir = _default_tool_dir
+
+    setup_error = _provisioner_setup_error(tool_dir)
+    if setup_error:
+        return jsonify({"error": setup_error, "setup_required": True}), 503
+    python_bin = _provisioner_python(tool_dir)
+
+    # transaction_notifications and consent_management must live in the
+    # same Mastercard project so they share one signing key.
+    # Build projects, merging consent_management into txnotify's project.
+    project_lines: list[str] = []
+    for api in selected_apis:
+        if api == "consent_management":
+            continue  # handled by transaction_notifications entry below
+        if api == "transaction_notifications":
+            project_lines.append(
+                f"  - name: {api}\n    apis: [{api}, consent_management]"
+            )
+        else:
+            project_lines.append(f"  - name: {api}\n    apis: [{api}]")
+    projects_yaml = "\n".join(project_lines)
+    project_prefix = body.get("project_prefix", "SS")
+    cfg_text = f"""environment: sandbox
+organization: mastercard
+login_url: https://developer.mastercard.com/account/log-in
+dashboard_url_pattern: "**/dashboard**"
+key_password: "{password}"
+project_prefix: "{project_prefix}"
+projects:
+{projects_yaml}
+"""
+    import tempfile
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        f.write(cfg_text)
+        cfg_path = f.name
+
+    job_id = str(uuid.uuid4())[:8]
+    q = queue.Queue()
+    _provision_jobs[job_id] = {"queue": q, "done": False, "proc": None}
+
+    # Remove any stale zip so we only import a zip produced by this run
+    zip_path = os.path.join(tool_dir, "output", "vima-config.zip")
+    try:
+        os.remove(zip_path)
+    except OSError:
+        pass
+
+    cmd = [python_bin, "-m", "app.main", "run", "-c", cfg_path]
+
+    def _import_from_zip() -> tuple[bool, str]:
+        """Import the current vima-config.zip into config/.env + config/keys/.
+
+        Returns (ok, message). Safe to call repeatedly — each invocation
+        re-merges the .env (idempotent for unchanged entries) and overwrites
+        key files for any APIs newly added to the zip.
+        """
+        if not os.path.isfile(zip_path):
+            return False, "no zip yet"
+        try:
+            import io as _io
+            import zipfile
+            with open(zip_path, "rb") as zf_file:
+                data = zf_file.read()
+            updated_apis: set[str] = set()
+            with zipfile.ZipFile(_io.BytesIO(data)) as zf:
+                names = zf.namelist()
+                norm = {n: n.replace("\\", "/") for n in names}
+                os.makedirs(_KEYS_DIR, exist_ok=True)
+                for orig, name in norm.items():
+                    if name == "config/.env":
+                        new_env_text = zf.read(orig).decode("utf-8")
+                        if os.path.isfile(_ENV_PATH):
+                            existing = open(_ENV_PATH, encoding="utf-8").read()
+                            env_text = _merge_env_text(existing, new_env_text)
+                        else:
+                            env_text = _merge_env_text("", new_env_text)
+                        _atomic_write_text(_ENV_PATH, env_text)
+                        load_dotenv(_ENV_PATH, override=True)
+                    elif name.startswith("config/keys/") and not name.endswith("/"):
+                        fname = name.split("/")[-1]
+                        ext = os.path.splitext(fname)[1].lower()
+                        if ext in (".p12", ".pkcs12", ".pem", ".key"):
+                            dest = os.path.join(_KEYS_DIR, fname)
+                            _atomic_write_bytes(dest, zf.read(orig))
+                            updated_apis.add(os.path.splitext(fname)[0])
+            return True, ", ".join(sorted(updated_apis)) or "ok"
+        except Exception as exc:
+            return False, str(exc)
+
+    def _run():
+        rc = None
+        launched = False
+        try:
+            proc = subprocess.Popen(
+                cmd,
+                cwd=tool_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+            )
+            launched = True
+            _provision_jobs[job_id]["proc"] = proc
+            for line in proc.stdout:
+                stripped = line.rstrip()
+                # The orchestrator emits this marker after each successful
+                # API so we can update config/.env + config/keys/
+                # incrementally rather than waiting for the whole run.
+                if stripped == "__VIMA_ZIP_READY__":
+                    ok, info = _import_from_zip()
+                    if ok:
+                        q.put(f"💾  Updated .env (apis on disk: {info})")
+                    else:
+                        q.put(f"⚠️  Incremental .env update skipped: {info}")
+                    continue
+                # The provisioner learned a working strategy that differs
+                # from the declared one — surface it so the user can promote
+                # it into providers/mastercard/api_config.py.
+                if stripped.startswith("__VIMA_LEARNED__"):
+                    q.put(f"🧠  Learned: {stripped[len('__VIMA_LEARNED__ '):]} "
+                          f"(see tools/mcd-key-automation/learned/ to promote)")
+                    continue
+                # All provisioning strategies failed — surface the report
+                # path so the user can open the JSON and the screenshot.
+                if stripped.startswith("__VIMA_PROVISION_REPORT__"):
+                    q.put(f"📄  Failure report written: "
+                          f"{stripped[len('__VIMA_PROVISION_REPORT__ '):]}")
+                    continue
+                q.put(stripped)
+            proc.wait()
+            rc = proc.returncode
+        except Exception as exc:
+            q.put(f"ERROR launching provisioner: {exc}")
+
+        if rc is not None and rc != 0:
+            q.put(f"ERROR: provisioner exited with code {rc}")
+
+        # If the provisioner subprocess didn't produce a zip (e.g. build_vima_config_zip
+        # raised a non-fatal exception inside the subprocess), fall back to building it
+        # directly from the Flask process so we still get a .env on Windows.
+        if launched and not os.path.isfile(zip_path):
+            q.put("ℹ️  vima-config.zip not produced by provisioner — attempting direct build…")
+            try:
+                import importlib.util as _ilu
+                from pathlib import Path as _Path
+                _ec_file = os.path.join(tool_dir, "export_vima_config.py")
+                _spec = _ilu.spec_from_file_location("export_vima_config", _ec_file)
+                _mod = _ilu.module_from_spec(_spec)
+                _spec.loader.exec_module(_mod)
+                _norm_dir = _Path(tool_dir) / "temp" / "normalized"
+                os.makedirs(os.path.join(tool_dir, "output"), exist_ok=True)
+                _result = _mod.build_vima_config_zip(_norm_dir, password, _Path(zip_path))
+                _included = len(_result.get("apis", []))
+                _skipped = _result.get("skipped", [])
+                q.put(f"Direct build: {_included} API(s) included" + (f", skipped: {_skipped}" if _skipped else ""))
+                if _included == 0:
+                    try:
+                        os.remove(zip_path)
+                    except OSError:
+                        pass
+                    q.put("__PROVISION_FAILED__:No credentials were collected. Run the key automation setup with "
+                          f"`{_tool_setup_command()}`, then try provisioning again.")
+            except Exception as _fb_exc:
+                q.put(f"Direct build also failed: {_fb_exc}")
+                q.put(f"__PROVISION_FAILED__:Could not build vima-config.zip: {_fb_exc}")
+        elif not launched:
+            q.put("__PROVISION_FAILED__:Provisioner could not be launched.")
+
+        # Final reconciliation — idempotent. Catches anything the
+        # incremental imports missed (e.g. OAuth2 / OFin credentials that
+        # only finalize at the very end).
+        if os.path.isfile(zip_path):
+            ok, info = _import_from_zip()
+            if ok:
+                q.put("__IMPORT_COMPLETE__")
+            else:
+                q.put(f"__IMPORT_ERROR__: {info}")
+        else:
+            q.put("__NO_ZIP__")
+
+        _provision_jobs[job_id]["done"] = True
+        q.put(None)
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    return jsonify({"job_id": job_id})
+
+
+@app.route("/provision/stream/<job_id>")
+@_require_not_server_mode
+def provision_stream(job_id):
+    job = _provision_jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Unknown job"}), 404
+
+    _SENTINELS = {"__DONE__", "__IMPORT_COMPLETE__", "__NO_ZIP__"}
+
+    def generate():
+        q = job["queue"]
+        while True:
+            try:
+                line = q.get(timeout=60)
+            except queue.Empty:
+                yield "data: \n\n"
+                continue
+            if line is None:
+                yield "data: __DONE__\n\n"
+                yield ": end\n\n"  # flush keepalive so __DONE__ clears browser buffer
+                break
+            # Send sentinel control strings raw; JSON-encode all other log lines
+            if (
+                line in _SENTINELS
+                or (isinstance(line, str) and line.startswith("__IMPORT_ERROR__"))
+                or (isinstance(line, str) and line.startswith("__PROVISION_FAILED__:"))
+            ):
+                yield f"data: {line}\n\n"
+            else:
+                yield f"data: {json.dumps(line)}\n\n"
+
+    return app.response_class(
+        generate(),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 if __name__ == "__main__":
     _bin_try_load_from_disk()
-    port = int(os.environ.get("PORT", "9021"))
+    port = _RUNTIME_FLAGS.port
+    host = _RUNTIME_FLAGS.host
     apis = api_registry.manifests()
     print("\n" + "=" * 60)
-    print("Vima — Mastercard API explorer")
+    print("Solution Studio")
     print("=" * 60)
     for a in apis:
-        flag = "✓" if a.get("configured") else "✗"
+        flag = "+" if a.get("configured") else "-"
         print(f"  {flag} {a['name']:<20} ({len(a['operations'])} operations)")
-    print(f"\nListening on http://0.0.0.0:{port}")
+    if _server_mode_enabled() or _non_us_mode_enabled():
+        print("\nRuntime mode:")
+        print(f"  - server mode: {'ON' if _server_mode_enabled() else 'OFF'}")
+        print(f"  - non-us mode: {'ON' if _non_us_mode_enabled() else 'OFF'}")
+    print(f"\nListening on http://{host}:{port}")
     print("=" * 60 + "\n")
-    app.run(host="0.0.0.0", port=port, debug=True, use_reloader=False)
+    app.run(host=host, port=port, debug=True, use_reloader=False)  # nosec B201 — local dev server only

@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vima.local/docs/agent-onboarding/api-onboarding-spec.schema.json",
+  "title": "Vima API Onboarding Spec",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["spec_version", "generated_from", "api_definitions"],
+  "properties": {
+    "spec_version": { "type": "string", "minLength": 1 },
+    "generated_from": { "type": "string", "minLength": 1 },
+    "api_definitions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/ApiDefinition" }
+    }
+  },
+  "$defs": {
+    "ApiDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identity",
+        "auth",
+        "provisioning",
+        "implementation",
+        "ux",
+        "validation",
+        "ownership"
+      ],
+      "properties": {
+        "identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "legacy_id", "display_name", "env_prefix", "portal_slug", "docs_url"],
+          "properties": {
+            "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+            "legacy_id": { "type": ["string", "null"] },
+            "display_name": { "type": "string", "minLength": 1 },
+            "env_prefix": { "type": "string", "pattern": "^[A-Z0-9_]+$" },
+            "portal_slug": { "type": "string", "minLength": 1 },
+            "docs_url": { "type": "string", "minLength": 1 }
+          }
+        },
+        "auth": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["auth_type", "required_env_keys", "optional_env_keys", "key_file_types"],
+          "properties": {
+            "auth_type": { "type": "string", "enum": ["oauth1", "oauth1_enc", "oauth2"] },
+            "required_env_keys": { "type": "array", "items": { "type": "string" } },
+            "optional_env_keys": { "type": "array", "items": { "type": "string" } },
+            "key_file_types": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "provisioning": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "provision_type",
+            "region",
+            "api_selection",
+            "skip_step3",
+            "manual_approval_required",
+            "expected_activation_delay_minutes"
+          ],
+          "properties": {
+            "provision_type": {
+              "type": "string",
+              "enum": [
+                "oauth1_standard",
+                "oauth1_skip_step3",
+                "oauth1_enc_key",
+                "oauth2_region",
+                "priceless",
+                "playbook",
+                "manual_onboarding",
+                "match_inline"
+              ]
+            },
+            "region": { "type": ["string", "null"] },
+            "api_selection": { "type": ["string", "null"] },
+            "skip_step3": { "type": "boolean" },
+            "manual_approval_required": { "type": "boolean" },
+            "expected_activation_delay_minutes": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "implementation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "module_path",
+            "manifest_symbol",
+            "execute_symbol",
+            "simulator_handler_path",
+            "simulator_fixture_path"
+          ],
+          "properties": {
+            "module_path": { "type": "string", "minLength": 1 },
+            "manifest_symbol": { "type": "string", "const": "MANIFEST" },
+            "execute_symbol": { "type": "string", "const": "execute" },
+            "simulator_handler_path": { "type": "string", "minLength": 1 },
+            "simulator_fixture_path": { "type": "string", "minLength": 1 }
+          }
+        },
+        "ux": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["categories", "how_to_summary", "how_to_required_topics", "docs_button_label"],
+          "properties": {
+            "categories": { "type": "array", "items": { "type": "string" } },
+            "how_to_summary": { "type": "string", "minLength": 1 },
+            "how_to_required_topics": { "type": "array", "items": { "type": "string" } },
+            "docs_button_label": { "type": "string", "minLength": 1 }
+          }
+        },
+        "validation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "primary_operation_id",
+            "expected_artifacts",
+            "required_endpoints",
+            "smoke_test_commands",
+            "success_signals"
+          ],
+          "properties": {
+            "primary_operation_id": { "type": "string", "minLength": 1 },
+            "expected_artifacts": { "type": "array", "items": { "type": "string" } },
+            "required_endpoints": { "type": "array", "items": { "type": "string" } },
+            "smoke_test_commands": { "type": "array", "items": { "type": "string" } },
+            "success_signals": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "ownership": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["team", "maintainer", "last_verified_date", "verification_notes"],
+          "properties": {
+            "team": { "type": "string", "minLength": 1 },
+            "maintainer": { "type": "string", "minLength": 1 },
+            "last_verified_date": { "type": "string", "minLength": 1 },
+            "verification_notes": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

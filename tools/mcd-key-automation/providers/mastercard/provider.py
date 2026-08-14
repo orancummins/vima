@@ -1,0 +1,89 @@
+"""Mastercard Developers provider."""
+from __future__ import annotations
+
+from datetime import datetime
+from pathlib import Path
+
+from loguru import logger
+from playwright.async_api import Page
+
+from app.alias_engine import make_alias, make_filename
+from app.models import AppConfig, DownloadedArtifact, ProjectSpec
+from app.validators import sha256_file, classify_extension
+from providers.base import DeveloperPortalProvider
+from providers.mastercard.pages.dashboard_page import DashboardPage
+from providers.mastercard.pages.login_page import LoginPage
+from providers.mastercard.workflows.project_workflow import ensure_project_with_api
+
+
+class MastercardProvider(DeveloperPortalProvider):
+    name = "mastercard"
+
+    def __init__(self, page: Page, config: AppConfig, workspace: Path, *, headless: bool = False) -> None:
+        super().__init__(page, config, workspace, headless=headless)
+        self.login_page = LoginPage(page, login_url=config.login_url)
+        self.dashboard = DashboardPage(page)
+        # Single timestamp shared across all projects in this run.
+        # Used to construct unique portal project names ({prefix}-<name>-<ts>).
+        # prefix comes from AppConfig.project_prefix ("SS" for app, "SST" for tests).
+        self.run_timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    async def login(self) -> None:
+        await self.login_page.goto()
+        await self.login_page.wait_for_manual_auth(headless=self.headless)
+        logger.info("Authenticated session detected.")
+
+    async def ensure_project(self, project: ProjectSpec) -> None:
+        # Project creation is now done per-API via ensure_project_with_api.
+        pass
+
+    async def attach_api(self, project: ProjectSpec, api: str) -> None:
+        # API is attached during project creation (fast-path URL includes ?services=).
+        pass
+
+    async def download_keys(self, project: ProjectSpec, api: str) -> list[DownloadedArtifact]:
+        await self.dashboard.goto()
+        raw_files = await ensure_project_with_api(
+            self.dashboard, project, api, self.workspace, self.config,
+            run_timestamp=self.run_timestamp
+        )
+
+        artifacts: list[DownloadedArtifact] = []
+        for raw_file in raw_files:
+            # Detect enc vs signing from the filename hint embedded by the workflow layer.
+            # enc artifacts are named with "-enc" in the stem; everything else is "signing".
+            raw_stem = raw_file.stem.lower()
+            if "-enc" in raw_stem or raw_stem.endswith("enc"):
+                purpose = "enc"
+            else:
+                purpose = "signing"
+            alias = make_alias(
+                organization=self.config.organization,
+                environment=self.config.environment,
+                project=project.name,
+                api=api,
+                purpose=purpose,
+            )
+            # JSON credentials get a distinct suffix so they don't collide with the key file.
+            if raw_file.suffix == ".json":
+                alias = f"{alias}-credentials"
+            ext = raw_file.suffix.lstrip(".")
+            filename = make_filename(alias, ext)
+            dest = self.workspace / "normalized" / filename
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            raw_file.replace(dest)  # cross-platform: replaces existing file on Windows too
+
+            artifact = DownloadedArtifact(
+                alias=alias,
+                filename=filename,
+                path=str(dest),
+                sha256=sha256_file(dest),
+                kind=classify_extension(filename),
+                project=project.name,
+                api=api,
+            )
+            logger.info("Artifact: {} ({})", artifact.filename, artifact.sha256[:12])
+            artifacts.append(artifact)
+
+        return artifacts
+

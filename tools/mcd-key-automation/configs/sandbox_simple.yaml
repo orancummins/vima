@@ -1,0 +1,22 @@
+environment: sandbox
+projects:
+  - name: mastercard-sbx-binlookup
+    apis: [binlookup]
+  - name: TestEasySavings
+    apis: [easysavings]
+  - name: places
+    apis: [places]
+  - name: clarity
+    apis: [clarity]
+  - name: txnotify
+    apis: [txnotify]
+  - name: consent
+    apis: [consent]
+  - name: ofpub
+    apis: [ofpub]
+  - name: ofmc
+    apis: [ofmc]
+  - name: eligibility
+    apis: [eligibility]
+  - name: bces
+    apis: [bces]

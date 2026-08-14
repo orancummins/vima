@@ -1,0 +1,434 @@
+/* ==========================================================================
+   Config Modal
+   ========================================================================== */
+
+/* Trigger button in the header */
+.cfg-trigger-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #ccc; cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  margin-left: 10px; flex-shrink: 0;
+}
+.cfg-trigger-btn:hover { background: rgba(255,255,255,0.14); color: white; border-color: rgba(255,255,255,0.22); }
+.cfg-trigger-btn:disabled,
+.cfg-trigger-btn--locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.cfg-trigger-btn:disabled:hover,
+.cfg-trigger-btn--locked:hover {
+  background: rgba(255,255,255,0.08);
+  color: #ccc;
+  border-color: rgba(255,255,255,0.12);
+}
+
+#global-edit-btn {
+  animation: edit-btn-pulse 2.4s ease-in-out infinite;
+}
+/* Keep the button's slot in the header even when it's hidden, so the
+   centered `.top-tabs` doesn't shift each time the user enters/leaves
+   the Use Cases tab. Overrides the global `.hidden { display: none }`. */
+#global-edit-btn.hidden {
+  display: inline-flex !important;
+  visibility: hidden;
+  pointer-events: none;
+  animation: none;
+}
+@keyframes edit-btn-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,95,0,0); border-color: rgba(255,255,255,0.12); }
+  50%       { box-shadow: 0 0 0 5px rgba(255,95,0,0.22); border-color: rgba(255,95,0,0.55); }
+}
+
+/* Modal overlay */
+.cfg-modal { position: fixed; inset: 0; z-index: 1200; display: flex; align-items: center; justify-content: center; }
+.cfg-modal.cfg-hidden { display: none; }
+.cfg-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(2px);
+}
+
+/* Dialog panel */
+.cfg-panel {
+  position: relative; z-index: 1;
+  background: white; border-radius: 14px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.22), 0 4px 16px rgba(0,0,0,0.10);
+  width: min(760px, 94vw); max-height: 86vh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+/* Panel header */
+.cfg-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px 16px;
+  border-bottom: 1px solid var(--line);
+  background: #fafafa;
+  flex-shrink: 0;
+}
+.cfg-panel-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 15px; font-weight: 700; color: var(--ink);
+}
+.cfg-header-right { display: flex; align-items: center; gap: 10px; }
+
+.cfg-mc-link {
+  font-size: 12px; font-weight: 600; color: var(--mc-orange);
+  text-decoration: none; padding: 5px 10px; border-radius: 6px;
+  border: 1px solid rgba(255,95,0,0.25); transition: background 0.15s;
+}
+.cfg-mc-link:hover { background: rgba(255,95,0,0.06); }
+
+.cfg-lock-btn, .cfg-close-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 7px;
+  border: 1px solid var(--line); background: white;
+  color: var(--muted); cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.cfg-lock-btn:hover { color: var(--ink); border-color: #ccc; }
+.cfg-lock-btn.unlocked { color: var(--mc-orange); border-color: rgba(255,95,0,0.35); background: rgba(255,95,0,0.05); }
+.cfg-close-btn:hover { color: var(--ink); border-color: #ccc; }
+.cfg-icon-btn {
+  display: flex; align-items: center; gap: 5px;
+  height: 30px; padding: 0 10px; border-radius: 7px;
+  border: 1px solid var(--line); background: white;
+  color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 600;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.cfg-icon-btn:hover { color: var(--ink); border-color: #ccc; }
+.cfg-icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.cfg-autogen-btn {
+  display: flex; align-items: center; gap: 5px;
+  height: 30px; padding: 0 12px; border-radius: 7px;
+  border: 1px solid rgba(255,95,0,0.4); background: rgba(255,95,0,0.07);
+  color: var(--mc-orange); cursor: pointer; font-size: 12px; font-weight: 700;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.cfg-autogen-btn:hover { background: rgba(255,95,0,0.14); border-color: var(--mc-orange); }
+
+/* Auto-generate confirmation banner */
+.cfg-autogen-banner {
+  margin: 0 16px 12px;
+  border: 1px solid rgba(255,95,0,0.3);
+  border-radius: 10px;
+  background: rgba(255,95,0,0.04);
+  padding: 14px 16px;
+  display: flex; gap: 12px; align-items: flex-start;
+  animation: cfg-slide-down 0.18s ease;
+}
+@keyframes cfg-slide-down {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.cfg-autogen-banner-icon { color: var(--mc-orange); flex-shrink: 0; padding-top: 2px; }
+.cfg-autogen-banner-body { flex: 1; }
+.cfg-autogen-banner-body strong { font-size: 13px; color: var(--ink); }
+.cfg-autogen-banner-body p { font-size: 12px; color: var(--muted); margin: 4px 0 0; line-height: 1.5; }
+.cfg-autogen-banner-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+
+/* Panel body */
+.cfg-panel-body {
+  flex: 1; overflow-y: auto; padding: 6px 0 10px;
+}
+.cfg-loading { padding: 32px; text-align: center; color: var(--muted); font-size: 14px; }
+
+/* Group */
+.cfg-group {
+  padding: 18px 22px 6px;
+  border-bottom: 1px solid var(--line);
+}
+.cfg-group:last-child { border-bottom: none; }
+.cfg-group-header {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.cfg-group-title { font-size: 13px; font-weight: 700; color: var(--ink); }
+.cfg-group-subtitle { font-size: 11px; color: var(--muted); margin-left: 6px; }
+.cfg-group-docs {
+  font-size: 11px; font-weight: 600; color: var(--mc-orange);
+  text-decoration: none;
+}
+.cfg-group-docs:hover { text-decoration: underline; }
+
+/* Field rows */
+.cfg-field {
+  display: grid; grid-template-columns: 148px 1fr 28px;
+  align-items: center; gap: 10px;
+  padding: 6px 0;
+  min-height: 40px;
+}
+.cfg-field-label {
+  font-size: 12px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.cfg-field-val {
+  font-size: 13px; color: var(--ink);
+  font-family: var(--mono); word-break: break-all;
+}
+.cfg-field-val.empty { color: var(--muted); font-family: inherit; font-style: italic; }
+.cfg-field-val.masked { letter-spacing: 2px; }
+
+/* Editable inputs */
+.cfg-input {
+  width: 100%; padding: 7px 10px; border-radius: 7px;
+  border: 1px solid var(--line); background: var(--bg);
+  font-family: var(--mono); font-size: 13px; color: var(--ink);
+  outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+}
+.cfg-input:focus { border-color: var(--mc-orange); box-shadow: 0 0 0 3px rgba(255,95,0,0.1); }
+
+/* File field */
+.cfg-file-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+.cfg-file-name {
+  flex: 1; font-size: 12px; color: var(--muted); font-family: var(--mono);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cfg-file-name.set { color: var(--ok); }
+.cfg-upload-btn {
+  padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--line); background: white; color: var(--ink);
+  cursor: pointer; white-space: nowrap; transition: background 0.15s;
+}
+.cfg-upload-btn:hover { background: var(--bg); }
+.cfg-file-input { display: none; }
+
+/* Info icon */
+.cfg-info-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 1px solid var(--line); background: white; color: var(--muted);
+  cursor: pointer; font-size: 11px; font-weight: 700; line-height: 1;
+  flex-shrink: 0; transition: color 0.15s, border-color 0.15s;
+  font-style: italic; font-family: Georgia, serif;
+}
+.cfg-info-btn:hover { color: var(--mc-orange); border-color: rgba(255,95,0,0.4); }
+
+/* Tooltip */
+.cfg-tooltip {
+  position: fixed; z-index: 1300;
+  max-width: 280px; padding: 10px 13px;
+  background: var(--ink); color: #e8e8e8;
+  font-size: 12px; line-height: 1.55;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+.cfg-tooltip.cfg-hidden { display: none; }
+
+/* Panel footer */
+.cfg-panel-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 22px;
+  border-top: 1px solid var(--line);
+  background: #fafafa;
+  flex-shrink: 0;
+}
+.cfg-panel-footer.cfg-hidden { display: none; }
+.cfg-restart-note { font-size: 11px; color: var(--muted); }
+.cfg-footer-actions { display: flex; gap: 8px; }
+
+.cfg-save-btn {
+  background: var(--mc-orange); color: white; border: none;
+  padding: 8px 20px; border-radius: 8px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: opacity 0.15s;
+}
+.cfg-save-btn:hover { opacity: 0.88; }
+.cfg-save-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Saved flash */
+@keyframes cfgFlash {
+  0%   { background: rgba(31,157,85,0.12); }
+  100% { background: transparent; }
+}
+.cfg-field.saved { animation: cfgFlash 1s ease forwards; }
+
+/* --------------------------------------------------------------------
+   API Config UI — dark theme (matches the API of the Day modal).
+   These rules override the light defaults above with the same warm
+   black/orange palette used by `.aotd-modal`. Kept as a single block
+   so the light scheme remains the source of truth for layout.
+   -------------------------------------------------------------------- */
+.cfg-overlay {
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(3px);
+}
+.cfg-panel {
+  background: linear-gradient(170deg, #161310 0%, #0f0f0f 60%);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 150, 60, 0.22);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 150, 60, 0.08),
+    inset 0 1px 0 rgba(255, 200, 140, 0.06);
+}
+.cfg-panel-header {
+  background: linear-gradient(180deg, rgba(255, 95, 0, 0.10) 0%, rgba(255, 95, 0, 0) 100%);
+  border-bottom: 1px solid rgba(255, 150, 60, 0.18);
+}
+.cfg-panel-title { color: #fff; }
+.cfg-mc-link {
+  color: #ffb070;
+  border-color: rgba(255, 150, 60, 0.45);
+}
+.cfg-mc-link:hover { background: rgba(255, 95, 0, 0.14); color: #ffd0a8; }
+
+.cfg-lock-btn, .cfg-close-btn, .cfg-icon-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.65);
+}
+.cfg-lock-btn:hover, .cfg-close-btn:hover, .cfg-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 150, 60, 0.45);
+  color: #fff;
+}
+.cfg-lock-btn.unlocked {
+  color: #ffb070;
+  border-color: rgba(255, 95, 0, 0.55);
+  background: rgba(255, 95, 0, 0.14);
+}
+
+.cfg-autogen-btn {
+  background: rgba(255, 95, 0, 0.16);
+  border-color: rgba(255, 95, 0, 0.55);
+  color: #ffb070;
+}
+.cfg-autogen-btn:hover {
+  background: rgba(255, 95, 0, 0.28);
+  border-color: #ff8a3a;
+  color: #fff;
+}
+
+.cfg-autogen-banner {
+  border-color: rgba(255, 95, 0, 0.4);
+  background: rgba(255, 95, 0, 0.08);
+}
+.cfg-autogen-banner-icon { color: #ff8a3a; }
+.cfg-autogen-banner-body strong { color: #fff; }
+.cfg-autogen-banner-body p { color: rgba(255, 220, 180, 0.75); }
+
+.cfg-loading { color: rgba(255, 255, 255, 0.55); }
+
+.cfg-group { border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.cfg-group-title { color: #fff; }
+.cfg-group-subtitle { color: rgba(255, 255, 255, 0.55); }
+.cfg-group-docs { color: #ffb070; }
+
+.cfg-field-label {
+  color: rgba(255, 180, 100, 0.85);
+}
+.cfg-field-val { color: rgba(255, 255, 255, 0.9); }
+.cfg-field-val.empty { color: rgba(255, 255, 255, 0.4); }
+
+.cfg-input {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.cfg-input::placeholder { color: rgba(255, 255, 255, 0.35); }
+.cfg-input:focus {
+  border-color: #ff8a3a;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 3px rgba(255, 95, 0, 0.18);
+}
+
+.cfg-file-name { color: rgba(255, 255, 255, 0.6); }
+.cfg-file-name.set { color: #5dd49a; }
+.cfg-upload-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.85);
+}
+.cfg-upload-btn:hover {
+  background: rgba(255, 95, 0, 0.16);
+  border-color: rgba(255, 150, 60, 0.55);
+  color: #fff;
+}
+
+.cfg-info-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.55);
+}
+.cfg-info-btn:hover {
+  color: #ffb070;
+  border-color: rgba(255, 150, 60, 0.55);
+  background: rgba(255, 95, 0, 0.10);
+}
+
+.cfg-tooltip {
+  background: #0a0808;
+  color: #ffe0c8;
+  border: 1px solid rgba(255, 150, 60, 0.25);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.6);
+}
+
+.cfg-panel-footer {
+  background: linear-gradient(0deg, rgba(255, 95, 0, 0.06) 0%, rgba(255, 95, 0, 0) 100%);
+  border-top: 1px solid rgba(255, 150, 60, 0.18);
+}
+.cfg-restart-note { color: rgba(255, 255, 255, 0.55); }
+
+.cfg-save-btn {
+  background: linear-gradient(180deg, #ff8a3a 0%, #ff6a00 100%);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(255, 95, 0, 0.35);
+}
+.cfg-save-btn:hover { opacity: 1; filter: brightness(1.08); }
+.cfg-save-btn:disabled {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.35);
+  box-shadow: none;
+}
+
+/* Slightly tweak the saved flash so it reads on the dark surface. */
+@keyframes cfgFlashDark {
+  0%   { background: rgba(93, 212, 154, 0.16); }
+  100% { background: transparent; }
+}
+.cfg-panel .cfg-field.saved { animation: cfgFlashDark 1s ease forwards; }
+
+/* Dark scrollbar inside the API Config panel \u2014 same idiom as the
+   Snippets modal so all dark dialogs share the look. Firefox uses the
+   `scrollbar-*` properties; Chromium/Safari use the webkit pseudos. */
+.cfg-panel,
+.cfg-panel-body {
+  scrollbar-width: thin;
+  scrollbar-color: #2a1f17 transparent;
+}
+.cfg-panel::-webkit-scrollbar,
+.cfg-panel-body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.cfg-panel::-webkit-scrollbar-track,
+.cfg-panel-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cfg-panel::-webkit-scrollbar-thumb,
+.cfg-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 150, 60, 0.18);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.cfg-panel::-webkit-scrollbar-thumb:hover,
+.cfg-panel-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 150, 60, 0.4);
+  background-clip: padding-box;
+}
+.cfg-panel::-webkit-scrollbar-corner,
+.cfg-panel-body::-webkit-scrollbar-corner {
+  background: transparent;
+}
+

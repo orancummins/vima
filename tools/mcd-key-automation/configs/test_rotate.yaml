@@ -1,0 +1,12 @@
+environment: sandbox
+organization: mastercard
+
+login_url: https://developer.mastercard.com/account/log-in
+dashboard_url_pattern: "**/dashboard**"
+key_password: "foobar!!"
+
+# Test rotation on a single project (places has 8 keys - good test case)
+projects:
+  - name: places
+    description: Mastercard Locations / Places
+    apis: [places]

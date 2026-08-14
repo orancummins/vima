@@ -1,0 +1,40 @@
+environment: sandbox
+organization: mastercard
+
+login_url: https://developer.mastercard.com/account/log-in
+dashboard_url_pattern: "**/dashboard**"
+key_password: "foobar!!"
+
+projects:
+  - name: binlookup
+    apis: [binlookup]
+
+  - name: ofin
+    apis: [ofin]
+
+  - name: easysavings
+    apis: [easysavings]
+
+  - name: places
+    apis: [places]
+
+  - name: clarity
+    apis: [clarity]
+
+  - name: priceless
+    apis: [priceless]
+
+  - name: transaction_notifications
+    apis: [transaction_notifications, consent_management]
+
+  - name: ofpub
+    apis: [ofpub]
+
+  - name: ofmc
+    apis: [ofmc]
+
+  - name: eligibility
+    apis: [eligibility]
+
+  - name: bces
+    apis: [bces]

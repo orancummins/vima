@@ -1,0 +1,45 @@
+[project]
+name = "mcd-key-automation"
+version = "0.1.0"
+description = "Mastercard Developers automation platform: project creation, API enrollment, key provisioning and packaging."
+requires-python = ">=3.12"
+dependencies = [
+  "playwright>=1.44",
+  "pydantic>=2.7",
+  "pyyaml>=6.0",
+  "typer>=0.12",
+  "loguru>=0.7",
+  "cryptography>=42.0",
+  "requests>=2.28",
+  "anthropic>=0.40.0",
+  # Used by the MATCH provisioning playbook to inject OS-level mouse clicks
+  # (bypasses bot-detection that flags Playwright's synthetic CDP clicks).
+  # Cross-platform: Windows uses win32 APIs, macOS uses Quartz.
+  "pyautogui>=0.9.54",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-asyncio>=0.23",
+  "ruff>=0.4",
+]
+
+# NOTE: We intentionally do NOT declare a [project.scripts] entry. Doing so
+# would cause `pip install -e .` to generate a `mcd-key-automation.exe`
+# console-script shim in the venv's Scripts/ directory — corporate AV /
+# lockdown policies often block running unsigned generated .exe files.
+# Invoke the CLI directly via `python -m app.main <subcommand>` from this
+# directory. See requirements.txt for the install path used by addapi.bat /
+# addapi.sh / run.bat.
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*", "providers*", "browser*"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
