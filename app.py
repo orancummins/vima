@@ -2399,29 +2399,73 @@ def config_save_route():
 @app.route("/config/export", methods=["GET"])
 @_require_not_server_mode
 def config_export():
-    """Export config/keys + .env (with ANTHROPIC_API_KEY redacted) as a zip."""
+    """Export config/.env + all referenced keystore material as a zip.
+
+    Bundles the redacted .env, every file already under config/keys/, and any
+    keystore file referenced by a ``*_KEY_PATH`` entry in .env (which may live
+    at the project root). Referenced paths are rewritten to
+    ``config/keys/<name>`` so the bundle is self-contained and imports cleanly
+    on another machine.
+    """
     import io
     import re as _re
     import zipfile
 
+    _base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    env_text = ""
+    if os.path.isfile(_ENV_PATH):
+        with open(_ENV_PATH, encoding="utf-8") as fh:
+            env_text = fh.read()
+
+    # Collect keystore files referenced by *_KEY_PATH entries and rewrite the
+    # paths to a canonical config/keys/<name> location inside the bundle.
+    added_keys: dict[str, str] = {}  # source abspath -> zip basename
+
+    def _rewrite_key_path(match):
+        key = match.group(1)
+        raw_val = match.group(2).strip().strip('"').strip("'")
+        if not raw_val:
+            return match.group(0)
+        candidate = raw_val if os.path.isabs(raw_val) else os.path.join(_base_dir, raw_val)
+        if os.path.isfile(candidate):
+            base = os.path.basename(raw_val)
+            added_keys[os.path.abspath(candidate)] = base
+            return f"{key}=config/keys/{base}"
+        return match.group(0)
+
+    env_text = _re.sub(
+        r"(?m)^([A-Z0-9_]*_KEY_PATH)\s*=\s*(.*)$", _rewrite_key_path, env_text
+    )
+
+    # .env — redact ANTHROPIC_API_KEY
+    env_text = _re.sub(
+        r"(?m)^(ANTHROPIC_API_KEY\s*=\s*).*$",
+        r"\1YOUR_ANTHROPIC_API_KEY_HERE",
+        env_text,
+    )
+
     buf = io.BytesIO()
+    written_entries: set[str] = set()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        # .env — redact ANTHROPIC_API_KEY
-        if os.path.isfile(_ENV_PATH):
-            with open(_ENV_PATH, encoding="utf-8") as fh:
-                env_text = fh.read()
-            env_text = _re.sub(
-                r"(?m)^(ANTHROPIC_API_KEY\s*=\s*).*$",
-                r"\1YOUR_ANTHROPIC_API_KEY_HERE",
-                env_text,
-            )
+        if env_text:
             zf.writestr("config/.env", env_text)
-        # all key files — always use forward slashes in zip entries (cross-platform)
+        # all key files already under config/keys/ — always use forward slashes
+        # in zip entries (cross-platform)
         if os.path.isdir(_KEYS_DIR):
             for fname in os.listdir(_KEYS_DIR):
                 fpath = os.path.join(_KEYS_DIR, fname)
                 if os.path.isfile(fpath):
-                    zf.write(fpath, "config/keys/" + fname)
+                    entry = "config/keys/" + fname
+                    zf.write(fpath, entry)
+                    written_entries.add(entry)
+        # keystore files referenced by .env that live outside config/keys/
+        for src, base in added_keys.items():
+            entry = "config/keys/" + base
+            if entry in written_entries:
+                continue
+            zf.write(src, entry)
+            written_entries.add(entry)
 
     buf.seek(0)
     from flask import send_file

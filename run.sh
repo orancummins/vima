@@ -47,10 +47,22 @@ if [[ ! -f "$SCRIPT_DIR/config/.env" && -f "$SCRIPT_DIR/config/.env.example" ]];
   echo "Created config/.env from .env.example — open the app and fill in your credentials."
 fi
 
-# ── Install / sync dependencies ───────────────────────────────────────
+# ── Install / sync dependencies (only when requirements.txt changed) ──
 if [[ -f "$SCRIPT_DIR/requirements.txt" ]]; then
-  echo "Installing dependencies..."
-  python3 -m pip install -q -r "$SCRIPT_DIR/requirements.txt"
+  DEPS_MARKER="$VENV_DIR/.deps-installed"
+  REQ_HASH=$(sha256sum "$SCRIPT_DIR/requirements.txt" 2>/dev/null | awk '{print $1}')
+  if [[ -z "$REQ_HASH" ]]; then
+    REQ_HASH=$(shasum -a 256 "$SCRIPT_DIR/requirements.txt" 2>/dev/null | awk '{print $1}')
+  fi
+  STORED_HASH=""
+  [[ -f "$DEPS_MARKER" ]] && STORED_HASH=$(cat "$DEPS_MARKER")
+  if [[ -n "$REQ_HASH" && "$REQ_HASH" == "$STORED_HASH" ]]; then
+    echo "Dependencies already up to date, skipping install."
+  else
+    echo "Installing dependencies..."
+    python3 -m pip install -q -r "$SCRIPT_DIR/requirements.txt"
+    echo "$REQ_HASH" > "$DEPS_MARKER"
+  fi
 fi
 
 # ── Set up key-automation tool (once, on first run) ───────────────────
