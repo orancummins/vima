@@ -39,6 +39,9 @@ vima-config*
 cli/dist/
 cli/ofin/sdk/_vendor/*_client.py
 
+# Open Finance EU credentials bundle (keys + identifiers — never commit)
+ofin-eur/
+
 # Local-only docs / plans (not for commit)
 *.local.md
 

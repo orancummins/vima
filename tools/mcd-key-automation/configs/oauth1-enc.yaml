@@ -1,0 +1,14 @@
+environment: sandbox
+organization: mastercard
+key_password: "foobar!!"
+projects:
+  - name: consumer_clarity
+    apis: [consumer_clarity]
+  - name: offers_for_publishers
+    apis: [offers_for_publishers]
+  - name: benefits_eligibility
+    apis: [benefits_eligibility]
+  - name: benefits_content_eligibility
+    apis: [benefits_content_eligibility]
+  - name: flight_delay_pass
+    apis: [flight_delay_pass]

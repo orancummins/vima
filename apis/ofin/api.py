@@ -17,19 +17,25 @@ from .client import OpenFinanceClient
 # ---------------------------------------------------------------------------
 
 _client: Optional[OpenFinanceClient] = None
+_client_sig: Optional[tuple] = None
 
 
 def _get_client() -> Optional[OpenFinanceClient]:
-    global _client
-    if _client is not None:
-        return _client
+    global _client, _client_sig
     pid = os.environ.get("PARTNER_ID", "")
     psec = os.environ.get("PARTNER_SECRET", "")
     akey = os.environ.get("APP_KEY", "")
     base = os.environ.get("API_BASE_URL", "https://api.finicity.com")
     if not (pid and psec and akey) or pid == "your_partner_id_here":
+        _client = _client_sig = None
         return None
+    # Rebuild the cached client whenever any credential changes so a config
+    # save/import takes effect without a server restart.
+    sig = (pid, psec, akey, base)
+    if _client is not None and _client_sig == sig:
+        return _client
     _client = OpenFinanceClient(pid, psec, akey, base_url=base)
+    _client_sig = sig
     return _client
 
 

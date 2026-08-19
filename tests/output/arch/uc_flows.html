@@ -46,7 +46,6 @@ flowchart LR
     UC_findacard(["Find A Card"])
     UC_sonic(["Sonic Branding"])
     UC_testchat(["Test Chat"])
-    UC_the_wire(["The Wire"])
     UC_txnotify(["Transaction Notifications Live"])
 
     %% APIs (right side)
@@ -87,15 +86,12 @@ flowchart LR
     UC_findacard --> API_open_finance
     UC_findacard --> API_offers_for_publishers
     UC_sonic --> API_Mastercard_Brand_Centre
-    UC_the_wire --> API_open_finance
-    UC_the_wire --> API_merchant_identifier
-    UC_the_wire --> API_consumer_clarity
     UC_txnotify --> API_transaction_notifications
 
     %% Styling
     classDef uc fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
     classDef api fill:#14532d,stroke:#22c55e,color:#bbf7d0
-    class UC_txnotify,UC_identity,UC_the_wire,UC_places,UC_findacard,UC_psi,UC_pfm,UC_specials,UC_sonic,UC_recurring,UC_enrichment,UC_bin_lookup,UC_easy_savings,UC_consumer_clarity uc
+    class UC_psi,UC_identity,UC_txnotify,UC_places,UC_specials,UC_easy_savings,UC_recurring,UC_sonic,UC_findacard,UC_enrichment,UC_consumer_clarity,UC_pfm,UC_bin_lookup uc
     class API_open_finance,API_consumer_clarity,API_merchant_identifier,API_places,API_automatic_billing_updater,API_transaction_notifications,API_consent_management,API_bin_lookup,API_easy_savings,API_priceless_cities,API_offers_for_publishers,API_Mastercard_Brand_Centre api
     </div>
   </div>
@@ -117,7 +113,6 @@ flowchart LR
     UC_findacard(["Find A Card"])
     UC_sonic(["Sonic Branding"])
     UC_testchat(["Test Chat"])
-    UC_the_wire(["The Wire"])
     UC_txnotify(["Transaction Notifications Live"])
 
     %% APIs (right side)
@@ -158,15 +153,12 @@ flowchart LR
     UC_findacard --> API_open_finance
     UC_findacard --> API_offers_for_publishers
     UC_sonic --> API_Mastercard_Brand_Centre
-    UC_the_wire --> API_open_finance
-    UC_the_wire --> API_merchant_identifier
-    UC_the_wire --> API_consumer_clarity
     UC_txnotify --> API_transaction_notifications
 
     %% Styling
     classDef uc fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
     classDef api fill:#14532d,stroke:#22c55e,color:#bbf7d0
-    class UC_txnotify,UC_identity,UC_the_wire,UC_places,UC_findacard,UC_psi,UC_pfm,UC_specials,UC_sonic,UC_recurring,UC_enrichment,UC_bin_lookup,UC_easy_savings,UC_consumer_clarity uc
+    class UC_psi,UC_identity,UC_txnotify,UC_places,UC_specials,UC_easy_savings,UC_recurring,UC_sonic,UC_findacard,UC_enrichment,UC_consumer_clarity,UC_pfm,UC_bin_lookup uc
     class API_open_finance,API_consumer_clarity,API_merchant_identifier,API_places,API_automatic_billing_updater,API_transaction_notifications,API_consent_management,API_bin_lookup,API_easy_savings,API_priceless_cities,API_offers_for_publishers,API_Mastercard_Brand_Centre api</pre>
   </div>
   <script src="/vima/test/arch/mermaid.js"></script>

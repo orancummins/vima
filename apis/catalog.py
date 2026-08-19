@@ -243,6 +243,7 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/match/documentation/",
         legacy_id=None,
         group=GROUP_SECURITY,
+        provision_note="Requires API Owner approval for sandbox enablement.",
         complements=("merchant_identifier", "bin_lookup", "consumer_clarity"),
     ),
     ApiCatalogEntry(
@@ -419,15 +420,10 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         docs_url="https://developer.mastercard.com/carbon-calculator/documentation/",
         legacy_id=None,
         group=GROUP_DATA,
-        # Sandbox project creation requires a Mastercard-issued Customer ID
-        # (CID), Legal Name, and BIN range — none of which the portal wizard
-        # can supply autonomously. Contact carboncalculator@mastercard.com.
-        provision_note=(
-            "Manual onboarding only — requires Mastercard-issued Customer ID, "
-            "Legal Name and BIN range. Contact carboncalculator@mastercard.com."
-        ),
-        auto_provisionable=False,
-        manual_onboarding_url="https://developer.mastercard.com/create-project/carbon-calculator?services=carbon-calculator",
+        # Sandbox project creation is gated on API Owner approval. Once enabled,
+        # the admin-API path supplies the required config (Customer ID, retention
+        # period) from KNOWN_SERVICE_CONFIG so it provisions unattended.
+        provision_note="Requires API Owner approval for sandbox enablement.",
         complements=("open_finance", "consumer_clarity", "merchant_identifier"),
     ),
     ApiCatalogEntry(
@@ -453,8 +449,9 @@ _ENTRIES: tuple[ApiCatalogEntry, ...] = (
         # the playbook's ``defaults`` block for now — swap for a real
         # token issued by your Mastercard Commercial Products manager.
         provision_note=(
-            "Requires a registration token from your Mastercard Commercial "
-            "Products implementation manager (default in playbook: 123456789)."
+            "Requires API Owner approval for sandbox enablement, plus a "
+            "registration token from your Mastercard Commercial Products "
+            "implementation manager (default in playbook: 123456789)."
         ),
         complements=("bin_lookup", "transaction_notifications", "enhanced_currency_conversion_calculator"),
     ),

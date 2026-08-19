@@ -122,10 +122,11 @@ if not exist "%TOOL_MARKER%" (
     echo.
 )
 
-REM If the chromium download was skipped, drive system Edge instead.
-if exist "%TOOL_VENV%\.chromium-skipped" (
-    set PLAYWRIGHT_BROWSER_CHANNEL=msedge
-)
+REM Browser selection is handled automatically by the key-automation tool
+REM (tools/mcd-key-automation/browser/session.py): it tries Playwright's bundled
+REM Chromium first and transparently falls back to a system-installed Chrome
+REM (preferred) or Edge when the Chromium download was blocked. No channel env
+REM var is needed; set PLAYWRIGHT_BROWSER_CHANNEL only to force a specific one.
 
 REM Start vima (Vima Chat is now embedded in-process at /chat)
 echo Starting Mastercard Solution Studio on http://127.0.0.1:%VIMA_PORT%

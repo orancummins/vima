@@ -634,6 +634,374 @@ def explorer_setup(api_id: str):
     })
 
 
+# ---------------------------------------------------------------------------
+# Mastercard Developers API — project management (list / delete)
+# ---------------------------------------------------------------------------
+_REGION_TOKENS = {
+    "us": "us", "usa": "us", "america": "us",
+    "au": "au", "aus": "au", "australia": "au",
+    "eu": "eu", "europe": "eu",
+    "uk": "uk",
+}
+
+
+def _developers_api_client():
+    """Return a Mastercard Developers admin-API client, or None if unavailable.
+
+    The client lives in the mcd-key-automation tool and is signed with the
+    MCD_DEVELOPERS_API_* admin key (loaded from config/.env at startup). Returns
+    None when the admin key isn't configured so callers can degrade gracefully.
+
+    We load ``client.py`` directly by file path (not ``import providers…``) so
+    the tool's package ``__init__`` — which pulls in ``provisioner`` and its
+    ``from app.alias_engine import …`` imports — is NOT executed here, where
+    ``app`` is the Flask application module rather than the tool's app package.
+    """
+    ck = os.environ.get("MCD_DEVELOPERS_API_CONSUMER_KEY", "").strip()
+    kp = os.environ.get("MCD_DEVELOPERS_API_SIGNING_KEY_PATH", "").strip()
+    if not ck or not kp or ck == "your_consumer_key_here":
+        return None
+    try:
+        import importlib.util
+        import sys as _sys
+        client_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "tools", "mcd-key-automation", "providers", "mastercard_api", "client.py",
+        )
+        spec = importlib.util.spec_from_file_location("_mcd_devapi_client", client_path)
+        mod = importlib.util.module_from_spec(spec)
+        # Register before exec so dataclasses/typing can resolve annotations via
+        # sys.modules[__module__] (otherwise @dataclass processing raises).
+        _sys.modules[spec.name] = mod
+        spec.loader.exec_module(mod)
+        return mod.DevelopersApiClient.from_env()
+    except Exception:
+        return None
+
+
+def _api_auth(api_id: str) -> str:
+    """Return the catalog auth type for an API ('oauth1', 'oauth2', …)."""
+    try:
+        from apis.catalog import get as _cat_get
+        entry = _cat_get(api_id)
+        return getattr(entry, "auth", "") if entry else ""
+    except Exception:
+        return ""
+
+
+
+def _api_service_name_and_region(display_name: str) -> tuple[str, str]:
+    """Split a catalog display name into (base service name, region code).
+
+    "Open Finance US" -> ("open finance", "us"); "BIN Lookup" -> ("bin lookup", "").
+    The Developers API service is region-agnostic ("Open Finance"); region is a
+    separate attribute on each project.
+    """
+    t = (display_name or "").strip().lower()
+    parts = t.split()
+    if len(parts) > 1 and parts[-1] in _REGION_TOKENS:
+        return " ".join(parts[:-1]), _REGION_TOKENS[parts[-1]]
+    return t, ""
+
+
+def _mask_identifier(value: str) -> str:
+    if not value:
+        return ""
+    return value[:10] + "…" + value[-6:] if len(value) > 20 else value
+
+
+def _configured_identifier(env_prefix: str, auth: str) -> tuple[str, str]:
+    """Return (configured_id, credential_field) that ties this API to a project."""
+    if auth == "oauth2":
+        return os.environ.get(f"{env_prefix}_PARTNER_ID", "").strip(), "partnerId"
+    return os.environ.get(f"{env_prefix}_CONSUMER_KEY", "").strip(), "consumerKey"
+
+
+def _project_matches_api(project: dict, base_name: str) -> bool:
+    for svc in (project.get("services") or []):
+        n = str(svc.get("name", "")).strip().lower()
+        if n and (n == base_name or base_name in n or n in base_name):
+            return True
+    return False
+
+
+def _project_credentials(full: dict, id_field: str) -> list[dict]:
+    creds: list[dict] = []
+    for env in (full.get("environments") or []):
+        for cr in (env.get("credentials") or []):
+            val = cr.get(id_field) or ""
+            if val:
+                creds.append({"env": env.get("name", ""), "type": cr.get("type", ""), "id": val})
+    return creds
+
+
+# --- Background-cached "all projects" + async delete jobs ------------------
+_dev_projects_lock = _threading.Lock()
+_dev_projects_cache: dict = {"status": "idle", "projects": [], "loaded_at": None, "error": None}
+_dev_delete_jobs: dict = {}
+_dev_delete_jobs_lock = _threading.Lock()
+
+
+def _all_configured_identifiers() -> set:
+    """Every consumer_key / partner_id currently configured across all APIs.
+
+    A project is "in use" if any of its credentials matches one of these.
+    """
+    ids: set = set()
+    try:
+        for m in api_registry.manifests():
+            prefix = m.get("env_prefix") or (m.get("id", "").upper())
+            for suffix in ("_CONSUMER_KEY", "_PARTNER_ID"):
+                v = os.environ.get(f"{prefix}{suffix}", "").strip()
+                if v and not v.startswith("your_"):
+                    ids.add(v)
+    except Exception:
+        pass
+    return ids
+
+
+def _enrich_project(full: dict, configured_ids: set) -> dict:
+    """Annotate a project with sandbox/production/in-use/deletable flags."""
+    sandbox_creds = production_creds = 0
+    in_use = False
+    sample = ""
+    for env in (full.get("environments") or []):
+        is_prod = str(env.get("name", "")).strip().upper() == "PRODUCTION"
+        for cr in (env.get("credentials") or []):
+            ident = cr.get("consumerKey") or cr.get("partnerId") or ""
+            if ident and not sample:
+                sample = ident
+            if is_prod:
+                production_creds += 1
+            else:
+                sandbox_creds += 1
+            if ident and ident in configured_ids:
+                in_use = True
+    has_production = production_creds > 0
+    deletable = (not has_production) and (not in_use)
+    reason = "in use" if in_use else ("production keys" if has_production else "")
+    return {
+        "id": full.get("id"),
+        "name": full.get("name", ""),
+        "type": full.get("type", ""),
+        "region": full.get("region", ""),
+        "services": [s.get("name", "") for s in (full.get("services") or [])],
+        "sandbox_creds": sandbox_creds,
+        "production_creds": production_creds,
+        "has_production": has_production,
+        "in_use": in_use,
+        "deletable": deletable,
+        "reason": reason,
+        "cred": _mask_identifier(sample),
+    }
+
+
+def _load_dev_projects_worker() -> None:
+    client = _developers_api_client()
+    if client is None:
+        with _dev_projects_lock:
+            _dev_projects_cache.update(status="unconfigured", projects=[], error=None, loaded_at=time.time())
+        return
+    try:
+        configured = _all_configured_identifiers()
+        data = client.get_projects()
+        projects = data.get("projects", data) if isinstance(data, dict) else data
+        projects = list(projects or [])
+
+        # Each project's credentials only appear in its full detail, so we must
+        # GET every project. Do it in parallel (bounded pool) so the background
+        # load finishes in a few seconds rather than one-at-a-time.
+        from concurrent.futures import ThreadPoolExecutor
+
+        def _detail(p):
+            try:
+                return client.get_project(p.get("id"))
+            except Exception:
+                return p
+
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            fulls = list(pool.map(_detail, projects))
+        out = [_enrich_project(f, configured) for f in fulls]
+        out.sort(key=lambda x: (not x["deletable"], (x.get("name") or "").lower()))
+        with _dev_projects_lock:
+            _dev_projects_cache.update(status="ready", projects=out, error=None, loaded_at=time.time())
+    except Exception as exc:
+        with _dev_projects_lock:
+            _dev_projects_cache.update(status="error", error=str(exc)[:300], loaded_at=time.time())
+
+
+def _ensure_dev_projects_loading(force: bool = False) -> None:
+    with _dev_projects_lock:
+        st = _dev_projects_cache["status"]
+        if st == "loading":
+            return
+        if st == "ready" and not force:
+            return
+        _dev_projects_cache.update(status="loading", error=None)
+    _threading.Thread(target=_load_dev_projects_worker, daemon=True).start()
+
+
+def _delete_job_worker(job_id: str, ids: list) -> None:
+    client = _developers_api_client()
+    # Fail faster on a hung/slow delete so one bad project can't stall the whole
+    # job at the default 30s timeout.
+    if client is not None:
+        try:
+            client.timeout = 20.0
+        except Exception:
+            pass
+    with _dev_projects_lock:
+        by_id = {p["id"]: p for p in _dev_projects_cache["projects"]}
+    for pid in ids:
+        p = by_id.get(pid)
+        name = (p.get("name", "") if p else "")
+        with _dev_delete_jobs_lock:
+            job = _dev_delete_jobs.get(job_id)
+            if job is not None:
+                job["current"] = name or pid
+        res = {"id": pid, "name": name, "ok": False, "error": None}
+        if p is None:
+            res["error"] = "unknown"
+        elif not p.get("deletable"):
+            res["error"] = p.get("reason") or "protected"
+        elif client is None:
+            res["error"] = "admin_key_not_configured"
+        else:
+            # One retry on transient errors (rate-limiting / 5xx) which is the
+            # usual reason a delete fails when removing many projects at once.
+            last_err = None
+            for attempt in range(2):
+                try:
+                    client.delete_project(pid)
+                    res["ok"] = True
+                    last_err = None
+                    break
+                except Exception as exc:
+                    last_err = str(exc)[:200]
+                    code = getattr(exc, "status_code", None)
+                    if attempt == 0 and code in (429, 500, 502, 503, 504):
+                        time.sleep(1.2)
+                        continue
+                    break
+            if not res["ok"]:
+                res["error"] = last_err
+        with _dev_delete_jobs_lock:
+            job = _dev_delete_jobs.get(job_id)
+            if job is not None:
+                job["results"].append(res)
+                job["done"] += 1
+    with _dev_delete_jobs_lock:
+        if job_id in _dev_delete_jobs:
+            _dev_delete_jobs[job_id]["status"] = "done"
+            _dev_delete_jobs[job_id]["current"] = ""
+    # Refresh the cache so the freed-up projects disappear from the list.
+    _ensure_dev_projects_loading(force=True)
+
+
+@app.route("/developer-projects")
+@_require_not_server_mode
+def developer_projects():
+    """Return all Mastercard Developer projects (loaded/cached in a background thread).
+
+    First call kicks off a background load and returns ``status='loading'``; the
+    client polls until ``status='ready'``. Each project is enriched with whether
+    it has sandbox/production credentials, whether it's currently in use (its
+    credential matches a configured value), and whether it's safe to delete
+    (sandbox-only and not in use).
+    """
+    if _developers_api_client() is None:
+        return jsonify({"status": "unconfigured", "projects": []})
+    _ensure_dev_projects_loading()
+    with _dev_projects_lock:
+        snap = dict(_dev_projects_cache)
+    return jsonify({
+        "status": snap["status"],
+        "projects": snap["projects"],
+        "loaded_at": snap["loaded_at"],
+        "error": snap["error"],
+    })
+
+
+@app.route("/developer-projects/refresh", methods=["POST"])
+@_require_not_server_mode
+def developer_projects_refresh():
+    """Force a background reload of the project list."""
+    _ensure_dev_projects_loading(force=True)
+    return jsonify({"status": "loading"})
+
+
+@app.route("/developer-projects/delete", methods=["POST"])
+@_require_not_server_mode
+def developer_projects_delete():
+    """Start a background job that deletes the given (deletable) projects.
+
+    Only projects that are sandbox-only (no production keys) and not currently in
+    use are accepted; anything else is rejected up front. Deletion runs one
+    project at a time in a background thread; the client polls the returned
+    ``job_id`` for progress.
+    """
+    if _developers_api_client() is None:
+        return jsonify({"error": "admin_key_not_configured"}), 400
+    payload = request.get_json(silent=True) or {}
+    ids = [str(i) for i in (payload.get("ids") or []) if i]
+    if not ids:
+        return jsonify({"error": "no_ids"}), 400
+
+    with _dev_projects_lock:
+        by_id = {p["id"]: p for p in _dev_projects_cache["projects"]}
+    accepted, rejected = [], []
+    for pid in ids:
+        p = by_id.get(pid)
+        if p and p.get("deletable"):
+            accepted.append(pid)
+        else:
+            rejected.append({"id": pid, "reason": (p.get("reason") if p else "unknown") or "protected"})
+    if not accepted:
+        return jsonify({"error": "none_deletable", "rejected": rejected}), 400
+
+    import uuid as _uuid
+    job_id = _uuid.uuid4().hex[:12]
+    with _dev_delete_jobs_lock:
+        _dev_delete_jobs[job_id] = {
+            "id": job_id, "total": len(accepted), "done": 0,
+            "results": [], "status": "running", "started": time.time(), "current": "",
+        }
+    _threading.Thread(target=_delete_job_worker, args=(job_id, accepted), daemon=True).start()
+    return jsonify({"job_id": job_id, "total": len(accepted), "rejected": rejected})
+
+
+@app.route("/developer-projects/delete/<job_id>")
+@_require_not_server_mode
+def developer_projects_delete_status(job_id: str):
+    """Return progress for a delete job."""
+    with _dev_delete_jobs_lock:
+        job = _dev_delete_jobs.get(job_id)
+        if job is None:
+            return jsonify({"error": "unknown_job"}), 404
+        return jsonify(dict(job))
+
+
+def _ps_python_bootstrap() -> list[str]:
+    """PowerShell lines that resolve a working Python interpreter into ``$PY``.
+
+    Prefers the Windows launcher ``py`` but falls back to ``python`` /
+    ``python3`` so the spawned terminal works on machines where ``py`` isn't
+    installed. Exits with a clear message if no interpreter is on PATH.
+    """
+    return [
+        "$PY = $null",
+        "foreach ($c in 'py','python','python3') {",
+        "  if (Get-Command $c -ErrorAction SilentlyContinue) { $PY = $c; break }",
+        "}",
+        "if (-not $PY) {",
+        "  Write-Host 'Python was not found on PATH. Install it from "
+        "https://www.python.org/downloads/ (tick \"Add python.exe to PATH\") "
+        "then re-run.' -ForegroundColor Red",
+        "  Read-Host 'Press Enter to close' | Out-Null; exit 1",
+        "}",
+    ]
+
+
 @app.route("/explorer/<api_id>/run", methods=["POST"])
 @_require_not_server_mode
 def explorer_run(api_id: str):
@@ -719,14 +1087,15 @@ def explorer_run(api_id: str):
             "Remove-Item Env:PYTHONHOME     -ErrorAction SilentlyContinue",
             "Remove-Item Env:VIRTUAL_ENV_PROMPT -ErrorAction SilentlyContinue",
         ]
+        lines += _ps_python_bootstrap()
         for name, val in env_pairs:
             lines.append(f"$env:{name} = {_ps_quote(val)}")
         if packages:
             lines.append("Write-Host 'Installing dependencies...' -ForegroundColor DarkGray")
-            lines.append(f"py -m pip install --user --quiet {' '.join(packages)}")
+            lines.append(f"& $PY -m pip install --user --quiet {' '.join(packages)}")
         lines += [
             "Write-Host ''",
-            f"py {_ps_quote(str(py_path))}",
+            f"& $PY {_ps_quote(str(py_path))}",
             "$code = $LASTEXITCODE",
             "Write-Host ''",
             "Write-Host ('Exit code: ' + $code) -ForegroundColor Cyan",
@@ -893,10 +1262,13 @@ def sdk_run():
             "Remove-Item Env:VIRTUAL_ENV    -ErrorAction SilentlyContinue",
             "Remove-Item Env:PYTHONHOME     -ErrorAction SilentlyContinue",
             "Remove-Item Env:VIRTUAL_ENV_PROMPT -ErrorAction SilentlyContinue",
+        ]
+        lines += _ps_python_bootstrap()
+        lines += [
             "Write-Host 'Installing dependencies...' -ForegroundColor DarkGray",
-            f"py -m pip install --user --quiet {' '.join(packages)}",
+            f"& $PY -m pip install --user --quiet {' '.join(packages)}",
             "Write-Host ''",
-            "py '" + str(py_path).replace("'", "''") + "'",
+            "& $PY '" + str(py_path).replace("'", "''") + "'",
             "$code = $LASTEXITCODE",
             "Write-Host ''",
             "Write-Host ('Exit code: ' + $code) -ForegroundColor Cyan",
@@ -2579,7 +2951,7 @@ def _atomic_write_text(path: str, text: str) -> None:
                 os.fsync(fh.fileno())
             except OSError:
                 pass
-        os.replace(tmp_path, path)
+        _replace_with_retry(tmp_path, path, data=text.encode("utf-8"), binary=False)
     except Exception:
         try:
             os.remove(tmp_path)
@@ -2588,11 +2960,65 @@ def _atomic_write_text(path: str, text: str) -> None:
         raise
 
 
+def _replace_with_retry(tmp_path: str, path: str, *, data: bytes, binary: bool) -> None:
+    """os.replace(tmp_path, path) that tolerates transient Windows file locks.
+
+    On Windows ``os.replace`` raises ``PermissionError`` (WinError 5) when the
+    destination is momentarily locked — commonly by antivirus real-time
+    scanning of the just-created key file, or by a reader holding it open. We
+    retry with a short backoff, then fall back to writing the bytes in place.
+    The temp file is always cleaned up.
+    """
+    import time
+    last_exc: Exception | None = None
+    for attempt in range(10):
+        try:
+            os.replace(tmp_path, path)
+            return
+        except PermissionError as exc:  # WinError 5 — dest transiently locked
+            last_exc = exc
+            time.sleep(0.15 * (attempt + 1))
+    # Fallback: overwrite the destination in place (the lock may have cleared,
+    # or an in-place write can succeed where an atomic rename cannot).
+    try:
+        with open(path, "wb" if binary else "w",
+                  encoding=None if binary else "utf-8") as fh:
+            fh.write(data if binary else data.decode("utf-8"))
+            fh.flush()
+            try:
+                os.fsync(fh.fileno())
+            except OSError:
+                pass
+        try:
+            os.remove(tmp_path)
+        except OSError:
+            pass
+        return
+    except Exception:
+        try:
+            os.remove(tmp_path)
+        except OSError:
+            pass
+        raise last_exc if last_exc is not None else RuntimeError(
+            f"could not write {path}"
+        )
+
+
 def _atomic_write_bytes(path: str, data: bytes) -> None:
     """Binary counterpart of ``_atomic_write_text`` for key files."""
     import tempfile
     parent = os.path.dirname(os.path.abspath(path)) or "."
     os.makedirs(parent, exist_ok=True)
+    # If the destination already has exactly these bytes, do nothing — this
+    # avoids replacing a key file that another thread/process may hold open
+    # (the common cause of the Windows "Access is denied" rename failure when
+    # re-importing an unchanged bundle).
+    try:
+        with open(path, "rb") as existing:
+            if existing.read() == data:
+                return
+    except OSError:
+        pass
     fd, tmp_path = tempfile.mkstemp(
         prefix=os.path.basename(path) + ".", suffix=".tmp", dir=parent,
     )
@@ -2604,7 +3030,7 @@ def _atomic_write_bytes(path: str, data: bytes) -> None:
                 os.fsync(fh.fileno())
             except OSError:
                 pass
-        os.replace(tmp_path, path)
+        _replace_with_retry(tmp_path, path, data=data, binary=True)
     except Exception:
         try:
             os.remove(tmp_path)
