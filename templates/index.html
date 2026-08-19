@@ -1403,6 +1403,10 @@ client = OfinClient.from_env()          <span class="sdk-c-cm"># credentials aut
           <a href="https://developer.mastercard.com" target="_blank" rel="noopener" class="cfg-mc-link">
             Mastercard Developers ↗
           </a>
+          <button class="cfg-icon-btn" id="cfg-projects-btn" title="View & manage your Mastercard Developer projects">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2z"/></svg>
+            Projects
+          </button>
           <button class="cfg-icon-btn" id="cfg-import-btn" title="Import config zip">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             Import
@@ -1460,6 +1464,51 @@ client = OfinClient.from_env()          <span class="sdk-c-cm"># credentials aut
 
   <!-- Tooltip -->
   <div id="cfg-tooltip" class="cfg-tooltip cfg-hidden"></div>
+
+  <!-- ====================== Developer Projects Modal ====================== -->
+  <div id="devprojects-modal" class="cfg-modal cfg-hidden" role="dialog" aria-modal="true" aria-labelledby="devprojects-title">
+    <div class="cfg-overlay" id="devprojects-overlay"></div>
+    <div class="cfg-panel dp-panel">
+      <div class="cfg-panel-header">
+        <div class="cfg-panel-title" id="devprojects-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2z"/></svg>
+          Developer Projects
+        </div>
+        <div class="cfg-header-right">
+          <span class="dp-summary" id="dp-summary"></span>
+          <button class="cfg-icon-btn" id="dp-refresh-btn" title="Reload projects from Mastercard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh
+          </button>
+          <button class="cfg-close-btn" id="dp-close-btn" aria-label="Close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="dp-toolbar">
+        <input type="text" id="dp-search" class="dp-search" placeholder="Filter by name, service, type or id…" autocomplete="off">
+        <label class="dp-check-inline"><input type="checkbox" id="dp-only-deletable"> Deletable only</label>
+        <label class="dp-check-inline"><input type="checkbox" id="dp-select-all"> Select all</label>
+      </div>
+
+      <div class="cfg-panel-body dp-body" id="dp-body">
+        <div class="cfg-loading">Loading projects…</div>
+      </div>
+
+      <div class="cfg-panel-footer dp-footer">
+        <div class="dp-progress" id="dp-progress" hidden>
+          <div class="dp-progress-bar"><div class="dp-progress-fill" id="dp-progress-fill"></div></div>
+          <span class="dp-progress-text" id="dp-progress-text"></span>
+        </div>
+        <div class="cfg-footer-actions">
+          <span class="dp-note">Only sandbox‑only projects that aren’t in use can be deleted. Production projects are never deletable.</span>
+          <button class="btn cfg-save-btn" id="dp-delete-btn" disabled>Delete selected</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <!-- API Calls FAB + drawer -->
   <button id="api-calls-fab" class="api-calls-fab hidden" aria-label="Show API Calls">

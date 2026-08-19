@@ -23,7 +23,30 @@ class LoginPage:
 
     async def goto(self) -> None:
         logger.info("Navigating to {}", self.login_url)
-        await self.page.goto(self.login_url, wait_until="domcontentloaded")
+        # The portal's first paint can be slow behind corporate proxies, so use
+        # a generous timeout and the cheaper "commit" wait (fires as soon as the
+        # server responds) with a couple of retries. A hard failure here would
+        # otherwise close the browser window before the user can log in.
+        last_err: Exception | None = None
+        for attempt in range(1, 4):
+            try:
+                await self.page.goto(self.login_url, wait_until="commit", timeout=60000)
+                # Best-effort: let the DOM settle, but don't fail if it's slow.
+                try:
+                    await self.page.wait_for_load_state("domcontentloaded", timeout=30000)
+                except Exception:
+                    pass
+                return
+            except Exception as exc:
+                last_err = exc
+                logger.warning(
+                    "Login page navigation attempt {}/3 failed ({}) — retrying…",
+                    attempt, type(exc).__name__,
+                )
+                await self.page.wait_for_timeout(2000)
+        # All retries failed — re-raise so the caller can surface it.
+        assert last_err is not None
+        raise last_err
 
     async def fill_credentials(self, email: str, password: str) -> None:
         """Pre-fill the Mastercard Developers login form and submit.

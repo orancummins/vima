@@ -45,6 +45,7 @@ import './features/autoProvision.js';
 import './features/infoModal.js';
 import './features/apiGuide.js';
 import { initSearch } from './features/search.js';
+import { initDevProjects } from './features/devProjects.js';
 
 (() => {
   initTheme();
@@ -3461,6 +3462,8 @@ import { initSearch } from './features/search.js';
   initSimToggle();
   // Wire the workbench Send button.
   initSendHandler();
+  // Wire the Developer Projects manager (opened from API Configuration).
+  initDevProjects();
 
   if (getCurrentApiId()) renderApi();
   if (USE_CASES.length) {

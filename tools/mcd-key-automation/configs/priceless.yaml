@@ -1,0 +1,6 @@
+environment: sandbox
+organization: mastercard
+key_password: "foobar!!"
+projects:
+  - name: priceless_cities
+    apis: [priceless_cities]

@@ -23,10 +23,11 @@ from .client import OpenFinanceEUClient
 # ---------------------------------------------------------------------------
 
 _client: OpenFinanceEUClient | None = None
+_client_sig: tuple | None = None
 
 
 def _get_client() -> OpenFinanceEUClient | None:
-    global _client
+    global _client, _client_sig
     from simulator.switcher import is_simulated
     if is_simulated("open_finance_eu"):
         # The simulator does not perform JWT verification; pass dummy paths.
@@ -39,8 +40,6 @@ def _get_client() -> OpenFinanceEUClient | None:
             auth_base_url=sim_base,
             api_base_url=sim_base,
         )
-    if _client is not None:
-        return _client
     cid = os.environ.get("OPEN_FINANCE_EU_CLIENT_ID", "")
     pkey = os.environ.get("OPEN_FINANCE_EU_PRIVATE_KEY_PATH", "")
     pcert = os.environ.get("OPEN_FINANCE_EU_PUBLIC_CERT_PATH", "")
@@ -54,7 +53,13 @@ def _get_client() -> OpenFinanceEUClient | None:
         OpenFinanceEUClient.DEFAULT_API_BASE,
     )
     if not (cid and pkey and pcert) or cid == "your_client_id_here":
+        _client = _client_sig = None
         return None
+    # Rebuild the cached client whenever any credential changes so a config
+    # save/import takes effect without a server restart.
+    sig = (cid, pkey, pcert, app_id, auth_base, api_base)
+    if _client is not None and _client_sig == sig:
+        return _client
     _client = OpenFinanceEUClient(
         client_id=cid,
         private_key_path=pkey,
@@ -63,6 +68,7 @@ def _get_client() -> OpenFinanceEUClient | None:
         api_base_url=api_base,
         application_id=app_id,
     )
+    _client_sig = sig
     return _client
 
 

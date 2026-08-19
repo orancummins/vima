@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 import time
 from pathlib import Path
@@ -265,6 +266,21 @@ class PlaybookRunner:
 
         selector = self._val(step, "selector")
         timeout = int(step.get("timeout_ms", 20000))
+
+        # In headless mode there is no visible browser window, so pyautogui
+        # would fire physical mouse clicks at arbitrary points on the real
+        # desktop — meaningless for the automation and potentially disruptive.
+        # Skip the OS-level click entirely and use a Playwright click instead.
+        if os.environ.get("MCD_HEADLESS") == "1":
+            logger.info(
+                "Playbook: headless mode — skipping OS-level click for {!r}, "
+                "using Playwright locator.click()", selector,
+            )
+            loc = self.page.locator(selector + ":visible").first
+            await loc.wait_for(state="visible", timeout=timeout)
+            await loc.scroll_into_view_if_needed()
+            await loc.click(timeout=8000)
+            return
 
         # Wait for a visible copy of the button.
         loc = self.page.locator(selector + ":visible").first

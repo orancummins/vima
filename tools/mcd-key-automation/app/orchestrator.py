@@ -8,7 +8,7 @@ from loguru import logger
 from app.alias_engine import make_alias, make_filename  # noqa: F401  (used by downstream phases)
 from app.config_loader import load_config
 from app.exceptions import McdAutomationError
-from app.models import AppConfig, DownloadedArtifact
+from app.models import AppConfig, DownloadedArtifact, ProjectSpec
 from app.package_builder import build_bundle
 from browser.screenshots import capture
 from browser.session import browser_session
@@ -31,6 +31,12 @@ async def run(config_path: Path, *, dry_run: bool = False, headless: bool = Fals
     config: AppConfig = load_config(config_path)
     logger.info("Loaded config for env={} ({} projects)", config.environment, len(config.projects))
 
+    # Expose the headless flag to downstream helpers (e.g. the playbook runner's
+    # os_click, which must NOT fire physical mouse clicks when there is no
+    # visible browser window).
+    import os as _os
+    _os.environ["MCD_HEADLESS"] = "1" if headless else "0"
+
     WORKSPACE.mkdir(parents=True, exist_ok=True)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -43,24 +49,95 @@ async def run(config_path: Path, *, dry_run: bool = False, headless: bool = Fals
     # ``.env`` is updated one API at a time rather than rebuilt from zero.
 
     artifacts: list[DownloadedArtifact] = []
-    async with browser_session(headless=headless, downloads_dir=WORKSPACE) as (_browser, _ctx, page):
-        provider: DeveloperPortalProvider = _provider_for(config.organization)(page, config, WORKSPACE, headless=headless)
-        try:
-            await provider.login()
-            if dry_run:
-                logger.info("Dry-run: stopping after login.")
-                return None
-            failed: list[str] = []
-            for project in config.projects:
-                await provider.ensure_project(project)
-                for api_spec in project.normalised_apis():
+    failed: list[str] = []
+
+    # ------------------------------------------------------------------
+    # Phase 1 — Mastercard Developers API (fast, browser-free) where supported.
+    # Falls back to the browser (Phase 2) for anything the admin key can't do
+    # unattended, or when no admin key is configured.
+    # ------------------------------------------------------------------
+    from datetime import datetime as _dtdt
+
+    from app._vima_catalog import entry_for_legacy
+    from providers.mastercard.api_config import API_CONFIG
+    from providers.mastercard_api import (
+        ADMIN_KEY_INSTRUCTIONS,
+        ApiProvisioner,
+        is_admin_key_configured,
+    )
+
+    run_ts = _dtdt.now().strftime("%Y%m%d%H%M%S")
+    prefix = getattr(config, "project_prefix", "SS") or "SS"
+
+    provisioner = None if dry_run else ApiProvisioner.try_from_env()
+    if provisioner is not None:
+        logger.info(
+            "Provisioning technique: Mastercard Developers API (admin key). "
+            "Browser automation (Playwright) is the fallback."
+        )
+        print("[technique] Mastercard Developers API (admin key) — browser automation as fallback.", flush=True)
+    elif not dry_run:
+        if not is_admin_key_configured():
+            # First-launch transparency: tell the user how to enable the fast path.
+            print(ADMIN_KEY_INSTRUCTIONS, flush=True)
+        logger.info("Provisioning technique: browser automation (Playwright).")
+        print("[technique] Browser automation (Playwright) — no Developers API admin key configured.", flush=True)
+
+    # (project, api_name) pairs that still need the browser flow.
+    remaining: list[tuple[ProjectSpec, str]] = []
+    for project in config.projects:
+        for api_spec in project.normalised_apis():
+            api = api_spec.name
+            handled = False
+            if provisioner is not None:
+                setup = API_CONFIG.get(api)
+                entry = entry_for_legacy(api)
+                try:
+                    if provisioner.supports(api, setup, entry):
+                        logger.info("Provisioning '{}' via Developers API…", api)
+                        arts = provisioner.provision(
+                            api_id=api,
+                            entry=entry,
+                            setup=setup,
+                            project_name=project.name,
+                            portal_project_name=f"{prefix}-{api}-{run_ts}",
+                            organization=config.organization,
+                            environment=config.environment,
+                            key_password=config.key_password,
+                            dest_dir=WORKSPACE,
+                        )
+                        artifacts.extend(arts)
+                        logger.info("Provisioned '{}' ✓ (Developers API)", api)
+                        _rebuild_vima_zip(config.key_password)
+                        handled = True
+                except Exception as exc:  # noqa: BLE001 - fall back to the browser
+                    logger.warning(
+                        "Developers API provisioning of '{}' failed ({}) — "
+                        "falling back to browser automation.", api, exc,
+                    )
+            if not handled:
+                remaining.append((project, api))
+
+    # ------------------------------------------------------------------
+    # Phase 2 — browser automation for the remaining APIs (and dry-run login).
+    # ------------------------------------------------------------------
+    if remaining or dry_run:
+        async with browser_session(headless=headless, downloads_dir=WORKSPACE) as (_browser, _ctx, page):
+            provider: DeveloperPortalProvider = _provider_for(config.organization)(page, config, WORKSPACE, headless=headless)
+            try:
+                await provider.login()
+                if dry_run:
+                    logger.info("Dry-run: stopping after login.")
+                    return None
+                for project, api in remaining:
+                    logger.info("Provisioning '{}' via browser automation…", api)
                     try:
-                        await provider.attach_api(project, api_spec.name)
-                        arts = await provider.download_keys(project, api_spec.name)
+                        await provider.attach_api(project, api)
+                        arts = await provider.download_keys(project, api)
                         artifacts.extend(arts)
                         has_creds = any(a.filename.endswith("-credentials.json") for a in arts)
                         if has_creds:
-                            logger.info("Provisioned '{}' ✓", api_spec.name)
+                            logger.info("Provisioned '{}' ✓ (browser automation)", api)
                             # Rebuild the vima-config zip incrementally so the
                             # supervisor (the VIMA Flask app) can import each
                             # API as soon as it's been provisioned, rather
@@ -69,20 +146,21 @@ async def run(config_path: Path, *, dry_run: bool = False, headless: bool = Fals
                         else:
                             logger.warning(
                                 "Failed to provision '{}': key zip downloaded but consumer key could not be extracted — check sandbox page",
-                                api_spec.name,
+                                api,
                             )
-                            failed.append(f"{project.name}/{api_spec.name}")
+                            failed.append(f"{project.name}/{api}")
                     except Exception as api_err:
                         logger.error(
                             "Failed to provision '{}': {} — skipping, continuing with remaining APIs",
-                            api_spec.name, api_err,
+                            api, api_err,
                         )
-                        await capture(page, f"failure_{project.name}_{api_spec.name}")
-                        failed.append(f"{project.name}/{api_spec.name}")
-        except Exception as e:
-            logger.exception("Workflow failed: {}", e)
-            await capture(page, "workflow_failure")
-            raise
+                        await capture(page, f"failure_{project.name}_{api}")
+                        failed.append(f"{project.name}/{api}")
+            except Exception as e:
+                logger.exception("Workflow failed: {}", e)
+                await capture(page, "workflow_failure")
+                raise
+
 
     if failed:
         logger.warning("Skipped {} API(s) due to errors: {}", len(failed), failed)

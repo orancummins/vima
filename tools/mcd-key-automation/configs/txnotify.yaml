@@ -1,0 +1,6 @@
+environment: sandbox
+organization: mastercard
+key_password: "foobar!!"
+projects:
+  - name: transaction_notifications
+    apis: [transaction_notifications]

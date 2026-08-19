@@ -58,25 +58,98 @@ class OAuth2SandboxPage:
         logger.info("Downloaded signature verification key: {}", dest)
         return dest
 
-    async def add_signature_key(self, *, dest_dir: Path, filename_hint: str = "sig_key") -> Path:
-        """Run the add-api-key wizard to create + download a new Mastercard Signature Verification Key."""
-        logger.info("Clicking 'Add key' for Mastercard Signature Verification Key")
-        await self.page.locator(OAuth2SandboxSelectors.add_sig_key_button).click()
-        await self.page.wait_for_selector(OAuth2SandboxSelectors.sig_key_proceed, timeout=15000)
-        await self.page.locator(OAuth2SandboxSelectors.sig_key_proceed).click()
-        await self.page.wait_for_selector(OAuth2SandboxSelectors.sig_key_create, timeout=15000)
-        logger.info("Clicking 'Create key' for signature verification key")
-        await self.page.locator(OAuth2SandboxSelectors.sig_key_create).click()
-        await self.page.wait_for_selector(OAuth2SandboxSelectors.sig_key_download_after_create, timeout=30000)
-        logger.info("Downloading new Mastercard Signature Verification Key")
-        async with self.page.expect_download() as dl_info:
-            await self.page.locator(OAuth2SandboxSelectors.sig_key_download_after_create).first.click()
-        download = await dl_info.value
-        original = download.suggested_filename or f"{filename_hint}.zip"
-        dest = dest_dir / original
-        await save_download(download, dest)
-        logger.info("Downloaded new signature verification key: {}", dest)
-        return dest
+    async def add_signature_key(self, *, dest_dir: Path, filename_hint: str = "sig_key", max_attempts: int = 3) -> Path:
+        """Create + download a new Mastercard Signature Verification Key.
+
+        The portal's certificate generation is intermittently flaky and pops an
+        "An error has occurred — There was an issue trying to create the
+        certificate" dialog (often transient, or triggered by a VPN). We detect
+        that dialog, dismiss it, and retry. If a key ends up existing (a prior
+        attempt partially succeeded), we download that existing key instead.
+        """
+        from browser.screenshots import capture as _capture
+
+        error_dialog = (
+            "text=/issue trying to create the certificate/i, "
+            "[role='dialog']:has-text('An error has occurred'), "
+            "text=/An error has occurred/i"
+        )
+        close_btn = (
+            "[role='dialog'] button:has-text('Close'), "
+            "[role='dialog'] button:has-text('OK'), "
+            "[role='dialog'] button:has-text('Dismiss'), "
+            "button[aria-label='Close']"
+        )
+
+        for attempt in range(1, max_attempts + 1):
+            # If a signature key already exists (e.g. a previous attempt created
+            # one despite the error dialog), just download that one.
+            if attempt > 1 and await self.has_signature_key():
+                logger.info("A signature verification key now exists — downloading it instead")
+                return await self.download_existing_signature_key(
+                    dest_dir=dest_dir, filename_hint=filename_hint
+                )
+
+            logger.info(
+                "Adding Mastercard Signature Verification Key (attempt {}/{})",
+                attempt, max_attempts,
+            )
+            await self.page.locator(OAuth2SandboxSelectors.add_sig_key_button).click()
+            await self.page.wait_for_selector(OAuth2SandboxSelectors.sig_key_proceed, timeout=15000)
+            await self.page.locator(OAuth2SandboxSelectors.sig_key_proceed).click()
+            await self.page.wait_for_selector(OAuth2SandboxSelectors.sig_key_create, timeout=15000)
+            logger.info("Clicking 'Create key' for signature verification key")
+            await self.page.locator(OAuth2SandboxSelectors.sig_key_create).click()
+
+            # Race: a Download button (success) vs the certificate error dialog.
+            outcome: str | None = None
+            waited = 0.0
+            while waited < 35.0:
+                if await self.page.locator(OAuth2SandboxSelectors.sig_key_download_after_create).count() > 0:
+                    outcome = "download"
+                    break
+                if await self.page.locator(error_dialog).count() > 0:
+                    outcome = "error"
+                    break
+                await asyncio.sleep(1.0)
+                waited += 1.0
+
+            if outcome == "download":
+                logger.info("Downloading new Mastercard Signature Verification Key")
+                async with self.page.expect_download() as dl_info:
+                    await self.page.locator(OAuth2SandboxSelectors.sig_key_download_after_create).first.click()
+                download = await dl_info.value
+                original = download.suggested_filename or f"{filename_hint}.zip"
+                dest = dest_dir / original
+                await save_download(download, dest)
+                logger.info("Downloaded new signature verification key: {}", dest)
+                return dest
+
+            # Error dialog or timeout — capture, dismiss, reload, and retry.
+            await _capture(self.page, f"ofin_cert_error_attempt{attempt}")
+            logger.warning(
+                "Certificate creation {} on attempt {}/{} — dismissing and retrying",
+                outcome or "timeout", attempt, max_attempts,
+            )
+            try:
+                cb = self.page.locator(close_btn).first
+                if await cb.count() > 0:
+                    await cb.click(force=True)
+            except Exception:
+                pass
+            await asyncio.sleep(2)
+            try:
+                await self.page.reload(wait_until="domcontentloaded")
+                await asyncio.sleep(2)
+            except Exception:
+                pass
+
+        raise RuntimeError(
+            "Could not create the Mastercard Signature Verification Key after "
+            f"{max_attempts} attempts — the portal kept returning 'There was an "
+            "issue trying to create the certificate'. This is usually transient "
+            "(retry later) or caused by connecting through a VPN."
+        )
 
     async def save_credentials_json(self, creds: dict[str, str], dest_dir: Path, filename: str) -> Path:
         """Serialise credentials dict to a JSON file and return the path."""

@@ -1,0 +1,8 @@
+environment: sandbox
+organization: mastercard
+key_password: "foobar!!"
+projects:
+  - name: bin_lookup
+    apis: [bin_lookup]
+  - name: open_finance
+    apis: [open_finance]

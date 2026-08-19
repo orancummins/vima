@@ -1,0 +1,14 @@
+environment: sandbox
+organization: mastercard
+key_password: "foobar!!"
+projects:
+  - name: open_finance
+    apis: [open_finance]
+  - name: match
+    apis: [match]
+  - name: consumer_clarity
+    apis: [consumer_clarity]
+  - name: transaction_notifications
+    apis: [transaction_notifications]
+  - name: merchant_identifier
+    apis: [merchant_identifier]

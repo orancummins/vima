@@ -17,24 +17,30 @@ from .client import OpenFinanceClient
 # ---------------------------------------------------------------------------
 
 _client: OpenFinanceClient | None = None
+_client_sig: tuple | None = None
 
 
 def _get_client() -> OpenFinanceClient | None:
-    global _client
+    global _client, _client_sig
     from simulator.switcher import is_simulated
     if is_simulated("open_finance"):
         port = int(os.environ.get("PORT", 9021))
         sim_base = f"http://localhost:{port}/api-sim/open_finance"
         return OpenFinanceClient("sim_partner", "sim_secret", "sim_appkey", base_url=sim_base)
-    if _client is not None:
-        return _client
     pid = os.environ.get("OPEN_FINANCE_PARTNER_ID", "")
     psec = os.environ.get("OPEN_FINANCE_PARTNER_SECRET", "")
     akey = os.environ.get("OPEN_FINANCE_APP_KEY", "")
     base = os.environ.get("OPEN_FINANCE_API_BASE_URL", "https://api.finicity.com")
     if not (pid and psec and akey) or pid == "your_partner_id_here":
+        _client = _client_sig = None
         return None
+    # Rebuild the cached client whenever any credential changes so a config
+    # save/import takes effect without a server restart.
+    sig = (pid, psec, akey, base)
+    if _client is not None and _client_sig == sig:
+        return _client
     _client = OpenFinanceClient(pid, psec, akey, base_url=base)
+    _client_sig = sig
     return _client
 
 

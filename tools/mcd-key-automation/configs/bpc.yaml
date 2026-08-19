@@ -1,0 +1,6 @@
+environment: sandbox
+organization: mastercard
+key_password: "foobar!!"
+projects:
+  - name: business_payment_controls
+    apis: [business_payment_controls]
