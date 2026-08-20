@@ -16,12 +16,12 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict
+from typing import Any
 
 _SANDBOX_BASE_URL = "https://sandbox.api.mastercard.com/openapis"
 _PROD_BASE_URL    = "https://api.mastercard.com/openapis"
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "txnotify",
     "name": "Transaction Notifications",
     "description": (
@@ -233,11 +233,11 @@ def is_configured() -> bool:
     return _configured()
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured()}
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if op_id == "trigger_test_transaction":
         return _trigger_test_transaction(params)
     if op_id == "get_undelivered":
@@ -262,18 +262,18 @@ def _get_auth_header(url: str, method: str, body_str: str | None = None):
     return OAuth.get_authorization_header(url, method, body_str, consumer_key, signing_key)
 
 
-def _not_configured_error(op: str) -> Dict[str, Any]:
+def _not_configured_error(op: str) -> dict[str, Any]:
     return {
         "success": False,
         "error": (
-            f"Transaction Notifications is not configured. "
-            f"Set TXNOTIFY_CONSUMER_KEY and TXNOTIFY_SIGNING_KEY_PATH in .env, "
-            f"then restart the server."
+            "Transaction Notifications is not configured. "
+            "Set TXNOTIFY_CONSUMER_KEY and TXNOTIFY_SIGNING_KEY_PATH in .env, "
+            "then restart the server."
         ),
     }
 
 
-def _trigger_test_transaction(params: Dict[str, Any]) -> Dict[str, Any]:
+def _trigger_test_transaction(params: dict[str, Any]) -> dict[str, Any]:
     if not _configured():
         return _not_configured_error("trigger_test_transaction")
 
@@ -344,7 +344,7 @@ def _trigger_test_transaction(params: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _get_undelivered(params: Dict[str, Any]) -> Dict[str, Any]:
+def _get_undelivered(params: dict[str, Any]) -> dict[str, Any]:
     if not _configured():
         return _not_configured_error("get_undelivered")
 

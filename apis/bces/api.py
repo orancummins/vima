@@ -20,8 +20,7 @@ from __future__ import annotations
 import json
 import os
 import uuid
-from typing import Any, Dict, List, Optional
-
+from typing import Any
 
 _PROD_BASE    = "https://api.mastercard.com/loyalty/eligibility"
 _SANDBOX_BASE = "https://sandbox.api.mastercard.com/loyalty/eligibility"
@@ -41,7 +40,7 @@ def is_configured() -> bool:
     return _configured()
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured()}
 
 
@@ -107,7 +106,7 @@ _HOW_TO = (
 )
 
 
-_CONTENT_PARAMS: List[Dict[str, Any]] = [
+_CONTENT_PARAMS: list[dict[str, Any]] = [
     {"name": "cardNumber",    "label": "Card number / BIN", "type": "select", "default": "5291070000000000", "required": True,  "options": _CARD_OPTIONS, "help": "Mandatory. 6-digit BIN or 12–19-digit PAN."},
     {"name": "effectiveDate", "label": "Effective date",    "type": "text",   "default": "",                 "required": False, "help": "YYYY-MM-DD. Defaults to today."},
     {"name": "benefitCode",   "label": "Benefit code",      "type": "select", "default": "",                 "required": False, "options": _BENEFIT_CODE_OPTIONS, "help": "Narrows to a specific benefit (3–5 char)."},
@@ -116,7 +115,7 @@ _CONTENT_PARAMS: List[Dict[str, Any]] = [
 ]
 
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "bces",
     "name": "Benefits Content Eligibility",
     "description": (
@@ -142,20 +141,20 @@ MANIFEST: Dict[str, Any] = {
 }
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if op_id == "search_contents":
         return _search_contents(params)
     return {"success": False, "error": f"Unknown operation: {op_id}"}
 
 
-def _search_contents(params: Dict[str, Any]) -> Dict[str, Any]:
+def _search_contents(params: dict[str, Any]) -> dict[str, Any]:
     card_str = (params.get("cardNumber") or "").strip()
     if not card_str:
         return {"success": False, "error": "cardNumber is required."}
     if not card_str.isdigit():
         return {"success": False, "error": "cardNumber must be numeric (BIN or PAN)."}
 
-    body: Dict[str, Any] = {"cardNumber": int(card_str)}
+    body: dict[str, Any] = {"cardNumber": int(card_str)}
 
     for opt in ("effectiveDate", "benefitCode", "productCode", "locale"):
         v = (params.get(opt) or "").strip()
@@ -169,8 +168,8 @@ def _signed_request(
     method: str,
     path: str,
     *,
-    body: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    body: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     if not _configured():
         return {
             "success": False,
@@ -191,8 +190,8 @@ def _signed_request(
     if enc_cert and not os.path.isabs(enc_cert):
         enc_cert = os.path.join(project_root, enc_cert)
 
-    import requests
     import oauth1.authenticationutils as authutils
+    import requests
     from oauth1.oauth import OAuth
 
     url = f"{_base()}{path}"
@@ -217,7 +216,7 @@ def _signed_request(
     else:
         body_str = None
 
-    headers: Dict[str, str] = {
+    headers: dict[str, str] = {
         "Accept": "application/json",
         "X-OpenApi-ClientId": consumer_key.split("!", 1)[0],
         "x-openapi-transid":  str(uuid.uuid4()),
@@ -254,10 +253,10 @@ def _signed_request(
     }
 
 
-def _encrypt_body(body: Dict[str, Any], cert_path: str) -> str:
+def _encrypt_body(body: dict[str, Any], cert_path: str) -> str:
     """JWE-encrypt the entire request body into {\"encryptedValue\": \"<JWE>\"}."""
-    from client_encryption.jwe_encryption_config import JweEncryptionConfig
     from client_encryption.jwe_encryption import encrypt_payload
+    from client_encryption.jwe_encryption_config import JweEncryptionConfig
 
     config = JweEncryptionConfig({
         "paths": {

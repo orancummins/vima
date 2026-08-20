@@ -20,7 +20,7 @@ References:
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, List, Tuple
+from typing import Any
 from urllib.parse import urlencode
 
 # --- Base URLs ------------------------------------------------------------
@@ -56,7 +56,7 @@ def is_configured() -> bool:
     return _configured()
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured()}
 
 
@@ -121,7 +121,7 @@ _MC_PRODUCT_OPTIONS = [
 ]
 
 
-def _specials_filter_params() -> List[Dict[str, Any]]:
+def _specials_filter_params() -> list[dict[str, Any]]:
     return [
         {"name": "language",            "label": "Language",            "type": "select", "default": "", "required": False, "options": _LANGUAGE_OPTIONS},
         {"name": "eligible_markets",    "label": "Eligible Markets",    "type": "select", "default": "", "required": False, "options": _MARKET_OPTIONS,
@@ -160,7 +160,7 @@ _HOW_TO = (
     "</ol>"
 )
 
-_PARTNER_ID_PARAM: Dict[str, Any] = {
+_PARTNER_ID_PARAM: dict[str, Any] = {
     "name": "partner_id",
     "label": "Partner ID",
     "type": "text",
@@ -175,7 +175,7 @@ _PARTNER_ID_PARAM: Dict[str, Any] = {
 # Each operation declares which service base URL it uses, the endpoint
 # template (optionally with {path_params}), and the HTTP method.
 
-_OPS: Dict[str, Dict[str, Any]] = {
+_OPS: dict[str, dict[str, Any]] = {
     # Priceless Platform
     "platform_health":              {"service": "platform", "endpoint": "/health-checks",            "path_params": ()},
     "platform_products":            {"service": "platform", "endpoint": "/products",                 "path_params": ()},
@@ -205,7 +205,7 @@ _OPS: Dict[str, Dict[str, Any]] = {
 }
 
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "priceless",
     "name": "Priceless",
     "description": (
@@ -470,14 +470,14 @@ MANIFEST: Dict[str, Any] = {
 
 # --- Execute --------------------------------------------------------------
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     op = _OPS.get(op_id)
     if op is None:
         return {"success": False, "error": f"Unknown operation: {op_id}"}
     return _do_get(op, params or {})
 
 
-def _do_get(op: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
+def _do_get(op: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
     if not _configured():
         return {
             "success": False,
@@ -499,7 +499,7 @@ def _do_get(op: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
 
     # Resolve path placeholders ({product_id} etc.) from params, removing
     # them from the query-string copy.
-    query_params: Dict[str, Any] = dict(params)
+    query_params: dict[str, Any] = dict(params)
     endpoint = op["endpoint"]
     for path_key in op.get("path_params", ()):
         val = str(query_params.pop(path_key, "")).strip()
@@ -508,7 +508,7 @@ def _do_get(op: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
         endpoint = endpoint.replace("{" + path_key + "}", val)
 
     # Drop empty / None values
-    query_pairs: List[Tuple[str, str]] = [
+    query_pairs: list[tuple[str, str]] = [
         (k, str(v)) for k, v in query_params.items()
         if v is not None and str(v).strip() != ""
     ]
@@ -516,11 +516,11 @@ def _do_get(op: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
     if query_pairs:
         url = f"{url}?{urlencode(query_pairs)}"
 
-    import requests
-    import oauth1.authenticationutils as authutils
-    from oauth1.oauth import OAuth
-
     import uuid
+
+    import oauth1.authenticationutils as authutils
+    import requests
+    from oauth1.oauth import OAuth
     headers = {
         "Accept":            "application/json",
         # Some Mastercard sandbox routes (Priceless Specials in particular)

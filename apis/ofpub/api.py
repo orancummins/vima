@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict
+from typing import Any
 from urllib.parse import urlencode
 
 _SANDBOX_BASE = "https://sandbox.api.mastercard.com/loyalty/offers"
@@ -28,7 +28,7 @@ _PROD_BASE    = "https://api.mastercard.com/loyalty/offers"
 _PRESENTMENT_SUFFIX = "/presentment"
 
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "ofpub",
     "name": "Offers for Publishers",
     "description": (
@@ -255,11 +255,11 @@ def is_configured() -> bool:
     return _configured()
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured()}
 
 
-def _not_configured_err() -> Dict[str, Any]:
+def _not_configured_err() -> dict[str, Any]:
     return {
         "success": False,
         "error": (
@@ -276,14 +276,14 @@ def _resolve_key_path(path: str) -> str:
     return os.path.join(project_root, path)
 
 
-def _signed_request(method: str, url: str, body_str: str | None, extra_headers: Dict[str, str] | None = None) -> Dict[str, Any]:
+def _signed_request(method: str, url: str, body_str: str | None, extra_headers: dict[str, str] | None = None) -> dict[str, Any]:
     """Build OAuth-signed headers + execute the HTTP call.
 
     Returns a uniform response envelope: success / data / error / request /
     response — matching the convention used by the other Mastercard APIs.
     """
-    import requests
     import oauth1.authenticationutils as authutils
+    import requests
     from oauth1.oauth import OAuth
 
     consumer_key = os.environ["OFPUB_CONSUMER_KEY"]
@@ -332,7 +332,7 @@ def _signed_request(method: str, url: str, body_str: str | None, extra_headers: 
     }
 
 
-def _qs(params: Dict[str, Any]) -> str:
+def _qs(params: dict[str, Any]) -> str:
     items = {k: v for k, v in params.items() if v not in (None, "", [])}
     return ("?" + urlencode(items)) if items else ""
 
@@ -340,7 +340,7 @@ def _qs(params: Dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 # Operations
 # ---------------------------------------------------------------------------
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if not _configured():
         return _not_configured_err()
     dispatch = {
@@ -362,7 +362,7 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     return fn(params)
 
 
-def _create_access_token(p: Dict[str, Any]) -> Dict[str, Any]:
+def _create_access_token(p: dict[str, Any]) -> dict[str, Any]:
     body = {
         "fiId":      (p.get("fi_id") or "").strip(),
         "userId":    (p.get("user_id") or "").strip(),
@@ -371,9 +371,9 @@ def _create_access_token(p: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request("POST", _presentment_url("/access-tokens"), json.dumps(body))
 
 
-def _auth_headers(p: Dict[str, Any]) -> Dict[str, str]:
+def _auth_headers(p: dict[str, Any]) -> dict[str, str]:
     tok = (p.get("access_token") or "").strip()
-    headers: Dict[str, str] = {}
+    headers: dict[str, str] = {}
     if tok:
         headers["X-Auth-Token"] = tok
     lang = (p.get("accept_language") or "").strip()
@@ -382,7 +382,7 @@ def _auth_headers(p: Dict[str, Any]) -> Dict[str, str]:
     return headers
 
 
-def _list_offers(p: Dict[str, Any]) -> Dict[str, Any]:
+def _list_offers(p: dict[str, Any]) -> dict[str, Any]:
     qs = _qs({
         "offer_types":           p.get("offer_types"),
         "category":              p.get("category"),
@@ -396,14 +396,14 @@ def _list_offers(p: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request("GET", _presentment_url(f"/offers{qs}"), None, _auth_headers(p))
 
 
-def _get_offer(p: Dict[str, Any]) -> Dict[str, Any]:
+def _get_offer(p: dict[str, Any]) -> dict[str, Any]:
     offer_id = (p.get("offer_id") or "").strip()
     if not offer_id:
         return {"success": False, "error": "'offer_id' is required."}
     return _signed_request("GET", _presentment_url(f"/offers/{offer_id}"), None, _auth_headers(p))
 
 
-def _list_platform_offers(p: Dict[str, Any]) -> Dict[str, Any]:
+def _list_platform_offers(p: dict[str, Any]) -> dict[str, Any]:
     qs = _qs({
         "category":              p.get("category"),
         "presentment_countries": p.get("presentment_countries"),
@@ -413,7 +413,7 @@ def _list_platform_offers(p: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request("GET", _presentment_url(f"/platforms/offers{qs}"), None, _auth_headers(p))
 
 
-def _activate_offer(p: Dict[str, Any]) -> Dict[str, Any]:
+def _activate_offer(p: dict[str, Any]) -> dict[str, Any]:
     offer_id = (p.get("offer_id") or "").strip()
     if not offer_id:
         return {"success": False, "error": "'offer_id' is required."}
@@ -421,22 +421,22 @@ def _activate_offer(p: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request("POST", _presentment_url("/activations"), json.dumps(body), _auth_headers(p))
 
 
-def _list_activities(p: Dict[str, Any]) -> Dict[str, Any]:
+def _list_activities(p: dict[str, Any]) -> dict[str, Any]:
     source_type = (p.get("source_type") or "OFFER").strip()
     return _signed_request("GET", _presentment_url(f"/activities/{source_type}"), None, _auth_headers(p))
 
 
-def _get_savings(p: Dict[str, Any]) -> Dict[str, Any]:
+def _get_savings(p: dict[str, Any]) -> dict[str, Any]:
     return _signed_request("GET", _presentment_url("/savings"), None, _auth_headers(p))
 
 
-def _fid_header(p: Dict[str, Any]) -> Dict[str, str]:
+def _fid_header(p: dict[str, Any]) -> dict[str, str]:
     fid = (p.get("fi_id") or "").strip()
     return {"X-FID": fid} if fid else {}
 
 
-def _enroll_user(p: Dict[str, Any]) -> Dict[str, Any]:
-    body: Dict[str, Any] = {
+def _enroll_user(p: dict[str, Any]) -> dict[str, Any]:
+    body: dict[str, Any] = {
         "userId":     (p.get("user_id") or "").strip(),
         "userIdType": (p.get("user_id_type") or "BCN").strip(),
         "account": {
@@ -458,14 +458,14 @@ def _enroll_user(p: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request("POST", _admin_url("/enrollments/users"), json.dumps(body), _fid_header(p))
 
 
-def _retrieve_user(p: Dict[str, Any]) -> Dict[str, Any]:
+def _retrieve_user(p: dict[str, Any]) -> dict[str, Any]:
     crk = (p.get("crk") or "").strip()
     if not crk:
         return {"success": False, "error": "'crk' is required."}
     return _signed_request("GET", _admin_url(f"/enrollments/users/{crk}"), None, _fid_header(p))
 
 
-def _search_users(p: Dict[str, Any]) -> Dict[str, Any]:
+def _search_users(p: dict[str, Any]) -> dict[str, Any]:
     search_id   = (p.get("search_id") or "").strip()
     search_type = (p.get("search_type") or "BCN").strip()
     if not search_id:
@@ -474,6 +474,6 @@ def _search_users(p: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request("POST", _admin_url("/enrollments/users/searches"), json.dumps(body), _fid_header(p))
 
 
-def _list_rebates(p: Dict[str, Any]) -> Dict[str, Any]:
+def _list_rebates(p: dict[str, Any]) -> dict[str, Any]:
     qs = _qs({"limit": p.get("limit") or "10", "offset": p.get("offset") or "0"})
     return _signed_request("GET", _admin_url(f"/rebates{qs}"), None, _fid_header(p))
