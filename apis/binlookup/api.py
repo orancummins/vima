@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict
+from typing import Any
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "binlookup",
     "name": "BIN Lookup",
     "description": (
@@ -87,17 +87,17 @@ def is_configured() -> bool:
     return _configured()
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured()}
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if op_id == "lookup_bin":
         return _lookup_bin(params)
     return {"success": False, "error": f"Unknown operation: {op_id}"}
 
 
-def _lookup_bin(params: Dict[str, Any]) -> Dict[str, Any]:
+def _lookup_bin(params: dict[str, Any]) -> dict[str, Any]:
     if not _configured():
         return {
             "success": False,
@@ -121,8 +121,9 @@ def _lookup_bin(params: Dict[str, Any]) -> Dict[str, Any]:
         key_path = os.path.join(project_root, key_path)
 
     import json
-    import requests
+
     import oauth1.authenticationutils as authutils
+    import requests
     from oauth1.oauth import OAuth
 
     # Filter /bin-ranges by binNum — works on free plan (account-searches needs paid plan)

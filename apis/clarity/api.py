@@ -7,12 +7,12 @@ Docs:     https://developer.mastercard.com/consumer-clarity/documentation/
 from __future__ import annotations
 
 import os
-from typing import Any, Dict
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # Sandbox preset queries (from official test cases in the docs)
 # ---------------------------------------------------------------------------
-_PRESETS: Dict[str, Dict[str, Any]] = {
+_PRESETS: dict[str, dict[str, Any]] = {
     "shoe_store": {
         "label": "SHOE STORE 1234 — Austin, TX, USA  →  The Shoe Store",
         "criteria": {
@@ -79,7 +79,7 @@ _SANDBOX_BASE_URL = "https://sandbox.api.ethocaweb.com/ethoca"
 _PROD_BASE_URL    = "https://api.ethocaweb.com/ethoca"
 _ENDPOINT         = "/consumer-clarity/searches"
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "clarity",
     "name": "Consumer Clarity",
     "description": (
@@ -164,17 +164,17 @@ def is_configured() -> bool:
     return _configured()
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured()}
 
 
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if op_id == "search_merchant":
         return _search_merchant(params)
     return {"success": False, "error": f"Unknown operation: {op_id}"}
 
 
-def _search_merchant(params: Dict[str, Any]) -> Dict[str, Any]:
+def _search_merchant(params: dict[str, Any]) -> dict[str, Any]:
     if not _configured():
         return {
             "success": False,
@@ -200,8 +200,9 @@ def _search_merchant(params: Dict[str, Any]) -> Dict[str, Any]:
         key_path = os.path.join(project_root, key_path)
 
     import json
-    import requests
+
     import oauth1.authenticationutils as authutils
+    import requests
     from oauth1.oauth import OAuth
 
     url = f"{_base_url()}{_ENDPOINT}"

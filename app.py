@@ -2999,9 +2999,10 @@ def _replace_with_retry(tmp_path: str, path: str, *, data: bytes, binary: bool) 
             os.remove(tmp_path)
         except OSError:
             pass
-        raise last_exc if last_exc is not None else RuntimeError(
+        err = last_exc if last_exc is not None else RuntimeError(
             f"could not write {path}"
         )
+        raise err from last_exc
 
 
 def _atomic_write_bytes(path: str, data: bytes) -> None:

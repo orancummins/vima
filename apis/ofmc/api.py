@@ -15,14 +15,14 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict
+from typing import Any
 from urllib.parse import urlencode
 
 _SANDBOX_BASE = "https://sandbox.api.mastercard.com/loyalty/offers/eop"
 _PROD_BASE    = "https://api.mastercard.com/loyalty/offers/eop"
 
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "ofmc",
     "name": "Offers Merchant Content",
     "description": (
@@ -235,11 +235,11 @@ def is_configured() -> bool:
     return _configured()
 
 
-def get_state() -> Dict[str, Any]:
+def get_state() -> dict[str, Any]:
     return {"configured": _configured()}
 
 
-def _not_configured_err() -> Dict[str, Any]:
+def _not_configured_err() -> dict[str, Any]:
     return {
         "success": False,
         "error": (
@@ -256,9 +256,9 @@ def _resolve_key_path(path: str) -> str:
     return os.path.join(project_root, path)
 
 
-def _signed_request(method: str, url: str, body_str: str | None) -> Dict[str, Any]:
-    import requests
+def _signed_request(method: str, url: str, body_str: str | None) -> dict[str, Any]:
     import oauth1.authenticationutils as authutils
+    import requests
     from oauth1.oauth import OAuth
 
     consumer_key = os.environ["OFMC_CONSUMER_KEY"]
@@ -305,7 +305,7 @@ def _signed_request(method: str, url: str, body_str: str | None) -> Dict[str, An
     }
 
 
-def _qs(params: Dict[str, Any]) -> str:
+def _qs(params: dict[str, Any]) -> str:
     items = {k: v for k, v in params.items() if v not in (None, "", [])}
     return ("?" + urlencode(items)) if items else ""
 
@@ -313,7 +313,7 @@ def _qs(params: Dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 # Operations
 # ---------------------------------------------------------------------------
-def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def execute(op_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if not _configured():
         return _not_configured_err()
     dispatch = {
@@ -334,9 +334,9 @@ def execute(op_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     return fn(params)
 
 
-def _search_categories(p: Dict[str, Any]) -> Dict[str, Any]:
+def _search_categories(p: dict[str, Any]) -> dict[str, Any]:
     countries = [c.strip() for c in (p.get("countries") or "").split(",") if c.strip()]
-    body: Dict[str, Any] = {
+    body: dict[str, Any] = {
         "limit":  int((p.get("limit")  or "10").strip() or 10),
         "offset": int((p.get("offset") or "0").strip()  or 0),
     }
@@ -345,25 +345,25 @@ def _search_categories(p: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request("POST", f"{_base_url()}/categories/category-searches", json.dumps(body))
 
 
-def _list_sources(p: Dict[str, Any]) -> Dict[str, Any]:
+def _list_sources(p: dict[str, Any]) -> dict[str, Any]:
     qs = _qs({"limit": p.get("limit") or "10", "offset": p.get("offset") or "0"})
     return _signed_request("GET", f"{_base_url()}/sources{qs}", None)
 
 
-def _get_source(p: Dict[str, Any]) -> Dict[str, Any]:
+def _get_source(p: dict[str, Any]) -> dict[str, Any]:
     uuid_ = (p.get("source_uuid") or "").strip()
     if not uuid_:
         return {"success": False, "error": "'source_uuid' is required."}
     return _signed_request("GET", f"{_base_url()}/sources/{uuid_}", None)
 
 
-def _create_merchant(p: Dict[str, Any]) -> Dict[str, Any]:
+def _create_merchant(p: dict[str, Any]) -> dict[str, Any]:
     sub_uuid    = (p.get("subcategory_uuid") or "").strip()
     source_uuid = (p.get("source_uuid") or "").strip()
     if not sub_uuid or not source_uuid:
         return {"success": False, "error": "'subcategory_uuid' and 'source_uuid' are required."}
 
-    body: Dict[str, Any] = {
+    body: dict[str, Any] = {
         "name":               (p.get("name") or "").strip(),
         "displayName":        (p.get("display_name") or "").strip(),
         "externalMerchantId": (p.get("external_merchant_id") or "").strip(),
@@ -386,18 +386,18 @@ def _create_merchant(p: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request("POST", f"{_base_url()}/merchants", json.dumps(body))
 
 
-def _get_merchant(p: Dict[str, Any]) -> Dict[str, Any]:
+def _get_merchant(p: dict[str, Any]) -> dict[str, Any]:
     mid = (p.get("merchant_id") or "").strip()
     if not mid:
         return {"success": False, "error": "'merchant_id' is required."}
     return _signed_request("GET", f"{_base_url()}/merchants/{mid}", None)
 
 
-def _update_merchant(p: Dict[str, Any]) -> Dict[str, Any]:
+def _update_merchant(p: dict[str, Any]) -> dict[str, Any]:
     mid = (p.get("merchant_id") or "").strip()
     if not mid:
         return {"success": False, "error": "'merchant_id' is required."}
-    body: Dict[str, Any] = {}
+    body: dict[str, Any] = {}
     for k_in, k_out in (
         ("display_name", "displayName"),
         ("description",  "description"),
@@ -410,7 +410,7 @@ def _update_merchant(p: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request("PUT", f"{_base_url()}/merchants/{mid}", json.dumps(body))
 
 
-def _add_merchant_address(p: Dict[str, Any]) -> Dict[str, Any]:
+def _add_merchant_address(p: dict[str, Any]) -> dict[str, Any]:
     mid = (p.get("merchant_id") or "").strip()
     if not mid:
         return {"success": False, "error": "'merchant_id' is required."}
@@ -424,14 +424,14 @@ def _add_merchant_address(p: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request("POST", f"{_base_url()}/merchants/{mid}/addresses", json.dumps(body))
 
 
-def _list_merchant_images(p: Dict[str, Any]) -> Dict[str, Any]:
+def _list_merchant_images(p: dict[str, Any]) -> dict[str, Any]:
     mid = (p.get("merchant_id") or "").strip()
     if not mid:
         return {"success": False, "error": "'merchant_id' is required."}
     return _signed_request("GET", f"{_base_url()}/merchants/{mid}/images", None)
 
 
-def _upload_merchant_image(p: Dict[str, Any]) -> Dict[str, Any]:
+def _upload_merchant_image(p: dict[str, Any]) -> dict[str, Any]:
     mid    = (p.get("merchant_id") or "").strip()
     b64    = (p.get("image_base64") or "").strip()
     name   = (p.get("image_name") or "").strip() or "image"
@@ -442,13 +442,13 @@ def _upload_merchant_image(p: Dict[str, Any]) -> Dict[str, Any]:
     return _signed_request("POST", f"{_base_url()}/merchants/{mid}/images", json.dumps(body))
 
 
-def _create_offer(p: Dict[str, Any]) -> Dict[str, Any]:
+def _create_offer(p: dict[str, Any]) -> dict[str, Any]:
     merchant_uuid = (p.get("merchant_uuid") or "").strip()
     source_uuid   = (p.get("source_uuid") or "").strip()
     if not merchant_uuid or not source_uuid:
         return {"success": False, "error": "'merchant_uuid' and 'source_uuid' are required."}
 
-    rewards: Dict[str, Any] = {
+    rewards: dict[str, Any] = {
         "discountType": (p.get("discount_type") or "PERCENTAGE").strip(),
         "type":         "STATEMENT_CREDIT",
         "mode":         "CASH",

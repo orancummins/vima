@@ -5,20 +5,19 @@ clean "before → after" merchant card for the Use Cases tab.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 # Pull the sandbox preset list from the underlying API module so the UI
 # always offers the same choices the backend can actually serve.
 from apis.clarity.api import _PRESETS as _CLARITY_PRESETS  # type: ignore
 
-
-_PRESET_OPTIONS: List[Dict[str, str]] = [
+_PRESET_OPTIONS: list[dict[str, str]] = [
     {"value": key, "label": preset["label"]}
     for key, preset in _CLARITY_PRESETS.items()
 ]
 
 
-MANIFEST: Dict[str, Any] = {
+MANIFEST: dict[str, Any] = {
     "id": "clarity",
     "name": "Consumer Clarity",
     "description": (
@@ -35,7 +34,7 @@ MANIFEST: Dict[str, Any] = {
 }
 
 
-def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
     if action == "lookup":
         from apis.clarity import api as clarity_api
 
@@ -49,7 +48,7 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
         # Recover the raw descriptor from the request body so the UI can render
         # the "before" state alongside the enriched "after" state.
         request_body = (result.get("request") or {}).get("body") or {}
-        raw_criteria: Dict[str, Any] = {}
+        raw_criteria: dict[str, Any] = {}
         try:
             raw_criteria = (
                 request_body["searchCriteria"][0]["merchantCriteria"] or {}
@@ -79,7 +78,7 @@ def do_action(action: str, params: Dict[str, Any]) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Shape a single Consumer Clarity result into a UI-friendly dict.
 # ---------------------------------------------------------------------------
-def _shape(item: Dict[str, Any]) -> Dict[str, Any]:
+def _shape(item: dict[str, Any]) -> dict[str, Any]:
     address = item.get("address") or {}
     category = item.get("category") or {}
     location = item.get("location") or {}
@@ -88,7 +87,7 @@ def _shape(item: Dict[str, Any]) -> Dict[str, Any]:
     merchant_logo = _pick_logo(logos, ("MERCHANT", "MERCHANT_LOGO"))
     industry_logo = _pick_logo(logos, ("INDUSTRY", "INDUSTRY_LOGO"))
 
-    addr_lines: List[str] = []
+    addr_lines: list[str] = []
     line1 = address.get("addressLine1") or address.get("line1")
     if line1:
         addr_lines.append(line1)
@@ -123,7 +122,7 @@ def _shape(item: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _pick_logo(logos: List[Dict[str, Any]], kinds: tuple) -> str | None:
+def _pick_logo(logos: list[dict[str, Any]], kinds: tuple) -> str | None:
     """Return the first logo URL whose ``logoType`` matches one of *kinds*."""
     if not logos:
         return None
