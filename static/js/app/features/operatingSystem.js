@@ -11,10 +11,13 @@
 // mcos/web/mcos-bridge.js):
 //   frame → shell  {type:'mcos:ready'}
 //                  {type:'mcos:state', state, host}   what the picture shows
+//                  {type:'mcos:globe', atGlobe, rect}  where its globe is (for the glide)
 //                  {type:'vima:navigate', tab, api|bundle|uc}
 //                  {type:'vima:shortcut', key}        ⌘K / Ctrl+K inside the frame
 //   shell → frame  {type:'mcos:goto', target}
 //                  {type:'mcos:visibility', visible}
+//                  {type:'mcos:globe-rect'}            where is your globe?
+//                  {type:'mcos:glide', phase, rot}     'hold' hides its globe, 'reveal' shows it at rot
 //                  {type:'vima:theme', theme}         (core/theme.js)
 //
 // A target is the picture's own hash: '' (the stack), 'open', 'U', 'L1'…'L5',
@@ -43,7 +46,7 @@ function _post(msg) {
   try { _frame.contentWindow.postMessage(msg, window.location.origin); } catch (_) {}
 }
 
-function _ensureFrame() {
+function _ensureFrame(glide) {
   if (_frame) return;
   const host = $('os-frame-host');
   if (!host) return;
@@ -54,7 +57,8 @@ function _ensureFrame() {
   // tooltip wherever the pointer rests inside it.
   _frame.setAttribute('aria-label', 'Mastercard Operating System');
   // The bridge reads the hash on start, so a pending target rides along here.
-  _frame.src = _appPath('/mcos/index.html') + (_pending ? '#' + encodeURIComponent(_pending) : '');
+  _frame.src = _appPath('/mcos/index.html') + (glide ? '?glide=1' : '') +
+    (_pending ? '#' + encodeURIComponent(_pending) : '');
   _pending = null;
   _frame.addEventListener('load', () => {
     host.classList.add('os-frame-host--loaded');
@@ -63,17 +67,20 @@ function _ensureFrame() {
   host.appendChild(_frame);
 }
 
-/** Called by core/nav.js when the Operating System tab is shown. */
-export function showOs() {
+/** Called by core/nav.js when the Operating System tab is shown. `fromHome`
+ *  is the Home globe's place (captureHomeGlobe) when coming from Home. */
+export function showOs(fromHome) {
   _visible = true;
-  _ensureFrame();
+  _ensureFrame(!!fromHome);
   if (_ready) _post({ type: 'mcos:visibility', visible: true });
+  if (fromHome) _startGlide(fromHome);
 }
 
 /** Called by core/nav.js when any other tab is shown. */
 export function hideOs() {
   if (!_visible) return;
   _visible = false;
+  _endGlide(true);
   _post({ type: 'mcos:visibility', visible: false });
 }
 
@@ -93,6 +100,77 @@ export function openOs(target) {
   if (tabBtn && !tabBtn.classList.contains('active')) tabBtn.click();
   else showOs();
   if (_ready) gotoOs(target);
+}
+
+// ---------- the Home globe glides into the picture ----------
+// The picture's opening globe is drawn exactly like the Home globe
+// (mcos/web/mcos-bridge.js), so switching Home → Operating System moves one
+// globe rather than swapping two: a copy of the Home canvas glides and
+// scales onto the picture's globe, which then appears at the same rotation.
+const HOME_OUTLINE = 0.32 * 0.668;   // the Home globe's outline radius, as a share of its canvas width
+let _glide = null;
+
+/** Called by core/nav.js before it hides Home: where the Home globe is now, or null. */
+export function captureHomeGlobe() {
+  const panel = $('panel-home');
+  const canvas = $('home-globe');
+  if (!panel || panel.classList.contains('hidden') || !canvas) return null;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return null;
+  const r = canvas.getBoundingClientRect();
+  if (!r.width) return null;
+  return { canvas, left: r.left, top: r.top, w: r.width, h: r.height,
+    cx: r.left + r.width / 2, cy: r.top + r.height / 2, r: r.width * HOME_OUTLINE };
+}
+
+function _startGlide(from) {
+  _endGlide(true);
+  const ov = document.createElement('canvas');
+  ov.className = 'os-glide';
+  ov.width = from.canvas.width;
+  ov.height = from.canvas.height;
+  Object.assign(ov.style, { left: from.left + 'px', top: from.top + 'px', width: from.w + 'px', height: from.h + 'px' });
+  document.body.appendChild(ov);
+  const ctx = ov.getContext('2d');
+  // The Home globe keeps turning while hidden; copy it every frame.
+  const g = { ov, from, raf: 0, timer: 0, moved: false };
+  const copy = () => {
+    ctx.clearRect(0, 0, ov.width, ov.height);
+    ctx.drawImage(from.canvas, 0, 0);
+    g.raf = requestAnimationFrame(copy);
+  };
+  copy();
+  g.timer = setTimeout(() => _endGlide(), 2500);   // the picture never answered: just fade out
+  _glide = g;
+  if (_ready) {
+    _post({ type: 'mcos:glide', phase: 'hold' });
+    _post({ type: 'mcos:globe-rect' });
+  }
+}
+
+function _moveGlide(msg) {
+  const g = _glide;
+  if (!g || g.moved) return;
+  if (!msg.atGlobe || !msg.rect || !_frame) { _endGlide(); return; }
+  const fr = _frame.getBoundingClientRect();
+  const to = { cx: fr.left + msg.rect.cx, cy: fr.top + msg.rect.cy, r: msg.rect.r };
+  g.moved = true;
+  g.ov.style.transition = 'transform 0.9s cubic-bezier(.45,.05,.25,1)';
+  g.ov.style.transform = `translate(${to.cx - g.from.cx}px, ${to.cy - g.from.cy}px) scale(${to.r / g.from.r})`;
+  g.ov.addEventListener('transitionend', () => _endGlide(), { once: true });
+}
+
+function _endGlide(instant) {
+  const g = _glide;
+  if (!g) return;
+  _glide = null;
+  clearTimeout(g.timer);
+  const rot = typeof window.__homeGlobeRot === 'function' ? window.__homeGlobeRot() : undefined;
+  _post({ type: 'mcos:glide', phase: 'reveal', rot });
+  const remove = () => { cancelAnimationFrame(g.raf); g.ov.remove(); };
+  if (instant) { remove(); return; }
+  g.ov.style.transition = 'opacity 0.3s ease';
+  g.ov.style.opacity = '0';
+  setTimeout(remove, 320);
 }
 
 function _navigateStudio(msg) {
@@ -133,6 +211,13 @@ function _onMessage(e) {
         _post({ type: 'mcos:goto', target: _pending });
         _pending = null;
       }
+      if (_glide) {
+        _post({ type: 'mcos:glide', phase: 'hold' });
+        _post({ type: 'mcos:globe-rect' });
+      }
+      break;
+    case 'mcos:globe':
+      _moveGlide(msg);
       break;
     case 'mcos:state':
       if (!_visible) return;

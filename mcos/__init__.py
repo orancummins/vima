@@ -112,6 +112,7 @@ def render_page() -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mastercard Operating System</title>
 <script src="/static/js/usecase-theme.js"></script>
+<script>if (/[?&]glide=1/.test(location.search)) document.documentElement.classList.add("mcos-glide-wait");</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>html,body{{margin:0}}img{{max-width:100%}}[hidden]{{display:none!important}}</style>

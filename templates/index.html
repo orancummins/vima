@@ -1683,6 +1683,9 @@ client = OfinClient.from_env()          <span class="sdk-c-cm"># credentials aut
       }
 
       let rot = 0, last = null;
+      // The Operating System tab glides this globe into its picture and carries
+      // on from the same rotation (static/js/app/features/operatingSystem.js).
+      window.__homeGlobeRot = () => rot;
       function render(ts) {
         const delta = last ? Math.min((ts - last) / 16.667, 2) : 1;
         last = ts;

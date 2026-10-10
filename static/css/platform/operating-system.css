@@ -52,6 +52,14 @@ html.theme-light .os-loading { color: rgba(0, 0, 0, 0.45); }
 @keyframes os-pulse { 50% { opacity: 0.35; transform: scale(0.8); } }
 @media (prefers-reduced-motion: reduce) { .os-loading-dot { animation: none; } }
 
+/* The Home globe on its way into the picture (operatingSystem.js). */
+.os-glide {
+  position: fixed;
+  z-index: 30;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+}
+
 /* ---------- links into the Operating System ---------- */
 
 /* API workbench header, beside "How To Use These APIs". */
