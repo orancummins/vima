@@ -208,6 +208,7 @@ that composes one or more of the APIs above:
 - **Online Identity Verification** — IDV flow demo
 - **Specials** — themed offer collections
 - **[Find A Card](https://github.com/orancummins/fac)** — card recommendation engine (separate repo, embedded)
+- **Settle In** *(concept)* — a newcomer's first day in New York, step by step: Open Finance history for a card with no local credit file, a tokenised card in the wallet, money home with the rate up front, enriched spending, fraud stopped in milliseconds, and a Priceless Surprise
 - **Sonic Branding** — Mastercard sound experience
 - **Finance In Colour** — visual spend analytics
 - **The Wire** — x-ray of a single transaction's data journey through Open Banking layers

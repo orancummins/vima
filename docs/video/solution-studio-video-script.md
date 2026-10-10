@@ -1,6 +1,6 @@
 # Mastercard Solution Studio — walkthrough video script
 
-3 min 22 s · 1920×1080, 30 fps · voice: Kokoro-82M v1.0 (`af_heart`), one sentence at a time with explicit pauses · made by `tools/video/` (see its README)
+4 min 4 s · 1920×1080, 30 fps · voice: Kokoro-82M v1.0 (`af_heart`), one sentence at a time with explicit pauses · made by `tools/video/` (see its README)
 
 The narration below is the source of truth in [`tools/video/narration.json`](../../tools/video/narration.json); edit it there and re-run the pipeline. Timings are from the current voice track. *Italic brackets* are what happens on screen.
 
@@ -70,7 +70,17 @@ Moments later, the card is approved and added to your phone's wallet, ready to u
 
 *[Use Cases → Find A Card. The request "Travel rewards, no foreign fees, and I want it now." is typed and sent. On requirements, "Connect To Bank" opens the Open Banking connection (verifying identity, assessing financial history). The spending profile appears: monthly spend by category, credit band, trips a year, cross-border share. The agent's smart criteria follow; "Find My Perfect Card" runs the search and the ranked cards appear with fit scores, expected annual value and approval odds. "Apply Instantly via Agent" steps through checking the issuer, applying through the website, form-filling, the decision and provisioning; on "added to your phone's wallet" the card flies into the wallet on a phone, with a tick and its features.]*
 
-## 2:45 · Open to everyone, easy to set up (22 s)
+## 2:45 · Settle In, a concept (42 s)
+
+And here's where Solution Studio is heading next. Settle In is a concept, built entirely on Mastercard assets.
+
+Priya lands in New York with no US credit history. With her consent, Open Finance shares her history from her bank in Ireland, and she's approved for a card in minutes. It's in her phone's wallet before she reaches the city, ready to use at more than a hundred and fifty million places worldwide.
+
+She sends money home, sees the exchange rate before she pays, and her mum has it in seconds. At lunch, her new statement already makes sense. When someone abroad tries her card details, Mastercard's AI stops the payment before it happens. And her first night ends with a Priceless Surprise on Broadway.
+
+*[Use Cases → Settle In, marked "Concept · not wired yet". Priya's day runs along the top (07:55 Arrive to 19:30 Priceless); each line moves to the next moment: her Irish bank shared through Open Finance, approval with no US credit file, the card in her phone's wallet, $400 home to her mum with the rate shown first, an enriched statement and nearby essentials, a declined fraud attempt with the protections behind it (Decision Intelligence Pro, Identity Check, tokenisation, alerts), and a Priceless Surprise notification at a Broadway box office. Each moment lists the Mastercard assets behind it, marked as in Studio today or to add.]*
+
+## 3:26 · Open to everyone, easy to set up (22 s)
 
 Solution Studio is open to everyone who wants to innovate with Mastercard. Sign up for Mastercard Developers, clone the project, and run it. You're up and running in four steps.
 
@@ -78,7 +88,7 @@ And setup is just as easy. Choose auto-provision, pick the APIs you want, and St
 
 *[The info button opens "Install & Run Solution Studio"; it scrolls through the four steps. It closes and the first-run welcome appears; "Auto-provision Keys" opens "Select APIs to Provision". The cursor rests on "Provision Selected APIs" — it is never clicked, so no keys are created.]*
 
-## 3:07 · Close (15 s)
+## 3:48 · Close (15 s)
 
 Mastercard is powering commerce for people, businesses and economies everywhere. With Solution Studio, we're empowering you to innovate with us.
 
@@ -107,4 +117,4 @@ From the review of the first draft (10 October 2026); all made in this version.
 4. ✓ **Pronunciation: "live".** "The way you actually live" now rhymes with *give*.
 5. ✓ **The final line.** "Let's build what's next…", a full pause, then "together." on its own, slower, with a falling tone.
 
-Also added: the Data Enrichment example before Find A Card.
+Also added: the Data Enrichment example before Find A Card, and Settle In (Priya's first day, a concept use case) after it.

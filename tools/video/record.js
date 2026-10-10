@@ -140,6 +140,7 @@ const OVERLAY = `(() => {
   const os = page.frameLocator('#os-frame');
   const fac = page.frameLocator('#findacard-webview-frame').frameLocator('iframe.fac-frame');
   const enrich = page.frameLocator('#enrichment-webview-frame');
+  const settle = page.frameLocator('#settle_in-webview-frame');
   const facFrame = () => page.frames().find((f) => f.url().startsWith('http://localhost:5432') || f.url().includes(':5432/'));
   const osFrame = () => page.frames().find((f) => f.url().includes('/mcos/'));
 
@@ -157,6 +158,8 @@ const OVERLAY = `(() => {
   });
   await page.locator('[data-uc-id="enrichment"]').click();
   await enrich.locator('#enrich-rows').waitFor({ timeout: 20000 });
+  await page.locator('[data-uc-id="settle_in"]').click();
+  await settle.locator('#si-next').waitFor({ timeout: 20000 });
   // Load the Operating System picture and hold it on the spinning globe.
   await tab('os').click();
   await os.locator('#svg').waitFor({ timeout: 20000 });
@@ -265,8 +268,16 @@ const OVERLAY = `(() => {
   await at(S('f9') + 0.9); await click(fac.locator('#applyContinueBtn'), { dur: 0.45 });
   await at(S('f9') + 3.4); await hover(fac.locator('.iphone-frame'), 1.0);
 
-  // 8 · Open to everyone, easy to set up — the info guide, then auto-provisioning.
-  await at(SEC('s8_open').start); mark('s8_open');
+  // 8 · Settle In — the concept use case: Priya's first day, one moment per line.
+  await at(SEC('s8_settle_in').start); mark('s8_settle_in');
+  await at(S('n1') + 0.3); await click(page.locator('[data-uc-id="settle_in"]'), { dur: 0.7 });
+  await at(S('n2') + 3.8); await click(settle.locator('#si-next'), { dur: 0.7 });   // approved
+  for (const id of ['n3', 'n4', 'n5', 'n6', 'n7']) {
+    await at(S(id) - 0.2); await click(settle.locator('#si-next'), { dur: 0.35 });
+  }
+
+  // 9 · Open to everyone, easy to set up — the info guide, then auto-provisioning.
+  await at(SEC('s9_open').start); mark('s9_open');
   await at(S('e1') + 0.4); await click(page.locator('#info-trigger-btn'));
   await at(S('e2') + 0.6); await smoothScroll(page, '.info-panel-body', 380);
   await at(S('e2') + 3.2); await smoothScroll(page, '.info-panel-body', 760);
@@ -287,8 +298,8 @@ const OVERLAY = `(() => {
   await page.evaluate(() => { document.getElementById('prov-modal').classList.add('prov-hidden'); document.body.style.overflow = ''; });
   await at(S('e5') + 2.2); await click(tab('home'), { dur: 0.6 });
 
-  // 9 · Close — Home.
-  await at(SEC('s9_close').start); mark('s9_close');
+  // 10 · Close — Home.
+  await at(SEC('s10_close').start); mark('s10_close');
   await at(S('c1') + 0.8); await hideCursor();
 
   await at(TL.total); mark('end');
