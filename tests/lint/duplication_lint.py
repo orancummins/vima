@@ -116,6 +116,49 @@ _IGNORED_PAIRS: dict[tuple[str, str], str] = {
         "Regional Open Finance client implementations (AU Finicity vs EU JWT OAuth2) "
         "— structural similarity is intentional; independently maintained for different auth flows"
     ),
+    # --- Legacy alias modules (canonical id <-> legacy id) ---
+    # Each legacy-id module is a back-compat shim that mirrors its canonical
+    # counterpart so old .env prefixes, artifact names and imports keep working
+    # (see apis/catalog.py `legacy_id`). The near-identical body is the shim.
+    ("apis/open_finance/api.py", "apis/ofin/api.py"): "Legacy alias shim: 'ofin' mirrors canonical 'open_finance'.",
+    ("apis/open_finance/client.py", "apis/ofin/client.py"): "Legacy alias shim: 'ofin' client mirrors 'open_finance' client.",
+    ("apis/priceless_cities/api.py", "apis/priceless/api.py"): "Legacy alias shim: 'priceless' mirrors 'priceless_cities'.",
+    ("apis/offers_merchant_content/api.py", "apis/ofmc/api.py"): "Legacy alias shim: 'ofmc' mirrors 'offers_merchant_content'.",
+    ("apis/offers_for_publishers/api.py", "apis/ofpub/api.py"): "Legacy alias shim: 'ofpub' mirrors 'offers_for_publishers'.",
+    ("apis/transaction_notifications/api.py", "apis/txnotify/api.py"): "Legacy alias shim: 'txnotify' mirrors 'transaction_notifications'.",
+    ("apis/transaction_notifications/api.py", "apis/consent/api.py"): "Legacy alias shim: 'consent' is merged into 'transaction_notifications'.",
+    ("apis/benefits_eligibility/api.py", "apis/eligibility/api.py"): "Legacy alias shim: 'eligibility' mirrors 'benefits_eligibility'.",
+    ("apis/benefits_content_eligibility/api.py", "apis/bces/api.py"): "Legacy alias shim: 'bces' mirrors 'benefits_content_eligibility'.",
+    ("apis/easy_savings/api.py", "apis/easysavings/api.py"): "Legacy alias shim: 'easysavings' mirrors 'easy_savings'.",
+    ("apis/consumer_clarity/api.py", "apis/clarity/api.py"): "Legacy alias shim: 'clarity' mirrors 'consumer_clarity'.",
+    ("apis/bin_lookup/api.py", "apis/binlookup/api.py"): "Legacy alias shim: 'binlookup' mirrors 'bin_lookup'.",
+    ("usecases/bin_lookup/__init__.py", "usecases/binlookup/__init__.py"): "Legacy alias shim: 'binlookup' use case mirrors 'bin_lookup'.",
+    ("usecases/consumer_clarity/__init__.py", "usecases/clarity/__init__.py"): "Legacy alias shim: 'clarity' use case mirrors 'consumer_clarity'.",
+    ("usecases/easy_savings/__init__.py", "usecases/easysavings/__init__.py"): "Legacy alias shim: 'easysavings' use case mirrors 'easy_savings'.",
+    # --- Within-file repeated boilerplate (self-pairs) ---
+    ("apis/ofin/api.py", "apis/ofin/api.py"): (
+        "Legacy alias of open_finance; repeated per-endpoint param dicts mirror the "
+        "canonical module's within-file structural similarity (already allowlisted there)."
+    ),
+    ("apis/consent/api.py", "apis/consent/api.py"): (
+        "Legacy consent shim; repeated 3DS/enrollment handlers share the same param-guard "
+        "+ OAuth-sign pattern — within-file structural similarity, not extractable logic."
+    ),
+    ("static/js/app.js", "static/js/app.js"): (
+        "Legacy pre-split UI monolith; repeated panel/event-handler patterns — frontend "
+        "boilerplate retained for back-compat while logic lives in static/js/app/*."
+    ),
+    # --- Legacy JS monolith vs the modules it was split into ---
+    ("static/js/app.js", "static/js/app/main.js"): "Legacy app.js monolith duplicates the split-out app/main.js module.",
+    ("static/js/app.js", "static/js/app/workbench/core.js"): "Legacy app.js monolith duplicates the split-out app/workbench/core.js module.",
+    ("static/js/app.js", "static/js/app/features/apiCallLog.js"): "Legacy app.js monolith duplicates the split-out app/features/apiCallLog.js module.",
+    # --- Same product-family structural similarity (shared schemas) ---
+    ("apis/ofmc/api.py", "apis/ofpub/api.py"): "Offers product family — legacy shims share response/param schemas by design.",
+    ("apis/offers_merchant_content/api.py", "apis/ofpub/api.py"): "Offers product family — shared response/param schemas across related APIs.",
+    ("apis/offers_for_publishers/api.py", "apis/ofmc/api.py"): "Offers product family — shared response/param schemas across related APIs.",
+    ("apis/bces/api.py", "apis/eligibility/api.py"): "Benefits product family — legacy shims share eligibility param schemas by design.",
+    ("apis/easysavings/api.py", "apis/places/api.py"): "Location/offer search APIs share geographic parameter schema by product design.",
+    ("apis/ofin/api.py", "apis/open_finance_au/api.py"): "Regional Open Finance variants (legacy ofin vs AU) — structurally similar by design.",
 }
 
 

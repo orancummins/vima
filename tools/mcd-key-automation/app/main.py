@@ -63,6 +63,9 @@ def run(
 ) -> None:
     """Run the end-to-end automation."""
     _configure_logging(verbose)
+    # Load config/.env so the Developers API admin key (MCD_DEVELOPERS_API_*) is
+    # available for the fast, browser-free provisioning path.
+    _load_dotenv(VIMA_CONFIG / ".env")
     bundle = asyncio.run(orchestrator.run(config, dry_run=dry_run, headless=headless))
     if bundle:
         typer.echo(f"Bundle: {bundle}")
@@ -189,6 +192,32 @@ def _load_dotenv(path: Path) -> None:
         v = v.strip().strip('"').strip("'")
         if k and k not in os.environ:
             os.environ[k] = v
+
+
+def _upsert_env_vars(path: Path, mapping: dict[str, str], *, header: str | None = None) -> None:
+    """Insert or update KEY=VALUE lines in a .env file, preserving other content.
+
+    Existing keys are updated in place; missing keys are appended (under an
+    optional comment header). The file is created if it does not exist.
+    """
+    lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+    remaining = dict(mapping)
+    for i, raw in enumerate(lines):
+        stripped = raw.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key = stripped.split("=", 1)[0].strip()
+        if key in remaining:
+            lines[i] = f"{key}={remaining.pop(key)}"
+    if remaining:
+        if lines and lines[-1].strip():
+            lines.append("")
+        if header:
+            lines.append(header)
+        for key, value in remaining.items():
+            lines.append(f"{key}={value}")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def _slug_from_url(url: str) -> str | None:
@@ -497,6 +526,288 @@ def provision_api(
             f"  Re-run: mcd-key-automation test-api {url!r}",
             err=True,
         )
+
+
+@app.command("provision-admin-key")
+def provision_admin_key(
+    key_name: str = typer.Option(
+        "vima-developers-api", "--key-name",
+        help="Name/alias for the Developers API key (8-75 chars).",
+    ),
+    key_password: str = typer.Option(
+        "foobar!!", "--key-password",
+        help="Keystore password protecting the downloaded .p12.",
+    ),
+    keys_dir: Path = typer.Option(
+        VIMA_KEYS, "--keys-dir", help="Where to copy the .p12 keystore."
+    ),
+    env_out: Path = typer.Option(
+        VIMA_CONFIG / ".env.generated", "--env-out",
+        help="Where to write the generated env block.",
+    ),
+    headful: bool = typer.Option(
+        False, "--headful",
+        help="Force the browser window open (useful when the session has expired).",
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+) -> None:
+    """Provision the Mastercard **Developers API** (admin) key.
+
+    \b
+    Automates: Account page → 'Developers API Keys' → Add key → Browser
+    Keystore → generate → name + password → accept T&C → Create key →
+    Download key, then captures the consumer key.
+
+    This is the one-time bootstrap credential for the documented Mastercard
+    Developers API. It is scoped to just this key — it does NOT provision any
+    other API's project keys.
+
+    Reads MCD_PORTAL_EMAIL / MCD_PORTAL_PASSWORD from config/.env to pre-fill
+    the login form (you still complete MFA/CAPTCHA). Runs headless when a fresh
+    session exists; otherwise opens a browser window.
+    """
+    from app import admin_key
+
+    _configure_logging(verbose)
+    _load_dotenv(VIMA_CONFIG / ".env")
+
+    if not (8 <= len(key_name) <= 75):
+        typer.echo("ERROR: --key-name must be 8-75 characters.", err=True)
+        raise typer.Exit(1)
+
+    headless = not headful and _session_is_fresh()
+    mode = "headless" if headless else "headful"
+    typer.echo(
+        f"Provisioning Developers API (admin) key  name={key_name!r}  "
+        f"mode={mode}  session={_session_age_str()}"
+    )
+    if not headless and not headful:
+        typer.echo(
+            "  No fresh session found — browser will open for login.\n"
+            "  Tip: run 'init-session' once to cache your session for autonomous re-runs."
+        )
+
+    dest_dir = WORKSPACE / "admin-key"
+    try:
+        result = asyncio.run(
+            admin_key.run_admin_key(
+                login_url="https://developer.mastercard.com/account/log-in",
+                key_name=key_name,
+                key_password=key_password,
+                dest_dir=dest_dir,
+                headless=headless,
+            )
+        )
+    except RuntimeError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(1) from None
+
+    if result.status == "submitted":
+        typer.echo(
+            "\n✅ Developers API key request submitted — status: Pending.\n"
+            "   Mastercard reviews requests within ~3 business days; you'll get an "
+            "email when it's approved.\n"
+            "   After approval, re-run this command (or download from the Account "
+            "page) to fetch the keystore + consumer key."
+        )
+        return
+
+    # status == "download": deploy the keystore into config/keys and emit env block.
+    if result.key_path is None:
+        typer.echo("ERROR: download path missing despite 'download' status.", err=True)
+        raise typer.Exit(1)
+    keys_dir.mkdir(parents=True, exist_ok=True)
+    target_p12 = keys_dir / "mcd-developers-api.p12"
+    # The portal delivers the keystore inside a ZIP — extract the .p12 member.
+    src = result.key_path
+    if src.suffix.lower() == ".zip":
+        import zipfile
+        with zipfile.ZipFile(src) as zf:
+            members = [n for n in zf.namelist() if n.lower().endswith(".p12")]
+            if not members:
+                typer.echo(
+                    f"ERROR: no .p12 found inside downloaded zip {src.name}. "
+                    f"Members: {zf.namelist()}",
+                    err=True,
+                )
+                raise typer.Exit(1)
+            target_p12.write_bytes(zf.read(members[0]))
+            typer.echo(f"  Extracted {members[0]} from {src.name}")
+    else:
+        target_p12.write_bytes(src.read_bytes())
+
+    prefix = "MCD_DEVELOPERS_API"
+    env_vars = {
+        f"{prefix}_CONSUMER_KEY": result.consumer_key or "",
+        f"{prefix}_SIGNING_KEY_PATH": f"config/keys/{target_p12.name}",
+        f"{prefix}_SIGNING_KEY_ALIAS": result.key_name,
+        f"{prefix}_SIGNING_KEY_PASSWORD": result.key_password,
+    }
+    header = "# Mastercard Developers API (admin) key - provision-admin-key"
+    # Auto-wire directly into config/.env (upsert), and mirror to .env.generated.
+    dotenv = VIMA_CONFIG / ".env"
+    _upsert_env_vars(dotenv, env_vars, header=header)
+    _upsert_env_vars(env_out, env_vars, header=header)
+
+    typer.echo(f"\n✅ Keystore saved: {target_p12}")
+    typer.echo(f"✅ Wired credentials into: {dotenv}")
+    typer.echo(f"✅ Mirrored to: {env_out}")
+    if result.consumer_key:
+        typer.echo(f"✅ Consumer key: {result.consumer_key}")
+    else:
+        typer.echo(
+            "⚠  Consumer key not auto-captured (key may still be provisioning). "
+            f"Run 'sync-admin-key' to fetch + wire it, or set {prefix}_CONSUMER_KEY "
+            f"manually in {dotenv}.",
+            err=True,
+        )
+    typer.echo(
+        "\nNote: new Developers API keys are 'Pending' until Mastercard emails "
+        "approval before they can call the Developers API."
+    )
+
+
+@app.command("sync-admin-key")
+def sync_admin_key_cmd(
+    key_name: str = typer.Option(
+        "vima-developers-api", "--key-name",
+        help="Name of the Developers API key to read from the Account page.",
+    ),
+    headful: bool = typer.Option(
+        False, "--headful", help="Force the browser window open (session expired)."
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+) -> None:
+    """Read the Developers API key's consumer key from the Account page and wire it in.
+
+    \b
+    Auto-updates MCD_DEVELOPERS_API_CONSUMER_KEY in config/.env (and
+    config/.env.generated). Works even while the key is PENDING — the portal
+    shows the consumer key immediately, though it only authenticates against
+    the API once Mastercard approves the key.
+    """
+    from app import admin_key
+
+    _configure_logging(verbose)
+    _load_dotenv(VIMA_CONFIG / ".env")
+
+    headless = not headful and _session_is_fresh()
+    typer.echo(
+        f"Reading Developers API key {key_name!r}  "
+        f"mode={'headless' if headless else 'headful'}  session={_session_age_str()}"
+    )
+    try:
+        row = asyncio.run(
+            admin_key.sync_admin_key(
+                login_url="https://developer.mastercard.com/account/log-in",
+                key_name=key_name,
+                headless=headless,
+            )
+        )
+    except RuntimeError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(1) from None
+
+    if not row:
+        typer.echo(
+            "No Developers API key found on the Account page. "
+            "Run 'provision-admin-key' first.",
+            err=True,
+        )
+        raise typer.Exit(1)
+
+    status = row.get("status") or "UNKNOWN"
+    consumer_key = row.get("consumer_key")
+    typer.echo(f"  Key: {row.get('name')!r}  status={status}")
+    if not consumer_key:
+        typer.echo("⚠  Consumer key not visible yet on the Account page.", err=True)
+        raise typer.Exit(1)
+
+    dotenv = VIMA_CONFIG / ".env"
+    env_gen = VIMA_CONFIG / ".env.generated"
+    prefix = "MCD_DEVELOPERS_API"
+    # Wire the consumer key plus the deterministic keystore path/alias so the
+    # Developers API client can build straight from config/.env. Only set the
+    # keystore password if it isn't already configured (don't clobber a custom one).
+    to_wire = {
+        f"{prefix}_CONSUMER_KEY": consumer_key,
+        f"{prefix}_SIGNING_KEY_PATH": "config/keys/mcd-developers-api.p12",
+        f"{prefix}_SIGNING_KEY_ALIAS": row.get("name") or key_name,
+    }
+    if not os.environ.get(f"{prefix}_SIGNING_KEY_PASSWORD", "").strip():
+        to_wire[f"{prefix}_SIGNING_KEY_PASSWORD"] = "foobar!!"
+    header = "# Mastercard Developers API (admin) key - sync-admin-key"
+    _upsert_env_vars(dotenv, to_wire, header=header)
+    _upsert_env_vars(env_gen, to_wire, header=header)
+    typer.echo(f"✅ Wired {prefix}_CONSUMER_KEY into {dotenv}")
+    typer.echo(f"   Consumer key: {consumer_key}")
+    if status.upper() == "PENDING":
+        typer.echo(
+            "\nNote: key is PENDING — it will authenticate against the Developers "
+            "API only after Mastercard approves it (email notification)."
+        )
+
+
+@app.command("dev-api-services")
+def dev_api_services(
+    contains: str = typer.Option(
+        None, "--contains", help="Filter services whose name contains this text."
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+) -> None:
+    """List services via the Developers API (GET /services). Validates the admin key."""
+    from providers.mastercard_api import DevelopersApiClient, DevelopersApiError
+
+    _configure_logging(verbose)
+    _load_dotenv(VIMA_CONFIG / ".env")
+    try:
+        client = DevelopersApiClient.from_env()
+        data = client.get_services()
+    except DevelopersApiError as exc:
+        typer.echo(f"ERROR: Developers API call failed: {exc}", err=True)
+        typer.echo(
+            "If the key is still PENDING, wait for approval before calling the API.",
+            err=True,
+        )
+        raise typer.Exit(1) from None
+    except RuntimeError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(1) from None
+
+    services = data.get("services", data) if isinstance(data, dict) else data
+    count = 0
+    for svc in services or []:
+        name = svc.get("name", "")
+        if contains and contains.lower() not in str(name).lower():
+            continue
+        sid = svc.get("id") or svc.get("serviceId")
+        typer.echo(f"  {sid}\t{name}")
+        count += 1
+    typer.echo(f"\n{count} service(s).")
+
+
+@app.command("dev-api-projects")
+def dev_api_projects(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
+    """List your projects via the Developers API (GET /projects). Validates the admin key."""
+    from providers.mastercard_api import DevelopersApiClient, DevelopersApiError
+
+    _configure_logging(verbose)
+    _load_dotenv(VIMA_CONFIG / ".env")
+    try:
+        client = DevelopersApiClient.from_env()
+        data = client.get_projects()
+    except DevelopersApiError as exc:
+        typer.echo(f"ERROR: Developers API call failed: {exc}", err=True)
+        raise typer.Exit(1) from None
+    except RuntimeError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(1) from None
+
+    projects = data.get("projects", data) if isinstance(data, dict) else data
+    for proj in projects or []:
+        typer.echo(f"  {proj.get('id')}\t{proj.get('name')}\t{proj.get('environment', '')}")
+    typer.echo(f"\n{len(projects or [])} project(s).")
+
 
 
 @app.command("test-api")

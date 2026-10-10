@@ -604,6 +604,22 @@ async def _oauth2_sandbox_keys(
         except Exception:
             has_add_btn = False
         if not has_add_btn:
+            # Diagnostic: dump the sandbox page's key-related testids + a
+            # screenshot so we can see the real DOM if a region variant (e.g.
+            # Australia) uses testids we don't yet match.
+            try:
+                from browser.screenshots import capture as _capture
+                testids = await page.evaluate(
+                    """() => Array.from(document.querySelectorAll('[data-testid]'))
+                        .map(e => e.getAttribute('data-testid'))
+                        .filter(t => /key|signature|encryption|credential/i.test(t))"""
+                )
+                logger.info(
+                    "Sandbox key-related testids for {!r}: {}", api_name, testids
+                )
+                await _capture(page, f"ofin_sandbox_no_sigkey_{api_name}")
+            except Exception:
+                pass
             logger.info(
                 "No Mastercard Signature Verification Key section on sandbox page "
                 "for {!r} — skipping (credentials-only tenant).",
@@ -683,6 +699,11 @@ async def ensure_project_with_api(
 
     primary = api_cfg.provision_type
     strategies: list[str] = [primary, *fallback_strategies(primary)]
+    # While debugging, MCD_DISABLE_FALLBACKS=1 limits each API to a single
+    # attempt so a failure doesn't create 2 extra throwaway portal projects.
+    import os as _os
+    if _os.environ.get("MCD_DISABLE_FALLBACKS"):
+        strategies = [primary]
     attempts: list[dict] = []
 
     for idx, ptype in enumerate(strategies):

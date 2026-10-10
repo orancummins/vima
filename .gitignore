@@ -1,3 +1,5 @@
+.env
+.env.*
 config/.env
 config/.env.*
 .venv/
@@ -27,12 +29,18 @@ chat/.env
 # Local pip install target used during development/testing
 .pylibs/
 
+# Dependency-install marker (tracks requirements.txt hash to skip reinstalls)
+.deps-installed
+
 # Config zip bundles
 vima-config*
 
 # ofin CLI portable build output (assembled by cli/build.py)
 cli/dist/
 cli/ofin/sdk/_vendor/*_client.py
+
+# Open Finance EU credentials bundle (keys + identifiers — never commit)
+ofin-eur/
 
 # Local-only docs / plans (not for commit)
 *.local.md

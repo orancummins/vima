@@ -58,6 +58,10 @@ _IGNORED_BLOCKS: dict[tuple[str, str], str] = {
         "Open Finance API dispatcher with 50+ operations (accounts, transactions, "
         "institutions, consent, customer flows) — structural dispatch, not spaghetti"
     ),
+    ("apis/ofin/api.py", "execute"): (
+        "Legacy alias of the Open Finance dispatcher ('ofin' back-compat shim) — "
+        "same operation-per-branch structure as apis/open_finance/api.py"
+    ),
     ("apis/open_finance_au/api.py", "execute"): (
         "Open Finance AU API dispatcher — regional variant with the same "
         "operation-per-branch structure as the global module"

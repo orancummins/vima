@@ -274,8 +274,11 @@ export function initApisSnippets(opts) {
     const pkgs = (data.packages || []).join(' ');
     const lines = [];
     if (os === 'windows') {
-      lines.push('# Windows PowerShell \u2014 uses `py -m pip` so it works even if pip.exe is blocked.');
-      if (pkgs) lines.push(`py -m pip install --user ${pkgs}`);
+      lines.push('# Windows PowerShell \u2014 resolves py/python/python3 so it works even if pip.exe is blocked.');
+      if (pkgs) {
+        lines.push("$PY = @('py','python','python3') | Where-Object { Get-Command $_ -ErrorAction SilentlyContinue } | Select-Object -First 1");
+        lines.push(`& $PY -m pip install --user ${pkgs}`);
+      }
       lines.push('');
       (data.env || []).forEach((e) => {
         const v = e.set ? e.value : `<your ${e.name}>`;
@@ -300,18 +303,20 @@ export function initApisSnippets(opts) {
   //     locked-down corporate Windows machines)
   //   * pipes the snippet into the Python launcher via stdin so no .py
   //     file is needed
-  // Uses `py` on Windows (the launcher is installed by every Python
-  // distribution, while `python.exe` is often the WindowsApps store
-  // stub) and `python3` on POSIX. `--user` avoids permission errors
-  // when site-packages isn't writable.
+  // Uses a resolved interpreter on Windows — prefers the `py` launcher
+  // (installed by every Python distribution) but falls back to `python` /
+  // `python3` so it still runs where `py` isn't present — and `python3` on
+  // POSIX. `--user` avoids permission errors when site-packages isn't
+  // writable.
   function _buildRunCommand(setup, code, os) {
     const pkgs = (setup.packages || []).join(' ');
     const lines = [];
     if (os === 'windows') {
-      const launcher = 'py';
+      const launcher = '& $PY';
       lines.push('# Paste into PowerShell. Sets env vars, installs deps, runs the snippet.');
-      lines.push('# Uses the `py` launcher + `py -m pip` so it works even if pip.exe / python.exe');
+      lines.push('# Resolves py/python/python3 so it works even if pip.exe / python.exe');
       lines.push('# are blocked by corporate AV or shadowed by the Windows Store stub.');
+      lines.push("$PY = @('py','python','python3') | Where-Object { Get-Command $_ -ErrorAction SilentlyContinue } | Select-Object -First 1");
       (setup.env || []).forEach((e) => {
         const v = e.set ? e.value : `<your ${e.name}>`;
         lines.push(`$env:${e.name} = ${_shellQuote(v, os)}`);
