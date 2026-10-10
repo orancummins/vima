@@ -1,0 +1,14 @@
+environment: sandbox
+organization: mastercard
+key_password: "foobar!!"
+projects:
+  - name: easy_savings
+    apis: [easy_savings]
+  - name: places
+    apis: [places]
+  - name: offers_merchant_content
+    apis: [offers_merchant_content]
+  - name: enhanced_currency_conversion_calculator
+    apis: [enhanced_currency_conversion_calculator]
+  - name: automatic_billing_updater
+    apis: [automatic_billing_updater]

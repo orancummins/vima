@@ -1,0 +1,10 @@
+environment: sandbox
+organization: mastercard
+key_password: "foobar!!"
+projects:
+  - name: transaction_notifications
+    apis: [transaction_notifications]
+  - name: consent_management
+    apis: [consent_management]
+  - name: automatic_billing_updater
+    apis: [automatic_billing_updater]

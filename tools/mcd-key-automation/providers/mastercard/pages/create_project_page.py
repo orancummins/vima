@@ -150,70 +150,445 @@ class CreateProjectPage:
                     # Scroll to bottom to expose the button on this step.
                     await self.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
                     await asyncio.sleep(0.5)
-                    # Fill any visible required-like inputs by placeholder text.
-                    # Carbon Calculator Step 2 has Customer ID(CID)* with placeholder 'Enter Numeric value'.
-                    filled = await self.page.evaluate("""
-                        () => {
-                            const inputs = Array.from(document.querySelectorAll(
-                                'input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"])'
-                            )).filter(i => {
-                                const visible = i.offsetParent !== null &&
-                                                getComputedStyle(i).display !== 'none';
-                                return visible && !i.value;
-                            });
-                            const setter = Object.getOwnPropertyDescriptor(
-                                window.HTMLInputElement.prototype, 'value').set;
-                            let count = 0;
-                            for (const inp of inputs) {
-                                const ph = (inp.placeholder || '').toLowerCase();
-                                const id_ = (inp.id || '').toLowerCase();
-                                const name_ = (inp.name || '').toLowerCase();
-                                // Fill numeric fields (e.g. CID) with '1', text fields with 'sandbox'
-                                if (ph.includes('numeric') || id_.includes('cid') || name_.includes('cid')) {
-                                    setter.call(inp, '1');
-                                    inp.dispatchEvent(new Event('input', { bubbles: true }));
-                                    inp.dispatchEvent(new Event('change', { bubbles: true }));
-                                    count++;
-                                }
-                            }
-                            return count;
-                        }
-                    """)
-                    if filled:
-                        logger.info("Service details — filled {} numeric input(s); waiting for button to enable", filled)
-                        await asyncio.sleep(1.5)  # React re-render / validation
-                    else:
-                        logger.info("Service details — no numeric inputs to fill; button may already be enabled")
-                    # JS-click the form's action button (not Exit/navigation buttons).
-                    clicked = await self.page.evaluate("""
-                        () => {
-                            const SKIP = ['exit', 'back', 'cancel'];
-                            const btns = Array.from(document.querySelectorAll('button'))
-                                .filter(b => {
-                                    const text = b.textContent.trim().toLowerCase();
-                                    if (SKIP.some(s => text === s)) return false;
-                                    const style = getComputedStyle(b);
-                                    return style.display !== 'none' &&
-                                           style.visibility !== 'hidden' &&
-                                           !b.disabled &&
-                                           b.getAttribute('aria-disabled') !== 'true' &&
-                                           b.offsetParent !== null;
-                                });
-                            if (btns.length === 0) return null;
-                            const btn = btns[0];
-                            const text = btn.textContent.trim();
-                            btn.click();
-                            return text;
-                        }
-                    """)
-                    logger.info("Service details — JS-clicked button: {!r}", clicked)
+                    # Fill the mandatory Service-details fields (customer segment,
+                    # intended-use checkboxes, description, numeric CID).
+                    await self._fill_service_details_fields()
+                    logger.info("Service details — filled segment/intended-use/description fields")
+                    # Service details is its OWN wizard step — click Proceed to
+                    # advance to the credentials (key alias + password) step. The
+                    # button enables once the required fields above are satisfied.
+                    await self._click_service_details_proceed()
                     _service_details_clicked = True
-                    await asyncio.sleep(1.0)
+                    await asyncio.sleep(1.5)
                     continue
 
             await asyncio.sleep(poll_interval)
             elapsed += poll_interval
         raise TimeoutError(f"No confirmation or project page appeared within {timeout_ms}ms — skipping")
+
+    async def _fill_dynamic_config_fields(self) -> bool:
+        """Fill schema-driven config fields (the "Service details" step) with real interactions.
+
+        Services with a config schema (e.g. BIN Lookup / 1800, Carbon Calculator
+        / 283) render REQUIRED fields whose ``name`` is ``<schemaId>_<field>``
+        (schemaId is a UUID). These must be committed to React state via genuine
+        interactions — synthetic native-setter events do not commit, so the create
+        POST ships an empty ``config`` and the backend rejects it ("Config is
+        required for service ID <id>").
+
+        Only acts when such a field is VISIBLE (i.e. the active config step); on
+        later steps the same form exists hidden and re-touching it clears the
+        already-committed config. Returns True if a config step was detected+filled.
+        """
+        page = self.page
+        # Detect a VISIBLE schema-driven config field (name = "<uuid>_<field>").
+        has_cfg = await page.evaluate(r"""
+            () => Array.from(document.querySelectorAll('input,select,textarea'))
+                .some(e => e.offsetParent !== null &&
+                    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_/
+                        .test(e.name || ''));
+        """)
+        if not has_cfg:
+            return False
+
+        logger.info("Dynamic-config (schema-driven) step detected — filling required fields")
+
+        # 1) Customer segment react-select (BIN Lookup) — pick a valid enum option.
+        seg = page.locator("[data-testid='customersegment-select']")
+        if await seg.count() > 0 and await seg.first.is_visible():
+            try:
+                await seg.first.scroll_into_view_if_needed(timeout=3000)
+                await seg.first.click()
+                await asyncio.sleep(0.4)
+                for label in ("Merchant", "Acquirer", "Issuer", "Other"):
+                    opt = page.locator(
+                        f"[role='option']:has-text('{label}'), "
+                        f"[class*='option']:has-text('{label}')"
+                    ).first
+                    if await opt.count() > 0:
+                        await opt.click(timeout=3000)
+                        logger.info("Customer segment → {!r}", label)
+                        break
+            except Exception as exc:
+                logger.debug("customer-segment select failed: {}", exc)
+
+        # 2) Numeric text inputs (e.g. Carbon's customerId, placeholder
+        #    "Enter Numeric value") — fill with a real value.
+        try:
+            nums = page.locator(
+                "input[placeholder*='umeric'], "
+                "[data-testid='customerid-text'], "
+                "[data-testid*='customerid']"
+            )
+            for i in range(await nums.count()):
+                el = nums.nth(i)
+                if await el.is_visible() and not (await el.input_value()):
+                    await el.fill("1")
+                    logger.info("Numeric config input → '1'")
+        except Exception as exc:
+            logger.debug("numeric config input fill failed: {}", exc)
+
+        # 3) Intended-use checkboxes (BIN Lookup) — tick the first via its label.
+        try:
+            boxes = page.locator("input[type=checkbox][data-testid*='intendedUse']")
+            count = await boxes.count()
+            already = False
+            for i in range(count):
+                if await boxes.nth(i).is_checked():
+                    already = True
+                    break
+            if count > 0 and not already:
+                first = boxes.first
+                testid = await first.get_attribute("data-testid")
+                label = page.locator(f"label[for='{testid}']")
+                if await label.count() > 0:
+                    await label.first.click()
+                else:
+                    await first.check(force=True)
+                logger.info("Intended-use → checked first option")
+        except Exception as exc:
+            logger.debug("intended-use check failed: {}", exc)
+
+        # 4) Use-case / outline textarea (BIN Lookup) — fill with a real value.
+        #    (Only this specific textarea; other optional free-text config fields
+        #    like Carbon's BINs must stay empty or they fail format validation.)
+        try:
+            ta = page.locator(
+                "[data-testid='usecase-textarea'], textarea[name$='useCase']"
+            ).first
+            if await ta.count() > 0 and not (await ta.input_value()):
+                await ta.click()
+                await ta.fill(
+                    "Sandbox integration testing and evaluation of this API for a "
+                    "proof of concept."
+                )
+                logger.info("Use-case outline → filled")
+        except Exception as exc:
+            logger.debug("use-case textarea fill failed: {}", exc)
+
+        # 5) Any remaining VISIBLE empty react-select (e.g. Carbon's Score
+        #    Retention Period) — open and pick the first real option.
+        try:
+            rs_ids: list[str] = await page.evaluate("""
+                () => Array.from(document.querySelectorAll('input[id^="react-select"]'))
+                    .filter(el => el.offsetParent !== null && !el.value)
+                    .filter(el => {
+                        const c = el.closest("[class*='control']");
+                        const t = (c && c.textContent || '').trim();
+                        return !t || /^select/i.test(t);
+                    })
+                    .map(el => el.id)
+            """)
+        except Exception:
+            rs_ids = []
+        for rid in rs_ids:
+            try:
+                inp = page.locator(f"#{rid}").first
+                await inp.evaluate("el => el.scrollIntoView({block: 'center', inline: 'center'})")
+                await asyncio.sleep(0.2)
+                control = page.locator(f"#{rid}").locator(
+                    "xpath=ancestor::*[contains(@class,'control')][1]"
+                )
+                target = control.first if await control.count() > 0 else inp
+                await target.click(force=True, timeout=3000)
+                await asyncio.sleep(0.4)
+                opt_texts: list[str] = await page.evaluate("""
+                    () => Array.from(document.querySelectorAll(
+                        "[role='option'], [class*='option']"
+                    )).map(e => (e.textContent || '').trim()).filter(Boolean)
+                """)
+                if opt_texts:
+                    pick = opt_texts[0]
+                    await page.locator(
+                        f"[role='option']:has-text({pick!r}), "
+                        f"[class*='option']:has-text({pick!r})"
+                    ).first.click(timeout=3000)
+                    logger.info("react-select {} → {!r}", rid, pick)
+                else:
+                    await inp.press("ArrowDown")
+                    await inp.press("Enter")
+            except Exception as exc:
+                logger.debug("react-select {} fill failed: {}", rid, exc)
+
+        await asyncio.sleep(0.4)
+        await screenshot(self.page, "service_details_after_fill")
+        return True
+
+    async def _fill_service_details_fields(self) -> None:
+        """Fill the mandatory 'Service details' fields on the create-project wizard.
+
+        Mastercard added a required Service-details section to the wizard:
+          * a 'customer segment' react-select dropdown
+          * one or more 'intended use of the data' checkboxes
+          * a free-text description / outline textarea
+          * (some APIs) a numeric Customer ID (CID) input
+        Until these are satisfied the 'Create project' button stays disabled.
+
+        Idempotent: only fills empty/unchecked controls, so it is safe to call
+        from both the service-details detection branch and fill_step2_credentials.
+        """
+        page = self.page
+        try:
+            await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        except Exception:
+            pass
+        await asyncio.sleep(0.3)
+
+        # Dynamic-config services (e.g. BIN Lookup, service 1800) render a
+        # schema-driven "Additional information" form whose values must reach the
+        # React/Formik state via REAL user interactions — synthetic native-setter
+        # events do not commit, so the create POST ships an empty `config` and the
+        # backend rejects it ("Config is required for service ID <id>"). Fill those
+        # known fields with genuine Playwright actions. If this handled the config
+        # step, skip the generic native-setter fill below (it would put junk into
+        # optional free-text config fields, e.g. Carbon's BINs, and fail validation).
+        if await self._fill_dynamic_config_fields():
+            return
+
+        # Checkboxes (intended use), textareas (description) and numeric inputs (CID).
+        try:
+            await page.evaluate(r"""
+                () => {
+                    const setNative = (el, val) => {
+                        const proto = el.tagName === 'TEXTAREA'
+                            ? window.HTMLTextAreaElement.prototype
+                            : window.HTMLInputElement.prototype;
+                        const setter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+                        setter.call(el, val);
+                        el.dispatchEvent(new Event('input', { bubbles: true }));
+                        el.dispatchEvent(new Event('change', { bubbles: true }));
+                        el.dispatchEvent(new Event('blur', { bubbles: true }));
+                    };
+                    // Intended-use checkboxes: tick the first if none are checked.
+                    const checks = Array.from(document.querySelectorAll(
+                        'input[type=checkbox][data-testid*="intendedUse"], '
+                        + 'input[type=checkbox][name*="intendedUse"], '
+                        + 'input[type=checkbox][id*="intendedUse"]'
+                    ));
+                    if (checks.length && !checks.some(c => c.checked)) {
+                        checks[0].click();
+                    }
+                    // Description / outline textareas.
+                    const areas = Array.from(document.querySelectorAll('textarea'))
+                        .filter(t => t.offsetParent !== null && !t.value);
+                    for (const t of areas) {
+                        setNative(t, 'Sandbox integration testing and evaluation of this API for a proof of concept.');
+                    }
+                    // Numeric text inputs (e.g. Customer ID / CID).
+                    const nums = Array.from(document.querySelectorAll(
+                        'input:not([type=hidden]):not([type=checkbox]):not([type=radio])'
+                    )).filter(i => i.offsetParent !== null && !i.value &&
+                        (((i.placeholder||'').toLowerCase().includes('numeric')) ||
+                         ((i.id||'').toLowerCase().includes('cid')) ||
+                         ((i.name||'').toLowerCase().includes('cid'))));
+                    for (const n of nums) setNative(n, '1');
+                }
+            """)
+        except Exception as exc:
+            logger.debug("service-details checkbox/textarea fill skipped: {}", exc)
+        await asyncio.sleep(0.4)
+
+        # Customer-segment (and any other empty) react-select dropdowns: pick the
+        # first available option.
+        try:
+            rs_ids: list[str] = await page.evaluate("""
+                () => Array.from(document.querySelectorAll('input[id^="react-select"]'))
+                    .filter(el => el.offsetParent !== null && !el.value)
+                    .filter(el => {
+                        // Skip a react-select whose control already shows a chosen
+                        // value (avoids clobbering a selection made by the
+                        // dynamic-config filler above).
+                        const ctrl = el.closest("[class*='control']");
+                        const txt = (ctrl && ctrl.textContent || '').trim();
+                        return !txt || /^select/i.test(txt);
+                    })
+                    .map(el => el.id)
+            """)
+        except Exception:
+            rs_ids = []
+        for rid in rs_ids:
+            try:
+                inp = page.locator(f"#{rid}").first
+                # Center the element in the viewport via JS first — force=True clicks
+                # still fail if the target sits outside the viewport, and these
+                # react-select inputs often render below the fold.
+                await inp.evaluate("el => el.scrollIntoView({block: 'center', inline: 'center'})")
+                await asyncio.sleep(0.2)
+                # Prefer clicking the react-select 'control' container (the visible
+                # box) over the hidden dummy input.
+                control = page.locator(f"#{rid}").locator(
+                    "xpath=ancestor::*[contains(@class,'control')][1]"
+                )
+                target = control.first if await control.count() > 0 else inp
+                await target.click(force=True, timeout=3000)
+                await asyncio.sleep(0.5)
+                # Read the option labels, then click the first REAL option by its
+                # text (mirrors the proven fill_ofin approach — clicking .first can
+                # grab a hidden/placeholder node, which submits an invalid value).
+                opt_texts: list[str] = await page.evaluate("""
+                    () => Array.from(document.querySelectorAll(
+                        "[role='option'], [class*='option']"
+                    )).map(e => (e.textContent || '').trim()).filter(Boolean)
+                """)
+                if opt_texts:
+                    pick = opt_texts[0]
+                    picker = page.locator(
+                        f"[role='option']:has-text({pick!r}), "
+                        f"[class*='option']:has-text({pick!r})"
+                    ).first
+                    await picker.click(timeout=3000)
+                    logger.debug("react-select {} → selected {!r}", rid, pick)
+                    await asyncio.sleep(0.3)
+                else:
+                    # Fallback: keyboard-select the first option.
+                    await inp.press("ArrowDown")
+                    await inp.press("Enter")
+            except Exception as exc:
+                logger.debug("react-select {} fill skipped: {}", rid, exc)
+        await asyncio.sleep(0.4)
+        await screenshot(self.page, "service_details_after_fill")
+
+    async def _click_service_details_proceed(self) -> bool:
+        """Submit the Service-details wizard step (button 'Proceed' or 'Create project').
+
+        The button (a ``type=submit`` #submit / data-testid='proceed-btn') is
+        sometimes reported "not visible" by Playwright due to a sticky footer,
+        so we drive it with a direct JS click after confirming it is enabled.
+
+        Open Finance generates a certificate when this step is submitted and the
+        portal intermittently pops "An error has occurred — There was an issue
+        trying to create the certificate". We detect that dialog, dismiss it, and
+        re-click the button (up to 3 times) before giving up.
+        Returns True once the step is submitted (or advanced).
+        """
+        page = self.page
+        error_dialog = (
+            "text=/issue trying to create the certificate/i, "
+            "[role='dialog']:has-text('An error has occurred'), "
+            "text=/An error has occurred/i"
+        )
+        close_btn = (
+            "[role='dialog'] button:has-text('Close'), "
+            "[role='dialog'] button:has-text('OK'), "
+            "[role='dialog'] button:has-text('Dismiss'), "
+            "button[aria-label='Close']"
+        )
+
+        async def _click_once() -> bool:
+            # Wait until the submit button is present and enabled.
+            for _ in range(30):
+                state = await page.evaluate("""
+                    () => {
+                        const b = document.querySelector('[data-testid="proceed-btn"], button#submit');
+                        if (!b) return null;
+                        return { disabled: !!b.disabled, aria: b.getAttribute('aria-disabled') };
+                    }
+                """)
+                if state and not state["disabled"] and state["aria"] != "true":
+                    break
+                await asyncio.sleep(0.5)
+            # IMPORTANT: use a REAL (trusted) Playwright click, not an injected
+            # JS ``element.click()``. The portal generates the certificate in the
+            # browser on submit, and that path requires transient user activation
+            # (a genuine user gesture). A synthetic JS click has no user
+            # activation, so the cert step aborts with "There was an issue trying
+            # to create the certificate". A real mouse click succeeds — this is
+            # the same thing that works when a human clicks the button.
+            # Deliver a REAL trusted click via mouse coordinates on the VISIBLE,
+            # enabled submit button. There are several 'proceed-btn' elements in
+            # the DOM (one per wizard step); Playwright's .first can resolve to a
+            # hidden/disabled one and time out. Locating the visible enabled
+            # button in JS, scrolling it to centre, then page.mouse.click at its
+            # coordinates gives a genuine user gesture that properly SUBMITS the
+            # step so its form values (e.g. the dynamic config) commit.
+            box = await page.evaluate("""
+                () => {
+                    const btns = Array.from(document.querySelectorAll(
+                        '[data-testid="proceed-btn"], button#submit, button[type="submit"]'));
+                    const b = btns.find(x => x.offsetParent !== null
+                        && x.getAttribute('aria-disabled') !== 'true' && !x.disabled);
+                    if (!b) return null;
+                    b.scrollIntoView({ block: 'center', inline: 'center' });
+                    const r = b.getBoundingClientRect();
+                    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+                }
+            """)
+            if box:
+                try:
+                    await asyncio.sleep(0.3)  # let scroll settle
+                    await page.mouse.click(box["x"], box["y"])
+                    return True
+                except Exception as exc:
+                    logger.debug("Service-details mouse click failed: {}", exc)
+            logger.warning(
+                "Service-details submit: no real click landed; using JS fallback "
+                "(may not commit dynamic config)"
+            )
+            # Last-resort fallback only (loses user activation, may hit the cert
+            # error) so the wizard doesn't stall entirely if the button can't be
+            # clicked normally.
+            try:
+                clicked = await page.evaluate("""
+                    () => {
+                        const b = document.querySelector('[data-testid="proceed-btn"], button#submit');
+                        if (!b) return false;
+                        b.scrollIntoView({ block: 'center', inline: 'center' });
+                        b.click();
+                        return true;
+                    }
+                """)
+                return bool(clicked)
+            except Exception:
+                return False
+
+
+        for attempt in range(1, 4):
+            if not await _click_once():
+                logger.warning("Could not click Service-details submit button (attempt {})", attempt)
+                await asyncio.sleep(1.0)
+                continue
+            logger.info("Clicked Service-details submit ('Proceed'/'Create project') attempt {}", attempt)
+
+            # Watch for either the step advancing or the certificate error dialog.
+            waited = 0.0
+            while waited < 25.0:
+                url = page.url
+                if "/project-details/" in url and "/create-project" not in url:
+                    return True
+                if await page.locator(ProjectCreatedSelectors.download_key_button).count() > 0:
+                    return True
+                if await page.locator("[data-testid='key-alias-input']:visible").count() > 0:
+                    return True  # advanced to the credentials step (oauth1)
+                if await page.locator(
+                    "h1:has-text('Creating your project'), h2:has-text('Creating your project')"
+                ).count() > 0:
+                    return True
+                if await page.locator(error_dialog).count() > 0:
+                    await screenshot(self.page, f"ofin_cert_error_attempt{attempt}")
+                    logger.warning(
+                        "Certificate error dialog after submit (attempt {}/3) — "
+                        "dismissing and re-clicking 'Create project'", attempt,
+                    )
+                    try:
+                        cb = page.locator(close_btn).first
+                        if await cb.count() > 0:
+                            await cb.click(force=True)
+                    except Exception:
+                        pass
+                    await asyncio.sleep(2.0)
+                    break  # re-click on next outer-loop iteration
+                await asyncio.sleep(1.0)
+                waited += 1.0
+            else:
+                # No error and no explicit advance signal within 25s — assume the
+                # click took; let the caller's wait loop resolve the final state.
+                return True
+
+        logger.warning(
+            "Service-details submit kept hitting the certificate error after 3 attempts "
+            "(usually transient / VPN-related)"
+        )
+        return False
 
     async def fill_step2_credentials(self, *, alias: str, password: str) -> None:
         """Fill ALL alias+password pairs in the Step 2 wizard.
@@ -224,6 +599,11 @@ class CreateProjectPage:
         React synthetic events without needing visibility.
         """
         logger.info("Filling Step 2 credentials: alias={!r}", alias)
+
+        # The credentials page now also carries the mandatory Service-details
+        # fields (customer segment, intended use, description). Fill them here too
+        # so 'Create project' enables even when we reached this page directly.
+        await self._fill_service_details_fields()
 
         # Helper: fill a React-controlled input by testid using JS (works even if hidden).
         async def fill_react_input(testid: str, value: str) -> bool:
@@ -305,6 +685,40 @@ class CreateProjectPage:
             }
         """)
 
+    async def _trusted_click_button(self, *texts: str) -> bool:
+        """Deliver a REAL mouse click on the first VISIBLE, enabled button whose
+        text contains one of ``texts``.
+
+        Several wizard steps render duplicate buttons (one per step) in the DOM,
+        so ``locator.first.click()`` can resolve to a hidden/covered element and
+        time out. Locating the visible enabled button in JS, scrolling it to
+        centre, then clicking its coordinates with ``page.mouse.click`` gives a
+        genuine user gesture that also reliably lands. Returns True if clicked.
+        """
+        box = await self.page.evaluate("""
+            (texts) => {
+                const norm = (s) => (s || '').trim().toLowerCase();
+                const wanted = texts.map(norm);
+                const btns = Array.from(document.querySelectorAll('button, [role="button"]'));
+                const b = btns.find(x => x.offsetParent !== null
+                    && x.getAttribute('aria-disabled') !== 'true' && !x.disabled
+                    && wanted.some(w => norm(x.textContent).includes(w)));
+                if (!b) return null;
+                b.scrollIntoView({ block: 'center', inline: 'center' });
+                const r = b.getBoundingClientRect();
+                return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+            }
+        """, list(texts))
+        if not box:
+            return False
+        try:
+            await asyncio.sleep(0.3)  # let scroll settle
+            await self.page.mouse.click(box["x"], box["y"])
+            return True
+        except Exception as exc:
+            logger.debug("trusted button click {!r} failed: {}", texts, exc)
+            return False
+
     async def _wait_for_create_button_enabled(self, *, max_wait_s: float = 20.0) -> None:
         """Poll until 'Create project' button is enabled (aria-disabled != true)."""
         btn = self.page.locator("button:has-text('Create project')").first
@@ -338,10 +752,25 @@ class CreateProjectPage:
                     hasContactEmailText: text.includes('acquirer contact email') ? 1 : 0,
                 };
                 const totalSignals = Object.values(signals).reduce((a, b) => a + Number(b || 0), 0);
-                return { ...signals, totalSignals };
+                // STRONG signals uniquely identify the MATCH Pro service-details
+                // form. Generic 'ica'/'email' substring inputs (icaInputs,
+                // emailInputs) match unrelated fields — e.g. an oauth1_enc
+                // project's Mastercard-encryption key alias — and must NOT
+                // trigger MATCH handling on their own.
+                const strongSignals =
+                    Number(signals.companyTypeRadios) +
+                    Number(signals.replacementRadios) +
+                    Number(signals.hasCompanyText) +
+                    Number(signals.hasIcaText) +
+                    Number(signals.hasContactEmailText) +
+                    count("input[data-testid='acquirerica-text']");
+                return { ...signals, totalSignals, strongSignals };
             }
         """)
-        if int(form_signals.get("totalSignals", 0)) == 0:
+        # Gate on strong, MATCH-specific signals only — avoids false positives on
+        # oauth1_enc combined flows (e.g. Transaction Notifications) whose
+        # encryption-key alias inputs otherwise match the loose ica/email selectors.
+        if int(form_signals.get("strongSignals", 0)) == 0:
             return False
 
         # If terminal controls are present, stop treating this as the active form.
@@ -408,7 +837,7 @@ class CreateProjectPage:
                         try {
                             const safeId = (window.CSS && typeof window.CSS.escape === 'function')
                                 ? window.CSS.escape(input.id)
-                                : input.id.replace(/([#.;?+*~':"!^$[\]()=>|/@])/g, '\\$1');
+                                : input.id.replace(/([#.;?+*~':"!^$[\\]()=>|/@])/g, '\\$1');
                             const label = document.querySelector(`label[for="${safeId}"]`);
                             if (label) {
                                 label.click();
@@ -871,33 +1300,21 @@ class CreateProjectPage:
                 await screenshot(self.page, "step3_detected_via_skip")
 
                 if skip_step3:
-                    # Caller wants to skip the enc key step entirely — click 'Skip this step'
-                    # so the portal lands on the project page without downloading the cert.
-                    logger.info("skip_step3=True — clicking 'Skip this step'")
-                    await self.page.locator("button:has-text('Skip this step')").first.click()
-                    # Some portals (e.g. Carbon Calculator) show a confirmation dialog
-                    # "Are you sure you want to add your project credential later?"
-                    # after clicking 'Skip this step'. Accept it.
-                    await asyncio.sleep(0.5)
-                    _dialog = self.page.locator(
-                        "[role='dialog']:visible, [role='alertdialog']:visible"
-                    )
-                    if await _dialog.count() > 0:
-                        for _ct in ("Skip", "Yes", "Confirm", "Continue", "OK"):
-                            _cb = _dialog.first.locator(f"button:has-text('{_ct}')")
-                            if await _cb.count() > 0:
-                                logger.info("Skip confirmation dialog — clicking {!r}", _ct)
-                                await _cb.first.click()
-                                break
-                    else:
-                        # No role=dialog — also check for standalone buttons that appeared
-                        # after the skip click (excluding 'Skip this step' itself).
-                        for _ct in ("Yes", "Confirm", "Continue", "OK"):
-                            _cb = self.page.locator(f"button:has-text('{_ct}'):visible")
-                            if await _cb.count() > 0:
-                                logger.info("Skip confirmation (no dialog role) — clicking {!r}", _ct)
-                                await _cb.first.click()
-                                break
+                    # The final "Additional credentials" step only offers to
+                    # generate an Encryption Key that "will be generated when your
+                    # project is created" — no user action is required. The most
+                    # reliable completion is to click the primary 'Create project'
+                    # CTA with a TRUSTED click, which creates the project (with the
+                    # signing key from Step 3 + auto-generated encryption key).
+                    # 'Skip this step' opens an extra "add credentials later?"
+                    # confirmation that is flakier, so we avoid it.
+                    logger.info("Final key step — clicking 'Create project' (enc key auto-generated)")
+                    await self._wait_for_create_button_enabled(max_wait_s=8.0)
+                    if not await self._trusted_click_button("Create project"):
+                        logger.warning(
+                            "Create project: no visible enabled button — JS fallback"
+                        )
+                        await self._js_click_create_project()
                 else:
                     # MATCH-specific behavior: proceed with "Create project".
                     await self._wait_for_create_button_enabled(max_wait_s=8.0)

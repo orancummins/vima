@@ -158,11 +158,11 @@ def build_vima_config_zip(
         if entry.auth == AUTH_OAUTH2:
             continue  # handled below
 
-        # consent_management is merged into transaction_notifications — its
-        # artifacts (encryption PEM) are written under the TxNotify prefix so
-        # there is only one block in config/.env for the combined project.
-        if entry.id == "consent_management":
-            continue
+        # consent_management provisions as its own project via the Developers API
+        # (its own signing key + CONSENT_MANAGEMENT_* env block). If no such
+        # artifact exists (e.g. an older browser combined run that captured it
+        # under the TxNotify project), it simply won't be found below and is
+        # skipped — so this is safe either way.
 
         aliases = _aliases_for_entry(entry)
         cred_path, matched_alias = _find_credentials_any(aliases, normalized_dir)
@@ -309,7 +309,7 @@ def main():
     print(f"  Included APIs : {', '.join(result['apis'])}")
     if result["skipped"]:
         print(f"  Skipped       : {', '.join(result['skipped'])}")
-    print(f"\nImport into vima via Settings → Import Config, or:")
+    print(f"\nImport into vima via Settings -> Import Config, or:")
     print(f"  curl -X POST http://localhost:5001/config/import -F file=@{output_path.resolve()}")
 
 

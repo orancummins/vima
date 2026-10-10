@@ -1,0 +1,6 @@
+environment: sandbox
+organization: mastercard
+key_password: "foobar!!"
+projects:
+  - name: carbon_calculator
+    apis: [carbon_calculator]

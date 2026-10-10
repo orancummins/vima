@@ -271,6 +271,105 @@ html:not(.theme-light) .api-context-toggle:hover { color: rgba(255,255,255,0.85)
   padding-top: 6px;
 }
 
+/* Developer Projects modal (opened from API Configuration). Themed with the
+   app's CSS variables so it matches light + dark mode. */
+.dp-panel { max-width: 860px; width: min(94vw, 860px); display: flex; flex-direction: column; max-height: 88vh; }
+.dp-summary { font-size: 11px; color: var(--muted); margin-right: 8px; white-space: nowrap; }
+.dp-toolbar {
+  display: flex; align-items: center; gap: 14px; padding: 10px 18px;
+  border-bottom: 1px solid var(--line); flex-wrap: wrap;
+}
+.dp-search {
+  flex: 1 1 260px; min-width: 180px; padding: 6px 10px; font-size: 13px;
+  border: 1px solid var(--line); border-radius: 6px; font-family: inherit;
+  color: var(--ink); background: var(--surface, #fff);
+}
+.dp-check-inline { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.dp-body { overflow-y: auto; flex: 1 1 auto; padding: 10px 18px; min-height: 160px; }
+.dp-empty { font-size: 13px; color: var(--muted); line-height: 1.5; padding: 20px 4px; }
+.dp-empty code, .dp-row-id code { font-size: 11px; padding: 1px 4px; border-radius: 4px; background: rgba(127,127,127,0.16); font-family: var(--mono); }
+.dp-muted { color: var(--muted); font-size: 11px; }
+
+/* Indeterminate loading bar (stable across polls — no flashing). */
+.dp-loading { display: flex; flex-direction: column; gap: 12px; padding: 26px 4px; }
+.dp-loading-label { font-size: 13px; color: var(--muted); }
+.dp-loading-track { height: 4px; border-radius: 3px; background: rgba(127,127,127,0.18); overflow: hidden; position: relative; }
+.dp-loading-track::after {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 40%;
+  border-radius: 3px; background: linear-gradient(90deg, transparent, var(--mc-orange), transparent);
+  animation: dpIndet 1.1s ease-in-out infinite;
+}
+@keyframes dpIndet { 0% { left: -40%; } 100% { left: 100%; } }
+
+.dp-list { display: flex; flex-direction: column; gap: 5px; }
+.dp-row {
+  display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--surface, #fff); cursor: pointer;
+}
+.dp-row:hover { border-color: var(--muted); }
+.dp-row--locked { cursor: default; background: var(--surface-2, #f7f8fa); opacity: 0.8; }
+.dp-row-cb { flex: 0 0 auto; padding-top: 2px; width: 16px; text-align: center; }
+.dp-row-cb input { accent-color: var(--mc-orange); }
+.dp-lock { font-size: 12px; }
+.dp-row-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dp-row-name { font-size: 13px; font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.dp-row-meta { font-size: 11.5px; color: var(--muted); }
+.dp-row-id { font-size: 10px; color: var(--muted); opacity: 0.8; font-family: var(--mono); }
+.dp-badge { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 1px 6px; border-radius: 9px; white-space: nowrap; }
+.dp-badge--inuse { background: var(--ok); color: #fff; }
+.dp-badge--prod { background: var(--err); color: #fff; }
+.dp-badge--sbx { background: rgba(90,150,230,0.18); color: #5a96e6; }
+.dp-tag { font-size: 9.5px; font-weight: 600; padding: 1px 6px; border-radius: 8px; background: rgba(127,127,127,0.16); color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.dp-footer { flex-direction: column; align-items: stretch; gap: 8px; }
+.dp-note { font-size: 11px; color: var(--muted); flex: 1 1 auto; }
+.dp-progress { display: flex; align-items: center; gap: 10px; width: 100%; }
+.dp-progress-bar { flex: 1 1 auto; height: 8px; border-radius: 4px; background: rgba(127,127,127,0.18); overflow: hidden; }
+.dp-progress-fill { height: 100%; width: 0; background: var(--ok); transition: width 0.25s ease; }
+.dp-progress-text { font-size: 11px; color: var(--muted); white-space: nowrap; max-width: 55%; overflow: hidden; text-overflow: ellipsis; }
+.dp-fail-summary { font-size: 11.5px; color: var(--err); line-height: 1.5; margin-top: 4px; }
+
+/* -------------------------------------------------------------------------
+   Dark theme (default) for the Developer Projects modal. The dp-* rules above
+   fall back to light surfaces (--surface/--ink aren't defined on the app page),
+   so restate them here with the warm-black palette used by .cfg-panel. Light
+   mode keeps the rules above (their #fff fallbacks are already correct).
+   ------------------------------------------------------------------------- */
+html:not(.theme-light) .dp-toolbar { border-bottom-color: rgba(255, 255, 255, 0.09); }
+html:not(.theme-light) .dp-search {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.9);
+}
+html:not(.theme-light) .dp-search::placeholder { color: rgba(255, 255, 255, 0.4); }
+html:not(.theme-light) .dp-search:focus { border-color: rgba(255, 150, 60, 0.5); outline: none; }
+html:not(.theme-light) .dp-summary,
+html:not(.theme-light) .dp-check-inline,
+html:not(.theme-light) .dp-muted,
+html:not(.theme-light) .dp-row-meta,
+html:not(.theme-light) .dp-note,
+html:not(.theme-light) .dp-empty,
+html:not(.theme-light) .dp-loading-label,
+html:not(.theme-light) .dp-progress-text { color: rgba(255, 255, 255, 0.55); }
+html:not(.theme-light) .dp-row {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+html:not(.theme-light) .dp-row:hover {
+  border-color: rgba(255, 150, 60, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+}
+html:not(.theme-light) .dp-row--locked {
+  background: rgba(255, 255, 255, 0.015);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+html:not(.theme-light) .dp-row--locked:hover { border-color: rgba(255, 255, 255, 0.07); }
+html:not(.theme-light) .dp-row-name { color: #f4f0ea; }
+html:not(.theme-light) .dp-row-id { color: rgba(255, 255, 255, 0.4); }
+html:not(.theme-light) .dp-tag { background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.6); }
+html:not(.theme-light) .dp-empty code,
+html:not(.theme-light) .dp-row-id code { background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.85); }
+
+
 .api-pairs { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; min-width: 0; }
 .api-pairs[hidden] { display: none; }
 /* Single-line row: label stays put, chips strip scrolls horizontally if it
