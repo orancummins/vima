@@ -35,8 +35,9 @@ required.
 ### Mastercard Operating System
 
 The **Operating System** tab shows the whole of Mastercard as one animated
-picture. A revolving globe is cut into five slices that stack into the
-system: the kernel (switch, brands, rules, data), rails, network services,
+picture. It opens on the same revolving globe as Home (switch from Home and
+the globe glides across into the picture), which is then cut into five
+slices that stack into the system: the kernel (switch, brands, rules, data), rails, network services,
 solutions and access, with the users above them. Click the stack to
 separate the layers, a layer to list its areas, and an area for its
 products. Choose *who you are* and *what you want to solve*, and the areas
@@ -482,6 +483,16 @@ canonical example. It pulls and embeds
 [github.com/orancummins/fac](https://github.com/orancummins/fac) as a
 web UI inside Solution Studio. Copy that pattern to bring any other
 external project into the platform.
+
+### Re-make the walkthrough video
+
+`tools/video/` voices a script with a natural text-to-speech voice, films the
+running app in a headless browser timed to every sentence, and builds a
+narrated 1080p MP4 (about three minutes): Mastercard's mission, the
+Operating System, a live API, a bundle, Find A Card, setup, and the close.
+The script is in [docs/video/solution-studio-video-script.md](docs/video/solution-studio-video-script.md);
+see [tools/video/README.md](tools/video/README.md) to change and re-make it
+(`tools/video/run.sh` with Solution Studio and Find A Card running).
 
 ### Update the Operating System picture
 

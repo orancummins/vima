@@ -1,0 +1,5 @@
+# Voice and build for the walkthrough video (tools/video). Recording also
+# needs Node with Playwright (npm install -g playwright) and ffmpeg.
+sherpa-onnx>=1.10
+soundfile
+numpy
