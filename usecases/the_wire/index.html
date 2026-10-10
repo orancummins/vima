@@ -19,6 +19,7 @@
       <div class="wire-picker-title">Recent activity</div>
       <div class="wire-picker-sub">Real shape, real plumbing. Tap one to trace it.</div>
       <div class="wire-picker-list" id="wire-picker-list"></div>
+      <div class="wire-upload-panel" id="wire-upload-panel"></div>
       <div class="wire-picker-footer">
         Each transaction takes the same five-hop journey from your bank to your phone — but the data at every stop is different.
       </div>
@@ -30,6 +31,10 @@
         <div class="wire-stage-eyebrow">The Wire</div>
         <h1 class="wire-stage-title" id="wire-stage-title">Blue Bottle Coffee &nbsp;·&nbsp; $4.50</h1>
         <div class="wire-stage-sub">Trace this transaction from raw POS string to the line on your phone.</div>
+        <div class="wire-asset-strip" aria-label="Custom image previews">
+          <div class="wire-asset-slot" id="wire-character-slot"></div>
+          <div class="wire-asset-slot" id="wire-location-slot"></div>
+        </div>
         <button class="wire-replay-btn" id="wire-replay-btn" type="button">
           <span class="wire-replay-icon">↻</span> Replay journey
         </button>
@@ -64,12 +69,34 @@
     let currentTx = null;
     let currentStageIdx = 0;
     let animTimer = null;
+    let sceneAssets = { character: null, location: null };
 
     // ---------------- helpers ----------------
     function escapeHtml(s) {
       return String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function wireAssetImgHtml(kind, label) {
+      const asset = sceneAssets[kind];
+      const src = asset && asset.url ? asset.url : null;
+      const className = kind === 'location'
+        ? 'wire-hero-image wire-hero-image--location'
+        : 'wire-hero-image wire-hero-image--character';
+      if (src) {
+        return `<img class="${className}" src="${escapeHtml(src)}" alt="${escapeHtml(label)}">`;
+      }
+      return `<div class="${className} wire-hero-image--fallback">${escapeHtml(label.slice(0, 1).toUpperCase())}</div>`;
+    }
+
+    function wireUploadControlHtml(kind, label) {
+      return `
+        <label class="wire-upload-control">
+          <span class="wire-upload-label">${escapeHtml(label)}</span>
+          <input class="wire-upload-input" type="file" accept="image/*" data-wire-upload="${escapeHtml(kind)}">
+          <span class="wire-upload-btn">Upload image</span>
+        </label>`;
     }
 
     // Syntax-highlight a JSON object into colorised HTML.
@@ -103,6 +130,17 @@
           if (tx) selectTx(tx);
         });
       });
+      const uploadRoot = $('wire-upload-panel');
+      if (uploadRoot) {
+        uploadRoot.innerHTML = `
+          <div class="wire-upload-title">Custom images</div>
+          <div class="wire-upload-grid">
+            ${wireUploadControlHtml('character', 'Character image')}
+            ${wireUploadControlHtml('location', 'Location image')}
+          </div>
+          <div class="wire-upload-status" id="wire-upload-status">Stored on the server for later scene creation.</div>
+          <button class="wire-upload-reset" id="wire-upload-reset" type="button">Reset images</button>`;
+      }
     }
 
     function renderNodes() {
@@ -137,6 +175,59 @@
       $('wire-inspector-json').innerHTML = highlight(s.blob);
     }
 
+    function renderWireHeaderArt() {
+      const characterSlot = $('wire-character-slot');
+      const locationSlot = $('wire-location-slot');
+      if (characterSlot) characterSlot.innerHTML = wireAssetImgHtml('character', 'Character');
+      if (locationSlot) locationSlot.innerHTML = wireAssetImgHtml('location', 'Location');
+    }
+
+    function setUploadStatus(message, isError) {
+      const status = $('wire-upload-status');
+      if (!status) return;
+      status.textContent = message;
+      status.classList.toggle('wire-upload-status--error', Boolean(isError));
+    }
+
+    function refreshWireAssets(nextAssets) {
+      if (nextAssets && typeof nextAssets === 'object') {
+        sceneAssets = nextAssets;
+      }
+      renderWireHeaderArt();
+    }
+
+    function uploadWireAsset(kind, file) {
+      const body = new FormData();
+      body.append('kind', kind);
+      body.append('file', file);
+      setUploadStatus(`Uploading ${kind} image…`, false);
+      return fetch('/usecases/the_wire/assets', {
+        method: 'POST',
+        body,
+      })
+        .then((response) => response.json().then((payload) => ({ ok: response.ok, payload })))
+        .then(({ ok, payload }) => {
+          if (!ok || !payload || payload.error) {
+            throw new Error((payload && payload.error) || 'Upload failed');
+          }
+          refreshWireAssets(payload.scene_assets || null);
+          setUploadStatus(`${kind.charAt(0).toUpperCase() + kind.slice(1)} image saved on the server.`, false);
+        });
+    }
+
+    function resetWireAssets() {
+      setUploadStatus('Clearing server-stored images…', false);
+      return fetch('/usecases/the_wire/assets', { method: 'DELETE' })
+        .then((response) => response.json().then((payload) => ({ ok: response.ok, payload })))
+        .then(({ ok, payload }) => {
+          if (!ok || !payload || payload.error) {
+            throw new Error((payload && payload.error) || 'Reset failed');
+          }
+          refreshWireAssets(payload.scene_assets || null);
+          setUploadStatus('Server images cleared.', false);
+        });
+    }
+
     function updateActiveNode() {
       document.querySelectorAll('.wire-node').forEach((n, i) => {
         n.classList.toggle('wire-node--active', i === currentStageIdx);
@@ -168,6 +259,7 @@
       currentStageIdx = 0;
       $('wire-stage-title').innerHTML = escapeHtml(tx.summary).replace('·', '&nbsp;·&nbsp;');
       renderPicker();
+      renderWireHeaderArt();
       renderNodes();
       renderInspector();
       // Reset packet to top, then animate.
@@ -200,6 +292,7 @@
         .then((r) => r.json())
         .then((d) => {
           TRANSACTIONS = (d && d.transactions) || [];
+          sceneAssets = (d && d.scene_assets) || sceneAssets;
           if (!TRANSACTIONS.length) {
             $('wire-stage-title').textContent = 'No transactions available';
             return;
@@ -215,6 +308,26 @@
         const packet = $('wire-packet');
         packet.style.top = '0%';
         startAnim();
+      });
+
+      document.addEventListener('change', (event) => {
+        const input = event.target;
+        if (!input || !input.dataset || !input.dataset.wireUpload) return;
+        const kind = input.dataset.wireUpload;
+        const file = input.files && input.files[0];
+        if (!file) return;
+        uploadWireAsset(kind, file).catch((err) => {
+          setUploadStatus(err && err.message ? err.message : 'Upload failed', true);
+        });
+      });
+
+      document.addEventListener('click', (event) => {
+        const target = event.target;
+        const resetBtn = target && target.closest ? target.closest('#wire-upload-reset') : null;
+        if (!resetBtn) return;
+        resetWireAssets().catch((err) => {
+          setUploadStatus(err && err.message ? err.message : 'Reset failed', true);
+        });
       });
     }
 
