@@ -87,9 +87,16 @@ const OVERLAY = `(() => {
   async function hideCursor() {
     await page.evaluate(() => { const c = document.getElementById('__cursor'); c.style.opacity = '0'; });
   }
-  async function centre(loc, dx = 0.5, dy = 0.5) {
+  async function centre(loc, dx = 0.5, dy = 0.5, scroll = true) {
     await loc.first().waitFor({ state: 'visible', timeout: 8000 });
-    await loc.first().scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
+    if (scroll) {
+      const before = await loc.first().boundingBox();
+      await loc.first().scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
+      const after = await loc.first().boundingBox();
+      // Scrolling can set off layout changes (the picture's dialog collapses its
+      // header once scrolled), so let them settle before measuring.
+      if (before && after && (before.x !== after.x || before.y !== after.y)) await sleep(450);
+    }
     const b = await loc.first().boundingBox();
     return { x: b.x + b.width * dx, y: b.y + b.height * dy };
   }
@@ -103,15 +110,19 @@ const OVERLAY = `(() => {
   };
   // Glide the cursor to an element and click it: in the top page or inside any iframe.
   const click = safe('click', async (loc, { dur = 0.7, dx = 0.5, dy = 0.5 } = {}) => {
-    const p = await centre(loc, dx, dy);
+    let p = await centre(loc, dx, dy);
     await cursor(p.x, p.y, dur);
     await sleep(dur * 1000 + 60);
+    // Measure again before clicking, in case the page moved under the cursor.
+    const q = await centre(loc, dx, dy, false);
+    if (Math.abs(q.x - p.x) > 3 || Math.abs(q.y - p.y) > 3) { p = q; await cursor(p.x, p.y, 0.2); await sleep(240); }
     await page.evaluate(({ x, y }) => {
       const r = document.createElement('div');
       r.className = '__ripple'; r.style.left = x + 'px'; r.style.top = y + 'px';
       document.documentElement.appendChild(r); setTimeout(() => r.remove(), 700);
     }, p);
     await page.mouse.click(p.x, p.y);
+    log('  click', String(loc).replace(/^locator\(|frameLocator\(/g, '').slice(-70));
   });
   const hover = safe('hover', async (loc, dur = 0.7) => { const p = await centre(loc); await cursor(p.x, p.y, dur); });
   async function smoothScroll(frameOrPage, selector, to) {
@@ -128,6 +139,7 @@ const OVERLAY = `(() => {
   const tab = (id) => page.locator(`.top-tab[data-top-tab="${id}"]`);
   const os = page.frameLocator('#os-frame');
   const fac = page.frameLocator('#findacard-webview-frame').frameLocator('iframe.fac-frame');
+  const enrich = page.frameLocator('#enrichment-webview-frame');
   const facFrame = () => page.frames().find((f) => f.url().startsWith('http://localhost:5432') || f.url().includes(':5432/'));
   const osFrame = () => page.frames().find((f) => f.url().includes('/mcos/'));
 
@@ -137,12 +149,14 @@ const OVERLAY = `(() => {
   await page.evaluate(OVERLAY);   // cursor and click ripple, on the top page only
   const skip = page.locator('#prov-modal:not(.prov-hidden) #prov-btn-skip');
   if (await skip.count()) await skip.click();
-  // Load Find A Card once, so its frame is cached and ready.
+  // Load Find A Card and Data Enrichment once, so their frames are cached and ready.
   await tab('usecases').click();
   await page.locator('[data-uc-id="findacard"]').click();
   await fac.locator('#panel1').waitFor({ state: 'visible', timeout: 20000 }).catch(() => {
     throw new Error('Find A Card is not showing: start it on port 5432 first.');
   });
+  await page.locator('[data-uc-id="enrichment"]').click();
+  await enrich.locator('#enrich-rows').waitFor({ timeout: 20000 });
   // Load the Operating System picture and hold it on the spinning globe.
   await tab('os').click();
   await os.locator('#svg').waitFor({ timeout: 20000 });
@@ -159,6 +173,8 @@ const OVERLAY = `(() => {
   await tab('home').click();
   await page.evaluate(() => document.querySelectorAll('.top-tab').forEach((b) => b.blur()));
   await page.mouse.move(1598, 898);   // out of the way, so nothing shows a hover tooltip
+  // The Home globe's tooltip would pop up as the cursor crosses it to reach the tab.
+  await page.evaluate(() => { const g = document.getElementById('home-globe-wrap'); if (g) g.removeAttribute('title'); });
 
   // ---------- screencast ----------
   const cdp = await ctx.newCDPSession(page);
@@ -180,14 +196,15 @@ const OVERLAY = `(() => {
   // 1 · Mastercard's mission — the Home screen.
   await at(SEC('s1_mission').start); mark('s1_mission');
 
-  // 2 · More than a card network — the Operating System globe, then the stack.
+  // 2 · More than a card network — the Operating System tab opens around the
+  // same globe (it stays exactly where it was on Home), which then moves into
+  // the picture as it slices into the stack.
   await at(SEC('s2_studio').start); mark('s2_studio');
-  await cursor(1180, 520, 0.01, false);
+  await cursor(1500, 840, 0.01, false);   // hidden, and away from the globe's tooltip
   await at(S('o1') + 0.5); await click(tab('os'), { dur: 0.9 });
-  await at(S('o2') + 0.4); await cursor(560, 520, 1.2);
+  await at(S('o1') + 2.0); await hideCursor();
   await at(S('o6') + 0.1);
   await osFrame().evaluate(() => { window.__hold = false; runIntro(1); });
-  await hideCursor();
 
   // 3 · The operating system — open the stack, the kernel, BIN Lookup.
   await at(SEC('s3_os').start); mark('s3_os');
@@ -216,27 +233,40 @@ const OVERLAY = `(() => {
   await smoothScroll(page, '.bundles-content', { sel: '.bundle-section-title', text: 'fit together', offset: 30 });
   await at(S('b4') + 1.8); await cursor(900, 520, 0.9);
 
-  // 6 · Find A Card — the agent, Open Finance and the spend profile.
-  await at(SEC('s6_findacard').start); mark('s6_findacard');
-  await at(S('f1') + 0.4); await click(tab('usecases'));
-  await at(S('f1') + 2.4); await click(page.locator('[data-uc-id="findacard"]'));
+  // 6 · Data enrichment — raw statement lines become merchants, logos and categories.
+  await at(SEC('s6_enrichment').start); mark('s6_enrichment');
+  await at(S('d1') + 0.4); await click(tab('usecases'));
+  await at(S('d1') + 2.4); await click(page.locator('[data-uc-id="enrichment"]'));
+  await at(S('d2') + 0.8); await hover(enrich.locator('.enrich-row--raw').first(), 0.9);
+  await at(S('d3') + 0.3); await click(enrich.locator('[data-enrich-id]').first(), { dur: 0.6 });
+  await at(S('d3') + 1.8); await click(enrich.locator('[data-enrich-id]').first(), { dur: 0.6 });
+  await at(S('d3') + 3.4); await click(enrich.locator('#enrich-all'), { dur: 0.7 });
+  await at(S('d3') + 5.4); await hover(enrich.locator('.enrich-row--done').first(), 0.9);
+
+  // 7 · Find A Card — the agent, Open Finance, the spend profile, and the card in the wallet.
+  await at(SEC('s7_findacard').start); mark('s7_findacard');
+  await at(S('f2') + 0.3); await click(page.locator('[data-uc-id="findacard"]'));
   // Find A Card's bank connection takes about ten seconds, so the request is
   // typed as the agent is introduced and the connection starts early: the
   // spend profile then lands as the narration describes it.
-  await at(S('f2') + 2.2); await click(fac.locator('#userDescribe'), { dur: 0.6 });
-  await fac.locator('#userDescribe').pressSequentially('Travel rewards, no foreign fees, and I want it now.', { delay: 16 });
-  await at(S('f3') + 0.3); await click(fac.locator('#panel1 .btn-primary'), { dur: 0.45 });
-  await at(S('f3') + 1.4);
+  await at(S('f2') + 1.6); await click(fac.locator('#userDescribe'), { dur: 0.6 });
+  await fac.locator('#userDescribe').pressSequentially('Travel rewards, no foreign fees, and I want it now.', { delay: 8 });
+  await click(fac.locator('#panel1 .btn-primary'), { dur: 0.4 });
   await click(fac.locator('#panel2 button', { hasText: 'Connect To Bank' }), { dur: 0.5 });
-  await at(S('f6') + 1.6); await click(fac.locator('#panel3 .btn-primary'), { dur: 0.6 });
-  await at(S('f6') + 2.9); await click(fac.locator('#btnSearch'), { dur: 0.5 });
+  await at(S('f6') + 0.6); await click(fac.locator('#panel3 .btn-primary'), { dur: 0.6 });
+  await at(S('f6') + 1.9); await click(fac.locator('#btnSearch'), { dur: 0.5 });
   await at(S('f7') + 0.4);
   const ff = facFrame();
   if (ff) await smoothScroll(ff, null, 160);
-  await at(S('f7') + 1.2); await hover(fac.locator('#resultsGrid > *').first(), 0.9);
 
-  // 7 · Open to everyone, easy to set up — the info guide, then auto-provisioning.
-  await at(SEC('s7_open').start); mark('s7_open');
+  // Apply with the agent (about eleven seconds of steps), then the card lands in the wallet.
+  await at(S('f7') + 0.3); await click(fac.locator('.card-apply-btn').first(), { dur: 0.6 });
+  // Continue appears about eleven seconds later; click it as the narration says "added to your phone's wallet".
+  await at(S('f9') + 0.9); await click(fac.locator('#applyContinueBtn'), { dur: 0.45 });
+  await at(S('f9') + 3.4); await hover(fac.locator('.iphone-frame'), 1.0);
+
+  // 8 · Open to everyone, easy to set up — the info guide, then auto-provisioning.
+  await at(SEC('s8_open').start); mark('s8_open');
   await at(S('e1') + 0.4); await click(page.locator('#info-trigger-btn'));
   await at(S('e2') + 0.6); await smoothScroll(page, '.info-panel-body', 380);
   await at(S('e2') + 3.2); await smoothScroll(page, '.info-panel-body', 760);
@@ -257,8 +287,8 @@ const OVERLAY = `(() => {
   await page.evaluate(() => { document.getElementById('prov-modal').classList.add('prov-hidden'); document.body.style.overflow = ''; });
   await at(S('e5') + 2.2); await click(tab('home'), { dur: 0.6 });
 
-  // 8 · Close — Home.
-  await at(SEC('s8_close').start); mark('s8_close');
+  // 9 · Close — Home.
+  await at(SEC('s9_close').start); mark('s9_close');
   await at(S('c1') + 0.8); await hideCursor();
 
   await at(TL.total); mark('end');

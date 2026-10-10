@@ -29,6 +29,7 @@ import sherpa_onnx
 import soundfile as sf
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+EXTRA_LEXICON = os.path.join(HERE, "lexicon-extra.txt")
 
 
 def load_tts(model_dir: str) -> sherpa_onnx.OfflineTts:
@@ -42,7 +43,8 @@ def load_tts(model_dir: str) -> sherpa_onnx.OfflineTts:
             kokoro=sherpa_onnx.OfflineTtsKokoroModelConfig(
                 model=f"{m}/model.onnx", voices=f"{m}/voices.bin", tokens=f"{m}/tokens.txt",
                 data_dir=f"{m}/espeak-ng-data", dict_dir=f"{m}/dict",
-                lexicon=f"{m}/lexicon-us-en.txt,{m}/lexicon-zh.txt",
+                # lexicon-extra.txt adds spellings the voice gets wrong (see "voice" in narration.json)
+                lexicon=f"{m}/lexicon-us-en.txt,{m}/lexicon-zh.txt,{EXTRA_LEXICON}",
             ),
             num_threads=int(os.environ.get("THREADS", "2")), provider="cpu",
         ),
@@ -80,7 +82,9 @@ def main() -> int:
         start = t
         lines = {}
         for line in sec["lines"]:
-            a = tts.generate(line["say"], sid=sid, speed=base_speed * line.get("speed", 1.0))
+            # "voice" is what the voice reads when the written line would be mispronounced
+            # (e.g. "Bin" for "BIN", or "liv" for the verb "live"); "say" is the line as written.
+            a = tts.generate(line.get("voice", line["say"]), sid=sid, speed=base_speed * line.get("speed", 1.0))
             sr = a.sample_rate
             x = trim(np.array(a.samples, dtype=np.float32), sr)
             f = int(0.012 * sr)

@@ -17,7 +17,7 @@
 /* The vendored picture's top-level names (checked by tools/sync_mcos.py). */
 /* global MAP, st, OUTCOMES, LAYERS, TILE, PADS, sraf:writable, st0:writable, phi:writable, reduce, f,
    esc, renderSide, renderPick, openTile, openProduct, closeDrawer, drawerOpen, setFocus, pickOut,
-   clearPick, openStack, closeStack, endIntro, OX, GR, GY, DEG */
+   clearPick, openStack, closeStack, OX, GR, GY, DEG */
 (function () {
   "use strict";
   if (typeof MAP === "undefined" || typeof st === "undefined" || typeof openProduct !== "function") return;
@@ -297,13 +297,54 @@
   /* The shell glides the Home globe into this one when you switch tabs
      (static/js/app/features/operatingSystem.js): it asks where the globe is,
      we hide ours while its copy travels, then show ours at its rotation. */
+  // Arriving from Home, the globe first sits exactly where the Home globe was
+  // (heroEnter: the picture is shifted and scaled so its globe lands on that
+  // spot; the heading and side panel wait, hidden). When the slicing starts
+  // the picture eases back to its own place and the rest fades in.
+  var heroPic = null;
+  function heroEnter(target, rot) {
+    var pic = document.querySelector(".pic");
+    // A page opened mid-switch starts in the hero state; if the globe can't be placed, leave it.
+    if (!pic || !target || !target.r || st.p >= 0.1) { document.documentElement.classList.remove("mcos-hero"); return false; }
+    if (typeof rot === "number") { phi = rot; st0 = 0; window.drawGlobe(); }
+    pic.style.transition = "none";
+    pic.style.transform = "none";
+    var c = globeRect();
+    if (!c || !c.r) { document.documentElement.classList.remove("mcos-hero"); return false; }
+    var box = pic.getBoundingClientRect(), s = target.r / c.r;
+    var tx = target.cx - box.left - s * (c.cx - box.left), ty = target.cy - box.top - s * (c.cy - box.top);
+    pic.style.transformOrigin = "0 0";
+    pic.style.transform = "translate(" + tx.toFixed(2) + "px," + ty.toFixed(2) + "px) scale(" + s.toFixed(4) + ")";
+    document.documentElement.classList.add("mcos-hero");
+    heroPic = pic;
+    return true;
+  }
+  function heroLeave(animate) {
+    if (!heroPic) return;
+    var pic = heroPic;
+    heroPic = null;
+    document.documentElement.classList.remove("mcos-hero");
+    pic.style.transition = animate && !reduce ? "transform 1.2s cubic-bezier(.45,.05,.25,1)" : "none";
+    pic.style.transform = "";
+    setTimeout(function () { pic.style.transition = ""; pic.style.transformOrigin = ""; }, 1300);
+  }
+  window.addEventListener("resize", function () { heroLeave(false); });
+
   // Arriving by glide, the picture's own opening (the slicing) waits until
-  // the globe has landed and turned for a moment.
+  // the globe is in place and has turned for a moment.
   var _runIntro = window.runIntro, introQueued = false;
   window.runIntro = function (to, done) {
     if (to === 1 && document.documentElement.classList.contains("mcos-glide-wait")) { introQueued = true; return undefined; }
+    if (to === 1) heroLeave(true);
     return _runIntro(to, done);
   };
+  var _endIntro = window.endIntro;
+  window.endIntro = function () { heroLeave(false); return _endIntro(); };
+  function releaseIntro() {
+    if (!introQueued) return;
+    introQueued = false;
+    setTimeout(function () { if (st.p <= 0) window.runIntro(1); }, 1500);
+  }
   function globeRect() {
     var svg = document.getElementById("svg");
     var m = svg && svg.getScreenCTM();
@@ -353,10 +394,10 @@
     var m;
     if ((m = /^p-(.+)$/.exec(t)) && MAP.PRODUCTS[m[1]]) {
       var p = MAP.PRODUCTS[m[1]];
-      endIntro(); focusLayerOf(p.tile); openProduct(p);
+      window.endIntro(); focusLayerOf(p.tile); openProduct(p);
     } else if ((m = /^t-(.+)$/.exec(t)) && MAP.TILES[m[1]]) {
       var T = MAP.TILES[m[1]];
-      endIntro(); focusLayerOf(T); openTile(T);
+      window.endIntro(); focusLayerOf(T); openTile(T);
     } else if ((m = /^o-(.+)$/.exec(t)) && OUTCOMES.some(function (o) { return o.id === m[1]; })) {
       closeDrawer(); pickOut(m[1]);
     } else if (t === "U" || LAYERS.some(function (l) { return l.id === t; })) {
@@ -377,6 +418,13 @@
 
   /* ---------- pause while the tab is hidden ---------- */
   function setVisible(v) {
+    if (!v) {
+      heroLeave(false);
+      // Still on the globe: hide it and the panels now, while nobody can see, so a
+      // return from Home can place the globe without a flash of the old layout.
+      // A return from any other tab sends "reveal", which shows them again.
+      if (st.p < 0.1) document.documentElement.classList.add("mcos-glide-wait", "mcos-hero");
+    }
     document.documentElement.classList.toggle("mcos-paused", !v);
     var svg = document.getElementById("svg");
     try { if (svg) { if (v) svg.unpauseAnimations(); else svg.pauseAnimations(); } } catch (e) {}
@@ -395,16 +443,19 @@
     var d = e.data || {};
     if (d.type === "mcos:goto") go(d.target);
     else if (d.type === "mcos:visibility") setVisible(!!d.visible);
-    else if (d.type === "mcos:globe-rect") send({ type: "mcos:globe", atGlobe: st.p < 0.1, rect: globeRect() });
+    else if (d.type === "mcos:hero") {
+      var placed = heroEnter(d.rect, d.rot);
+      document.documentElement.classList.remove("mcos-glide-wait");
+      releaseIntro();
+      send({ type: "mcos:hero-ready", ok: placed });
+    }
     else if (d.type === "mcos:glide") {
       if (d.phase === "hold") document.documentElement.classList.add("mcos-glide-wait");
       else {
         if (typeof d.rot === "number") { phi = d.rot; st0 = 0; window.drawGlobe(); }
         document.documentElement.classList.remove("mcos-glide-wait");
-        if (introQueued) {
-          introQueued = false;
-          setTimeout(function () { if (st.p <= 0) window.runIntro(1); }, 1500);
-        }
+        if (!heroPic) document.documentElement.classList.remove("mcos-hero");
+        releaseIntro();
       }
     }
   });

@@ -213,7 +213,12 @@ html:not([data-theme="light"]) .eng { filter: drop-shadow(0 0 4px rgba(0, 0, 0, 
 #intro .gb { stroke: var(--mc-grid); }
 #intro .gtp { stroke: var(--mc-grid-strong); }
 svg.rest #intro .gb, svg.rest #intro .gtp { fill-opacity: 0; stroke-opacity: 0; }
-/* Hidden while the shell glides the Home globe into place over it. */
+/* Arriving from Home, the globe first sits where Home's globe was, alone:
+   the heading, side panel and pick bar fade in as it slices into the stack. */
+.right, .pick { transition: opacity 0.8s ease; }
+html.mcos-hero .right, html.mcos-hero .pick { opacity: 0; pointer-events: none; }
+html.mcos-glide-wait .right, html.mcos-glide-wait .pick { transition: none; }
+/* Hidden while the shell holds the Home globe in place over it. */
 #intro { transition: opacity 0.3s ease; }
 html.mcos-glide-wait #intro { opacity: 0; transition: none; }
 .again circle { fill: var(--mc-globe-a); stroke: var(--mc-grid-strong); stroke-width: 0.8; }
