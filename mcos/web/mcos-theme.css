@@ -48,7 +48,10 @@ html:root:not([data-theme="light"]) {
   --mc-edge-mix: #fff; --mc-ico-mix: #fff;
   --mc-utok-hi: #2c2219; --mc-utok: #110c08; --mc-uico: #ffcf9a;
   --mc-grid: rgba(255, 120, 0, 0.32); --mc-grid-strong: rgba(255, 140, 40, 0.6);
-  --mc-dot: #ffa028; --mc-dot-alpha: 0.9; --mc-dot-glow: #ff8c00; --mc-dot-glow-alpha: 0.45;
+  /* the opening globe: the Home globe's colours (templates/index.html) */
+  --mc-hg: rgb(255, 120, 0); --mc-gop: 0.18;
+  --mc-dot: rgb(255, 160, 40); --mc-dot-alpha: 1; --mc-dot-glow: rgb(255, 140, 0); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(255, 140, 0, 0.18); --mc-halo-b: rgba(255, 94, 0, 0.1);
   --mc-globe-a: rgba(255, 140, 0, 0.12); --mc-globe-b: rgba(255, 94, 0, 0.06);
   --mc-globe-c: rgba(255, 94, 0, 0.03); --mc-globe-d: rgba(255, 94, 0, 0.1);
   --mc-cut-a: rgba(255, 140, 0, 0.3); --mc-cut-b: rgba(255, 94, 0, 0.12);
@@ -79,7 +82,9 @@ html:root[data-theme="light"] {
   --mc-edge-mix: #000; --mc-ico-mix: #000;
   --mc-utok-hi: #ffffff; --mc-utok: #ede7de; --mc-uico: #2a2a2a;
   --mc-grid: rgba(0, 0, 0, 0.22); --mc-grid-strong: rgba(0, 0, 0, 0.38);
-  --mc-dot: #141414; --mc-dot-alpha: 0.55; --mc-dot-glow: #000000; --mc-dot-glow-alpha: 0;
+  --mc-hg: #000000; --mc-gop: 0.22;
+  --mc-dot: rgb(20, 20, 20); --mc-dot-alpha: 1; --mc-dot-glow: #000000; --mc-dot-glow-alpha: 0.2;
+  --mc-halo-a: rgba(0, 0, 0, 0.06); --mc-halo-b: rgba(0, 0, 0, 0.03);
   --mc-globe-a: rgba(0, 0, 0, 0.02); --mc-globe-b: rgba(0, 0, 0, 0.012);
   --mc-globe-c: rgba(0, 0, 0, 0.008); --mc-globe-d: rgba(0, 0, 0, 0.04);
   --mc-cut-a: rgba(0, 0, 0, 0.1); --mc-cut-b: rgba(0, 0, 0, 0.04);
@@ -189,13 +194,28 @@ html:not([data-theme="light"]) .eng { filter: drop-shadow(0 0 4px rgba(0, 0, 0, 
 .usr { stroke: var(--mc-grid-strong); }
 .uico { stroke: var(--mc-uico); }
 
-/* The opening globe: the Home tab's wireframe globe, cut into five plates. */
-#intro .gb { stroke: var(--mc-grid); }
-#intro .gtp { stroke: var(--mc-grid-strong); }
-#gsurf #glat, #gsurf #gmer { stroke: var(--mc-grid); stroke-opacity: 1; }
+/* The opening globe: the Home tab's globe exactly (drawn by mcos-bridge.js),
+   which the slicing then cuts into five plates. At rest it is only dots,
+   grid and glow; the slices' outlines and faint fill appear as it is cut. */
+#gsurf .mcos-hg { fill: none; stroke: var(--mc-hg); stroke-width: 0.8; }
+#gsurf .mcos-hg0 { stroke-opacity: calc(var(--mc-gop) * 0.1); }
+#gsurf .mcos-hg1 { stroke-opacity: calc(var(--mc-gop) * 0.3); }
+#gsurf .mcos-hg2 { stroke-opacity: calc(var(--mc-gop) * 0.5); }
+#gsurf .mcos-hg3 { stroke-opacity: calc(var(--mc-gop) * 0.7); }
+#gsurf .mcos-hg4 { stroke-opacity: calc(var(--mc-gop) * 0.9); }
+#gsurf .mcos-hd { fill: var(--mc-dot); stroke: none; }
+#gsurf .mcos-hd1 { fill-opacity: 0.57; }
+#gsurf .mcos-hd2 { fill-opacity: 0.25; }
 #gsurf #gland { fill: var(--mc-dot); fill-opacity: var(--mc-dot-alpha); }
 #gsurf .lglow { fill: var(--mc-dot-glow); opacity: var(--mc-dot-glow-alpha); }
-#grim { stroke: var(--mc-grid-strong); stroke-opacity: 1; stroke-width: 1; }
+#glat { display: none; }
+#grim { visibility: hidden; }   /* not opacity: the picture sets #grim's opacity inline */
+#intro .gb { stroke: var(--mc-grid); }
+#intro .gtp { stroke: var(--mc-grid-strong); }
+svg.rest #intro .gb, svg.rest #intro .gtp { fill-opacity: 0; stroke-opacity: 0; }
+/* Hidden while the shell glides the Home globe into place over it. */
+#intro { transition: opacity 0.3s ease; }
+html.mcos-glide-wait #intro { opacity: 0; transition: none; }
 .again circle { fill: var(--mc-globe-a); stroke: var(--mc-grid-strong); stroke-width: 0.8; }
 .again g { stroke: var(--mc-dot); }
 

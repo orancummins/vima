@@ -15,9 +15,9 @@
    A target is the picture's hash: '' (the stack), 'open', 'U', 'L1'…'L5',
    't-<area>', 'p-<product>' or 'o-<outcome>'. */
 /* The vendored picture's top-level names (checked by tools/sync_mcos.py). */
-/* global MAP, st, OUTCOMES, LAYERS, TILE, PADS, sraf:writable, st0:writable, reduce, f, esc,
-   spin, renderSide, renderPick, openTile, openProduct, closeDrawer, drawerOpen, setFocus, pickOut,
-   clearPick, openStack, closeStack, endIntro, DOTS, phi, OX, GR, GY, DEG */
+/* global MAP, st, OUTCOMES, LAYERS, TILE, PADS, sraf:writable, st0:writable, phi:writable, reduce, f,
+   esc, renderSide, renderPick, openTile, openProduct, closeDrawer, drawerOpen, setFocus, pickOut,
+   clearPick, openStack, closeStack, endIntro, OX, GR, GY, DEG */
 (function () {
   "use strict";
   if (typeof MAP === "undefined" || typeof st === "undefined" || typeof openProduct !== "function") return;
@@ -186,15 +186,15 @@
     STOPS["bt" + k] = [mix(k, "--mc-pad-tint", "--mc-pad"), mix(k, "--mc-pad-tint-lo", "--mc-pad")];
     STOPS["gc" + k] = [mix(k, "--mc-pad-tint-lo", "--mc-pad"), mix(k, "--mc-side-tint-lo", "--mc-plate-deep")];
   }
-  // The opening globe: [colour, opacity] per stop.
+  // The opening globe: [colour, opacity, offset] per stop. The sphere has
+  // no fill, rim or highlight, only the Home globe's soft glow (the halo,
+  // whose radius is about the Home gradient's, 1.5× the sphere's).
   var GLOBE = {
     gg: [["var(--mc-globe-a)"], ["var(--mc-globe-a)"], ["var(--mc-globe-b)"], ["var(--mc-globe-c)"], ["var(--mc-globe-d)"]],
     gt: [["var(--mc-cut-a)"], ["var(--mc-cut-b)"]],
-    ghl: [["var(--mc-globe-hl)", ".22"], ["var(--mc-globe-hl)", ".05"], ["var(--mc-globe-hl)", "0"]],
-    grl: [["var(--mc-globe-rim)", "0"], ["var(--mc-globe-rim)", ".3"], ["var(--mc-globe-rim)", ".6"]],
-    // The halo's first stop also fills the sphere, which is now see-through:
-    // keep it as faint as the Home globe's inner glow.
-    gha: [["var(--mc-halo)", ".12"], ["var(--mc-halo)", ".1"], ["var(--mc-halo)", ".04"], ["var(--mc-halo)", "0"]],
+    ghl: [["var(--mc-globe-hl)", "0"], ["var(--mc-globe-hl)", "0"], ["var(--mc-globe-hl)", "0"]],
+    grl: [["var(--mc-globe-rim)", "0"], ["var(--mc-globe-rim)", "0"], ["var(--mc-globe-rim)", "0"]],
+    gha: [["var(--mc-halo-a)", "1", ".14"], ["var(--mc-halo-b)", "1", ".32"], ["var(--mc-halo-b)", "0", ".7"], ["var(--mc-halo-b)", "0", "1"]],
   };
   function restyleDefs() {
     var svg = document.getElementById("svg");
@@ -214,41 +214,102 @@
         if (!v) return;
         stop.style.setProperty("stop-color", v[0]);
         if (v[1] !== undefined) stop.setAttribute("stop-opacity", v[1]);
+        if (v[2] !== undefined) stop.setAttribute("offset", v[2]);
       });
     });
   }
 
-  /* The globe's continents, drawn as in the picture but with smaller dots,
-     nearer the Home globe's fine dot sphere. Replaces the picture's
-     drawGlobe(), which spin() calls by name every frame. */
-  var DOT_SCALE = 0.58;
+  /* The opening globe, drawn exactly like the Home tab's globe
+     (templates/index.html, "Home tab — large revolving globe"): the same 80
+     dots on a Fibonacci sphere, the same 20° grid faded by depth, the same
+     perspective (scale 1 / (1.8 - z)), turning the same way at the same
+     0.18 rad a second. K sizes it so the outline is the picture's sphere
+     (radius GR), which the slicing animation then cuts. Replaces the
+     picture's drawGlobe() and spin(), which it calls by name. */
+  var SVGNS_G = "http://www.w3.org/2000/svg";
+  var HOME = (function () {
+    var n = 80, pts = [];
+    for (var i = 0; i < n; i++) {
+      var ph = Math.acos(-1 + (2 * i) / n), th = Math.sqrt(n * Math.PI) * ph;
+      pts.push([Math.cos(th) * Math.sin(ph), Math.sin(th) * Math.sin(ph), Math.cos(ph)]);
+    }
+    // The Home globe's outline is 0.668 of its RADIUS (262.4 px on its 820 px canvas).
+    return { pts: pts, K: GR / 0.668, dot: (2.5 / 262.4) * (GR / 0.668) };
+  })();
+  function layer(id, cls, before) {
+    var el = document.getElementById(id);
+    if (!el) {
+      el = document.createElementNS(SVGNS_G, "path");
+      el.id = id;
+      el.setAttribute("class", cls);
+      before.parentNode.insertBefore(el, before);
+    }
+    return el;
+  }
   window.drawGlobe = function () {
-    var land = document.getElementById("gland"), mer = document.getElementById("gmer"), lat = document.getElementById("glat");
+    var land = document.getElementById("gland");
     if (!land) return;
-    var d = "";
-    for (var i = 0; i < DOTS.length; i++) {
-      var q = DOTS[i], a = q[2] + phi, z = q[0] * Math.cos(a);
-      if (z < .14) continue;
-      var x = OX + GR * q[0] * Math.sin(a), y = GY - GR * q[1], r = GR * .0285 * DOT_SCALE * (.16 + .84 * z);
-      d += "M" + f(x - r) + "," + f(y) + "a" + f(r) + "," + f(r) + " 0 1,0 " + f(2 * r) + ",0a" + f(r) + "," + f(r) + " 0 1,0 " + f(-2 * r) + ",0";
-    }
-    land.setAttribute("d", d);
-    var m = "";
-    for (var k = 0; k < 12; k++) {
-      var ang = k * 30 * DEG + phi, c = Math.cos(ang), sn = Math.sin(ang);
-      if (c <= .02) continue;
-      m += "M" + OX + "," + (GY - GR) + "A" + f(Math.max(.01, GR * Math.abs(sn))) + "," + GR + " 0 0 " + (sn > 0 ? 1 : 0) + " " + OX + "," + (GY + GR);
-    }
-    mer.setAttribute("d", m);
-    if (!lat.getAttribute("d")) {
-      var n = LAYERS.length, h = 2 * GR / n, l = "";
-      for (var j = 1; j < n; j++) {
-        var yy = GY + GR - j * h, rr = Math.sqrt(GR * GR - (yy - GY) * (yy - GY));
-        l += "M" + f(OX - rr) + "," + f(yy) + "H" + f(OX + rr);
+    var rot = phi, K = HOME.K, grid = ["", "", "", "", ""], dots = ["", "", ""];
+    var seg = function (x0, y0, z0, x1, y1, z1) {
+      var a = Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
+      if (a < 0.03) return;
+      var s0 = 1 / (1.8 - z0), s1 = 1 / (1.8 - z1);
+      grid[Math.min(4, Math.floor(a * 5))] += "M" + f(OX + x0 * K * s0) + "," + f(GY + y0 * K * s0) +
+        "L" + f(OX + x1 * K * s1) + "," + f(GY + y1 * K * s1);
+    };
+    for (var lat = -80; lat <= 80; lat += 20) {
+      var lR = lat * DEG, cl = Math.cos(lR), sl = Math.sin(lR);
+      for (var g = 0; g < 360; g += 4) {
+        var l0 = g * DEG + rot, l1 = (g + 4) * DEG + rot;
+        seg(cl * Math.cos(l0), sl, cl * Math.sin(l0), cl * Math.cos(l1), sl, cl * Math.sin(l1));
       }
-      lat.setAttribute("d", l);
     }
+    for (var lon = 0; lon < 360; lon += 20) {
+      var L = lon * DEG + rot, cL = Math.cos(L), sL = Math.sin(L);
+      for (var m = -88; m < 90; m += 4) {
+        var a0 = m * DEG, a1 = (m + 4) * DEG;
+        seg(Math.cos(a0) * cL, Math.sin(a0), Math.cos(a0) * sL, Math.cos(a1) * cL, Math.sin(a1), Math.cos(a1) * sL);
+      }
+    }
+    for (var i = 0; i < HOME.pts.length; i++) {
+      var p = HOME.pts[i];
+      var rx = p[0] * Math.cos(rot) - p[2] * Math.sin(rot), rz = p[0] * Math.sin(rot) + p[2] * Math.cos(rot);
+      if (rz <= -0.18) continue;
+      var sc = 1 / (1.8 - rz), alpha = 0.15 + 0.85 * Math.max(0, Math.min(1, (rz + 0.2) / 0.4));
+      var x = OX + rx * K * sc, y = GY + p[1] * K * sc, r = HOME.dot * sc;
+      dots[alpha >= 0.75 ? 0 : alpha >= 0.4 ? 1 : 2] += "M" + f(x - r) + "," + f(y) + "a" + f(r) + "," + f(r) +
+        " 0 1,0 " + f(2 * r) + ",0a" + f(r) + "," + f(r) + " 0 1,0 " + f(-2 * r) + ",0";
+    }
+    for (var b = 0; b < 5; b++) layer("mcos-hg" + b, "mcos-hg mcos-hg" + b, land).setAttribute("d", grid[b]);
+    layer("mcos-hd2", "mcos-hd mcos-hd2", land).setAttribute("d", dots[2]);
+    layer("mcos-hd1", "mcos-hd mcos-hd1", land).setAttribute("d", dots[1]);
+    land.setAttribute("d", dots[0]);   // the nearest dots, which the picture also blurs into a glow
+    ["gmer", "glat"].forEach(function (id) { var e = document.getElementById(id); if (e) e.setAttribute("d", ""); });
   };
+  window.spin = function (t) {
+    if (st.p >= 0.1 || !document.getElementById("gland")) { sraf = 0; st0 = 0; return; }
+    if (st0) phi += (t - st0) * 0.00018;
+    st0 = t;
+    window.drawGlobe();
+    sraf = requestAnimationFrame(window.spin);
+  };
+
+  /* The shell glides the Home globe into this one when you switch tabs
+     (static/js/app/features/operatingSystem.js): it asks where the globe is,
+     we hide ours while its copy travels, then show ours at its rotation. */
+  // Arriving by glide, the picture's own opening (the slicing) waits until
+  // the globe has landed and turned for a moment.
+  var _runIntro = window.runIntro, introQueued = false;
+  window.runIntro = function (to, done) {
+    if (to === 1 && document.documentElement.classList.contains("mcos-glide-wait")) { introQueued = true; return undefined; }
+    return _runIntro(to, done);
+  };
+  function globeRect() {
+    var svg = document.getElementById("svg");
+    var m = svg && svg.getScreenCTM();
+    if (!m) return null;
+    return { cx: m.a * OX + m.c * GY + m.e, cy: m.b * OX + m.d * GY + m.f, r: GR * m.a };
+  }
 
   var _layout = window.layout;
   window.layout = function () { _layout(); restyleDefs(); markPads(); };
@@ -322,7 +383,7 @@
     if (!v) {
       if (sraf) { cancelAnimationFrame(sraf); sraf = 0; st0 = 0; }
     } else {
-      if (st.p < .1 && !sraf && !reduce) sraf = requestAnimationFrame(spin);
+      if (st.p < .1 && !sraf && !reduce) sraf = requestAnimationFrame(window.spin);
       // The shell's URL may have moved on while the tab was hidden.
       lastState = null; hostChange = true; schedule();
     }
@@ -334,6 +395,18 @@
     var d = e.data || {};
     if (d.type === "mcos:goto") go(d.target);
     else if (d.type === "mcos:visibility") setVisible(!!d.visible);
+    else if (d.type === "mcos:globe-rect") send({ type: "mcos:globe", atGlobe: st.p < 0.1, rect: globeRect() });
+    else if (d.type === "mcos:glide") {
+      if (d.phase === "hold") document.documentElement.classList.add("mcos-glide-wait");
+      else {
+        if (typeof d.rot === "number") { phi = d.rot; st0 = 0; window.drawGlobe(); }
+        document.documentElement.classList.remove("mcos-glide-wait");
+        if (introQueued) {
+          introQueued = false;
+          setTimeout(function () { if (st.p <= 0) window.runIntro(1); }, 1500);
+        }
+      }
+    }
   });
   window.addEventListener("hashchange", function () { go(location.hash.slice(1)); });
 
