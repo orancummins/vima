@@ -90,3 +90,4 @@ Noted after reviewing the first draft (10 October 2026); not yet made.
 1. **Pronunciation: "BIN Lookup".** Say *bin lookup*, with "BIN" as the word *bin*, never spelled out as B-I-N. It is spoken in the Operating System section ("Let's take BIN Lookup…").
 2. **Globe position.** The globe in the Operating System tab sits in a different place from the Home globe, so the switch between the tabs looks disjointed even with the glide. The two should line up so the transition reads as one continuous globe.
 3. **Find A Card runs to the end.** Carry the use case through to its last step, so the chosen card is shown loaded into the wallet on a phone, rather than stopping at the ranked results.
+4. **Pronunciation: "live".** In "The result is a card that fits the way you actually live" (Find A Card), the narrator says *live* like the adjective in "live music" (rhymes with *five*). It should be the verb, rhyming with *give*.
