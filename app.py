@@ -31,6 +31,7 @@ _CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
 load_dotenv(os.path.join(_CONFIG_DIR, ".env"))
 
 import live_demo  # noqa: E402
+import mcos  # noqa: E402
 from apis import registry as api_registry  # noqa: E402
 from apis import spotlights as api_spotlights  # noqa: E402
 from simulator.blueprint import sim_bp  # noqa: E402
@@ -361,6 +362,7 @@ CSS_FILES = [
     "css/platform/sdk-panel.css",
     "css/platform/info-modal.css",
     "css/platform/search.css",
+    "css/platform/operating-system.css",
 ]
 
 
@@ -384,13 +386,16 @@ def home():
 @app.route("/app")
 def index():
     _apis = api_registry.manifests()
+    _solutions = api_registry.solutions()
+    _use_cases = usecase_registry.manifests()
     return render_template(
         "index.html",
         apis=_apis,
         api_groups=api_registry.manifests_grouped(),
-        solutions=api_registry.solutions(),
-        bundles=api_registry.solutions(),
-        use_cases=usecase_registry.manifests(),
+        solutions=_solutions,
+        bundles=_solutions,
+        use_cases=_use_cases,
+        mcos_targets=_mcos_links(_apis, _solutions, _use_cases)["targets"],
         spotlight=_build_spotlight(_apis),
         provision_catalog=_build_provision_catalog(),
         runtime_mode={
@@ -1882,6 +1887,38 @@ def _register_usecase_static_routes() -> None:
 
 
 _register_usecase_static_routes()
+
+
+# ---------------------------------------------------------------------------
+# Mastercard Operating System tab — the animated layer picture from the maos
+# project (vendored under mcos/vendor/), dressed in Solution Studio's theme
+# and linked to the APIs, bundles and use cases. See mcos/__init__.py.
+# ---------------------------------------------------------------------------
+
+def _mcos_links(apis=None, solutions=None, use_cases=None) -> dict:
+    return mcos.build_links(
+        apis if apis is not None else api_registry.manifests(),
+        solutions if solutions is not None else api_registry.solutions(),
+        use_cases if use_cases is not None else usecase_registry.manifests(),
+        non_us_blocked_api=_is_non_us_blocked_api,
+        non_us_blocked_use_case=_is_non_us_blocked_usecase,
+    )
+
+
+@app.route("/mcos/")
+@app.route("/mcos/index.html")
+def mcos_page():
+    return _prefix_html_routes(mcos.render_page()), 200, {"Content-Type": "text/html; charset=utf-8"}
+
+
+@app.route("/mcos/links.json")
+def mcos_links():
+    return jsonify(_mcos_links())
+
+
+@app.route("/mcos/<path:filename>")
+def mcos_files(filename: str):
+    return send_from_directory(mcos.WEB_DIR, filename)
 
 
 @app.route("/catalog")

@@ -2,9 +2,10 @@
 
 Validates that:
   - The home page (GET /app) returns 200 without a server error page
-  - The HTML contains all three top-level navigation panels
+  - The HTML contains all top-level navigation panels
   - The API manifest endpoint (GET /explorer/apis) returns valid JSON
   - The API list is non-empty and contains a known API id
+  - The Operating System tab's page and links load, and every link resolves
 
 Independently runnable::
 
@@ -39,7 +40,7 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
     def _home_nav_panels():
         resp = assert_status(get(f"{base_url}/app"), 200)
         html = resp.text
-        for marker in ("panel-home", "panel-apis", "panel-usecases"):
+        for marker in ("panel-home", "panel-os", "panel-apis", "panel-bundles", "panel-usecases"):
             assert marker in html, (
                 f"Navigation panel marker {marker!r} not found in /app HTML. "
                 f"The page may not have loaded correctly."
@@ -83,6 +84,32 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
         )
 
     runner.run("Use Cases panel marker present in /app", _uc_panel)
+
+    # ── Operating System tab (mcos/) ────────────────────────────
+    def _mcos_page():
+        resp = assert_status(get(f"{base_url}/mcos/index.html"), 200)
+        assert_no_server_error(resp.text, f"{base_url}/mcos/index.html")
+        for marker in ('id="pic"', "mcos-theme.css", "mcos-bridge.js"):
+            assert marker in resp.text, f"{marker!r} not found in /mcos/index.html"
+
+    runner.run("GET /mcos/index.html serves the themed picture", _mcos_page)
+
+    def _mcos_assets():
+        for name in ("mcos-theme.css", "mcos-bridge.js"):
+            assert_status(get(f"{base_url}/mcos/{name}"), 200)
+
+    runner.run("GET /mcos/ theme and bridge assets return 200", _mcos_assets)
+
+    def _mcos_links():
+        data = assert_json(assert_status(get(f"{base_url}/mcos/links.json"), 200))
+        assert not data.get("warnings"), f"Operating System links no longer resolve: {data['warnings']}"
+        products = data.get("products", {})
+        assert "binlookup" in products, f"BIN Lookup has no product in the picture: {sorted(products)}"
+        assert data.get("targets", {}).get("api", {}).get("bin_lookup") == "p-binlookup", (
+            "bin_lookup should link to p-binlookup in the picture"
+        )
+
+    runner.run("GET /mcos/links.json resolves every link", _mcos_links)
 
     return runner
 

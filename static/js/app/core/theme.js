@@ -23,6 +23,7 @@ export function _syncEmbeddedUseCaseTheme(mode) {
     _postThemeToEmbeddedFrame(frame, theme);
   });
   _postThemeToEmbeddedFrame($('global-edit-modal-iframe'), theme);
+  _postThemeToEmbeddedFrame($('os-frame'), theme);
 }
 
 export function _applyThemeMode(mode) {
