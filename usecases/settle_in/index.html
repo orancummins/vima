@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settle In</title>
+<script src="/static/js/usecase-theme.js"></script>
+<link rel="stylesheet" href="/static/css/usecase-theme.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Settle In — a concept use case: Priya's first day in New York, one moment at a time.
+   The moments, phone screens and tokens are shared with the Settle In storyboard. */
+
+/* Layout: a storyboard timeline. Each moment of the day is a row: the sky behind the phone follows the time of day,
+   the phone shows what Priya sees, and the notes name the Mastercard assets and a photo prompt for the scene. */
+:root {
+  --bg: #f6f4f1;
+  --surface: #ffffff;
+  --ink: #1b1714;
+  --ink-2: #4a433d;
+  --muted: #7a716a;
+  --line: #e4ded6;
+  --accent: #e2540b;
+  --accent-soft: #fde9dc;
+  --ok: #18794e;
+  --ok-soft: #dff3e9;
+  --add: #8a5300;
+  --add-soft: #fbefd9;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141110; --surface: #1d1917; --ink: #f3eee8; --ink-2: #d2c9c0; --muted: #9c938b; --line: #332d29;
+    --accent: #ff7a2e; --accent-soft: #3a2316; --ok: #5fd39b; --ok-soft: #173126; --add: #f2b84b; --add-soft: #36290f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141110; --surface: #1d1917; --ink: #f3eee8; --ink-2: #d2c9c0; --muted: #9c938b; --line: #332d29;
+  --accent: #ff7a2e; --accent-soft: #3a2316; --ok: #5fd39b; --ok-soft: #173126; --add: #f2b84b; --add-soft: #36290f;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.55 var(--font-body); }
+.page { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 64px; }
+
+header.intro { display: grid; gap: 18px; max-width: 760px; margin-bottom: 40px; }
+.eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 700 clamp(34px, 5vw, 56px)/1.02 var(--font-display); letter-spacing: -.025em; margin: 0; text-wrap: balance; }
+.lede { font-size: 18px; color: var(--ink-2); margin: 0; max-width: 62ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 22px; font: 500 13px/1.4 var(--font-mono); color: var(--muted); }
+.facts b { color: var(--ink); font-weight: 500; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+/* ---------- a moment ---------- */
+.moment { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 28px 40px; align-items: center;
+  padding-block: 28px; border-top: 1px solid var(--line); }
+.scene { position: relative; border-radius: 22px; padding: 34px 20px; display: grid; place-items: center; overflow: hidden;
+  background: linear-gradient(170deg, var(--sky1), var(--sky2) 62%, var(--sky3)); min-height: 560px; }
+.scene::after { /* the skyline, a low horizon */
+  content: ""; position: absolute; inset: auto 0 0 0; height: 120px; opacity: .55;
+  background:
+    linear-gradient(to top, var(--city) 0 34px, transparent 34px) 0 100% / 100% 100% no-repeat,
+    repeating-linear-gradient(90deg, var(--city) 0 22px, transparent 22px 30px, var(--city) 30px 44px, transparent 44px 50px, var(--city) 50px 66px, transparent 66px 74px) 0 100% / 100% 64px no-repeat,
+    repeating-linear-gradient(90deg, transparent 0 40px, var(--city) 40px 52px, transparent 52px 120px, var(--city) 120px 134px, transparent 134px 190px) 0 100% / 100% 104px no-repeat;
+  pointer-events: none; }
+.clock { position: absolute; left: 18px; top: 16px; font: 500 13px/1 var(--font-mono); color: #fff; opacity: .92;
+  background: rgba(0,0,0,.22); padding: 6px 9px; border-radius: 999px; z-index: 2; }
+.where { position: absolute; right: 18px; top: 16px; font: 500 12px/1 var(--font-body); color: #fff; opacity: .9; z-index: 2; }
+
+.notes { display: grid; gap: 14px; min-width: 0; }
+.step { font: 500 12px/1 var(--font-mono); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.notes h2 { font: 700 clamp(24px, 3vw, 32px)/1.1 var(--font-display); letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+.notes p { margin: 0; color: var(--ink-2); max-width: 60ch; }
+.protect { margin: 0; padding-left: 18px; display: grid; gap: 7px; color: var(--ink-2); max-width: 62ch; }
+.protect b { color: var(--ink); font-weight: 600; }
+.say { border-left: 3px solid var(--accent); padding: 2px 0 2px 14px; font-style: italic; color: var(--ink); }
+.assets { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font: 500 12.5px/1 var(--font-body); padding: 7px 10px; border-radius: 8px; }
+.chip.ok { background: var(--ok-soft); color: var(--ok); }
+.chip.add { background: var(--add-soft); color: var(--add); }
+.chip::before { font: 600 11px/1 var(--font-mono); }
+.chip.ok::before { content: "✓"; }
+.chip.add::before { content: "+"; }
+details.prompt { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+details.prompt summary { cursor: pointer; padding: 10px 14px; font: 500 13px/1.3 var(--font-body); color: var(--ink-2); list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+details.prompt summary::-webkit-details-marker { display: none; }
+details.prompt summary::after { content: "Show"; color: var(--accent); font-weight: 600; }
+details.prompt[open] summary::after { content: "Hide"; }
+details.prompt summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.prompt-body { padding: 0 14px 14px; display: grid; gap: 10px; }
+.prompt-body p { font: 400 13.5px/1.55 var(--font-mono); color: var(--ink-2); margin: 0; overflow-wrap: anywhere; }
+.copy { justify-self: start; font: 600 12.5px/1 var(--font-body); color: var(--accent); background: var(--accent-soft); border: 0; border-radius: 7px; padding: 8px 11px; cursor: pointer; }
+.copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- the phone ---------- */
+.phone { position: relative; z-index: 1; width: 252px; max-width: 100%; aspect-ratio: 9 / 19.3; border-radius: 42px; padding: 10px;
+  background: linear-gradient(145deg, #2a2a2e, #0c0c0e); box-shadow: 0 30px 60px -20px rgba(0,0,0,.55), inset 0 0 0 1.5px #3c3c42; }
+.screen { position: relative; height: 100%; border-radius: 33px; overflow: hidden; background: #f4f3f6; color: #111;
+  font: 400 11.5px/1.35 -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; }
+.screen.dark { background: #0d0d10; color: #f2f2f4; }
+.island { position: absolute; top: 9px; left: 50%; transform: translateX(-50%); width: 76px; height: 22px; background: #000; border-radius: 12px; z-index: 3; }
+.status { display: flex; justify-content: space-between; align-items: center; padding: 12px 22px 6px; font-weight: 600; font-size: 11.5px; }
+.status .icons { display: flex; gap: 4px; align-items: center; }
+.status .bars { width: 15px; height: 9px; background: linear-gradient(90deg, currentColor 0 3px, transparent 3px 4px, currentColor 4px 7px, transparent 7px 8px, currentColor 8px 11px, transparent 11px 12px, currentColor 12px); clip-path: polygon(0 100%, 100% 0, 100% 100%); }
+.status .batt { width: 20px; height: 9px; border: 1.3px solid currentColor; border-radius: 3px; position: relative; }
+.status .batt::after { content: ""; position: absolute; inset: 1px 5px 1px 1px; background: currentColor; border-radius: 1px; }
+.app { flex: 1; padding: 6px 14px 14px; display: flex; flex-direction: column; gap: 9px; min-height: 0; }
+.appbar { display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 12px; }
+.brand { display: inline-flex; align-items: center; gap: 6px; }
+.brand i { width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle at 35% 40%, #eb001b 0 46%, transparent 47%), radial-gradient(circle at 65% 40%, #f79e1b 0 46%, transparent 47%); display: inline-block; }
+.big { font: 700 19px/1.15 -apple-system, "SF Pro Display", "Segoe UI", sans-serif; letter-spacing: -.01em; }
+.sub { color: #6b6b72; font-size: 11px; }
+.dark .sub { color: #a1a1aa; }
+.card-ui { background: #fff; border-radius: 14px; padding: 10px 11px; display: grid; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+.dark .card-ui { background: #1b1b20; box-shadow: none; }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.row span:last-child { text-align: right; }
+.tick { color: #18794e; font-weight: 700; }
+.dark .tick { color: #5fd39b; }
+.btn { margin-top: auto; background: #111; color: #fff; text-align: center; padding: 10px; border-radius: 12px; font-weight: 600; font-size: 12px; }
+.btn.orange { background: #ff5f00; }
+.pill { display: inline-block; font-size: 9.5px; font-weight: 600; padding: 3px 7px; border-radius: 999px; background: #e9f6ef; color: #18794e; }
+.bankrow { display: flex; align-items: center; gap: 9px; padding: 8px 9px; border-radius: 11px; background: #fff; }
+.bankrow.sel { box-shadow: inset 0 0 0 1.5px #ff5f00; }
+.logo { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-weight: 700; color: #fff; font-size: 11px; flex: none; }
+.mc-card { aspect-ratio: 1.586; border-radius: 12px; padding: 10px 12px; color: #fff; display: flex; flex-direction: column; justify-content: space-between;
+  background: radial-gradient(120% 140% at 0% 0%, #3a3a44, #121216 70%); box-shadow: 0 10px 24px -10px rgba(0,0,0,.6); font-size: 10.5px; }
+.mc-card .marks { align-self: flex-end; width: 34px; height: 21px; background: radial-gradient(circle at 30% 50%, #eb001b 0 48%, transparent 49%), radial-gradient(circle at 70% 50%, #f79e1b 0 48%, transparent 49%); }
+.amount { font: 700 28px/1 -apple-system, "SF Pro Display", "Segoe UI", sans-serif; letter-spacing: -.02em; }
+.txn { display: flex; gap: 9px; align-items: center; padding: 7px 0; border-bottom: 1px solid #eee; }
+.txn:last-child { border-bottom: 0; }
+.txn .t { flex: 1; min-width: 0; }
+.txn .t b { display: block; font-weight: 600; }
+.txn .t small { color: #77777f; display: block; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.raw { font: 500 9.5px/1.3 ui-monospace, Menlo, monospace; color: #8b8b93; text-decoration: line-through; }
+.lock { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 18px 12px; gap: 10px; color: #fff;
+  background: linear-gradient(180deg, rgba(10,10,20,.15), rgba(10,10,20,.55)), radial-gradient(120% 80% at 50% 0%, #4b2a7a, #120c22 70%); }
+.lock .time { font: 600 46px/1 -apple-system, "SF Pro Display", "Segoe UI", sans-serif; letter-spacing: -.02em; }
+.lock .date { font-size: 12px; opacity: .85; }
+.notif { width: 100%; background: rgba(245,245,250,.86); color: #111; border-radius: 16px; padding: 9px 10px; display: grid; gap: 3px; backdrop-filter: blur(8px); }
+.notif .head { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #55555c; }
+.notif .head .logo { width: 16px; height: 16px; border-radius: 5px; font-size: 8px; }
+.notif b { font-size: 11.5px; }
+.map { height: 92px; border-radius: 12px; position: relative; overflow: hidden;
+  background: linear-gradient(0deg, transparent 47%, #fff 47% 53%, transparent 53%) 0 0 / 100% 28px,
+              linear-gradient(90deg, transparent 47%, #fff 47% 53%, transparent 53%) 0 0 / 34px 100%, #e7ece4; }
+.map .pin { position: absolute; width: 12px; height: 12px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #ff5f00; box-shadow: 0 0 0 3px rgba(255,95,0,.25); }
+.map .me { position: absolute; width: 11px; height: 11px; border-radius: 50%; background: #2d6cdf; box-shadow: 0 0 0 4px rgba(45,108,223,.25); }
+
+/* ---------- sources ---------- */
+section.sources { border-top: 1px solid var(--line); padding-top: 28px; margin-top: 12px; display: grid; gap: 12px; }
+section.sources h2 { font: 700 22px/1.2 var(--font-display); margin: 0; }
+section.sources ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; color: var(--ink-2); max-width: 75ch; }
+section.sources a { color: var(--accent); }
+
+@media (max-width: 820px) {
+  .moment { grid-template-columns: minmax(0, 1fr); }
+  .scene { min-height: 0; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .phone { transition: transform .4s cubic-bezier(.2,.8,.2,1); }
+  .scene:hover .phone { transform: translateY(-4px); }
+}
+
+/* ---------- the step-through ---------- */
+.page { max-width: 1180px; padding-block: 14px 18px; }
+.si-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 24px; margin-bottom: 14px; }
+.si-head h1 { font-size: clamp(22px, 2.6vw, 30px); margin-top: 8px; }
+.si-side { display: grid; gap: 8px; justify-items: end; }
+.si-head .lede { font-size: 14.5px; max-width: 70ch; margin-top: 6px; }
+.concept { display: inline-flex; align-items: center; gap: 6px; font: 600 11.5px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--add); background: var(--add-soft); padding: 6px 9px; border-radius: 999px; }
+.si-steps { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-bottom: 14px; }
+.si-step { display: grid; gap: 3px; text-align: left; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
+  border-radius: 10px; padding: 8px 10px; cursor: pointer; font: inherit; transition: border-color .15s, background .15s; min-width: 0; }
+.si-step .t { font: 500 12px/1 var(--font-mono); color: var(--muted); }
+.si-step .l { font: 600 13px/1.2 var(--font-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.si-step:hover { border-color: var(--accent); }
+.si-step.active { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+.si-step.active .t { color: var(--accent); }
+.si-step.done .t::after { content: " ✓"; color: var(--ok); }
+.si-step:focus-visible, .si-nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.moment { display: none; border-top: 0; padding-block: 0; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 20px 36px; }
+.moment.active { display: grid; }
+.scene { min-height: 0; padding: 20px 18px; }
+.phone { width: 194px; }
+.notes h2 { font-size: clamp(22px, 2.4vw, 28px); }
+.notes p { font-size: 15px; }
+.si-nav { display: flex; align-items: center; gap: 8px; }
+.si-nav button { font: 600 13px/1 var(--font-body); padding: 10px 14px; border-radius: 9px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.si-nav button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.si-nav button:disabled { opacity: .4; cursor: default; }
+.si-nav .count { font: 500 12.5px/1 var(--font-mono); color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) {
+  .moment.active .scene { animation: si-in .45s cubic-bezier(.2,.8,.2,1); }
+  .moment.active .notes { animation: si-in .45s .06s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes si-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+}
+@media (max-width: 820px) {
+  .si-steps { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .moment { grid-template-columns: minmax(0, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="si-head">
+    <div>
+      <span class="concept">Concept · not wired yet</span>
+      <h1>Settle In: Priya's first day in New York</h1>
+    </div>
+    <div class="si-side">
+      <div class="legend"><span class="chip ok">In Solution Studio today</span><span class="chip add">To add</span></div>
+      <div class="si-nav">
+        <span class="count" id="si-count">1 of 7</span>
+        <button id="si-prev" type="button">← Previous</button>
+        <button id="si-next" class="primary" type="button">Next →</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="si-steps" aria-label="Priya's day">
+      <button class="si-step active" type="button" data-i="0" aria-current="step"><span class="t">07:55</span><span class="l">Arrive</span></button>
+      <button class="si-step" type="button" data-i="1" aria-current="false"><span class="t">08:20</span><span class="l">Approved</span></button>
+      <button class="si-step" type="button" data-i="2" aria-current="false"><span class="t">08:25</span><span class="l">In her wallet</span></button>
+      <button class="si-step" type="button" data-i="3" aria-current="false"><span class="t">09:05</span><span class="l">Money home</span></button>
+      <button class="si-step" type="button" data-i="4" aria-current="false"><span class="t">12:40</span><span class="l">Lunch</span></button>
+      <button class="si-step" type="button" data-i="5" aria-current="false"><span class="t">18:10</span><span class="l">Protected</span></button>
+      <button class="si-step" type="button" data-i="6" aria-current="false"><span class="t">19:30</span><span class="l">Priceless</span></button>
+  </nav>
+
+  <div class="si-stage">
+  <!-- 1 -->
+  <article class="moment active" id="arrive">
+    <div class="scene" style="--sky1:#8fa7c4; --sky2:#d9c7b8; --sky3:#f2d6b8; --city:#3d4656;">
+      <span class="clock">07:55</span><span class="where">JFK Terminal 4</span>
+      <div class="phone" role="img" aria-label="Phone screen: choose your bank at home to share your history">
+        <div class="screen"><div class="island"></div>
+          <div class="status"><span>7:55</span><span class="icons"><span class="bars"></span><span class="batt"></span></span></div>
+          <div class="app">
+            <div class="appbar"><span class="brand"><i></i>Settle In</span><span class="sub">1 of 3</span></div>
+            <div class="big">Bring your history from home</div>
+            <div class="sub">Share your Irish bank account so we can see your income and spending, not a US credit score.</div>
+            <div class="bankrow sel"><span class="logo" style="background:#7b2b83">AIB</span><div><b>AIB</b><div class="sub">Current account ••3391</div></div></div>
+            <div class="bankrow"><span class="logo" style="background:#0b4ea2">BOI</span><div><b>Bank of Ireland</b></div></div>
+            <div class="bankrow"><span class="logo" style="background:#191c1f">R</span><div><b>Revolut</b></div></div>
+            <div class="card-ui"><div class="row"><span>Accounts, balances, 12 months of transactions</span></div><div class="sub">Read-only · you can withdraw consent at any time</div></div>
+            <div class="btn orange">Allow and continue</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <span class="step">Moment 1 · Arrive</span>
+      <h2>Bring her history from home</h2>
+      <p>Still in the arrivals hall, Priya opens the bank's app and connects her Irish account. With her consent, Open Finance shares twelve months of salary and spending. That gives the bank a real picture of her, where a US credit bureau has nothing.</p>
+      <div class="assets"><span class="chip ok">Open Finance Europe</span><span class="chip ok">Online Identity Verification (pattern)</span></div>
+    </div>
+  </article>
+
+  <!-- 2 -->
+  <article class="moment" id="approved">
+    <div class="scene" style="--sky1:#a9c0d8; --sky2:#e6dccd; --sky3:#f4e2c6; --city:#4b5566;">
+      <span class="clock">08:20</span><span class="where">AirTrain to Jamaica</span>
+      <div class="phone" role="img" aria-label="Phone screen: credit card approved based on cash flow">
+        <div class="screen"><div class="island"></div>
+          <div class="status"><span>8:20</span><span class="icons"><span class="bars"></span><span class="batt"></span></span></div>
+          <div class="app">
+            <div class="appbar"><span class="brand"><i></i>Settle In</span><span class="sub">2 of 3</span></div>
+            <div class="big">You're approved, Priya</div>
+            <div class="card-ui">
+              <div class="row"><span class="sub">Credit limit</span><b style="font-size:16px">$4,000</b></div>
+              <div class="row"><span class="sub">Based on</span><span>12 months of AIB history</span></div>
+            </div>
+            <div class="card-ui">
+              <div class="row"><span>Identity confirmed</span><span class="tick">✓</span></div>
+              <div class="row"><span>Regular salary, 12 of 12 months</span><span class="tick">✓</span></div>
+              <div class="row"><span>Bills paid on time</span><span class="tick">✓</span></div>
+              <div class="row"><span>Monthly spend vs income</span><span>58%</span></div>
+            </div>
+            <div class="sub">No US credit file needed. Your history from home did the work.</div>
+            <div class="btn">Add card to Wallet</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <span class="step">Moment 2 · Approved</span>
+      <h2>A credit card without a credit file</h2>
+      <p>The bank reads her income and cash flow from the shared data and approves a card in minutes. The same check confirms her identity from the account details she already has.</p>
+      <div class="assets"><span class="chip ok">Open Finance Europe</span><span class="chip add">Identity Insights</span></div>
+    </div>
+  </article>
+
+  <!-- 3 -->
+  <article class="moment" id="wallet">
+    <div class="scene" style="--sky1:#b8cde0; --sky2:#ece4d6; --sky3:#f6e8cf; --city:#566174;">
+      <span class="clock">08:25</span><span class="where">AirTrain</span>
+      <div class="phone" role="img" aria-label="Phone screen: card added to wallet, ready to tap">
+        <div class="screen dark"><div class="island"></div>
+          <div class="status"><span>8:25</span><span class="icons"><span class="bars"></span><span class="batt"></span></span></div>
+          <div class="app">
+            <div class="appbar"><span>Wallet</span><span class="sub">Done</span></div>
+            <div class="mc-card"><span style="font-weight:600;letter-spacing:.04em">HARBOR BANK</span><div><div style="font:500 11px/1.2 ui-monospace,Menlo,monospace;opacity:.85">•••• 7421</div><div style="display:flex;justify-content:space-between;align-items:flex-end"><span>World Mastercard</span><span class="marks"></span></div></div></div>
+            <div class="big" style="text-align:center">Ready to tap</div>
+            <div class="sub" style="text-align:center">Added to Wallet as a secure token. The card number on file stays private.</div>
+            <div class="card-ui"><div class="row"><span>Physical card</span><span class="sub">Arrives Thursday</span></div><div class="row"><span>Use it today</span><span class="tick">✓</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <span class="step">Moment 3 · In her wallet</span>
+      <h2>On her phone before she reaches the city</h2>
+      <p>The new card goes straight into her phone's wallet as a token, so she can pay today while the plastic card is in the post. The card range is checked as it's issued. From here it works almost anywhere: Mastercard is accepted at more than 150 million locations in over 200 countries and territories, including on her way home to Dublin.</p>
+      <div class="assets"><span class="chip add">MDES tokenisation / Digital First</span><span class="chip ok">BIN Lookup</span></div>
+    </div>
+  </article>
+
+  <!-- 4 -->
+  <article class="moment" id="home">
+    <div class="scene" style="--sky1:#9cc3e6; --sky2:#d9e6ee; --sky3:#eef1ee; --city:#5f6b7d;">
+      <span class="clock">09:05</span><span class="where">Hudson Yards, office lobby</span>
+      <div class="phone" role="img" aria-label="Phone screen: money sent home to Dublin, delivered in seconds">
+        <div class="screen"><div class="island"></div>
+          <div class="status"><span>9:05</span><span class="icons"><span class="bars"></span><span class="batt"></span></span></div>
+          <div class="app">
+            <div class="appbar"><span class="brand"><i></i>Send home</span><span class="sub">Ireland</span></div>
+            <div class="sub">To Mum · Anjali Sharma · AIB ••7710</div>
+            <div class="row" style="align-items:flex-end"><span class="amount">$400</span><span class="sub">→ €368.52</span></div>
+            <div class="card-ui">
+              <div class="row"><span class="sub">Exchange rate</span><span>1 USD = 0.9213 EUR</span></div>
+              <div class="row"><span class="sub">Fee</span><span>$2.99</span></div>
+              <div class="row"><span class="sub">Rate vs. reference</span><span>Shown before you send</span></div>
+            </div>
+            <div class="card-ui">
+              <div class="row"><b>Delivered</b><span class="pill">09:05:12</span></div>
+              <div class="sub">Paid into Mum's AIB account in Dublin. She'll see it now.</div>
+            </div>
+            <div class="btn">Done</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <span class="step">Moment 4 · Money home</span>
+      <h2>Money home, with the rate up front</h2>
+      <p>Before her first meeting, Priya sends $400 to her mum. She sees the exact rate and fee before she confirms, and it lands in her mum's Irish bank account within seconds. Cross-Border Services reaches bank accounts, mobile wallets, cards and cash pick-up from one connection. Mastercard Send can also pay to a card, including a tokenised one.</p>
+      <div class="assets"><span class="chip ok">Currency Conversion Calculator</span><span class="chip add">Cross-Border Services</span><span class="chip add">Mastercard Send (card payouts)</span></div>
+    </div>
+  </article>
+
+  <!-- 5 -->
+  <article class="moment" id="lunch">
+    <div class="scene" style="--sky1:#7fb3e0; --sky2:#cfe2f0; --sky3:#f3f1e8; --city:#55627a;">
+      <span class="clock">12:40</span><span class="where">West 34th Street</span>
+      <div class="phone" role="img" aria-label="Phone screen: enriched transactions and nearby places">
+        <div class="screen"><div class="island"></div>
+          <div class="status"><span>12:40</span><span class="icons"><span class="bars"></span><span class="batt"></span></span></div>
+          <div class="app">
+            <div class="appbar"><span class="brand"><i></i>Today</span><span class="sub">$27.15</span></div>
+            <div class="card-ui" style="gap:0">
+              <div class="txn"><span class="logo" style="background:#006241">S</span><div class="t"><b>Starbucks</b><small>Coffee shop · 34th St &amp; 8th Ave</small><span class="raw">SBUX 00654321 NEW YORK</span></div><b>$6.40</b></div>
+              <div class="txn"><span class="logo" style="background:#c8102e">P</span><div class="t"><b>Penn Pizza Co.</b><small>Pizza · 10 min walk · open till 11pm</small><span class="raw">SQ *PENNPZA 0423 NEW YOR</span></div><b>$12.90</b></div>
+              <div class="txn"><span class="logo" style="background:#0039a6">M</span><div class="t"><b>MTA subway</b><small>Transport · OMNY tap</small><span class="raw">OMNY MTA NYCT PAYGO</span></div><b>$2.90</b></div>
+            </div>
+            <div class="sub" style="font-weight:600;color:#111">Near your office</div>
+            <div class="map"><span class="me" style="left:46%;top:48%"></span><span class="pin" style="left:22%;top:26%"></span><span class="pin" style="left:68%;top:30%"></span><span class="pin" style="left:60%;top:70%"></span></div>
+            <div class="row"><span>Pharmacy · Grocery · Laundromat</span><span class="sub">all &lt; 5 min</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <span class="step">Moment 5 · Lunch</span>
+      <h2>A new city, already making sense</h2>
+      <p>She taps her phone for coffee, lunch and the subway turnstile, and it just works: the card network is accepted everywhere she goes on day one. Her first US statement lines are cryptic, so each one is cleaned up into a merchant name, logo, category and address. Places shows the essentials near her office, ranked by where cardholders actually shop.</p>
+      <div class="assets"><span class="chip ok">Consumer Clarity</span><span class="chip ok">Merchant Identifier</span><span class="chip ok">Places</span></div>
+    </div>
+  </article>
+
+  <!-- 6 -->
+  <article class="moment" id="protected">
+    <div class="scene" style="--sky1:#e9a46a; --sky2:#c98b8e; --sky3:#6c5c86; --city:#2f2f45;">
+      <span class="clock">18:10</span><span class="where">The High Line</span>
+      <div class="phone" role="img" aria-label="Phone screen: a suspicious payment declined, and the protections on her card">
+        <div class="screen"><div class="island"></div>
+          <div class="status"><span>18:10</span><span class="icons"><span class="bars"></span><span class="batt"></span></span></div>
+          <div class="app">
+            <div class="notif" style="background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.12)"><div class="head"><span class="logo" style="background:#111">H</span>HARBOR BANK · now</div><b>We declined a $1,240 payment</b><span class="sub">An online electronics store abroad. Not you? Nothing to do, your card is safe.</span></div>
+            <div class="big">How you're protected</div>
+            <div class="card-ui">
+              <div class="row"><span>Every payment scored in milliseconds</span><span class="tick">✓</span></div>
+              <div class="row"><span>Online checkouts verified</span><span class="tick">✓</span></div>
+              <div class="row"><span>Card number never shared</span><span class="tick">✓</span></div>
+              <div class="row"><span>Alert on every purchase</span><span class="tick">✓</span></div>
+              <div class="row"><span>Zero liability for fraud</span><span class="tick">✓</span></div>
+            </div>
+            <div class="card-ui"><div class="row"><span>Cell phone protection</span><span class="sub">Included</span></div></div>
+            <div class="btn">See all protections</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <span class="step">Moment 6 · Protected</span>
+      <h2>Protected from her very first tap</h2>
+      <p>A new card in a new country looks like a target. Just before sunset, someone abroad tries her card details on an electronics site. The payment is declined before it completes, and her app tells her straight away. Behind that one alert:</p>
+      <ul class="protect">
+        <li><b>Decision Intelligence Pro</b> scores every authorisation in real time. It uses generative AI to weigh the relationships around a transaction against about a trillion data points, in under 50 milliseconds.</li>
+        <li><b>Identity Check</b> (EMV 3-D Secure) verifies her when she pays online, usually invisibly and with a fingerprint or face when the risk calls for it.</li>
+        <li><b>Tokenisation (MDES)</b> means the phone pays with a token, so her real card number is never handed to a shop.</li>
+        <li><b>Transaction Notifications</b> alert her the moment the card is used, and <b>zero liability</b> means she isn't held responsible for fraud.</li>
+      </ul>
+      <div class="assets"><span class="chip add">Decision Intelligence Pro</span><span class="chip add">Identity Check</span><span class="chip add">MDES tokenisation</span><span class="chip ok">Transaction Notifications</span><span class="chip ok">Benefits Eligibility</span></div>
+    </div>
+  </article>
+
+  <!-- 7 -->
+  <article class="moment" id="surprise">
+    <div class="scene" style="--sky1:#2b2350; --sky2:#3b2457; --sky3:#7a2a4e; --city:#120d1f;">
+      <span class="clock">19:30</span><span class="where">Times Square, Broadway</span>
+      <div class="phone" role="img" aria-label="Lock screen: a Priceless Surprise notification for two seats and a backstage visit">
+        <div class="screen dark"><div class="island"></div>
+          <div class="status" style="color:#fff"><span>19:30</span><span class="icons"><span class="bars"></span><span class="batt"></span></span></div>
+          <div class="lock">
+            <div class="date">Friday, October 16</div>
+            <div class="time">7:30</div>
+            <div class="notif"><div class="head"><span class="logo" style="background:linear-gradient(135deg,#eb001b,#f79e1b)">P</span>PRICELESS · now</div><b>Surprise, Priya!</b><span>Welcome to New York. You've been surprised with two seats at a Broadway show tonight, and a backstage visit to meet the cast after the curtain.</span></div>
+            <div class="notif" style="opacity:.85"><div class="head"><span class="logo" style="background:#111">H</span>HARBOR BANK · 2m ago</div><span>$0.00 hold · box office pickup confirmed</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <span class="step">Moment 7 · Priceless</span>
+      <h2>A Priceless Surprise on her first night</h2>
+      <p>At the box office for a cheap standing ticket, she taps her new card and is surprised with two seats and a backstage visit to meet the cast. Priceless Surprises turns an ordinary payment into a moment cardholders talk about. Mastercard has run Broadway experiences for cardholders with NYC &amp; Company, and partners with Hudson Yards. This one is illustrative.</p>
+      <div class="assets"><span class="chip ok">Priceless Cities (experiences)</span><span class="chip ok">Transaction Notifications (trigger)</span></div>
+    </div>
+  </article>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  var moments = Array.prototype.slice.call(document.querySelectorAll(".moment"));
+  var steps = Array.prototype.slice.call(document.querySelectorAll(".si-step"));
+  var prev = document.getElementById("si-prev"), next = document.getElementById("si-next"), count = document.getElementById("si-count");
+  var current = 0;
+  function show(i) {
+    current = Math.max(0, Math.min(moments.length - 1, i));
+    moments.forEach(function (m, k) { m.classList.toggle("active", k === current); });
+    steps.forEach(function (s, k) {
+      s.classList.toggle("active", k === current);
+      s.classList.toggle("done", k < current);
+      s.setAttribute("aria-current", k === current ? "step" : "false");
+    });
+    prev.disabled = current === 0;
+    next.disabled = current === moments.length - 1;
+    count.textContent = (current + 1) + " of " + moments.length;
+  }
+  steps.forEach(function (s) { s.addEventListener("click", function () { show(+s.dataset.i); }); });
+  prev.addEventListener("click", function () { show(current - 1); });
+  next.addEventListener("click", function () { show(current + 1); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight") show(current + 1);
+    else if (e.key === "ArrowLeft") show(current - 1);
+  });
+  show(0);
+})();
+</script>
+</body>
+</html>

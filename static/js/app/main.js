@@ -369,6 +369,9 @@ import { initOperatingSystem, osTargetFor } from './features/operatingSystem.js'
       renderTxNotify();
     } else if (uc.render === "testchat") {
       renderTestChat();
+    } else if (uc.render === "webview") {
+      // A self-contained page in usecases/<id>/index.html (e.g. Settle In).
+      _renderCachedWebview(uc.id, `${uc.id}-webview-frame`, _appPath(`/${uc.id}/index.html`), uc.name);
     } else if (uc.render === "financeincolour") {
       _renderCachedWebview('financeincolour', 'financeincolour-webview-frame', _appPath('/financeincolour/index.html'), 'Finance In Colour');
     } else {
