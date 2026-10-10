@@ -1,12 +1,16 @@
 /* Solution Studio skin for the Mastercard Operating System layer picture.
 
    Loaded after the vendored picture's own <style>, so it only has to re-point
-   tokens and the few colours the picture hard-codes. The layer colours (gold
-   kernel, red rails, orange services, yellow solutions) already follow the
-   card brand and stay; the picture's gold "selection" accent becomes Solution
-   Studio's orange, its cool greys become warm ones, and its fonts become
-   Inter and JetBrains Mono. usecase-theme.js sets data-theme on <html> from
-   the shell's light/dark toggle. */
+   tokens and the few colours the picture hard-codes. The picture itself takes
+   the look of the Home tab's globe: the opening globe is an orange wireframe
+   with glowing dots instead of a solid sphere, and the discs are dark glass
+   plates (frosted white in light mode) whose edges glow in their layer's
+   colour, with the circuit drawn like the globe's grid. The --mc-* tokens
+   below feed the picture's gradients (re-pointed by mcos-bridge.js). The
+   picture's gold "selection" accent becomes Solution Studio's orange, its
+   cool greys become warm ones, and its fonts become Inter and JetBrains Mono.
+   usecase-theme.js sets data-theme on <html> from the shell's light/dark
+   toggle. */
 
 :root {
   --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -30,10 +34,26 @@ html:root:not([data-theme="light"]) {
   --s-new: #34d399; --s-flux: #f2b84b; --s-retired: #f87171;
   --gold: #ff7a26; --gold-deep: #ff8a3d; --gold-ink: #ffb070;
   --gold-grad: linear-gradient(100deg, #ff6a00 0%, #ffb347 60%, #ffd280 100%);
-  --l5: #d6cfc7; --lu: #857c73; --l5f: #5f5852; --luf: #6e665f;
+  --l5: #d6cfc7; --lu: #857c73;
+  --l1f: #ffc24d; --l2f: #eb001b; --l3f: #ff5f00; --l4f: #f79e1b; --l5f: #a59c93; --luf: #857c73;
+  --l1t: #ffd27a; --l2t: #ff6b7a; --l3t: #ff9448; --l4t: #ffc04d; --l5t: #e8e2db;
   --slot: #050505; --shadow: rgba(0, 0, 0, 0.7);
-  --wash-a: rgba(255, 95, 0, 0.12); --wash-b: rgba(247, 158, 27, 0.07);
+  --wash-a: rgba(255, 140, 0, 0.13); --wash-b: rgba(255, 94, 0, 0.06);
   --studio-ok: #34d399;
+  /* the picture */
+  --mc-plate: #17110c; --mc-plate-deep: #070504;
+  --mc-top-tint: 24%; --mc-top-tint-lo: 7%;
+  --mc-side-tint: 32%; --mc-side-tint-lo: 12%;
+  --mc-pad: #1d1610; --mc-pad-tint: 36%; --mc-pad-tint-lo: 14%;
+  --mc-edge-mix: #fff; --mc-ico-mix: #fff;
+  --mc-utok-hi: #2c2219; --mc-utok: #110c08; --mc-uico: #ffcf9a;
+  --mc-grid: rgba(255, 120, 0, 0.32); --mc-grid-strong: rgba(255, 140, 40, 0.6);
+  --mc-dot: #ffa028; --mc-dot-alpha: 0.9; --mc-dot-glow: #ff8c00; --mc-dot-glow-alpha: 0.45;
+  --mc-globe-a: rgba(255, 140, 0, 0.12); --mc-globe-b: rgba(255, 94, 0, 0.06);
+  --mc-globe-c: rgba(255, 94, 0, 0.03); --mc-globe-d: rgba(255, 94, 0, 0.1);
+  --mc-cut-a: rgba(255, 140, 0, 0.3); --mc-cut-b: rgba(255, 94, 0, 0.12);
+  --mc-globe-hl: #ffb070; --mc-globe-rim: #ff7a1a; --mc-halo: #ff8c00;
+  --mc-underglow: rgba(255, 95, 0, 0.22);
 }
 
 /* ---------- light ---------- */
@@ -46,9 +66,25 @@ html:root[data-theme="light"] {
   --c1: #c2410c;
   --gold: #ff7a1a; --gold-deep: #e65c00; --gold-ink: #b84a00;
   --gold-grad: linear-gradient(100deg, #e65100 0%, #ff7a1a 60%, #f59e0b 100%);
-  --l5: #2a2a2a; --lu: #6b6b6b; --l5f: #4a4540; --luf: #a59c93;
-  --wash-a: rgba(255, 95, 0, 0.10); --wash-b: rgba(247, 158, 27, 0.08);
+  --l5: #2a2a2a; --lu: #6b6b6b;
+  --l1f: #e0a100; --l2f: #eb001b; --l3f: #ff5f00; --l4f: #f79e1b; --l5f: #6b6b6b; --luf: #a59c93;
+  --l1t: #8a5a00; --l2t: #b8001a; --l3t: #c24400; --l4t: #a8690a; --l5t: #2a2a2a;
+  --wash-a: rgba(255, 140, 0, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
   --studio-ok: #1f9d55;
+  /* the picture */
+  --mc-plate: #ffffff; --mc-plate-deep: #efe9e1;
+  --mc-top-tint: 13%; --mc-top-tint-lo: 5%;
+  --mc-side-tint: 26%; --mc-side-tint-lo: 10%;
+  --mc-pad: #ffffff; --mc-pad-tint: 24%; --mc-pad-tint-lo: 9%;
+  --mc-edge-mix: #000; --mc-ico-mix: #000;
+  --mc-utok-hi: #ffffff; --mc-utok: #ede7de; --mc-uico: #2a2a2a;
+  --mc-grid: rgba(0, 0, 0, 0.22); --mc-grid-strong: rgba(0, 0, 0, 0.38);
+  --mc-dot: #141414; --mc-dot-alpha: 0.55; --mc-dot-glow: #000000; --mc-dot-glow-alpha: 0;
+  --mc-globe-a: rgba(0, 0, 0, 0.02); --mc-globe-b: rgba(0, 0, 0, 0.012);
+  --mc-globe-c: rgba(0, 0, 0, 0.008); --mc-globe-d: rgba(0, 0, 0, 0.04);
+  --mc-cut-a: rgba(0, 0, 0, 0.1); --mc-cut-b: rgba(0, 0, 0, 0.04);
+  --mc-globe-hl: #ffffff; --mc-globe-rim: rgba(0, 0, 0, 0.3); --mc-halo: rgba(0, 0, 0, 0.22);
+  --mc-underglow: rgba(0, 0, 0, 0.16);
 }
 
 /* ---------- page ---------- */
@@ -120,6 +156,56 @@ html:not([data-theme="light"]) .prod.open { background: rgba(255, 255, 255, 0.03
 .fwho rect { fill: var(--lit-ink); }
 .fwho text { fill: var(--lit); }
 .step .no { color: var(--lit); background: var(--lit-ink); box-shadow: inset 0 0 0 1px var(--lit); }
+
+/* ---------- the picture, in the style of the Home globe ---------- */
+/* Each layer's accent, for the rules below. */
+.layer[data-l="L1"] { --k: var(--l1f); }
+.layer[data-l="L2"] { --k: var(--l2f); }
+.layer[data-l="L3"] { --k: var(--l3f); }
+.layer[data-l="L4"] { --k: var(--l4f); }
+.layer[data-l="L5"] { --k: var(--l5f); }
+.layer[data-l="U"] { --k: var(--luf); }
+
+/* Plates: glowing rims, faint seams, the circuit drawn like the globe's grid. */
+.slabtop { stroke: color-mix(in oklab, var(--k) 82%, var(--mc-edge-mix)); stroke-width: 1.3; }
+html:not([data-theme="light"]) .slabtop { filter: drop-shadow(0 0 5px color-mix(in oklab, var(--k) 65%, transparent)); }
+.face { stroke: color-mix(in oklab, var(--k) 40%, transparent); }
+.bev { stroke: var(--k); stroke-opacity: 0.6; }
+.bev.lo { stroke: var(--k); stroke-opacity: 0.22; }
+.decor { stroke: var(--mc-grid); stroke-opacity: 1; }
+.decor .hub { stroke: var(--mc-grid-strong); }
+.guide, .orbit { stroke: var(--mc-grid); }
+.shadow { fill: var(--mc-underglow); }
+.eng { letter-spacing: 0.14em; }
+html:not([data-theme="light"]) .eng { filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.9)); }
+
+/* Pads: dark pucks with a coloured rim and a lit icon. */
+.blk .ft { stroke: color-mix(in oklab, var(--k) 75%, var(--mc-edge-mix)); stroke-width: 1; }
+.blk .fs { stroke: color-mix(in oklab, var(--k) 30%, transparent); }
+.ring { stroke: color-mix(in oklab, var(--k) 45%, transparent); }
+.ico { stroke: color-mix(in oklab, var(--k), var(--mc-ico-mix) 28%) !important; }
+
+/* Users: dark tokens on a faint orbit. */
+.usr { stroke: var(--mc-grid-strong); }
+.uico { stroke: var(--mc-uico); }
+
+/* The opening globe: the Home tab's wireframe globe, cut into five plates. */
+#intro .gb { stroke: var(--mc-grid); }
+#intro .gtp { stroke: var(--mc-grid-strong); }
+#gsurf #glat, #gsurf #gmer { stroke: var(--mc-grid); stroke-opacity: 1; }
+#gsurf #gland { fill: var(--mc-dot); fill-opacity: var(--mc-dot-alpha); }
+#gsurf .lglow { fill: var(--mc-dot-glow); opacity: var(--mc-dot-glow-alpha); }
+#grim { stroke: var(--mc-grid-strong); stroke-opacity: 1; stroke-width: 1; }
+.again circle { fill: var(--mc-globe-a); stroke: var(--mc-grid-strong); stroke-width: 0.8; }
+.again g { stroke: var(--mc-dot); }
+
+/* The dialog's puck: the same dark puck, glowing in its layer's colour. */
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #1d1610), #0c0907 75%);
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--lcf), #fff 15%),
+    0 0 24px -4px color-mix(in oklab, var(--lcf) 60%, transparent);
+}
+html:not([data-theme="light"]) .dpuck svg { stroke: color-mix(in oklab, var(--lcf), #fff 30%); }
 
 /* ---------- what is live in Solution Studio ---------- */
 /* Pads: an orange marker on areas with something to try in Studio. */
