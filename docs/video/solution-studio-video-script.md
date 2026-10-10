@@ -82,3 +82,11 @@ Let's build what's next, together.
 - **Your own data shows.** The take uses whatever the running Solution Studio has: real sandbox keys give real BIN Lookup data, and with no keys the simulator answers. Find A Card's profile and scores are random each run.
 - **Nothing is provisioned.** The welcome dialog is opened directly and the API picker is only hovered.
 - **Timing.** Every action is scheduled from the voice track, so changing a sentence moves the picture with it. Find A Card's bank connection takes about ten seconds; its clicks are placed early so the spend profile lands on "where the money goes".
+
+## Change requests for the next version
+
+Noted after reviewing the first draft (10 October 2026); not yet made.
+
+1. **Pronunciation: "BIN Lookup".** Say *bin lookup*, with "BIN" as the word *bin*, never spelled out as B-I-N. It is spoken in the Operating System section ("Let's take BIN Lookup…").
+2. **Globe position.** The globe in the Operating System tab sits in a different place from the Home globe, so the switch between the tabs looks disjointed even with the glide. The two should line up so the transition reads as one continuous globe.
+3. **Find A Card runs to the end.** Carry the use case through to its last step, so the chosen card is shown loaded into the wallet on a phone, rather than stopping at the ranked results.
