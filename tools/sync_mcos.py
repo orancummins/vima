@@ -42,7 +42,12 @@ REQUIRED_NAMES = (
     "MAP", "st", "OUTCOMES", "LAYERS", "TILE", "PADS", "sraf", "st0", "reduce", "f", "esc",
     "spin", "layout", "renderSide", "renderPick", "detailHtml", "tagHtml", "openTile",
     "openProduct", "closeDrawer", "drawerOpen", "setFocus", "pickOut", "clearPick",
-    "openStack", "closeStack", "endIntro",
+    "openStack", "closeStack", "endIntro", "drawGlobe", "DOTS", "phi", "OX", "GR", "GY", "DEG",
+)
+# Gradients mcos-bridge.js re-colours (restyleDefs), as the picture builds them.
+REQUIRED_SNIPPETS = (
+    'lg("st"+k', 'lg("gs"+k', 'lg("bt"+k', 'lg("gc"+k',
+    'id="ug"', 'id="gg"', 'id="gt"', 'id="ghl"', 'id="grl"', 'id="gha"',
 )
 
 
@@ -51,6 +56,9 @@ def check(src: str) -> list[str]:
     for name in REQUIRED_NAMES:
         if not re.search(rf"(?:\bfunction\s+{name}\s*\(|\b(?:const|let|var)\s+[^;]*?\b{name}\s*=)", src):
             problems.append(f"the picture no longer defines {name!r}, which mcos-bridge.js uses")
+    for snippet in REQUIRED_SNIPPETS:
+        if snippet not in src:
+            problems.append(f"the picture no longer builds {snippet!r}, which mcos-bridge.js re-colours")
     if "</style>" not in src:
         problems.append("no </style> to split the head from the body at")
     products = set(re.findall(r'\bP\("([a-z0-9]+)",', src))

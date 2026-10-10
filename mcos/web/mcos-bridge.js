@@ -17,7 +17,7 @@
 /* The vendored picture's top-level names (checked by tools/sync_mcos.py). */
 /* global MAP, st, OUTCOMES, LAYERS, TILE, PADS, sraf:writable, st0:writable, reduce, f, esc,
    spin, renderSide, renderPick, openTile, openProduct, closeDrawer, drawerOpen, setFocus, pickOut,
-   clearPick, openStack, closeStack, endIntro */
+   clearPick, openStack, closeStack, endIntro, DOTS, phi, OX, GR, GY, DEG */
 (function () {
   "use strict";
   if (typeof MAP === "undefined" || typeof st === "undefined" || typeof openProduct !== "function") return;
@@ -167,8 +167,91 @@
       title.textContent = n + " live in Solution Studio";
     });
   }
+  /* Solution Studio's look for the picture itself. The picture paints its
+     discs and its opening globe with gradients built in build(), coloured
+     straight from the layer tokens. Point each stop at the --mc-* tokens in
+     mcos-theme.css instead: the discs become dark glass plates tinted by
+     their layer (frosted white in light mode), and the globe becomes the
+     Home tab's wireframe globe, a faint glow rather than a solid sphere.
+     The values are CSS variables, so the light/dark toggle applies without
+     a rebuild. */
+  function mix(k, tint, base) {
+    return "color-mix(in oklab, var(--l" + k + "f) var(" + tint + "), var(" + base + "))";
+  }
+  var STOPS = { ug: ["var(--mc-utok-hi)", "var(--mc-utok)"] };
+  for (var k = 1; k <= 5; k++) {
+    STOPS["st" + k] = [mix(k, "--mc-top-tint", "--mc-plate"), mix(k, "--mc-top-tint-lo", "--mc-plate-deep")];
+    STOPS["gs" + k] = [mix(k, "--mc-side-tint-lo", "--mc-plate-deep"), mix(k, "--mc-side-tint", "--mc-plate"),
+      mix(k, "--mc-side-tint-lo", "--mc-plate"), mix(k, "--mc-side-tint-lo", "--mc-plate-deep")];
+    STOPS["bt" + k] = [mix(k, "--mc-pad-tint", "--mc-pad"), mix(k, "--mc-pad-tint-lo", "--mc-pad")];
+    STOPS["gc" + k] = [mix(k, "--mc-pad-tint-lo", "--mc-pad"), mix(k, "--mc-side-tint-lo", "--mc-plate-deep")];
+  }
+  // The opening globe: [colour, opacity] per stop.
+  var GLOBE = {
+    gg: [["var(--mc-globe-a)"], ["var(--mc-globe-a)"], ["var(--mc-globe-b)"], ["var(--mc-globe-c)"], ["var(--mc-globe-d)"]],
+    gt: [["var(--mc-cut-a)"], ["var(--mc-cut-b)"]],
+    ghl: [["var(--mc-globe-hl)", ".22"], ["var(--mc-globe-hl)", ".05"], ["var(--mc-globe-hl)", "0"]],
+    grl: [["var(--mc-globe-rim)", "0"], ["var(--mc-globe-rim)", ".3"], ["var(--mc-globe-rim)", ".6"]],
+    // The halo's first stop also fills the sphere, which is now see-through:
+    // keep it as faint as the Home globe's inner glow.
+    gha: [["var(--mc-halo)", ".12"], ["var(--mc-halo)", ".1"], ["var(--mc-halo)", ".04"], ["var(--mc-halo)", "0"]],
+  };
+  function restyleDefs() {
+    var svg = document.getElementById("svg");
+    if (!svg) return;
+    Object.keys(STOPS).forEach(function (id) {
+      var g = svg.querySelector("#" + id);
+      if (!g) return;
+      g.querySelectorAll("stop").forEach(function (stop, i) {
+        if (STOPS[id][i]) stop.style.setProperty("stop-color", STOPS[id][i]);
+      });
+    });
+    Object.keys(GLOBE).forEach(function (id) {
+      var g = svg.querySelector("#" + id);
+      if (!g) return;
+      g.querySelectorAll("stop").forEach(function (stop, i) {
+        var v = GLOBE[id][i];
+        if (!v) return;
+        stop.style.setProperty("stop-color", v[0]);
+        if (v[1] !== undefined) stop.setAttribute("stop-opacity", v[1]);
+      });
+    });
+  }
+
+  /* The globe's continents, drawn as in the picture but with smaller dots,
+     nearer the Home globe's fine dot sphere. Replaces the picture's
+     drawGlobe(), which spin() calls by name every frame. */
+  var DOT_SCALE = 0.58;
+  window.drawGlobe = function () {
+    var land = document.getElementById("gland"), mer = document.getElementById("gmer"), lat = document.getElementById("glat");
+    if (!land) return;
+    var d = "";
+    for (var i = 0; i < DOTS.length; i++) {
+      var q = DOTS[i], a = q[2] + phi, z = q[0] * Math.cos(a);
+      if (z < .14) continue;
+      var x = OX + GR * q[0] * Math.sin(a), y = GY - GR * q[1], r = GR * .0285 * DOT_SCALE * (.16 + .84 * z);
+      d += "M" + f(x - r) + "," + f(y) + "a" + f(r) + "," + f(r) + " 0 1,0 " + f(2 * r) + ",0a" + f(r) + "," + f(r) + " 0 1,0 " + f(-2 * r) + ",0";
+    }
+    land.setAttribute("d", d);
+    var m = "";
+    for (var k = 0; k < 12; k++) {
+      var ang = k * 30 * DEG + phi, c = Math.cos(ang), sn = Math.sin(ang);
+      if (c <= .02) continue;
+      m += "M" + OX + "," + (GY - GR) + "A" + f(Math.max(.01, GR * Math.abs(sn))) + "," + GR + " 0 0 " + (sn > 0 ? 1 : 0) + " " + OX + "," + (GY + GR);
+    }
+    mer.setAttribute("d", m);
+    if (!lat.getAttribute("d")) {
+      var n = LAYERS.length, h = 2 * GR / n, l = "";
+      for (var j = 1; j < n; j++) {
+        var yy = GY + GR - j * h, rr = Math.sqrt(GR * GR - (yy - GY) * (yy - GY));
+        l += "M" + f(OX - rr) + "," + f(yy) + "H" + f(OX + rr);
+      }
+      lat.setAttribute("d", l);
+    }
+  };
+
   var _layout = window.layout;
-  window.layout = function () { _layout(); markPads(); };
+  window.layout = function () { _layout(); restyleDefs(); markPads(); };
 
   /* ---------- where the picture is, for the shell's URL ---------- */
   function current() {
@@ -277,6 +360,8 @@
 
   function start(links) {
     if (links && links.products) LINKS = links;
+    restyleDefs();
+    if (st.p < .1) window.drawGlobe();
     markPads();
     renderSide();
     var h0 = location.hash.slice(1);
