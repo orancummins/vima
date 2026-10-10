@@ -101,6 +101,13 @@ def _client():
     from apis.open_finance import api as ofin_api
     return ofin_api._get_client()
 
+
+def _live_api_available() -> bool:
+    """True when Open Finance has real credentials (not the simulator), so
+    enrichment should come straight from the live API rather than the cache."""
+    from simulator.switcher import is_simulated
+    return not is_simulated("open_finance") and _client() is not None
+
 def _shape_row(raw: dict[str, Any], enriched: dict[str, Any]) -> dict[str, Any]:
     """Combine a raw preset and a cached/enriched payload into a UI row."""
     return {
@@ -162,13 +169,17 @@ def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
     Action ``enrich`` accepts:
       - ``ids``: optional list limiting which transactions to enrich.
       - ``force``: optional bool — if true, bypass the cache and re-call the API.
+      - ``live``: optional bool, default true — when Open Finance has real
+        credentials, always call the API so names, logos and categories are
+        exactly what it returns today. Pass false to prefer the cache.
 
     Behaviour:
-      1. Cached transactions are returned immediately (no API call).
-      2. Uncached transactions are sent to the API in a single batch.
-      3. Successful API responses are persisted to the cache.
-      4. If the API call fails, any cached transactions are still returned;
-         only uncached transactions report the error.
+      1. With live credentials, every requested transaction goes to the API.
+         Otherwise cached transactions are returned immediately (no API call)
+         and only uncached ones are sent.
+      2. Successful API responses are persisted to the cache.
+      3. If the API call fails, the cached (or bundled) result is returned
+         instead; only transactions with neither report the error.
     """
     if action == "clear_cache":
         global _cache
@@ -180,7 +191,8 @@ def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
         return {"error": f"Unknown action: {action}"}
 
     cache = _load_cache()
-    force = bool(params.get("force"))
+    live = params.get("live", True) is not False and _live_api_available()
+    force = bool(params.get("force")) or live
 
     requested_ids = params.get("ids")
     if requested_ids:
@@ -224,10 +236,10 @@ def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
 
         data, status = client.enrich_transactions(api_txns)
         if status >= 400 or not isinstance(data, dict):
-            # API failed — use fallback for any transaction that has one
+            # API failed — use the cached (or bundled) result where there is one
             recovered, still_failed = [], []
             for raw in needs_api:
-                fb = _FALLBACK_DATA.get(raw["id"])
+                fb = cache.get(raw["id"]) or _FALLBACK_DATA.get(raw["id"])
                 if fb:
                     results_by_id[raw["id"]] = _shape_row(raw, fb)
                     recovered.append(raw["id"])
@@ -258,6 +270,7 @@ def do_action(action: str, params: dict[str, Any]) -> dict[str, Any]:
         "transactions": transactions,
         "cacheHits":    cache_hits,
         "fromApi":      [t["id"] for t in needs_api if t["id"] in results_by_id],
+        "live":         live,
     }
     if api_error:
         response["error"]  = api_error["message"]
