@@ -38,7 +38,15 @@ recurring detection, etc.).
 """
 from __future__ import annotations
 
+import json
+import os
+import threading
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
+
+from werkzeug.utils import secure_filename
 
 MANIFEST: dict[str, Any] = {
     "id": "the_wire",
@@ -59,6 +67,147 @@ MANIFEST: dict[str, Any] = {
 # required.  Lets the route at ``/usecases/the_wire/data`` serve the
 # curated journeys even when nobody has connected a bank yet.
 REQUIRES_CUSTOMER = False
+
+_ASSET_KIND_CHARACTER = "character"
+_ASSET_KIND_LOCATION = "location"
+_ASSET_KINDS = (_ASSET_KIND_CHARACTER, _ASSET_KIND_LOCATION)
+_ALLOWED_ASSET_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif"}
+_ASSET_DIR = Path(__file__).resolve().parents[2] / "data" / "the_wire_assets"
+_ASSET_STATE_FILE = _ASSET_DIR / "state.json"
+_ASSET_LOCK = threading.Lock()
+
+
+def _default_scene_assets() -> dict[str, Any]:
+    return {kind: None for kind in _ASSET_KINDS}
+
+
+def scene_asset_directory() -> str:
+    return str(_ASSET_DIR)
+
+
+def _scene_asset_url(filename: str, base_url: str = "") -> str:
+    prefix = (base_url or "").rstrip("/")
+    path = f"/usecases/the_wire/assets/{filename}"
+    return f"{prefix}{path}" if prefix else path
+
+
+def _format_scene_asset(kind: str, entry: Any, base_url: str = "") -> dict[str, Any] | None:
+    if not isinstance(entry, dict):
+        return None
+    filename = str(entry.get("filename") or "").strip()
+    if not filename:
+        return None
+    return {
+        "kind": kind,
+        "filename": filename,
+        "original_name": str(entry.get("original_name") or ""),
+        "content_type": str(entry.get("content_type") or ""),
+        "uploaded_at": str(entry.get("uploaded_at") or ""),
+        "url": _scene_asset_url(filename, base_url),
+    }
+
+
+def _format_scene_assets(state: dict[str, Any], base_url: str = "") -> dict[str, Any]:
+    return {
+        kind: _format_scene_asset(kind, state.get(kind), base_url)
+        for kind in _ASSET_KINDS
+    }
+
+
+def _load_scene_asset_state() -> dict[str, Any]:
+    try:
+        with open(_ASSET_STATE_FILE, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return _default_scene_assets()
+    state = _default_scene_assets()
+    if isinstance(data, dict):
+        for kind in _ASSET_KINDS:
+            state[kind] = data.get(kind)
+    return state
+
+
+def _save_scene_asset_state(state: dict[str, Any]) -> None:
+    _ASSET_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = str(_ASSET_STATE_FILE) + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(state, fh, indent=2, sort_keys=True)
+    os.replace(tmp, _ASSET_STATE_FILE)
+
+
+def _delete_scene_asset_file(entry: Any) -> None:
+    if not isinstance(entry, dict):
+        return
+    filename = str(entry.get("filename") or "").strip()
+    if not filename:
+        return
+    try:
+        (_ASSET_DIR / filename).unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
+def get_scene_assets(base_url: str = "") -> dict[str, Any]:
+    with _ASSET_LOCK:
+        return _format_scene_assets(_load_scene_asset_state(), base_url)
+
+
+def _guess_asset_extension(uploaded_file) -> str:
+    filename = secure_filename(getattr(uploaded_file, "filename", "") or "")
+    suffix = Path(filename).suffix.lower() if filename else ""
+    if suffix in _ALLOWED_ASSET_EXTENSIONS:
+        return suffix
+    mimetype = str(getattr(uploaded_file, "mimetype", "") or "").lower()
+    if mimetype in {"image/jpeg", "image/jpg"}:
+        return ".jpg"
+    if mimetype == "image/png":
+        return ".png"
+    if mimetype == "image/gif":
+        return ".gif"
+    if mimetype == "image/webp":
+        return ".webp"
+    if mimetype == "image/svg+xml":
+        return ".svg"
+    if mimetype == "image/avif":
+        return ".avif"
+    return ".png"
+
+
+def store_scene_asset(kind: str, uploaded_file, base_url: str = "") -> dict[str, Any]:
+    if kind not in _ASSET_KINDS:
+        raise ValueError("Unknown scene asset kind")
+    if uploaded_file is None:
+        raise ValueError("Missing uploaded file")
+    original_name = secure_filename(getattr(uploaded_file, "filename", "") or "")
+    if not original_name:
+        raise ValueError("Uploaded file must have a filename")
+    extension = _guess_asset_extension(uploaded_file)
+    filename = f"{kind}-{uuid.uuid4().hex}{extension}"
+    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    with _ASSET_LOCK:
+        state = _load_scene_asset_state()
+        _delete_scene_asset_file(state.get(kind))
+        _ASSET_DIR.mkdir(parents=True, exist_ok=True)
+        uploaded_file.save(str(_ASSET_DIR / filename))
+        state[kind] = {
+            "kind": kind,
+            "filename": filename,
+            "original_name": original_name,
+            "content_type": str(getattr(uploaded_file, "mimetype", "") or ""),
+            "uploaded_at": now,
+        }
+        _save_scene_asset_state(state)
+        return _format_scene_assets(state, base_url)
+
+
+def clear_scene_assets(base_url: str = "") -> dict[str, Any]:
+    with _ASSET_LOCK:
+        state = _load_scene_asset_state()
+        for kind in _ASSET_KINDS:
+            _delete_scene_asset_file(state.get(kind))
+        state = _default_scene_assets()
+        _save_scene_asset_state(state)
+        return _format_scene_assets(state, base_url)
 
 # ---------------------------------------------------------------------------
 # Curated journeys — each one is real-shaped data hand-assembled so the demo
@@ -537,12 +686,18 @@ _JOURNEYS: list[dict[str, Any]] = [
     },
 ]
 
-def get_data(customer_id: str) -> dict[str, Any]:
+def get_data(customer_id: str, base_url: str = "") -> dict[str, Any]:
     """Return the curated journeys.
 
     ``customer_id`` is accepted for API symmetry with other use cases but
     is not used — the data is hand-curated so the demo is fully offline-
     capable.  A future iteration could substitute live transactions
-    pulled via Open Finance + Merchant Identifier here.
+    pulled via Open Finance + Merchant Identifier here.  The returned
+    payload also includes the current server-backed scene asset images so
+    downstream scene creation can reuse them.
     """
-    return {"transactions": _JOURNEYS, "customer_id": customer_id}
+    return {
+        "transactions": _JOURNEYS,
+        "customer_id": customer_id,
+        "scene_assets": get_scene_assets(base_url),
+    }
