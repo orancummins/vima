@@ -97,7 +97,9 @@ const OVERLAY = `(() => {
       // header once scrolled), so let them settle before measuring.
       if (before && after && (before.x !== after.x || before.y !== after.y)) await sleep(450);
     }
-    const b = await loc.first().boundingBox();
+    let b = await loc.first().boundingBox();
+    if (!b) { await sleep(250); b = await loc.first().boundingBox(); }   // redrawn under us: try once more
+    if (!b) throw new Error('no box for ' + String(loc));
     return { x: b.x + b.width * dx, y: b.y + b.height * dy };
   }
   // A step that fails is logged and skipped, so one bad selector doesn't lose the take.
@@ -199,24 +201,45 @@ const OVERLAY = `(() => {
   // 1 · Mastercard's mission — the Home screen.
   await at(SEC('s1_mission').start); mark('s1_mission');
 
-  // 2 · More than a card network — the Operating System tab opens around the
-  // same globe (it stays exactly where it was on Home), which then moves into
-  // the picture as it slices into the stack.
+  // Somewhere inside a line: 0 is its first word, 1 its last.
+  const W = (id, frac) => S(id) + frac * (E(id) - S(id));
+  // A layer is focused by clicking its label beside the stack; an area is
+  // pointed at by hovering its pad (the picture highlights it and its row).
+  const layerLabel = (l) => os.locator(`.layer[data-l="${l}"] .lbl`);
+  const pad = (t) => os.locator(`.blk[data-t="${t}"]`);
+
+  // 2 · One operating system — the Operating System tab opens around the same
+  // globe (it stays exactly where it was on Home), which slices into the
+  // layers; the stack opens out and each asset named is shown on its layer.
   await at(SEC('s2_studio').start); mark('s2_studio');
   await cursor(1500, 840, 0.01, false);   // hidden, and away from the globe's tooltip
   await at(S('o1') + 0.5); await click(tab('os'), { dur: 0.9 });
   await at(S('o1') + 2.0); await hideCursor();
-  await at(S('o6') + 0.1);
+  await at(S('o2') + 0.2);
   await osFrame().evaluate(() => { window.__hold = false; runIntro(1); });
+  await at(S('o3') + 0.1); await click(os.locator('.layer[data-l="L3"]'), { dur: 0.7 });   // open the stack
+  await at(S('o4') + 0.1); await click(layerLabel('L2'), { dur: 0.5 });                     // Rails
+  await at(W('o4', 0.6)); await hover(pad('2.2'), 0.4);                                    // A2A & real-time
+  await at(S('o5') + 0.0); await click(layerLabel('L3'), { dur: 0.4 });                     // tokenisation, identity, fraud
+  await at(W('o5', 0.55)); await click(layerLabel('L4'), { dur: 0.4 });                     // cyber security
+  await at(S('o6') - 0.6); await click(layerLabel('L2'), { dur: 0.4 });                     // open finance
+  await at(W('o6', 0.22)); await click(layerLabel('L4'), { dur: 0.4 });                     // data and insights, loyalty
+  await at(W('o6', 0.66)); await click(layerLabel('L3'), { dur: 0.4 });                     // agentic commerce
 
-  // 3 · The operating system — open the stack, the kernel, BIN Lookup.
+  // 3 · A use case through the layers — a bank cutting fraud lights its
+  // circuit; then the kernel and BIN Lookup, one click from the API.
   await at(SEC('s3_os').start); mark('s3_os');
-  await at(S('a1') + 0.4); await click(os.locator('.layer[data-l="L3"]'), { dur: 0.8 });
-  await at(S('a2') + 0.3); await click(os.locator('#side .row[data-go="L1"]'));
-  await at(S('a2') + 3.2); await hover(os.locator('.blk.studio[data-t="1.3"]'), 0.8);
-  await at(S('a3') + 0.5); await click(os.locator('#side .tile[data-t="1.3"]'));
-  await at(S('a3') + 2.4); await click(os.locator('.prod[data-p="binlookup"] > button'));
-  await at(S('a4') + 0.5); await click(os.locator('.prod[data-p="binlookup"] .mcos-link--api'));
+  await at(S('a1') + 0.4); await click(os.locator('#s-out'), { dur: 0.8 });                 // "Solution"
+  await at(W('a1', 0.55)); await click(os.locator('[data-out="fraud"]'), { dur: 0.6 });     // Cut fraud…
+  await at(S('a2') + 0.3); await hover(os.locator('#side .step').nth(0), 0.6);             // threat intelligence
+  await at(W('a2', 0.42)); await hover(os.locator('#side .step').nth(2), 0.4);             // tokens
+  await at(W('a2', 0.6)); await hover(os.locator('#side .step').nth(3), 0.4);              // authentication
+  await at(W('a2', 0.8)); await hover(os.locator('#side .step').nth(4), 0.4);              // risk score
+  await at(S('a3') + 0.2); await click(layerLabel('L1'), { dur: 0.7 });                     // Kernel
+  await at(W('a3', 0.6)); await hover(os.locator('.blk.studio[data-t="1.3"]'), 0.7);
+  await at(S('a4') + 0.4); await click(os.locator('#side .tile[data-t="1.3"]'));
+  await at(S('a4') + 2.3); await click(os.locator('.prod[data-p="binlookup"] > button'));
+  await at(S('a5') + 0.4); await click(os.locator('.prod[data-p="binlookup"] .mcos-link--api'));
 
   // 4 · A live API — BIN Lookup in the workbench.
   await at(SEC('s4_api').start); mark('s4_api');
