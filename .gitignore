@@ -53,3 +53,9 @@ tests/last_run.log
 tests/last_run.pid
 tests/last_run.done
 tests/last_run.scope
+
+# Walkthrough video (tools/video): outputs, voice model and its environment
+tools/video/out/
+tools/video/.venv/
+tools/video/kokoro-multi-lang-v1_0/
+tools/video/sherpa-onnx-whisper-*/
