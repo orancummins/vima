@@ -31,7 +31,7 @@
       "lines": [
         { "id": "a1", "say": "Open the stack, and every layer shows the capabilities inside it.", "pause": 0.45 },
         { "id": "a2", "say": "Each area lists the products behind it, and the orange markers show what you can try live, right here in Studio.", "pause": 0.45 },
-        { "id": "a3", "say": "Let's take BIN Lookup, which tells you all about a Mastercard card range.", "pause": 0.4 },
+        { "id": "a3", "say": "Let's take BIN Lookup, which tells you all about a Mastercard card range.", "voice": "Let's take Bin Lookup, which tells you all about a Mastercard card range.", "pause": 0.4 },
         { "id": "a4", "say": "Every API is just one click away.", "pause": 0.7 }
       ]
     },
@@ -56,20 +56,31 @@
       ]
     },
     {
-      "id": "s6_findacard",
+      "id": "s6_enrichment",
+      "title": "Data enrichment",
+      "lines": [
+        { "id": "d1", "say": "Then there are use cases: complete experiences that bring the APIs to life.", "pause": 0.45 },
+        { "id": "d2", "say": "Let's start simple. This is what a bank statement really looks like.", "pause": 0.6 },
+        { "id": "d3", "say": "And this is the same data after Mastercard enriches it. The real merchant, its logo, a proper category, and where to find it.", "pause": 0.9 }
+      ]
+    },
+    {
+      "id": "s7_findacard",
       "title": "Find A Card",
       "lines": [
-        { "id": "f1", "say": "Then there are use cases: complete experiences that bring the APIs to life.", "pause": 0.45 },
-        { "id": "f2", "say": "This is Find A Card. It shows how an AI agent could find the right card for you.", "pause": 0.45 },
+        { "id": "f2", "say": "Find A Card goes further. It shows how an AI agent could find the right card for you.", "pause": 0.45 },
         { "id": "f3", "say": "You start by telling the agent what you want, in your own words.", "pause": 0.45 },
         { "id": "f4", "say": "Then, with your permission, it connects to your bank through Open Finance,", "pause": 0.35 },
         { "id": "f5", "say": "and learns how you really spend. Where the money goes, how often you travel, and how much you spend abroad.", "pause": 1.2 },
         { "id": "f6", "say": "From that, it builds its own search, and scores every card on value, and on your chances of approval.", "pause": 0.45 },
-        { "id": "f7", "say": "The result is a card that fits the way you actually live.", "pause": 0.9 }
+        { "id": "f7", "say": "The result is a card that fits the way you actually live.", "voice": "The result is a card that fits the way you actually liv.", "pause": 0.6 },
+        { "id": "f8", "say": "Choose one, and the agent applies for you.", "pause": 2.0 },
+        { "id": "f8b", "say": "If the bank has no API, it fills in the application itself.", "pause": 2.8 },
+        { "id": "f9", "say": "Moments later, the card is approved and added to your phone's wallet, ready to use.", "pause": 3.2 }
       ]
     },
     {
-      "id": "s7_open",
+      "id": "s8_open",
       "title": "Open to everyone, easy to set up",
       "lines": [
         { "id": "e1", "say": "Solution Studio is open to everyone who wants to innovate with Mastercard.", "pause": 0.4 },
@@ -80,12 +91,13 @@
       ]
     },
     {
-      "id": "s8_close",
+      "id": "s9_close",
       "title": "Close",
       "lines": [
         { "id": "c1", "say": "Mastercard is powering commerce for people, businesses and economies everywhere.", "speed": 0.94, "pause": 0.55 },
         { "id": "c2", "say": "With Solution Studio, we're empowering you to innovate with us.", "speed": 0.94, "pause": 0.55 },
-        { "id": "c3", "say": "Let's build what's next, together.", "speed": 0.92, "pause": 0.5 }
+        { "id": "c3", "say": "Let's build what's next,", "speed": 0.92, "pause": 1.0 },
+        { "id": "c4", "say": "together.", "voice": "Together.", "speed": 0.8, "pause": 0.5 }
       ]
     }
   ]

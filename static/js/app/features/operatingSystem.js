@@ -11,13 +11,13 @@
 // mcos/web/mcos-bridge.js):
 //   frame → shell  {type:'mcos:ready'}
 //                  {type:'mcos:state', state, host}   what the picture shows
-//                  {type:'mcos:globe', atGlobe, rect}  where its globe is (for the glide)
+//                  {type:'mcos:hero-ready', ok}        its globe now sits where Home's was
 //                  {type:'vima:navigate', tab, api|bundle|uc}
 //                  {type:'vima:shortcut', key}        ⌘K / Ctrl+K inside the frame
 //   shell → frame  {type:'mcos:goto', target}
 //                  {type:'mcos:visibility', visible}
-//                  {type:'mcos:globe-rect'}            where is your globe?
 //                  {type:'mcos:glide', phase, rot}     'hold' hides its globe, 'reveal' shows it at rot
+//                  {type:'mcos:hero', rect, rot}       put your globe here (frame coordinates), at this rotation
 //                  {type:'vima:theme', theme}         (core/theme.js)
 //
 // A target is the picture's own hash: '' (the stack), 'open', 'U', 'L1'…'L5',
@@ -74,6 +74,7 @@ export function showOs(fromHome) {
   _ensureFrame(!!fromHome);
   if (_ready) _post({ type: 'mcos:visibility', visible: true });
   if (fromHome) _startGlide(fromHome);
+  else if (_ready) _post({ type: 'mcos:glide', phase: 'reveal' });   // not from Home: show the picture as it was
 }
 
 /** Called by core/nav.js when any other tab is shown. */
@@ -102,11 +103,13 @@ export function openOs(target) {
   if (_ready) gotoOs(target);
 }
 
-// ---------- the Home globe glides into the picture ----------
+// ---------- one globe across Home and the Operating System ----------
 // The picture's opening globe is drawn exactly like the Home globe
-// (mcos/web/mcos-bridge.js), so switching Home → Operating System moves one
-// globe rather than swapping two: a copy of the Home canvas glides and
-// scales onto the picture's globe, which then appears at the same rotation.
+// (mcos/web/mcos-bridge.js). Switching Home → Operating System, a copy of the
+// Home canvas holds the globe exactly where it was while the picture places
+// its own globe on the same spot, at the same size and rotation; the copy
+// then fades out over an identical globe, so nothing appears to move. The
+// picture's globe travels to its usual place as it slices into the stack.
 const HOME_OUTLINE = 0.32 * 0.668;   // the Home globe's outline radius, as a share of its canvas width
 let _glide = null;
 
@@ -139,38 +142,34 @@ function _startGlide(from) {
     g.raf = requestAnimationFrame(copy);
   };
   copy();
-  g.timer = setTimeout(() => _endGlide(), 2500);   // the picture never answered: just fade out
+  g.timer = setTimeout(() => _endGlide(), 3000);   // the picture never answered: just fade out
   _glide = g;
-  if (_ready) {
-    _post({ type: 'mcos:glide', phase: 'hold' });
-    _post({ type: 'mcos:globe-rect' });
-  }
+  if (_ready) _requestHero();
 }
 
-function _moveGlide(msg) {
+const _homeRot = () => (typeof window.__homeGlobeRot === 'function' ? window.__homeGlobeRot() : undefined);
+
+function _requestHero() {
   const g = _glide;
-  if (!g || g.moved) return;
-  if (!msg.atGlobe || !msg.rect || !_frame) { _endGlide(); return; }
+  if (!g || g.asked || !_frame) return;
+  g.asked = true;
   const fr = _frame.getBoundingClientRect();
-  const to = { cx: fr.left + msg.rect.cx, cy: fr.top + msg.rect.cy, r: msg.rect.r };
-  g.moved = true;
-  g.ov.style.transition = 'transform 0.9s cubic-bezier(.45,.05,.25,1)';
-  g.ov.style.transform = `translate(${to.cx - g.from.cx}px, ${to.cy - g.from.cy}px) scale(${to.r / g.from.r})`;
-  g.ov.addEventListener('transitionend', () => _endGlide(), { once: true });
+  _post({ type: 'mcos:glide', phase: 'hold' });
+  _post({ type: 'mcos:hero', rect: { cx: g.from.cx - fr.left, cy: g.from.cy - fr.top, r: g.from.r }, rot: _homeRot() });
 }
 
-function _endGlide(instant) {
+function _endGlide(instant, placed) {
   const g = _glide;
   if (!g) return;
   _glide = null;
   clearTimeout(g.timer);
-  const rot = typeof window.__homeGlobeRot === 'function' ? window.__homeGlobeRot() : undefined;
-  _post({ type: 'mcos:glide', phase: 'reveal', rot });
+  // Placed: the picture already shows its globe under the copy. Otherwise show it now.
+  if (!placed) _post({ type: 'mcos:glide', phase: 'reveal', rot: _homeRot() });
   const remove = () => { cancelAnimationFrame(g.raf); g.ov.remove(); };
   if (instant) { remove(); return; }
-  g.ov.style.transition = 'opacity 0.3s ease';
+  g.ov.style.transition = 'opacity 0.35s ease';
   g.ov.style.opacity = '0';
-  setTimeout(remove, 320);
+  setTimeout(remove, 380);
 }
 
 function _navigateStudio(msg) {
@@ -211,13 +210,10 @@ function _onMessage(e) {
         _post({ type: 'mcos:goto', target: _pending });
         _pending = null;
       }
-      if (_glide) {
-        _post({ type: 'mcos:glide', phase: 'hold' });
-        _post({ type: 'mcos:globe-rect' });
-      }
+      if (_glide) _requestHero();
       break;
-    case 'mcos:globe':
-      _moveGlide(msg);
+    case 'mcos:hero-ready':
+      _endGlide(false, !!msg.ok);
       break;
     case 'mcos:state':
       if (!_visible) return;

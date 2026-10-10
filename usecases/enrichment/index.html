@@ -42,12 +42,14 @@ function enrichCatColor(cat, group) {
 }
 
 function enrichLogoHtml(e) {
-  if (e.logoUrl) {
-    return `<img src="${escapeHtml(e.logoUrl)}" alt="${escapeHtml(e.name)}" class="enrich-logo-img" loading="lazy">`;
-  }
   const initials = (e.name || "?").slice(0, 2).toUpperCase();
   const color = enrichCatColor(e.category, e.categoryGroup);
-  return `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="${color}"/><text x="20" y="26" text-anchor="middle" font-size="14" fill="white">${escapeHtml(initials)}</text></svg>`;
+  const badge = (hidden) => `<svg viewBox="0 0 40 40"${hidden ? ' style="display:none"' : ""}><circle cx="20" cy="20" r="20" fill="${color}"/><text x="20" y="26" text-anchor="middle" font-size="14" fill="white">${escapeHtml(initials)}</text></svg>`;
+  if (e.logoUrl) {
+    // If the logo can't load (offline, blocked host), show the initials badge instead of a broken image.
+    return `<img src="${escapeHtml(e.logoUrl)}" alt="${escapeHtml(e.name)}" class="enrich-logo-img" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display=''">` + badge(true);
+  }
+  return badge(false);
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
