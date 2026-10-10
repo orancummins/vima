@@ -170,6 +170,7 @@ section.sources a { color: var(--accent); }
 }
 
 /* ---------- the step-through ---------- */
+.logo.logo-img { object-fit: contain; background: #fff; padding: 2px; border: 1px solid #eee; }
 .page { max-width: 1180px; padding-block: 14px 18px; }
 .si-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 24px; margin-bottom: 14px; }
 .si-head h1 { font-size: clamp(22px, 2.6vw, 30px); margin-top: 8px; }
@@ -365,11 +366,13 @@ section.sources a { color: var(--accent); }
         <div class="screen"><div class="island"></div>
           <div class="status"><span>12:40</span><span class="icons"><span class="bars"></span><span class="batt"></span></span></div>
           <div class="app">
-            <div class="appbar"><span class="brand"><i></i>Today</span><span class="sub">$27.15</span></div>
-            <div class="card-ui" style="gap:0">
-              <div class="txn"><span class="logo" style="background:#006241">S</span><div class="t"><b>Starbucks</b><small>Coffee shop · 34th St &amp; 8th Ave</small><span class="raw">SBUX 00654321 NEW YORK</span></div><b>$6.40</b></div>
-              <div class="txn"><span class="logo" style="background:#c8102e">P</span><div class="t"><b>Penn Pizza Co.</b><small>Pizza · 10 min walk · open till 11pm</small><span class="raw">SQ *PENNPZA 0423 NEW YOR</span></div><b>$12.90</b></div>
-              <div class="txn"><span class="logo" style="background:#0039a6">M</span><div class="t"><b>MTA subway</b><small>Transport · OMNY tap</small><span class="raw">OMNY MTA NYCT PAYGO</span></div><b>$2.90</b></div>
+            <div class="appbar"><span class="brand"><i></i>Today</span><span class="sub">$83.35</span></div>
+            <!-- Names, logos and categories are filled in from Solution Studio's Data Enrichment
+                 (Open Finance transaction enrichment): live from the API when it is configured. -->
+            <div class="card-ui" style="gap:0" id="si-enriched">
+              <div class="txn" data-enrich="t1"><span class="logo" style="background:#006241">ST</span><div class="t"><b>Starbucks</b><small>Coffee Shops</small><span class="raw">SBUX 00654321 CARD 12345</span></div><b>$6.75</b></div>
+              <div class="txn" data-enrich="t5"><span class="logo" style="background:#00674b">WH</span><div class="t"><b>Whole Foods Market</b><small>Groceries</small><span class="raw">WHOLEFDS MKT #10452 SFCA</span></div><b>$14.20</b></div>
+              <div class="txn" data-enrich="t3"><span class="logo" style="background:#111">UB</span><div class="t"><b>Uber</b><small>Rental Car &amp; Taxi</small><span class="raw">UBER* TRIP HELP.UBER.COM</span></div><b>$62.40</b></div>
             </div>
             <div class="sub" style="font-weight:600;color:#111">Near your office</div>
             <div class="map"><span class="me" style="left:46%;top:48%"></span><span class="pin" style="left:22%;top:26%"></span><span class="pin" style="left:68%;top:30%"></span><span class="pin" style="left:60%;top:70%"></span></div>
@@ -381,8 +384,8 @@ section.sources a { color: var(--accent); }
     <div class="notes">
       <span class="step">Moment 5 · Lunch</span>
       <h2>A new city, already making sense</h2>
-      <p>She taps her phone for coffee, lunch and the subway turnstile, and it just works: the card network is accepted everywhere she goes on day one. Her first US statement lines are cryptic, so each one is cleaned up into a merchant name, logo, category and address. Places shows the essentials near her office, ranked by where cardholders actually shop.</p>
-      <div class="assets"><span class="chip ok">Consumer Clarity</span><span class="chip ok">Merchant Identifier</span><span class="chip ok">Places</span></div>
+      <p>She taps her phone for her ride in from the airport, a coffee and lunch, and it just works: the card network is accepted everywhere she goes on day one. Her first US statement lines are cryptic, so each one is cleaned up into a merchant name, logo, category and address. Places shows the essentials near her office, ranked by where cardholders actually shop.</p>
+      <div class="assets"><span class="chip ok">Open Finance enrichment</span><span class="chip ok">Consumer Clarity</span><span class="chip ok">Merchant Identifier</span><span class="chip ok">Places</span></div>
     </div>
   </article>
 
@@ -476,6 +479,34 @@ section.sources a { color: var(--accent); }
     else if (e.key === "ArrowLeft") show(current - 1);
   });
   show(0);
+
+  // Lunch: the statement lines are enriched by Solution Studio's Data Enrichment use case
+  // (Open Finance transaction enrichment), so the names, logos and categories are the API's own.
+  var rows = Array.prototype.slice.call(document.querySelectorAll("[data-enrich]"));
+  var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]; }); };
+  fetch("/usecases/enrichment/action", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "enrich", params: { ids: rows.map(function (r) { return r.dataset.enrich; }) } })
+  }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+    if (!d || !d.transactions) return;
+    d.transactions.forEach(function (t) {
+      var row = document.querySelector('[data-enrich="' + t.id + '"]');
+      var e = t.enriched;
+      if (!row || !e) return;
+      row.querySelector(".t b").textContent = e.name || "";
+      row.querySelector(".t small").textContent = [e.category, e.location].filter(Boolean).join(" · ");
+      row.querySelector(".raw").textContent = t.raw || "";
+      if (e.logoUrl) {
+        var badge = row.querySelector(".logo");
+        var img = new Image();
+        img.className = "logo logo-img";
+        img.alt = e.name || "";
+        img.onload = function () { badge.replaceWith(img); };   // keep the initials if the logo can't load
+        img.src = e.logoUrl;
+      }
+    });
+  }).catch(function () {});
 })();
 </script>
 </body>

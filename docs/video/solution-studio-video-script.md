@@ -101,7 +101,8 @@ Let's build what's next, together.
 ## Notes for re-recording
 
 - **Pronunciation.** `tools/video/check_voice.py` plays the track back through Whisper; at the last run every sentence was heard as written (it reports British spellings such as *tokenisation* as differences, which is expected). Where the voice gets a word wrong, a line in `narration.json` carries a `voice` text alongside the written `say`: "Bin Lookup" so BIN is said as the word *bin*, and "liv" (defined in `tools/video/lexicon-extra.txt`) so *live* rhymes with *give*.
-- **Your own data shows.** The take uses whatever the running Solution Studio has: real sandbox keys give real BIN Lookup data and enrichment logos, and with no keys the simulator answers. Find A Card's profile and scores are random each run.
+- **Your own data shows.** The take uses whatever the running Solution Studio has: real sandbox keys give real BIN Lookup data, and with no keys the simulator answers. Find A Card's profile and scores are random each run.
+- **Real merchant logos.** With Open Finance configured, Data Enrichment calls the enrichment API live, and Settle In's lunch statement uses the same results, so names, categories and logos are the API's own. The logos load from Mastercard's merchant-branding host; where it can't be reached the merchant's initials stand in.
 - **Nothing is provisioned.** The welcome dialog is opened directly and the API picker is only hovered.
 - **Timing.** Every action is scheduled from the voice track, so changing a sentence moves the picture with it. Find A Card's bank connection takes about ten seconds and applying about eleven, so its clicks start early and the wallet click is tied to "added to your phone's wallet".
 
