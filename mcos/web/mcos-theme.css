@@ -1,0 +1,257 @@
+/* Solution Studio skin for the Mastercard Operating System layer picture.
+
+   Loaded after the vendored picture's own <style>, so it only has to re-point
+   tokens and the few colours the picture hard-codes. The layer colours (gold
+   kernel, red rails, orange services, yellow solutions) already follow the
+   card brand and stay; the picture's gold "selection" accent becomes Solution
+   Studio's orange, its cool greys become warm ones, and its fonts become
+   Inter and JetBrains Mono. usecase-theme.js sets data-theme on <html> from
+   the shell's light/dark toggle. */
+
+:root {
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* The lit circuit (an outcome's flow) and its labels. */
+  --lit: #ffb347;
+  --lit-glow: #ff5f00;
+  --lit-core: #fff1e0;
+  --lit-ink: #0a0a0a;
+  --studio: #ff5f00;
+}
+
+/* ---------- dark (Solution Studio's default) ---------- */
+html:root:not([data-theme="light"]) {
+  color-scheme: dark;
+  --ground: #121110; --panel: #1a1816; --panel-2: #23201d;
+  --ink: #f1ede8; --ink-2: #d6cfc7; --muted: #a59c93; --faint: #857c73;
+  --line: rgba(255, 255, 255, 0.08); --line-2: rgba(255, 255, 255, 0.16);
+  --focus: #ff7a26; --accent: #ff5f00; --link: #ffbe8a;
+  --c1: #ffb070; --c7: #c4b5fd;
+  --s-new: #34d399; --s-flux: #f2b84b; --s-retired: #f87171;
+  --gold: #ff7a26; --gold-deep: #ff8a3d; --gold-ink: #ffb070;
+  --gold-grad: linear-gradient(100deg, #ff6a00 0%, #ffb347 60%, #ffd280 100%);
+  --l5: #d6cfc7; --lu: #857c73; --l5f: #5f5852; --luf: #6e665f;
+  --slot: #050505; --shadow: rgba(0, 0, 0, 0.7);
+  --wash-a: rgba(255, 95, 0, 0.12); --wash-b: rgba(247, 158, 27, 0.07);
+  --studio-ok: #34d399;
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  color-scheme: light;
+  --ground: #ffffff; --panel: #f6f2ec; --panel-2: #ede7de;
+  --ink: #141414; --ink-2: #2a2a2a; --muted: #6b6b6b; --faint: #8a8580;
+  --line: #e7e2da; --line-2: #d3ccc1;
+  --focus: #ff5f00; --accent: #ff5f00; --link: #c2410c;
+  --c1: #c2410c;
+  --gold: #ff7a1a; --gold-deep: #e65c00; --gold-ink: #b84a00;
+  --gold-grad: linear-gradient(100deg, #e65100 0%, #ff7a1a 60%, #f59e0b 100%);
+  --l5: #2a2a2a; --lu: #6b6b6b; --l5f: #4a4540; --luf: #a59c93;
+  --wash-a: rgba(255, 95, 0, 0.10); --wash-b: rgba(247, 158, 27, 0.08);
+  --studio-ok: #1f9d55;
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(255, 95, 0, 0.09) 0%, transparent 42%),
+    linear-gradient(135deg, #0a0a0a 0%, #0f0a00 60%, #1a0f00 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f5f5f0 0%, #fdf6ec 60%, #fef3e2 100%);
+  background-attachment: fixed;
+}
+/* Solution Studio's header already carries the brand bar. */
+body::before { display: none; }
+.wrap { max-width: 1320px; }
+
+/* Heading in the style of Solution Studio's About panels. */
+.head::before {
+  content: "Capability map";
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: rgba(255, 140, 50, 0.75);
+  margin-bottom: 10px;
+}
+html[data-theme="light"] .head::before { color: rgba(180, 80, 0, 0.75); }
+h1 { font-weight: 700; letter-spacing: -0.03em; font-size: clamp(26px, 3vw, 38px); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(255, 120, 0, 0.35); }
+h1 .os { text-shadow: none; }
+.sub { font-size: 14.5px; color: var(--muted); }
+/* The picture's note that its groupings are its own drafts. */
+.onote { display: none; }
+
+/* Pick bar, menus and buttons: Solution Studio's surfaces. */
+html:not([data-theme="light"]) .pick,
+html:not([data-theme="light"]) .menu,
+html:not([data-theme="light"]) .again { background: rgba(18, 17, 16, 0.92); }
+.pick { border-color: var(--line-2); }
+
+/* Dialog: the dark modal of Solution Studio (chat-modal.css .tc-modal). */
+.scrim { background: rgba(0, 0, 0, 0.55); }
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #161310 0%, #0f0f0f 100%);
+  border-color: rgba(255, 150, 60, 0.22);
+}
+html:not([data-theme="light"]) .prod { background: rgba(255, 255, 255, 0.02); }
+html:not([data-theme="light"]) .prod.open { background: rgba(255, 255, 255, 0.035); }
+
+/* ---------- the lit circuit, in Solution Studio orange ---------- */
+.shade { fill: var(--lit-ink); }
+.ck { stroke: var(--lit-ink); }
+.cg { stroke: var(--lit-glow); }
+.cm { stroke: var(--lit); }
+.cc { stroke: var(--lit-core); }
+.pr { stroke: var(--lit); }
+.prg { stroke: var(--lit-glow); }
+.cp { stroke: var(--lit-glow); }
+.blk.on .ft { stroke: var(--lit); }
+.fcase { stroke: var(--lit-ink); }
+.fline { stroke: var(--lit); }
+.fdot { stroke: var(--lit-ink); }
+.fuser { stroke: var(--lit); }
+.fstem { stroke: var(--lit-ink); }
+.fnode { fill: var(--lit-ink); stroke: var(--lit); }
+.fnum { fill: var(--lit); }
+.fwho rect { fill: var(--lit-ink); }
+.fwho text { fill: var(--lit); }
+.step .no { color: var(--lit); background: var(--lit-ink); box-shadow: inset 0 0 0 1px var(--lit); }
+
+/* ---------- what is live in Solution Studio ---------- */
+/* Pads: an orange marker on areas with something to try in Studio. */
+.mcos-pip {
+  fill: var(--studio);
+  stroke: #fff;
+  stroke-width: 1.8;
+  pointer-events: none;
+  filter: drop-shadow(0 0 3px rgba(255, 95, 0, 0.75));
+}
+.mcos-legend {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.mcos-pip-key,
+.mcos-tile-studio::before {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--studio);
+  box-shadow: 0 0 0 1.5px #fff, 0 0 6px rgba(255, 95, 0, 0.7);
+}
+
+.badge.studio {
+  color: #fff;
+  background: linear-gradient(90deg, #ff5f00, #ff8a3d);
+}
+.stat--studio { border-color: rgba(255, 120, 30, 0.45); }
+.stat--studio b { color: var(--gold-deep); }
+
+.mcos-tile-studio {
+  grid-column: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold-deep);
+}
+.mcos-tile-studio::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+}
+
+.step.mcos-live .no { box-shadow: inset 0 0 0 1px var(--lit), 0 0 0 3px rgba(255, 95, 0, 0.28); }
+.mcos-step-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold-deep);
+  background: color-mix(in oklab, var(--studio) 12%, transparent);
+}
+
+.mcos-studio .dl { color: var(--gold-deep); }
+.mcos-links { display: flex; flex-wrap: wrap; gap: 6px; }
+.mcos-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px 6px 11px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 150, 60, 0.3);
+  background: rgba(255, 95, 0, 0.08);
+  color: var(--ink);
+  font: 500 13px/1.3 var(--font);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, transform 0.08s;
+}
+.mcos-link:hover { border-color: rgba(255, 120, 30, 0.75); background: rgba(255, 95, 0, 0.14); }
+.mcos-link:active { transform: translateY(1px); }
+.mcos-link:disabled { opacity: 0.45; cursor: not-allowed; }
+.mcos-link svg {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.7;
+}
+.mcos-link-kind {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.mcos-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--faint);
+}
+.mcos-dot.ok { background: var(--studio-ok); }
+
+.mcos-cta {
+  margin: 18px 0 8px;
+  padding: 14px 16px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 150, 60, 0.24);
+  background: rgba(255, 95, 0, 0.06);
+}
+.mcos-cta-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+}
+.mcos-cta-text { margin: 6px 0 12px; font-size: 13px; color: var(--ink-2); }
+
+/* Paused while the tab is hidden (mcos-bridge.js). */
+html.mcos-paused *,
+html.mcos-paused *::before,
+html.mcos-paused *::after { animation-play-state: paused !important; }
+
+/* Slim scrollbars like the rest of Solution Studio. */
+.right, .db, .menu { scrollbar-width: thin; scrollbar-color: rgba(255, 150, 60, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

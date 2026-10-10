@@ -11,6 +11,7 @@ import { escapeHtml } from '../core/html.js';
 import { _isNonUsBlockedUseCaseById } from '../core/region.js';
 import { loadBundles } from '../core/catalog.js';
 import { _initSdkDemo, _initLiveDemo } from './openFinanceSdk.js';
+import { osTargetFor } from './operatingSystem.js';
   function _bundleApiTileHtml(bundle, a) {
     const isAnchor = a.id === bundle.anchor;
     const cls = 'bundle-api-tile' + (a.configured ? ' configured' : '') + (isAnchor ? ' anchor' : '');
@@ -382,6 +383,7 @@ import { _initSdkDemo, _initLiveDemo } from './openFinanceSdk.js';
     }).join('');
 
     const heroVisual = _bundleHeroVisual(bundle.id);
+    const osTarget = osTargetFor('bundle', bundle.id);
 
     detail.innerHTML = `
       <header class="bundle-detail-header">
@@ -395,6 +397,10 @@ import { _initSdkDemo, _initLiveDemo } from './openFinanceSdk.js';
             <div class="bundle-detail-eyebrow">Solution bundle</div>
             <h1 class="bundle-detail-title">${escapeHtml(bundle.name)}</h1>
             <p class="bundle-detail-tagline">${escapeHtml(bundle.tagline || '')}</p>
+            ${osTarget ? `<button type="button" class="bundle-os-link" data-os-target="${escapeHtml(osTarget)}" title="See this bundle on the Mastercard Operating System">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v4c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 14v4c0 1.7 3.6 3 8 3s8-1.3 8-3v-4"/></svg>
+              <span>${osTarget.startsWith('o-') ? 'See how it lights up the Operating System' : 'See it in the Operating System'}</span>
+            </button>` : ''}
           </div>
         </div>
         <div class="bundle-detail-progress" title="${bundle.configured} of ${bundle.total} APIs configured">

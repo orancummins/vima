@@ -7,6 +7,7 @@ import { $ } from './dom.js';
 import { SERVER_MODE } from './env.js';
 import { apiCallsClose, _startPolling, _stopPolling } from '../features/apiCallLog.js';
 import { apisSnippetsClose } from '../features/apiSnippets.js';
+import { showOs, hideOs } from '../features/operatingSystem.js';
 
 export function initNav() {
     // ---------------------------------------------------------------------
@@ -25,6 +26,9 @@ export function initNav() {
         const bp = $("panel-bundles");
         if (bp) bp.classList.toggle("hidden", tab !== "bundles");
         $("panel-usecases").classList.toggle("hidden", tab !== "usecases");
+        const op = $("panel-os");
+        if (op) op.classList.toggle("hidden", tab !== "os");
+        if (tab === "os") showOs(); else hideOs();
         const fab = $('api-calls-fab');
         if (fab) fab.classList.toggle('hidden', tab !== 'usecases');
         const snipFab = $('apis-snippets-fab');
@@ -38,7 +42,7 @@ export function initNav() {
       });
     });
 
-    // Home panel CTA buttons — switch to APIs or Use Cases tab
+    // Home panel CTA buttons — switch to another top tab
     document.querySelectorAll('.home-cta[data-switch-tab]').forEach(function(btn) {
       btn.addEventListener('click', function() {
         const tabBtn = document.querySelector('.top-tab[data-top-tab="' + btn.dataset.switchTab + '"]');
