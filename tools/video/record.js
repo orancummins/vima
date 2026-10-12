@@ -335,11 +335,10 @@ const OVERLAY = `(() => {
     m.classList.remove('prov-hidden');
   });
   await at(S('e4') + 0.6); await click(page.locator('#prov-btn-auto'), { dur: 0.8 });
-  await at(S('e4') + 3.2); await hover(page.locator('#prov-api-grid .prov-api-item').nth(4), 0.9);
   await at(S('e5') + 0.4); await hover(page.locator('#prov-btn-start'), 0.8);   // hovered, never clicked
-  await at(S('e5') + 2.0);
+  await at(S('e5') + 1.4);
   await page.evaluate(() => { document.getElementById('prov-modal').classList.add('prov-hidden'); document.body.style.overflow = ''; });
-  await at(S('e5') + 2.2); await click(tab('home'), { dur: 0.6 });
+  await at(S('e5') + 1.6); await click(tab('home'), { dur: 0.6 });
 
   // 10 · Close — Home.
   await at(SEC('s10_close').start); mark('s10_close');
