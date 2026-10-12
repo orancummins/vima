@@ -1,6 +1,6 @@
 # Mastercard Solution Studio — walkthrough video script
 
-5 min 21 s · 1920×1080, 30 fps · voice: Kokoro-82M v1.0 (`af_heart`), one sentence at a time with explicit pauses · made by `tools/video/` (see its README)
+5 min 23 s · 1920×1080, 30 fps · voice: Kokoro-82M v1.0 (`af_heart`), one sentence at a time with explicit pauses · made by `tools/video/` (see its README)
 
 **Watch the latest cut: [Mastercard-Solution-Studio.mp4](Mastercard-Solution-Studio.mp4)** (merchant logos show as initials in this take; a local render with Open Finance keys shows the API's real logos).
 
@@ -90,7 +90,7 @@ And setup is just as easy. Choose auto-provision, pick the APIs you want, and St
 
 *[The info button opens "Install & Run Solution Studio"; it scrolls through the four steps. It closes and the first-run welcome appears; "Auto-provision Keys" opens "Select APIs to Provision". The cursor rests on "Provision Selected APIs" — it is never clicked, so no keys are created.]*
 
-## 5:03 · Close (18 s)
+## 5:05 · Close (18 s)
 
 Mastercard is the platform for the world's economies, powering secure value exchange between people, businesses and communities. With Solution Studio, we're empowering you to innovate with us.
 
