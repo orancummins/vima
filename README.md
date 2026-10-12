@@ -489,8 +489,10 @@ external project into the platform.
 
 `tools/video/` voices a script with a natural text-to-speech voice, films the
 running app in a headless browser timed to every sentence, and builds a
-narrated 1080p MP4 (about three minutes): Mastercard's mission, the
-Operating System, a live API, a bundle, Find A Card, setup, and the close.
+narrated 1080p MP4 (about four minutes): Mastercard's mission, the
+Operating System and a use case lit through its layers, a live API, a bundle,
+Data Enrichment, Find A Card, Settle In, setup, and the close. The latest cut
+is [docs/video/Mastercard-Solution-Studio.mp4](docs/video/Mastercard-Solution-Studio.mp4).
 The script is in [docs/video/solution-studio-video-script.md](docs/video/solution-studio-video-script.md);
 see [tools/video/README.md](tools/video/README.md) to change and re-make it
 (`tools/video/run.sh` with Solution Studio and Find A Card running).

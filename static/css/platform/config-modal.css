@@ -2,44 +2,13 @@
    Config Modal
    ========================================================================== */
 
-/* Trigger button in the header */
-.cfg-trigger-btn {
-  display: flex; align-items: center; justify-content: center;
-  width: 34px; height: 34px; border-radius: 8px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: #ccc; cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-  margin-left: 10px; flex-shrink: 0;
-}
-.cfg-trigger-btn:hover { background: rgba(255,255,255,0.14); color: white; border-color: rgba(255,255,255,0.22); }
-.cfg-trigger-btn:disabled,
-.cfg-trigger-btn--locked {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.cfg-trigger-btn:disabled:hover,
-.cfg-trigger-btn--locked:hover {
-  background: rgba(255,255,255,0.08);
-  color: #ccc;
-  border-color: rgba(255,255,255,0.12);
-}
-
+/* The header trigger buttons are styled with the header (base.css). */
 #global-edit-btn {
   animation: edit-btn-pulse 2.4s ease-in-out infinite;
 }
-/* Keep the button's slot in the header even when it's hidden, so the
-   centered `.top-tabs` doesn't shift each time the user enters/leaves
-   the Use Cases tab. Overrides the global `.hidden { display: none }`. */
-#global-edit-btn.hidden {
-  display: inline-flex !important;
-  visibility: hidden;
-  pointer-events: none;
-  animation: none;
-}
 @keyframes edit-btn-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255,95,0,0); border-color: rgba(255,255,255,0.12); }
-  50%       { box-shadow: 0 0 0 5px rgba(255,95,0,0.22); border-color: rgba(255,95,0,0.55); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,95,0,0); border-color: transparent; }
+  50%       { box-shadow: 0 0 0 4px rgba(255,95,0,0.2); border-color: rgba(255,95,0,0.55); }
 }
 
 /* Modal overlay */

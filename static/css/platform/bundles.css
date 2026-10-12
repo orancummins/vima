@@ -71,25 +71,6 @@
   border: 1px solid color-mix(in srgb, var(--bundle-accent) 25%, white);
 }
 .bundle-card-titles { min-width: 0; }
-html.theme-light .header:not(.header--home) .cfg-trigger-btn {
-  background: rgba(20, 20, 20, 0.04);
-  color: var(--ink);
-  border-color: rgba(20, 20, 20, 0.10);
-}
-html.theme-light .header:not(.header--home) .cfg-trigger-btn:hover {
-  background: rgba(20, 20, 20, 0.08);
-  color: var(--ink);
-  border-color: rgba(20, 20, 20, 0.16);
-}
-html.theme-light .header:not(.header--home) .cfg-trigger-btn:disabled,
-html.theme-light .header:not(.header--home) .cfg-trigger-btn--locked {
-  color: rgba(20, 20, 20, 0.38);
-  border-color: rgba(20, 20, 20, 0.08);
-}
-html.theme-light .header:not(.header--home) .cfg-trigger-btn:disabled:hover,
-html.theme-light .header:not(.header--home) .cfg-trigger-btn--locked:hover {
-  background: rgba(20, 20, 20, 0.04);
-}
 .bundle-card-name {
   font-size: 20px; margin: 0 0 4px; line-height: 1.25;
   color: var(--ink); font-weight: 600;

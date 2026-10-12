@@ -2,6 +2,8 @@
 
 4 min 12 s · 1920×1080, 30 fps · voice: Kokoro-82M v1.0 (`af_heart`), one sentence at a time with explicit pauses · made by `tools/video/` (see its README)
 
+**Watch the latest cut: [Mastercard-Solution-Studio.mp4](Mastercard-Solution-Studio.mp4)** (merchant logos show as initials in this take; a local render with Open Finance keys shows the API's real logos).
+
 The narration below is the source of truth in [`tools/video/narration.json`](../../tools/video/narration.json); edit it there and re-run the pipeline. Timings are from the current voice track. *Italic brackets* are what happens on screen.
 
 ---
