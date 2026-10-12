@@ -5,7 +5,7 @@ Validates that:
   - The HTML contains all top-level navigation panels
   - The API manifest endpoint (GET /explorer/apis) returns valid JSON
   - The API list is non-empty and contains a known API id
-  - The Operating System tab's page and links load, and every link resolves
+  - The platform tab's page and links load, and every link resolves
 
 Independently runnable::
 
@@ -85,7 +85,7 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
 
     runner.run("Use Cases panel marker present in /app", _uc_panel)
 
-    # ── Operating System tab (mcos/) ────────────────────────────
+    # ── Platform tab (mcos/) ──────────────────────────────────────
     def _mcos_page():
         resp = assert_status(get(f"{base_url}/mcos/index.html"), 200)
         assert_no_server_error(resp.text, f"{base_url}/mcos/index.html")
@@ -102,7 +102,7 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
 
     def _mcos_links():
         data = assert_json(assert_status(get(f"{base_url}/mcos/links.json"), 200))
-        assert not data.get("warnings"), f"Operating System links no longer resolve: {data['warnings']}"
+        assert not data.get("warnings"), f"Platform links no longer resolve: {data['warnings']}"
         products = data.get("products", {})
         assert "binlookup" in products, f"BIN Lookup has no product in the picture: {sorted(products)}"
         assert data.get("targets", {}).get("api", {}).get("bin_lookup") == "p-binlookup", (

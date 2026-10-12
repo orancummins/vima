@@ -1,8 +1,9 @@
 // -------------------------------------------------------------------
 // features/operatingSystem.js
-// The "Operating System" tab: the animated Mastercard Operating System
-// layer picture (served at /mcos/, see mcos/__init__.py) in an iframe,
-// plus the links between it and the rest of Solution Studio.
+// The "Platform for the world's economies" tab: the animated layer picture
+// (the Mastercard Operating System in maos; served at /mcos/, see
+// mcos/__init__.py) in an iframe, plus the links between it and the rest
+// of Solution Studio.
 //
 // The frame is created the first time the tab opens and kept afterwards, so
 // the opening animation plays once and the picture keeps its state.
@@ -55,7 +56,7 @@ function _ensureFrame(glide) {
   _frame.className = 'os-frame';
   // aria-label rather than title: Chrome shows an iframe's title as a
   // tooltip wherever the pointer rests inside it.
-  _frame.setAttribute('aria-label', 'Mastercard Operating System');
+  _frame.setAttribute('aria-label', "Mastercard's platform for the world's economies");
   // The bridge reads the hash on start, so a pending target rides along here.
   _frame.src = _appPath('/mcos/index.html') + (glide ? '?glide=1' : '') +
     (_pending ? '#' + encodeURIComponent(_pending) : '');
@@ -67,7 +68,7 @@ function _ensureFrame(glide) {
   host.appendChild(_frame);
 }
 
-/** Called by core/nav.js when the Operating System tab is shown. `fromHome`
+/** Called by core/nav.js when the platform tab is shown. `fromHome`
  *  is the Home globe's place (captureHomeGlobe) when coming from Home. */
 export function showOs(fromHome) {
   _visible = true;
@@ -92,7 +93,7 @@ export function gotoOs(target) {
   else _pending = t;
 }
 
-/** Switch to the Operating System tab and show a target in it. */
+/** Switch to the platform tab and show a target in it. */
 export function openOs(target) {
   // Set first so a frame created by the tab switch starts on the target
   // instead of playing the opening animation.
@@ -103,9 +104,9 @@ export function openOs(target) {
   if (_ready) gotoOs(target);
 }
 
-// ---------- one globe across Home and the Operating System ----------
+// ---------- one globe across Home and the platform ----------
 // The picture's opening globe is drawn exactly like the Home globe
-// (mcos/web/mcos-bridge.js). Switching Home → Operating System, a copy of the
+// (mcos/web/mcos-bridge.js). Switching Home → platform, a copy of the
 // Home canvas holds the globe exactly where it was while the picture places
 // its own globe on the same spot, at the same size and rotation; the copy
 // then fades out over an identical globe, so nothing appears to move. The
@@ -237,7 +238,7 @@ function _onMessage(e) {
 export function initOperatingSystem() {
   window.addEventListener('message', _onMessage);
 
-  // "See it in the Operating System" links anywhere in the shell.
+  // "See it on the platform" links anywhere in the shell.
   document.addEventListener('click', (e) => {
     const link = e.target.closest('[data-os-target]');
     if (!link || link.disabled) return;

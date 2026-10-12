@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Refresh the vendored Mastercard Operating System layer picture.
+"""Refresh the vendored layer picture (the Mastercard Operating System in maos).
 
-The Operating System tab shows ``src/layers.artifact.html`` from the maos
+The platform tab shows ``src/layers.artifact.html`` from the maos
 project (https://github.com/orancummins/maos), copied verbatim into
 ``mcos/vendor/``. This script copies a newer version in, records where it came
 from in ``mcos/vendor/VERSION``, and checks that everything Solution Studio
@@ -59,6 +59,9 @@ def check(src: str) -> list[str]:
     for snippet in REQUIRED_SNIPPETS:
         if snippet not in src:
             problems.append(f"the picture no longer builds {snippet!r}, which mcos-bridge.js re-colours")
+    for old, _new in mcos.TEXT_SWAPS:
+        if old not in src:
+            problems.append(f"the picture no longer says {old!r}, which Solution Studio renames")
     if "</style>" not in src:
         problems.append("no </style> to split the head from the body at")
     products = set(re.findall(r'\bP\("([a-z0-9]+)",', src))
