@@ -231,27 +231,27 @@
         {
           "id": "f2",
           "say": "Find A Card goes further. It shows how an AI agent could find the right card for you.",
-          "pause": 0.45
+          "pause": 2.2
         },
         {
           "id": "f3",
           "say": "You start by telling the agent what you want, in your own words.",
-          "pause": 0.45
+          "pause": 2.9
         },
         {
           "id": "f4",
           "say": "Then, with your permission, it connects to your bank through Open Finance,",
-          "pause": 0.35
+          "pause": 1.2
         },
         {
           "id": "f5",
           "say": "and learns how you really spend. Where the money goes, how often you travel, and how much you spend abroad.",
-          "pause": 1.2
+          "pause": 2.0
         },
         {
           "id": "f6",
           "say": "From that, it builds its own search, and scores every card on value, and on your chances of approval.",
-          "pause": 0.45
+          "pause": 1.0
         },
         {
           "id": "f7",

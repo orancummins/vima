@@ -290,9 +290,11 @@ const OVERLAY = `(() => {
   // 7 · Find A Card — the agent, Open Finance, the spend profile, and the card in the wallet.
   await at(SEC('s7_findacard').start); mark('s7_findacard');
   await at(S('f2') + 0.3); await click(page.locator('[data-uc-id="findacard"]'));
-  // Find A Card's bank connection takes about ten seconds, so the request is
-  // typed as the agent is introduced and the connection starts early: the
-  // spend profile then lands as the narration describes it.
+  // Find A Card reloads when it is selected, its bank connection takes about
+  // eight seconds and its search about five, so the request is typed as the
+  // agent is introduced and the narration leaves room (the pauses after
+  // f2–f6 in narration.json): the connection starts on "connects to your
+  // bank" and the spend profile lands as the narration describes it.
   await at(S('f2') + 1.6); await click(fac.locator('#userDescribe'), { dur: 0.6 });
   // Typed through the keyboard: a locator per character is slow across two frames.
   await page.keyboard.type('Travel rewards, no foreign fees, and I want it now.', { delay: 14 });

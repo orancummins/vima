@@ -1,6 +1,6 @@
 # Mastercard Solution Studio — walkthrough video script
 
-5 min 14 s · 1920×1080, 30 fps · voice: Kokoro-82M v1.0 (`af_heart`), one sentence at a time with explicit pauses · made by `tools/video/` (see its README)
+5 min 21 s · 1920×1080, 30 fps · voice: Kokoro-82M v1.0 (`af_heart`), one sentence at a time with explicit pauses · made by `tools/video/` (see its README)
 
 **Watch the latest cut: [Mastercard-Solution-Studio.mp4](Mastercard-Solution-Studio.mp4)** (merchant logos show as initials in this take; a local render with Open Finance keys shows the API's real logos).
 
@@ -58,7 +58,7 @@ Let's start simple. This is what a bank statement really looks like. And this is
 
 *[Use Cases → Data Enrichment. Raw statement lines such as `SBUX 00654321 CARD 12345` and `AMZN MKTP US*MK7G3B2X1` sit with "Merchant unknown". The cursor enriches the first two one at a time, then "Enrich all": each becomes the merchant's name and logo, its category, its website and, where the data has one, its location.]*
 
-## 3:06 · Find A Card (47 s)
+## 3:06 · Find A Card (53 s)
 
 Find A Card goes further. It shows how an AI agent could find the right card for you.
 
@@ -72,7 +72,7 @@ Moments later, the card is approved and added to your phone's wallet, ready to u
 
 *[Use Cases → Find A Card. The request "Travel rewards, no foreign fees, and I want it now." is typed and sent. On requirements, "Connect To Bank" opens the Open Banking connection (verifying identity, assessing financial history). The spending profile appears: monthly spend by category, credit band, trips a year, cross-border share. The agent's smart criteria follow; "Find My Perfect Card" runs the search and the ranked cards appear with fit scores, expected annual value and approval odds. "Apply Instantly via Agent" steps through checking the issuer, applying through the website, form-filling, the decision and provisioning; on "added to your phone's wallet" the card flies into the wallet on a phone, with a tick and its features.]*
 
-## 3:52 · Settle In, a concept (42 s)
+## 3:59 · Settle In, a concept (42 s)
 
 And here's where Solution Studio is heading next. Settle In is a concept, built entirely on Mastercard assets.
 
@@ -82,7 +82,7 @@ She sends money home, sees the exchange rate before she pays, and her mum has it
 
 *[Use Cases → Settle In, marked "Concept · not wired yet". Priya's day runs along the top (07:55 Arrive to 19:30 Priceless); each line moves to the next moment: her Irish bank shared through Open Finance, approval with no US credit file, the card in her phone's wallet, $400 home to her mum with the rate shown first, an enriched statement and nearby essentials, a declined fraud attempt with the protections behind it (Decision Intelligence Pro, Identity Check, tokenisation, alerts), and a Priceless Surprise notification at a Broadway box office. Each moment lists the Mastercard assets behind it, marked as in Studio today or to add.]*
 
-## 4:34 · Open to everyone, easy to set up (22 s)
+## 4:41 · Open to everyone, easy to set up (22 s)
 
 Solution Studio is open to everyone who wants to innovate with Mastercard. Sign up for Mastercard Developers, clone the project, and run it. You're up and running in four steps.
 
@@ -90,7 +90,7 @@ And setup is just as easy. Choose auto-provision, pick the APIs you want, and St
 
 *[The info button opens "Install & Run Solution Studio"; it scrolls through the four steps. It closes and the first-run welcome appears; "Auto-provision Keys" opens "Select APIs to Provision". The cursor rests on "Provision Selected APIs" — it is never clicked, so no keys are created.]*
 
-## 4:56 · Close (18 s)
+## 5:03 · Close (18 s)
 
 Mastercard is the platform for the world's economies, powering secure value exchange between people, businesses and communities. With Solution Studio, we're empowering you to innovate with us.
 
@@ -107,7 +107,7 @@ Helping everyone realize their potential, which is priceless.
 - **Your own data shows.** The take uses whatever the running Solution Studio has: real sandbox keys give real BIN Lookup data, and with no keys the simulator answers. Find A Card's profile and scores are random each run.
 - **Real merchant logos.** With Open Finance configured, Data Enrichment calls the enrichment API live, and Settle In's lunch statement uses the same results, so names, categories and logos are the API's own. The logos load from Mastercard's merchant-branding host; where it can't be reached the merchant's initials stand in.
 - **Nothing is provisioned.** The welcome dialog is opened directly and the API picker is only hovered.
-- **Timing.** Every action is scheduled from the voice track, so changing a sentence moves the picture with it. Find A Card's bank connection takes about ten seconds and applying about eleven, so its clicks start early and the wallet click is tied to "added to your phone's wallet".
+- **Timing.** Every action is scheduled from the voice track, so changing a sentence moves the picture with it. Find A Card reloads when selected, its bank connection takes about eight seconds, its search about five and applying about eleven, so its request is typed early, the narration leaves short pauses for it, and the wallet click is tied to "added to your phone's wallet".
 
 ## Change requests
 
