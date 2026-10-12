@@ -32,7 +32,7 @@
       </div>
     </div>
     <nav class="top-tabs">
-      <canvas id="mini-globe" width="52" height="52" style="display:block;flex-shrink:0;opacity:0.75;margin-right:8px"></canvas>
+      <canvas id="mini-globe" width="52" height="52" aria-hidden="true"></canvas>
       <button class="top-tab active" data-top-tab="home">Home</button>
       <button class="top-tab" data-top-tab="os">Operating System</button>
       <button class="top-tab" data-top-tab="apis">APIs</button>
@@ -40,6 +40,19 @@
       <button class="top-tab" data-top-tab="usecases">Use Cases</button>
     </nav>
     <div class="header-actions">
+      <button class="cfg-trigger-btn hidden{% if runtime_mode.server_mode %} cfg-trigger-btn--locked{% endif %}" id="global-edit-btn" title="{% if runtime_mode.server_mode %}server mode{% else %}Edit with Claude{% endif %}" {% if runtime_mode.server_mode %}aria-disabled="true"{% endif %}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+      <button class="header-search" id="search-trigger-btn" type="button" title="Search (⌘K)" aria-label="Search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span class="header-search-label">Search</span>
+        <kbd class="header-search-kbd" id="search-trigger-kbd">⌘K</kbd>
+      </button>
       <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to light theme" title="Switch to light theme">
         <span class="theme-toggle-track" aria-hidden="true">
           <span class="theme-toggle-option theme-toggle-option--dark">Dark</span>
@@ -47,51 +60,42 @@
           <span class="theme-toggle-thumb"></span>
         </span>
       </button>
-      {% if spotlight %}
-      <button class="aotd-trigger-btn"
-              id="aotd-trigger-btn"
-              data-spotlight-id="{{ spotlight.id }}"
-              title="API of the day — {{ spotlight.name }}"
-              aria-label="Open API of the day">
-        <span class="aotd-trigger-icon" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"/>
-            <circle cx="12" cy="12" r="4" fill="currentColor" fill-opacity="0.18"/>
+      <div class="header-tools" role="group" aria-label="Tools">
+        {% if spotlight %}
+        <button class="aotd-trigger-btn"
+                id="aotd-trigger-btn"
+                data-spotlight-id="{{ spotlight.id }}"
+                title="API of the day — {{ spotlight.name }}"
+                aria-label="Open API of the day">
+          <span class="aotd-trigger-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"/>
+              <circle cx="12" cy="12" r="4" fill="currentColor" fill-opacity="0.18"/>
+            </svg>
+          </span>
+          <span class="aotd-trigger-pulse" aria-hidden="true"></span>
+        </button>
+        {% endif %}
+        <a class="cfg-trigger-btn" href="/vima/test" target="_blank" rel="noopener" title="Testing" aria-label="Testing">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.5 2v11.5l4.5 7H5l4.5-7V2"/>
+            <path d="M8.5 2h7"/>
+            <path d="M7 16.5h10"/>
           </svg>
-        </span>
-        <span class="aotd-trigger-pulse" aria-hidden="true"></span>
-      </button>
-      {% endif %}
-      <button class="cfg-trigger-btn" id="search-trigger-btn" title="Search (⌘K)" aria-label="Search">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-      </button>
-      <a class="cfg-trigger-btn" href="/vima/test" target="_blank" rel="noopener" title="Testing" aria-label="Testing">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14.5 2v11.5l4.5 7H5l4.5-7V2"/>
-          <path d="M8.5 2h7"/>
-          <path d="M7 16.5h10"/>
-        </svg>
-      </a>
-      <button class="cfg-trigger-btn" id="info-trigger-btn" title="How to install &amp; run" aria-label="How to install and run">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="16" x2="12" y2="12"/>
-          <line x1="12" y1="8" x2="12.01" y2="8"/>
-        </svg>
-      </button>
-      <button class="cfg-trigger-btn{% if runtime_mode.server_mode %} cfg-trigger-btn--locked{% endif %}" id="cfg-trigger-btn" title="{% if runtime_mode.server_mode %}server mode{% else %}API Configuration{% endif %}" {% if runtime_mode.server_mode %}aria-disabled="true"{% endif %}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-        </svg>
-      </button>
-      <button class="cfg-trigger-btn hidden{% if runtime_mode.server_mode %} cfg-trigger-btn--locked{% endif %}" id="global-edit-btn" title="{% if runtime_mode.server_mode %}server mode{% else %}Edit with Claude{% endif %}" {% if runtime_mode.server_mode %}aria-disabled="true"{% endif %}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-        </svg>
-      </button>
+        </a>
+        <button class="cfg-trigger-btn" id="info-trigger-btn" title="How to install &amp; run" aria-label="How to install and run">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+        </button>
+        <button class="cfg-trigger-btn{% if runtime_mode.server_mode %} cfg-trigger-btn--locked{% endif %}" id="cfg-trigger-btn" title="{% if runtime_mode.server_mode %}server mode{% else %}API Configuration{% endif %}" {% if runtime_mode.server_mode %}aria-disabled="true"{% endif %}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </header>
 

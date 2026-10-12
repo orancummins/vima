@@ -297,6 +297,13 @@ export function initSearch() {
   // ── Trigger: header button ──
   const triggerBtn = document.getElementById('search-trigger-btn');
   if (triggerBtn) triggerBtn.addEventListener('click', _open);
+  // The header shows ⌘K; Windows and Linux use Ctrl+K.
+  const platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '';
+  if (!/mac|iphone|ipad/i.test(platform)) {
+    const kbd = document.getElementById('search-trigger-kbd');
+    if (kbd) kbd.textContent = 'Ctrl K';
+    if (triggerBtn) triggerBtn.title = 'Search (Ctrl+K)';
+  }
 
   // ── Trigger: ⌘K / Ctrl+K ──
   document.addEventListener('keydown', (e) => {
