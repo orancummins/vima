@@ -1,0 +1,500 @@
+/* Solution Studio bridge for the Mastercard Operating System layer picture.
+
+   Runs after the vendored picture's own scripts (mcos/vendor/), whose
+   top-level functions and state are visible from here: openTile,
+   openProduct, detailHtml, renderSide, setFocus, pickOut, st, MAP and so on.
+   The vendored file is never edited; this script wraps a few of those
+   functions to add Solution Studio's links, and drives the rest.
+
+   It talks to the shell (static/js/app/features/operatingSystem.js) with
+   same-origin postMessage:
+     in   {type:'mcos:goto', target}  {type:'mcos:visibility', visible}
+     out  {type:'mcos:ready'}  {type:'mcos:state', state, host}
+          {type:'vima:navigate', tab, api|bundle|uc}  {type:'vima:shortcut', key}
+
+   A target is the picture's hash: '' (the stack), 'open', 'U', 'L1'…'L5',
+   't-<area>', 'p-<product>' or 'o-<outcome>'. */
+/* The vendored picture's top-level names (checked by tools/sync_mcos.py). */
+/* global MAP, st, OUTCOMES, LAYERS, TILE, PADS, sraf:writable, st0:writable, phi:writable, reduce, f,
+   esc, renderSide, renderPick, openTile, openProduct, closeDrawer, drawerOpen, setFocus, pickOut,
+   clearPick, openStack, closeStack, OX, GR, GY, DEG */
+(function () {
+  "use strict";
+  if (typeof MAP === "undefined" || typeof st === "undefined" || typeof openProduct !== "function") return;
+
+  var ORIGIN = window.location.origin;
+  var parentWin = window.parent !== window ? window.parent : null;
+  var LINKS = { products: {}, outcomes: {} };
+  var drawerTarget = "";
+  var lastState = null;
+  var hostChange = false;
+  var timer = 0;
+
+  function send(msg) {
+    if (!parentWin) return;
+    try { parentWin.postMessage(msg, ORIGIN); } catch (e) {}
+  }
+  function h(s) { return esc(s == null ? "" : s); }
+
+  /* ---------- what Solution Studio has for a product ---------- */
+  function studioFor(pid) { return LINKS.products[pid] || null; }
+  function isLive(pid) {
+    var s = studioFor(pid);
+    return !!(s && (s.apis.length || s.use_cases.length));
+  }
+  function liveInTile(tileId) {
+    var T = MAP.TILES[tileId];
+    if (!T || !T.products) return 0;
+    return T.products.filter(function (p) { return p.st !== "retired" && isLive(p.id); }).length;
+  }
+
+  var ICON_STUDIO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>';
+
+  function linkButton(kind, item) {
+    var tab = kind === "api" ? "apis" : kind === "bundle" ? "bundles" : "usecases";
+    var label = kind === "api" ? "API" : kind === "bundle" ? "Bundle" : "Use case";
+    var dot = kind === "api" ? '<span class="mcos-dot' + (item.configured ? " ok" : "") + '" title="' + (item.configured ? "Keys configured" : "No keys yet — the simulator can answer") + '"></span>' : "";
+    var blocked = !!item.blocked;
+    var title = blocked ? item.title : "Open " + item.name + " in Solution Studio";
+    return '<button type="button" class="mcos-link mcos-link--' + kind + '" data-studio-tab="' + tab + '" data-studio-id="' + h(item.id) + '" title="' + h(title) + '"' + (blocked ? " disabled" : "") + ">" +
+      dot + '<span class="mcos-link-name">' + h(item.name) + '</span><span class="mcos-link-kind">' + label + "</span>" + ICON_STUDIO + "</button>";
+  }
+
+  function studioSection(pid) {
+    var s = studioFor(pid);
+    if (!s) return null;
+    var html = s.apis.map(function (a) { return linkButton("api", a); }).join("") +
+      s.use_cases.map(function (u) { return linkButton("usecase", u); }).join("") +
+      s.bundles.map(function (b) { return linkButton("bundle", b); }).join("");
+    if (!html) return null;
+    var sec = document.createElement("div");
+    sec.className = "dsec mcos-studio";
+    sec.innerHTML = '<div class="dl">Try it in Solution Studio</div><div class="mcos-links">' + html + "</div>";
+    return sec;
+  }
+
+  /* ---------- wrap the picture's own functions ---------- */
+  var _detailHtml = window.detailHtml;
+  window.detailHtml = function (p, solo) {
+    var d = _detailHtml(p, solo);
+    var sec = p && studioSection(p.id);
+    if (sec) {
+      var main = d.querySelector(".dmain");
+      var sources = main && Array.prototype.find.call(main.querySelectorAll(":scope > .dsec"), function (x) { return x.querySelector(".links"); });
+      if (sources) main.insertBefore(sec, sources); else if (main) main.appendChild(sec);
+    }
+    return d;
+  };
+
+  var _tagHtml = window.tagHtml;
+  window.tagHtml = function (p) {
+    var out = _tagHtml(p);
+    if (p && isLive(p.id)) out += '<span class="badge studio">Live in Studio</span>';
+    return out;
+  };
+
+  var _openTile = window.openTile;
+  window.openTile = function (T) {
+    _openTile(T);
+    if (!T) return;
+    drawerTarget = "t-" + T.id;
+    var n = liveInTile(T.id), stats = document.getElementById("dstats");
+    if (n && stats) stats.insertAdjacentHTML("beforeend", '<span class="stat stat--studio"><b>' + n + "</b>live in Solution Studio</span>");
+    schedule();
+  };
+
+  var _openProduct = window.openProduct;
+  window.openProduct = function (p) {
+    _openProduct(p);
+    if (!p) return;
+    drawerTarget = "p-" + p.id;
+    schedule();
+  };
+
+  var _renderSide = window.renderSide;
+  window.renderSide = function () {
+    _renderSide();
+    var side = document.getElementById("side");
+    if (!side) return;
+    side.querySelectorAll(".tile[data-t]").forEach(function (b) {
+      var n = liveInTile(b.dataset.t);
+      if (n) b.insertAdjacentHTML("beforeend", '<span class="mcos-tile-studio">' + n + " live in Solution Studio</span>");
+    });
+    var o = !st.focus && st.out && OUTCOMES.find(function (x) { return x.id === st.out; });
+    if (!o) return;
+    side.querySelectorAll(".step[data-p]").forEach(function (li) {
+      if (!isLive(li.dataset.p)) return;
+      li.classList.add("mcos-live");
+      var sm = li.querySelector(".sm");
+      if (sm) sm.insertAdjacentHTML("beforeend", '<span class="mcos-step-tag">Live in Studio</span>');
+    });
+    var oc = LINKS.outcomes[o.id];
+    if (oc && oc.bundles.length) {
+      side.insertAdjacentHTML("beforeend", '<div class="mcos-cta"><div class="mcos-cta-eyebrow">Put it into practice</div><p class="mcos-cta-text">Solution Studio has these APIs wired up and ready to call, grouped as a bundle.</p><div class="mcos-links">' +
+        oc.bundles.map(function (b) { return linkButton("bundle", b); }).join("") + "</div></div>");
+    }
+  };
+
+  /* An orange marker on the rim of every pad with something to try in
+     Studio: white-edged, so it reads on all five layer colours. PADS holds
+     each pad's top centre in the same coordinates as the pad itself. */
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function markPads() {
+    var svg = document.getElementById("svg");
+    if (!svg) return;
+    svg.querySelectorAll(".blk[data-t]").forEach(function (b) {
+      var n = liveInTile(b.dataset.t), at = PADS[b.dataset.t];
+      b.classList.toggle("studio", n > 0);
+      var pip = b.querySelector(".mcos-pip"), title = b.querySelector("title.mcos-title");
+      if (!n || !at) {
+        if (pip) pip.remove();
+        if (title) title.remove();
+        return;
+      }
+      if (!pip) {
+        pip = document.createElementNS(SVGNS, "circle");
+        pip.setAttribute("class", "mcos-pip");
+        pip.setAttribute("r", "4.4");
+        b.appendChild(pip);
+      }
+      pip.setAttribute("cx", f(at.x + 18.5));
+      pip.setAttribute("cy", f(at.y - 9.5));
+      if (!title) {
+        title = document.createElementNS(SVGNS, "title");
+        title.setAttribute("class", "mcos-title");
+        b.insertBefore(title, b.firstChild);
+      }
+      title.textContent = n + " live in Solution Studio";
+    });
+  }
+  /* Solution Studio's look for the picture itself. The picture paints its
+     discs and its opening globe with gradients built in build(), coloured
+     straight from the layer tokens. Point each stop at the --mc-* tokens in
+     mcos-theme.css instead: the discs become dark glass plates tinted by
+     their layer (frosted white in light mode), and the globe becomes the
+     Home tab's wireframe globe, a faint glow rather than a solid sphere.
+     The values are CSS variables, so the light/dark toggle applies without
+     a rebuild. */
+  function mix(k, tint, base) {
+    return "color-mix(in oklab, var(--l" + k + "f) var(" + tint + "), var(" + base + "))";
+  }
+  var STOPS = { ug: ["var(--mc-utok-hi)", "var(--mc-utok)"] };
+  for (var k = 1; k <= 5; k++) {
+    STOPS["st" + k] = [mix(k, "--mc-top-tint", "--mc-plate"), mix(k, "--mc-top-tint-lo", "--mc-plate-deep")];
+    STOPS["gs" + k] = [mix(k, "--mc-side-tint-lo", "--mc-plate-deep"), mix(k, "--mc-side-tint", "--mc-plate"),
+      mix(k, "--mc-side-tint-lo", "--mc-plate"), mix(k, "--mc-side-tint-lo", "--mc-plate-deep")];
+    STOPS["bt" + k] = [mix(k, "--mc-pad-tint", "--mc-pad"), mix(k, "--mc-pad-tint-lo", "--mc-pad")];
+    STOPS["gc" + k] = [mix(k, "--mc-pad-tint-lo", "--mc-pad"), mix(k, "--mc-side-tint-lo", "--mc-plate-deep")];
+  }
+  // The opening globe: [colour, opacity, offset] per stop. The sphere has
+  // no fill, rim or highlight, only the Home globe's soft glow (the halo,
+  // whose radius is about the Home gradient's, 1.5× the sphere's).
+  var GLOBE = {
+    gg: [["var(--mc-globe-a)"], ["var(--mc-globe-a)"], ["var(--mc-globe-b)"], ["var(--mc-globe-c)"], ["var(--mc-globe-d)"]],
+    gt: [["var(--mc-cut-a)"], ["var(--mc-cut-b)"]],
+    ghl: [["var(--mc-globe-hl)", "0"], ["var(--mc-globe-hl)", "0"], ["var(--mc-globe-hl)", "0"]],
+    grl: [["var(--mc-globe-rim)", "0"], ["var(--mc-globe-rim)", "0"], ["var(--mc-globe-rim)", "0"]],
+    gha: [["var(--mc-halo-a)", "1", ".14"], ["var(--mc-halo-b)", "1", ".32"], ["var(--mc-halo-b)", "0", ".7"], ["var(--mc-halo-b)", "0", "1"]],
+  };
+  function restyleDefs() {
+    var svg = document.getElementById("svg");
+    if (!svg) return;
+    Object.keys(STOPS).forEach(function (id) {
+      var g = svg.querySelector("#" + id);
+      if (!g) return;
+      g.querySelectorAll("stop").forEach(function (stop, i) {
+        if (STOPS[id][i]) stop.style.setProperty("stop-color", STOPS[id][i]);
+      });
+    });
+    Object.keys(GLOBE).forEach(function (id) {
+      var g = svg.querySelector("#" + id);
+      if (!g) return;
+      g.querySelectorAll("stop").forEach(function (stop, i) {
+        var v = GLOBE[id][i];
+        if (!v) return;
+        stop.style.setProperty("stop-color", v[0]);
+        if (v[1] !== undefined) stop.setAttribute("stop-opacity", v[1]);
+        if (v[2] !== undefined) stop.setAttribute("offset", v[2]);
+      });
+    });
+  }
+
+  /* The opening globe, drawn exactly like the Home tab's globe
+     (templates/index.html, "Home tab — large revolving globe"): the same 80
+     dots on a Fibonacci sphere, the same 20° grid faded by depth, the same
+     perspective (scale 1 / (1.8 - z)), turning the same way at the same
+     0.18 rad a second. K sizes it so the outline is the picture's sphere
+     (radius GR), which the slicing animation then cuts. Replaces the
+     picture's drawGlobe() and spin(), which it calls by name. */
+  var SVGNS_G = "http://www.w3.org/2000/svg";
+  var HOME = (function () {
+    var n = 80, pts = [];
+    for (var i = 0; i < n; i++) {
+      var ph = Math.acos(-1 + (2 * i) / n), th = Math.sqrt(n * Math.PI) * ph;
+      pts.push([Math.cos(th) * Math.sin(ph), Math.sin(th) * Math.sin(ph), Math.cos(ph)]);
+    }
+    // The Home globe's outline is 0.668 of its RADIUS (262.4 px on its 820 px canvas).
+    return { pts: pts, K: GR / 0.668, dot: (2.5 / 262.4) * (GR / 0.668) };
+  })();
+  function layer(id, cls, before) {
+    var el = document.getElementById(id);
+    if (!el) {
+      el = document.createElementNS(SVGNS_G, "path");
+      el.id = id;
+      el.setAttribute("class", cls);
+      before.parentNode.insertBefore(el, before);
+    }
+    return el;
+  }
+  window.drawGlobe = function () {
+    var land = document.getElementById("gland");
+    if (!land) return;
+    var rot = phi, K = HOME.K, grid = ["", "", "", "", ""], dots = ["", "", ""];
+    var seg = function (x0, y0, z0, x1, y1, z1) {
+      var a = Math.max(0, Math.min(1, ((z0 + z1) / 2 + 0.4) / 0.8));
+      if (a < 0.03) return;
+      var s0 = 1 / (1.8 - z0), s1 = 1 / (1.8 - z1);
+      grid[Math.min(4, Math.floor(a * 5))] += "M" + f(OX + x0 * K * s0) + "," + f(GY + y0 * K * s0) +
+        "L" + f(OX + x1 * K * s1) + "," + f(GY + y1 * K * s1);
+    };
+    for (var lat = -80; lat <= 80; lat += 20) {
+      var lR = lat * DEG, cl = Math.cos(lR), sl = Math.sin(lR);
+      for (var g = 0; g < 360; g += 4) {
+        var l0 = g * DEG + rot, l1 = (g + 4) * DEG + rot;
+        seg(cl * Math.cos(l0), sl, cl * Math.sin(l0), cl * Math.cos(l1), sl, cl * Math.sin(l1));
+      }
+    }
+    for (var lon = 0; lon < 360; lon += 20) {
+      var L = lon * DEG + rot, cL = Math.cos(L), sL = Math.sin(L);
+      for (var m = -88; m < 90; m += 4) {
+        var a0 = m * DEG, a1 = (m + 4) * DEG;
+        seg(Math.cos(a0) * cL, Math.sin(a0), Math.cos(a0) * sL, Math.cos(a1) * cL, Math.sin(a1), Math.cos(a1) * sL);
+      }
+    }
+    for (var i = 0; i < HOME.pts.length; i++) {
+      var p = HOME.pts[i];
+      var rx = p[0] * Math.cos(rot) - p[2] * Math.sin(rot), rz = p[0] * Math.sin(rot) + p[2] * Math.cos(rot);
+      if (rz <= -0.18) continue;
+      var sc = 1 / (1.8 - rz), alpha = 0.15 + 0.85 * Math.max(0, Math.min(1, (rz + 0.2) / 0.4));
+      var x = OX + rx * K * sc, y = GY + p[1] * K * sc, r = HOME.dot * sc;
+      dots[alpha >= 0.75 ? 0 : alpha >= 0.4 ? 1 : 2] += "M" + f(x - r) + "," + f(y) + "a" + f(r) + "," + f(r) +
+        " 0 1,0 " + f(2 * r) + ",0a" + f(r) + "," + f(r) + " 0 1,0 " + f(-2 * r) + ",0";
+    }
+    for (var b = 0; b < 5; b++) layer("mcos-hg" + b, "mcos-hg mcos-hg" + b, land).setAttribute("d", grid[b]);
+    layer("mcos-hd2", "mcos-hd mcos-hd2", land).setAttribute("d", dots[2]);
+    layer("mcos-hd1", "mcos-hd mcos-hd1", land).setAttribute("d", dots[1]);
+    land.setAttribute("d", dots[0]);   // the nearest dots, which the picture also blurs into a glow
+    ["gmer", "glat"].forEach(function (id) { var e = document.getElementById(id); if (e) e.setAttribute("d", ""); });
+  };
+  window.spin = function (t) {
+    if (st.p >= 0.1 || !document.getElementById("gland")) { sraf = 0; st0 = 0; return; }
+    if (st0) phi += (t - st0) * 0.00018;
+    st0 = t;
+    window.drawGlobe();
+    sraf = requestAnimationFrame(window.spin);
+  };
+
+  /* The shell glides the Home globe into this one when you switch tabs
+     (static/js/app/features/operatingSystem.js): it asks where the globe is,
+     we hide ours while its copy travels, then show ours at its rotation. */
+  // Arriving from Home, the globe first sits exactly where the Home globe was
+  // (heroEnter: the picture is shifted and scaled so its globe lands on that
+  // spot; the heading and side panel wait, hidden). When the slicing starts
+  // the picture eases back to its own place and the rest fades in.
+  var heroPic = null;
+  function heroEnter(target, rot) {
+    var pic = document.querySelector(".pic");
+    // A page opened mid-switch starts in the hero state; if the globe can't be placed, leave it.
+    if (!pic || !target || !target.r || st.p >= 0.1) { document.documentElement.classList.remove("mcos-hero"); return false; }
+    if (typeof rot === "number") { phi = rot; st0 = 0; window.drawGlobe(); }
+    pic.style.transition = "none";
+    pic.style.transform = "none";
+    var c = globeRect();
+    if (!c || !c.r) { document.documentElement.classList.remove("mcos-hero"); return false; }
+    var box = pic.getBoundingClientRect(), s = target.r / c.r;
+    var tx = target.cx - box.left - s * (c.cx - box.left), ty = target.cy - box.top - s * (c.cy - box.top);
+    pic.style.transformOrigin = "0 0";
+    pic.style.transform = "translate(" + tx.toFixed(2) + "px," + ty.toFixed(2) + "px) scale(" + s.toFixed(4) + ")";
+    document.documentElement.classList.add("mcos-hero");
+    heroPic = pic;
+    return true;
+  }
+  function heroLeave(animate) {
+    if (!heroPic) return;
+    var pic = heroPic;
+    heroPic = null;
+    document.documentElement.classList.remove("mcos-hero");
+    pic.style.transition = animate && !reduce ? "transform 1.2s cubic-bezier(.45,.05,.25,1)" : "none";
+    pic.style.transform = "";
+    setTimeout(function () { pic.style.transition = ""; pic.style.transformOrigin = ""; }, 1300);
+  }
+  window.addEventListener("resize", function () { heroLeave(false); });
+
+  // Arriving by glide, the picture's own opening (the slicing) waits until
+  // the globe is in place and has turned for a moment.
+  var _runIntro = window.runIntro, introQueued = false;
+  window.runIntro = function (to, done) {
+    if (to === 1 && document.documentElement.classList.contains("mcos-glide-wait")) { introQueued = true; return undefined; }
+    if (to === 1) heroLeave(true);
+    return _runIntro(to, done);
+  };
+  var _endIntro = window.endIntro;
+  window.endIntro = function () { heroLeave(false); return _endIntro(); };
+  function releaseIntro() {
+    if (!introQueued) return;
+    introQueued = false;
+    setTimeout(function () { if (st.p <= 0) window.runIntro(1); }, 1500);
+  }
+  function globeRect() {
+    var svg = document.getElementById("svg");
+    var m = svg && svg.getScreenCTM();
+    if (!m) return null;
+    return { cx: m.a * OX + m.c * GY + m.e, cy: m.b * OX + m.d * GY + m.f, r: GR * m.a };
+  }
+
+  var _layout = window.layout;
+  window.layout = function () { _layout(); restyleDefs(); markPads(); };
+
+  /* ---------- where the picture is, for the shell's URL ---------- */
+  function current() {
+    if (drawerOpen() && drawerTarget) return drawerTarget;
+    if (st.p < 1) return "";
+    if (st.out) return "o-" + st.out;
+    if (st.focus) return st.focus;
+    if (st.open) return "open";
+    return "";
+  }
+  function report() {
+    timer = 0;
+    var s = current();
+    var host = hostChange;
+    hostChange = false;
+    if (s === lastState) return;
+    lastState = s;
+    send({ type: "mcos:state", state: s, host: host });
+  }
+  function schedule() { if (!timer) timer = setTimeout(report, 40); }
+  document.addEventListener("click", schedule, true);
+  document.addEventListener("keydown", schedule, true);
+
+  /* ---------- go to a target ---------- */
+  function clearPicks() {
+    if (st.who || st.out || st.menu) { st.who = null; st.out = null; st.menu = null; renderPick(); }
+  }
+  function focusLayerOf(tile) {
+    var own = tile && TILE[tile.id];
+    var id = own ? own.L.id : null;
+    clearPicks();
+    if (id && st.focus !== id) setFocus(id); else if (!st.open) openStack();
+  }
+  function go(target) {
+    var t = String(target || "");
+    try { t = decodeURIComponent(t); } catch (e) {}
+    hostChange = true;
+    var m;
+    if ((m = /^p-(.+)$/.exec(t)) && MAP.PRODUCTS[m[1]]) {
+      var p = MAP.PRODUCTS[m[1]];
+      window.endIntro(); focusLayerOf(p.tile); openProduct(p);
+    } else if ((m = /^t-(.+)$/.exec(t)) && MAP.TILES[m[1]]) {
+      var T = MAP.TILES[m[1]];
+      window.endIntro(); focusLayerOf(T); openTile(T);
+    } else if ((m = /^o-(.+)$/.exec(t)) && OUTCOMES.some(function (o) { return o.id === m[1]; })) {
+      closeDrawer(); pickOut(m[1]);
+    } else if (t === "U" || LAYERS.some(function (l) { return l.id === t; })) {
+      closeDrawer(); clearPicks(); setFocus(t);
+    } else if (t === "open" || t === "sliced") {
+      closeDrawer(); clearPicks();
+      if (st.focus) setFocus(null);
+      openStack();
+    } else {
+      closeDrawer();
+      if (st.p >= 1) {
+        if (st.who || st.out) clearPick();
+        else if (st.open || st.focus) closeStack();
+      }
+    }
+    schedule();
+  }
+
+  /* ---------- pause while the tab is hidden ---------- */
+  function setVisible(v) {
+    if (!v) {
+      heroLeave(false);
+      // Still on the globe: hide it and the panels now, while nobody can see, so a
+      // return from Home can place the globe without a flash of the old layout.
+      // A return from any other tab sends "reveal", which shows them again.
+      if (st.p < 0.1) document.documentElement.classList.add("mcos-glide-wait", "mcos-hero");
+    }
+    document.documentElement.classList.toggle("mcos-paused", !v);
+    var svg = document.getElementById("svg");
+    try { if (svg) { if (v) svg.unpauseAnimations(); else svg.pauseAnimations(); } } catch (e) {}
+    if (!v) {
+      if (sraf) { cancelAnimationFrame(sraf); sraf = 0; st0 = 0; }
+    } else {
+      if (st.p < .1 && !sraf && !reduce) sraf = requestAnimationFrame(window.spin);
+      // The shell's URL may have moved on while the tab was hidden.
+      lastState = null; hostChange = true; schedule();
+    }
+  }
+
+  /* ---------- events ---------- */
+  window.addEventListener("message", function (e) {
+    if (e.origin !== ORIGIN || e.source !== parentWin) return;
+    var d = e.data || {};
+    if (d.type === "mcos:goto") go(d.target);
+    else if (d.type === "mcos:visibility") setVisible(!!d.visible);
+    else if (d.type === "mcos:hero") {
+      var placed = heroEnter(d.rect, d.rot);
+      document.documentElement.classList.remove("mcos-glide-wait");
+      releaseIntro();
+      send({ type: "mcos:hero-ready", ok: placed });
+    }
+    else if (d.type === "mcos:glide") {
+      if (d.phase === "hold") document.documentElement.classList.add("mcos-glide-wait");
+      else {
+        if (typeof d.rot === "number") { phi = d.rot; st0 = 0; window.drawGlobe(); }
+        document.documentElement.classList.remove("mcos-glide-wait");
+        if (!heroPic) document.documentElement.classList.remove("mcos-hero");
+        releaseIntro();
+      }
+    }
+  });
+  window.addEventListener("hashchange", function () { go(location.hash.slice(1)); });
+
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-studio-tab]");
+    if (!b || b.disabled) return;
+    e.preventDefault();
+    var msg = { type: "vima:navigate", tab: b.dataset.studioTab };
+    msg[b.dataset.studioTab === "apis" ? "api" : b.dataset.studioTab === "bundles" ? "bundle" : "uc"] = b.dataset.studioId;
+    send(msg);
+  });
+  document.addEventListener("keydown", function (e) {
+    if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
+      e.preventDefault();
+      send({ type: "vima:shortcut", key: "k" });
+    }
+  });
+
+  /* ---------- start ---------- */
+  var head = document.querySelector(".head");
+  if (head && !head.querySelector(".mcos-legend")) {
+    head.insertAdjacentHTML("beforeend", '<p class="mcos-legend"><span class="mcos-pip-key" aria-hidden="true"></span>Areas with an orange marker have APIs and use cases you can try live in Solution Studio.</p>');
+  }
+
+  function start(links) {
+    if (links && links.products) LINKS = links;
+    restyleDefs();
+    if (st.p < .1) window.drawGlobe();
+    markPads();
+    renderSide();
+    var h0 = location.hash.slice(1);
+    if (/^[tp]-/.test(h0)) go(h0);
+    else { lastState = current(); }
+    send({ type: "mcos:ready" });
+  }
+  fetch("links.json", { credentials: "same-origin" })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .catch(function () { return null; })
+    .then(start);
+})();

@@ -1,0 +1,328 @@
+{
+  "voice": {
+    "sid": 3,
+    "name": "af_heart",
+    "speed": 1.0
+  },
+  "lead": 0.8,
+  "tail": 2.5,
+  "sections": [
+    {
+      "id": "s1_mission",
+      "title": "Mastercard's mission",
+      "lines": [
+        {
+          "id": "m1",
+          "say": "At Mastercard, our mission is to power economies and empower people.",
+          "speed": 0.93,
+          "pause": 0.6
+        },
+        {
+          "id": "m2",
+          "say": "Every day, that means connecting billions of people, millions of businesses and thousands of banks, safely and simply, all around the world.",
+          "pause": 0.55
+        },
+        {
+          "id": "m3",
+          "say": "So how do you build on all of that?",
+          "pause": 0.45
+        },
+        {
+          "id": "m4",
+          "say": "That's where Mastercard Solution Studio comes in.",
+          "speed": 0.95,
+          "pause": 0.9
+        }
+      ]
+    },
+    {
+      "id": "s2_studio",
+      "title": "One operating system",
+      "lines": [
+        {
+          "id": "o1",
+          "say": "Solution Studio helps you navigate, and innovate, across everything Mastercard has to offer.",
+          "pause": 0.5
+        },
+        {
+          "id": "o2",
+          "say": "We've mapped all of it as one operating system: five layers, from the network at its core, up to the ways you plug in.",
+          "pause": 0.6
+        },
+        {
+          "id": "o3",
+          "say": "Because there's a lot more to Mastercard than a card network.",
+          "pause": 0.45
+        },
+        {
+          "id": "o4",
+          "say": "There are real-time, account-to-account payments.",
+          "pause": 0.45
+        },
+        {
+          "id": "o5",
+          "say": "Tokenisation, identity, fraud and cyber security.",
+          "pause": 0.45
+        },
+        {
+          "id": "o6",
+          "say": "Open finance, data and insights, loyalty, and now, agentic commerce.",
+          "pause": 0.8
+        }
+      ]
+    },
+    {
+      "id": "s3_os",
+      "title": "A use case through the layers",
+      "lines": [
+        {
+          "id": "a1",
+          "say": "Choose who you are and what you want to solve, and the areas that deliver it light up across the layers, in the order they act.",
+          "pause": 0.5
+        },
+        {
+          "id": "a2",
+          "say": "For a bank cutting fraud, that's threat intelligence, tokens, authentication, and a risk score on every payment.",
+          "pause": 0.7
+        },
+        {
+          "id": "a3",
+          "say": "Each area lists its products, and the orange markers show what you can try live, right here in Studio.",
+          "pause": 0.45
+        },
+        {
+          "id": "a4",
+          "say": "Let's take BIN Lookup, which tells you all about a Mastercard card range.",
+          "voice": "Let's take Bin Lookup, which tells you all about a Mastercard card range.",
+          "pause": 0.4
+        },
+        {
+          "id": "a5",
+          "say": "Every API is just one click away.",
+          "pause": 0.7
+        }
+      ]
+    },
+    {
+      "id": "s4_api",
+      "title": "A live API",
+      "lines": [
+        {
+          "id": "p1",
+          "say": "Each API comes pre-wired, with authentication and request signing handled for you.",
+          "pause": 0.4
+        },
+        {
+          "id": "p2",
+          "say": "Pick a card range, hit send,",
+          "pause": 0.35
+        },
+        {
+          "id": "p3",
+          "say": "and there's the response. The issuer, the product, the country, in about a second.",
+          "pause": 0.45
+        },
+        {
+          "id": "p4",
+          "say": "When you're ready, the same call is waiting as Python code for your own app.",
+          "pause": 0.8
+        }
+      ]
+    },
+    {
+      "id": "s5_bundles",
+      "title": "API bundles",
+      "lines": [
+        {
+          "id": "b1",
+          "say": "APIs are even more powerful together, so we've grouped them into bundles built around real business problems.",
+          "pause": 0.45
+        },
+        {
+          "id": "b2",
+          "say": "Merchant Resolution, for example, combines Consumer Clarity, Merchant Identifier and Places.",
+          "pause": 0.35
+        },
+        {
+          "id": "b3",
+          "say": "So cardholders always recognise who they paid, and fewer disputes ever start.",
+          "pause": 0.45
+        },
+        {
+          "id": "b4",
+          "say": "Every bundle walks you through how the APIs fit together, step by step.",
+          "pause": 0.8
+        }
+      ]
+    },
+    {
+      "id": "s6_enrichment",
+      "title": "Data enrichment",
+      "lines": [
+        {
+          "id": "d1",
+          "say": "Then there are use cases: complete experiences that bring the APIs to life.",
+          "pause": 0.45
+        },
+        {
+          "id": "d2",
+          "say": "Let's start simple. This is what a bank statement really looks like.",
+          "pause": 0.6
+        },
+        {
+          "id": "d3",
+          "say": "And this is the same data after Mastercard enriches it. The real merchant, its logo, a proper category, and where to find it.",
+          "pause": 0.9
+        }
+      ]
+    },
+    {
+      "id": "s7_findacard",
+      "title": "Find A Card",
+      "lines": [
+        {
+          "id": "f2",
+          "say": "Find A Card goes further. It shows how an AI agent could find the right card for you.",
+          "pause": 0.45
+        },
+        {
+          "id": "f3",
+          "say": "You start by telling the agent what you want, in your own words.",
+          "pause": 0.45
+        },
+        {
+          "id": "f4",
+          "say": "Then, with your permission, it connects to your bank through Open Finance,",
+          "pause": 0.35
+        },
+        {
+          "id": "f5",
+          "say": "and learns how you really spend. Where the money goes, how often you travel, and how much you spend abroad.",
+          "pause": 1.2
+        },
+        {
+          "id": "f6",
+          "say": "From that, it builds its own search, and scores every card on value, and on your chances of approval.",
+          "pause": 0.45
+        },
+        {
+          "id": "f7",
+          "say": "The result is a card that fits the way you actually live.",
+          "voice": "The result is a card that fits the way you actually liv.",
+          "pause": 0.6
+        },
+        {
+          "id": "f8",
+          "say": "Choose one, and the agent applies for you.",
+          "pause": 2.0
+        },
+        {
+          "id": "f8b",
+          "say": "If the bank has no API, it fills in the application itself.",
+          "pause": 2.8
+        },
+        {
+          "id": "f9",
+          "say": "Moments later, the card is approved and added to your phone's wallet, ready to use.",
+          "pause": 3.2
+        }
+      ]
+    },
+    {
+      "id": "s8_settle_in",
+      "title": "Settle In (concept)",
+      "lines": [
+        {
+          "id": "n1",
+          "say": "And here's where Solution Studio is heading next. Settle In is a concept, built entirely on Mastercard assets.",
+          "pause": 0.6
+        },
+        {
+          "id": "n2",
+          "say": "Priya lands in New York with no US credit history. With her consent, Open Finance shares her history from her bank in Ireland, and she's approved for a card in minutes.",
+          "pause": 0.5
+        },
+        {
+          "id": "n3",
+          "say": "It's in her phone's wallet before she reaches the city, ready to use at more than a hundred and fifty million places worldwide.",
+          "pause": 0.5
+        },
+        {
+          "id": "n4",
+          "say": "She sends money home, sees the exchange rate before she pays, and her mum has it in seconds.",
+          "pause": 0.5
+        },
+        {
+          "id": "n5",
+          "say": "At lunch, her new statement already makes sense.",
+          "pause": 0.5
+        },
+        {
+          "id": "n6",
+          "say": "When someone abroad tries her card details, Mastercard's AI stops the payment before it happens.",
+          "pause": 0.5
+        },
+        {
+          "id": "n7",
+          "say": "And her first night ends with a Priceless Surprise on Broadway.",
+          "pause": 1.0
+        }
+      ]
+    },
+    {
+      "id": "s9_open",
+      "title": "Open to everyone, easy to set up",
+      "lines": [
+        {
+          "id": "e1",
+          "say": "Solution Studio is open to everyone who wants to innovate with Mastercard.",
+          "pause": 0.4
+        },
+        {
+          "id": "e2",
+          "say": "Sign up for Mastercard Developers, clone the project, and run it. You're up and running in four steps.",
+          "pause": 0.5
+        },
+        {
+          "id": "e3",
+          "say": "And setup is just as easy.",
+          "pause": 0.35
+        },
+        {
+          "id": "e4",
+          "say": "Choose auto-provision, pick the APIs you want, and Studio creates your projects and sandbox keys for you.",
+          "pause": 0.4
+        },
+        {
+          "id": "e5",
+          "say": "No forms, and no copying and pasting keys.",
+          "pause": 0.8
+        }
+      ]
+    },
+    {
+      "id": "s10_close",
+      "title": "Close",
+      "lines": [
+        {
+          "id": "c1",
+          "say": "Mastercard is powering commerce for people, businesses and economies everywhere.",
+          "speed": 0.94,
+          "pause": 0.55
+        },
+        {
+          "id": "c2",
+          "say": "With Solution Studio, we're empowering you to innovate with us.",
+          "speed": 0.94,
+          "pause": 0.55
+        },
+        {
+          "id": "c3",
+          "say": "Let's build what's next, together.",
+          "speed": 0.92,
+          "pause": 0.5
+        }
+      ]
+    }
+  ]
+}

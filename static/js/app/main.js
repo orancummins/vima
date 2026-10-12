@@ -46,6 +46,7 @@ import './features/infoModal.js';
 import './features/apiGuide.js';
 import { initSearch } from './features/search.js';
 import { initDevProjects } from './features/devProjects.js';
+import { initOperatingSystem, osTargetFor } from './features/operatingSystem.js';
 
 (() => {
   initTheme();
@@ -80,6 +81,12 @@ import { initDevProjects } from './features/devProjects.js';
     const list = $('uc-sidebar-apis-list');
     if (!container || !list) return;
     const ucApis = (uc && uc.apis) || [];
+    const osLink = $('uc-sidebar-os-link');
+    const osTarget = osTargetFor('use_case', uc && uc.id);
+    if (osLink) {
+      osLink.dataset.osTarget = osTarget || '';
+      osLink.classList.toggle('hidden', !osTarget);
+    }
     if (!ucApis.length) { container.classList.add('hidden'); return; }
     list.innerHTML = ucApis.map(apiId => {
       const apiManifest = APIS.find(a => a.id === apiId);
@@ -122,6 +129,7 @@ import { initDevProjects } from './features/devProjects.js';
 
   // API Guide coach extracted to features/apiGuide.js (sets window.ApiGuide).
 
+  initOperatingSystem();
   initNav();
 
   initHistory();
@@ -361,6 +369,9 @@ import { initDevProjects } from './features/devProjects.js';
       renderTxNotify();
     } else if (uc.render === "testchat") {
       renderTestChat();
+    } else if (uc.render === "webview") {
+      // A self-contained page in usecases/<id>/index.html (e.g. Settle In).
+      _renderCachedWebview(uc.id, `${uc.id}-webview-frame`, _appPath(`/${uc.id}/index.html`), uc.name);
     } else if (uc.render === "financeincolour") {
       _renderCachedWebview('financeincolour', 'financeincolour-webview-frame', _appPath('/financeincolour/index.html'), 'Finance In Colour');
     } else {

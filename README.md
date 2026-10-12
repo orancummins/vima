@@ -32,6 +32,37 @@ to demonstrate, combine and innovate on those capabilities. An embedded
 Claude-powered chat (ViMA) lets you edit any use case in place — no IDE
 required.
 
+### Mastercard Operating System
+
+The **Operating System** tab shows the whole of Mastercard as one animated
+picture. It opens on the same revolving globe as Home (switch from Home and
+the globe glides across into the picture), which is then cut into five
+slices that stack into the system: the kernel (switch, brands, rules, data), rails, network services,
+solutions and access, with the users above them. Click the stack to
+separate the layers, a layer to list its areas, and an area for its
+products. Choose *who you are* and *what you want to solve*, and the areas
+that deliver it light up as a circuit, numbered in the order they act.
+
+The picture is linked to the rest of Solution Studio in both directions:
+
+- **Out of the picture.** Areas with an orange marker have something you can
+  try live. A product's card lists its wired APIs, the use cases built on
+  them and the bundles they belong to, and each one opens in Solution Studio.
+  An outcome such as *Stop chargebacks before they happen* links to the
+  bundles that put it into practice.
+- **Into the picture.** API pages (*In the Operating System*), bundle pages
+  and the use case sidebar open the matching place in the picture. On Home,
+  the button under the tagline and the globe itself open the tab.
+
+Every view has its own link (`/app?tab=os&os=p-binlookup`,
+`/app?tab=os&os=o-dispute`), and Back/Forward step through it. The picture
+follows the light/dark toggle, honours `--non-us`, and pauses its animation
+while the tab is hidden.
+
+![Operating System — an outcome lit across the layers](docs/screenshots/MastercardSolutionStudio-OperatingSystem.png)
+
+![Operating System — a product and where to try it in Solution Studio](docs/screenshots/MastercardSolutionStudio-OperatingSystem-Product.png)
+
 ### Wired-up APIs
 
 All accessible from the **APIs** tab, grouped the same way they're
@@ -177,6 +208,7 @@ that composes one or more of the APIs above:
 - **Online Identity Verification** — IDV flow demo
 - **Specials** — themed offer collections
 - **[Find A Card](https://github.com/orancummins/fac)** — card recommendation engine (separate repo, embedded)
+- **Settle In** *(concept)* — a newcomer's first day in New York, step by step: Open Finance history for a card with no local credit file, a tokenised card in the wallet, money home with the rate up front, enriched spending, fraud stopped in milliseconds, and a Priceless Surprise
 - **Sonic Branding** — Mastercard sound experience
 - **Finance In Colour** — visual spend analytics
 - **The Wire** — x-ray of a single transaction's data journey through Open Banking layers
@@ -453,6 +485,37 @@ canonical example. It pulls and embeds
 web UI inside Solution Studio. Copy that pattern to bring any other
 external project into the platform.
 
+### Re-make the walkthrough video
+
+`tools/video/` voices a script with a natural text-to-speech voice, films the
+running app in a headless browser timed to every sentence, and builds a
+narrated 1080p MP4 (about three minutes): Mastercard's mission, the
+Operating System, a live API, a bundle, Find A Card, setup, and the close.
+The script is in [docs/video/solution-studio-video-script.md](docs/video/solution-studio-video-script.md);
+see [tools/video/README.md](tools/video/README.md) to change and re-make it
+(`tools/video/run.sh` with Solution Studio and Find A Card running).
+
+### Update the Operating System picture
+
+The picture comes from [github.com/orancummins/maos](https://github.com/orancummins/maos)
+(`src/layers.artifact.html`) and is vendored unedited under `mcos/vendor/`,
+with the commit it came from in `mcos/vendor/VERSION`. Solution Studio's look
+(`mcos/web/mcos-theme.css`) and links (`mcos/web/mcos-bridge.js`) are layered
+on top when the page is served, so refreshing it is one command:
+
+```bash
+python tools/sync_mcos.py                  # latest maos main
+python tools/sync_mcos.py --maos ../maos   # from a local checkout
+python tools/sync_mcos.py --check          # check the current copy only
+```
+
+The script refuses the update if the picture no longer defines something the
+bridge relies on, or a product or outcome that Solution Studio links to. To
+link a newly wired API, add its home product to `API_PRODUCTS` in
+[mcos/__init__.py](mcos/__init__.py); bundles and use cases built on it
+follow automatically. `OUTCOME_BUNDLES` pairs the picture's outcomes with
+bundles.
+
 ---
 
 ## Architecture
@@ -462,6 +525,7 @@ Mastercard Solution Studio (port 9021, Flask)
 ├── apis/         ← wired Mastercard API integrations
 ├── usecases/     ← end-to-end demos composing those APIs
 ├── simulator/    ← optional response mocking for offline / no-key runs
+├── mcos/         ← Mastercard Operating System picture, theme and links (/mcos/)
 └── chat/         ← ViMA — Claude-powered coding assistant (Blueprint at /chat)
 ```
 

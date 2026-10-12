@@ -22,6 +22,7 @@ import {
 } from '../core/state.js';
 import { _isNonUsBlockedApiId, _isNonUsBlockedUseCaseById } from '../core/region.js';
 import { loadUseCases, getBundlesCache, getUseCasesCache } from '../core/catalog.js';
+import { osTargetFor } from '../features/operatingSystem.js';
 import {
   setStatus, _findFirstUrl, _findKey, fmt,
   renderIoPanel, updateHeaderToggleBtn, headersVisible, lastIoData,
@@ -138,6 +139,12 @@ import { showOfinSetupModal } from '../features/ofinSetupModal.js';
     if (_isNonUsBlockedApiId(api.id)) return;
     $("api-title").textContent = api.name;
     $("api-desc").textContent = api.description || "";
+    const osLink = $("btn-os-link");
+    if (osLink) {
+      const osTarget = osTargetFor('api', api.id);
+      osLink.dataset.osTarget = osTarget || '';
+      osLink.classList.toggle('hidden', !osTarget);
+    }
     const docs = $("api-docs");
 
     // Simulator toggle — fetch current status for this API
