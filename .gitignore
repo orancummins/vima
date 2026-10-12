@@ -17,6 +17,10 @@ config/keys/
 *.pkcs12
 *.pem
 private.key
+*_Sandbox_API_Keys.zip
+*sandbox*.zip
+eu-ofin-public.pem.zip
+Archive.zip
 
 # Local enrichment cache
 usecases/.enrichment_cache.json
