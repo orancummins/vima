@@ -56,7 +56,7 @@ Then there are use cases: complete experiences that bring the APIs to life.
 
 Let's start simple. This is what a bank statement really looks like. And this is the same data after Mastercard enriches it. The real merchant, its logo, a proper category, and where to find it.
 
-*[Use Cases → Data Enrichment. Raw statement lines such as `SBUX 00654321 CARD 12345` and `AMZN MKTP US*MK7G3B2X1` sit with "Merchant unknown". The cursor enriches the first two one at a time, then "Enrich all": each becomes the merchant's name and logo, its category, its website and, where the data has one, its location.]*
+*[Use Cases → Data Enrichment. Raw statement lines such as `SBUX 00654321 CARD 12345` and `AMZN MKTP US*MK7G3B2X1` sit with "Merchant unknown". The cursor enriches the first one, then "Enrich all": each becomes the merchant's name and logo, its category, its website and, where the data has one, its location.]*
 
 ## 3:06 · Find A Card (53 s)
 

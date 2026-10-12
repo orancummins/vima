@@ -283,8 +283,7 @@ const OVERLAY = `(() => {
   await at(S('d1') + 2.4); await click(page.locator('[data-uc-id="enrichment"]'));
   await at(S('d2') + 0.8); await hover(enrich.locator('.enrich-row--raw').first(), 0.9);
   await at(S('d3') + 0.3); await click(enrich.locator('[data-enrich-id]').first(), { dur: 0.6 });
-  await at(S('d3') + 1.8); await click(enrich.locator('[data-enrich-id]').first(), { dur: 0.6 });
-  await at(S('d3') + 3.4); await click(enrich.locator('#enrich-all'), { dur: 0.7 });
+  await at(S('d3') + 2.4); await click(enrich.locator('#enrich-all'), { dur: 0.7 });
   await at(S('d3') + 5.4); await hover(enrich.locator('.enrich-row--done').first(), 0.9);
 
   // 7 · Find A Card — the agent, Open Finance, the spend profile, and the card in the wallet.
