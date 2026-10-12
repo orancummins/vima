@@ -82,7 +82,7 @@ She sends money home, sees the exchange rate before she pays, and her mum has it
 
 *[Use Cases → Settle In, marked "Concept · not wired yet". Priya's day runs along the top (07:55 Arrive to 19:30 Priceless); each line moves to the next moment: her Irish bank shared through Open Finance, approval with no US credit file, the card in her phone's wallet, $400 home to her mum with the rate shown first, an enriched statement and nearby essentials, a declined fraud attempt with the protections behind it (Decision Intelligence Pro, Identity Check, tokenisation, alerts), and a Priceless Surprise notification at a Broadway box office. Each moment lists the Mastercard assets behind it, marked as in Studio today or to add.]*
 
-## 4:41 · Open to everyone, easy to set up (22 s)
+## 4:41 · Open to everyone, easy to set up (24 s)
 
 Solution Studio is open to everyone who wants to innovate with Mastercard. Sign up for Mastercard Developers, clone the project, and run it. You're up and running in four steps.
 
