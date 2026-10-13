@@ -397,9 +397,9 @@ import { osTargetFor } from './operatingSystem.js';
             <div class="bundle-detail-eyebrow">Solution bundle</div>
             <h1 class="bundle-detail-title">${escapeHtml(bundle.name)}</h1>
             <p class="bundle-detail-tagline">${escapeHtml(bundle.tagline || '')}</p>
-            ${osTarget ? `<button type="button" class="bundle-os-link" data-os-target="${escapeHtml(osTarget)}" title="See this bundle on the Mastercard Operating System">
+            ${osTarget ? `<button type="button" class="bundle-os-link" data-os-target="${escapeHtml(osTarget)}" title="See this bundle on the platform for the world's economies">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v4c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 14v4c0 1.7 3.6 3 8 3s8-1.3 8-3v-4"/></svg>
-              <span>${osTarget.startsWith('o-') ? 'See how it lights up the Operating System' : 'See it in the Operating System'}</span>
+              <span>${osTarget.startsWith('o-') ? 'See how it lights up the platform' : 'See it on the platform'}</span>
             </button>` : ''}
           </div>
         </div>

@@ -1,4 +1,5 @@
-"""Mastercard Operating System — the animated layer picture as a Solution Studio tab.
+"""Mastercard's platform for the world's economies — the animated layer picture (from maos,
+where it is the Mastercard Operating System) as a Solution Studio tab.
 
 The picture itself comes from the ``maos`` project and is vendored verbatim
 under ``mcos/vendor/`` (refresh it with ``python tools/sync_mcos.py``). This
@@ -91,6 +92,24 @@ def _asset_bust() -> int:
     return int(newest)
 
 
+# The picture calls itself the Mastercard Operating System; Solution Studio
+# calls it the platform for the world's economies. Each swap must match the
+# vendored copy (tools/sync_mcos.py checks), so a refresh can't lose one.
+PLATFORM_NAME = "Platform for the world's economies"
+TEXT_SWAPS = (
+    ('<h1>Mastercard <span class="os">Operating System</span></h1>',
+     f'<h1>Mastercard <span class="os">{PLATFORM_NAME}</span></h1>'),
+    ("Five discs that stack into one system.", "Five discs that stack into one platform."),
+    ("one for each layer of the Mastercard Operating System",
+     "one for each layer of Mastercard's platform for the world's economies"),
+    ("One front door for the whole OS.", "One front door for the whole platform."),
+    ("the ecosystem the OS serves", "the ecosystem the platform serves"),
+    # Mastercard's own figure (2025): Bacs Direct Credit pays over 95% of UK
+    # monthly salaries. The picture's "98% of state benefits" has no current source.
+    ('t:"Bacs carries about 98% of UK state benefits"', 't:"Bacs pays benefits and over 95% of UK salaries"'),
+)
+
+
 def render_page() -> str:
     """The vendored picture as a full page, dressed in Solution Studio's theme.
 
@@ -99,6 +118,8 @@ def render_page() -> str:
     font links are dropped; Solution Studio's fonts replace them.
     """
     src = vendor_source()
+    for old, new in TEXT_SWAPS:
+        src = src.replace(old, new)
     cut = src.index("</style>") + len("</style>")
     head, body = src[:cut], src[cut:]
     head = re.sub(r"<title>.*?</title>\s*", "", head, flags=re.S)
@@ -110,7 +131,7 @@ def render_page() -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mastercard Operating System</title>
+<title>Mastercard {PLATFORM_NAME}</title>
 <script src="/static/js/usecase-theme.js"></script>
 <script>if (/[?&]glide=1/.test(location.search)) document.documentElement.classList.add("mcos-glide-wait", "mcos-hero");</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">

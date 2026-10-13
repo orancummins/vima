@@ -87,8 +87,8 @@ const OVERLAY = `(() => {
   async function hideCursor() {
     await page.evaluate(() => { const c = document.getElementById('__cursor'); c.style.opacity = '0'; });
   }
-  async function centre(loc, dx = 0.5, dy = 0.5, scroll = true) {
-    await loc.first().waitFor({ state: 'visible', timeout: 8000 });
+  async function centre(loc, dx = 0.5, dy = 0.5, scroll = true, wait = 8000) {
+    await loc.first().waitFor({ state: 'visible', timeout: wait });
     if (scroll) {
       const before = await loc.first().boundingBox();
       await loc.first().scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
@@ -111,8 +111,8 @@ const OVERLAY = `(() => {
     }
   };
   // Glide the cursor to an element and click it: in the top page or inside any iframe.
-  const click = safe('click', async (loc, { dur = 0.7, dx = 0.5, dy = 0.5 } = {}) => {
-    let p = await centre(loc, dx, dy);
+  const click = safe('click', async (loc, { dur = 0.7, dx = 0.5, dy = 0.5, wait = 8000 } = {}) => {
+    let p = await centre(loc, dx, dy, true, wait);
     await cursor(p.x, p.y, dur);
     await sleep(dur * 1000 + 60);
     // Measure again before clicking, in case the page moved under the cursor.
@@ -162,7 +162,7 @@ const OVERLAY = `(() => {
   await enrich.locator('#enrich-rows').waitFor({ timeout: 20000 });
   await page.locator('[data-uc-id="settle_in"]').click();
   await settle.locator('#si-next').waitFor({ timeout: 20000 });
-  // Load the Operating System picture and hold it on the spinning globe.
+  // Load the platform picture and hold it on the spinning globe.
   await tab('os').click();
   await os.locator('#svg').waitFor({ timeout: 20000 });
   await sleep(500);
@@ -208,9 +208,9 @@ const OVERLAY = `(() => {
   const layerLabel = (l) => os.locator(`.layer[data-l="${l}"] .lbl`);
   const pad = (t) => os.locator(`.blk[data-t="${t}"]`);
 
-  // 2 · One operating system — the Operating System tab opens around the same
-  // globe (it stays exactly where it was on Home), which slices into the
-  // layers; the stack opens out and each asset named is shown on its layer.
+  // 2 · Platform for the world's economies — the platform tab opens around the
+  // same globe (it stays exactly where it was on Home), which slices into the
+  // layers; the stack opens out and each asset named is pointed at on its layer.
   await at(SEC('s2_studio').start); mark('s2_studio');
   await cursor(1500, 840, 0.01, false);   // hidden, and away from the globe's tooltip
   await at(S('o1') + 0.5); await click(tab('os'), { dur: 0.9 });
@@ -219,22 +219,42 @@ const OVERLAY = `(() => {
   await osFrame().evaluate(() => { window.__hold = false; runIntro(1); });
   await at(S('o3') + 0.1); await click(os.locator('.layer[data-l="L3"]'), { dur: 0.7 });   // open the stack
   await at(S('o4') + 0.1); await click(layerLabel('L2'), { dur: 0.5 });                     // Rails
-  await at(W('o4', 0.6)); await hover(pad('2.2'), 0.4);                                    // A2A & real-time
-  await at(S('o5') + 0.0); await click(layerLabel('L3'), { dur: 0.4 });                     // tokenisation, identity, fraud
-  await at(W('o5', 0.55)); await click(layerLabel('L4'), { dur: 0.4 });                     // cyber security
-  await at(S('o6') - 0.6); await click(layerLabel('L2'), { dur: 0.4 });                     // open finance
-  await at(W('o6', 0.22)); await click(layerLabel('L4'), { dur: 0.4 });                     // data and insights, loyalty
-  await at(W('o6', 0.66)); await click(layerLabel('L3'), { dur: 0.4 });                     // agentic commerce
+  await at(W('o4', 0.55)); await hover(pad('2.2'), 0.4);                                   // A2A & real-time
+  await at(S('o5') - 0.2); await click(layerLabel('L3'), { dur: 0.4 });                     // Network services
+  await at(W('o5', 0.12)); await hover(pad('3.1'), 0.4);                                   // tokens
+  await at(W('o5', 0.62)); await hover(pad('3.3'), 0.4);                                   // AI scoring
+  await at(S('o6') - 0.2); await click(layerLabel('L4'), { dur: 0.4 });                     // Solutions
+  await at(W('o6', 0.3)); await hover(pad('4.1'), 0.4);                                    // cyber intelligence
+  await at(S('o7') - 0.2); await click(layerLabel('L2'), { dur: 0.4 });                     // Rails
+  await at(W('o7', 0.15)); await hover(pad('2.6'), 0.4);                                   // open finance
+  await at(S('o8') - 0.2); await click(layerLabel('L4'), { dur: 0.4 });                     // Solutions
+  await at(W('o8', 0.1)); await hover(pad('4.3'), 0.4);                                    // insights
+  await at(W('o8', 0.62)); await hover(pad('4.2'), 0.4);                                   // loyalty, Priceless
+  await at(S('o9') - 0.2); await click(layerLabel('L3'), { dur: 0.4 });                     // Network services
+  await at(W('o9', 0.2)); await hover(pad('3.6'), 0.4);                                    // agentic commerce
 
-  // 3 · A use case through the layers — a bank cutting fraud lights its
-  // circuit; then the kernel and BIN Lookup, one click from the API.
+  // 3 · Use cases through the layers — a bank cutting fraud lights its
+  // circuit; then, at more length, a government getting money to people, each
+  // step pointed at as it is named; then the kernel and BIN Lookup, one click
+  // from the API.
   await at(SEC('s3_os').start); mark('s3_os');
+  const step = (i) => os.locator('#side .step').nth(i);
   await at(S('a1') + 0.4); await click(os.locator('#s-out'), { dur: 0.8 });                 // "Solution"
   await at(W('a1', 0.55)); await click(os.locator('[data-out="fraud"]'), { dur: 0.6 });     // Cut fraud…
-  await at(S('a2') + 0.3); await hover(os.locator('#side .step').nth(0), 0.6);             // threat intelligence
-  await at(W('a2', 0.42)); await hover(os.locator('#side .step').nth(2), 0.4);             // tokens
-  await at(W('a2', 0.6)); await hover(os.locator('#side .step').nth(3), 0.4);              // authentication
-  await at(W('a2', 0.8)); await hover(os.locator('#side .step').nth(4), 0.4);              // risk score
+  await at(S('a2') + 0.3); await hover(step(0), 0.6);                                      // threat intelligence
+  await at(W('a2', 0.42)); await hover(step(2), 0.4);                                      // tokens
+  await at(W('a2', 0.6)); await hover(step(3), 0.4);                                       // authentication
+  await at(W('a2', 0.8)); await hover(step(4), 0.4);                                       // risk score
+  await at(S('g1') + 0.3); await click(os.locator('#s-who'), { dur: 0.7 });                 // "Who"
+  await at(W('g1', 0.45)); await click(os.locator('[data-who="gov"]'), { dur: 0.5 });      // A government
+  await at(W('g1', 0.8)); await click(os.locator('[data-out="disburse"]'), { dur: 0.5 });  // Get payments to people…
+  await at(S('g2') + 0.3); await hover(step(0), 0.6);                                      // Bacs
+  await at(S('g3') + 0.1); await hover(step(1), 0.5);                                      // Move
+  await at(W('g3', 0.6)); await hover(step(2), 0.4);                                       // Send
+  await at(S('g4') + 0.3); await hover(step(3), 0.5);                                      // Community Pass
+  await at(S('g5') + 0.1); await hover(step(4), 0.5);                                      // A2A Protect
+  await at(S('g6') + 0.3); await hover(step(5), 0.5);                                      // SpendingPulse
+  await at(S('g7') + 0.2); await cursor(560, 520, 1.2);                                    // over the lit stack
   await at(S('a3') + 0.2); await click(layerLabel('L1'), { dur: 0.7 });                     // Kernel
   await at(W('a3', 0.6)); await hover(os.locator('.blk.studio[data-t="1.3"]'), 0.7);
   await at(S('a4') + 0.4); await click(os.locator('#side .tile[data-t="1.3"]'));
@@ -247,12 +267,10 @@ const OVERLAY = `(() => {
   await at(S('p2') + 0.1); await click(page.locator('#op-categories .op-btn').first(), { dur: 0.6 });
   await at(S('p2') + 1.3); await click(page.locator('#op-send'), { dur: 0.6 });
   await at(S('p3') + 1.0); await hover(page.locator('#resp-body'), 0.9);
-  await at(S('p4') + 0.6); await click(page.locator('#apis-snippets-fab'), { dur: 0.8 });
 
   // 5 · API bundles — Merchant resolution.
   await at(SEC('s5_bundles').start); mark('s5_bundles');
-  await at(S('b1') + 0.1); await click(page.locator('#apis-snippets-close'), { dur: 0.5 });
-  await at(S('b1') + 1.0); await click(tab('bundles'));
+  await at(S('b1') + 0.6); await click(tab('bundles'));
   await at(S('b1') + 2.8); await click(page.locator('.bundle-sidebar-item[data-bundle-id="merchant_resolution"]'));
   await at(S('b2') + 1.0); await hover(page.locator('.bundle-detail-title'), 1.0);
   await at(S('b4') + 0.2);
@@ -265,21 +283,23 @@ const OVERLAY = `(() => {
   await at(S('d1') + 2.4); await click(page.locator('[data-uc-id="enrichment"]'));
   await at(S('d2') + 0.8); await hover(enrich.locator('.enrich-row--raw').first(), 0.9);
   await at(S('d3') + 0.3); await click(enrich.locator('[data-enrich-id]').first(), { dur: 0.6 });
-  await at(S('d3') + 1.8); await click(enrich.locator('[data-enrich-id]').first(), { dur: 0.6 });
-  await at(S('d3') + 3.4); await click(enrich.locator('#enrich-all'), { dur: 0.7 });
+  await at(S('d3') + 2.4); await click(enrich.locator('#enrich-all'), { dur: 0.7 });
   await at(S('d3') + 5.4); await hover(enrich.locator('.enrich-row--done').first(), 0.9);
 
   // 7 · Find A Card — the agent, Open Finance, the spend profile, and the card in the wallet.
   await at(SEC('s7_findacard').start); mark('s7_findacard');
   await at(S('f2') + 0.3); await click(page.locator('[data-uc-id="findacard"]'));
-  // Find A Card's bank connection takes about ten seconds, so the request is
-  // typed as the agent is introduced and the connection starts early: the
-  // spend profile then lands as the narration describes it.
+  // Find A Card reloads when it is selected, its bank connection takes about
+  // eight seconds and its search about five, so the request is typed as the
+  // agent is introduced and the narration leaves room (the pauses after
+  // f2–f6 in narration.json): the connection starts on "connects to your
+  // bank" and the spend profile lands as the narration describes it.
   await at(S('f2') + 1.6); await click(fac.locator('#userDescribe'), { dur: 0.6 });
-  await fac.locator('#userDescribe').pressSequentially('Travel rewards, no foreign fees, and I want it now.', { delay: 8 });
+  // Typed through the keyboard: a locator per character is slow across two frames.
+  await page.keyboard.type('Travel rewards, no foreign fees, and I want it now.', { delay: 14 });
   await click(fac.locator('#panel1 .btn-primary'), { dur: 0.4 });
   await click(fac.locator('#panel2 button', { hasText: 'Connect To Bank' }), { dur: 0.5 });
-  await at(S('f6') + 0.6); await click(fac.locator('#panel3 .btn-primary'), { dur: 0.6 });
+  await at(S('f6') + 0.6); await click(fac.locator('#panel3 .btn-primary'), { dur: 0.6, wait: 16000 });
   await at(S('f6') + 1.9); await click(fac.locator('#btnSearch'), { dur: 0.5 });
   await at(S('f7') + 0.4);
   const ff = facFrame();
@@ -315,11 +335,10 @@ const OVERLAY = `(() => {
     m.classList.remove('prov-hidden');
   });
   await at(S('e4') + 0.6); await click(page.locator('#prov-btn-auto'), { dur: 0.8 });
-  await at(S('e4') + 3.2); await hover(page.locator('#prov-api-grid .prov-api-item').nth(4), 0.9);
   await at(S('e5') + 0.4); await hover(page.locator('#prov-btn-start'), 0.8);   // hovered, never clicked
-  await at(S('e5') + 2.0);
+  await at(S('e5') + 1.4);
   await page.evaluate(() => { document.getElementById('prov-modal').classList.add('prov-hidden'); document.body.style.overflow = ''; });
-  await at(S('e5') + 2.2); await click(tab('home'), { dur: 0.6 });
+  await at(S('e5') + 1.6); await click(tab('home'), { dur: 0.6 });
 
   // 10 · Close — Home.
   await at(SEC('s10_close').start); mark('s10_close');

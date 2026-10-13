@@ -37,7 +37,7 @@
     },
     {
       "id": "s2_studio",
-      "title": "One operating system",
+      "title": "Platform for the world's economies",
       "lines": [
         {
           "id": "o1",
@@ -46,7 +46,7 @@
         },
         {
           "id": "o2",
-          "say": "We've mapped all of it as one operating system: five layers, from the network at its core, up to the ways you plug in.",
+          "say": "We've mapped all of it as one platform for the world's economies: five layers, from the network at its core, up to the ways you plug in.",
           "pause": 0.6
         },
         {
@@ -56,24 +56,39 @@
         },
         {
           "id": "o4",
-          "say": "There are real-time, account-to-account payments.",
+          "say": "There are the rails behind entire national payment systems, moving money between bank accounts in real time.",
           "pause": 0.45
         },
         {
           "id": "o5",
-          "say": "Tokenisation, identity, fraud and cyber security.",
+          "say": "Tokens that keep card numbers out of phones, wallets and websites, and AI that scores every transaction in milliseconds.",
           "pause": 0.45
         },
         {
           "id": "o6",
-          "say": "Open finance, data and insights, loyalty, and now, agentic commerce.",
+          "say": "Cyber intelligence that spots stolen cards before they're used.",
+          "pause": 0.45
+        },
+        {
+          "id": "o7",
+          "say": "Open finance, so people can share their bank data, with consent, and get a loan decision in minutes.",
+          "pause": 0.45
+        },
+        {
+          "id": "o8",
+          "say": "Insights from the spending that flows across the network, loyalty, and Priceless experiences.",
+          "pause": 0.4
+        },
+        {
+          "id": "o9",
+          "say": "And now, agentic commerce, where AI agents can shop and pay for you, safely.",
           "pause": 0.8
         }
       ]
     },
     {
       "id": "s3_os",
-      "title": "A use case through the layers",
+      "title": "Use cases through the layers",
       "lines": [
         {
           "id": "a1",
@@ -84,6 +99,44 @@
           "id": "a2",
           "say": "For a bank cutting fraud, that's threat intelligence, tokens, authentication, and a risk score on every payment.",
           "pause": 0.7
+        },
+        {
+          "id": "g1",
+          "say": "Now take something bigger: a government getting money to people, quickly and safely.",
+          "pause": 0.5
+        },
+        {
+          "id": "g2",
+          "say": "Payments go out on Bacs, which runs on Mastercard's Vocalink, and already pays more than 95% of UK salaries.",
+          "voice": "Payments go out on Backs, which runs on Mastercard's Vocalink, and already pays more than ninety-five percent of UK salaries.",
+          "pause": 0.45
+        },
+        {
+          "id": "g3",
+          "say": "Mastercard Move pays out to cards, bank accounts and wallets, and Send can push funds to a card in seconds.",
+          "pause": 0.45
+        },
+        {
+          "id": "g4",
+          "say": "Where people have no bank account, Community Pass gives them a digital identity, so the money still reaches them.",
+          "pause": 0.45
+        },
+        {
+          "id": "g5",
+          "say": "A2A Protect screens every payment for scams before it leaves.",
+          "voice": "A to A Protect screens every payment for scams before it leaves.",
+          "pause": 0.45
+        },
+        {
+          "id": "g6",
+          "say": "And SpendingPulse shows how that money then moves through the economy.",
+          "voice": "And Spending Pulse shows how that money then moves through the economy.",
+          "pause": 0.5
+        },
+        {
+          "id": "g7",
+          "say": "Rails, security, insights and inclusion, working together as one platform.",
+          "pause": 0.8
         },
         {
           "id": "a3",
@@ -120,11 +173,6 @@
         {
           "id": "p3",
           "say": "and there's the response. The issuer, the product, the country, in about a second.",
-          "pause": 0.45
-        },
-        {
-          "id": "p4",
-          "say": "When you're ready, the same call is waiting as Python code for your own app.",
           "pause": 0.8
         }
       ]
@@ -183,27 +231,27 @@
         {
           "id": "f2",
           "say": "Find A Card goes further. It shows how an AI agent could find the right card for you.",
-          "pause": 0.45
+          "pause": 2.2
         },
         {
           "id": "f3",
           "say": "You start by telling the agent what you want, in your own words.",
-          "pause": 0.45
+          "pause": 2.9
         },
         {
           "id": "f4",
           "say": "Then, with your permission, it connects to your bank through Open Finance,",
-          "pause": 0.35
+          "pause": 1.2
         },
         {
           "id": "f5",
           "say": "and learns how you really spend. Where the money goes, how often you travel, and how much you spend abroad.",
-          "pause": 1.2
+          "pause": 2.0
         },
         {
           "id": "f6",
           "say": "From that, it builds its own search, and scores every card on value, and on your chances of approval.",
-          "pause": 0.45
+          "pause": 1.0
         },
         {
           "id": "f7",
@@ -296,7 +344,7 @@
         {
           "id": "e5",
           "say": "No forms, and no copying and pasting keys.",
-          "pause": 0.8
+          "pause": 2.8
         }
       ]
     },
@@ -306,7 +354,7 @@
       "lines": [
         {
           "id": "c1",
-          "say": "Mastercard is powering commerce for people, businesses and economies everywhere.",
+          "say": "Mastercard is the platform for the world's economies, powering secure value exchange between people, businesses and communities.",
           "speed": 0.94,
           "pause": 0.55
         },
@@ -318,7 +366,7 @@
         },
         {
           "id": "c3",
-          "say": "Let's build what's next, together.",
+          "say": "Helping everyone realize their potential, which is priceless.",
           "speed": 0.92,
           "pause": 0.5
         }
