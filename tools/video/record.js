@@ -60,6 +60,21 @@ const OVERLAY = `(() => {
   fs.mkdirSync(FRAMES, { recursive: true });
   const browser = await chromium.launch({ headless: !HEADED });
   const ctx = await browser.newContext({ viewport: { width: 1600, height: 900 }, deviceScaleFactor: 1.2 });
+  // Merchant logos come from Mastercard's branding host. Where the recording
+  // machine can't reach it, stand in the same brand's logo from logos/ (see
+  // logos/README.md); a merchant with none keeps the app's initials badge.
+  const LOGO_DIR = path.join(__dirname, 'logos');
+  const LOGOS = fs.existsSync(path.join(LOGO_DIR, 'logos.json'))
+    ? JSON.parse(fs.readFileSync(path.join(LOGO_DIR, 'logos.json'), 'utf8')) : {};
+  await ctx.route(/^https:\/\/institution-branding-assets-cf\.openbanking\.mastercard\.com\/merchants\//, async (route) => {
+    try {
+      const real = await route.fetch({ timeout: 5000 });
+      if (real.ok()) return route.fulfill({ response: real });
+    } catch (_) { /* unreachable: fall through to the stand-in */ }
+    const id = decodeURIComponent(route.request().url().split('/merchants/')[1].split('/')[0]);
+    if (LOGOS[id]) return route.fulfill({ path: path.join(LOGO_DIR, LOGOS[id]), contentType: 'image/svg+xml' });
+    return route.abort();
+  });
   await ctx.addInitScript(() => { try { localStorage.setItem('vima:theme', 'dark'); } catch (e) {} });
   const page = await ctx.newPage();
   const log = (...a) => console.log(((Date.now() - (t0 || Date.now())) / 1000).toFixed(2).padStart(7), ...a);
