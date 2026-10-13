@@ -2,7 +2,7 @@
 
 5 min 23 s · 1920×1080, 30 fps · voice: Kokoro-82M v1.0 (`af_heart`), one sentence at a time with explicit pauses · made by `tools/video/` (see its README)
 
-**Watch the latest cut: [Mastercard-Solution-Studio.mp4](Mastercard-Solution-Studio.mp4)** (5 min 23 s) (merchant logos show as initials in this take; a local render with Open Finance keys shows the API's real logos).
+**Watch the latest cut: [Mastercard-Solution-Studio.mp4](Mastercard-Solution-Studio.mp4)** (5 min 23 s). This take was recorded where Mastercard's logo host can't be reached, so the merchant logos are stand-ins of the same brands (see below); a render that can reach it shows the API's own.
 
 The narration below is the source of truth in [`tools/video/narration.json`](../../tools/video/narration.json); edit it there and re-run the pipeline. Timings are from the current voice track. *Italic brackets* are what happens on screen.
 
@@ -105,7 +105,7 @@ Helping everyone realize their potential, which is priceless.
 - **Pronunciation.** `tools/video/check_voice.py` plays the track back through Whisper; at the last run every sentence was heard as written (it reports British spellings such as *tokenisation* as differences, which is expected). Where the voice gets a word wrong, a line in `narration.json` carries a `voice` text alongside the written `say`: "Bin Lookup" so BIN is said as the word *bin*; "liv" (defined in `tools/video/lexicon-extra.txt`) so *live* rhymes with *give*; "Backs" for Bacs, "A to A Protect" and "Spending Pulse"; and "ninety-five percent" for 95%.
 - **The Bacs figure.** "More than 95% of UK salaries" is Mastercard's own 2025 figure for Bacs Direct Credit. The picture in `maos` says "about 98% of UK state benefits", which has no current source, so Studio shows "Bacs pays benefits and over 95% of UK salaries" instead (`TEXT_SWAPS` in `mcos/__init__.py`).
 - **Your own data shows.** The take uses whatever the running Solution Studio has: real sandbox keys give real BIN Lookup data, and with no keys the simulator answers. Find A Card's profile and scores are random each run.
-- **Real merchant logos.** With Open Finance configured, Data Enrichment calls the enrichment API live, and Settle In's lunch statement uses the same results, so names, categories and logos are the API's own. The logos load from Mastercard's merchant-branding host; where it can't be reached the merchant's initials stand in.
+- **Real merchant logos.** With Open Finance configured, Data Enrichment calls the enrichment API live, and Settle In's lunch statement uses the same results, so names, categories and logos are the API's own. The logos load from Mastercard's merchant-branding host. Where the recording machine can't reach it, `record.js` serves the same brand's logo from `tools/video/logos/` (Starbucks, Amazon, Uber, Netflix, Lyft, Apple, Target); Whole Foods Market has none there and keeps its initials.
 - **Nothing is provisioned.** The welcome dialog is opened directly and the API picker is only hovered.
 - **Timing.** Every action is scheduled from the voice track, so changing a sentence moves the picture with it. Find A Card reloads when selected, its bank connection takes about eight seconds, its search about five and applying about eleven, so its request is typed early, the narration leaves short pauses for it, and the wallet click is tied to "added to your phone's wallet".
 
