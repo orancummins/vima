@@ -396,6 +396,7 @@ def index():
         bundles=_solutions,
         use_cases=_use_cases,
         mcos_targets=_mcos_links(_apis, _solutions, _use_cases)["targets"],
+        mcos_search=mcos.search_catalog(),
         spotlight=_build_spotlight(_apis),
         provision_catalog=_build_provision_catalog(),
         runtime_mode={

@@ -6,6 +6,7 @@ Validates that:
   - The API manifest endpoint (GET /explorer/apis) returns valid JSON
   - The API list is non-empty and contains a known API id
   - The platform tab's page and links load, and every link resolves
+  - The platform's searchable catalogue reaches the page
 
 Independently runnable::
 
@@ -14,6 +15,8 @@ Independently runnable::
 from __future__ import annotations
 
 import argparse
+import json
+import re
 import sys
 import os
 
@@ -110,6 +113,22 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
         )
 
     runner.run("GET /mcos/links.json resolves every link", _mcos_links)
+
+    def _mcos_search_catalog():
+        resp = assert_status(get(f"{base_url}/app"), 200)
+        m = re.search(r"window\.__MCOS_SEARCH__ = (\[.*?\]);", resp.text)
+        assert m, "window.__MCOS_SEARCH__ not found in /app HTML."
+        entries = json.loads(m.group(1))
+        kinds = {e["kind"] for e in entries}
+        assert kinds >= {"layer", "area", "product", "outcome"}, (
+            f"Platform search catalogue is missing kinds: {sorted(kinds)}"
+        )
+        by_id = {e["id"]: e for e in entries}
+        assert by_id.get("binlookup", {}).get("target") == "p-binlookup", (
+            "BIN Lookup's product should be searchable and open p-binlookup"
+        )
+
+    runner.run("/app carries the platform search catalogue", _mcos_search_catalog)
 
     return runner
 

@@ -34,7 +34,7 @@
     <nav class="top-tabs">
       <canvas id="mini-globe" width="52" height="52" aria-hidden="true"></canvas>
       <button class="top-tab active" data-top-tab="home">Home</button>
-      <button class="top-tab" data-top-tab="os" title="Platform for the world's economies"><span class="top-tab-long">Platform for the world's economies</span><span class="top-tab-short" aria-hidden="true">Platform</span></button>
+      <button class="top-tab" data-top-tab="os" title="Platform">Platform</button>
       <button class="top-tab" data-top-tab="apis">APIs</button>
       <button class="top-tab" data-top-tab="bundles">API Bundles</button>
       <button class="top-tab" data-top-tab="usecases">Use Cases</button>
@@ -107,7 +107,7 @@
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
         <input class="search-input" id="search-input" type="text"
-               placeholder="Search APIs, operations, use cases…"
+               placeholder="Search APIs, use cases, bundles, the platform…"
                autocomplete="off" spellcheck="false" aria-label="Search">
         <kbd class="search-esc-hint">Esc</kbd>
       </div>
@@ -1664,6 +1664,7 @@ client = OfinClient.from_env()          <span class="sdk-c-cm"># credentials aut
     window.__BUNDLES__ = {{ bundles | tojson }};
     window.__RUNTIME_MODE__ = {{ runtime_mode | tojson }};
     window.__MCOS_TARGETS__ = {{ mcos_targets | tojson }};
+    window.__MCOS_SEARCH__ = {{ mcos_search | tojson }};
     window.__PROVISION_CATALOG__ = {{ provision_catalog | tojson }};
   </script>
   <script src="{{ url_for('static', filename='js/app/main.js') }}?v={{ cache_bust }}" type="module"></script>

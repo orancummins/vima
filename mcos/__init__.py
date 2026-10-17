@@ -6,7 +6,9 @@ under ``mcos/vendor/`` (refresh it with ``python tools/sync_mcos.py``). This
 package wraps it in a page that carries Solution Studio's look
 (``mcos/web/mcos-theme.css``) and its links into the rest of the app
 (``mcos/web/mcos-bridge.js``), and works out which products in the picture
-Solution Studio can show live.
+Solution Studio can show live. It also reads the picture's inventory out of
+the vendored source (``search_catalog``) so Studio's ⌘K palette can search
+the platform's layers, areas, products and outcomes and open them.
 
 Nothing in the vendored file is edited, so a refresh never has to re-apply
 local changes: the bridge drives the picture through the functions and state
@@ -83,6 +85,147 @@ def picture_ids() -> tuple[set[str], set[str]]:
     products = set(re.findall(r'\bP\("([a-z0-9]+)",', src))
     outcomes = set(re.findall(r'\{id:"([a-z0-9]+)", who:"', src))
     return products, outcomes
+
+
+# ---------------------------------------------------------------------------
+# Search catalogue
+# ---------------------------------------------------------------------------
+# Studio's ⌘K palette searches the picture as well as the APIs, bundles and
+# use cases. The picture's inventory lives inside the vendored file's own
+# script scope, so it is read out of the source here (like picture_ids above)
+# rather than by editing the vendored copy or running its script.
+
+_JS_STR = r'"((?:[^"\\]|\\.)*)"'
+_LAYER_RE = re.compile(r'\{id:"(U|L[1-5])", name:' + _JS_STR + r', analogy:' + _JS_STR)
+_TILE_RE = re.compile(r'\{id:"([\w.\-]+)", (?:ic:"[\w\-]+", )?name:' + _JS_STR)
+_BLURB_RE = re.compile(r'blurb:' + _JS_STR)
+_DESC_RE = re.compile(r'desc:' + _JS_STR)
+_PRODUCT_RE = re.compile(r'\bP\("([a-z0-9]+)",' + _JS_STR + r',' + _JS_STR)
+_OUTCOME_RE = re.compile(r'\{id:"([a-z0-9]+)", who:"(\w+)", name:' + _JS_STR + r', why:' + _JS_STR)
+_USERS_RE = re.compile(r'(\w+):' + _JS_STR)
+_DEV_API_RE = re.compile(r'\[' + _JS_STR + r',' + _JS_STR + r',"([a-z0-9]+)"\]')
+
+
+def _js_text(raw: str) -> str:
+    """A JS double-quoted string literal's value."""
+    return re.sub(r'\\(.)', r'\1', raw)
+
+
+def _inventory_source(src: str) -> str:
+    """The MAP IIFE: the picture's product inventory."""
+    start = src.index("const MAP=(function(){")
+    return src[start:src.index("const TILES = {}, PRODUCTS = {}", start)]
+
+
+def parse_catalog(src: str) -> list[dict]:
+    """Read the picture's layers, areas, products and outcomes out of ``src``.
+
+    Each entry carries the ``target`` (the picture's own hash) that opens it,
+    so a search result can go straight to it.
+    """
+    inv = _inventory_source(src)
+    entries: list[dict] = []
+
+    def add(kind: str, ident: str, name: str, sub: str, target: str, *text: str) -> None:
+        entries.append({
+            "kind": kind,
+            "id": ident,
+            "name": name,
+            "sub": sub,
+            "target": target,
+            "text": " ".join(t for t in (name, sub, *text) if t),
+        })
+
+    # Developer API products, so searching an API name finds its home product.
+    dev_apis: dict[str, list[str]] = {}
+    api_block = inv[inv.index("const APIS"):] if "const APIS" in inv else ""
+    for name, _slug, home in _DEV_API_RE.findall(api_block):
+        dev_apis.setdefault(home, []).append(_js_text(name))
+
+    # The eight kinds of user are the tiles of the Users layer, built in the
+    # picture from the USERS map rather than written out as tiles.
+    users_match = re.search(r"const USERS = \{(.*?)\n\};", inv, re.S)
+    user_names = dict(_USERS_RE.findall(users_match.group(1))) if users_match else {}
+    for key, raw in user_names.items():
+        add("user", "u-" + key, _js_text(raw), "Users", "t-u-" + key)
+
+    # Layers, areas and products, matched in source order so each product
+    # picks up the area and layer it sits inside.
+    marks: list[tuple[int, str, tuple]] = []
+    for m in _LAYER_RE.finditer(inv):
+        marks.append((m.start(), "layer", (m.group(1), _js_text(m.group(2)), _js_text(m.group(3)), m.end())))
+    for m in _TILE_RE.finditer(inv):
+        if _LAYER_RE.match(inv, m.start()):
+            continue
+        marks.append((m.start(), "area", (m.group(1), _js_text(m.group(2)), m.end())))
+    for m in _PRODUCT_RE.finditer(inv):
+        marks.append((m.start(), "product", (m.group(1), _js_text(m.group(2)), _js_text(m.group(3)))))
+    marks.sort(key=lambda x: x[0])
+
+    layer_name = area_name = ""
+    for _pos, kind, data in marks:
+        if kind == "layer":
+            lid, layer_name, analogy, end = data
+            desc = _DESC_RE.search(inv, end, end + 600)
+            add("layer", lid, layer_name, analogy, lid, _js_text(desc.group(1)) if desc else "")
+            area_name = ""
+        elif kind == "area":
+            aid, area_name, end = data
+            blurb = _BLURB_RE.search(inv, end, end + 300)
+            add("area", aid, area_name, layer_name, "t-" + aid, _js_text(blurb.group(1)) if blurb else "")
+        else:
+            pid, pname, pdesc = data
+            sub = " · ".join(x for x in (area_name, layer_name) if x)
+            add("product", pid, pname, sub, "p-" + pid, pdesc, *dev_apis.get(pid, ()))
+
+    # Outcomes ("who am I and what do I want to solve?") live outside the
+    # inventory, in the picture's own script.
+    who_block = re.search(r"const WHO = \{(.*?)\};", src, re.S)
+    who = dict(_USERS_RE.findall(who_block.group(1))) if who_block else {}
+    for oid, wid, name, why in _OUTCOME_RE.findall(src):
+        add("outcome", oid, _js_text(name), _js_text(who.get(wid, "")), "o-" + oid, _js_text(why))
+
+    return entries
+
+
+def catalog_problems(src: str) -> list[str]:
+    """Why the search catalogue could not be read out of ``src`` (empty if fine).
+
+    ``tools/sync_mcos.py`` runs this, so a refresh that moves the inventory
+    out of reach fails loudly instead of quietly emptying Studio's search.
+    """
+    try:
+        entries = parse_catalog(src)
+    except ValueError as exc:   # the inventory is no longer where it was
+        return [f"the search catalogue cannot be read from the picture: {exc}"]
+    counts: dict[str, int] = {}
+    for e in entries:
+        counts[e["kind"]] = counts.get(e["kind"], 0) + 1
+    problems = []
+    for kind, least in (("layer", 5), ("area", 20), ("product", 100), ("outcome", 10), ("user", 7)):
+        if counts.get(kind, 0) < least:
+            problems.append(
+                f"the search catalogue found only {counts.get(kind, 0)} {kind} entries in the picture "
+                f"(expected at least {least}); its shape has changed"
+            )
+    products = set(re.findall(r'\bP\("([a-z0-9]+)",', src))
+    missed = products - {e["id"] for e in entries if e["kind"] == "product"}
+    if missed:
+        problems.append(f"the search catalogue missed products: {', '.join(sorted(missed))}")
+    return problems
+
+
+@lru_cache(maxsize=4)
+def _search_catalog(mtime: float) -> tuple[dict, ...]:  # mtime keys the cache
+    src = vendor_source()
+    for old, new in TEXT_SWAPS:   # search the wording the page shows
+        src = src.replace(old, new)
+    return tuple(parse_catalog(src))
+
+
+def search_catalog() -> list[dict]:
+    """Everything in the picture the ⌘K palette can search and open."""
+    return [dict(e) for e in _search_catalog(os.path.getmtime(VENDOR_FILE))]
 
 
 def _asset_bust() -> int:

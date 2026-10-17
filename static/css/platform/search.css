@@ -163,6 +163,7 @@
 .search-result-type--usecase   { background: rgba(39, 201, 63, 0.12); color: #55dd70; }
 .search-result-type--bundle    { background: rgba(255, 203, 5, 0.12); color: #ffcb05; }
 .search-result-type--sdk       { background: rgba(70, 160, 255, 0.14); color: #7abfff; }
+.search-result-type--platform  { background: rgba(163, 120, 255, 0.14); color: #b899ff; }
 
 .search-empty {
   padding: 24px 14px;
@@ -230,6 +231,7 @@
 .theme-light .search-result-type--usecase   { background: rgba(0, 140, 30, 0.10); color: #006c18; }
 .theme-light .search-result-type--bundle    { background: rgba(160, 120, 0, 0.10); color: #7a5e00; }
 .theme-light .search-result-type--sdk       { background: rgba(0, 100, 220, 0.10); color: #0055b3; }
+.theme-light .search-result-type--platform  { background: rgba(95, 45, 210, 0.10); color: #5a2bb8; }
 .theme-light .search-empty { color: rgba(0, 0, 0, 0.4); }
 .theme-light .search-footer { border-top-color: rgba(0, 0, 0, 0.08); }
 .theme-light .search-footer span { color: rgba(0, 0, 0, 0.38); }

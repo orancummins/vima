@@ -76,6 +76,7 @@ def check(src: str) -> list[str]:
     for oid in mcos.OUTCOME_BUNDLES:
         if oid not in outcomes:
             problems.append(f"outcome {oid!r} is gone")
+    problems += mcos.catalog_problems(src)
     return problems
 
 

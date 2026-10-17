@@ -105,7 +105,14 @@ html[data-theme="light"] body {
 }
 /* Solution Studio's header already carries the brand bar. */
 body::before { display: none; }
-.wrap { max-width: 1320px; }
+.wrap {
+  max-width: 1320px;
+  padding-top: 84px;
+}
+
+@media (max-width: 560px) {
+  .wrap { padding-top: 28px; }
+}
 
 /* Heading in the style of Solution Studio's About panels. */
 .head::before {

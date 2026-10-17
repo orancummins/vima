@@ -1,11 +1,13 @@
 // features/search.js
 // Global command-palette search. Triggered by ⌘K / Ctrl+K or the search button.
-// Searches APIs, operations, use cases, and bundles entirely client-side.
+// Searches APIs, operations, use cases, bundles and the platform picture
+// (its layers, areas, products and outcomes) entirely client-side.
 
 import { APIS, USE_CASES } from '../core/env.js';
 import { getBundlesCache } from '../core/catalog.js';
 import { escapeHtml } from '../core/html.js';
 import { selectOp } from '../workbench/core.js';
+import { openOs } from './operatingSystem.js';
 
 // ---------------------------------------------------------------------------
 // Index building
@@ -14,6 +16,11 @@ import { selectOp } from '../workbench/core.js';
 function _stripHtml(str) {
   return (str || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
+
+// What a platform result is, shown on its badge.
+const _PLATFORM_BADGE = {
+  layer: 'Layer', area: 'Area', product: 'Product', outcome: 'Outcome', user: 'Customer',
+};
 
 function _buildIndex() {
   const entries = [];
@@ -88,6 +95,20 @@ function _buildIndex() {
     });
   }
 
+  // The platform picture: its layers, areas, products and outcomes
+  // (mcos.search_catalog(), rendered into the page by templates/index.html).
+  for (const item of (window.__MCOS_SEARCH__ || [])) {
+    entries.push({
+      type: 'platform',
+      badge: _PLATFORM_BADGE[item.kind] || 'Platform',
+      label: item.name,
+      sub: item.sub || '',
+      id: item.id,
+      searchText: (item.text || item.name || '').toLowerCase(),
+      action() { openOs(item.target); },
+    });
+  }
+
   return entries;
 }
 
@@ -153,7 +174,7 @@ function _score(entry, tokens) {
   return total;
 }
 
-const _TYPE_PRIORITY = { api: 0, usecase: 1, bundle: 2, sdk: 2, operation: 3 };
+const _TYPE_PRIORITY = { api: 0, usecase: 1, bundle: 2, sdk: 2, platform: 3, operation: 4 };
 
 function _search(query, index) {
   if (!query) return [];
@@ -168,15 +189,17 @@ function _search(query, index) {
 
   scored.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
-    return (_TYPE_PRIORITY[a.entry.type] ?? 4) - (_TYPE_PRIORITY[b.entry.type] ?? 4);
+    return (_TYPE_PRIORITY[a.entry.type] ?? 5) - (_TYPE_PRIORITY[b.entry.type] ?? 5);
   });
 
-  // Cap results: up to 20 total, max 6 operations
+  // Cap results: up to 20 total, max 6 operations and 6 platform entries.
+  // The platform picture holds a couple of hundred products, so a broad
+  // query would otherwise crowd out what Studio can actually run.
   const result = [];
-  let opCount = 0;
+  const capped = { operation: 0, platform: 0 };
   for (const { entry } of scored) {
-    if (entry.type === 'operation') {
-      if (++opCount > 6) continue;
+    if (entry.type in capped) {
+      if (++capped[entry.type] > 6) continue;
     }
     result.push(entry);
     if (result.length >= 20) break;
@@ -188,9 +211,9 @@ function _search(query, index) {
 // Rendering
 // ---------------------------------------------------------------------------
 
-const _TYPE_LABEL      = { api: 'API', operation: 'Operation', usecase: 'Use Case', bundle: 'Bundle', sdk: 'SDK' };
-const _TYPE_GROUP      = { api: 'APIs', operation: 'Operations', usecase: 'Use Cases', bundle: 'Bundles', sdk: 'SDKs' };
-const _TYPE_ORDER      = ['api', 'usecase', 'bundle', 'sdk', 'operation'];
+const _TYPE_LABEL      = { api: 'API', operation: 'Operation', usecase: 'Use Case', bundle: 'Bundle', sdk: 'SDK', platform: 'Platform' };
+const _TYPE_GROUP      = { api: 'APIs', operation: 'Operations', usecase: 'Use Cases', bundle: 'Bundles', sdk: 'SDKs', platform: 'Platform' };
+const _TYPE_ORDER      = ['api', 'usecase', 'bundle', 'sdk', 'platform', 'operation'];
 
 function _renderResults(results, matches, onSelect) {
   const entries = [];
@@ -221,7 +244,7 @@ function _renderResults(results, matches, onSelect) {
           ${dot}<span class="search-result-label">${escapeHtml(entry.label)}</span>
           ${entry.sub ? `<span class="search-result-sub">${escapeHtml(entry.sub)}</span>` : ''}
         </div>
-        <span class="search-result-type search-result-type--${entry.type}">${_TYPE_LABEL[entry.type]}</span>
+        <span class="search-result-type search-result-type--${entry.type}">${entry.badge || _TYPE_LABEL[entry.type]}</span>
       </button>`;
     }
   }
