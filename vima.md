@@ -28,12 +28,13 @@ mcos/
   web/                        — mcos-theme.css (Studio's look) and mcos-bridge.js (links + shell messages)
 customers/
   __init__.py                 — the Customers tab: registry, Studio-themed page, links, search catalogue
+  build_page.py               — builds a customer's page from SNB's (the template) and customers/<id>/page_data.py
   <id>/
     __init__.py               — CUSTOMER: who they are, the page, product → Studio APIs/use cases/bundles
-    <page>.html               — standalone page, copied in unedited (tools/sync_customer.py)
+    <page>.html               — standalone page: copied in (snb, tools/sync_customer.py) or built (build_page.py)
+    page_data.py              — (built pages) the page's data: inventory, journeys, Mastercard lens, palette
     studio-theme.css          — the customer's colours on Studio's skin
     *.md                      — research notes behind the page
-  citi/build_page.py          — builds Citi's page from SNB's (the template) and the citi_*.py data beside it
 simulator/
   blueprint.py                — Flask Blueprint; /api-sim/* routes
   handlers/                   — per-API mock response handlers

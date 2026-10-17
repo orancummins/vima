@@ -515,7 +515,11 @@ $6 trillion a day of payments to 70 million American cardmembers, 78
 products with their sources, and a *Mastercard lens* that raises every area
 by how deep Mastercard goes in it, from the 2015 network agreement under
 Citi's own cards to the first-issuer launches since 2024 (Move, World
-Legend, Agent Pay, Installments, In Control).
+Legend, Agent Pay, Installments, In Control). The third is **Citizens**
+(as at 17 October 2026): a $234 billion regional bank whose only card
+network, and contracted services provider, has been Mastercard since 2023,
+with the Consumer Bank, the Commercial Bank and a Private Bank built from
+First Republic's bankers, and the same Mastercard lens.
 
 Each customer has a folder under `customers/<id>/` holding a **standalone
 page**, one self-contained HTML file that opens on its own in any browser
@@ -542,10 +546,10 @@ python tools/sync_customer.py --check      # check every customer's current copy
 
 It refuses a page that no longer has what the bridge drives, or a product or
 journey that `customers/<id>/__init__.py` maps to Studio. Citi's page is
-built here rather than copied in: `customers/citi/build_page.py` takes SNB's
+built here rather than copied in: `customers/build_page.py` takes SNB's
 page as the template (the same engine) and swaps in Citi's data, palette and
 lens wording from the `citi_*.py` files beside it, so to update Citi edit
-those and run `python customers/citi/build_page.py`. To add a customer,
+those and run `python customers/build_page.py citi` (or `citizens`). To add a customer,
 copy `customers/snb/`: a `CUSTOMER` dict in `__init__.py` (who they are, the
 page's file name, and which Studio APIs, use cases and bundles land on which
 of their products), the standalone page, and a `studio-theme.css` with their

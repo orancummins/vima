@@ -192,8 +192,10 @@ def assert_field(data: Any, *path: str | int, msg: str = "") -> Any:
 def assert_no_server_error(html: str, url: str = "") -> None:
     """Assert that HTML response does not contain Flask/Python error pages."""
     for marker in ("Internal Server Error", "Traceback (most recent call last)", "raise ", "AttributeError"):
-        # Whole words only: page copy such as "reviews praise the app" is not an error.
-        if re.search(r"\b" + re.escape(marker), html):
+        # Whole words only, and "raise" only where it starts a line as in a traceback:
+        # page copy such as "reviews praise the app" or "advise and raise" is not an error.
+        pattern = r"^\s*raise \w" if marker == "raise " else r"\b" + re.escape(marker)
+        if re.search(pattern, html, re.M):
             raise AssertionError(
                 f"Server error page detected at {url!r}. Marker: {marker!r}. "
                 f"HTML (first 400): {html[:400]}"

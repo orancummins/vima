@@ -1,6 +1,6 @@
 """Citi, as a platform: the data behind ``Citi_Platform.html``.
 
-``build_page.py`` turns this into the page. Public sources, as at the date
+``python customers/build_page.py citi`` turns this into the page. Public sources, as at the date
 in ``AS_OF``; every product carries its own sources, and the research notes
 behind them are in ``Citi_research_notes.md``.
 
@@ -17,6 +17,8 @@ A product is a dict with the template's own keys:
 from citi_inventory import LAYERS, PILLARS  # noqa: F401  (the long lists live there)
 from citi_story import LENS, OUTCOMES, WHO  # noqa: F401
 
+SHORT = "Citi"
+PAGE = "Citi_Platform.html"
 AS_OF = "17 October 2026"
 TITLE = "Citi Platform"
 KICKER = f"Citigroup · as at {AS_OF}"
@@ -25,6 +27,12 @@ SUB = ("A global bank in nearly 160 countries as five discs that stack into one 
        "the transformation at the bottom to the app, the branches and CitiDirect at the top. Click the stack to open it. "
        "Choose who you are and what you want to do, and the areas that deliver it light up across the layers, joined "
        "in the order they act. Switch to the Mastercard lens to see how deep Mastercard goes in every area.")
+
+PALETTE_NOTE = ("Palette: Citi's blues for the bank, from the deep navy foundation to the bright access layer, graphite for the people,\n"
+                "   Citi red for the arc, and Mastercard's colours kept for the lens that reads the stack through Mastercard.")
+SLICES_NOTE = ("the five slices: foundation (deep navy), rails (Citi blue), services (mid blue), lines (sky blue), "
+               "access (graphite); graphite for the people")
+GLOBE_NOTE = "the globe: Citi's navy, blue and sky"
 
 PIN = (40.72, -74.01, "New York")
 PIN_FACING = "the Americas"

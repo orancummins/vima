@@ -8,11 +8,11 @@ for Mastercard. Public sources as at 17 October 2026; the research behind it
 is in ``Citi_research_notes.md``.
 
 Unlike SNB's page, which was built elsewhere and copied in, Citi's is built
-here: ``build_page.py`` takes SNB's page as the template (the same engine)
+here: ``customers/build_page.py`` takes SNB's page as the template (the same engine)
 and swaps in Citi's data from ``page_data.py``, ``citi_foundation.py``,
 ``citi_inventory.py`` and ``citi_story.py``. Edit those and rebuild::
 
-    python customers/citi/build_page.py
+    python customers/build_page.py citi
 
 ``STUDIO`` puts Solution Studio's APIs, use cases and bundles on the Citi
 products where the page's own Mastercard notes say they fit.

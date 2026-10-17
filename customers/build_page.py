@@ -1,27 +1,29 @@
 #!/usr/bin/env python3
-"""Build Citi's standalone page from SNB's, with Citi's data.
+"""Build a customer's standalone page from SNB's, with that customer's data.
 
 The SNB page (``customers/snb/SNB_Operating_System.html``) is one
 self-contained file: the layer-picture engine, its styles, embedded fonts
-and SNB's data. Citi's page is the same engine with Citi's data, palette and
-wording, so rather than keep a second copy of the engine by hand this script
-takes SNB's page as the template and swaps in:
+and SNB's data. Other customers' pages are the same engine with their own
+data, palette and wording, so rather than keep more copies of the engine by
+hand this script takes SNB's page as the template and swaps in, from
+``customers/<id>/page_data.py``:
 
 * the inventory (layers, areas, products and their sources), the journeys,
-  the kinds of user and the lens from ``page_data.py``, and the picture's
-  own tile list, generated from the same inventory so the two cannot drift;
-* Citi's palette (Citi blues, with Mastercard's colours for the lens);
+  the kinds of user and the lens, and the picture's own tile list, generated
+  from the same inventory so the two cannot drift;
+* the customer's palette (with Mastercard's colours for the lens);
 * the lens's wording: SNB's page reads every area through NEO, its digital
-  bank; Citi's reads every area through Mastercard (how deep Mastercard goes
-  in it), which is what Solution Studio is for;
-* the heading, the globe's pin (New York) and a few phrases.
+  bank; these pages read every area through Mastercard (how deep Mastercard
+  goes in it), which is what Solution Studio is for;
+* the heading, the globe's pin and a few phrases.
 
 Every swap must match exactly once, so a change to the template fails here
-loudly rather than leaving SNB's words in Citi's page.
+loudly rather than leaving SNB's words in another bank's page.
 
 Usage::
 
-    python customers/citi/build_page.py          # writes customers/citi/Citi_Platform.html
+    python customers/build_page.py citi        # writes customers/citi/<PAGE>
+    python customers/build_page.py citizens
 """
 from __future__ import annotations
 
@@ -31,12 +33,22 @@ import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
-TEMPLATE = os.path.join(ROOT, "customers", "snb", "SNB_Operating_System.html")
-OUT = os.path.join(HERE, "Citi_Platform.html")
+ROOT = os.path.abspath(os.path.join(HERE, ".."))
+TEMPLATE = os.path.join(HERE, "snb", "SNB_Operating_System.html")
 
-sys.path.insert(0, HERE)
-import page_data as D  # noqa: E402
+D = None   # the customer's page_data module, set by load()
+
+
+def load(cid: str):
+    """Import customers/<cid>/page_data.py (and the modules beside it) as D."""
+    global D
+    folder = os.path.join(HERE, cid)
+    if not os.path.isfile(os.path.join(folder, "page_data.py")):
+        raise SystemExit(f"customers/{cid}/page_data.py not found")
+    sys.path.insert(0, folder)
+    import page_data  # noqa: PLC0415
+    D = page_data
+    return os.path.join(folder, D.PAGE)
 
 
 def js(v) -> str:
@@ -141,9 +153,9 @@ def picture_js() -> str:
     out.append("LAYERS.forEach((L,i)=>{L.i=i;L.k=i+1;L.total=L.tiles.reduce((n,t)=>n+t.c,0);});")
     out.append("")
     out.append("/* ---------- the Mastercard lens ----------")
-    out.append(f"   Source: this project's Citi research, as at {D.AS_OF}. One depth per layer and per area.")
+    out.append(f"   Source: this project's {D.SHORT} research, as at {D.AS_OF}. One depth per layer and per area.")
     out.append("   d is Mastercard's depth: 3 Mastercard's own product or network runs it, 2 the whole capability rides on")
-    out.append("   Mastercard, 1 partly (beside Visa, Amex or Citi's own rails), 0 not Mastercard, null nothing public.")
+    out.append(f"   Mastercard, 1 partly (beside Visa, Amex or {D.SHORT}'s own rails), 0 not Mastercard, null nothing public.")
     out.append("   A Mastercard entry is [name, what it is, status, note, 1 if taken from background knowledge and not source-checked]. */")
     out.append(f"const VS={js(D.LENS)};")
     out.append("")
@@ -183,8 +195,7 @@ def palette(src: str) -> str:
 LENS_SWAPS = [
     ("Palette: SNB's greens for the bank, from the deep foundation to the bright access layer, graphite for the people, and\n"
      "   NEO's own colour kept for the lens that reads the stack through the digital bank.",
-     "Palette: Citi's blues for the bank, from the deep navy foundation to the bright access layer, graphite for the people,\n"
-     "   Citi red for the arc, and Mastercard's colours kept for the lens that reads the stack through Mastercard."),
+     "{palette_note}"),
     # comments that name SNB or NEO
     ("/* ---------- the NEO lens: the switch, the list and the dialog block ---------- */",
      "/* ---------- the Mastercard lens: the switch, the list and the dialog block ---------- */"),
@@ -201,22 +212,22 @@ LENS_SWAPS = [
      "   One switch re-reads the same stack through Mastercard. Every capability area carries a depth:\n"
      "   3 Mastercard-run, 2 on Mastercard, 1 partly Mastercard, 0 not Mastercard, null nothing public to go on."),
     ("/* the five slices: foundation (deep emerald), rails (SNB green), services (teal), lines (sea green), access (bright mint); graphite for the people */",
-     "/* the five slices: foundation (deep navy), rails (Citi blue), services (mid blue), lines (sky blue), access (graphite); graphite for the people */"),
-    ("/* the globe: SNB's deep, mid and bright greens */", "/* the globe: Citi's navy, blue and sky */"),
+     "/* {slices_note} */"),
+    ("/* the globe: SNB's deep, mid and bright greens */", "/* {globe_note} */"),
     ("/* NEO: the lens colour */", "/* the lens colour: Mastercard */"),
     ("/* Product inventory: Saudi National Bank as at 16 October 2026, with NEO marked wherever it reaches.",
-     "/* Product inventory: Citi as at {as_of}, with Mastercard marked wherever it reaches."),
+     "/* Product inventory: {bank} as at {as_of}, with Mastercard marked wherever it reaches."),
     # the key above the picture
     ('<span class="vk n3"><b>NEO</b>NEO-native</span>', '<span class="vk n3"><b>MC</b>Mastercard-run</span>'),
     ('<span class="vk n2"><b>Yes</b>In NEO</span>', '<span class="vk n2"><b>Yes</b>On Mastercard</span>'),
     ('<span class="vk n1"><b>Part</b>Partly in NEO</span>', '<span class="vk n1"><b>Part</b>Partly Mastercard</span>'),
     ('<span class="vk n0"><b>—</b>SNB only</span>', '<span class="vk n0"><b>—</b>Not Mastercard</span>'),
     ("The height of a column is NEO's depth in that area: built in or for NEO, offered in NEO on SNB's shared engine, only partly there, or not there at all.",
-     "The height of a column is Mastercard's depth in that area: run on Mastercard's own products or network, riding wholly on Mastercard, partly (beside Visa, Amex or Citi's own rails), or not at all."),
+     "The height of a column is Mastercard's depth in that area: run on Mastercard's own products or network, riding wholly on Mastercard, partly (beside Visa, Amex or {bank}'s own rails), or not at all."),
     ('<span class="neo" aria-hidden="true"></span>NEO lens', '<span class="neo" aria-hidden="true"></span>Mastercard lens'),
     # the lens's scale
     ('VMAG=["SNB only, or nowhere yet","part of it, or only through the SNB app","the whole capability, on SNB\'s shared engine","built in or for NEO"]',
-     'VMAG=["Citi\'s own, or another network\'s","part of it, beside Visa, Amex or Citi\'s own rails","the whole capability rides on Mastercard","Mastercard\'s own product or network runs it"]'),
+     'VMAG=["{bank}\'s own, or another network\'s","part of it, beside Visa, Amex or {bank}\'s own rails","the whole capability rides on Mastercard","Mastercard\'s own product or network runs it"]'),
     ('const vshort=d=>d==null?"?":d===3?"NEO":d===2?"Yes":d===1?"Part":"—";',
      'const vshort=d=>d==null?"?":d===3?"MC":d===2?"Yes":d===1?"Part":"—";'),
     ('const vlong=d=>d==null?"Can\'t tell":d===3?"NEO-native":d===2?"In NEO":d===1?"Partly in NEO":"Not in NEO";',
@@ -224,11 +235,11 @@ LENS_SWAPS = [
     # the side panel and dialogs
     ("Each capability area is a column as tall as NEO's depth in it, in NEO's green;",
      "Each capability area is a column as tall as Mastercard's depth in it, in Mastercard's orange;"),
-    ("one for each layer of Saudi National Bank as an operating system", "one for each layer of Citi as a platform"),
-    ("The grouping is this map's own, not an SNB product bundle.", "The grouping is this map's own, not a Citi product bundle."),
+    ("one for each layer of Saudi National Bank as an operating system", "one for each layer of {bank} as a platform"),
+    ("The grouping is this map's own, not an SNB product bundle.", "The grouping is this map's own, not a {bank} product bundle."),
     ("Most products serve several of them; NEO was built for the first three.", "Most products serve several of them."),
     ('const SUBV="The same five slices, read through NEO. A tall column is an area NEO runs itself; a short one is an area NEO only reaches through the SNB app; a flat one is SNB only. Click a disc for its areas, or an area for what NEO and SNB each put there.";',
-     'const SUBV="The same five slices, read through Mastercard. A tall column is an area Mastercard\'s own products or network run; a short one is an area Mastercard shares with Visa, Amex or Citi\'s own rails; a flat one has no Mastercard in it. Click a disc for its areas, or an area for what Mastercard and Citi each put there.";'),
+     'const SUBV="The same five slices, read through Mastercard. A tall column is an area Mastercard\'s own products or network run; a short one is an area Mastercard shares with Visa, Amex or {bank}\'s own rails; a flat one has no Mastercard in it. Click a disc for its areas, or an area for what Mastercard and {bank} each put there.";'),
     ("none.forEach(x=>out.push(`<span>${esc(x[0])}: not in NEO</span>`));",
      "none.forEach(x=>out.push(`<span>${esc(x[0])}: not Mastercard</span>`));"),
     ("are NEO-native, ${n.n2} are in NEO, ${n.n1} are partly in NEO, ${n.n0} are not in NEO",
@@ -236,23 +247,28 @@ LENS_SWAPS = [
     ('<span class="n3"><b>${n.n3}</b>NEO-native</span><span class="n2"><b>${n.n2}</b>in NEO</span>',
      '<span class="n3"><b>${n.n3}</b>Mastercard-run</span><span class="n2"><b>${n.n2}</b>on Mastercard</span>'),
     ('<span class="n0"><b>${n.n0}</b>SNB only</span>', '<span class="n0"><b>${n.n0}</b>not Mastercard</span>'),
-    ('<h2 class="vsec">NEO at a glance</h2>', '<h2 class="vsec">Mastercard at Citi, at a glance</h2>'),
+    ('<h2 class="vsec">NEO at a glance</h2>', '<h2 class="vsec">Mastercard at {bank}, at a glance</h2>'),
     ('<h2 class="vsec">Two front doors, one bank</h2><div class="vsides"><div style="--k:var(--neof)"><b>NEO</b>',
      '<h2 class="vsec">Mastercard, and everything else</h2><div class="vsides"><div style="--k:var(--neof)"><b>Mastercard</b>'),
-    ('<div style="--k:var(--l5f)"><b>SNB</b>${esc(VS.sides.snb.dir)}', '<div style="--k:var(--l5f)"><b>Citi &amp; others</b>${esc(VS.sides.snb.dir)}'),
+    ('<div style="--k:var(--l5f)"><b>SNB</b>${esc(VS.sides.snb.dir)}', '<div style="--k:var(--l5f)"><b>{bank} &amp; others</b>${esc(VS.sides.snb.dir)}'),
     ('<div class="vsides"><div style="--k:var(--neof)"><b>NEO</b>${esc(v.neo)}</div><div style="--k:var(--l5f)"><b>SNB</b>${esc(v.snb)}</div></div>',
-     '<div class="vsides"><div style="--k:var(--neof)"><b>Mastercard</b>${esc(v.neo)}</div><div style="--k:var(--l5f)"><b>Citi &amp; others</b>${esc(v.snb)}</div></div>'),
-    ("Open what NEO and SNB each put here", "Open what Mastercard and Citi each put here"),
+     '<div class="vsides"><div style="--k:var(--neof)"><b>Mastercard</b>${esc(v.neo)}</div><div style="--k:var(--l5f)"><b>{bank} &amp; others</b>${esc(v.snb)}</div></div>'),
+    ("Open what NEO and SNB each put here", "Open what Mastercard and {bank} each put here"),
     ('<span class="vl neo"><b>NEO</b>${vnames(x.v,3)}</span><span class="vl"><b>SNB</b>',
-     '<span class="vl neo"><b>Mastercard</b>${vnames(x.v,3)}</span><span class="vl"><b>Citi</b>'),
+     '<span class="vl neo"><b>Mastercard</b>${vnames(x.v,3)}</span><span class="vl"><b>{bank}</b>'),
     ('"0":["unconf","Not in NEO"]};', '"0":["unconf","Not Mastercard"]};'),
     ("/* Opens an area's dialog in the lens: the depth, then what NEO puts here, ahead of SNB's own products. */",
-     "/* Opens an area's dialog in the lens: the depth, then what Mastercard puts here, ahead of Citi's own products. */"),
+     "/* Opens an area's dialog in the lens: the depth, then what Mastercard puts here, ahead of {bank}'s own products. */"),
     ('<h4 class="vh" style="--k:var(--neof)">NEO · ${real.length} ${real.length===1?"feature":"features"} here</h4>',
      '<h4 class="vh" style="--k:var(--neof)">Mastercard · ${real.length} ${real.length===1?"piece":"pieces"} here</h4>'),
     ('<div class="fact"><div class="dl">In NEO</div>', '<div class="fact"><div class="dl">Mastercard</div>'),
-    ('const mh=el("h4","vh",`SNB · ${live.length}', 'const mh=el("h4","vh",`Citi · ${live.length}'),
+    ('const mh=el("h4","vh",`SNB · ${live.length}', 'const mh=el("h4","vh",`{bank} · ${live.length}'),
 ]
+
+
+def fill(text: str) -> str:
+    return (text.replace("{as_of}", D.AS_OF).replace("{bank}", D.SHORT).replace("{palette_note}", D.PALETTE_NOTE)
+            .replace("{slices_note}", D.SLICES_NOTE).replace("{globe_note}", D.GLOBE_NOTE))
 
 
 def heading(src: str) -> str:
@@ -261,7 +277,7 @@ def heading(src: str) -> str:
                f'<div class="kicker">{D.KICKER}</div>')
     src = swap(src, '<h1>SNB <span class="os">Operating System</span></h1>', D.H1)
     src = re.sub(r'<p class="sub">The Kingdom\'s largest bank.*?</p>', lambda _m: f'<p class="sub">{D.SUB}</p>', src, count=1, flags=re.S)
-    src = swap(src, '<button id="md-ma" aria-pressed="true">SNB</button>', '<button id="md-ma" aria-pressed="true">Citi</button>')
+    src = swap(src, '<button id="md-ma" aria-pressed="true">SNB</button>', f'<button id="md-ma" aria-pressed="true">{D.SHORT}</button>')
     return src
 
 
@@ -280,7 +296,7 @@ def build() -> str:
     src = heading(src)
     src = globe(src)
     for old, new in LENS_SWAPS:
-        src = swap(src, old, new.replace("{as_of}", D.AS_OF))
+        src = swap(src, old, fill(new))
     # The lens's columns are painted from a fixed table of NEO greens, and its chips are inked in NEO's dark green.
     src = swap(src, '[["n3","#D9FFF0","#38E8A0","#19C98A","#0B6B47"],["n2","#F0FFF8","#8CF0C6","#5FD9A8","#2E8C64"],["n1","#F7FFFB","#C4F3DF","#A9E6CC","#5F9C80"]',
                '[["n3","#FFF1E0","#FF8A3D","#FF5F00","#B23A00"],["n2","#FFF6EC","#FFB070","#FF8A3D","#C2410C"],["n1","#FFFAF4","#FFD9B3","#FFC08A","#B8754A"]')
@@ -292,12 +308,15 @@ def build() -> str:
     leftovers = sorted(set(re.findall(r"[^\n]{0,40}\b(?:NEO|SNB|Saudi|Riyadh|NEONS|AlAhli)\b[^\n]{0,40}", src)))
     leftovers = [x for x in leftovers if not any(ok in x for ok in D.ALLOWED_MENTIONS)]
     if leftovers:
-        raise SystemExit("SNB wording left in Citi's page:\n  " + "\n  ".join(leftovers[:20]))
+        raise SystemExit(f"SNB wording left in {D.SHORT}'s page:\n  " + "\n  ".join(leftovers[:20]))
     return src
 
 
 if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        raise SystemExit("usage: python customers/build_page.py <customer id>")
+    out = load(sys.argv[1])
     page = build()
-    with open(OUT, "w", encoding="utf-8") as f:
+    with open(out, "w", encoding="utf-8") as f:
         f.write(page)
-    print(f"✓ {os.path.relpath(OUT, ROOT)} ({len(page) // 1024} KB)")
+    print(f"✓ {os.path.relpath(out, ROOT)} ({len(page) // 1024} KB)")

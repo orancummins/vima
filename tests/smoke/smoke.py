@@ -136,7 +136,7 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
         m = re.search(r"window\.__CUSTOMERS__ = (\[.*?\]);", resp.text)
         assert m, "window.__CUSTOMERS__ not found in /app HTML."
         ids = {c["id"] for c in json.loads(m.group(1))}
-        assert {"snb", "citi"} <= ids, f"Saudi National Bank and Citi should be on the Customers tab: {sorted(ids)}"
+        assert {"snb", "citi", "citizens"} <= ids, f"SNB, Citi and Citizens should be on the Customers tab: {sorted(ids)}"
         assert 'data-customer-open="snb"' in resp.text, "No card opens Saudi National Bank."
 
     runner.run("/app lists the customers", _customers_listed)
@@ -178,6 +178,18 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
         assert "service" in data.get("products", {}), "Citi's disputes product should link to Consumer Clarity"
 
     runner.run("GET /customers/citi/ serves the page, its links and nothing else", _citi)
+
+    def _citizens():
+        resp = assert_status(get(f"{base_url}/customers/citizens/"), 200)
+        assert_no_server_error(resp.text, f"{base_url}/customers/citizens/")
+        assert 'Citizens <span class="os">Platform</span>' in resp.text
+        assert_status(get(f"{base_url}/customers/citizens/Citizens_Platform.html"), 200)
+        assert_status(get(f"{base_url}/customers/citizens/page_data.py"), 404)
+        data = assert_json(assert_status(get(f"{base_url}/customers/citizens/links.json"), 200))
+        assert not data.get("warnings"), f"Citizens' Studio links no longer resolve: {data['warnings']}"
+        assert "switchpay" in data.get("products", {}), "Switch Payments should link to Studio's billing APIs"
+
+    runner.run("GET /customers/citizens/ serves the page, its links and nothing else", _citizens)
 
     return runner
 
