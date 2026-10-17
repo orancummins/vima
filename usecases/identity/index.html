@@ -857,8 +857,14 @@ function idvPageHome() {
           </svg>
         </div>
         <div class="med-welcome-text">
+          <span class="med-welcome-kicker">Your health coverage, securely connected</span>
           <h1>Welcome to<br>Medicare</h1>
+          <p class="med-welcome-lede">Access your coverage, claims and benefits with an identity you can verify in minutes.</p>
           <button class="med-cta-green" id="med-cta-start">Get Started with Medicare</button>
+          <div class="med-welcome-trust" aria-label="Secure sign-in benefits">
+            <span>✓ No documents to upload</span>
+            <span>✓ Bank-grade verification</span>
+          </div>
         </div>
       </section>
       <footer class="med-footer">
@@ -892,8 +898,11 @@ function idvPageLogin() {
         </div>
       </div>
       <div class="med-login">
-        <h2>Log in or create account</h2>
-        <p class="muted">You can use any of the methods below to access your Medicare account.</p>
+        <div class="med-login-heading">
+          <span class="med-login-eyebrow">Secure account access</span>
+          <h2>Log in or create account</h2>
+          <p class="muted">Choose how you want to access your Medicare account.</p>
+        </div>
 
         <form class="med-login-form" onsubmit="return false">
           <label>Username
@@ -919,6 +928,13 @@ function idvPageLogin() {
           </span>
           <span class="med-mc-arrow">→</span>
         </button>
+        <div class="med-mc-trust">
+          <span>Private by design</span>
+          <span aria-hidden="true">•</span>
+          <span>No payment taken</span>
+          <span aria-hidden="true">•</span>
+          <span>About 2 minutes</span>
+        </div>
 
         ${IDV.passkeyChoice === 'enrolled' ? `
         <button class="med-mc-passkey" id="med-mc-passkey">
