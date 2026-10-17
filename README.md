@@ -499,6 +499,48 @@ The script is in [docs/video/solution-studio-video-script.md](docs/video/solutio
 see [tools/video/README.md](tools/video/README.md) to change and re-make it
 (`tools/video/run.sh` with Solution Studio and Find A Card running).
 
+### Customers
+
+The **Customers** tab reads a customer's business as a platform, on the same
+layer picture: what it stands on, the rails its money moves on, the services
+around them, what it sells and the front doors its customers come through,
+with the kinds of customer above and journeys that light up across the
+layers. The first customer is **Saudi National Bank and NEO**, its digital
+bank (public sources, as at 16 October 2026): five discs from Foundation to
+Access, a *NEO lens* that raises every area by NEO's depth in it, and twelve
+journeys, two of them for Mastercard (*Where Mastercard already is* and
+*Where Open Finance, data and loyalty could land*).
+
+Each customer has a folder under `customers/<id>/` holding a **standalone
+page**, one self-contained HTML file that opens on its own in any browser
+(for SNB, [customers/snb/SNB_Operating_System.html](customers/snb/SNB_Operating_System.html)),
+plus the research notes behind it. Inside Solution Studio the same page is
+dressed like the Platform tab, in the customer's own colours, and linked the
+same way: areas with an orange marker have something to try live, and a
+product's card lists the Studio APIs, use cases and bundles that fit it
+(SAMA Open Banking → Open Finance and Data Enrichment, NEONS → Offers and
+Find A Card, QuickPay → Settle In, and so on). ⌘K searches every customer's
+products and journeys too.
+
+Every view has its own link (`/app?tab=customers&customer=snb`,
+`/app?tab=customers&customer=snb&os=p-openbanking`), and the standalone page
+is at `/customers/snb/SNB_Operating_System.html`.
+
+To refresh a customer's page from where it is built (SNB's lives in the
+`snb` project next to this one):
+
+```bash
+python tools/sync_customer.py snb ../snb/SNB_Operating_System.html --notes ../snb/*.md
+python tools/sync_customer.py --check      # check every customer's current copy
+```
+
+It refuses a page that no longer has what the bridge drives, or a product or
+journey that `customers/<id>/__init__.py` maps to Studio. To add a customer,
+copy `customers/snb/`: a `CUSTOMER` dict in `__init__.py` (who they are, the
+page's file name, and which Studio APIs, use cases and bundles land on which
+of their products), the standalone page, and a `studio-theme.css` with their
+colours.
+
 ### Update the platform picture
 
 The picture comes from [github.com/orancummins/maos](https://github.com/orancummins/maos)
@@ -533,6 +575,7 @@ Mastercard Solution Studio (port 9021, Flask)
 ├── usecases/     ← end-to-end demos composing those APIs
 ├── simulator/    ← optional response mocking for offline / no-key runs
 ├── mcos/         ← the platform picture (maos), theme and links (/mcos/)
+├── customers/    ← a customer's business as a platform, one folder each (/customers/<id>/)
 └── chat/         ← ViMA — Claude-powered coding assistant (Blueprint at /chat)
 ```
 

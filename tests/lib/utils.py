@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import sys
 import json
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -191,7 +192,8 @@ def assert_field(data: Any, *path: str | int, msg: str = "") -> Any:
 def assert_no_server_error(html: str, url: str = "") -> None:
     """Assert that HTML response does not contain Flask/Python error pages."""
     for marker in ("Internal Server Error", "Traceback (most recent call last)", "raise ", "AttributeError"):
-        if marker in html:
+        # Whole words only: page copy such as "reviews praise the app" is not an error.
+        if re.search(r"\b" + re.escape(marker), html):
             raise AssertionError(
                 f"Server error page detected at {url!r}. Marker: {marker!r}. "
                 f"HTML (first 400): {html[:400]}"

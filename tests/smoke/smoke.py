@@ -43,7 +43,7 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
     def _home_nav_panels():
         resp = assert_status(get(f"{base_url}/app"), 200)
         html = resp.text
-        for marker in ("panel-home", "panel-os", "panel-apis", "panel-bundles", "panel-usecases"):
+        for marker in ("panel-home", "panel-os", "panel-customers", "panel-apis", "panel-bundles", "panel-usecases"):
             assert marker in html, (
                 f"Navigation panel marker {marker!r} not found in /app HTML. "
                 f"The page may not have loaded correctly."
@@ -129,6 +129,43 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
         )
 
     runner.run("/app carries the platform search catalogue", _mcos_search_catalog)
+
+    # ── Customers tab (customers/) ────────────────────────────────
+    def _customers_listed():
+        resp = assert_status(get(f"{base_url}/app"), 200)
+        m = re.search(r"window\.__CUSTOMERS__ = (\[.*?\]);", resp.text)
+        assert m, "window.__CUSTOMERS__ not found in /app HTML."
+        ids = {c["id"] for c in json.loads(m.group(1))}
+        assert "snb" in ids, f"Saudi National Bank is not on the Customers tab: {sorted(ids)}"
+        assert 'data-customer-open="snb"' in resp.text, "No card opens Saudi National Bank."
+
+    runner.run("/app lists the customers", _customers_listed)
+
+    def _customer_page():
+        resp = assert_status(get(f"{base_url}/customers/snb/"), 200)
+        assert_no_server_error(resp.text, f"{base_url}/customers/snb/")
+        for marker in ('id="pic"', "mcos-theme.css", "customers/snb/studio-theme.css", "mcos-bridge.js",
+                       'SNB <span class="os">Platform</span>'):
+            assert marker in resp.text, f"{marker!r} not found in /customers/snb/"
+
+    runner.run("GET /customers/snb/ serves the themed picture", _customer_page)
+
+    def _customer_standalone():
+        resp = assert_status(get(f"{base_url}/customers/snb/SNB_Operating_System.html"), 200)
+        assert "mcos-bridge.js" not in resp.text, "The standalone page should be served untouched."
+        assert 'SNB <span class="os">Operating System</span>' in resp.text
+        assert_status(get(f"{base_url}/customers/snb/__init__.py"), 404)
+
+    runner.run("GET /customers/snb/ standalone page is served as-is, nothing else is", _customer_standalone)
+
+    def _customer_links():
+        data = assert_json(assert_status(get(f"{base_url}/customers/snb/links.json"), 200))
+        assert not data.get("warnings"), f"SNB's Studio links no longer resolve: {data['warnings']}"
+        products = data.get("products", {})
+        assert "openbanking" in products, f"SNB open banking has nothing live in Studio: {sorted(products)}"
+        assert any(a["id"] == "open_finance" for a in products["openbanking"]["apis"])
+
+    runner.run("GET /customers/snb/links.json resolves every link", _customer_links)
 
     return runner
 

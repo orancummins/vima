@@ -1,0 +1,267 @@
+/* ==========================================================================
+   Customers tab — the list of customers, and a customer's platform in a
+   full-bleed frame under a slim bar (features/customers.js). The frame
+   itself reuses the Platform tab's .os-frame / .os-loading styles
+   (operating-system.css).
+   ========================================================================== */
+
+.panel.panel-customers {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #0a0a0a 0%, #0f0a00 60%, #1a0f00 100%);
+  color: #fff;
+}
+html.theme-light .panel.panel-customers {
+  background: linear-gradient(135deg, #f5f5f0 0%, #fdf6ec 60%, #fef3e2 100%);
+  color: #141414;
+}
+
+/* ---------- the list ---------- */
+.cust-index {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 150, 60, 0.28) transparent;
+}
+.cust-index-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 56px 32px 64px;
+}
+.cust-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: rgba(255, 140, 50, 0.75);
+  margin-bottom: 10px;
+}
+.cust-title {
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin: 0 0 14px;
+  text-shadow: 0 0 32px rgba(255, 120, 0, 0.35);
+}
+.cust-lead {
+  max-width: 720px;
+  margin: 0 0 36px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255, 220, 190, 0.72);
+}
+html.theme-light .cust-eyebrow { color: rgba(180, 80, 0, 0.8); }
+html.theme-light .cust-title { text-shadow: none; }
+html.theme-light .cust-lead { color: #555; }
+
+.cust-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr));
+  gap: 20px;
+}
+
+/* A card: the customer's colour (CUSTOMER["accent"]) runs along its top edge. */
+.cust-card {
+  --cust: #ff5f00;
+  --cust-hi: color-mix(in oklab, var(--cust), #fff 35%);
+  --cust-deep: color-mix(in oklab, var(--cust), #000 45%);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in oklab, var(--cust) 16%, transparent) 0%, transparent 55%),
+    rgba(255, 255, 255, 0.025);
+  overflow: hidden;
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+}
+.cust-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, var(--cust-deep), var(--cust) 55%, var(--cust-hi));
+}
+.cust-card:hover {
+  border-color: color-mix(in oklab, var(--cust-hi) 45%, transparent);
+  box-shadow: 0 18px 48px -18px color-mix(in oklab, var(--cust) 55%, transparent);
+  transform: translateY(-2px);
+}
+html.theme-light .cust-card {
+  border-color: #e7e2da;
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in oklab, var(--cust) 9%, transparent) 0%, transparent 55%),
+    #fff;
+}
+
+.cust-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 24px 20px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cust-card-main:focus-visible { outline: 2px solid var(--cust-hi); outline-offset: -4px; border-radius: 16px; }
+
+.cust-card-top { display: flex; align-items: center; gap: 14px; }
+.cust-mark {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: linear-gradient(135deg, var(--cust-deep), var(--cust) 70%);
+  box-shadow: 0 0 22px -4px color-mix(in oklab, var(--cust) 70%, transparent);
+}
+.cust-card-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cust-card-name { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+.cust-card-meta { font-size: 12.5px; color: rgba(255, 255, 255, 0.55); }
+html.theme-light .cust-card-meta { color: #6b6b6b; }
+
+.cust-card-tag { font-size: 14px; line-height: 1.6; color: rgba(255, 255, 255, 0.78); }
+html.theme-light .cust-card-tag { color: #2a2a2a; }
+
+.cust-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+.cust-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.55);
+}
+.cust-stat b { font-size: 15px; font-weight: 700; color: var(--cust-hi); }
+html.theme-light .cust-stat { border-color: #ece7df; background: #faf8f5; color: #6b6b6b; }
+html.theme-light .cust-stat b { color: var(--cust-deep); }
+
+.cust-counts { font-size: 12.5px; color: rgba(255, 255, 255, 0.55); }
+html.theme-light .cust-counts { color: #6b6b6b; }
+.cust-live { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: #ffb070; }
+html.theme-light .cust-live { color: #b84a00; }
+.cust-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff5f00;
+  box-shadow: 0 0 0 1.5px #fff, 0 0 6px rgba(255, 95, 0, 0.7);
+}
+
+.cust-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(90deg, color-mix(in oklab, var(--cust), #000 25%), var(--cust));
+  box-shadow: 0 4px 18px -4px color-mix(in oklab, var(--cust) 70%, transparent);
+}
+.cust-open svg,
+.cust-back svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.cust-card-main:hover .cust-open svg { transform: translateX(2px); }
+
+.cust-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: auto;
+  padding: 12px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 12.5px;
+}
+html.theme-light .cust-card-foot { border-top-color: #ece7df; }
+.cust-asof { color: rgba(255, 255, 255, 0.45); }
+html.theme-light .cust-asof { color: #8a8580; }
+.cust-card-links { display: inline-flex; flex-wrap: wrap; gap: 14px; }
+.cust-card-links a,
+.cust-bar-link { color: #ffbe8a; text-decoration: none; font-weight: 500; }
+.cust-card-links a:hover,
+.cust-bar-link:hover { text-decoration: underline; }
+html.theme-light .cust-card-links a,
+html.theme-light .cust-bar-link { color: #c2410c; }
+
+/* ---------- a customer ---------- */
+.cust-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.cust-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 6px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(10, 10, 10, 0.6);
+  font-size: 13px;
+}
+html.theme-light .cust-bar { border-bottom-color: #e7e2da; background: rgba(255, 255, 255, 0.7); }
+.cust-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 7px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: inherit;
+  font: 500 13px/1.2 inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+.cust-back:hover { border-color: rgba(255, 95, 0, 0.5); background: rgba(255, 95, 0, 0.06); }
+html.theme-light .cust-back { border-color: #d3ccc1; }
+.cust-bar-sep { width: 1px; height: 18px; background: rgba(255, 255, 255, 0.12); }
+html.theme-light .cust-bar-sep { background: #e7e2da; }
+.cust-bar-title { display: flex; align-items: baseline; gap: 10px; min-width: 0; flex: 1; }
+.cust-bar-name { font-weight: 600; white-space: nowrap; }
+.cust-bar-meta {
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html.theme-light .cust-bar-meta { color: #8a8580; }
+.cust-bar-actions { display: inline-flex; gap: 14px; flex: 0 0 auto; }
+
+.cust-frame-host .cust-frame { visibility: hidden; }
+.cust-frame-host .cust-frame--active { visibility: visible; }
+.cust-loading-dot { background: #00a862; box-shadow: 0 0 14px rgba(0, 168, 98, 0.8); }
+
+@media (max-width: 640px) {
+  .cust-index-inner { padding: 32px 16px 48px; }
+  .cust-bar { padding: 6px 12px; }
+  .cust-bar-meta { display: none; }
+}

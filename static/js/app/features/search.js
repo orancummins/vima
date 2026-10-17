@@ -1,13 +1,15 @@
 // features/search.js
 // Global command-palette search. Triggered by ⌘K / Ctrl+K or the search button.
-// Searches APIs, operations, use cases, bundles and the platform picture
-// (its layers, areas, products and outcomes) entirely client-side.
+// Searches APIs, operations, use cases, bundles, the platform picture
+// (its layers, areas, products and outcomes) and each customer's picture
+// entirely client-side.
 
 import { APIS, USE_CASES } from '../core/env.js';
 import { getBundlesCache } from '../core/catalog.js';
 import { escapeHtml } from '../core/html.js';
 import { selectOp } from '../workbench/core.js';
 import { openOs } from './operatingSystem.js';
+import { openCustomer } from './customers.js';
 
 // ---------------------------------------------------------------------------
 // Index building
@@ -109,6 +111,32 @@ function _buildIndex() {
     });
   }
 
+  // Customers, and what each customer's picture holds
+  // (customers.search_catalog(), rendered into the page by templates/index.html).
+  const customerSearch = window.__CUSTOMER_SEARCH__ || {};
+  for (const c of (window.__CUSTOMERS__ || [])) {
+    entries.push({
+      type: 'customer',
+      badge: 'Customer',
+      label: c.name,
+      sub: [(c.brands || []).join(' · '), c.country].filter(Boolean).join(' · '),
+      id: c.id,
+      searchText: [c.name, c.short, (c.brands || []).join(' '), c.country, c.region, c.tagline].join(' ').toLowerCase(),
+      action() { openCustomer(c.id); },
+    });
+    for (const item of (customerSearch[c.id] || [])) {
+      entries.push({
+        type: 'customer',
+        badge: `${c.short} · ${item.kind === 'outcome' ? 'Journey' : (_PLATFORM_BADGE[item.kind] || 'Platform')}`,
+        label: item.name,
+        sub: [c.short, item.sub].filter(Boolean).join(' · '),
+        id: `${c.id}:${item.id}`,
+        searchText: [item.text || item.name || '', c.name, c.short].join(' ').toLowerCase(),
+        action() { openCustomer(c.id, item.target); },
+      });
+    }
+  }
+
   return entries;
 }
 
@@ -174,7 +202,7 @@ function _score(entry, tokens) {
   return total;
 }
 
-const _TYPE_PRIORITY = { api: 0, usecase: 1, bundle: 2, sdk: 2, platform: 3, operation: 4 };
+const _TYPE_PRIORITY = { api: 0, usecase: 1, bundle: 2, sdk: 2, platform: 3, customer: 4, operation: 5 };
 
 function _search(query, index) {
   if (!query) return [];
@@ -189,14 +217,14 @@ function _search(query, index) {
 
   scored.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
-    return (_TYPE_PRIORITY[a.entry.type] ?? 5) - (_TYPE_PRIORITY[b.entry.type] ?? 5);
+    return (_TYPE_PRIORITY[a.entry.type] ?? 6) - (_TYPE_PRIORITY[b.entry.type] ?? 6);
   });
 
-  // Cap results: up to 20 total, max 6 operations and 6 platform entries.
-  // The platform picture holds a couple of hundred products, so a broad
-  // query would otherwise crowd out what Studio can actually run.
+  // Cap results: up to 20 total, max 6 operations, 6 platform and 6
+  // customer entries. The pictures hold hundreds of products between them,
+  // so a broad query would otherwise crowd out what Studio can actually run.
   const result = [];
-  const capped = { operation: 0, platform: 0 };
+  const capped = { operation: 0, platform: 0, customer: 0 };
   for (const { entry } of scored) {
     if (entry.type in capped) {
       if (++capped[entry.type] > 6) continue;
@@ -211,9 +239,9 @@ function _search(query, index) {
 // Rendering
 // ---------------------------------------------------------------------------
 
-const _TYPE_LABEL      = { api: 'API', operation: 'Operation', usecase: 'Use Case', bundle: 'Bundle', sdk: 'SDK', platform: 'Platform' };
-const _TYPE_GROUP      = { api: 'APIs', operation: 'Operations', usecase: 'Use Cases', bundle: 'Bundles', sdk: 'SDKs', platform: 'Platform' };
-const _TYPE_ORDER      = ['api', 'usecase', 'bundle', 'sdk', 'platform', 'operation'];
+const _TYPE_LABEL      = { api: 'API', operation: 'Operation', usecase: 'Use Case', bundle: 'Bundle', sdk: 'SDK', platform: 'Platform', customer: 'Customer' };
+const _TYPE_GROUP      = { api: 'APIs', operation: 'Operations', usecase: 'Use Cases', bundle: 'Bundles', sdk: 'SDKs', platform: 'Platform', customer: 'Customers' };
+const _TYPE_ORDER      = ['api', 'usecase', 'bundle', 'sdk', 'platform', 'customer', 'operation'];
 
 function _renderResults(results, matches, onSelect) {
   const entries = [];

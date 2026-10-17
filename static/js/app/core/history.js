@@ -1,6 +1,6 @@
 // -------------------------------------------------------------------
 // core/history.js
-// Browser Back/Forward + deep-link (?tab/?bundle/?api/?uc/?os) integration.
+// Browser Back/Forward + deep-link (?tab/?bundle/?api/?uc/?customer/?os) integration.
 // Extracted verbatim from main.js. Self-contained: drives navigation by
 // synthesizing clicks on nav elements, so it depends only on the DOM.
 // Must run AFTER nav + sidebar click handlers are wired (call inline at
@@ -28,6 +28,7 @@ export function initHistory() {
       if (state.bundle) params.set('bundle', state.bundle);
       if (state.api) params.set('api', state.api);
       if (state.uc) params.set('uc', state.uc);
+      if (state.customer) params.set('customer', state.customer);
       if (state.os) params.set('os', state.os);
       const qs = params.toString();
       return location.pathname + (qs ? '?' + qs : '');
@@ -56,6 +57,12 @@ export function initHistory() {
         // (features/operatingSystem.js passes it into the frame).
         if (tab === 'os') {
           document.dispatchEvent(new CustomEvent('vima:os-goto', { detail: { target: state.os || '' } }));
+        }
+        // Likewise a customer, and a place in its picture (features/customers.js).
+        if (tab === 'customers') {
+          document.dispatchEvent(new CustomEvent('vima:customer-goto', {
+            detail: { customer: state.customer || null, target: state.os || '' },
+          }));
         }
         const tabBtn = document.querySelector(`.top-tab[data-top-tab="${tab}"]`);
         if (tabBtn) tabBtn.click();
@@ -91,16 +98,16 @@ export function initHistory() {
       if (t.matches('.top-tab')) {
         const tab = t.dataset.topTab;
         // Switching tabs clears the in-tab selection so Back goes to the bare tab.
-        _pushNavState({ tab, bundle: null, api: null, uc: null, os: null });
+        _pushNavState({ tab, bundle: null, api: null, uc: null, customer: null, os: null });
       } else if (t.matches('[data-bundle-id]')) {
         // Each per-tab selection also clears the *other* tabs' selections,
         // otherwise stale ?api=… / ?uc=… ride along in the URL and get
         // re-applied when the user pops back to a different tab.
-        _pushNavState({ tab: 'bundles', bundle: t.dataset.bundleId, api: null, uc: null, os: null });
+        _pushNavState({ tab: 'bundles', bundle: t.dataset.bundleId, api: null, uc: null, customer: null, os: null });
       } else if (t.matches('[data-api-id]')) {
-        _pushNavState({ tab: 'apis', api: t.dataset.apiId, bundle: null, uc: null, os: null });
+        _pushNavState({ tab: 'apis', api: t.dataset.apiId, bundle: null, uc: null, customer: null, os: null });
       } else if (t.matches('[data-uc-id]')) {
-        _pushNavState({ tab: 'usecases', uc: t.dataset.ucId, bundle: null, api: null, os: null });
+        _pushNavState({ tab: 'usecases', uc: t.dataset.ucId, bundle: null, api: null, customer: null, os: null });
       }
     });
 
@@ -108,10 +115,16 @@ export function initHistory() {
     // reach the recorder above; features/operatingSystem.js reports what it
     // shows instead. States the shell asked for replace the current entry,
     // states the user clicked to get a new one.
+    // The Customers tab reports the same way: which customer, and where in its picture.
     document.addEventListener('vima:nav-state', (e) => {
       const d = e.detail || {};
-      if (d.tab !== 'os' || _navState.tab !== 'os') return;
-      _pushNavState({ tab: 'os', os: d.os || null, bundle: null, api: null, uc: null }, { replace: !!d.replace });
+      if (d.tab !== _navState.tab) return;
+      if (d.tab === 'os') {
+        _pushNavState({ tab: 'os', os: d.os || null, bundle: null, api: null, uc: null, customer: null }, { replace: !!d.replace });
+      } else if (d.tab === 'customers') {
+        _pushNavState({ tab: 'customers', customer: d.customer || null, os: d.os || null, bundle: null, api: null, uc: null },
+          { replace: !!d.replace });
+      }
     });
 
     window.addEventListener('popstate', (e) => {
@@ -122,6 +135,7 @@ export function initHistory() {
           bundle: p.get('bundle'),
           api: p.get('api'),
           uc: p.get('uc'),
+          customer: p.get('customer'),
           os: p.get('os'),
         };
       })();
@@ -138,6 +152,7 @@ export function initHistory() {
         bundle: p.get('bundle'),
         api: p.get('api'),
         uc: p.get('uc'),
+        customer: p.get('customer'),
         os: p.get('os'),
       };
       // Infer tab from a deep-link selection if no explicit ?tab=.
@@ -145,6 +160,7 @@ export function initHistory() {
         if (initial.bundle) initial.tab = 'bundles';
         else if (initial.api) initial.tab = 'apis';
         else if (initial.uc) initial.tab = 'usecases';
+        else if (initial.customer) initial.tab = 'customers';
         else if (initial.os) initial.tab = 'os';
         else initial.tab = 'home';
       }

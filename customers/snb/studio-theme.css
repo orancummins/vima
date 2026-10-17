@@ -1,0 +1,99 @@
+/* Saudi National Bank inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css, which gives the page the Platform
+   tab's look (dark glass plates, the Home globe's wireframe, Inter). This
+   puts SNB's greens back: the layers run from deep emerald to mint as on the
+   standalone page, the globe and grid glow green, and the page's own accents
+   are SNB's. Studio's orange is kept for what Studio adds (the markers, the
+   "Try it in Solution Studio" links) and the lit journey, so it is always
+   clear what is the bank and what is Studio. NEO's lens colours and the
+   Mastercard chips come from the page itself. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0d100f; --panel: #141a17; --panel-2: #1c2420;
+  --ink: #f2f6f4; --ink-2: #d5ddd9; --muted: #9fb0a8; --faint: #7d8c85;
+  --focus: #38e8a0; --accent: #38e8a0; --link: #7fe3b4;
+  --gold: #38e8a0; --gold-deep: #4ee3a4; --gold-ink: #7fe3b4;
+  --gold-grad: linear-gradient(100deg, #12a867 0%, #38e8a0 55%, #8cf8cc 100%);
+  --l1f: #0e8a5f; --l2f: #00a862; --l3f: #139c8f; --l4f: #4fb37f; --l5f: #8b9a93; --luf: #6b7a73;
+  --l1t: #7fe3b4; --l2t: #4ee3a4; --l3t: #5fd9cf; --l4t: #9bddb9; --l5t: #e3e9e6;
+  --l5: #d5ddd9; --lu: #7d8c85;
+  --wash-a: rgba(0, 168, 98, 0.13); --wash-b: rgba(56, 232, 160, 0.05);
+  --mc-plate: #0f1513; --mc-plate-deep: #050807; --mc-pad: #121b17;
+  --mc-utok-hi: #1b2621; --mc-utok: #08100c; --mc-uico: #9be7c4;
+  --mc-grid: rgba(0, 168, 98, 0.34); --mc-grid-strong: rgba(56, 232, 160, 0.6);
+  --mc-hg: rgb(0, 168, 98); --mc-gop: 0.2;
+  --mc-dot: rgb(56, 232, 160); --mc-dot-glow: rgb(0, 168, 98); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 168, 98, 0.18); --mc-halo-b: rgba(18, 168, 103, 0.1);
+  --mc-globe-a: rgba(0, 168, 98, 0.12); --mc-globe-b: rgba(18, 168, 103, 0.06);
+  --mc-globe-c: rgba(18, 168, 103, 0.03); --mc-globe-d: rgba(18, 168, 103, 0.1);
+  --mc-cut-a: rgba(0, 168, 98, 0.3); --mc-cut-b: rgba(18, 168, 103, 0.12);
+  --mc-globe-hl: #7fe3b4; --mc-globe-rim: #12a867; --mc-halo: #00a862;
+  --mc-underglow: rgba(0, 168, 98, 0.2);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f5f3; --panel-2: #e6ece8;
+  --focus: #00a862; --accent: #00a862; --link: #0b6b47;
+  --gold: #00a862; --gold-deep: #0b6b47; --gold-ink: #0b5c45;
+  --gold-grad: linear-gradient(100deg, #0b4d38 0%, #00a862 55%, #4fb37f 100%);
+  --l1f: #0e6b4c; --l2f: #00a862; --l3f: #139c8f; --l4f: #4fb37f; --l5f: #4b5955; --luf: #9ca3af;
+  --l1t: #0b4d38; --l2t: #0c7a4f; --l3t: #0a6e6b; --l4t: #2e7d5b; --l5t: #1f2a26;
+  --wash-a: rgba(0, 168, 98, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e8efeb; --mc-utok: #e6ece8; --mc-uico: #1f2a26;
+  --mc-grid: rgba(11, 77, 56, 0.24); --mc-grid-strong: rgba(11, 77, 56, 0.42);
+  --mc-hg: #0b6b47; --mc-gop: 0.3;
+  --mc-dot: #0b6b47; --mc-dot-glow: #00a862; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 168, 98, 0.08); --mc-halo-b: rgba(0, 168, 98, 0.03);
+  --mc-cut-a: rgba(11, 77, 56, 0.12); --mc-cut-b: rgba(11, 77, 56, 0.05);
+  --mc-globe-rim: rgba(11, 77, 56, 0.3); --mc-halo: rgba(0, 168, 98, 0.22);
+  --mc-underglow: rgba(11, 77, 56, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 168, 98, 0.1) 0%, transparent 42%),
+    linear-gradient(135deg, #080a09 0%, #07100c 60%, #04160e 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f8f6 0%, #eef7f2 60%, #e3f4ea 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(56, 232, 160, 0.8); }
+html[data-theme="light"] .head::before { color: rgba(11, 107, 71, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 168, 98, 0.35); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0f1513 0%, #0b0d0c 100%);
+  border-color: rgba(56, 232, 160, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #101a15), #070b09 75%);
+}
+
+/* The SNB / NEO lens switch sticks over the side panel on the page's plain
+   ground; over Studio's gradient a frosted strip reads better than a solid one. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(56, 232, 160, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

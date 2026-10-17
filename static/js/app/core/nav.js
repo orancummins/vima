@@ -8,6 +8,7 @@ import { SERVER_MODE } from './env.js';
 import { apiCallsClose, _startPolling, _stopPolling } from '../features/apiCallLog.js';
 import { apisSnippetsClose } from '../features/apiSnippets.js';
 import { showOs, hideOs, captureHomeGlobe } from '../features/operatingSystem.js';
+import { showCustomers, hideCustomers } from '../features/customers.js';
 
 export function initNav() {
     // ---------------------------------------------------------------------
@@ -31,6 +32,9 @@ export function initNav() {
         const op = $("panel-os");
         if (op) op.classList.toggle("hidden", tab !== "os");
         if (tab === "os") showOs(homeGlobe); else hideOs();
+        const cp = $("panel-customers");
+        if (cp) cp.classList.toggle("hidden", tab !== "customers");
+        if (tab === "customers") showCustomers(); else hideCustomers();
         const fab = $('api-calls-fab');
         if (fab) fab.classList.toggle('hidden', tab !== 'usecases');
         const snipFab = $('apis-snippets-fab');

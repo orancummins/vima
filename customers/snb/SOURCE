@@ -1,0 +1,6 @@
+source: ../snb (local project, built as a claude.ai artifact)
+artifact: https://claude.ai/artifact/CmCXMaJ5ETSL21SKNtN3mv
+files: SNB_Operating_System.html, SNB_NEO_research_notes.md, SNB_Operating_System_narration.md
+video: ../snb/SNB_Operating_System.mp4 (not vendored, 22 MB)
+as_of: 2026-10-16
+copied: 2026-10-17

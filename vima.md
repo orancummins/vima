@@ -22,6 +22,17 @@ apis/
 usecases/
   registry.py                 — USE_CASE_MODULES list; auto-loads all use case modules
   <id>.py  OR  <id>/__init__.py  — MANIFEST + optional do_action()
+mcos/
+  __init__.py                 — the Platform tab: vendored layer picture, search catalogue, links to Studio
+  vendor/                     — the picture from maos, unedited (tools/sync_mcos.py)
+  web/                        — mcos-theme.css (Studio's look) and mcos-bridge.js (links + shell messages)
+customers/
+  __init__.py                 — the Customers tab: registry, Studio-themed page, links, search catalogue
+  <id>/
+    __init__.py               — CUSTOMER: who they are, the page, product → Studio APIs/use cases/bundles
+    <page>.html               — standalone page, copied in unedited (tools/sync_customer.py)
+    studio-theme.css          — the customer's colours on Studio's skin
+    *.md                      — research notes behind the page
 simulator/
   blueprint.py                — Flask Blueprint; /api-sim/* routes
   handlers/                   — per-API mock response handlers
@@ -749,5 +760,8 @@ Prototype chat interface with a canvas-based revolving Mastercard globe (Fibonac
 | `simulator/blueprint.py` | Simulator Flask Blueprint (`/api-sim/*`) |
 | `tests/run.py` | Test orchestrator — source of record for test flow and steps |
 | `test.bat` / `test.sh` | Test launchers (Windows / macOS+Linux) |
+| `customers/<id>/__init__.py` | A customer's `CUSTOMER` dict; `studio` maps its products to Studio APIs, use cases and bundles |
+| `static/js/app/features/customers.js` | Customers tab: the list, each customer's frame, URL state |
+| `tools/sync_customer.py` | Copies a customer's standalone page in and checks Studio can still use it |
 | `tools/mcd-key-automation/` | Playwright portal automation tool (own `.venv`) |
 | `tools/mcd-key-automation/clean_portal_projects.py` | Deletes SST-* projects after clean test runs |

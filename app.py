@@ -25,11 +25,12 @@ truststore.inject_into_ssl()
 
 import requests as _requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify, redirect, render_template, request, send_from_directory, url_for
+from flask import Flask, abort, jsonify, redirect, render_template, request, send_from_directory, url_for
 
 _CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
 load_dotenv(os.path.join(_CONFIG_DIR, ".env"))
 
+import customers  # noqa: E402
 import live_demo  # noqa: E402
 import mcos  # noqa: E402
 from apis import registry as api_registry  # noqa: E402
@@ -363,6 +364,7 @@ CSS_FILES = [
     "css/platform/info-modal.css",
     "css/platform/search.css",
     "css/platform/operating-system.css",
+    "css/platform/customers.css",
 ]
 
 
@@ -397,6 +399,9 @@ def index():
         use_cases=_use_cases,
         mcos_targets=_mcos_links(_apis, _solutions, _use_cases)["targets"],
         mcos_search=mcos.search_catalog(),
+        customers=[customers.summary(c, _customer_links(c, _apis, _solutions, _use_cases))
+                   for c in customers.all_customers()],
+        customer_search={c["id"]: customers.search_catalog(c) for c in customers.all_customers()},
         spotlight=_build_spotlight(_apis),
         provision_catalog=_build_provision_catalog(),
         runtime_mode={
@@ -1920,6 +1925,55 @@ def mcos_links():
 @app.route("/mcos/<path:filename>")
 def mcos_files(filename: str):
     return send_from_directory(mcos.WEB_DIR, filename)
+
+
+# ---------------------------------------------------------------------------
+# Customers tab — a customer's business read as a platform, on the same
+# layer-picture engine (customers/<id>/). Each customer's standalone page is
+# served untouched, and dressed as a Studio tab at /customers/<id>/. See
+# customers/__init__.py.
+# ---------------------------------------------------------------------------
+
+def _customer_links(c: dict, apis=None, solutions=None, use_cases=None) -> dict:
+    return customers.build_links(
+        c,
+        apis if apis is not None else api_registry.manifests(),
+        solutions if solutions is not None else api_registry.solutions(),
+        use_cases if use_cases is not None else usecase_registry.manifests(),
+        non_us_blocked_api=_is_non_us_blocked_api,
+        non_us_blocked_use_case=_is_non_us_blocked_usecase,
+    )
+
+
+def _customer_or_404(cid: str) -> dict:
+    c = customers.get(cid)
+    if c is None:
+        abort(404)
+    return c
+
+
+@app.route("/customers/<cid>/")
+@app.route("/customers/<cid>/index.html")
+def customer_page(cid: str):
+    c = _customer_or_404(cid)
+    return _prefix_html_routes(customers.render_page(c)), 200, {"Content-Type": "text/html; charset=utf-8"}
+
+
+@app.route("/customers/<cid>/links.json")
+def customer_links(cid: str):
+    return jsonify(_customer_links(_customer_or_404(cid)))
+
+
+@app.route("/customers/<cid>/<path:filename>")
+def customer_files(cid: str, filename: str):
+    """The standalone page, its research notes and the Studio colours — nothing else in the folder."""
+    c = _customer_or_404(cid)
+    if filename == c["page"] or filename == "studio-theme.css":
+        return send_from_directory(c["dir"], filename)
+    if filename in {f for _label, f in c["notes"]}:
+        # Plain text, so the browser shows the Markdown rather than downloading it.
+        return send_from_directory(c["dir"], filename, mimetype="text/plain")
+    abort(404)
 
 
 @app.route("/catalog")

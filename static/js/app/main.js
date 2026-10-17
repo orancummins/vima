@@ -47,6 +47,7 @@ import './features/apiGuide.js';
 import { initSearch } from './features/search.js';
 import { initDevProjects } from './features/devProjects.js';
 import { initOperatingSystem, osTargetFor } from './features/operatingSystem.js';
+import { initCustomers } from './features/customers.js';
 
 (() => {
   initTheme();
@@ -130,6 +131,7 @@ import { initOperatingSystem, osTargetFor } from './features/operatingSystem.js'
   // API Guide coach extracted to features/apiGuide.js (sets window.ApiGuide).
 
   initOperatingSystem();
+  initCustomers();
   initNav();
 
   initHistory();

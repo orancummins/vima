@@ -24,6 +24,9 @@ export function _syncEmbeddedUseCaseTheme(mode) {
   });
   _postThemeToEmbeddedFrame($('global-edit-modal-iframe'), theme);
   _postThemeToEmbeddedFrame($('os-frame'), theme);
+  document.querySelectorAll('.cust-frame').forEach((frame) => {
+    _postThemeToEmbeddedFrame(frame, theme);
+  });
 }
 
 export function _applyThemeMode(mode) {

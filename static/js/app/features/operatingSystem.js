@@ -173,7 +173,7 @@ function _endGlide(instant, placed) {
   setTimeout(remove, 380);
 }
 
-function _navigateStudio(msg) {
+export function _navigateStudio(msg) {
   const sel = (attr, id) => `[${attr}="${window.CSS && CSS.escape ? CSS.escape(id) : id}"]`;
   let tab = '';
   let item = '';

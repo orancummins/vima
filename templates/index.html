@@ -35,6 +35,7 @@
       <canvas id="mini-globe" width="52" height="52" aria-hidden="true"></canvas>
       <button class="top-tab active" data-top-tab="home">Home</button>
       <button class="top-tab" data-top-tab="os" title="Platform">Platform</button>
+      <button class="top-tab" data-top-tab="customers" title="Customers">Customers</button>
       <button class="top-tab" data-top-tab="apis">APIs</button>
       <button class="top-tab" data-top-tab="bundles">API Bundles</button>
       <button class="top-tab" data-top-tab="usecases">Use Cases</button>
@@ -269,6 +270,65 @@
         <span class="os-loading-dot" aria-hidden="true"></span>Loading the platform…
       </div>
     </div>
+  </main>
+
+  <!-- ============ Customers (customers/) ============ -->
+  <!-- A customer's business read as a platform, on the same layer picture as
+       the Platform tab. Each one is served at /customers/<id>/ and loaded into
+       an iframe the first time it opens (static/js/app/features/customers.js). -->
+  <main class="panel panel-customers hidden" id="panel-customers">
+    <section class="cust-index" id="cust-index" aria-labelledby="cust-index-title">
+      <div class="cust-index-inner">
+        <div class="cust-eyebrow">Customers</div>
+        <h1 class="cust-title" id="cust-index-title">A customer's business, read as a platform</h1>
+        <p class="cust-lead">Each customer on the same five layers as Mastercard's platform: what it stands on, the rails its money moves on, the services around them, what it sells and the front doors its customers come through. Open one to walk its journeys, see where Mastercard already is, and jump to the Studio APIs and use cases that fit.</p>
+        <div class="cust-grid">
+          {% for c in customers %}
+          <article class="cust-card"{% if c.accent %} style="--cust: {{ c.accent }}"{% endif %}>
+            <button type="button" class="cust-card-main" data-customer-open="{{ c.id }}">
+              <span class="cust-card-top">
+                <span class="cust-mark" aria-hidden="true">{{ c.short }}</span>
+                <span class="cust-card-id">
+                  <span class="cust-card-name">{{ c.name }}</span>
+                  <span class="cust-card-meta">{{ c.brands | join(' · ') }} · {{ c.country }}</span>
+                </span>
+              </span>
+              <span class="cust-card-tag">{{ c.tagline }}</span>
+              <span class="cust-stats">
+                {% for s in c.stats %}<span class="cust-stat"><b>{{ s.value }}</b>{{ s.label }}</span>{% endfor %}
+              </span>
+              <span class="cust-counts">{{ c.counts.products }} products · {{ c.counts.areas }} areas · {{ c.counts.journeys }} journeys · <span class="cust-live"><span class="cust-live-dot" aria-hidden="true"></span>{{ c.counts.live }} live in Studio</span></span>
+              <span class="cust-open">Open the platform<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
+            </button>
+            <div class="cust-card-foot">
+              <span class="cust-asof">Public sources, as at {{ c.as_of }}</span>
+              <span class="cust-card-links">
+                <a href="{{ url_for('customer_files', cid=c.id, filename=c.page) }}" target="_blank" rel="noopener">Standalone page ↗</a>
+                {% for n in c.notes %}<a href="{{ url_for('customer_files', cid=c.id, filename=n.file) }}" target="_blank" rel="noopener">{{ n.label }} ↗</a>{% endfor %}
+              </span>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+    <section class="cust-view hidden" id="cust-view">
+      <div class="cust-bar">
+        <button type="button" class="cust-back" id="cust-back" title="All customers">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></svg>Customers
+        </button>
+        <span class="cust-bar-sep" aria-hidden="true"></span>
+        <span class="cust-bar-title"><span class="cust-bar-name" id="cust-bar-name"></span><span class="cust-bar-meta" id="cust-bar-meta"></span></span>
+        <span class="cust-bar-actions">
+          <a class="cust-bar-link" id="cust-bar-standalone" href="#" target="_blank" rel="noopener">Standalone page ↗</a>
+        </span>
+      </div>
+      <div class="os-frame-host cust-frame-host" id="cust-frame-host">
+        <div class="os-loading" role="status">
+          <span class="os-loading-dot cust-loading-dot" aria-hidden="true"></span>Loading the customer's platform…
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- ====================== APIs ====================== -->
@@ -1665,6 +1725,8 @@ client = OfinClient.from_env()          <span class="sdk-c-cm"># credentials aut
     window.__RUNTIME_MODE__ = {{ runtime_mode | tojson }};
     window.__MCOS_TARGETS__ = {{ mcos_targets | tojson }};
     window.__MCOS_SEARCH__ = {{ mcos_search | tojson }};
+    window.__CUSTOMERS__ = {{ customers | tojson }};
+    window.__CUSTOMER_SEARCH__ = {{ customer_search | tojson }};
     window.__PROVISION_CATALOG__ = {{ provision_catalog | tojson }};
   </script>
   <script src="{{ url_for('static', filename='js/app/main.js') }}?v={{ cache_bust }}" type="module"></script>
