@@ -15,7 +15,7 @@ hand this script takes SNB's page as the template and swaps in, from
 * the lens's wording: SNB's page reads every area through NEO, its digital
   bank; these pages read every area through Mastercard (how deep Mastercard
   goes in it), which is what Solution Studio is for;
-* the heading, the globe's pin and a few phrases.
+* the heading, the logos over it, the globe's pin and a few phrases.
 
 Every swap must match exactly once, so a change to the template fails here
 loudly rather than leaving SNB's words in another bank's page.
@@ -36,12 +36,17 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
 TEMPLATE = os.path.join(HERE, "snb", "SNB_Operating_System.html")
 
+sys.path.insert(0, ROOT)
+import customers  # noqa: E402
+
 D = None   # the customer's page_data module, set by load()
+CID = None  # and its id
 
 
 def load(cid: str):
     """Import customers/<cid>/page_data.py (and the modules beside it) as D."""
-    global D
+    global D, CID
+    CID = cid
     folder = os.path.join(HERE, cid)
     if not os.path.isfile(os.path.join(folder, "page_data.py")):
         raise SystemExit(f"customers/{cid}/page_data.py not found")
@@ -294,6 +299,7 @@ def build() -> str:
         src = f.read()
     src = palette(src)
     src = heading(src)
+    src = customers.with_brand(src, customers.get(CID))   # the customer's logos over the kicker
     src = globe(src)
     for old, new in LENS_SWAPS:
         src = swap(src, old, fill(new))

@@ -9,69 +9,72 @@
 html:root[data-theme="light"] { --studio-ink: #b84a00; }
 
 /* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
 html:root:not([data-theme="light"]) {
-  --ground: #0b0c0f; --panel: #111319; --panel-2: #181a23;
-  --ink: #f2f4f7; --ink-2: #d4d8e0; --muted: #a0a5b2; --faint: #7e828e;
-  --focus: #4c5dc7; --accent: #4c5dc7; --link: #8f9ed9;
-  --gold: #4c5dc7; --gold-deep: #5f71d3; --gold-ink: #8f9ed9;
-  --gold-grad: linear-gradient(100deg, #000987 0%, #4c5dc7 55%, #bfcaf0 100%);
-  --l1f: #0f107a; --l2f: #000987; --l3f: #1f25a3; --l4f: #6c7bc4; --l5f: #8b8e9a; --luf: #6b6e7a;
-  --l1t: #8f9ed9; --l2t: #6f7fd0; --l3t: #7f82dc; --l4t: #a9b5e3; --l5t: #e3e4e9;
-  --l5: #d4d8e0; --lu: #7e828e;
-  --wash-a: rgba(0, 9, 135, 0.14); --wash-b: rgba(108, 123, 196, 0.05);
-  --mc-plate: #0e0f15; --mc-plate-deep: #050608; --mc-pad: #11121b;
-  --mc-utok-hi: #1a1d26; --mc-utok: #080a10; --mc-uico: #a9b5e3;
-  --mc-grid: rgba(0, 9, 135, 0.38); --mc-grid-strong: rgba(76, 93, 199, 0.6);
-  --mc-hg: rgb(31, 37, 163); --mc-gop: 0.22;
-  --mc-dot: rgb(143, 158, 217); --mc-dot-glow: rgb(0, 9, 135); --mc-dot-glow-alpha: 0.85;
-  --mc-halo-a: rgba(0, 9, 135, 0.2); --mc-halo-b: rgba(31, 37, 163, 0.1);
-  --mc-globe-a: rgba(0, 9, 135, 0.12); --mc-globe-b: rgba(31, 37, 163, 0.06);
-  --mc-globe-c: rgba(31, 37, 163, 0.03); --mc-globe-d: rgba(31, 37, 163, 0.1);
-  --mc-cut-a: rgba(0, 9, 135, 0.32); --mc-cut-b: rgba(31, 37, 163, 0.12);
-  --mc-globe-hl: #8f9ed9; --mc-globe-rim: #1f25a3; --mc-halo: #000987;
-  --mc-underglow: rgba(0, 9, 135, 0.22);
+  --ground: #0e0f13; --panel: #181A23; --panel-2: #252736;
+  --ink: #f3f4f8; --ink-2: #dfe1e8; --muted: #c8c8d2; --faint: #b4b5be;
+  --focus: #878fda; --accent: #878fda; --link: #bec5e9;
+  --gold: #878fda; --gold-deep: #a2aae6; --gold-ink: #bec5e9;
+  --gold-grad: linear-gradient(100deg, #262aff 0%, #979edf 55%, #d0d6f4 100%);
+  --l1f: #453fe7; --l2f: #262aff; --l3f: #6665e2; --l4f: #aab0dd; --l5f: #bcbcc5; --luf: #a8a9b3;
+  --l1t: #5f70c9; --l2t: #636ecc; --l3t: #6b69d6; --l4t: #5c6ecc; --l5t: #e8e8ed;
+  --l5: #dfe1e8; --lu: #b4b5be;
+  --wash-a: rgba(38, 42, 255, 0.14); --wash-b: rgba(170, 176, 221, 0.05);
+  --mc-plate: #12141c; --mc-plate-deep: #060709; --mc-pad: #181926;
+  --mc-utok-hi: #292d3c; --mc-utok: #0a0c14; --mc-uico: #c9cfee;
+  --mc-grid: rgba(38, 42, 255, 0.38); --mc-grid-strong: rgba(151, 158, 223, 0.6);
+  --mc-hg: rgb(102, 101, 226); --mc-gop: 0.22;
+  --mc-dot: rgb(190, 197, 233); --mc-dot-glow: rgb(38, 42, 255); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(38, 42, 255, 0.2); --mc-halo-b: rgba(102, 101, 226, 0.1);
+  --mc-globe-a: rgba(38, 42, 255, 0.12); --mc-globe-b: rgba(102, 101, 226, 0.06);
+  --mc-globe-c: rgba(102, 101, 226, 0.03); --mc-globe-d: rgba(102, 101, 226, 0.1);
+  --mc-cut-a: rgba(38, 42, 255, 0.32); --mc-cut-b: rgba(102, 101, 226, 0.12);
+  --mc-globe-hl: #bec5e9; --mc-globe-rim: #6665e2; --mc-halo: #262aff;
+  --mc-underglow: rgba(38, 42, 255, 0.22);
 }
 
 /* ---------- light ---------- */
 html:root[data-theme="light"] {
-  --panel: #f1f3f6; --panel-2: #e4e7ee;
-  --focus: #000987; --accent: #000987; --link: #000166;
-  --gold: #000987; --gold-deep: #000157; --gold-ink: #000166;
-  --gold-grad: linear-gradient(100deg, #000157 0%, #000987 55%, #6c7bc4 100%);
-  --l1f: #0b0b5c; --l2f: #000987; --l3f: #1f25a3; --l4f: #6c7bc4; --l5f: #464a58; --luf: #9ca3af;
-  --l1t: #00013d; --l2t: #000157; --l3t: #0c0b6e; --l4t: #1f266e; --l5t: #1c202e;
-  --wash-a: rgba(0, 9, 135, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
-  --mc-plate-deep: #e8ebf0; --mc-utok: #e4e7ee; --mc-uico: #1c202e;
-  --mc-grid: rgba(0, 1, 87, 0.24); --mc-grid-strong: rgba(0, 1, 87, 0.42);
-  --mc-hg: #000157; --mc-gop: 0.3;
-  --mc-dot: #000157; --mc-dot-glow: #000987; --mc-dot-glow-alpha: 0.25;
-  --mc-halo-a: rgba(0, 9, 135, 0.08); --mc-halo-b: rgba(0, 9, 135, 0.03);
-  --mc-cut-a: rgba(0, 1, 87, 0.12); --mc-cut-b: rgba(0, 1, 87, 0.05);
-  --mc-globe-rim: rgba(0, 1, 87, 0.3); --mc-halo: rgba(0, 9, 135, 0.22);
-  --mc-underglow: rgba(0, 1, 87, 0.14);
+  --panel: #f2f3f7; --panel-2: #e8eaf0;
+  --focus: #262aff; --accent: #262aff; --link: #0800c6;
+  --gold: #262aff; --gold-deep: #06009c; --gold-ink: #0800c6;
+  --gold-grad: linear-gradient(100deg, #06009c 0%, #262aff 55%, #aab0dd 100%);
+  --l1f: #1c15b3; --l2f: #262aff; --l3f: #6665e2; --l4f: #aab0dd; --l5f: #8e8ea5; --luf: #9ca3af;
+  --l1t: #03005f; --l2t: #06009c; --l3t: #2518e8; --l4t: #585dd0; --l5t: #2f354d;
+  --wash-a: rgba(38, 42, 255, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #ebedf2; --mc-utok: #e8eaf0; --mc-uico: #2f354d;
+  --mc-grid: rgba(6, 0, 156, 0.24); --mc-grid-strong: rgba(6, 0, 156, 0.42);
+  --mc-hg: #06009c; --mc-gop: 0.3;
+  --mc-dot: #06009c; --mc-dot-glow: #262aff; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(38, 42, 255, 0.08); --mc-halo-b: rgba(38, 42, 255, 0.03);
+  --mc-cut-a: rgba(6, 0, 156, 0.12); --mc-cut-b: rgba(6, 0, 156, 0.05);
+  --mc-globe-rim: rgba(6, 0, 156, 0.3); --mc-halo: rgba(38, 42, 255, 0.22);
+  --mc-underglow: rgba(6, 0, 156, 0.14);
 }
 
 /* ---------- page ---------- */
 body {
   background:
-    radial-gradient(circle at 18% 8%, rgba(0, 9, 135, 0.12) 0%, transparent 42%),
-    linear-gradient(135deg, #07070a 0%, #070910 60%, #040614 100%);
+    radial-gradient(circle at 18% 8%, rgba(38, 42, 255, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #08080c 0%, #080a13 60%, #050618 100%);
   background-attachment: fixed;
 }
 html[data-theme="light"] body {
-  background: linear-gradient(135deg, #f6f7f9 0%, #eef1f6 60%, #e2e6f2 100%);
+  background: linear-gradient(135deg, #f6f7f9 0%, #eff2f7 60%, #e6e9f4 100%);
   background-attachment: fixed;
 }
-.head::before { content: "Customer platform"; color: rgba(76, 93, 199, 0.85); }
-html[data-theme="light"] .head::before { color: rgba(0, 1, 87, 0.85); }
-html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 9, 135, 0.4); }
+.head::before { content: "Customer platform"; color: rgba(151, 158, 223, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(6, 0, 156, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(38, 42, 255, 0.4); }
 
 html:not([data-theme="light"]) .drawer {
-  background: linear-gradient(180deg, #0e0f15 0%, #0a0a0d 100%);
-  border-color: rgba(76, 93, 199, 0.22);
+  background: linear-gradient(180deg, #12141c 0%, #0c0c10 100%);
+  border-color: rgba(151, 158, 223, 0.22);
 }
 html:not([data-theme="light"]) .dpuck {
-  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0e101a), #06070a 75%);
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #131524), #07080b 75%);
 }
 
 /* The Global Payments / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
@@ -88,7 +91,7 @@ html:not([data-theme="light"]) .dpuck {
 .mcos-studio .dl,
 .mcos-cta-eyebrow { color: var(--studio-ink); }
 
-.right, .db, .menu { scrollbar-color: rgba(76, 93, 199, 0.28) transparent; }
+.right, .db, .menu { scrollbar-color: rgba(151, 158, 223, 0.28) transparent; }
 html[data-theme="light"] .right,
 html[data-theme="light"] .db,
 html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

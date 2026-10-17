@@ -21,18 +21,18 @@
    Palette: Synchrony's colours for the company, from the deep foundation to the bright access layer, graphite for the
    people, and Mastercard's colours kept for the lens that reads the stack through Mastercard. Type follows the Mastercard OS pages. */
 :root{
-  --ground:#FFFFFF; --panel:#F3F4F4; --panel-2:#E7EBEB; --ink:#0F1415; --ink-2:#222728; --muted:#4C5152; --faint:#6D7273; --line:#CED2D2; --line-2:#B1B6B7;
-  --focus:#2C4B5B; --accent:#2C4B5B; --link:#213745; --c1:#2a78d6; --c7:#4a3aa7; --s-new:#0F7A55; --s-flux:#A35F00; --s-retired:#B42318; --sh3:0 32px 64px -16px rgba(10,24,18,.4); --r-l:16px; --red:#C8102E; --gold:#2C4B5B; --gold-deep:#1C2F3B; --gold-ink:#213745;
+  --ground:#FFFFFF; --panel:#F7F5F2; --panel-2:#F1EDE9; --ink:#241D0E; --ink-2:#544733; --muted:#B3AFA0; --faint:#BFBCB5; --line:#E6E4DD; --line-2:#DFDDD6;
+  --focus:#B98E00; --accent:#B98E00; --link:#7F6900; --c1:#2a78d6; --c7:#4a3aa7; --s-new:#0F7A55; --s-flux:#A35F00; --s-retired:#B42318; --sh3:0 32px 64px -16px rgba(10,24,18,.4); --r-l:16px; --red:#C8102E; --gold:#B98E00; --gold-deep:#AC8E00; --gold-ink:#7F6900;
   /* the five slices in Synchrony's colours, deep to bright, with graphite for access and the people */
-  --l1:#142129; --l2:#1C2F3B; --l3:#2B3F4E; --l4:#4B616B; --l5:#29272F; --lu:#747279;
-  --l1f:#253642; --l2f:#2C4B5B; --l3f:#4A6878; --l4f:#89A0A7; --l5f:#423F49; --luf:#A4A2A9;
-  --l1t:#EFF6F8; --l2t:#FFFFFF; --l3t:#FFFFFF; --l4t:#121A1E; --l5t:#FFFFFF;
-  --slot:#0F1415; --edge:rgba(255,255,255,.55); --seam:rgba(0,0,0,.18); --shadow:rgba(17,26,29,.22);
-  --wash-a:rgba(44,75,91,.14); --wash-b:rgba(137,160,167,.10);
+  --l1:#675500; --l2:#AC8E00; --l3:#EBCF33; --l4:#D9C386; --l5:#1F2937; --lu:#6B7280;
+  --l1f:#C6A918; --l2f:#FFD549; --l3f:#E6D17E; --l4f:#E2D4B8; --l5f:#374151; --luf:#9CA3AF;
+  --l1t:#FFFFFF; --l2t:#0B0F14; --l3t:#0B0F14; --l4t:#0B0F14; --l5t:#FFFFFF;
+  --slot:#241D0E; --edge:rgba(255,255,255,.55); --seam:rgba(0,0,0,.18); --shadow:rgba(61,45,9,.22);
+  --wash-a:rgba(255,213,73,.14); --wash-b:rgba(226,212,184,.10);
   /* the globe in Synchrony's colours */
-  --gb2:#253642; --gb3:#2C4B5B; --gb4:#A7BCC1;
-  --brand-grad:linear-gradient(90deg,#253642,#FBC600 55%,#FFE27A);
-  --gold-grad:linear-gradient(135deg,#A7BCC1 0%,#2C4B5B 45%,#1C2F3B 100%);
+  --gb2:#C6A918; --gb3:#FFD549; --gb4:#EDDFC9;
+  --brand-grad:linear-gradient(90deg,#AC8E00,#FFD549 55%,#EDDFC9);
+  --gold-grad:linear-gradient(135deg,#EDDFC9 0%,#FFD549 45%,#AC8E00 100%);
   /* the lens colour: Mastercard */
   --neo:#B23A00; --neof:#FF5F00; --neo-on:#1F0A00; --neo-grad:linear-gradient(135deg,#F79E1B,#FF5F00 50%,#EB001B);
   /* Mastercard, for the places it fits */
@@ -44,14 +44,14 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-    --ground:#0A0B0C; --panel:#141616; --panel-2:#1C1F1F; --ink:#F4F5F5; --ink-2:#D8DCDC; --muted:#A9AEAF; --faint:#878B8C; --line:#2E3233; --line-2:#444849;
-    --focus:#85A3AD; --accent:#74949F; --link:#A7BCC1; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#74949F; --gold-deep:#85A3AD; --gold-ink:#A7BCC1;
-    --l1:#A7BCC1; --l2:#8FA9B0; --l3:#9DB2BE; --l4:#BCCCD0; --l5:#D5D4D8; --lu:#94929A;
-    --l1f:#253642; --l2f:#2C4B5B; --l3f:#4A6878; --l4f:#89A0A7; --l5f:#747279; --luf:#747279;
-    --slot:#060707; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
-    --wash-a:rgba(44,75,91,.12); --wash-b:rgba(137,160,167,.06);
-    --gb2:#253642; --gb3:#2C4B5B; --gb4:#A7BCC1;
-    --gold-grad:linear-gradient(135deg,#CFDDE0 0%,#74949F 45%,#2C4B5B 100%);
+    --ground:#100E0B; --panel:#252019; --panel-2:#3A3428; --ink:#F8F5F3; --ink-2:#E9E5E1; --muted:#DBD9D3; --faint:#CAC8C2; --line:#736D58; --line-2:#AFAB9C;
+    --focus:#FFD549; --accent:#FFD549; --link:#EDDFC9; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#FFD549; --gold-deep:#EAD8B1; --gold-ink:#EDDFC9;
+    --l1:#EDDFC9; --l2:#E8D9B9; --l3:#EEE5C1; --l4:#F0E5D1; --l5:#D1D5DB; --lu:#8B93A1;
+    --l1f:#C6A918; --l2f:#FFD549; --l3f:#E6D17E; --l4f:#E2D4B8; --l5f:#6B7280; --luf:#6B7280;
+    --slot:#090706; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
+    --wash-a:rgba(255,213,73,.12); --wash-b:rgba(226,212,184,.06);
+    --gb2:#C6A918; --gb3:#FFD549; --gb4:#EDDFC9;
+    --gold-grad:linear-gradient(135deg,#F5E8D3 0%,#E4D2A8 45%,#FFD549 100%);
     --neo:#FFB070; --neof:#FF7A2E; --neo-on:#1F0A00;
     --mc:#FF7A2E; --mc-ink:#FF9A57;
     --eqf:#7B8290;
@@ -59,14 +59,14 @@
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --ground:#0A0B0C; --panel:#141616; --panel-2:#1C1F1F; --ink:#F4F5F5; --ink-2:#D8DCDC; --muted:#A9AEAF; --faint:#878B8C; --line:#2E3233; --line-2:#444849;
-  --focus:#85A3AD; --accent:#74949F; --link:#A7BCC1; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#74949F; --gold-deep:#85A3AD; --gold-ink:#A7BCC1;
-  --l1:#A7BCC1; --l2:#8FA9B0; --l3:#9DB2BE; --l4:#BCCCD0; --l5:#D5D4D8; --lu:#94929A;
-  --l1f:#253642; --l2f:#2C4B5B; --l3f:#4A6878; --l4f:#89A0A7; --l5f:#747279; --luf:#747279;
-  --slot:#060707; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
-  --wash-a:rgba(44,75,91,.12); --wash-b:rgba(137,160,167,.06);
-  --gb2:#253642; --gb3:#2C4B5B; --gb4:#A7BCC1;
-  --gold-grad:linear-gradient(135deg,#CFDDE0 0%,#74949F 45%,#2C4B5B 100%);
+  --ground:#100E0B; --panel:#252019; --panel-2:#3A3428; --ink:#F8F5F3; --ink-2:#E9E5E1; --muted:#DBD9D3; --faint:#CAC8C2; --line:#736D58; --line-2:#AFAB9C;
+  --focus:#FFD549; --accent:#FFD549; --link:#EDDFC9; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#FFD549; --gold-deep:#EAD8B1; --gold-ink:#EDDFC9;
+  --l1:#EDDFC9; --l2:#E8D9B9; --l3:#EEE5C1; --l4:#F0E5D1; --l5:#D1D5DB; --lu:#8B93A1;
+  --l1f:#C6A918; --l2f:#FFD549; --l3f:#E6D17E; --l4f:#E2D4B8; --l5f:#6B7280; --luf:#6B7280;
+  --slot:#090706; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
+  --wash-a:rgba(255,213,73,.12); --wash-b:rgba(226,212,184,.06);
+  --gb2:#C6A918; --gb3:#FFD549; --gb4:#EDDFC9;
+  --gold-grad:linear-gradient(135deg,#F5E8D3 0%,#E4D2A8 45%,#FFD549 100%);
   --neo:#FFB070; --neof:#FF7A2E; --neo-on:#1F0A00;
   --mc:#FF7A2E; --mc-ink:#FF9A57;
   --eqf:#7B8290;
@@ -704,6 +704,7 @@ window.addEventListener("error",function(e){ var b=document.getElementById("oops
 
   <div class="right">
     <header class="head">
+      <!--brand--><style>.brand{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px}.brand img{display:block;box-sizing:border-box;height:46px;width:auto;max-width:230px;padding:9px 14px;border-radius:12px;background:var(--chip);object-fit:contain;box-shadow:0 0 0 1px color-mix(in oklab,var(--line,#ccc) 70%,transparent),0 8px 22px -14px rgba(0,0,0,.45)}</style><div class="brand"><img src="data:image/png;base64,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" alt="Synchrony" style="--chip:#ffffff"></div><!--/brand-->
       <div class="kicker">Synchrony Financial · as at 17 October 2026</div>
       <h1>Synchrony <span class="os">Platform</span></h1>
       <p class="sub">America's largest private-label card issuer as five discs that stack into one platform, from $102 billion of receivables and partner agreements running to 2035 at the bottom to the tills and apps of Amazon, Lowe's, Walmart and 290,000 care providers at the top. Click the stack to open it. Choose who you are and what you want to do, and the areas that deliver it light up across the layers, joined in the order they act. Switch to the Mastercard lens to see how deep Mastercard goes in every area.</p>

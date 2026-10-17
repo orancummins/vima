@@ -140,6 +140,10 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
                     "globalpayments", "santander", "barclays", "natwest", "synchrony"}
         assert expected <= ids, f"Customers missing from the Customers tab: {sorted(expected - ids)}"
         assert 'data-customer-open="snb"' in resp.text, "No card opens Saudi National Bank."
+        no_logo = sorted(c["id"] for c in json.loads(m.group(1)) if not c.get("logos"))
+        assert not no_logo, f"Customers without a logo on their card: {no_logo}"
+        logo = json.loads(m.group(1))[0]["logos"][0]["url"]
+        assert_status(get(f"{base_url}{logo}"), 200)
 
     runner.run("/app lists the customers", _customers_listed)
 
@@ -208,6 +212,7 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
             resp = assert_status(get(f"{base_url}/customers/{cid}/"), 200)
             assert_no_server_error(resp.text, f"{base_url}/customers/{cid}/")
             assert f"customers/{cid}/studio-theme.css" in resp.text
+            assert '<div class="brand">' in resp.text, f"{cid}: no logo over the page's heading"
             assert_status(get(f"{base_url}/customers/{cid}/{page}"), 200)
             data = assert_json(assert_status(get(f"{base_url}/customers/{cid}/links.json"), 200))
             assert not data.get("warnings"), f"{cid}'s Studio links no longer resolve: {data['warnings']}"

@@ -21,18 +21,18 @@
    Palette: Bank of Ireland's royal blues for the bank, from the deep navy foundation to the bright access layer, graphite for
    the people, and Mastercard's colours kept for the lens that reads the stack through Mastercard. Type follows the Mastercard OS pages. */
 :root{
-  --ground:#FFFFFF; --panel:#F2F5FB; --panel-2:#E5EBF7; --ink:#0A1530; --ink-2:#1C2B4D; --muted:#46536E; --faint:#69758E; --line:#CCD5E6; --line-2:#AFBBD3;
-  --focus:#0047BB; --accent:#0047BB; --link:#003A99; --c1:#2a78d6; --c7:#4a3aa7; --s-new:#0F7A55; --s-flux:#A35F00; --s-retired:#B42318; --sh3:0 32px 64px -16px rgba(10,24,18,.4); --r-l:16px; --red:#C8102E; --gold:#0047BB; --gold-deep:#0B1F4F; --gold-ink:#003A99;
+  --ground:#FFFFFF; --panel:#F2F3F7; --panel-2:#E7E9F0; --ink:#0D0F21; --ink-2:#2A2F46; --muted:#7A7A95; --faint:#9797A5; --line:#D6D6E0; --line-2:#C6C6D2;
+  --focus:#0000FF; --accent:#0000FF; --link:#0A00AF; --c1:#2a78d6; --c7:#4a3aa7; --s-new:#0F7A55; --s-flux:#A35F00; --s-retired:#B42318; --sh3:0 32px 64px -16px rgba(10,24,18,.4); --r-l:16px; --red:#C8102E; --gold:#0000FF; --gold-deep:#08008C; --gold-ink:#0A00AF;
   /* the five slices: foundation (deep navy), rails (royal blue), services (bright blue), lines (cornflower), access (graphite); graphite for the people */
-  --l1:#0B1F4F; --l2:#00349A; --l3:#0047BB; --l4:#2F6AD9; --l5:#1F2937; --lu:#6B7280;
-  --l1f:#14306E; --l2f:#0047BB; --l3f:#2F6AD9; --l4f:#79A0EA; --l5f:#374151; --luf:#9CA3AF;
-  --l1t:#EAF0FF; --l2t:#FFFFFF; --l3t:#FFFFFF; --l4t:#08214F; --l5t:#FFFFFF;
-  --slot:#0A1530; --edge:rgba(255,255,255,.55); --seam:rgba(0,0,0,.18); --shadow:rgba(8,24,64,.22);
-  --wash-a:rgba(0,71,187,.14); --wash-b:rgba(121,160,234,.10);
+  --l1:#050057; --l2:#08008C; --l3:#2314CB; --l4:#5659C9; --l5:#1F2937; --lu:#6B7280;
+  --l1f:#1B139E; --l2f:#0000FF; --l3f:#4E4ADD; --l4f:#9BA1D7; --l5f:#374151; --luf:#9CA3AF;
+  --l1t:#FFFFFF; --l2t:#FFFFFF; --l3t:#FFFFFF; --l4t:#FFFFFF; --l5t:#FFFFFF;
+  --slot:#0D0F21; --edge:rgba(255,255,255,.55); --seam:rgba(0,0,0,.18); --shadow:rgba(8,11,53,.22);
+  --wash-a:rgba(0,0,255,.14); --wash-b:rgba(155,161,215,.10);
   /* the globe: Bank of Ireland's navy, royal blue and sky */
-  --gb2:#14306E; --gb3:#0047BB; --gb4:#9CC0FF;
-  --brand-grad:linear-gradient(90deg,#0B1F4F,#0047BB 55%,#9CC0FF);
-  --gold-grad:linear-gradient(135deg,#9CC0FF 0%,#0047BB 45%,#0B1F4F 100%);
+  --gb2:#1B139E; --gb3:#0000FF; --gb4:#B3BAE5;
+  --brand-grad:linear-gradient(90deg,#08008C,#0000FF 55%,#B3BAE5);
+  --gold-grad:linear-gradient(135deg,#B3BAE5 0%,#0000FF 45%,#08008C 100%);
   /* the lens colour: Mastercard */
   --neo:#B23A00; --neof:#FF5F00; --neo-on:#1F0A00; --neo-grad:linear-gradient(135deg,#F79E1B,#FF5F00 50%,#EB001B);
   /* Mastercard, for the places it fits */
@@ -44,14 +44,14 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-    --ground:#090C14; --panel:#111727; --panel-2:#18203A; --ink:#F2F5FB; --ink-2:#D5DCEC; --muted:#A3AEC7; --faint:#808BA6; --line:#29324C; --line-2:#3D4868;
-    --focus:#7FA6F5; --accent:#6E99F2; --link:#9CC0FF; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#6E99F2; --gold-deep:#7FA6F5; --gold-ink:#9CC0FF;
-    --l1:#9CC0FF; --l2:#7FA6F5; --l3:#8DB4FA; --l4:#B4CCF7; --l5:#D1D5DB; --lu:#8B93A1;
-    --l1f:#14306E; --l2f:#0047BB; --l3f:#2F6AD9; --l4f:#79A0EA; --l5f:#6B7280; --luf:#6B7280;
-    --slot:#05070C; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
-    --wash-a:rgba(0,71,187,.12); --wash-b:rgba(121,160,234,.06);
-    --gb2:#14306E; --gb3:#0047BB; --gb4:#9CC0FF;
-    --gold-grad:linear-gradient(135deg,#CFE0FF 0%,#6E99F2 45%,#0047BB 100%);
+    --ground:#0A0B0F; --panel:#161820; --panel-2:#222431; --ink:#F3F4F7; --ink-2:#DCDEE6; --muted:#C1C1CC; --faint:#AAAAB4; --line:#46465C; --line-2:#74748F;
+    --focus:#9299E1; --accent:#858BD9; --link:#B3BAE5; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#858BD9; --gold-deep:#9299E1; --gold-ink:#B3BAE5;
+    --l1:#B3BAE5; --l2:#9DA4DF; --l3:#AAA8E7; --l4:#C2C7EB; --l5:#D1D5DB; --lu:#8B93A1;
+    --l1f:#1B139E; --l2f:#0000FF; --l3f:#4E4ADD; --l4f:#9BA1D7; --l5f:#6B7280; --luf:#6B7280;
+    --slot:#050709; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
+    --wash-a:rgba(0,0,255,.12); --wash-b:rgba(155,161,215,.06);
+    --gb2:#1B139E; --gb3:#0000FF; --gb4:#B3BAE5;
+    --gold-grad:linear-gradient(135deg,#CCD2F3 0%,#858BD9 45%,#0000FF 100%);
     --neo:#FFB070; --neof:#FF7A2E; --neo-on:#1F0A00;
     --mc:#FF7A2E; --mc-ink:#FF9A57;
     --eqf:#7B8290;
@@ -59,14 +59,14 @@
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --ground:#090C14; --panel:#111727; --panel-2:#18203A; --ink:#F2F5FB; --ink-2:#D5DCEC; --muted:#A3AEC7; --faint:#808BA6; --line:#29324C; --line-2:#3D4868;
-  --focus:#7FA6F5; --accent:#6E99F2; --link:#9CC0FF; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#6E99F2; --gold-deep:#7FA6F5; --gold-ink:#9CC0FF;
-  --l1:#9CC0FF; --l2:#7FA6F5; --l3:#8DB4FA; --l4:#B4CCF7; --l5:#D1D5DB; --lu:#8B93A1;
-  --l1f:#14306E; --l2f:#0047BB; --l3f:#2F6AD9; --l4f:#79A0EA; --l5f:#6B7280; --luf:#6B7280;
-  --slot:#05070C; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
-  --wash-a:rgba(0,71,187,.12); --wash-b:rgba(121,160,234,.06);
-  --gb2:#14306E; --gb3:#0047BB; --gb4:#9CC0FF;
-  --gold-grad:linear-gradient(135deg,#CFE0FF 0%,#6E99F2 45%,#0047BB 100%);
+  --ground:#0A0B0F; --panel:#161820; --panel-2:#222431; --ink:#F3F4F7; --ink-2:#DCDEE6; --muted:#C1C1CC; --faint:#AAAAB4; --line:#46465C; --line-2:#74748F;
+  --focus:#9299E1; --accent:#858BD9; --link:#B3BAE5; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#858BD9; --gold-deep:#9299E1; --gold-ink:#B3BAE5;
+  --l1:#B3BAE5; --l2:#9DA4DF; --l3:#AAA8E7; --l4:#C2C7EB; --l5:#D1D5DB; --lu:#8B93A1;
+  --l1f:#1B139E; --l2f:#0000FF; --l3f:#4E4ADD; --l4f:#9BA1D7; --l5f:#6B7280; --luf:#6B7280;
+  --slot:#050709; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
+  --wash-a:rgba(0,0,255,.12); --wash-b:rgba(155,161,215,.06);
+  --gb2:#1B139E; --gb3:#0000FF; --gb4:#B3BAE5;
+  --gold-grad:linear-gradient(135deg,#CCD2F3 0%,#858BD9 45%,#0000FF 100%);
   --neo:#FFB070; --neof:#FF7A2E; --neo-on:#1F0A00;
   --mc:#FF7A2E; --mc-ink:#FF9A57;
   --eqf:#7B8290;
@@ -704,6 +704,7 @@ window.addEventListener("error",function(e){ var b=document.getElementById("oops
 
   <div class="right">
     <header class="head">
+      <!--brand--><style>.brand{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px}.brand img{display:block;box-sizing:border-box;height:46px;width:auto;max-width:230px;padding:9px 14px;border-radius:12px;background:var(--chip);object-fit:contain;box-shadow:0 0 0 1px color-mix(in oklab,var(--line,#ccc) 70%,transparent),0 8px 22px -14px rgba(0,0,0,.45)}</style><div class="brand"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5NiA3NiIgZmlsbD0iIzAwZiIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNOTIuNDE3IDM0LjEzNmMxLjE2IDAgMi4yNDYuMzk4IDMuMDQuOTQ1di0yLjYzN2MtLjYtLjMtMS45MDMtLjY3NS0zLjYwMi0uNjc1LTQuMTY2IDAtNS44NzcgMi41MTMtNS44NzcgNS43MDZWNTIuMzNoNC4xNVY0MS4wNmgyLjkyOHYtMi4zODJIOTAuMTNWMzYuOGMwLTEuNTM2Ljg0Mi0yLjY4MiAyLjI4OC0yLjY3Nm0tMTYuMjY0IDMuOTZjMi4yNC0uMDE1IDMuMTk0IDIgMy4yMzcgNi4yMzQuMDQzIDQuMTgzLS45MDggNi4wODUtMy4yMzcgNi4wODVzLTMuMjI1LTEuOTAyLTMuMjI1LTYuMDg1YzAtNC4zODcuOS02LjIyIDMuMjI1LTYuMjM0bS4wMjggMTQuN2MzLjkzMiAwIDcuNi0yLjI4NyA3LjU3OC04LjQ3NS0uMDMtNi4yMjUtMy4zMzMtOC42MzQtNy41NzgtOC42LTQuMDU2LjAyLTcuNjM4IDIuMzgtNy42MjggOC42LjAyIDYuMjE4IDMuNzA1IDguNDc1IDcuNjI4IDguNDc1bS01NS01LjA3YzAtMS44ODIgMS44LTIuODMgMy42MzQtMy4zNTJsMi4wOTgtLjUzN3Y1LjA1Yy0uNTIuNDc4LTEuODU4IDEuMTg4LTMuMjkyIDEuMTg4LTEuNTQ1IDAtMi40MzItLjc4LTIuNDQtMi4zNDhtNi4wMzMgMy40NjVsLjI4NSAxLjEzMmgzLjkwN2MtLjItLjY0NC0uMzctMS44NjItLjM3LTMuMzhWNDAuOWMwLTQuNzMzLTMuNTI2LTUuMTczLTYuNjI4LTUuMTczLTUuMjgyIDAtNi43IDIuODY4LTYuNyA1LjAyN2wzLjc5NC0uMDA3Yy4wMDctMS44NDMgMS40MTYtMi44MDMgMi45Ny0yLjgwMyAxLjI4MiAwIDIuNDUuNTggMi40NSAyLjY1OHYxLjAxNUwyMi4wMTcgNDIuOGMtMy4wMTIuNzItNS4xMTQgMi4yMi01LjA5NyA1LjMyNi4wMSAzLjA2NiAyLjEwMyA0LjY3NiA1LjIwNSA0LjY3NiAyLjgtLjAwNCA0LjU2LTEuMjUgNS4wOC0xLjYwNW0tMjAuNTgtMS4xMjNINS4xNVY0Mi42N2gxLjQ3NWMyLjI4NS0uMDA2IDMuOSAxLjA2NyAzLjk0IDMuNTQ0LjAxNCAyLjQ4NC0xLjIyIDMuODYtMy45NCAzLjg2ek01LjE1IDM0LjQ3NmgxLjEyOGMxLjkwOC0uMDA3IDMuNS42IDMuNDk3IDIuODIyQzkuNzcgMzkuNSA4LjQyIDQwLjQwMyA2LjI2IDQwLjRoLTEuMXYtNS45MzR6bTEwLjE4MyAxMi4wMzhjMC0zLjY0Ni0zLjI2LTUuMDkzLTUuMzg2LTUuMiAyLjEzLS40NjMgNC4zMzQtMS41NzIgNC4zMzQtNC42MTYgMC0zLjE2Ni0yLjUzLTQuNDU2LTUuMzU0LTQuNDYzSC42NjZWNTIuMzNoNy4zN2MzLjk2LjAxMyA3LjI5Ny0xLjg2NSA3LjI5Ny01LjgxN3oiLz48cGF0aCBkPSJNNDMuMzY1IDQyLjA1djEwLjI4Mmg0LjExN3YtMTAuNWMwLTIuNi0uNDUtNi4xMTYtNS4wOTQtNi4xMTYtMi4xOCAwLTQuMDQyIDEuMjMtNC42NjUgMS42Mjh2LTEuMmgtNC4xMTh2MTYuMTc4aDQuMTE4di0xMi40NGMuNjUyLS41MjUgMS44MjgtMS4zODggMy4xNDItMS4zODggMi4wMiAwIDIuNTA2IDEuMiAyLjUgMy41NDZtNi43LTkuODIzdjIwLjEwNWg0LjE0M1YzMi4yMjd6Ii8+PHBhdGggZD0iTTU4LjQ4NSA0Mi40ODJsNS4yMzMtNi4zMjhoLTMuNTVMNTQuMiA0My4yNmw0LjYyMyA5LjA3Mmg1LjF6TTIyLjg1IDY0Ljk3OGMuMi0xLjkxNS43NzQtNC40ODQgMy4xNy00LjQ5NiAyLjM5MiAwIDMuMDE1IDIuNTEyIDMuMTI1IDQuNDk2SDIyLjg1em0zLjE3LTYuODYyYy00LjIwOC4wMDUtNy41OTQgMi42Ny03LjYwNyA4LjMzOC0uMDEgNi41NyAzLjQ0NyA4LjczOCA3LjYwNyA4LjczOCAzLjI3NiAwIDYuNDc0LTEuNDQ2IDcuMzMtNS45MjVsLTQuMzE1LS4wMWMtLjI0NyAyLjEtMS4wMTggMy41NTUtMy4wMTUgMy41NS0yLjUwMi0uMDEtMy4yMTYtMi4xNzItMy4yMi01LjY3MmgxMC43NGExNi41NiAxNi41NiAwIDAgMCAuMDEyLS43MDRjLjAxNy01LjY2OC0zLjQ2NC04LjMxNi03LjUzLTguMzE2ek01Mi4yIDcxLjI4MmMtLjUyMi40NzgtMS44NTUgMS4yLTMuMjg3IDEuMi0xLjU0NyAwLTIuNDMtLjc4LTIuNDM3LTIuMzQ4LS4wMDItMS44ODMgMS44LTIuODMgMy42My0zLjM1MmwyLjA5NC0uNTM3djUuMDV6bTQuMTMzLTcuOTkzYzAtNC43MzQtMy41MzItNS4xNzMtNi42My01LjE3My01LjI4IDAtNi43MiAyLjg2Ny02LjcyIDUuMDI3bDMuNzk3LS4wMDZjLjAwMy0xLjg0NCAxLjQtMi44MDQgMi45NzItMi44MDQgMS4yOCAwIDIuNDQ2LjU4IDIuNDQ2IDIuNjU4djEuMDE1bC00Ljg3IDEuMTk0Yy0zLjAyMi43Mi01LjExNiAyLjIyLTUuMSA1LjMyNi4wMTggMy4wNjYgMi4xIDQuNjc2IDUuMjE0IDQuNjc2IDIuNzk3LS4wMDMgNC41NTgtMS4yNDggNS4wNy0xLjYwNWwuMjg3IDEuMTNoMy45MDhjLS4xOTgtLjY0My0uMzY0LTEuODYyLS4zNjQtMy4zOHYtOC4wNXpNMzUuODM3IDc0LjcyaDQuMTQ1VjU0LjYxN2gtNC4xNDV6bTMyLjAzLTE2LjYwNGMtMi4xOCAwLTQuMDQyIDEuMjMtNC42NjcgMS42Mjh2LTEuMmgtNC4xMTN2MTYuMThINjMuMlY2Mi4yOGMuNjYtLjUyNCAxLjgzLTEuMzg4IDMuMTQyLTEuMzg4IDIuMDIgMCAyLjUwMyAxLjIgMi41MDMgMy41NDZWNzQuNzJoNC4xMTZ2LTEwLjVjMC0yLjYtLjQ0NS02LjExNi01LjA5NC02LjExNk04NS45OCA3MC45Yy0uMzA0LjUzLTEuNjI0IDEuNzctMy4wMDggMS43Ny0xLjgzNCAwLTMuNDA1LTEuMDMzLTMuMzk2LTYuMDgyLjAxLTQuODIzIDEuNjYtNS45MTMgMy4zNjUtNS45MTMgMS40NTcgMCAyLjY1IDEuMDc1IDMuMDQgMS43MjR2OC41em0wLTExLjI2Yy0uODY2LS43NzUtMi4yMTMtMS41LTQuMTM1LTEuNDg4LTIuNDk0IDAtNi42NTUgMS40MTYtNi42NjMgOC40NDctLjAxNiA2LjcxNiAzLjI5MyA4LjYxMyA2LjQxNiA4LjYwMyAyLjQ2Mi0uMDIgNC4yMjYtMS41NTUgNC4zODItMS42OTJ2MS4yMmg0LjE1VjU0LjYxN2gtNC4xNXY1LjAxNHpNLjY2NiA3NC43Mmg0LjQ4VjU0LjYxN0guNjY2em0xMS42ODctMTQuMDg1di0yLjA5Mkg4LjJsLjAwMyAxNi4xNzhoNC4xMzh2LTkuMjVjMC0zLjk3MiAzLjQ2NC00LjI0IDUuNDM3LTQuMTU1di0zLjE1M2MtMy4xNzYtLjM3LTUuMDczIDEuNTg4LTUuNDM3IDIuNDczTTYxLjUyMi42NjZjMCAzLjA0Mi0xMy4zMTQgMy4zNzQtMTMuMzE0IDYuNjQ3aC0uMjk0QzQ3LjkxNCA0LjA0IDM0LjYgMy43MDggMzQuNi42NjZoLS4yOThWMy44NGMwIDMuNzkyIDEzLjMzOCAzLjQzNiAxMy42IDcuMDgyaC4yOTRjLjI3My0zLjY0NiAxMy42LTMuMyAxMy42LTcuMDgyVi42NjZoLS4yOTd6bTAgNy4yMDRjMCAzLjA0Mi0xMy4zMTQgMy4zNzQtMTMuMzE0IDYuNjQ3aC0uMjk0YzAtMy4yNzMtMTMuMzEzLTMuNjA1LTEzLjMxMy02LjY0N2gtLjI5OHYzLjE3NWMwIDMuNzkyIDEzLjMzOCAzLjQzNiAxMy42IDcuMDgyaC4yOTRjLjI3My0zLjY0NiAxMy42LTMuMyAxMy42LTcuMDgyVjcuODdoLS4yOTd6bTAgNy4yMDZjMCAzLjA0Mi0xMy4zMTQgMy4zNzMtMTMuMzE0IDYuNjQ3aC0uMjk0YzAtMy4yNzQtMTMuMzEzLTMuNjA1LTEzLjMxMy02LjY0N2gtLjI5OHYzLjE3NWMwIDMuOCAxMy4zMzggMy40MzYgMTMuNiA3LjA4MmguMjk0Yy4yNzMtMy42NDYgMTMuNi0zLjMgMTMuNi03LjA4MnYtMy4xNzVoLS4yOTd6Ii8+PC9zdmc+" alt="Bank of Ireland" style="--chip:#ffffff"></div><!--/brand-->
       <div class="kicker">Bank of Ireland Group · as at 17 October 2026</div>
       <h1>Bank of Ireland <span class="os">Platform</span></h1>
       <p class="sub">Ireland's oldest bank as five discs that stack into one platform, from a 1783 charter and a €169 billion balance sheet at the bottom to a new app, 169 branches and 900 post offices at the top. Click the stack to open it. Choose who you are and what you want to do, and the areas that deliver it light up across the layers, joined in the order they act. Switch to the Mastercard lens to see how deep Mastercard goes in every area.</p>

@@ -23,7 +23,10 @@ CUSTOMER = {
     "brands": ["Chase", "J.P. Morgan", "J.P. Morgan Payments", "Kinexys", "Chase UK"],
     "country": "United States",
     "region": "Americas",
-    "accent": "#117aca",   # Chase blue, on the Customers tab card
+    "accent": "#004fc2",   # Chase blue, from the logo
+    "logos": (   # file in this folder, alt text, the chip behind it, where it came from
+        {"file": "logo.svg", "alt": "Chase", "bg": "#ffffff", "source": "static/logos/financial-logos-500/01-financial-institutions/jpmorgan-chase.svg"},
+    ),
     "as_of": "17 October 2026",
     "tagline": "America's largest bank as five discs: $5.1 trillion of assets and the biggest US card book, "
                "mostly on Visa, with Apple Card arriving on Mastercard around 2028.",

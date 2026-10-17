@@ -90,6 +90,14 @@ function _showCustomer(id, target) {
   _current = id;
   $('cust-index').classList.add('hidden');
   $('cust-view').classList.remove('hidden');
+  $('cust-bar-logos').replaceChildren(...(c.logos || []).map((lg) => {
+    const img = document.createElement('img');
+    img.className = 'cust-bar-logo';
+    img.src = _appPath(lg.url);
+    img.alt = '';
+    img.style.setProperty('--chip', lg.bg);
+    return img;
+  }));
   $('cust-bar-name').textContent = c.name;
   $('cust-bar-meta').textContent = [(c.brands || []).join(' · '), c.country, `as at ${c.as_of}`].filter(Boolean).join(' · ');
   $('cust-bar-standalone').href = _appPath(`/customers/${encodeURIComponent(id)}/${c.page}`);

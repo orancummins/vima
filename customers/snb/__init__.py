@@ -22,7 +22,11 @@ CUSTOMER = {
     "brands": ["SNB", "AlAhli", "NEO"],
     "country": "Saudi Arabia",
     "region": "EEMEA",
-    "accent": "#00a862",   # SNB green, on the Customers tab card
+    "accent": "#00a862",   # SNB green, the page's own palette (built in the snb project)
+    "logos": (   # file in this folder, alt text, the chip behind it, where it came from
+        {"file": "logo.svg", "alt": "Saudi National Bank", "bg": "#ffffff", "source": "https://www.alahli.com/"},
+        {"file": "logo-neo.svg", "alt": "NEO", "bg": "#0b1220", "source": "https://neo.sa/"},
+    ),
     "as_of": "16 October 2026",
     "tagline": "The Kingdom's largest bank as five discs, with NEO, its digital bank, "
                "in every layer it touches, and where Mastercard already is.",

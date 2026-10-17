@@ -284,10 +284,11 @@
         <p class="cust-lead">Each customer on the same five layers as Mastercard's platform: what it stands on, the rails its money moves on, the services around them, what it sells and the front doors its customers come through. Open one to walk its journeys, see where Mastercard already is, and jump to the Studio APIs and use cases that fit.</p>
         <div class="cust-grid">
           {% for c in customers %}
-          <article class="cust-card"{% if c.accent %} style="--cust: {{ c.accent }}"{% endif %}>
+          <article class="cust-card"{% if c.accent %} style="--cust: {{ c.accent }}; --cust-text: {{ c.accent_text.dark }}; --cust-text-light: {{ c.accent_text.light }}; --cust-ink: {{ c.accent_text.ink }}"{% endif %}>
             <button type="button" class="cust-card-main" data-customer-open="{{ c.id }}">
               <span class="cust-card-top">
-                <span class="cust-mark" aria-hidden="true">{{ c.short }}</span>
+                {% if c.logos %}<span class="cust-logos">{% for lg in c.logos %}<img class="cust-logo" src="{{ url_for('customer_files', cid=c.id, filename=lg.file) }}?v={{ lg.v }}" alt="{{ lg.alt }}" style="--chip: {{ lg.bg }}">{% endfor %}</span>
+                {% else %}<span class="cust-mark" aria-hidden="true">{{ c.short }}</span>{% endif %}
                 <span class="cust-card-id">
                   <span class="cust-card-name">{{ c.name }}</span>
                   <span class="cust-card-meta">{{ c.brands | join(' · ') }} · {{ c.country }}</span>
@@ -318,6 +319,7 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></svg>Customers
         </button>
         <span class="cust-bar-sep" aria-hidden="true"></span>
+        <span class="cust-bar-logos" id="cust-bar-logos" aria-hidden="true"></span>
         <span class="cust-bar-title"><span class="cust-bar-name" id="cust-bar-name"></span><span class="cust-bar-meta" id="cust-bar-meta"></span></span>
         <span class="cust-bar-actions">
           <a class="cust-bar-link" id="cust-bar-standalone" href="#" target="_blank" rel="noopener">Standalone page ↗</a>

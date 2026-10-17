@@ -548,6 +548,18 @@ product's card lists the Studio APIs, use cases and bundles that fit it
 Find A Card, QuickPay → Settle In, and so on). ⌘K searches every customer's
 products and journeys too.
 
+Each customer is shown in its own brand: its real logo on its card, over its
+page and in the standalone page's header, and its primary colour through the
+page and its Studio theme. The logos come from the financial-services logo
+library in [static/logos/financial-logos-500/](static/logos/financial-logos-500/)
+(500 brands, with `index.csv`, `browse.html` and the source notices; logos remain
+their owners' trademarks), or, where the library's mark was missing or only a
+favicon (SNB and NEO, Citizens, NatWest, Fiserv, Bank of Ireland), from the
+customer's own website; `CUSTOMER["logos"]` records which. The primary colour is
+`CUSTOMER["accent"]`, and `customers/brand_colours.py <id>` recolours the page
+palette and `studio-theme.css` from it (Citizens' hand-tuned palette is the
+base; text colours are kept at 4.5:1).
+
 Every view has its own link (`/app?tab=customers&customer=snb`,
 `/app?tab=customers&customer=snb&os=p-openbanking`), and the standalone page
 is at `/customers/snb/SNB_Operating_System.html`.
@@ -567,9 +579,9 @@ page as the template (the same engine) and swaps in Citi's data, palette and
 lens wording from the `citi_*.py` files beside it, so to update Citi edit
 those and run `python customers/build_page.py <id>` (any customer but snb). To add a customer,
 copy `customers/snb/`: a `CUSTOMER` dict in `__init__.py` (who they are, the
-page's file name, and which Studio APIs, use cases and bundles land on which
-of their products), the standalone page, and a `studio-theme.css` with their
-colours.
+page's file name, their primary colour and logos, and which Studio APIs, use
+cases and bundles land on which of their products), the standalone page, the
+logo files, and a `studio-theme.css` from `customers/brand_colours.py`.
 
 ### Update the platform picture
 

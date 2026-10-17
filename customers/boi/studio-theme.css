@@ -1,7 +1,7 @@
-/* Bank of Ireland inside Solution Studio.
+/* BOI inside Solution Studio.
 
    Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
-   Bank of Ireland's colours back on the layers, the globe and the page's accents. Studio's
+   BOI's colours back on the layers, the globe and the page's accents. Studio's
    orange stays on what Studio adds and the lit journey; the Mastercard lens
    keeps Mastercard's own colours from the page. */
 
@@ -9,72 +9,75 @@
 html:root[data-theme="light"] { --studio-ink: #b84a00; }
 
 /* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
 html:root:not([data-theme="light"]) {
-  --ground: #0b0d0f; --panel: #111519; --panel-2: #181d23;
-  --ink: #f2f5f7; --ink-2: #d4dbe0; --muted: #a0abb2; --faint: #7e878e;
-  --focus: #4c82c7; --accent: #4c82c7; --link: #8fb4d9;
-  --gold: #4c82c7; --gold-deep: #5f94d3; --gold-ink: #8fb4d9;
-  --gold-grad: linear-gradient(100deg, #003287 0%, #4c82c7 55%, #bfd9f0 100%);
-  --l1f: #0f317a; --l2f: #003287; --l3f: #1f4ca3; --l4f: #6c95c4; --l5f: #8b929a; --luf: #6b727a;
-  --l1t: #8fb4d9; --l2t: #6f9cd0; --l3t: #7f9edc; --l4t: #a9c6e3; --l5t: #e3e6e9;
-  --l5: #d4dbe0; --lu: #7e878e;
-  --wash-a: rgba(0, 50, 135, 0.14); --wash-b: rgba(108, 149, 196, 0.05);
-  --mc-plate: #0e1115; --mc-plate-deep: #050708; --mc-pad: #11151b;
-  --mc-utok-hi: #1a2026; --mc-utok: #080c10; --mc-uico: #a9c6e3;
-  --mc-grid: rgba(0, 50, 135, 0.38); --mc-grid-strong: rgba(76, 130, 199, 0.6);
-  --mc-hg: rgb(31, 76, 163); --mc-gop: 0.22;
-  --mc-dot: rgb(143, 180, 217); --mc-dot-glow: rgb(0, 50, 135); --mc-dot-glow-alpha: 0.85;
-  --mc-halo-a: rgba(0, 50, 135, 0.2); --mc-halo-b: rgba(31, 76, 163, 0.1);
-  --mc-globe-a: rgba(0, 50, 135, 0.12); --mc-globe-b: rgba(31, 76, 163, 0.06);
-  --mc-globe-c: rgba(31, 76, 163, 0.03); --mc-globe-d: rgba(31, 76, 163, 0.1);
-  --mc-cut-a: rgba(0, 50, 135, 0.32); --mc-cut-b: rgba(31, 76, 163, 0.12);
-  --mc-globe-hl: #8fb4d9; --mc-globe-rim: #1f4ca3; --mc-halo: #003287;
-  --mc-underglow: rgba(0, 50, 135, 0.22);
+  --ground: #0d0e12; --panel: #161820; --panel-2: #222431;
+  --ink: #f3f4f7; --ink-2: #dcdee6; --muted: #bebecb; --faint: #a7a7b2;
+  --focus: #858bd9; --accent: #858bd9; --link: #b3bae5;
+  --gold: #858bd9; --gold-deep: #9299e1; --gold-ink: #b3bae5;
+  --gold-grad: linear-gradient(100deg, #0000ff 0%, #858bd9 55%, #ccd2f3 100%);
+  --l1f: #281de3; --l2f: #0000ff; --l3f: #4e4add; --l4f: #9ba1d7; --l5f: #b0b0ba; --luf: #9999a6;
+  --l1t: #5f6ec8; --l2t: #636ecc; --l3t: #6c68d5; --l4t: #626fcc; --l5t: #e7e7ec;
+  --l5: #dcdee6; --lu: #a7a7b2;
+  --wash-a: rgba(0, 0, 255, 0.14); --wash-b: rgba(155, 161, 215, 0.05);
+  --mc-plate: #11121a; --mc-plate-deep: #050709; --mc-pad: #161723;
+  --mc-utok-hi: #262837; --mc-utok: #090b13; --mc-uico: #c2c7eb;
+  --mc-grid: rgba(0, 0, 255, 0.38); --mc-grid-strong: rgba(133, 139, 217, 0.6);
+  --mc-hg: rgb(78, 74, 221); --mc-gop: 0.22;
+  --mc-dot: rgb(179, 186, 229); --mc-dot-glow: rgb(0, 0, 255); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 0, 255, 0.2); --mc-halo-b: rgba(78, 74, 221, 0.1);
+  --mc-globe-a: rgba(0, 0, 255, 0.12); --mc-globe-b: rgba(78, 74, 221, 0.06);
+  --mc-globe-c: rgba(78, 74, 221, 0.03); --mc-globe-d: rgba(78, 74, 221, 0.1);
+  --mc-cut-a: rgba(0, 0, 255, 0.32); --mc-cut-b: rgba(78, 74, 221, 0.12);
+  --mc-globe-hl: #b3bae5; --mc-globe-rim: #4e4add; --mc-halo: #0000ff;
+  --mc-underglow: rgba(0, 0, 255, 0.22);
 }
 
 /* ---------- light ---------- */
 html:root[data-theme="light"] {
-  --panel: #f1f4f6; --panel-2: #e4eaee;
-  --focus: #003287; --accent: #003287; --link: #001f66;
-  --gold: #003287; --gold-deep: #001b57; --gold-ink: #001f66;
-  --gold-grad: linear-gradient(100deg, #001b57 0%, #003287 55%, #6c95c4 100%);
-  --l1f: #0b245c; --l2f: #003287; --l3f: #1f4ca3; --l4f: #6c95c4; --l5f: #465058; --luf: #9ca3af;
-  --l1t: #00133d; --l2t: #001b57; --l3t: #0b276e; --l4t: #1f3e6e; --l5t: #1c262e;
-  --wash-a: rgba(0, 50, 135, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
-  --mc-plate-deep: #e8edf0; --mc-utok: #e4eaee; --mc-uico: #1c262e;
-  --mc-grid: rgba(0, 27, 87, 0.24); --mc-grid-strong: rgba(0, 27, 87, 0.42);
-  --mc-hg: #001b57; --mc-gop: 0.3;
-  --mc-dot: #001b57; --mc-dot-glow: #003287; --mc-dot-glow-alpha: 0.25;
-  --mc-halo-a: rgba(0, 50, 135, 0.08); --mc-halo-b: rgba(0, 50, 135, 0.03);
-  --mc-cut-a: rgba(0, 27, 87, 0.12); --mc-cut-b: rgba(0, 27, 87, 0.05);
-  --mc-globe-rim: rgba(0, 27, 87, 0.3); --mc-halo: rgba(0, 50, 135, 0.22);
-  --mc-underglow: rgba(0, 27, 87, 0.14);
+  --panel: #f2f3f7; --panel-2: #e7e9f0;
+  --focus: #0000ff; --accent: #0000ff; --link: #0a00af;
+  --gold: #0000ff; --gold-deep: #08008c; --gold-ink: #0a00af;
+  --gold-grad: linear-gradient(100deg, #08008c 0%, #0000ff 55%, #9ba1d7 100%);
+  --l1f: #1b139e; --l2f: #0000ff; --l3f: #4e4add; --l4f: #9ba1d7; --l5f: #7a7a95; --luf: #9ca3af;
+  --l1t: #050057; --l2t: #08008c; --l3t: #2314cb; --l4t: #3b3ec8; --l5t: #2a2f46;
+  --wash-a: rgba(0, 0, 255, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaecf1; --mc-utok: #e7e9f0; --mc-uico: #2a2f46;
+  --mc-grid: rgba(8, 0, 140, 0.24); --mc-grid-strong: rgba(8, 0, 140, 0.42);
+  --mc-hg: #08008c; --mc-gop: 0.3;
+  --mc-dot: #08008c; --mc-dot-glow: #0000ff; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 0, 255, 0.08); --mc-halo-b: rgba(0, 0, 255, 0.03);
+  --mc-cut-a: rgba(8, 0, 140, 0.12); --mc-cut-b: rgba(8, 0, 140, 0.05);
+  --mc-globe-rim: rgba(8, 0, 140, 0.3); --mc-halo: rgba(0, 0, 255, 0.22);
+  --mc-underglow: rgba(8, 0, 140, 0.14);
 }
 
 /* ---------- page ---------- */
 body {
   background:
-    radial-gradient(circle at 18% 8%, rgba(0, 50, 135, 0.12) 0%, transparent 42%),
-    linear-gradient(135deg, #07080a 0%, #070b10 60%, #040b14 100%);
+    radial-gradient(circle at 18% 8%, rgba(0, 0, 255, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #08080b 0%, #080913 60%, #050517 100%);
   background-attachment: fixed;
 }
 html[data-theme="light"] body {
-  background: linear-gradient(135deg, #f6f8f9 0%, #eef3f6 60%, #e2ebf2 100%);
+  background: linear-gradient(135deg, #f6f7f9 0%, #eff1f7 60%, #e5e7f3 100%);
   background-attachment: fixed;
 }
-.head::before { content: "Customer platform"; color: rgba(76, 130, 199, 0.85); }
-html[data-theme="light"] .head::before { color: rgba(0, 27, 87, 0.85); }
-html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 50, 135, 0.4); }
+.head::before { content: "Customer platform"; color: rgba(133, 139, 217, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(8, 0, 140, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 0, 255, 0.4); }
 
 html:not([data-theme="light"]) .drawer {
-  background: linear-gradient(180deg, #0e1115 0%, #0a0b0d 100%);
-  border-color: rgba(76, 130, 199, 0.22);
+  background: linear-gradient(180deg, #11121a 0%, #0c0c0f 100%);
+  border-color: rgba(133, 139, 217, 0.22);
 }
 html:not([data-theme="light"]) .dpuck {
-  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0e131a), #06080a 75%);
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #121321), #07070b 75%);
 }
 
-/* The Bank of Ireland / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+/* The BOI / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
 .modebar {
   background: transparent;
   -webkit-backdrop-filter: blur(14px);
@@ -88,7 +91,7 @@ html:not([data-theme="light"]) .dpuck {
 .mcos-studio .dl,
 .mcos-cta-eyebrow { color: var(--studio-ink); }
 
-.right, .db, .menu { scrollbar-color: rgba(76, 130, 199, 0.28) transparent; }
+.right, .db, .menu { scrollbar-color: rgba(133, 139, 217, 0.28) transparent; }
 html[data-theme="light"] .right,
 html[data-theme="light"] .db,
 html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

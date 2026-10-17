@@ -23,7 +23,10 @@ CUSTOMER = {
     "brands": ["Synchrony", "CareCredit", "Synchrony Bank", "Synchrony Pay Later"],
     "country": "United States",
     "region": "Americas",
-    "accent": "#c5a000",   # Synchrony gold, on the Customers tab card
+    "accent": "#ffd549",   # Synchrony gold, from the logo
+    "logos": (   # file in this folder, alt text, the chip behind it, where it came from
+        {"file": "logo.png", "alt": "Synchrony", "bg": "#ffffff", "source": "static/logos/financial-logos-500/01-financial-institutions/synchrony.png"},
+    ),
     "as_of": "17 October 2026",
     "tagline": "America's largest private-label card issuer as five discs: $102 billion of receivables across "
                "Amazon, Lowe's, PayPal, Walmart and CareCredit, with most co-brands on Mastercard.",

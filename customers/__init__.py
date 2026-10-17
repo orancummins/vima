@@ -6,12 +6,17 @@ Each customer lives in its own folder, ``customers/<id>/``:
   network needed) that opens on its own in any browser. It is built on the
   same layer-picture engine as the Platform tab (``mcos/``): the customer's
   business as five discs, the kinds of customer above them, and journeys
-  that light up across the layers. It is copied in verbatim and never
-  edited here (refresh it with ``python tools/sync_customer.py <id> <file>``).
+  that light up across the layers. It is copied in (refresh it with
+  ``python tools/sync_customer.py <id> <file>``, which adds the logos) or
+  built here (``customers/build_page.py``), and never edited by hand.
 * ``__init__.py`` with a ``CUSTOMER`` dict: who the customer is, the page's
   file name, and which Solution Studio APIs, use cases and bundles land on
   which of the customer's products (``STUDIO``) and journeys (``JOURNEY_BUNDLES``).
 * ``studio-theme.css``: the customer's own colours on Studio's skin.
+* the customer's logos (``CUSTOMER["logos"]``: ``logo.svg`` or ``logo.png``,
+  sometimes a second brand), taken from ``static/logos/financial-logos-500/``
+  or the customer's own website, and shown on its card, over its page and in
+  the standalone page's header (embedded there by :func:`with_brand`).
 * any research notes behind the page.
 
 Inside Studio the page is served at ``/customers/<id>/`` dressed like the
@@ -23,6 +28,8 @@ served untouched at ``/customers/<id>/<file>``.
 """
 from __future__ import annotations
 
+import base64
+import html
 import importlib
 import os
 import re
@@ -61,6 +68,7 @@ def _load() -> tuple[dict, ...]:
         c.setdefault("journey_bundles", {})
         c.setdefault("text_swaps", ())
         c.setdefault("notes", ())
+        c.setdefault("logos", ())
         out.append(c)
     out.sort(key=lambda c: (c["order"], c["name"]))
     return tuple(out)
@@ -95,6 +103,60 @@ def _swapped(c: dict) -> str:
     for old, new in c["text_swaps"]:
         src = src.replace(old, new)
     return src
+
+
+# ---------------------------------------------------------------------------
+# Logos
+# ---------------------------------------------------------------------------
+
+_MIME = {".svg": "image/svg+xml", ".png": "image/png"}
+_BRAND_RE = re.compile(r"<!--brand-->.*?<!--/brand-->\s*", re.S)
+_BRAND_CSS = (
+    ".brand{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px}"
+    ".brand img{display:block;box-sizing:border-box;height:46px;width:auto;max-width:230px;padding:9px 14px;"
+    "border-radius:12px;background:var(--chip);object-fit:contain;"
+    "box-shadow:0 0 0 1px color-mix(in oklab,var(--line,#ccc) 70%,transparent),0 8px 22px -14px rgba(0,0,0,.45)}"
+)
+
+
+def logo_files(c: dict) -> set[str]:
+    return {lg["file"] for lg in c["logos"]}
+
+
+def logo_urls(c: dict) -> list[dict]:
+    """The logos as Studio links them: ``file``, ``v`` (cache-buster), ``url``, ``alt`` and the chip colour ``bg``."""
+    out = []
+    for lg in c["logos"]:
+        path = os.path.join(c["dir"], lg["file"])
+        if os.path.isfile(path):
+            v = int(os.path.getmtime(path))
+            out.append({"file": lg["file"], "v": v, "url": f"/customers/{c['id']}/{lg['file']}?v={v}",
+                        "alt": lg["alt"], "bg": lg.get("bg", "#ffffff")})
+    return out
+
+
+def brand_block(c: dict) -> str:
+    """The logos as a self-contained block (images embedded) for the top of a standalone page."""
+    imgs = []
+    for lg in c["logos"]:
+        path = os.path.join(c["dir"], lg["file"])
+        with open(path, "rb") as f:
+            data = base64.b64encode(f.read()).decode("ascii")
+        mime = _MIME[os.path.splitext(lg["file"])[1].lower()]
+        imgs.append(f'<img src="data:{mime};base64,{data}" alt="{html.escape(lg["alt"])}" '
+                    f'style="--chip:{lg.get("bg", "#ffffff")}">')
+    if not imgs:
+        return ""
+    return f'<!--brand--><style>{_BRAND_CSS}</style><div class="brand">{"".join(imgs)}</div><!--/brand-->\n      '
+
+
+def with_brand(src: str, c: dict) -> str:
+    """``src`` (a standalone page) with ``c``'s logos above its kicker, replacing any logos already there."""
+    src = _BRAND_RE.sub("", src)
+    at = src.find('<div class="kicker">')
+    if at < 0:
+        raise ValueError(f"customers/{c['id']}: no kicker to put the logos above")
+    return src[:at] + brand_block(c) + src[at:]
 
 
 # ---------------------------------------------------------------------------
@@ -259,6 +321,18 @@ def build_links(c: dict, apis: list[dict], bundles: list[dict], use_cases: list[
     return {"products": products, "outcomes": outcomes, "targets": targets, "warnings": warnings}
 
 
+def accent_text(accent: str | None) -> dict | None:
+    """Shades of ``accent`` that read as text on Studio's dark and light cards, and the ink to put on it."""
+    if not accent:
+        return None
+    from customers.brand_colours import contrast, toward  # noqa: PLC0415
+    return {
+        "dark": toward(accent, "#16130f", 4.5, darker=False),
+        "light": toward(accent, "#ffffff", 4.5, darker=True),
+        "ink": "#ffffff" if contrast("#ffffff", accent) >= contrast("#111111", accent) else "#111111",
+    }
+
+
 def summary(c: dict, links: dict | None = None) -> dict:
     """What the Customers tab shows on a customer's card (JSON-safe)."""
     counts: dict[str, int] = {}
@@ -268,6 +342,8 @@ def summary(c: dict, links: dict | None = None) -> dict:
         k: c.get(k) for k in ("id", "name", "short", "brands", "country", "region", "as_of",
                               "tagline", "stats", "accent")
     }
+    out["logos"] = logo_urls(c)
+    out["accent_text"] = accent_text(c.get("accent"))
     out.update({
         "counts": {
             "layers": counts.get("layer", 0),

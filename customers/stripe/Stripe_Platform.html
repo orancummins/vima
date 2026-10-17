@@ -21,18 +21,18 @@
    Palette: Stripe's purples for the company, from the deep navy foundation to the bright access layer, graphite for
    the people, and Mastercard's colours kept for the lens that reads the stack through Mastercard. Type follows the Mastercard OS pages. */
 :root{
-  --ground:#FFFFFF; --panel:#F6F9FC; --panel-2:#E9EEF7; --ink:#0A2540; --ink-2:#1F3556; --muted:#425466; --faint:#6B7C93; --line:#D5DBE5; --line-2:#B8C2D3;
-  --focus:#635BFF; --accent:#635BFF; --link:#4B45C6; --c1:#2a78d6; --c7:#4a3aa7; --s-new:#0F7A55; --s-flux:#A35F00; --s-retired:#B42318; --sh3:0 32px 64px -16px rgba(10,24,18,.4); --r-l:16px; --red:#C8102E; --gold:#635BFF; --gold-deep:#0A2540; --gold-ink:#4B45C6;
+  --ground:#FFFFFF; --panel:#F2F3F7; --panel-2:#E9EBF1; --ink:#0E1025; --ink-2:#353958; --muted:#AAA9BB; --faint:#BCBCC5; --line:#E0DFE8; --line-2:#DBDAE2;
+  --focus:#635BFF; --accent:#635BFF; --link:#1900E6; --c1:#2a78d6; --c7:#4a3aa7; --s-new:#0F7A55; --s-flux:#A35F00; --s-retired:#B42318; --sh3:0 32px 64px -16px rgba(10,24,18,.4); --r-l:16px; --red:#C8102E; --gold:#635BFF; --gold-deep:#1300B4; --gold-ink:#1900E6;
   /* the five slices: foundation (deep navy), rails (Stripe blurple), services (violet), lines (lavender), access (graphite); graphite for the people */
-  --l1:#0A2540; --l2:#3A33B8; --l3:#5148D9; --l4:#7A73FF; --l5:#1F2937; --lu:#6B7280;
-  --l1f:#1A3A63; --l2f:#635BFF; --l3f:#7A73FF; --l4f:#A39EFF; --l5f:#374151; --luf:#9CA3AF;
-  --l1t:#EEF2FF; --l2t:#FFFFFF; --l3t:#FFFFFF; --l4t:#1B1660; --l5t:#FFFFFF;
-  --slot:#0A2540; --edge:rgba(255,255,255,.55); --seam:rgba(0,0,0,.18); --shadow:rgba(10,37,64,.22);
-  --wash-a:rgba(99,91,255,.14); --wash-b:rgba(0,212,255,.08);
+  --l1:#0B006B; --l2:#1300B4; --l3:#5741EC; --l4:#9492DC; --l5:#1F2937; --lu:#6B7280;
+  --l1f:#2D19D0; --l2f:#635BFF; --l3f:#928BE9; --l4f:#BFC1E5; --l5f:#374151; --luf:#9CA3AF;
+  --l1t:#FFFFFF; --l2t:#FFFFFF; --l3t:#FFFFFF; --l4t:#0B0F14; --l5t:#FFFFFF;
+  --slot:#0E1025; --edge:rgba(255,255,255,.55); --seam:rgba(0,0,0,.18); --shadow:rgba(9,11,63,.22);
+  --wash-a:rgba(99,91,255,.14); --wash-b:rgba(191,193,229,.10);
   /* the globe: Stripe's navy, blurple and cyan */
-  --gb2:#1A3A63; --gb3:#635BFF; --gb4:#80E9FF;
-  --brand-grad:linear-gradient(90deg,#0A2540,#635BFF 55%,#80E9FF);
-  --gold-grad:linear-gradient(135deg,#80E9FF 0%,#635BFF 45%,#0A2540 100%);
+  --gb2:#2D19D0; --gb3:#635BFF; --gb4:#CED1EE;
+  --brand-grad:linear-gradient(90deg,#1300B4,#635BFF 55%,#CED1EE);
+  --gold-grad:linear-gradient(135deg,#CED1EE 0%,#635BFF 45%,#1300B4 100%);
   /* the lens colour: Mastercard */
   --neo:#B23A00; --neof:#FF5F00; --neo-on:#1F0A00; --neo-grad:linear-gradient(135deg,#F79E1B,#FF5F00 50%,#EB001B);
   /* Mastercard, for the places it fits */
@@ -44,14 +44,14 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-    --ground:#0A0E1A; --panel:#121729; --panel-2:#1A2035; --ink:#F4F5FB; --ink-2:#D9DCEB; --muted:#A9AFC6; --faint:#878DA6; --line:#2B3149; --line-2:#40476A;
-    --focus:#9D97FF; --accent:#8F89FF; --link:#B5B1FF; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#8F89FF; --gold-deep:#9D97FF; --gold-ink:#B5B1FF;
-    --l1:#B5B1FF; --l2:#9D97FF; --l3:#B0ABFF; --l4:#C9C6FF; --l5:#D1D5DB; --lu:#8B93A1;
-    --l1f:#1A3A63; --l2f:#635BFF; --l3f:#7A73FF; --l4f:#A39EFF; --l5f:#6B7280; --luf:#6B7280;
-    --slot:#05070D; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
-    --wash-a:rgba(99,91,255,.12); --wash-b:rgba(0,212,255,.06);
-    --gb2:#1A3A63; --gb3:#635BFF; --gb4:#80E9FF;
-    --gold-grad:linear-gradient(135deg,#D6D3FF 0%,#8F89FF 45%,#635BFF 100%);
+    --ground:#0B0C11; --panel:#1A1B26; --panel-2:#292B3C; --ink:#F3F4F8; --ink-2:#E2E4EA; --muted:#D8D7DE; --faint:#C9C8CF; --line:#5D5C78; --line-2:#A7A6B7;
+    --focus:#B9BBEC; --accent:#B1B2E7; --link:#CED1EE; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#B1B2E7; --gold-deep:#B9BBEC; --gold-ink:#CED1EE;
+    --l1:#CED1EE; --l2:#C0C2EA; --l3:#CAC7F0; --l4:#D4D7F1; --l5:#D1D5DB; --lu:#8B93A1;
+    --l1f:#2D19D0; --l2f:#635BFF; --l3f:#928BE9; --l4f:#BFC1E5; --l5f:#6B7280; --luf:#6B7280;
+    --slot:#060709; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
+    --wash-a:rgba(99,91,255,.12); --wash-b:rgba(191,193,229,.06);
+    --gb2:#2D19D0; --gb3:#635BFF; --gb4:#CED1EE;
+    --gold-grad:linear-gradient(135deg,#D5D9F5 0%,#B1B2E7 45%,#635BFF 100%);
     --neo:#FFB070; --neof:#FF7A2E; --neo-on:#1F0A00;
     --mc:#FF7A2E; --mc-ink:#FF9A57;
     --eqf:#7B8290;
@@ -59,14 +59,14 @@
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --ground:#0A0E1A; --panel:#121729; --panel-2:#1A2035; --ink:#F4F5FB; --ink-2:#D9DCEB; --muted:#A9AFC6; --faint:#878DA6; --line:#2B3149; --line-2:#40476A;
-  --focus:#9D97FF; --accent:#8F89FF; --link:#B5B1FF; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#8F89FF; --gold-deep:#9D97FF; --gold-ink:#B5B1FF;
-  --l1:#B5B1FF; --l2:#9D97FF; --l3:#B0ABFF; --l4:#C9C6FF; --l5:#D1D5DB; --lu:#8B93A1;
-  --l1f:#1A3A63; --l2f:#635BFF; --l3f:#7A73FF; --l4f:#A39EFF; --l5f:#6B7280; --luf:#6B7280;
-  --slot:#05070D; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
-  --wash-a:rgba(99,91,255,.12); --wash-b:rgba(0,212,255,.06);
-  --gb2:#1A3A63; --gb3:#635BFF; --gb4:#80E9FF;
-  --gold-grad:linear-gradient(135deg,#D6D3FF 0%,#8F89FF 45%,#635BFF 100%);
+  --ground:#0B0C11; --panel:#1A1B26; --panel-2:#292B3C; --ink:#F3F4F8; --ink-2:#E2E4EA; --muted:#D8D7DE; --faint:#C9C8CF; --line:#5D5C78; --line-2:#A7A6B7;
+  --focus:#B9BBEC; --accent:#B1B2E7; --link:#CED1EE; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#B1B2E7; --gold-deep:#B9BBEC; --gold-ink:#CED1EE;
+  --l1:#CED1EE; --l2:#C0C2EA; --l3:#CAC7F0; --l4:#D4D7F1; --l5:#D1D5DB; --lu:#8B93A1;
+  --l1f:#2D19D0; --l2f:#635BFF; --l3f:#928BE9; --l4f:#BFC1E5; --l5f:#6B7280; --luf:#6B7280;
+  --slot:#060709; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
+  --wash-a:rgba(99,91,255,.12); --wash-b:rgba(191,193,229,.06);
+  --gb2:#2D19D0; --gb3:#635BFF; --gb4:#CED1EE;
+  --gold-grad:linear-gradient(135deg,#D5D9F5 0%,#B1B2E7 45%,#635BFF 100%);
   --neo:#FFB070; --neof:#FF7A2E; --neo-on:#1F0A00;
   --mc:#FF7A2E; --mc-ink:#FF9A57;
   --eqf:#7B8290;
@@ -704,6 +704,7 @@ window.addEventListener("error",function(e){ var b=document.getElementById("oops
 
   <div class="right">
     <header class="head">
+      <!--brand--><style>.brand{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px}.brand img{display:block;box-sizing:border-box;height:46px;width:auto;max-width:230px;padding:9px 14px;border-radius:12px;background:var(--chip);object-fit:contain;box-shadow:0 0 0 1px color-mix(in oklab,var(--line,#ccc) 70%,transparent),0 8px 22px -14px rgba(0,0,0,.45)}</style><div class="brand"><img src="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSI5LjAgMTIuNCA1My4xIDIzLjIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+Cgo8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTM3LjYxMDkgMTYuMjgzOUwzNC4wNTUgMTcuMDQ3VjE0LjE2NDFMMzcuNjEwOSAxMy40MTUxVjE2LjI4MzlaTTIzLjE2MDcgMTUuMDU0NEwxOS43MDQgMTUuNzg5MkwxOS42ODk5IDI3LjEwOUMxOS42ODk5IDI5LjIwMDYgMjEuMjYyNCAzMC43NDEgMjMuMzU5IDMwLjc0MUMyNC41MjA3IDMwLjc0MSAyNS4zNzA3IDMwLjUyOSAyNS44MzgyIDMwLjI3NDZWMjcuNDA1OEMyNS4zODQ5IDI3LjU4OTUgMjMuMTQ2NSAyOC4yMzk2IDIzLjE0NjUgMjYuMTQ4VjIxLjEzMTJIMjUuODM4MlYxOC4xMjFIMjMuMTQ2NUwyMy4xNjA3IDE1LjA1NDRaTTYxIDI0LjM1MzNDNjEgMjAuNzM1NSA1OS4yNDMzIDE3Ljg4MDggNTUuODg1OCAxNy44ODA4QzUyLjUxNDIgMTcuODgwOCA1MC40NzQyIDIwLjczNTUgNTAuNDc0MiAyNC4zMjVDNTAuNDc0MiAyOC41Nzg4IDUyLjg4MjUgMzAuNzI2OCA1Ni4zMzkyIDMwLjcyNjhDNTguMDI1IDMwLjcyNjggNTkuMyAzMC4zNDUzIDYwLjI2MzMgMjkuODA4M1YyNi45ODE4QzU5LjMgMjcuNDYyMyA1OC4xOTUgMjcuNzU5MSA1Ni43OTI1IDI3Ljc1OTFDNTUuNDE4MyAyNy43NTkxIDU0LjIgMjcuMjc4NiA1NC4wNDQyIDI1LjYxMUg2MC45NzE3QzYwLjk3MTcgMjUuNTMzMiA2MC45NzY4IDI1LjM1NjMgNjAuOTgyNiAyNS4xNTI1VjI1LjE1MjRWMjUuMTUyNFYyNS4xNTIzQzYwLjk5MDYgMjQuODc1MyA2MSAyNC41NDg3IDYxIDI0LjM1MzNaTTU0LjAwMTYgMjMuMDEwN0M1NC4wMDE2IDIxLjQxMzggNTQuOTc5MSAyMC43NDk2IDU1Ljg3MTYgMjAuNzQ5NkM1Ni43MzU4IDIwLjc0OTYgNTcuNjU2NiAyMS40MTM4IDU3LjY1NjYgMjMuMDEwN0g1NC4wMDE2Wk0xNC43ODg0IDIwLjk0NzVDMTQuMDM3NSAyMC45NDc1IDEzLjU4NDIgMjEuMTU5NSAxMy41ODQyIDIxLjcxMDZDMTMuNTg0MiAyMi4zMTI0IDE0LjM2NDQgMjIuNTc3MSAxNS4zMzIzIDIyLjkwNTVDMTYuOTEwMiAyMy40NDA5IDE4Ljk4NzEgMjQuMTQ1NSAxOC45OTU5IDI2Ljc1NThDMTguOTk1OSAyOS4yODU0IDE2Ljk3IDMwLjc0MSAxNC4wMjM0IDMwLjc0MUMxMi44MDUgMzAuNzQxIDExLjQ3MzMgMzAuNTAwOCAxMC4xNTU4IDI5LjkzNTVWMjYuNTcyMUMxMS4zNDU4IDI3LjIyMjEgMTIuODQ3NSAyNy43MDI2IDE0LjAyMzQgMjcuNzAyNkMxNC44MTY3IDI3LjcwMjYgMTUuMzgzNCAyNy40OTA2IDE1LjM4MzQgMjYuODQwNkMxNS4zODM0IDI2LjE3NCAxNC41Mzc2IDI1Ljg2OTMgMTMuNTE2NiAyNS41MDE1QzExLjk2MTYgMjQuOTQxMyAxMCAyNC4yMzQ3IDEwIDIxLjg4MDJDMTAgMTkuMzc4OCAxMS45MTI1IDE3Ljg4MDggMTQuNzg4NCAxNy44ODA4QzE1Ljk2NDIgMTcuODgwOCAxNy4xMjU5IDE4LjA2NDUgMTguMzAxNyAxOC41MzA5VjIxLjg1MTlDMTcuMjI1IDIxLjI3MjUgMTUuODY1IDIwLjk0NzUgMTQuNzg4NCAyMC45NDc1Wk0zMC4yNDQzIDE5LjE2NjhMMzAuMDE3NiAxOC4xMjFIMjYuOTU3NlYzMC40ODY2SDMwLjQ5OTNWMjIuMTA2M0MzMS4zMzUxIDIxLjAxODEgMzIuNzUxOCAyMS4yMTYgMzMuMTkwOSAyMS4zNzE0VjE4LjEyMUMzMi43Mzc2IDE3Ljk1MTUgMzEuMDgwMSAxNy42NDA2IDMwLjI0NDMgMTkuMTY2OFpNMzQuMDU0OCAxOC4xMjExSDM3LjYxMDdWMzAuNDg2NkgzNC4wNTQ4VjE4LjEyMTFaTTQyLjIyOSAxOC45ODMxQzQyLjcyNDggMTguNTMwOSA0My42MTczIDE3Ljg4MDggNDUuMDA1NyAxNy44ODA4QzQ3LjQ4NDggMTcuODgwOCA0OS44MjIzIDIwLjExMzcgNDkuODM2NSAyNC4yMTJDNDkuODM2NSAyOC42OTE4IDQ3LjUyNzMgMzAuNzI2OSA0NC45OTE1IDMwLjcyNjlDNDMuNzQ0OCAzMC43MjY5IDQyLjk5NCAzMC4yMDQgNDIuNDg0IDI5LjgzNjVMNDIuNDY5OCAzMy44MzU5TDM4LjkyODEgMzQuNTg0OVYxOC4xMDY5SDQyLjA0NDhMNDIuMjI5IDE4Ljk4MzFaTTQyLjQ4MzkgMjYuOTUzNkM0Mi44MjM5IDI3LjMyMSA0My4zMTk4IDI3LjYxNzggNDQuMTU1NiAyNy42MTc4QzQ1LjQ1ODkgMjcuNjE3OCA0Ni4zMzczIDI2LjIwNDYgNDYuMzM3MyAyNC4zMTA5QzQ2LjMzNzMgMjIuNDU5NiA0NS40NDQ4IDIxLjAxODEgNDQuMTU1NiAyMS4wMTgxQzQzLjM0ODEgMjEuMDE4MSA0Mi44MzgxIDIxLjMwMDcgNDIuNDY5OCAyMS43MTA2TDQyLjQ4MzkgMjYuOTUzNloiIGZpbGw9IiM2NDYxRkMiLz4KPC9zdmc+Cg==" alt="Stripe" style="--chip:#ffffff"></div><!--/brand-->
       <div class="kicker">Stripe · as at 17 October 2026</div>
       <h1>Stripe <span class="os">Platform</span></h1>
       <p class="sub">A payments company that moved $1.9 trillion in 2025 as five discs that stack into one platform, from its licences and its payments foundation model at the bottom to the Dashboard, the API and the AI companies at the top. Click the stack to open it. Choose who you are and what you want to do, and the areas that deliver it light up across the layers, joined in the order they act. Switch to the Mastercard lens to see how deep Mastercard goes in every area.</p>

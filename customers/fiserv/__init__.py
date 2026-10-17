@@ -22,7 +22,10 @@ CUSTOMER = {
     "brands": ["Fiserv", "Clover", "Carat", "STAR", "Accel"],
     "country": "United States",
     "region": "Americas",
-    "accent": "#ff6600",   # Fiserv orange, on the Customers tab card
+    "accent": "#ff6600",   # Fiserv orange, from the logo
+    "logos": (   # file in this folder, alt text, the chip behind it, where it came from
+        {"file": "logo.svg", "alt": "Fiserv", "bg": "#ffffff", "source": "https://www.fiserv.com/"},
+    ),
     "as_of": "17 October 2026",
     "tagline": "America's largest merchant acquirer and a processor for 10,000 banks as five discs: Mastercard "
                "Merchant Cloud now inside Commerce Hub, while STAR and Accel compete with Debit Mastercard.",

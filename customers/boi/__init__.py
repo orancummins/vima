@@ -22,7 +22,10 @@ CUSTOMER = {
     "brands": ["Bank of Ireland", "Davy", "New Ireland", "Bank of Ireland UK"],
     "country": "Ireland",
     "region": "Europe",
-    "accent": "#0047bb",   # Bank of Ireland blue, on the Customers tab card
+    "accent": "#0000ff",   # Bank of Ireland blue, from the 2023 logo
+    "logos": (   # file in this folder, alt text, the chip behind it, where it came from
+        {"file": "logo.svg", "alt": "Bank of Ireland", "bg": "#ffffff", "source": "https://personalbanking.bankofireland.com/"},
+    ),
     "as_of": "17 October 2026",
     "tagline": "Ireland's oldest bank as five discs: 42% of new mortgages, half of SME lending and Ireland's "
                "largest wealth manager, with every credit card on Mastercard and every debit card on Visa.",

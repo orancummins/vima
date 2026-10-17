@@ -21,18 +21,18 @@
    Palette: Barclays's colours for the company, from the deep foundation to the bright access layer, graphite for the
    people, and Mastercard's colours kept for the lens that reads the stack through Mastercard. Type follows the Mastercard OS pages. */
 :root{
-  --ground:#FFFFFF; --panel:#F1F6F6; --panel-2:#E4EEEF; --ink:#09181B; --ink-2:#1B2D2F; --muted:#455759; --faint:#677879; --line:#C8D7D8; --line-2:#AABDBE;
-  --focus:#006187; --accent:#006187; --link:#004366; --c1:#2a78d6; --c7:#4a3aa7; --s-new:#0F7A55; --s-flux:#A35F00; --s-retired:#B42318; --sh3:0 32px 64px -16px rgba(10,24,18,.4); --r-l:16px; --red:#C8102E; --gold:#006187; --gold-deep:#003957; --gold-ink:#004366;
+  --ground:#FFFFFF; --panel:#F2F6F6; --panel-2:#E7F0F0; --ink:#0C1C20; --ink-2:#294043; --muted:#71868E; --faint:#909B9F; --line:#D4DCDF; --line-2:#C2CCCF;
+  --focus:#009FDB; --accent:#009FDB; --link:#006EA5; --c1:#2a78d6; --c7:#4a3aa7; --s-new:#0F7A55; --s-flux:#A35F00; --s-retired:#B42318; --sh3:0 32px 64px -16px rgba(10,24,18,.4); --r-l:16px; --red:#C8102E; --gold:#009FDB; --gold-deep:#005985; --gold-ink:#006EA5;
   /* the five slices in Barclays's colours, deep to bright, with graphite for access and the people */
-  --l1:#00283D; --l2:#003957; --l3:#064B73; --l4:#27748F; --l5:#231E38; --lu:#706A81;
-  --l1f:#074160; --l2f:#006187; --l3f:#187DAA; --l4f:#68B7C8; --l5f:#3C3652; --luf:#A09BB0;
-  --l1t:#E8FBFF; --l2t:#FFFFFF; --l3t:#FFFFFF; --l4t:#04222C; --l5t:#FFFFFF;
-  --slot:#09181B; --edge:rgba(255,255,255,.55); --seam:rgba(0,0,0,.18); --shadow:rgba(4,34,42,.22);
-  --wash-a:rgba(0,97,135,.14); --wash-b:rgba(104,183,200,.10);
+  --l1:#003853; --l2:#005985; --l3:#1382BE; --l4:#4BA8C6; --l5:#1F2937; --lu:#6B7280;
+  --l1f:#126995; --l2f:#00AEEF; --l3f:#3FADDB; --l4f:#95C9D4; --l5f:#374151; --luf:#9CA3AF;
+  --l1t:#FFFFFF; --l2t:#FFFFFF; --l3t:#0B0F14; --l4t:#0B0F14; --l5t:#FFFFFF;
+  --slot:#0C1C20; --edge:rgba(255,255,255,.55); --seam:rgba(0,0,0,.18); --shadow:rgba(8,43,51,.22);
+  --wash-a:rgba(0,174,239,.14); --wash-b:rgba(149,201,212,.10);
   /* the globe in Barclays's colours */
-  --gb2:#074160; --gb3:#006187; --gb4:#8BD1DD;
-  --brand-grad:linear-gradient(90deg,#074160,#00AEEF 55%,#7FD8F7);
-  --gold-grad:linear-gradient(135deg,#8BD1DD 0%,#006187 45%,#003957 100%);
+  --gb2:#126995; --gb3:#00AEEF; --gb4:#AEDCE4;
+  --brand-grad:linear-gradient(90deg,#005985,#00AEEF 55%,#AEDCE4);
+  --gold-grad:linear-gradient(135deg,#AEDCE4 0%,#00AEEF 45%,#005985 100%);
   /* the lens colour: Mastercard */
   --neo:#B23A00; --neof:#FF5F00; --neo-on:#1F0A00; --neo-grad:linear-gradient(135deg,#F79E1B,#FF5F00 50%,#EB001B);
   /* Mastercard, for the places it fits */
@@ -44,14 +44,14 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-    --ground:#090D0D; --panel:#111819; --panel-2:#172224; --ink:#F2F7F7; --ink-2:#D3E0E1; --muted:#A3B4B5; --faint:#818F92; --line:#293538; --line-2:#3E4C4F;
-    --focus:#59C0D9; --accent:#46B1CD; --link:#8BD1DD; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#46B1CD; --gold-deep:#59C0D9; --gold-ink:#8BD1DD;
-    --l1:#8BD1DD; --l2:#6AC1D5; --l3:#7AC0E1; --l4:#A6DCE6; --l5:#D3D0DB; --lu:#908AA2;
-    --l1f:#074160; --l2f:#006187; --l3f:#187DAA; --l4f:#68B7C8; --l5f:#706A81; --luf:#706A81;
-    --slot:#050808; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
-    --wash-a:rgba(0,97,135,.12); --wash-b:rgba(104,183,200,.06);
-    --gb2:#074160; --gb3:#006187; --gb4:#8BD1DD;
-    --gold-grad:linear-gradient(135deg,#BDECF2 0%,#46B1CD 45%,#006187 100%);
+    --ground:#0A0E0F; --panel:#151E1F; --panel-2:#212D2F; --ink:#F3F7F7; --ink-2:#DBE5E5; --muted:#BDC6C9; --faint:#A5ADB0; --line:#435257; --line-2:#6D8087;
+    --focus:#00AEEF; --accent:#00AEEF; --link:#AEDCE4; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#00AEEF; --gold-deep:#8BD0DF; --gold-ink:#AEDCE4;
+    --l1:#AEDCE4; --l2:#97D1DD; --l3:#A2D1E6; --l4:#BEE4EA; --l5:#D1D5DB; --lu:#8B93A1;
+    --l1f:#126995; --l2f:#00AEEF; --l3f:#3FADDB; --l4f:#95C9D4; --l5f:#6B7280; --luf:#6B7280;
+    --slot:#050908; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
+    --wash-a:rgba(0,174,239,.12); --wash-b:rgba(149,201,212,.06);
+    --gb2:#126995; --gb3:#00AEEF; --gb4:#AEDCE4;
+    --gold-grad:linear-gradient(135deg,#CAEEF3 0%,#7EC5D7 45%,#00AEEF 100%);
     --neo:#FFB070; --neof:#FF7A2E; --neo-on:#1F0A00;
     --mc:#FF7A2E; --mc-ink:#FF9A57;
     --eqf:#7B8290;
@@ -59,14 +59,14 @@
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --ground:#090D0D; --panel:#111819; --panel-2:#172224; --ink:#F2F7F7; --ink-2:#D3E0E1; --muted:#A3B4B5; --faint:#818F92; --line:#293538; --line-2:#3E4C4F;
-  --focus:#59C0D9; --accent:#46B1CD; --link:#8BD1DD; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#46B1CD; --gold-deep:#59C0D9; --gold-ink:#8BD1DD;
-  --l1:#8BD1DD; --l2:#6AC1D5; --l3:#7AC0E1; --l4:#A6DCE6; --l5:#D3D0DB; --lu:#908AA2;
-  --l1f:#074160; --l2f:#006187; --l3f:#187DAA; --l4f:#68B7C8; --l5f:#706A81; --luf:#706A81;
-  --slot:#050808; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
-  --wash-a:rgba(0,97,135,.12); --wash-b:rgba(104,183,200,.06);
-  --gb2:#074160; --gb3:#006187; --gb4:#8BD1DD;
-  --gold-grad:linear-gradient(135deg,#BDECF2 0%,#46B1CD 45%,#006187 100%);
+  --ground:#0A0E0F; --panel:#151E1F; --panel-2:#212D2F; --ink:#F3F7F7; --ink-2:#DBE5E5; --muted:#BDC6C9; --faint:#A5ADB0; --line:#435257; --line-2:#6D8087;
+  --focus:#00AEEF; --accent:#00AEEF; --link:#AEDCE4; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#00AEEF; --gold-deep:#8BD0DF; --gold-ink:#AEDCE4;
+  --l1:#AEDCE4; --l2:#97D1DD; --l3:#A2D1E6; --l4:#BEE4EA; --l5:#D1D5DB; --lu:#8B93A1;
+  --l1f:#126995; --l2f:#00AEEF; --l3f:#3FADDB; --l4f:#95C9D4; --l5f:#6B7280; --luf:#6B7280;
+  --slot:#050908; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
+  --wash-a:rgba(0,174,239,.12); --wash-b:rgba(149,201,212,.06);
+  --gb2:#126995; --gb3:#00AEEF; --gb4:#AEDCE4;
+  --gold-grad:linear-gradient(135deg,#CAEEF3 0%,#7EC5D7 45%,#00AEEF 100%);
   --neo:#FFB070; --neof:#FF7A2E; --neo-on:#1F0A00;
   --mc:#FF7A2E; --mc-ink:#FF9A57;
   --eqf:#7B8290;
@@ -704,6 +704,7 @@ window.addEventListener("error",function(e){ var b=document.getElementById("oops
 
   <div class="right">
     <header class="head">
+      <!--brand--><style>.brand{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px}.brand img{display:block;box-sizing:border-box;height:46px;width:auto;max-width:230px;padding:9px 14px;border-radius:12px;background:var(--chip);object-fit:contain;box-shadow:0 0 0 1px color-mix(in oklab,var(--line,#ccc) 70%,transparent),0 8px 22px -14px rgba(0,0,0,.45)}</style><div class="brand"><img src="data:image/png;base64,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" alt="Barclays" style="--chip:#ffffff"></div><!--/brand-->
       <div class="kicker">Barclays PLC · as at 17 October 2026</div>
       <h1>Barclays <span class="os">Platform</span></h1>
       <p class="sub">Britain's first card issuer as five discs that stack into one platform, from a £1.7 trillion balance sheet and three centuries since Lombard Street at the bottom to an app for 14 million people, 206 branches and partners from Tesco to JetBlue at the top. Click the stack to open it. Choose who you are and what you want to do, and the areas that deliver it light up across the layers, joined in the order they act. Switch to the Mastercard lens to see how deep Mastercard goes in every area.</p>

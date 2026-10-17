@@ -21,18 +21,18 @@
    Palette: Fiserv's colours for the company, from the deep foundation to the bright access layer, graphite for the
    people, and Mastercard's colours kept for the lens that reads the stack through Mastercard. Type follows the Mastercard OS pages. */
 :root{
-  --ground:#FFFFFF; --panel:#F2F4F5; --panel-2:#E7EAEB; --ink:#0E1316; --ink-2:#212629; --muted:#4B5053; --faint:#6C7174; --line:#CDD1D3; --line-2:#B0B6B8;
-  --focus:#254162; --accent:#254162; --link:#1C2F4A; --c1:#2a78d6; --c7:#4a3aa7; --s-new:#0F7A55; --s-flux:#A35F00; --s-retired:#B42318; --sh3:0 32px 64px -16px rgba(10,24,18,.4); --r-l:16px; --red:#C8102E; --gold:#254162; --gold-deep:#18283F; --gold-ink:#1C2F4A;
+  --ground:#FFFFFF; --panel:#F7F2F2; --panel-2:#F0E8E7; --ink:#21120D; --ink-2:#46312A; --muted:#95857A; --faint:#A59C97; --line:#E0DAD6; --line-2:#D2CBC6;
+  --focus:#FA6400; --accent:#FA6400; --link:#AA4E00; --c1:#2a78d6; --c7:#4a3aa7; --s-new:#0F7A55; --s-flux:#A35F00; --s-retired:#B42318; --sh3:0 32px 64px -16px rgba(10,24,18,.4); --r-l:16px; --red:#C8102E; --gold:#FA6400; --gold-deep:#8C4000; --gold-ink:#AA4E00;
   /* the five slices in Fiserv's colours, deep to bright, with graphite for access and the people */
-  --l1:#111C2C; --l2:#18283F; --l3:#263753; --l4:#465B70; --l5:#2A2630; --lu:#76717A;
-  --l1f:#213046; --l2f:#254162; --l3f:#435E7F; --l4f:#849BAC; --l5f:#443E4A; --luf:#A5A1AA;
-  --l1t:#EEF4F9; --l2t:#FFFFFF; --l3t:#FFFFFF; --l4t:#101820; --l5t:#FFFFFF;
-  --slot:#0E1316; --edge:rgba(255,255,255,.55); --seam:rgba(0,0,0,.18); --shadow:rgba(15,24,31,.22);
-  --wash-a:rgba(37,65,98,.14); --wash-b:rgba(132,155,172,.10);
+  --l1:#572800; --l2:#8C4000; --l3:#CB6C14; --l4:#C98156; --l5:#1F2937; --lu:#6B7280;
+  --l1f:#9E5313; --l2f:#FF6600; --l3f:#DD884A; --l4f:#D7AD9B; --l5f:#374151; --luf:#9CA3AF;
+  --l1t:#FFFFFF; --l2t:#FFFFFF; --l3t:#0B0F14; --l4t:#0B0F14; --l5t:#FFFFFF;
+  --slot:#21120D; --edge:rgba(255,255,255,.55); --seam:rgba(0,0,0,.18); --shadow:rgba(53,22,8,.22);
+  --wash-a:rgba(255,102,0,.14); --wash-b:rgba(215,173,155,.10);
   /* the globe in Fiserv's colours */
-  --gb2:#213046; --gb3:#254162; --gb4:#A3B8C5;
-  --brand-grad:linear-gradient(90deg,#213046,#FF6600 55%,#FFB27A);
-  --gold-grad:linear-gradient(135deg,#A3B8C5 0%,#254162 45%,#18283F 100%);
+  --gb2:#9E5313; --gb3:#FF6600; --gb4:#E5C0B3;
+  --brand-grad:linear-gradient(90deg,#8C4000,#FF6600 55%,#E5C0B3);
+  --gold-grad:linear-gradient(135deg,#E5C0B3 0%,#FF6600 45%,#8C4000 100%);
   /* the lens colour: Mastercard */
   --neo:#B23A00; --neof:#FF5F00; --neo-on:#1F0A00; --neo-grad:linear-gradient(135deg,#F79E1B,#FF5F00 50%,#EB001B);
   /* Mastercard, for the places it fits */
@@ -44,14 +44,14 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-    --ground:#0A0B0C; --panel:#131517; --panel-2:#1B1E20; --ink:#F3F5F6; --ink-2:#D7DBDD; --muted:#A8ADB0; --faint:#868A8D; --line:#2E3133; --line-2:#43474A;
-    --focus:#7F9CB3; --accent:#6E8CA5; --link:#A3B8C5; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#6E8CA5; --gold-deep:#7F9CB3; --gold-ink:#A3B8C5;
-    --l1:#A3B8C5; --l2:#8AA2B5; --l3:#99ABC2; --l4:#B9C9D3; --l5:#D6D4D8; --lu:#96919B;
-    --l1f:#213046; --l2f:#254162; --l3f:#435E7F; --l4f:#849BAC; --l5f:#76717A; --luf:#76717A;
-    --slot:#060707; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
-    --wash-a:rgba(37,65,98,.12); --wash-b:rgba(132,155,172,.06);
-    --gb2:#213046; --gb3:#254162; --gb4:#A3B8C5;
-    --gold-grad:linear-gradient(135deg,#CCDAE3 0%,#6E8CA5 45%,#254162 100%);
+    --ground:#0F0B0A; --panel:#201816; --panel-2:#312622; --ink:#F7F3F3; --ink-2:#E6DDDC; --muted:#CCC5C1; --faint:#B4AEAA; --line:#5C4F46; --line-2:#8F7F74;
+    --focus:#FF6600; --accent:#FF6600; --link:#E5C0B3; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#FF6600; --gold-deep:#E1AB92; --gold-ink:#E5C0B3;
+    --l1:#E5C0B3; --l2:#DFB19D; --l3:#E7C3A8; --l4:#EBCDC2; --l5:#D1D5DB; --lu:#8B93A1;
+    --l1f:#9E5313; --l2f:#FF6600; --l3f:#DD884A; --l4f:#D7AD9B; --l5f:#6B7280; --luf:#6B7280;
+    --slot:#090605; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
+    --wash-a:rgba(255,102,0,.12); --wash-b:rgba(215,173,155,.06);
+    --gb2:#9E5313; --gb3:#FF6600; --gb4:#E5C0B3;
+    --gold-grad:linear-gradient(135deg,#F3D5CC 0%,#D9A185 45%,#FF6600 100%);
     --neo:#FFB070; --neof:#FF7A2E; --neo-on:#1F0A00;
     --mc:#FF7A2E; --mc-ink:#FF9A57;
     --eqf:#7B8290;
@@ -59,14 +59,14 @@
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --ground:#0A0B0C; --panel:#131517; --panel-2:#1B1E20; --ink:#F3F5F6; --ink-2:#D7DBDD; --muted:#A8ADB0; --faint:#868A8D; --line:#2E3133; --line-2:#43474A;
-  --focus:#7F9CB3; --accent:#6E8CA5; --link:#A3B8C5; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#6E8CA5; --gold-deep:#7F9CB3; --gold-ink:#A3B8C5;
-  --l1:#A3B8C5; --l2:#8AA2B5; --l3:#99ABC2; --l4:#B9C9D3; --l5:#D6D4D8; --lu:#96919B;
-  --l1f:#213046; --l2f:#254162; --l3f:#435E7F; --l4f:#849BAC; --l5f:#76717A; --luf:#76717A;
-  --slot:#060707; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
-  --wash-a:rgba(37,65,98,.12); --wash-b:rgba(132,155,172,.06);
-  --gb2:#213046; --gb3:#254162; --gb4:#A3B8C5;
-  --gold-grad:linear-gradient(135deg,#CCDAE3 0%,#6E8CA5 45%,#254162 100%);
+  --ground:#0F0B0A; --panel:#201816; --panel-2:#312622; --ink:#F7F3F3; --ink-2:#E6DDDC; --muted:#CCC5C1; --faint:#B4AEAA; --line:#5C4F46; --line-2:#8F7F74;
+  --focus:#FF6600; --accent:#FF6600; --link:#E5C0B3; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#FF6600; --gold-deep:#E1AB92; --gold-ink:#E5C0B3;
+  --l1:#E5C0B3; --l2:#DFB19D; --l3:#E7C3A8; --l4:#EBCDC2; --l5:#D1D5DB; --lu:#8B93A1;
+  --l1f:#9E5313; --l2f:#FF6600; --l3f:#DD884A; --l4f:#D7AD9B; --l5f:#6B7280; --luf:#6B7280;
+  --slot:#090605; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
+  --wash-a:rgba(255,102,0,.12); --wash-b:rgba(215,173,155,.06);
+  --gb2:#9E5313; --gb3:#FF6600; --gb4:#E5C0B3;
+  --gold-grad:linear-gradient(135deg,#F3D5CC 0%,#D9A185 45%,#FF6600 100%);
   --neo:#FFB070; --neof:#FF7A2E; --neo-on:#1F0A00;
   --mc:#FF7A2E; --mc-ink:#FF9A57;
   --eqf:#7B8290;
@@ -704,6 +704,7 @@ window.addEventListener("error",function(e){ var b=document.getElementById("oops
 
   <div class="right">
     <header class="head">
+      <!--brand--><style>.brand{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px}.brand img{display:block;box-sizing:border-box;height:46px;width:auto;max-width:230px;padding:9px 14px;border-radius:12px;background:var(--chip);object-fit:contain;box-shadow:0 0 0 1px color-mix(in oklab,var(--line,#ccc) 70%,transparent),0 8px 22px -14px rgba(0,0,0,.45)}</style><div class="brand"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz48c3ZnIGlkPSJhIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI3MS42OCIgaGVpZ2h0PSIzNiIgdmlld0JveD0iMCAwIDcxLjY4IDM2Ij48cmVjdCB4PSI2Ny4xIiB5PSIzMS4xMSIgd2lkdGg9IjQuNTgiIGhlaWdodD0iNC41OCIgZmlsbD0iI2Y2MCIvPjxwb2x5Z29uIHBvaW50cz0iNTcuODIgMTAuNzMgNjAuNTUgMzEuMTggNjMuMjcgMTAuNzMgNjcuNTEgMTAuNzMgNjMuNTQgMzUuNjggNTcuNSAzNS42OCA1My41NyAxMC43MyA1Ny44MiAxMC43MyIgZmlsbD0iI2Y2MCIvPjxwYXRoIGQ9Ik0yLjM1LDEwLjczSDB2My4zMkgyLjM1djIxLjY0SDYuNDlWMTQuMDRoMi45MXYtMy4zMmgtMi45MVY1LjY2YzAtLjc0LC4xNS0xLjMxLC41MS0xLjY5LC4zNi0uMzksLjkxLS41NywxLjY1LS41N2guNzVWMGgtMS41Yy0xLjg0LDAtMy42MSwuMzktNC40NSwxLjE5LS44NCwuOC0xLjA5LDIuMDQtMS4wOSwzLjgxdjUuNzJaIiBmaWxsPSIjZjYwIi8+PHJlY3QgeD0iMTAuNjkiIHk9IjEwLjczIiB3aWR0aD0iNC4xNSIgaGVpZ2h0PSIyNC45NSIgZmlsbD0iI2Y2MCIvPjxwYXRoIGQ9Ik0zNCwyNC42Mmg4LjY1di03LjY5Yy0uMDEtNC42LTIuMjItNi40OS02LjQxLTYuNDlzLTYuNCwxLjg4LTYuNCw2LjUydjEyLjY0Yy4wMSw0LjIyLDIuNTcsNi40LDYuNCw2LjRzNi40LTEuOCw2LjQyLTYuNHYtMmgtNC4wMXMwLDEuNzgsMCwyLjM3YzAsMS42OS0uNjMsMi44Ni0yLjMzLDIuODZzLTIuMzItMS4xOC0yLjMyLTIuODZ2LTUuMzVabTAtOC41MmMwLTEuNDEsLjM3LTIuODcsMi4zMS0yLjg3czIuMzMsMS40NCwyLjMzLDIuODZ2NS4xNmgtNC42NHYtNS4xNloiIGZpbGw9IiNmNjAiLz48cGF0aCBkPSJNMjQuMTcsMjEuNWMtMy4xMy0yLjc1LTMuMzktMy4xMy0zLjM5LTUuMTYsMC0xLjc0LC4xNS0yLjc5LDEuNzEtMi43OXMxLjc2LDEuMDQsMS43NiwyLjgxdjIuM2g0di0zLjc2Yy0uMDEtMi45NS0yLjI4LTQuNDUtNS44NS00LjQ1cy01LjgsMS4xNy01LjgyLDUuODljMCwuOCwwLC44LDAsLjQ5LDAsMS40OCwuMDEsMy44MywzLjY4LDYuOThsMS4wNSwuOWMyLjcsMi4yOCwzLDIuNTUsMi45OSw1LjI2LDAsMS42Ny0uMSwyLjk0LTEuODYsMi45NHMtMS44Ni0xLjI4LTEuODYtMi4wNnYtMy4xOWgtNC4ydjMuMjljMCw0LjA1LDIuNjQsNS4wNiw2LjA2LDUuMDZzNi4wNi0xLjAxLDYuMDYtNi4yM3YtLjQzYzAtMy42NC0uNjctNC42Mi00LjMzLTcuODRaIiBmaWxsPSIjZjYwIi8+PHBhdGggZD0iTTQ4LjIsMTMuM3YtMi41N2gtMy43OHYyNC45NWg0LjA4VjE4LjI5YzAtMS4zNCwuNDQtMi4yMywxLjItMi43NSwuNzItLjUsMS42MS0uNjcsMi43NC0uNjh2LTQuNDJjLTIuMTYsLjA0LTMuMSwuNDctNC4yLDIuNzZsLS4wNCwuMDlaIiBmaWxsPSIjZjYwIi8+PC9zdmc+" alt="Fiserv" style="--chip:#ffffff"></div><!--/brand-->
       <div class="kicker">Fiserv, Inc. · as at 17 October 2026</div>
       <h1>Fiserv <span class="os">Platform</span></h1>
       <p class="sub">America's largest merchant acquirer and a processor for 10,000 banks as five discs that stack into one platform, from $4.6 trillion of merchant volume and the Commerce Hub and Finxact platforms at the bottom to Clover devices, bank referrals and developer portals at the top. Click the stack to open it. Choose who you are and what you want to do, and the areas that deliver it light up across the layers, joined in the order they act. Switch to the Mastercard lens to see how deep Mastercard goes in every area.</p>

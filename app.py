@@ -1966,9 +1966,9 @@ def customer_links(cid: str):
 
 @app.route("/customers/<cid>/<path:filename>")
 def customer_files(cid: str, filename: str):
-    """The standalone page, its research notes and the Studio colours — nothing else in the folder."""
+    """The standalone page, its research notes, the Studio colours and the logos — nothing else in the folder."""
     c = _customer_or_404(cid)
-    if filename == c["page"] or filename == "studio-theme.css":
+    if filename == c["page"] or filename == "studio-theme.css" or filename in customers.logo_files(c):
         return send_from_directory(c["dir"], filename)
     if filename in {f for _label, f in c["notes"]}:
         # Plain text, so the browser shows the Markdown rather than downloading it.

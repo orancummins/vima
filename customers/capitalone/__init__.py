@@ -24,7 +24,10 @@ CUSTOMER = {
     "brands": ["Capital One", "Discover", "PULSE", "Diners Club", "Brex"],
     "country": "United States",
     "region": "Americas",
-    "accent": "#d03027",   # Capital One red, on the Customers tab card
+    "accent": "#004977",   # Capital One navy, from the logo
+    "logos": (   # file in this folder, alt text, the chip behind it, where it came from
+        {"file": "logo.svg", "alt": "Capital One", "bg": "#ffffff", "source": "static/logos/financial-logos-500/01-financial-institutions/capital-one.svg"},
+    ),
     "as_of": "17 October 2026",
     "tagline": "America's largest card issuer by loans, and now owner of the Discover network, as five discs: debit "
                "and new consumer credit moving off Mastercard, business and co-brand cards staying.",

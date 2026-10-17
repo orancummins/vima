@@ -23,7 +23,10 @@ CUSTOMER = {
     "brands": ["Barclays", "Barclaycard", "Tesco Bank", "Kensington", "Best Egg"],
     "country": "United Kingdom",
     "region": "Europe & Americas",
-    "accent": "#00aeef",   # Barclays blue, on the Customers tab card
+    "accent": "#00aeef",   # Barclays blue, from the logo
+    "logos": (   # file in this folder, alt text, the chip behind it, where it came from
+        {"file": "logo.png", "alt": "Barclays", "bg": "#ffffff", "source": "static/logos/financial-logos-500/01-financial-institutions/barclays.png"},
+    ),
     "as_of": "17 October 2026",
     "tagline": "Britain's first card issuer as five discs: £1.7 trillion of assets and a Visa bank at home, with "
                "Mastercard on most US partner cards, the Avios cards and Tesco Bank.",

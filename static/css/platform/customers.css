@@ -62,7 +62,8 @@ html.theme-light .cust-lead { color: #555; }
   gap: 20px;
 }
 
-/* A card: the customer's colour (CUSTOMER["accent"]) runs along its top edge. */
+/* A card: the customer's colour (CUSTOMER["accent"]) runs along its top edge. Text in that colour uses
+   --cust-text / --cust-text-light and the button --cust-ink, worked out in customers.summary() to stay readable. */
 .cust-card {
   --cust: #ff5f00;
   --cust-hi: color-mix(in oklab, var(--cust), #fff 35%);
@@ -126,6 +127,21 @@ html.theme-light .cust-card {
   background: linear-gradient(135deg, var(--cust-deep), var(--cust) 70%);
   box-shadow: 0 0 22px -4px color-mix(in oklab, var(--cust) 70%, transparent);
 }
+/* The customer's logos (CUSTOMER["logos"]), each on its own chip so it reads on either theme. */
+.cust-logos { flex: 0 0 auto; display: flex; gap: 8px; }
+.cust-logo {
+  display: block;
+  box-sizing: border-box;
+  height: 48px;
+  width: auto;
+  max-width: 156px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  object-fit: contain;
+  background: var(--chip, #fff);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 22px -6px color-mix(in oklab, var(--cust) 60%, transparent);
+}
+html.theme-light .cust-logo { box-shadow: 0 0 0 1px #e7e2da, 0 6px 18px -12px color-mix(in oklab, var(--cust) 60%, transparent); }
 .cust-card-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .cust-card-name { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
 .cust-card-meta { font-size: 12.5px; color: rgba(255, 255, 255, 0.55); }
@@ -146,9 +162,9 @@ html.theme-light .cust-card-tag { color: #2a2a2a; }
   font-size: 11.5px;
   color: rgba(255, 255, 255, 0.55);
 }
-.cust-stat b { font-size: 15px; font-weight: 700; color: var(--cust-hi); }
+.cust-stat b { font-size: 15px; font-weight: 700; color: var(--cust-text, var(--cust-hi)); }
 html.theme-light .cust-stat { border-color: #ece7df; background: #faf8f5; color: #6b6b6b; }
-html.theme-light .cust-stat b { color: var(--cust-deep); }
+html.theme-light .cust-stat b { color: var(--cust-text-light, var(--cust-deep)); }
 
 .cust-counts { font-size: 12.5px; color: rgba(255, 255, 255, 0.55); }
 html.theme-light .cust-counts { color: #6b6b6b; }
@@ -171,7 +187,7 @@ html.theme-light .cust-live { color: #b84a00; }
   border-radius: 8px;
   font-size: 13.5px;
   font-weight: 600;
-  color: #fff;
+  color: var(--cust-ink, #fff);
   background: linear-gradient(90deg, color-mix(in oklab, var(--cust), #000 25%), var(--cust));
   box-shadow: 0 4px 18px -4px color-mix(in oklab, var(--cust) 70%, transparent);
 }
@@ -245,6 +261,21 @@ html.theme-light .cust-bar { border-bottom-color: #e7e2da; background: rgba(255,
 html.theme-light .cust-back { border-color: #d3ccc1; }
 .cust-bar-sep { width: 1px; height: 18px; background: rgba(255, 255, 255, 0.12); }
 html.theme-light .cust-bar-sep { background: #e7e2da; }
+.cust-bar-logos { display: flex; gap: 6px; flex: 0 0 auto; }
+.cust-bar-logos:empty { display: none; }
+.cust-bar-logo {
+  display: block;
+  box-sizing: border-box;
+  height: 30px;
+  width: auto;
+  max-width: 110px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: var(--chip, #fff);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+html.theme-light .cust-bar-logo { box-shadow: 0 0 0 1px #e7e2da; }
 .cust-bar-title { display: flex; align-items: baseline; gap: 10px; min-width: 0; flex: 1; }
 .cust-bar-name { font-weight: 600; white-space: nowrap; }
 .cust-bar-meta {

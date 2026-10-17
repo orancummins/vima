@@ -23,7 +23,10 @@ CUSTOMER = {
     "brands": ["NatWest", "Royal Bank of Scotland", "Ulster Bank", "Coutts", "Mettle", "Tyl"],
     "country": "United Kingdom",
     "region": "Europe",
-    "accent": "#5a287d",   # NatWest purple, on the Customers tab card
+    "accent": "#3c1053",   # NatWest purple, from the logo
+    "logos": (   # file in this folder, alt text, the chip behind it, where it came from
+        {"file": "logo.svg", "alt": "NatWest", "bg": "#3c1053", "source": "https://www.natwest.com/"},
+    ),
     "as_of": "17 October 2026",
     "tagline": "The UK's largest bank for business as five discs: £745 billion of assets, private again since 2025, "
                "with 16 million debit cards on Mastercard and Visa first to its agentic payments.",

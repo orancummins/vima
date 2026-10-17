@@ -1,7 +1,7 @@
 /* Citi inside Solution Studio.
 
    Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
-   Citi's blues back on the layers, the globe and the page's accents. Studio's
+   Citi's colours back on the layers, the globe and the page's accents. Studio's
    orange stays on what Studio adds and the lit journey; the Mastercard lens
    keeps Mastercard's own colours from the page. */
 
@@ -9,69 +9,72 @@
 html:root[data-theme="light"] { --studio-ink: #b84a00; }
 
 /* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
 html:root:not([data-theme="light"]) {
-  --ground: #0b0e13; --panel: #121821; --panel-2: #1a2230;
-  --ink: #f3f6fa; --ink-2: #d6dee8; --muted: #a2afbf; --faint: #7f8b9a;
-  --focus: #5ab0f0; --accent: #5ab0f0; --link: #8cc8f0;
-  --gold: #5ab0f0; --gold-deep: #6cb8f0; --gold-ink: #8cc8f0;
-  --gold-grad: linear-gradient(100deg, #056dae 0%, #5ab0f0 55%, #bfe2fa 100%);
-  --l1f: #1b5aa8; --l2f: #056dae; --l3f: #1b8bd0; --l4f: #5aaae0; --l5f: #8b96a5; --luf: #6b7684;
-  --l1t: #a9d6f5; --l2t: #8cc8f0; --l3t: #7fd0f5; --l4t: #bfe2fa; --l5t: #e3e8ee;
-  --l5: #d6dee8; --lu: #7f8b9a;
-  --wash-a: rgba(5, 109, 174, 0.14); --wash-b: rgba(238, 28, 37, 0.05);
-  --mc-plate: #0e141c; --mc-plate-deep: #05080c; --mc-pad: #111a25;
-  --mc-utok-hi: #1a2433; --mc-utok: #080d14; --mc-uico: #a9d6f5;
-  --mc-grid: rgba(5, 109, 174, 0.4); --mc-grid-strong: rgba(90, 176, 240, 0.6);
-  --mc-hg: rgb(27, 139, 208); --mc-gop: 0.22;
-  --mc-dot: rgb(140, 200, 240); --mc-dot-glow: rgb(5, 109, 174); --mc-dot-glow-alpha: 0.85;
-  --mc-halo-a: rgba(5, 109, 174, 0.2); --mc-halo-b: rgba(27, 139, 208, 0.1);
-  --mc-globe-a: rgba(5, 109, 174, 0.12); --mc-globe-b: rgba(27, 139, 208, 0.06);
-  --mc-globe-c: rgba(27, 139, 208, 0.03); --mc-globe-d: rgba(27, 139, 208, 0.1);
-  --mc-cut-a: rgba(5, 109, 174, 0.32); --mc-cut-b: rgba(27, 139, 208, 0.12);
-  --mc-globe-hl: #8cc8f0; --mc-globe-rim: #1b8bd0; --mc-halo: #056dae;
-  --mc-underglow: rgba(5, 109, 174, 0.22);
+  --ground: #0c0e0f; --panel: #131719; --panel-2: #1c2024;
+  --ink: #f3f5f6; --ink-2: #d8dddf; --muted: #a9aeb4; --faint: #898d92;
+  --focus: #6b91b6; --accent: #6b91b6; --link: #a2bccf;
+  --gold: #6b91b6; --gold-deep: #7ca1c2; --gold-ink: #a2bccf;
+  --gold-grad: linear-gradient(100deg, #1c4882 0%, #6b91b6 55%, #cadce8 100%);
+  --l1f: #284678; --l2f: #1c4882; --l3f: #3c629a; --l4f: #84a0b9; --l5f: #95999e; --luf: #767a80;
+  --l1t: #4f7999; --l2t: #507a9f; --l3t: #5076af; --l4t: #4e799c; --l5t: #e5e6e8;
+  --l5: #d8dddf; --lu: #898d92;
+  --wash-a: rgba(28, 72, 130, 0.14); --wash-b: rgba(132, 160, 185, 0.05);
+  --mc-plate: #101215; --mc-plate-deep: #060708; --mc-pad: #14171b;
+  --mc-utok-hi: #1f2427; --mc-utok: #0a0d0f; --mc-uico: #b7cbdb;
+  --mc-grid: rgba(28, 72, 130, 0.38); --mc-grid-strong: rgba(107, 145, 182, 0.6);
+  --mc-hg: rgb(60, 98, 154); --mc-gop: 0.22;
+  --mc-dot: rgb(162, 188, 207); --mc-dot-glow: rgb(28, 72, 130); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(28, 72, 130, 0.2); --mc-halo-b: rgba(60, 98, 154, 0.1);
+  --mc-globe-a: rgba(28, 72, 130, 0.12); --mc-globe-b: rgba(60, 98, 154, 0.06);
+  --mc-globe-c: rgba(60, 98, 154, 0.03); --mc-globe-d: rgba(60, 98, 154, 0.1);
+  --mc-cut-a: rgba(28, 72, 130, 0.32); --mc-cut-b: rgba(60, 98, 154, 0.12);
+  --mc-globe-hl: #a2bccf; --mc-globe-rim: #3c629a; --mc-halo: #1c4882;
+  --mc-underglow: rgba(28, 72, 130, 0.22);
 }
 
 /* ---------- light ---------- */
 html:root[data-theme="light"] {
-  --panel: #f2f5f9; --panel-2: #e6ecf3;
-  --focus: #056dae; --accent: #056dae; --link: #0b4f8a;
-  --gold: #056dae; --gold-deep: #003b70; --gold-ink: #0b4f8a;
-  --gold-grad: linear-gradient(100deg, #003b70 0%, #056dae 55%, #5aaae0 100%);
-  --l1f: #0a3d7a; --l2f: #056dae; --l3f: #1b8bd0; --l4f: #5aaae0; --l5f: #4a5668; --luf: #9ca3af;
-  --l1t: #002d62; --l2t: #003b70; --l3t: #0b5a9c; --l4t: #1f5f96; --l5t: #1e2a3b;
-  --wash-a: rgba(5, 109, 174, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
-  --mc-plate-deep: #e8eef5; --mc-utok: #e6ecf3; --mc-uico: #1e2a3b;
-  --mc-grid: rgba(0, 59, 112, 0.24); --mc-grid-strong: rgba(0, 59, 112, 0.42);
-  --mc-hg: #003b70; --mc-gop: 0.3;
-  --mc-dot: #003b70; --mc-dot-glow: #056dae; --mc-dot-glow-alpha: 0.25;
-  --mc-halo-a: rgba(5, 109, 174, 0.08); --mc-halo-b: rgba(5, 109, 174, 0.03);
-  --mc-cut-a: rgba(0, 59, 112, 0.12); --mc-cut-b: rgba(0, 59, 112, 0.05);
-  --mc-globe-rim: rgba(0, 59, 112, 0.3); --mc-halo: rgba(5, 109, 174, 0.22);
-  --mc-underglow: rgba(0, 59, 112, 0.14);
+  --panel: #f2f4f5; --panel-2: #e6ebed;
+  --focus: #1c4882; --accent: #1c4882; --link: #15305f;
+  --gold: #1c4882; --gold-deep: #112950; --gold-ink: #15305f;
+  --gold-grad: linear-gradient(100deg, #112950 0%, #1c4882 55%, #84a0b9 100%);
+  --l1f: #1d3358; --l2f: #1c4882; --l3f: #3c629a; --l4f: #84a0b9; --l5f: #535960; --luf: #9ca3af;
+  --l1t: #0c1c36; --l2t: #112950; --l3t: #213b6b; --l4t: #344f6f; --l5t: #222a2f;
+  --wash-a: rgba(28, 72, 130, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaedef; --mc-utok: #e6ebed; --mc-uico: #222a2f;
+  --mc-grid: rgba(17, 41, 80, 0.24); --mc-grid-strong: rgba(17, 41, 80, 0.42);
+  --mc-hg: #112950; --mc-gop: 0.3;
+  --mc-dot: #112950; --mc-dot-glow: #1c4882; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(28, 72, 130, 0.08); --mc-halo-b: rgba(28, 72, 130, 0.03);
+  --mc-cut-a: rgba(17, 41, 80, 0.12); --mc-cut-b: rgba(17, 41, 80, 0.05);
+  --mc-globe-rim: rgba(17, 41, 80, 0.3); --mc-halo: rgba(28, 72, 130, 0.22);
+  --mc-underglow: rgba(17, 41, 80, 0.14);
 }
 
 /* ---------- page ---------- */
 body {
   background:
-    radial-gradient(circle at 18% 8%, rgba(5, 109, 174, 0.12) 0%, transparent 42%),
-    linear-gradient(135deg, #07090d 0%, #070c14 60%, #04101e 100%);
+    radial-gradient(circle at 18% 8%, rgba(28, 72, 130, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #08090a 0%, #090c0f 60%, #070c12 100%);
   background-attachment: fixed;
 }
 html[data-theme="light"] body {
-  background: linear-gradient(135deg, #f6f8fb 0%, #eef4fa 60%, #e3eef8 100%);
+  background: linear-gradient(135deg, #f7f8f9 0%, #f0f3f5 60%, #e5ebef 100%);
   background-attachment: fixed;
 }
-.head::before { content: "Customer platform"; color: rgba(90, 176, 240, 0.85); }
-html[data-theme="light"] .head::before { color: rgba(0, 59, 112, 0.85); }
-html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(5, 109, 174, 0.4); }
+.head::before { content: "Customer platform"; color: rgba(107, 145, 182, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(17, 41, 80, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(28, 72, 130, 0.4); }
 
 html:not([data-theme="light"]) .drawer {
-  background: linear-gradient(180deg, #0e141c 0%, #0a0d12 100%);
-  border-color: rgba(90, 176, 240, 0.22);
+  background: linear-gradient(180deg, #101215 0%, #0b0c0d 100%);
+  border-color: rgba(107, 145, 182, 0.22);
 }
 html:not([data-theme="light"]) .dpuck {
-  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0e1622), #06090e 75%);
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #111519), #070809 75%);
 }
 
 /* The Citi / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
@@ -88,7 +91,7 @@ html:not([data-theme="light"]) .dpuck {
 .mcos-studio .dl,
 .mcos-cta-eyebrow { color: var(--studio-ink); }
 
-.right, .db, .menu { scrollbar-color: rgba(90, 176, 240, 0.28) transparent; }
+.right, .db, .menu { scrollbar-color: rgba(107, 145, 182, 0.28) transparent; }
 html[data-theme="light"] .right,
 html[data-theme="light"] .db,
 html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

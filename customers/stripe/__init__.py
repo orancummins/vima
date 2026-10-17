@@ -24,7 +24,10 @@ CUSTOMER = {
     "brands": ["Stripe", "Link", "Bridge", "Privy", "Tempo"],
     "country": "United States & Ireland",
     "region": "Global",
-    "accent": "#635bff",   # Stripe blurple, on the Customers tab card
+    "accent": "#635bff",   # Stripe blurple
+    "logos": (   # file in this folder, alt text, the chip behind it, where it came from
+        {"file": "logo.svg", "alt": "Stripe", "bg": "#ffffff", "source": "static/logos/financial-logos-500/02-payments-and-processors/stripe.svg"},
+    ),
     "as_of": "17 October 2026",
     "tagline": "Payments infrastructure that moved $1.9 trillion in 2025 as five discs, building its own rails "
                "in stablecoins and agentic commerce while carrying every network, Mastercard among them.",

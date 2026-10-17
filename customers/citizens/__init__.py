@@ -24,7 +24,10 @@ CUSTOMER = {
     "brands": ["Citizens", "Citizens Private Bank", "Citizens Pay", "Citizens JMP"],
     "country": "United States",
     "region": "North America",
-    "accent": "#00875a",   # Citizens green, on the Customers tab card
+    "accent": "#008555",   # Citizens green, from the logo
+    "logos": (   # file in this folder, alt text, the chip behind it, where it came from
+        {"file": "logo.svg", "alt": "Citizens", "bg": "#ffffff", "source": "https://www.citizensbank.com/"},
+    ),
     "as_of": "17 October 2026",
     "tagline": "A $234 billion regional bank as five discs, with Mastercard its only card network and "
                "contracted services provider since 2023, and a Private Bank built in three years.",

@@ -21,18 +21,18 @@
    Palette: JPMorgan Chase's colours for the company, from the deep foundation to the bright access layer, graphite for the
    people, and Mastercard's colours kept for the lens that reads the stack through Mastercard. Type follows the Mastercard OS pages. */
 :root{
-  --ground:#FFFFFF; --panel:#F1F5F6; --panel-2:#E4ECEF; --ink:#09151B; --ink-2:#1B292F; --muted:#455359; --faint:#677579; --line:#C8D4D8; --line-2:#AAB9BE;
-  --focus:#004A87; --accent:#004A87; --link:#003266; --c1:#2a78d6; --c7:#4a3aa7; --s-new:#0F7A55; --s-flux:#A35F00; --s-retired:#B42318; --sh3:0 32px 64px -16px rgba(10,24,18,.4); --r-l:16px; --red:#C8102E; --gold:#004A87; --gold-deep:#002B57; --gold-ink:#003266;
+  --ground:#FFFFFF; --panel:#F1F5F6; --panel-2:#E5ECEF; --ink:#0B141D; --ink-2:#23303A; --muted:#5F6877; --faint:#7E858F; --line:#CFD4DC; --line-2:#B8BEC7;
+  --focus:#004FC2; --accent:#004FC2; --link:#00308A; --c1:#2a78d6; --c7:#4a3aa7; --s-new:#0F7A55; --s-flux:#A35F00; --s-retired:#B42318; --sh3:0 32px 64px -16px rgba(10,24,18,.4); --r-l:16px; --red:#C8102E; --gold:#004FC2; --gold-deep:#002871; --gold-ink:#00308A;
   /* the five slices in JPMorgan Chase's colours, deep to bright, with graphite for access and the people */
-  --l1:#001E3D; --l2:#002B57; --l3:#063973; --l4:#27638F; --l5:#271E38; --lu:#746A81;
-  --l1f:#073260; --l2f:#004A87; --l3f:#1865AA; --l4f:#68A6C8; --l5f:#413652; --luf:#A49BB0;
-  --l1t:#E8F7FF; --l2t:#FFFFFF; --l3t:#FFFFFF; --l4t:#041B2C; --l5t:#FFFFFF;
-  --slot:#09151B; --edge:rgba(255,255,255,.55); --seam:rgba(0,0,0,.18); --shadow:rgba(4,28,42,.22);
-  --wash-a:rgba(0,74,135,.14); --wash-b:rgba(104,166,200,.10);
+  --l1:#001A4A; --l2:#002871; --l3:#103D9C; --l4:#386DB1; --l5:#1F2937; --lu:#6B7280;
+  --l1f:#0F357C; --l2f:#004FC2; --l3f:#2767CD; --l4f:#83A9CD; --l5f:#374151; --luf:#9CA3AF;
+  --l1t:#FFFFFF; --l2t:#FFFFFF; --l3t:#FFFFFF; --l4t:#FFFFFF; --l5t:#FFFFFF;
+  --slot:#0B141D; --edge:rgba(255,255,255,.55); --seam:rgba(0,0,0,.18); --shadow:rgba(7,26,46,.22);
+  --wash-a:rgba(0,79,194,.14); --wash-b:rgba(131,169,205,.10);
   /* the globe in JPMorgan Chase's colours */
-  --gb2:#073260; --gb3:#004A87; --gb4:#8BC3DD;
-  --brand-grad:linear-gradient(90deg,#073260,#117ACA 55%,#7FC4F5);
-  --gold-grad:linear-gradient(135deg,#8BC3DD 0%,#004A87 45%,#002B57 100%);
+  --gb2:#0F357C; --gb3:#004FC2; --gb4:#A1C3DF;
+  --brand-grad:linear-gradient(90deg,#002871,#004FC2 55%,#A1C3DF);
+  --gold-grad:linear-gradient(135deg,#A1C3DF 0%,#004FC2 45%,#002871 100%);
   /* the lens colour: Mastercard */
   --neo:#B23A00; --neof:#FF5F00; --neo-on:#1F0A00; --neo-grad:linear-gradient(135deg,#F79E1B,#FF5F00 50%,#EB001B);
   /* Mastercard, for the places it fits */
@@ -44,14 +44,14 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-    --ground:#090C0D; --panel:#111719; --panel-2:#172024; --ink:#F2F6F7; --ink-2:#D3DEE1; --muted:#A3B1B5; --faint:#818D92; --line:#293338; --line-2:#3E4A4F;
-    --focus:#59ABD9; --accent:#469ACD; --link:#8BC3DD; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#469ACD; --gold-deep:#59ABD9; --gold-ink:#8BC3DD;
-    --l1:#8BC3DD; --l2:#6AAFD5; --l3:#7AAFE1; --l4:#A6D2E6; --l5:#D5D0DB; --lu:#948AA2;
-    --l1f:#073260; --l2f:#004A87; --l3f:#1865AA; --l4f:#68A6C8; --l5f:#746A81; --luf:#746A81;
+    --ground:#0A0C0E; --panel:#13191D; --panel-2:#1D242A; --ink:#F2F6F7; --ink-2:#D8DFE3; --muted:#B2B8C0; --faint:#969BA2; --line:#383F49; --line-2:#59626E;
+    --focus:#78A9DA; --accent:#689AD0; --link:#A1C3DF; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#689AD0; --gold-deep:#78A9DA; --gold-ink:#A1C3DF;
+    --l1:#A1C3DF; --l2:#86AFD7; --l3:#93B1E2; --l4:#B5D0E7; --l5:#D1D5DB; --lu:#8B93A1;
+    --l1f:#0F357C; --l2f:#004FC2; --l3f:#2767CD; --l4f:#83A9CD; --l5f:#6B7280; --luf:#6B7280;
     --slot:#050808; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
-    --wash-a:rgba(0,74,135,.12); --wash-b:rgba(104,166,200,.06);
-    --gb2:#073260; --gb3:#004A87; --gb4:#8BC3DD;
-    --gold-grad:linear-gradient(135deg,#BDE3F2 0%,#469ACD 45%,#004A87 100%);
+    --wash-a:rgba(0,79,194,.12); --wash-b:rgba(131,169,205,.06);
+    --gb2:#0F357C; --gb3:#004FC2; --gb4:#A1C3DF;
+    --gold-grad:linear-gradient(135deg,#C5DEF1 0%,#689AD0 45%,#004FC2 100%);
     --neo:#FFB070; --neof:#FF7A2E; --neo-on:#1F0A00;
     --mc:#FF7A2E; --mc-ink:#FF9A57;
     --eqf:#7B8290;
@@ -59,14 +59,14 @@
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --ground:#090C0D; --panel:#111719; --panel-2:#172024; --ink:#F2F6F7; --ink-2:#D3DEE1; --muted:#A3B1B5; --faint:#818D92; --line:#293338; --line-2:#3E4A4F;
-  --focus:#59ABD9; --accent:#469ACD; --link:#8BC3DD; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#469ACD; --gold-deep:#59ABD9; --gold-ink:#8BC3DD;
-  --l1:#8BC3DD; --l2:#6AAFD5; --l3:#7AAFE1; --l4:#A6D2E6; --l5:#D5D0DB; --lu:#948AA2;
-  --l1f:#073260; --l2f:#004A87; --l3f:#1865AA; --l4f:#68A6C8; --l5f:#746A81; --luf:#746A81;
+  --ground:#0A0C0E; --panel:#13191D; --panel-2:#1D242A; --ink:#F2F6F7; --ink-2:#D8DFE3; --muted:#B2B8C0; --faint:#969BA2; --line:#383F49; --line-2:#59626E;
+  --focus:#78A9DA; --accent:#689AD0; --link:#A1C3DF; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#689AD0; --gold-deep:#78A9DA; --gold-ink:#A1C3DF;
+  --l1:#A1C3DF; --l2:#86AFD7; --l3:#93B1E2; --l4:#B5D0E7; --l5:#D1D5DB; --lu:#8B93A1;
+  --l1f:#0F357C; --l2f:#004FC2; --l3f:#2767CD; --l4f:#83A9CD; --l5f:#6B7280; --luf:#6B7280;
   --slot:#050808; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
-  --wash-a:rgba(0,74,135,.12); --wash-b:rgba(104,166,200,.06);
-  --gb2:#073260; --gb3:#004A87; --gb4:#8BC3DD;
-  --gold-grad:linear-gradient(135deg,#BDE3F2 0%,#469ACD 45%,#004A87 100%);
+  --wash-a:rgba(0,79,194,.12); --wash-b:rgba(131,169,205,.06);
+  --gb2:#0F357C; --gb3:#004FC2; --gb4:#A1C3DF;
+  --gold-grad:linear-gradient(135deg,#C5DEF1 0%,#689AD0 45%,#004FC2 100%);
   --neo:#FFB070; --neof:#FF7A2E; --neo-on:#1F0A00;
   --mc:#FF7A2E; --mc-ink:#FF9A57;
   --eqf:#7B8290;
@@ -704,6 +704,7 @@ window.addEventListener("error",function(e){ var b=document.getElementById("oops
 
   <div class="right">
     <header class="head">
+      <!--brand--><style>.brand{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px}.brand img{display:block;box-sizing:border-box;height:46px;width:auto;max-width:230px;padding:9px 14px;border-radius:12px;background:var(--chip);object-fit:contain;box-shadow:0 0 0 1px color-mix(in oklab,var(--line,#ccc) 70%,transparent),0 8px 22px -14px rgba(0,0,0,.45)}</style><div class="brand"><img src="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIxNy45IDE3LjkgNjAuMSA2MC4xIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgoKPGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMjkiIGZpbGw9IiMwMDRGQzIiLz4KPG1hc2sgaWQ9Im1hc2swXzFfMzMyIiBzdHlsZT0ibWFzay10eXBlOmFscGhhIiBtYXNrVW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4PSI0MiIgeT0iMzIiIHdpZHRoPSIyMSIgaGVpZ2h0PSIxMCI+CjxwYXRoIGQ9Ik00Mi41MjczIDMyLjkyMTFINjIuODIzNFY0MS43NzgxSDQyLjUyNzNWMzIuOTIxMVoiIGZpbGw9IndoaXRlIi8+CjwvbWFzaz4KPGcgbWFzaz0idXJsKCNtYXNrMF8xXzMzMikiPgo8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTYyLjgyMzQgNDEuNzYxNkg2MS45ODEyQzU1Ljg1MDggNDEuNzYxNiA0OS43MjAyIDQxLjc0OCA0My41OSA0MS43NzgxQzQyLjc4NiA0MS43ODIyIDQyLjUwNjcgNDEuNTcxNyA0Mi41Mjg1IDQwLjczODlDNDIuNTgzMyAzOC42NDk3IDQyLjU0MzggMzYuNTU4MiA0Mi41NDc4IDM0LjQ2NzdDNDIuNTQ5OSAzMy4yOTQyIDQyLjg5MzQgMzIuOTMxIDQ0LjAzODkgMzIuOTI4MUM0Ny4wMDUyIDMyLjkyMDQgNDkuOTcxNiAzMi45MTMgNTIuOTM3NyAzMi45NDE2QzUzLjI5ODcgMzIuOTQ1MiA1My43NDk3IDMzLjA3MDIgNTQuMDAyNCAzMy4zMDYzQzU2Ljg3MjQgMzUuOTg1NiA1OS43MTI4IDM4LjY5NyA2Mi41NTg2IDQxLjQwMjJDNjIuNjMyOSA0MS40NzMxIDYyLjY4MzQgNDEuNTY5NCA2Mi44MjM0IDQxLjc2MTZaIiBmaWxsPSJ3aGl0ZSIvPgo8L2c+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNNTUuNDA0NyA2My44NTE4QzU1LjM4NzIgNjMuNDk3MSA1NS4zNjUzIDYzLjI1NTIgNTUuMzY1MyA2My4wMTM1QzU1LjM2MzIgNTYuOTM1MyA1NS4zNzgxIDUwLjg1NzQgNTUuMzQ2NyA0NC43Nzk3QzU1LjM0MjIgNDMuOTU4NCA1NS41ODkyIDQzLjcyNjEgNTYuMzc3OSA0My43NDYzQzU4LjM4NTcgNDMuNzk3NSA2MC4zOTU5IDQzLjc2MDYgNjIuNDA1IDQzLjc2NDZDNjMuNTY3NyA0My43NjY3IDYzLjg0MyA0NC4wMjgzIDYzLjg0NTcgNDUuMTc0MUM2My44NTI5IDQ4LjE3MDkgNjMuODY0NSA1MS4xNjgyIDYzLjgyODQgNTQuMTY0NkM2My44MjM2IDU0LjU3MDYgNjMuNjYgNTUuMDcxMiA2My4zOTQgNTUuMzYxNkM2MC44OTg2IDU4LjA4NjMgNTguMzY1NCA2MC43NzUzIDU1Ljg0MDcgNjMuNDcyMUM1NS43MzUxIDYzLjU4NTMgNTUuNjA2OSA2My42NzcxIDU1LjQwNDcgNjMuODUxOFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNMzIuOTE5OSA1Ni4xMTg0SDMzLjg0ODJDMzkuODY5OSA1Ni4xMTg0IDQ1Ljg5MiA1Ni4xMTc2IDUxLjkxMzYgNTYuMTE5QzUzLjAyMjUgNTYuMTE5MiA1My4wMjM4IDU2LjEyMzIgNTMuMDI0NCA1Ny4yMjM4QzUzLjAyNTUgNTkuMjA4MSA1My4wMjk3IDYxLjE5MjEgNTMuMDIyMyA2My4xNzYyQzUzLjAxODMgNjQuMjU5OSA1Mi42NTY4IDY0LjYxNzQgNTEuNTU4OSA2NC42MTk1QzQ4LjU0ODEgNjQuNjI1MyA0NS41MzY4IDY0LjYzMTkgNDIuNTI2MiA2NC42MDY4QzQyLjE5MzcgNjQuNjA0MiA0MS43NzczIDY0LjQ4ODEgNDEuNTQ0MyA2NC4yNzRDMzguNzUzNiA2MS43MDk4IDM1Ljk4OTkgNTkuMTE3OSAzMy4yMjE4IDU2LjUzMDVDMzMuMTQ1MyA1Ni40NTk0IDMzLjA5NTcgNTYuMzYxMSAzMi45MTk5IDU2LjExODRaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTQwLjU4ODYgMzMuNjkyNEM0MC42MDgzIDM0LjA3MzggNDAuNjMzOSAzNC4zNDI0IDQwLjYzNDEgMzQuNjExQzQwLjYzNjQgNDAuNjQwNCA0MC42MjAyIDQ2LjY3IDQwLjY1MzEgNTIuNjk5MUM0MC42NTc4IDUzLjU1MjIgNDAuNDIzNCA1My44MjE3IDM5LjU4MTIgNTMuNzk3NkMzNy41NDQ5IDUzLjczODYgMzUuNTA1NyA1My43ODQ1IDMzLjQ2NzcgNTMuNzc0NUMzMi40NDg5IDUzLjc2OTcgMzIuMTU0MyA1My40NTk3IDMyLjE1MjMgNTIuMzk5QzMyLjE0NjUgNDkuMzg0MiAzMi4xMzg0IDQ2LjM2OTQgMzIuMTY1NyA0My4zNTUxQzMyLjE2ODggNDIuOTk2NSAzMi4yODc4IDQyLjU0NzIgMzIuNTE2NiA0Mi4yOTY1QzM1LjA1NTggMzkuNTE4NyAzNy42MjY1IDM2Ljc3MTQgNDAuMTkxIDM0LjAxOEM0MC4yNzkgMzMuOTIzNiA0MC4zOTEgMzMuODUyOCA0MC41ODg2IDMzLjY5MjRaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K" alt="Chase" style="--chip:#ffffff"></div><!--/brand-->
       <div class="kicker">JPMorgan Chase & Co. · as at 17 October 2026</div>
       <h1>JPMorgan Chase <span class="os">Platform</span></h1>
       <p class="sub">America's largest bank as five discs that stack into one platform, from a $5.1 trillion fortress balance sheet and a $19.8 billion technology budget at the bottom to the Chase app, 5,164 branches and J.P. Morgan's portals at the top. Click the stack to open it. Choose who you are and what you want to do, and the areas that deliver it light up across the layers, joined in the order they act. Switch to the Mastercard lens to see how deep Mastercard goes in every area.</p>

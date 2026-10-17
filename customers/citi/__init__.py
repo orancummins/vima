@@ -26,7 +26,10 @@ CUSTOMER = {
     "brands": ["Citi", "Citibank", "Banamex"],
     "country": "United States",
     "region": "Global",
-    "accent": "#056dae",   # Citi blue, on the Customers tab card
+    "accent": "#1c4882",   # Citi blue, from the logo
+    "logos": (   # file in this folder, alt text, the chip behind it, where it came from
+        {"file": "logo.svg", "alt": "Citi", "bg": "#ffffff", "source": "static/logos/financial-logos-500/01-financial-institutions/citi.svg"},
+    ),
     "as_of": "17 October 2026",
     "tagline": "A global bank in nearly 160 countries as five discs: $6 trillion a day of payments at the "
                "institutional end, 70 million American cardmembers at the other, and Mastercard under the cards.",

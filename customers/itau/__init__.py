@@ -23,7 +23,10 @@ CUSTOMER = {
     "brands": ["Itaú", "Itaú Personnalité", "Itaú BBA", "Rede", "Itaucard"],
     "country": "Brazil",
     "region": "Latin America",
-    "accent": "#1f3fa8",   # Itaú navy, on the Customers tab card (its orange would clash with Studio's)
+    "accent": "#ff6200",   # Itaú orange, from the logo
+    "logos": (   # file in this folder, alt text, the chip behind it, where it came from
+        {"file": "logo.png", "alt": "Itaú", "bg": "#ffffff", "source": "static/logos/financial-logos-500/01-financial-institutions/ita-unibanco.png"},
+    ),
     "as_of": "17 October 2026",
     "tagline": "Latin America's largest private bank as five discs: Brazil's number-one card issuer and acquirer, "
                "on Mastercard and Visa, with Hipercard's 15 million cards moved to Mastercard in 2025.",

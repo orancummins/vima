@@ -21,18 +21,18 @@
    Palette: Global Payments's colours for the company, from the deep foundation to the bright access layer, graphite for the
    people, and Mastercard's colours kept for the lens that reads the stack through Mastercard. Type follows the Mastercard OS pages. */
 :root{
-  --ground:#FFFFFF; --panel:#F1F3F6; --panel-2:#E4E7EE; --ink:#0A0D1A; --ink-2:#1C202E; --muted:#464A58; --faint:#686D78; --line:#C9CDD7; --line-2:#ABB0BD;
-  --focus:#000987; --accent:#000987; --link:#000166; --c1:#2a78d6; --c7:#4a3aa7; --s-new:#0F7A55; --s-flux:#A35F00; --s-retired:#B42318; --sh3:0 32px 64px -16px rgba(10,24,18,.4); --r-l:16px; --red:#C8102E; --gold:#000987; --gold-deep:#000157; --gold-ink:#000166;
+  --ground:#FFFFFF; --panel:#F2F3F7; --panel-2:#E8EAF0; --ink:#0D1023; --ink-2:#2F354D; --muted:#8E8EA5; --faint:#A6A7B2; --line:#DADAE3; --line-2:#CECFD9;
+  --focus:#262AFF; --accent:#262AFF; --link:#0800C6; --c1:#2a78d6; --c7:#4a3aa7; --s-new:#0F7A55; --s-flux:#A35F00; --s-retired:#B42318; --sh3:0 32px 64px -16px rgba(10,24,18,.4); --r-l:16px; --red:#C8102E; --gold:#262AFF; --gold-deep:#06009C; --gold-ink:#0800C6;
   /* the five slices in Global Payments's colours, deep to bright, with graphite for access and the people */
-  --l1:#00013D; --l2:#000157; --l3:#0C0B6E; --l4:#2C358A; --l5:#331F37; --lu:#7F6B80;
-  --l1f:#0B0B5C; --l2f:#000987; --l3f:#1F25A3; --l4f:#6C7BC4; --l5f:#4E3751; --luf:#AD9CAF;
-  --l1t:#E8ECFF; --l2t:#FFFFFF; --l3t:#FFFFFF; --l4t:#06092A; --l5t:#FFFFFF;
-  --slot:#0A0D1A; --edge:rgba(255,255,255,.55); --seam:rgba(0,0,0,.18); --shadow:rgba(6,11,40,.22);
-  --wash-a:rgba(0,9,135,.14); --wash-b:rgba(108,123,196,.10);
+  --l1:#03005F; --l2:#06009C; --l3:#2518E8; --l4:#6F74D1; --l5:#1F2937; --lu:#6B7280;
+  --l1f:#1C15B3; --l2f:#262AFF; --l3f:#6665E2; --l4f:#AAB0DD; --l5f:#374151; --luf:#9CA3AF;
+  --l1t:#FFFFFF; --l2t:#FFFFFF; --l3t:#FFFFFF; --l4t:#0B0F14; --l5t:#FFFFFF;
+  --slot:#0D1023; --edge:rgba(255,255,255,.55); --seam:rgba(0,0,0,.18); --shadow:rgba(9,13,57,.22);
+  --wash-a:rgba(38,42,255,.14); --wash-b:rgba(170,176,221,.10);
   /* the globe in Global Payments's colours */
-  --gb2:#0B0B5C; --gb3:#000987; --gb4:#8F9ED9;
-  --brand-grad:linear-gradient(90deg,#0B0B5C,#3A3FD9 55%,#E5003B);
-  --gold-grad:linear-gradient(135deg,#8F9ED9 0%,#000987 45%,#000157 100%);
+  --gb2:#1C15B3; --gb3:#262AFF; --gb4:#BEC5E9;
+  --brand-grad:linear-gradient(90deg,#06009C,#262AFF 55%,#BEC5E9);
+  --gold-grad:linear-gradient(135deg,#BEC5E9 0%,#262AFF 45%,#06009C 100%);
   /* the lens colour: Mastercard */
   --neo:#B23A00; --neof:#FF5F00; --neo-on:#1F0A00; --neo-grad:linear-gradient(135deg,#F79E1B,#FF5F00 50%,#EB001B);
   /* Mastercard, for the places it fits */
@@ -44,14 +44,14 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-    --ground:#090A0D; --panel:#111319; --panel-2:#181A23; --ink:#F2F4F7; --ink-2:#D4D8E0; --muted:#A4A9B4; --faint:#828591; --line:#2A2D37; --line-2:#3F424E;
-    --focus:#5F71D3; --accent:#4C5DC7; --link:#8F9ED9; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#4C5DC7; --gold-deep:#5F71D3; --gold-ink:#8F9ED9;
-    --l1:#8F9ED9; --l2:#6F7FD0; --l3:#7F82DC; --l4:#A9B5E3; --l5:#DAD1DB; --lu:#9F8BA1;
-    --l1f:#0B0B5C; --l2f:#000987; --l3f:#1F25A3; --l4f:#6C7BC4; --l5f:#7F6B80; --luf:#7F6B80;
-    --slot:#050608; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
-    --wash-a:rgba(0,9,135,.12); --wash-b:rgba(108,123,196,.06);
-    --gb2:#0B0B5C; --gb3:#000987; --gb4:#8F9ED9;
-    --gold-grad:linear-gradient(135deg,#BFCAF0 0%,#4C5DC7 45%,#000987 100%);
+    --ground:#0B0C10; --panel:#181A23; --panel-2:#252736; --ink:#F3F4F8; --ink-2:#DFE1E8; --muted:#CACBD4; --faint:#B7B7BF; --line:#4F5068; --line-2:#8989A0;
+    --focus:#A2AAE6; --accent:#979EDF; --link:#BEC5E9; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#979EDF; --gold-deep:#A2AAE6; --gold-ink:#BEC5E9;
+    --l1:#BEC5E9; --l2:#ACB2E4; --l3:#B6B5EB; --l4:#C9CFEE; --l5:#D1D5DB; --lu:#8B93A1;
+    --l1f:#1C15B3; --l2f:#262AFF; --l3f:#6665E2; --l4f:#AAB0DD; --l5f:#6B7280; --luf:#6B7280;
+    --slot:#060709; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
+    --wash-a:rgba(38,42,255,.12); --wash-b:rgba(170,176,221,.06);
+    --gb2:#1C15B3; --gb3:#262AFF; --gb4:#BEC5E9;
+    --gold-grad:linear-gradient(135deg,#D0D6F4 0%,#979EDF 45%,#262AFF 100%);
     --neo:#FFB070; --neof:#FF7A2E; --neo-on:#1F0A00;
     --mc:#FF7A2E; --mc-ink:#FF9A57;
     --eqf:#7B8290;
@@ -59,14 +59,14 @@
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --ground:#090A0D; --panel:#111319; --panel-2:#181A23; --ink:#F2F4F7; --ink-2:#D4D8E0; --muted:#A4A9B4; --faint:#828591; --line:#2A2D37; --line-2:#3F424E;
-  --focus:#5F71D3; --accent:#4C5DC7; --link:#8F9ED9; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#4C5DC7; --gold-deep:#5F71D3; --gold-ink:#8F9ED9;
-  --l1:#8F9ED9; --l2:#6F7FD0; --l3:#7F82DC; --l4:#A9B5E3; --l5:#DAD1DB; --lu:#9F8BA1;
-  --l1f:#0B0B5C; --l2f:#000987; --l3f:#1F25A3; --l4f:#6C7BC4; --l5f:#7F6B80; --luf:#7F6B80;
-  --slot:#050608; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
-  --wash-a:rgba(0,9,135,.12); --wash-b:rgba(108,123,196,.06);
-  --gb2:#0B0B5C; --gb3:#000987; --gb4:#8F9ED9;
-  --gold-grad:linear-gradient(135deg,#BFCAF0 0%,#4C5DC7 45%,#000987 100%);
+  --ground:#0B0C10; --panel:#181A23; --panel-2:#252736; --ink:#F3F4F8; --ink-2:#DFE1E8; --muted:#CACBD4; --faint:#B7B7BF; --line:#4F5068; --line-2:#8989A0;
+  --focus:#A2AAE6; --accent:#979EDF; --link:#BEC5E9; --c1:#3987e5; --c7:#9085e9; --s-new:#4ADE80; --s-flux:#F2B84B; --s-retired:#F87171; --sh3:0 32px 64px -16px rgba(0,0,0,.7); --gold:#979EDF; --gold-deep:#A2AAE6; --gold-ink:#BEC5E9;
+  --l1:#BEC5E9; --l2:#ACB2E4; --l3:#B6B5EB; --l4:#C9CFEE; --l5:#D1D5DB; --lu:#8B93A1;
+  --l1f:#1C15B3; --l2f:#262AFF; --l3f:#6665E2; --l4f:#AAB0DD; --l5f:#6B7280; --luf:#6B7280;
+  --slot:#060709; --edge:rgba(255,255,255,.4); --seam:rgba(0,0,0,.35); --shadow:rgba(0,0,0,.7);
+  --wash-a:rgba(38,42,255,.12); --wash-b:rgba(170,176,221,.06);
+  --gb2:#1C15B3; --gb3:#262AFF; --gb4:#BEC5E9;
+  --gold-grad:linear-gradient(135deg,#D0D6F4 0%,#979EDF 45%,#262AFF 100%);
   --neo:#FFB070; --neof:#FF7A2E; --neo-on:#1F0A00;
   --mc:#FF7A2E; --mc-ink:#FF9A57;
   --eqf:#7B8290;
@@ -704,6 +704,7 @@ window.addEventListener("error",function(e){ var b=document.getElementById("oops
 
   <div class="right">
     <header class="head">
+      <!--brand--><style>.brand{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px}.brand img{display:block;box-sizing:border-box;height:46px;width:auto;max-width:230px;padding:9px 14px;border-radius:12px;background:var(--chip);object-fit:contain;box-shadow:0 0 0 1px color-mix(in oklab,var(--line,#ccc) 70%,transparent),0 8px 22px -14px rgba(0,0,0,.45)}</style><div class="brand"><img src="data:image/png;base64,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" alt="Global Payments" style="--chip:#ffffff"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAZlBMVEX/////Hz7/cYT/JUP/IUD/+/z/3OH/Tmb/8fP/Pln/SmP/bID/fpD/9/j/ydD/kaD/mKb/prL/NlL/1Nr/L0v/tb//oa7/XHP/jJz/g5T/Ql3/wMn/O1b/5ur/0df/h5j/ucP/ZHlxD7LuAAABZUlEQVR4nO1U24KCIBQEBcWUNO1mZpf//8mYgdwW7XX3xXlIBmbgXCAhVqz4Z2wTh1oHZpskaWwgusbaNjLspEPbBf0ebB8cXQu2iwwZNOnBk6OCRB09O6RwZ5HBnqA5+xgqSVQ+wjPGJxsZdI/pC8cm94bckF4w7nVkEAMOTjmdKW9QDENzYZiVyTDRmkHLAKZUswBmZhAJFgqMrtgdp1zBCswnc73osJCO7iwmzMTdviMikt2CgVspV+4GitsNv41rkHofPMMdkrvQKHCbZWjXSb9nl8AG5WbcuE+pdek+m5Elfjc0wlgwCda3EqJiNZlCMS4aNPs18FbdhGASu4EdnHUtxMRFRJSCYu9NPvVjAaynmsqeTHShax5l6LCiwoQbIstvevEIipZX07aBPr4asiDpPe2DPX4KP7BP+fly/DuSz/gpfGBLRREUlvdOxq/5d1CVe/1TUYz7L6i+B7Rixd/iBWaBDEME9p38AAAAAElFTkSuQmCC" alt="Worldpay" style="--chip:#ffffff"></div><!--/brand-->
       <div class="kicker">Global Payments Inc. & Worldpay · as at 17 October 2026</div>
       <h1>Global Payments <span class="os">Platform</span></h1>
       <p class="sub">A pure merchant company since it bought Worldpay and sold its issuer business, as five discs that stack into one platform: $3.7 trillion of volume and the network rules it lives by at the bottom, Genius devices, developer hubs and bank channels at the top. Click the stack to open it. Choose who you are and what you want to do, and the areas that deliver it light up across the layers, joined in the order they act. Switch to the Mastercard lens to see how deep Mastercard goes in every area.</p>

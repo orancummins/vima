@@ -23,7 +23,11 @@ CUSTOMER = {
     "brands": ["Global Payments", "Worldpay", "Genius", "Heartland", "Payrix"],
     "country": "United States",
     "region": "Global",
-    "accent": "#1a3c8b",   # Global Payments navy, on the Customers tab card
+    "accent": "#262aff",   # Global Payments blue, from the logo
+    "logos": (   # file in this folder, alt text, the chip behind it, where it came from
+        {"file": "logo.png", "alt": "Global Payments", "bg": "#ffffff", "source": "static/logos/financial-logos-500/02-payments-and-processors/global-payments.png"},
+        {"file": "logo-worldpay.png", "alt": "Worldpay", "bg": "#ffffff", "source": "static/logos/financial-logos-500/02-payments-and-processors/worldpay.png"},
+    ),
     "as_of": "17 October 2026",
     "tagline": "A pure merchant company since it bought Worldpay, as five discs: $3.7 trillion of volume at 6 million "
                "locations, Mastercard Move for payouts in the UAE, and agentic acceptance still open.",

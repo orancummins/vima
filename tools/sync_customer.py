@@ -3,8 +3,8 @@
 
 A customer's page is built outside Solution Studio (for Saudi National Bank,
 in the ``snb`` project next to this one) on the same layer-picture engine as
-the Platform tab, and copied into ``customers/<id>/`` verbatim. This script
-copies a newer version in and checks that Studio can still use it:
+the Platform tab, and copied into ``customers/<id>/`` with the customer's
+logos added over its heading. This script copies a newer version in and checks that Studio can still use it:
 
 * the functions and state ``mcos/web/mcos-bridge.js`` drives (the same
   checks as ``tools/sync_mcos.py``),
@@ -101,7 +101,8 @@ def main() -> int:
         _report(c["id"], problems)
         print(f"customers/{c['id']}/{c['page']} left unchanged. Update customers/{c['id']}/__init__.py first.")
         return 1
-    shutil.copyfile(args.page, customers.page_path(c))
+    with open(customers.page_path(c), "w", encoding="utf-8") as f:
+        f.write(customers.with_brand(src, c))   # the customer's logos over the page's kicker
     print(f"✓ customers/{c['id']}/{c['page']} updated from {args.page}")
     for note in args.notes:
         shutil.copyfile(note, os.path.join(c["dir"], os.path.basename(note)))
