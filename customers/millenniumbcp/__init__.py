@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Millennium bcp", "ActivoBank", "Bank Millennium", "Millennium bim", "Millenniumbcp Ageas"],
     "country": "Portugal",
     "region": "Europe",
+    "type": "bank",
     "accent": "#d1005d",   # Millennium magenta, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Millennium bcp", "bg": "#ffffff", "source": "https://www.millenniumbcp.pt/"},

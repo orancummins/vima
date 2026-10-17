@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Halyk Bank", "Halyk Super-App", "Onlinebank", "Halyk Market", "Halyk Life", "Tenge Bank"],
     "country": "Kazakhstan",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#068c6e",   # Halyk green, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Halyk Bank", "bg": "#ffffff", "source": "https://halykbank.com/"},

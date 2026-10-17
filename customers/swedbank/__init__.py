@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Swedbank", "Entercard", "Swedbank Pay", "Swedbank Robur", "Stabelo", "PayEx"],
     "country": "Sweden",
     "region": "Europe",
+    "type": "bank",
     "accent": "#ff5f00",   # Swedbank orange, from the logo's wordmark
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Swedbank", "bg": "#ffffff",

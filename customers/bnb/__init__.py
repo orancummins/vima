@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["BNB", "BNB Móvil", "Bille", "Cuenta Cripto BNB", "BNB Leasing", "BNB SAFI", "BNB Valores"],
     "country": "Bolivia",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#2bb461",   # BNB green, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Banco Nacional de Bolivia", "bg": "#ffffff", "source": "https://commons.wikimedia.org/wiki/File:Banco_Nacional_de_Bolivia_logo.svg"},

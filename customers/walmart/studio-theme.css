@@ -1,0 +1,97 @@
+/* Walmart inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Walmart's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0d0f11; --panel: #151A1F; --panel-2: #1f272e;
+  --ink: #f3f6f7; --ink-2: #dae0e4; --muted: #b7bcc5; --faint: #9da2a9;
+  --focus: #6795d0; --accent: #6795d0; --link: #aac7e2;
+  --gold: #6795d0; --gold-deep: #86aede; --gold-ink: #aac7e2;
+  --gold-grad: linear-gradient(100deg, #0053e2 0%, #77a0d5 55%, #c9def2 100%);
+  --l1f: #1951cb; --l2f: #0053e2; --l3f: #366ed9; --l4f: #90afd2; --l5f: #a7abb3; --luf: #8e939c;
+  --l1t: #3d79b1; --l2t: #3d78ba; --l3t: #4674cc; --l4t: #3c78b7; --l5t: #e6e8eb;
+  --l5: #dae0e4; --lu: #9da2a9;
+  --wash-a: rgba(0, 83, 226, 0.14); --wash-b: rgba(144, 175, 210, 0.05);
+  --mc-plate: #111419; --mc-plate-deep: #050809; --mc-pad: #151a21;
+  --mc-utok-hi: #232b33; --mc-utok: #090e12; --mc-uico: #bcd2e9;
+  --mc-grid: rgba(0, 83, 226, 0.38); --mc-grid-strong: rgba(119, 160, 213, 0.6);
+  --mc-hg: rgb(54, 110, 217); --mc-gop: 0.22;
+  --mc-dot: rgb(170, 199, 226); --mc-dot-glow: rgb(0, 83, 226); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 83, 226, 0.2); --mc-halo-b: rgba(54, 110, 217, 0.1);
+  --mc-globe-a: rgba(0, 83, 226, 0.12); --mc-globe-b: rgba(54, 110, 217, 0.06);
+  --mc-globe-c: rgba(54, 110, 217, 0.03); --mc-globe-d: rgba(54, 110, 217, 0.1);
+  --mc-cut-a: rgba(0, 83, 226, 0.32); --mc-cut-b: rgba(54, 110, 217, 0.12);
+  --mc-globe-hl: #aac7e2; --mc-globe-rim: #366ed9; --mc-halo: #0053e2;
+  --mc-underglow: rgba(0, 83, 226, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f5f6; --panel-2: #e6ecef;
+  --focus: #0053e2; --accent: #0053e2; --link: #00309d;
+  --gold: #0053e2; --gold-deep: #00277f; --gold-ink: #00309d;
+  --gold-grad: linear-gradient(100deg, #00277f 0%, #0053e2 55%, #90afd2 100%);
+  --l1f: #11378e; --l2f: #0053e2; --l3f: #366ed9; --l4f: #90afd2; --l5f: #6c7688; --luf: #9ca3af;
+  --l1t: #001951; --l2t: #00277f; --l3t: #1241b4; --l4t: #3365b4; --l5t: #273440;
+  --wash-a: rgba(0, 83, 226, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaeff1; --mc-utok: #e6ecef; --mc-uico: #273440;
+  --mc-grid: rgba(0, 39, 127, 0.24); --mc-grid-strong: rgba(0, 39, 127, 0.42);
+  --mc-hg: #00277f; --mc-gop: 0.3;
+  --mc-dot: #00277f; --mc-dot-glow: #0053e2; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 83, 226, 0.08); --mc-halo-b: rgba(0, 83, 226, 0.03);
+  --mc-cut-a: rgba(0, 39, 127, 0.12); --mc-cut-b: rgba(0, 39, 127, 0.05);
+  --mc-globe-rim: rgba(0, 39, 127, 0.3); --mc-halo: rgba(0, 83, 226, 0.22);
+  --mc-underglow: rgba(0, 39, 127, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 83, 226, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #08090b 0%, #080d12 60%, #050c17 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f8f9 0%, #eff4f6 60%, #e4ecf3 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(119, 160, 213, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 39, 127, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 83, 226, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #111419 0%, #0b0c0f 100%);
+  border-color: rgba(119, 160, 213, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #11181f), #07090b 75%);
+}
+
+/* The Walmart / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(119, 160, 213, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

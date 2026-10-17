@@ -24,6 +24,7 @@ CUSTOMER = {
                "UniCredit Leasing", "Comfort by UniCredit"],
     "country": "Bulgaria",
     "region": "Europe",
+    "type": "bank",
     "accent": "#e51e26",   # UniCredit red, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "UniCredit Bulbank", "bg": "#ffffff",

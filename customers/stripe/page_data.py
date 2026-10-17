@@ -49,7 +49,7 @@ DEFAULT_DIV = "stripe"
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F2F3F7", "panel-2": "#E9EBF1", "ink": "#0E1025", "ink-2": "#353958",
-    "muted": "#AAA9BB", "faint": "#BCBCC5", "line": "#E0DFE8", "line-2": "#DBDAE2", "focus": "#635BFF",
+    "muted": "#696782", "faint": "#858596", "line": "#E0DFE8", "line-2": "#CAC9D5", "focus": "#635BFF",
     "accent": "#635BFF", "link": "#1900E6", "gold": "#635BFF", "gold-deep": "#1300B4", "gold-ink": "#1900E6",
     "l1": "#0B006B", "l2": "#1300B4", "l3": "#5741EC", "l4": "#9492DC", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#2D19D0", "l2f": "#635BFF", "l3f": "#928BE9", "l4f": "#BFC1E5",

@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Global Payments", "Worldpay", "Genius", "Heartland", "Payrix"],
     "country": "United States",
     "region": "Global",
+    "type": "payments",
     "accent": "#262aff",   # Global Payments blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Global Payments", "bg": "#ffffff", "source": "static/logos/financial-logos-500/02-payments-and-processors/global-payments.png"},

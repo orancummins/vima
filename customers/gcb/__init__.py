@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["GCB Bank", "G-Money", "GCB Capital", "ReadyCash", "Lite Pay", "Amber Club"],
     "country": "Ghana",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#ffc72a",   # GCB eagle yellow, from the logo in the bank's 2025 tariff guide
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "GCB Bank", "bg": "#2f3d44",

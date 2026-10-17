@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Commercial Bank", "ComBank Digital", "Q+", "Flash", "Prestige", "CBC Finance"],
     "country": "Sri Lanka",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#006fba",   # ComBank blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Commercial Bank of Ceylon", "bg": "#ffffff",

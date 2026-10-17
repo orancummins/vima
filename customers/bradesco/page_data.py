@@ -41,7 +41,7 @@ DEFAULT_DIV = 'bradesco'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F6F2F4", "panel-2": "#EFE6EA", "ink": "#1D0C12", "ink-2": "#3C262E",
-    "muted": "#80686C", "faint": "#958689", "line": "#DDD2D4", "line-2": "#CABDC0", "focus": "#CC092F",
+    "muted": "#7A6367", "faint": "#908184", "line": "#DDD2D4", "line-2": "#CABDC0", "focus": "#CC092F",
     "accent": "#CC092F", "link": "#8F0619", "gold": "#CC092F", "gold-deep": "#740514", "gold-ink": "#8F0619",
     "l1": "#4B030D", "l2": "#740514", "l3": "#A41828", "l4": "#B8425C", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#821524", "l2f": "#CC092F", "l3f": "#D0344F", "l4f": "#CD8EA0",

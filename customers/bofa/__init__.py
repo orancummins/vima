@@ -24,6 +24,7 @@ CUSTOMER = {
                "BofA Merchant Services"],
     "country": "United States",
     "region": "Americas",
+    "type": "bank",
     "accent": "#012169",   # Bank of America navy, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Bank of America", "bg": "#ffffff",

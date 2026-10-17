@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["QNB", "QNB First", "QNB Private", "QNB Türkiye", "Enpara", "QNB Egypt"],
     "country": "Qatar",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#003d74",   # QNB navy, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "QNB", "bg": "#ffffff",

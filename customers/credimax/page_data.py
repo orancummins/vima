@@ -52,7 +52,7 @@ PALETTE_LIGHT = {
 }
 PALETTE_DARK = {
     "ground": "#090A0B", "panel": "#101114", "panel-2": "#15161A", "ink": "#F3F4F6", "ink-2": "#D3D5DA",
-    "muted": "#999AA4", "faint": "#72737B", "line": "#1E1E23", "line-2": "#26272B", "focus": "#6976B2",
+    "muted": "#999AA4", "faint": "#72737B", "line": "#232328", "line-2": "#34363B", "focus": "#6976B2",
     "accent": "#6B77AF", "link": "#8F9BC1", "gold": "#6B77AF", "gold-deep": "#6976B2", "gold-ink": "#8F9BC1",
     "l1": "#8F9BC1", "l2": "#707CB0", "l3": "#8285BF", "l4": "#ABB3D1", "l5": "#D1D5DB",
     "lu": "#8B93A1", "l1f": "#121330", "l2f": "#10143B", "l3f": "#2C3064", "l4f": "#6A75A5",

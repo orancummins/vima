@@ -41,7 +41,7 @@ DEFAULT_DIV = 'crdb'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F4F5F2", "panel-2": "#EAEEE8", "ink": "#131B0F", "ink-2": "#303A2B",
-    "muted": "#717E6E", "faint": "#8D958B", "line": "#D5DBD4", "line-2": "#C2C9C0", "focus": "#40A828",
+    "muted": "#626E60", "faint": "#80897E", "line": "#D5DBD4", "line-2": "#C2C9C0", "focus": "#40A828",
     "accent": "#40A828", "link": "#297B1D", "gold": "#40A828", "gold-deep": "#226418", "gold-ink": "#297B1D",
     "l1": "#16400F", "l2": "#226418", "l3": "#3A9030", "l4": "#68A857", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#317228", "l2f": "#43B02A", "l3f": "#61B751", "l4f": "#A6C49A",

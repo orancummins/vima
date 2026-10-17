@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Worldline", "PAYONE", "Global Collect", "Bambora", "Axepta", "equensWorldline"],
     "country": "France",
     "region": "Europe",
+    "type": "payments",
     "accent": "#46beaa",   # Worldline teal, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Worldline", "bg": "#ffffff", "source": "https://worldline.com/"},

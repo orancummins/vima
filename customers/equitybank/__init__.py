@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Equity Bank", "Equity BCDC", "Equitel", "Finserve", "Equity Insurance", "Equity Afya", "Equity Investment Bank"],
     "country": "Kenya",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#a32a29",   # Equity maroon, from the roof in the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Equity Bank", "bg": "#ffffff",

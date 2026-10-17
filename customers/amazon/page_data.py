@@ -42,7 +42,7 @@ DEFAULT_DIV = 'amazon'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F7F3F2", "panel-2": "#F0EAE7", "ink": "#21160D", "ink-2": "#46362A",
-    "muted": "#958A7A", "faint": "#A59F97", "line": "#E0DCD6", "line-2": "#D2CDC6", "focus": "#D68100",
+    "muted": "#72685B", "faint": "#8D867C", "line": "#E0DCD6", "line-2": "#D0CBC3", "focus": "#D68100",
     "accent": "#D68100", "link": "#905F00", "gold": "#D68100", "gold-deep": "#8C5C00", "gold-ink": "#905F00",
     "l1": "#573900", "l2": "#8C5C00", "l3": "#CB9114", "l4": "#C99856", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#9E6F13", "l2f": "#FF9900", "l3f": "#DDA64A", "l4f": "#D7B99B",

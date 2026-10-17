@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["UniCredit", "HypoVereinsbank", "Bank Austria", "buddy", "onemarkets"],
     "country": "Italy",
     "region": "Europe",
+    "type": "bank",
     "accent": "#e31818",   # UniCredit red, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "UniCredit", "bg": "#ffffff", "source": "https://www.unicreditgroup.eu/"},

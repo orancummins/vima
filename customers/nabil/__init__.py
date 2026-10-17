@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Nabil Bank", "nBank", "Nabil Remit", "nRemit", "Nabil Investment Banking", "Nabil Stock Dealer"],
     "country": "Nepal",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#12b25a",   # Nabil green, from the logo and nabilbank.com
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Nabil Bank", "bg": "#ffffff",

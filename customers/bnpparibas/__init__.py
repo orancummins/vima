@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["BNP Paribas", "BNP Paribas Fortis", "BNL", "BGL BNP Paribas", "Hello bank!", "Nickel", "Cetelem", "Floa", "Arval", "Cardif"],
     "country": "France",
     "region": "Europe",
+    "type": "bank",
     "accent": "#008053",   # BNP Paribas green, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "BNP Paribas", "bg": "#ffffff", "source": "https://commons.wikimedia.org/wiki/File:BNP_Paribas_logo.svg"},

@@ -20,6 +20,7 @@ CUSTOMER = {
     "brands": ["Itaú", "Personal Bank", "Itaú Campo", "Itaú BBA", "Pik", "Tienda Naranja"],
     "country": "Paraguay",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#ff6200",   # Itaú orange, from itau.com.py's stylesheet
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Itaú Paraguay", "bg": "#ff6200", "source": "https://www.itau.com.py/images/redis/logo.svg"},

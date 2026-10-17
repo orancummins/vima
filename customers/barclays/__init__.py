@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Barclays", "Barclaycard", "Tesco Bank", "Kensington", "Best Egg"],
     "country": "United Kingdom",
     "region": "Europe & Americas",
+    "type": "bank",
     "accent": "#00aeef",   # Barclays blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Barclays", "bg": "#ffffff", "source": "static/logos/financial-logos-500/01-financial-institutions/barclays.png"},

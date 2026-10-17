@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["PayPal", "Venmo", "Braintree", "Xoom", "Hyperwallet", "Honey", "Paidy", "PYUSD"],
     "country": "United States",
     "region": "Global",
+    "type": "wallet",
     "accent": "#003087",   # PayPal navy, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "PayPal", "bg": "#ffffff", "source": "static/logos/financial-logos-500/02-payments-and-processors/paypal.svg"},

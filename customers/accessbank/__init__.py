@@ -24,6 +24,7 @@ CUSTOMER = {
     "brands": ["Access Bank", "Access Holdings", "AccessMore", "Access Closa", "The Access Bank UK", "Hydrogen"],
     "country": "Nigeria",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#ee7e01",   # Access orange, the site's base brand colour
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Access Bank", "bg": "#ffffff", "source": "https://www.accessbankplc.com/Content/images/access-lg-logo.png"},

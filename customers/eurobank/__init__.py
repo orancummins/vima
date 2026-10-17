@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Eurobank", "Eurobank Cyprus", "Hellenic Bank", "Postbank", "Eurobank Private Bank Luxembourg", "Eurolife"],
     "country": "Greece",
     "region": "Europe",
+    "type": "bank",
     "accent": "#ea002a",   # Eurobank red, from the logo mark
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Eurobank", "bg": "#ffffff",

@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Interbank", "Izipay", "Plin", "Millas Benefit", "Interseguro", "Inteligo"],
     "country": "Peru",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#00a24f",   # Interbank green, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Interbank", "bg": "#ffffff", "source": "https://commons.wikimedia.org/wiki/File:Interbank_logo.svg"},

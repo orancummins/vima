@@ -41,7 +41,7 @@ DEFAULT_DIV = 'zaba'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F6F2F3", "panel-2": "#F0E8EA", "ink": "#200E0F", "ink-2": "#472F31",
-    "muted": "#9B8785", "faint": "#ABA0A0", "line": "#E1D9D8", "line-2": "#D5CCCB", "focus": "#EE3124",
+    "muted": "#776462", "faint": "#918282", "line": "#E1D9D8", "line-2": "#D3C9C8", "focus": "#EE3124",
     "accent": "#EE3124", "link": "#AD210D", "gold": "#EE3124", "gold-deep": "#891A0B", "gold-ink": "#AD210D",
     "l1": "#541007", "l2": "#891A0B", "l3": "#CB3C24", "l4": "#C56D6A", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#9E2F1F", "l2f": "#EE3124", "l3f": "#D56C62", "l4f": "#D6A6A8",

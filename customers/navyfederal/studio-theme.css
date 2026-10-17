@@ -1,0 +1,97 @@
+/* Navy Federal inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Navy Federal's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0b0d0e; --panel: #121518; --panel-2: #191d21;
+  --ink: #f3f5f6; --ink-2: #d5dcde; --muted: #a0a7ae; --faint: #7d838a;
+  --focus: #578cb7; --accent: #578cb7; --link: #96b9cf;
+  --gold: #578cb7; --gold-deep: #6a9dc4; --gold-ink: #96b9cf;
+  --gold-grad: linear-gradient(100deg, #0f3d70 0%, #578cb7 55%, #c4dcea 100%);
+  --l1f: #1a3a67; --l2f: #0f3d70; --l3f: #2d598e; --l4f: #739bb8; --l5f: #8a9096; --luf: #6a6f75;
+  --l1t: #487c9d; --l2t: #487ba2; --l3t: #4778b5; --l4t: #457b9c; --l5t: #e3e6e8;
+  --l5: #d5dcde; --lu: #7d838a;
+  --wash-a: rgba(15, 61, 112, 0.14); --wash-b: rgba(115, 155, 184, 0.05);
+  --mc-plate: #0f1214; --mc-plate-deep: #050708; --mc-pad: #121619;
+  --mc-utok-hi: #1b2023; --mc-utok: #090d0f; --mc-uico: #aecadb;
+  --mc-grid: rgba(15, 61, 112, 0.38); --mc-grid-strong: rgba(87, 140, 183, 0.6);
+  --mc-hg: rgb(45, 89, 142); --mc-gop: 0.22;
+  --mc-dot: rgb(150, 185, 207); --mc-dot-glow: rgb(15, 61, 112); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(15, 61, 112, 0.2); --mc-halo-b: rgba(45, 89, 142, 0.1);
+  --mc-globe-a: rgba(15, 61, 112, 0.12); --mc-globe-b: rgba(45, 89, 142, 0.06);
+  --mc-globe-c: rgba(45, 89, 142, 0.03); --mc-globe-d: rgba(45, 89, 142, 0.1);
+  --mc-cut-a: rgba(15, 61, 112, 0.32); --mc-cut-b: rgba(45, 89, 142, 0.12);
+  --mc-globe-hl: #96b9cf; --mc-globe-rim: #2d598e; --mc-halo: #0f3d70;
+  --mc-underglow: rgba(15, 61, 112, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f4f5; --panel-2: #e5ebed;
+  --focus: #0f3d70; --accent: #0f3d70; --link: #0b2a56;
+  --gold: #0f3d70; --gold-deep: #0a244a; --gold-ink: #0b2a56;
+  --gold-grad: linear-gradient(100deg, #0a244a 0%, #0f3d70 55%, #739bb8 100%);
+  --l1f: #142c4e; --l2f: #0f3d70; --l3f: #2d598e; --l4f: #739bb8; --l5f: #454b52; --luf: #9ca3af;
+  --l1t: #071a34; --l2t: #0a244a; --l3t: #15315d; --l4t: #26425f; --l5t: #1d262a;
+  --wash-a: rgba(15, 61, 112, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e9eeef; --mc-utok: #e5ebed; --mc-uico: #1d262a;
+  --mc-grid: rgba(10, 36, 74, 0.24); --mc-grid-strong: rgba(10, 36, 74, 0.42);
+  --mc-hg: #0a244a; --mc-gop: 0.3;
+  --mc-dot: #0a244a; --mc-dot-glow: #0f3d70; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(15, 61, 112, 0.08); --mc-halo-b: rgba(15, 61, 112, 0.03);
+  --mc-cut-a: rgba(10, 36, 74, 0.12); --mc-cut-b: rgba(10, 36, 74, 0.05);
+  --mc-globe-rim: rgba(10, 36, 74, 0.3); --mc-halo: rgba(15, 61, 112, 0.22);
+  --mc-underglow: rgba(10, 36, 74, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(15, 61, 112, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #07080a 0%, #080c0f 60%, #060c12 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f8f9 0%, #eff4f5 60%, #e4ecf0 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(87, 140, 183, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(10, 36, 74, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(15, 61, 112, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0f1214 0%, #0a0b0d 100%);
+  border-color: rgba(87, 140, 183, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0f1418), #060809 75%);
+}
+
+/* The Navy Federal / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(87, 140, 183, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

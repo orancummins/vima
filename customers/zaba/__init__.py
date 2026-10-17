@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Zaba", "m-zaba", "IziPay", "go!card", "UniCredit Invest", "UniCredit Leasing Croatia", "UniCredit Bank Mostar"],
     "country": "Croatia",
     "region": "Europe",
+    "type": "bank",
     "accent": "#ee3124",   # Zaba red, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Zagrebačka banka", "bg": "#ffffff",

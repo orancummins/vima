@@ -596,6 +596,36 @@ sporiteľňa) have their own pages, with the parent as context. Where a bank's
 own site blocked reading, the facts come from filings, regulators, archived
 copies and press, and are marked ⚠.
 
+Then fifty more of the institutions, merchants and payment players that matter
+most to Mastercard, also as at 17 October 2026:
+- **North American banks and issuers:** U.S. Bank (with Elavon), Truist, PNC,
+  TD, RBC, Scotiabank, CIBC, Navy Federal, USAA and Bread Financial.
+- **European banks:** Crédit Agricole, Société Générale, Intesa Sanpaolo,
+  CaixaBank, BBVA, Commerzbank, Rabobank and Standard Chartered.
+- **Asia-Pacific:** MUFG, Sumitomo Mitsui Card, KB Kookmin Card, ICICI Bank,
+  SBI Card, OCBC, UOB, ANZ and Bank of China.
+- **Elsewhere:** Credicorp (BCP), Banorte, Al Rajhi Bank, First Abu Dhabi Bank,
+  FirstRand (FNB) and Kaspi.kz.
+- **Payments and fintech:** Block, Klarna, Affirm, Marqeta, Wise, Chime,
+  Mercado Pago, Western Union and Ant International.
+- **Big tech:** Apple, Google, Samsung and Tencent, each read as a payments player.
+- **Merchants and platforms:** Shopify, Walmart, Uber and Booking Holdings.
+
+**Finding a customer.** The tab opens on a logo wall: every customer's logo by
+region (North America, Latin America & Caribbean, Europe, Middle East & Africa,
+Asia-Pacific) and sub-region (the Gulf, Nordics & Baltics, Southeast Asia…); a
+click opens the customer. One compact bar above it holds search (press `/`), the
+active filters as removable tokens, sort, and the choice of logos, cards or a
+compact list. "Filters" opens one line each for kind (`CUSTOMER["type"]`: banks,
+digital banks, card issuers, payments, wallets and fintech, merchants, big tech),
+region and sub-region (from the HQ country, `customers.geo()`), and Mastercard
+depth. Depth (`customers.mc_depth()`) reads each customer's Rails layer from its
+inventory: a product on or run by Mastercard counts 1, one partly on it ½, and
+the share sorts customers into deep (45% and up), partial (25–45%) and light;
+it is the map's reading of public sources, not volumes. The search, filters,
+sort and layout ride in the URL as `?cf=`, so a filtered view can be shared and
+Back returns to it. A customer whose page is not built yet stays off the tab.
+
 Each customer has a folder under `customers/<id>/` holding a **standalone
 page**, one self-contained HTML file that opens on its own in any browser
 (for SNB, [customers/snb/SNB_Operating_System.html](customers/snb/SNB_Operating_System.html)),

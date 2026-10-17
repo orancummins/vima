@@ -23,6 +23,7 @@ CUSTOMER = {
                "CRDB Bank Burundi", "CRDB Bank Congo", "CRDB Insurance"],
     "country": "Tanzania",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#43b02a",   # CRDB green, from the logo on crdbbank.co.tz
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "CRDB Bank", "bg": "#ffffff",

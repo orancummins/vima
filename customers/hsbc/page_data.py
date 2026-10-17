@@ -41,7 +41,7 @@ DEFAULT_DIV = 'hsbc'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F6F2F3", "panel-2": "#EFE6E9", "ink": "#1F0C0F", "ink-2": "#3F262C",
-    "muted": "#84696B", "faint": "#988889", "line": "#DED2D3", "line-2": "#CCBEBF", "focus": "#DB0011",
+    "muted": "#7B6264", "faint": "#918081", "line": "#DED2D3", "line-2": "#CCBEBF", "focus": "#DB0011",
     "accent": "#DB0011", "link": "#990003", "gold": "#DB0011", "gold-deep": "#7C0002", "gold-ink": "#990003",
     "l1": "#4F0002", "l2": "#7C0002", "l3": "#AF1211", "l4": "#C13E4C", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#8A1112", "l2f": "#DB0011", "l3f": "#D8313A", "l4f": "#D18D99",

@@ -41,7 +41,7 @@ DEFAULT_DIV = 'idb'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F6F2F4", "panel-2": "#F0E6EA", "ink": "#1F0C11", "ink-2": "#412830",
-    "muted": "#8B6E73", "faint": "#9D8D90", "line": "#DFD3D5", "line-2": "#CEC1C3", "focus": "#E80028",
+    "muted": "#7A6065", "faint": "#917F83", "line": "#DFD3D5", "line-2": "#CEC1C3", "focus": "#E80028",
     "accent": "#E80028", "link": "#A10012", "gold": "#E80028", "gold-deep": "#82000F", "gold-ink": "#A10012",
     "l1": "#52000A", "l2": "#82000F", "l3": "#B91322", "l4": "#C44760", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#911120", "l2f": "#E80028", "l3f": "#DA3A52", "l4f": "#D392A4",

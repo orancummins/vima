@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Kapitalbank", "KAPITALBANK.Online", "Uzum Business Kapitalbank", "Kapital Premium", "Kapital Privilege"],
     "country": "Uzbekistan",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#fbc200",   # Kapitalbank yellow, the site's theme colour and the bars in the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Kapitalbank", "bg": "#ffffff",

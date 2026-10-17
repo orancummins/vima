@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Bank Audi", "neo by Bank Audi", "Banque Audi (Suisse)", "Audi Capital", "Bank Audi France"],
     "country": "Lebanon",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#191c1f",   # Bank Audi black, from the wordmark logo on bankaudi.com.lb
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Bank Audi", "bg": "#ffffff",

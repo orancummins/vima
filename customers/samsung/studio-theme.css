@@ -1,0 +1,97 @@
+/* Samsung inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Samsung's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0c0d10; --panel: #14161B; --panel-2: #1d2027;
+  --ink: #f3f4f7; --ink-2: #d8dce1; --muted: #adafb9; --faint: #8f919a;
+  --focus: #6e80c2; --accent: #6e80c2; --link: #a4b2d6;
+  --gold: #6e80c2; --gold-deep: #7e90cd; --gold-ink: #a4b2d6;
+  --gold-grad: linear-gradient(100deg, #1428a0 0%, #6e80c2 55%, #c9d3ec 100%);
+  --l1f: #242e92; --l2f: #1428a0; --l3f: #3745b1; --l4f: #8695c2; --l5f: #9a9ca5; --luf: #7d7f8a;
+  --l1t: #5a74b5; --l2t: #5c72b8; --l3t: #636ec3; --l4t: #5872b6; --l5t: #e5e6e9;
+  --l5: #d8dce1; --lu: #8f919a;
+  --wash-a: rgba(20, 40, 160, 0.14); --wash-b: rgba(134, 149, 194, 0.05);
+  --mc-plate: #101216; --mc-plate-deep: #060708; --mc-pad: #14161d;
+  --mc-utok-hi: #20232b; --mc-utok: #090b10; --mc-uico: #b8c3e0;
+  --mc-grid: rgba(20, 40, 160, 0.38); --mc-grid-strong: rgba(110, 128, 194, 0.6);
+  --mc-hg: rgb(55, 69, 177); --mc-gop: 0.22;
+  --mc-dot: rgb(164, 178, 214); --mc-dot-glow: rgb(20, 40, 160); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(20, 40, 160, 0.2); --mc-halo-b: rgba(55, 69, 177, 0.1);
+  --mc-globe-a: rgba(20, 40, 160, 0.12); --mc-globe-b: rgba(55, 69, 177, 0.06);
+  --mc-globe-c: rgba(55, 69, 177, 0.03); --mc-globe-d: rgba(55, 69, 177, 0.1);
+  --mc-cut-a: rgba(20, 40, 160, 0.32); --mc-cut-b: rgba(55, 69, 177, 0.12);
+  --mc-globe-hl: #a4b2d6; --mc-globe-rim: #3745b1; --mc-halo: #1428a0;
+  --mc-underglow: rgba(20, 40, 160, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f3f6; --panel-2: #e6e9ee;
+  --focus: #1428a0; --accent: #1428a0; --link: #0e1773;
+  --gold: #1428a0; --gold-deep: #0c135f; --gold-ink: #0e1773;
+  --gold-grad: linear-gradient(100deg, #0c135f 0%, #1428a0 55%, #8695c2 100%);
+  --l1f: #192069; --l2f: #1428a0; --l3f: #3745b1; --l4f: #8695c2; --l5f: #5b5e6d; --luf: #9ca3af;
+  --l1t: #080d3f; --l2t: #0c135f; --l3t: #1d2382; --l4t: #344285; --l5t: #242935;
+  --wash-a: rgba(20, 40, 160, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaecf0; --mc-utok: #e6e9ee; --mc-uico: #242935;
+  --mc-grid: rgba(12, 19, 95, 0.24); --mc-grid-strong: rgba(12, 19, 95, 0.42);
+  --mc-hg: #0c135f; --mc-gop: 0.3;
+  --mc-dot: #0c135f; --mc-dot-glow: #1428a0; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(20, 40, 160, 0.08); --mc-halo-b: rgba(20, 40, 160, 0.03);
+  --mc-cut-a: rgba(12, 19, 95, 0.12); --mc-cut-b: rgba(12, 19, 95, 0.05);
+  --mc-globe-rim: rgba(12, 19, 95, 0.3); --mc-halo: rgba(20, 40, 160, 0.22);
+  --mc-underglow: rgba(12, 19, 95, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(20, 40, 160, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #08080a 0%, #080a10 60%, #060913 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f8f9 0%, #eff2f5 60%, #e5e9f1 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(110, 128, 194, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(12, 19, 95, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(20, 40, 160, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #101216 0%, #0b0b0d 100%);
+  border-color: rgba(110, 128, 194, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #11131b), #07080a 75%);
+}
+
+/* The Samsung / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(110, 128, 194, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

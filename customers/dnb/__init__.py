@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["DNB", "Sbanken", "DNB Carnegie", "DNB Eiendom", "DNB Finans", "DNB Livsforsikring"],
     "country": "Norway",
     "region": "Europe",
+    "type": "bank",
     "accent": "#007272",   # DNB sea green, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "DNB", "bg": "#ffffff", "source": "https://www.dnb.no/en"},

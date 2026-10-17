@@ -24,6 +24,7 @@ CUSTOMER = {
     "brands": ["Kapital Bank", "Birbank", "Birbank Biznes", "Birbank Private", "Birbank Invest", "m10", "MilliÖn", "Birmarket"],
     "country": "Azerbaijan",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#b61d29",   # Kapital Bank red, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Kapital Bank", "bg": "#ffffff",

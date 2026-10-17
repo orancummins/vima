@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Banco Pichincha", "Deuna", "Mi Vecino", "Pichincha Miles", "Banco Pichincha España", "Pibank"],
     "country": "Ecuador",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#ffdd00",   # Pichincha yellow, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Banco Pichincha", "bg": "#ffffff", "source": "https://www.pichincha.com/themes/custom/pichincha_theme/logo.svg"},

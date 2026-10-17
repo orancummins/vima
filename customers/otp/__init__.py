@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["OTP Bank", "DSK Bank", "OTP banka", "Ipoteka Bank", "Simple", "SimplePay", "Merkantil"],
     "country": "Hungary",
     "region": "Europe",
+    "type": "bank",
     "accent": "#52ae30",   # OTP green, from the logo and otpbank.hu
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "OTP Group", "bg": "#ffffff", "source": "https://www.otpgroup.info/"},

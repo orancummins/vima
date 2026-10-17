@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["IDB", "e-IDB", "IDB UAE", "Arab Tourist Card"],
     "country": "Iraq",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#e80028",   # IDB red, from the logo on idb.iq
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "International Development Bank", "bg": "#ffffff",

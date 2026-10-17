@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Bank Muscat", "Meethaq", "Al Jawhar", "Asalah", "Hisaby", "Bank Muscat Rewards"],
     "country": "Oman",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#e83840",   # Bank Muscat red, from the logo on bankmuscat.com
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Bank Muscat", "bg": "#ffffff",

@@ -25,6 +25,7 @@ CUSTOMER = {
     "brands": ["Banamex", "Banamex Priority", "Beyond", "Switch", "Seguros Banamex", "Afore Banamex"],
     "country": "Mexico",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#ff1b44",   # Banamex red, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Banamex", "bg": "#ffffff", "source": "https://www.banamex.com/content/dam/banamex/Logo.svg"},

@@ -1,0 +1,97 @@
+/* Mercado Pago inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Mercado Pago's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0d1112; --panel: #161F20; --panel-2: #222f31;
+  --ink: #f3f7f7; --ink-2: #dce6e6; --muted: #bec7cb; --faint: #a7afb2;
+  --focus: #3aa1b9; --accent: #3aa1b9; --link: #b3dfe5;
+  --gold: #3aa1b9; --gold-deep: #92d3e1; --gold-ink: #b3dfe5;
+  --gold-grad: linear-gradient(100deg, #00bcff 0%, #85c9d9 55%, #cceff3 100%);
+  --l1f: #1da5e3; --l2f: #00bcff; --l3f: #4ab3dd; --l4f: #9bcdd7; --l5f: #b0b8ba; --luf: #99a2a6;
+  --l1t: #30818d; --l2t: #2f8090; --l3t: #2b7c9d; --l4t: #2d7f8b; --l5t: #e7eaec;
+  --l5: #dce6e6; --lu: #a7afb2;
+  --wash-a: rgba(0, 188, 255, 0.14); --wash-b: rgba(155, 205, 215, 0.05);
+  --mc-plate: #11191a; --mc-plate-deep: #050908; --mc-pad: #162123;
+  --mc-utok-hi: #263537; --mc-utok: #091213; --mc-uico: #c2e6eb;
+  --mc-grid: rgba(0, 188, 255, 0.38); --mc-grid-strong: rgba(133, 201, 217, 0.6);
+  --mc-hg: rgb(74, 179, 221); --mc-gop: 0.22;
+  --mc-dot: rgb(179, 223, 229); --mc-dot-glow: rgb(0, 188, 255); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 188, 255, 0.2); --mc-halo-b: rgba(74, 179, 221, 0.1);
+  --mc-globe-a: rgba(0, 188, 255, 0.12); --mc-globe-b: rgba(74, 179, 221, 0.06);
+  --mc-globe-c: rgba(74, 179, 221, 0.03); --mc-globe-d: rgba(74, 179, 221, 0.1);
+  --mc-cut-a: rgba(0, 188, 255, 0.32); --mc-cut-b: rgba(74, 179, 221, 0.12);
+  --mc-globe-hl: #b3dfe5; --mc-globe-rim: #4ab3dd; --mc-halo: #00bcff;
+  --mc-underglow: rgba(0, 188, 255, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f7f7; --panel-2: #e7f0f0;
+  --focus: #00bcff; --accent: #00bcff; --link: #0076af;
+  --gold: #00bcff; --gold-deep: #005f8c; --gold-ink: #0076af;
+  --gold-grad: linear-gradient(100deg, #005f8c 0%, #00bcff 55%, #9bcdd7 100%);
+  --l1f: #13719e; --l2f: #00bcff; --l3f: #4ab3dd; --l4f: #9bcdd7; --l5f: #7a8e95; --luf: #9ca3af;
+  --l1t: #003b57; --l2t: #005f8c; --l3t: #148ccb; --l4t: #3ba6c8; --l5t: #2a4346;
+  --wash-a: rgba(0, 188, 255, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaf1f1; --mc-utok: #e7f0f0; --mc-uico: #2a4346;
+  --mc-grid: rgba(0, 95, 140, 0.24); --mc-grid-strong: rgba(0, 95, 140, 0.42);
+  --mc-hg: #005f8c; --mc-gop: 0.3;
+  --mc-dot: #005f8c; --mc-dot-glow: #00bcff; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 188, 255, 0.08); --mc-halo-b: rgba(0, 188, 255, 0.03);
+  --mc-cut-a: rgba(0, 95, 140, 0.12); --mc-cut-b: rgba(0, 95, 140, 0.05);
+  --mc-globe-rim: rgba(0, 95, 140, 0.3); --mc-halo: rgba(0, 188, 255, 0.22);
+  --mc-underglow: rgba(0, 95, 140, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 188, 255, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #080a0b 0%, #081113 60%, #051317 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f9f9 0%, #eff7f6 60%, #e5f2f3 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(133, 201, 217, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 95, 140, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 188, 255, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #11191a 0%, #0c0e0f 100%);
+  border-color: rgba(133, 201, 217, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #121e21), #070b0b 75%);
+}
+
+/* The Mercado Pago / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(133, 201, 217, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

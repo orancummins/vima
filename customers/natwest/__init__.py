@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["NatWest", "Royal Bank of Scotland", "Ulster Bank", "Coutts", "Mettle", "Tyl"],
     "country": "United Kingdom",
     "region": "Europe",
+    "type": "bank",
     "accent": "#3c1053",   # NatWest purple, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "NatWest", "bg": "#3c1053", "source": "https://www.natwest.com/"},

@@ -1,0 +1,97 @@
+/* Truist inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Truist's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0c0b0d; --panel: #121115; --panel-2: #19171c;
+  --ink: #f4f3f6; --ink-2: #d6d5db; --muted: #a09ca5; --faint: #79767d;
+  --focus: #765f9c; --accent: #765f9c; --link: #a599bf;
+  --gold: #765f9c; --gold-deep: #8671ac; --gold-ink: #a599bf;
+  --gold-grad: linear-gradient(100deg, #2e1a47 0%, #765f9c 55%, #d0c9e1 100%);
+  --l1f: #322044; --l2f: #2e1a47; --l3f: #4f376b; --l4f: #8777a4; --l5f: #87848b; --luf: #646167;
+  --l1t: #7e6da3; --l2t: #806da5; --l3t: #8869a8; --l4t: #7d6ca5; --l5t: #e5e4e6;
+  --l5: #d6d5db; --lu: #79767d;
+  --wash-a: rgba(46, 26, 71, 0.14); --wash-b: rgba(135, 119, 164, 0.05);
+  --mc-plate: #100f12; --mc-plate-deep: #060607; --mc-pad: #131216;
+  --mc-utok-hi: #1a191e; --mc-utok: #0b0a0d; --mc-uico: #bbb2d0;
+  --mc-grid: rgba(46, 26, 71, 0.38); --mc-grid-strong: rgba(118, 95, 156, 0.6);
+  --mc-hg: rgb(79, 55, 107); --mc-gop: 0.22;
+  --mc-dot: rgb(165, 153, 191); --mc-dot-glow: rgb(46, 26, 71); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(46, 26, 71, 0.2); --mc-halo-b: rgba(79, 55, 107, 0.1);
+  --mc-globe-a: rgba(46, 26, 71, 0.12); --mc-globe-b: rgba(79, 55, 107, 0.06);
+  --mc-globe-c: rgba(79, 55, 107, 0.03); --mc-globe-d: rgba(79, 55, 107, 0.1);
+  --mc-cut-a: rgba(46, 26, 71, 0.32); --mc-cut-b: rgba(79, 55, 107, 0.12);
+  --mc-globe-hl: #a599bf; --mc-globe-rim: #4f376b; --mc-halo: #2e1a47;
+  --mc-underglow: rgba(46, 26, 71, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f3f2f4; --panel-2: #e7e6eb;
+  --focus: #2e1a47; --accent: #2e1a47; --link: #28153a;
+  --gold: #2e1a47; --gold-deep: #231333; --gold-ink: #28153a;
+  --gold-grad: linear-gradient(100deg, #231333 0%, #2e1a47 55%, #8777a4 100%);
+  --l1f: #281936; --l2f: #2e1a47; --l3f: #4f376b; --l4f: #8777a4; --l5f: #3d3a40; --luf: #9ca3af;
+  --l1t: #1a0e27; --l2t: #231333; --l3t: #2d1c3d; --l4t: #322641; --l5t: #1d1b22;
+  --wash-a: rgba(46, 26, 71, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaeaed; --mc-utok: #e7e6eb; --mc-uico: #1d1b22;
+  --mc-grid: rgba(35, 19, 51, 0.24); --mc-grid-strong: rgba(35, 19, 51, 0.42);
+  --mc-hg: #231333; --mc-gop: 0.3;
+  --mc-dot: #231333; --mc-dot-glow: #2e1a47; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(46, 26, 71, 0.08); --mc-halo-b: rgba(46, 26, 71, 0.03);
+  --mc-cut-a: rgba(35, 19, 51, 0.12); --mc-cut-b: rgba(35, 19, 51, 0.05);
+  --mc-globe-rim: rgba(35, 19, 51, 0.3); --mc-halo: rgba(46, 26, 71, 0.22);
+  --mc-underglow: rgba(35, 19, 51, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(46, 26, 71, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #080809 0%, #0a090d 60%, #0b080f 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f7f7f8 0%, #f0f0f4 60%, #e8e5ed 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(118, 95, 156, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(35, 19, 51, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(46, 26, 71, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #100f12 0%, #0b0a0c 100%);
+  border-color: rgba(118, 95, 156, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #121015), #070709 75%);
+}
+
+/* The Truist / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(118, 95, 156, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

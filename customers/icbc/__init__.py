@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["ICBC", "Peony", "ICBC e-Life", "ICBC (Asia)", "ICBC (Macau)", "ICBC (Argentina)", "ICBC Standard Bank"],
     "country": "China",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#c7000b",   # ICBC red, from the website and logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "ICBC", "bg": "#ffffff", "source": "https://commons.wikimedia.org/wiki/File:ICBC_China_logo.svg"},

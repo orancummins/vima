@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Bradesco", "Digio", "Bradesco Seguros", "Bradescard", "Ágora"],
     "country": "Brazil",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#cc092f",   # Bradesco red, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Bradesco", "bg": "#ffffff", "source": "https://commons.wikimedia.org/"},

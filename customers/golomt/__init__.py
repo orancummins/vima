@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Golomt Bank", "SocialPay", "Universe cards", "Premiere Banking", "Golomt Financial Group"],
     "country": "Mongolia",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#0061b3",   # Golomt blue, from the logo on golomtbank.com
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Golomt Bank", "bg": "#ffffff", "source": "https://www.golomtbank.com/en"},

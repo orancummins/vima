@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Lloyds", "Halifax", "Bank of Scotland", "MBNA", "Scottish Widows", "Curve"],
     "country": "United Kingdom",
     "region": "Europe",
+    "type": "bank",
     "accent": "#006a4a",   # Lloyds green, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Lloyds Banking Group", "bg": "#ffffff", "source": "https://www.lloydsbankinggroup.com/"},

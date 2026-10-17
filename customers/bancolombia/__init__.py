@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Bancolombia", "Grupo Cibest", "Nequi", "Wompi", "Wenia", "Banco Agrícola", "BAM", "Sufi"],
     "country": "Colombia",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#fdda24",   # Bancolombia yellow, from the website
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Bancolombia", "bg": "#ffffff",

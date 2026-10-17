@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Attijariwafa bank", "Simple", "Attijari Payment", "Wafacash", "Wafasalaf", "Wafa Assurance", "Bank Assafa", "CBAO"],
     "country": "Morocco",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#e05038",   # Attijariwafa red-orange, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Attijariwafa bank", "bg": "#ffffff",

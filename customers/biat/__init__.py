@@ -21,6 +21,7 @@ CUSTOMER = {
     "brands": ["BIAT", "MyBIAT", "BIAT France", "Assurances BIAT", "Tunisie Valeurs", "BIAT Privilèges"],
     "country": "Tunisia",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#204070",   # BIAT navy, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "BIAT, Banque Internationale Arabe de Tunisie", "bg": "#ffffff",

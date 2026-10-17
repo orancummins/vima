@@ -24,6 +24,7 @@ CUSTOMER = {
     "brands": ["Garanti BBVA", "Bonus", "BonusFlaş", "Paracard", "Miles&Smiles", "Shop&Fly", "TAMİ", "Garanti BBVA Kripto"],
     "country": "Turkey",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#217536",   # Garanti green, from the logo and garantibbva.com.tr
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Garanti BBVA", "bg": "#ffffff",

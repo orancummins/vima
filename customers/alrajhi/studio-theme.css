@@ -1,0 +1,97 @@
+/* Al Rajhi inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Al Rajhi's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0d0e11; --panel: #16171F; --panel-2: #21232f;
+  --ink: #f3f4f7; --ink-2: #dcdee4; --muted: #bbbbc7; --faint: #a3a3ad;
+  --focus: #8387d1; --accent: #8387d1; --link: #b1b7e0;
+  --gold: #8387d1; --gold-deep: #9195da; --gold-ink: #b1b7e0;
+  --gold-grad: linear-gradient(100deg, #150fe0 0%, #8387d1 55%, #cdd1f0 100%);
+  --l1f: #3426ca; --l2f: #150fe0; --l3f: #5049d1; --l4f: #999dd0; --l5f: #acacb5; --luf: #94949f;
+  --l1t: #6470c2; --l2t: #676fc5; --l3t: #6f6acc; --l4t: #656fc3; --l5t: #e7e6eb;
+  --l5: #dcdee4; --lu: #a3a3ad;
+  --wash-a: rgba(21, 15, 224, 0.14); --wash-b: rgba(153, 157, 208, 0.05);
+  --mc-plate: #111219; --mc-plate-deep: #060608; --mc-pad: #161721;
+  --mc-utok-hi: #252734; --mc-utok: #0a0b12; --mc-uico: #c1c5e7;
+  --mc-grid: rgba(21, 15, 224, 0.38); --mc-grid-strong: rgba(131, 135, 209, 0.6);
+  --mc-hg: rgb(80, 73, 209); --mc-gop: 0.22;
+  --mc-dot: rgb(177, 183, 224); --mc-dot-glow: rgb(21, 15, 224); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(21, 15, 224, 0.2); --mc-halo-b: rgba(80, 73, 209, 0.1);
+  --mc-globe-a: rgba(21, 15, 224, 0.12); --mc-globe-b: rgba(80, 73, 209, 0.06);
+  --mc-globe-c: rgba(80, 73, 209, 0.03); --mc-globe-d: rgba(80, 73, 209, 0.1);
+  --mc-cut-a: rgba(21, 15, 224, 0.32); --mc-cut-b: rgba(80, 73, 209, 0.12);
+  --mc-globe-hl: #b1b7e0; --mc-globe-rim: #5049d1; --mc-halo: #150fe0;
+  --mc-underglow: rgba(21, 15, 224, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f3f6; --panel-2: #e7e9ef;
+  --focus: #150fe0; --accent: #150fe0; --link: #170a9b;
+  --gold: #150fe0; --gold-deep: #12087c; --gold-ink: #170a9b;
+  --gold-grad: linear-gradient(100deg, #12087c 0%, #150fe0 55%, #999dd0 100%);
+  --l1f: #241a8d; --l2f: #150fe0; --l3f: #5049d1; --l4f: #999dd0; --l5f: #74738c; --luf: #9ca3af;
+  --l1t: #0b054e; --l2t: #12087c; --l3t: #2e1eb4; --l4t: #3f3eb5; --l5t: #2a2d41;
+  --wash-a: rgba(21, 15, 224, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaecf1; --mc-utok: #e7e9ef; --mc-uico: #2a2d41;
+  --mc-grid: rgba(18, 8, 124, 0.24); --mc-grid-strong: rgba(18, 8, 124, 0.42);
+  --mc-hg: #12087c; --mc-gop: 0.3;
+  --mc-dot: #12087c; --mc-dot-glow: #150fe0; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(21, 15, 224, 0.08); --mc-halo-b: rgba(21, 15, 224, 0.03);
+  --mc-cut-a: rgba(18, 8, 124, 0.12); --mc-cut-b: rgba(18, 8, 124, 0.05);
+  --mc-globe-rim: rgba(18, 8, 124, 0.3); --mc-halo: rgba(21, 15, 224, 0.22);
+  --mc-underglow: rgba(18, 8, 124, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(21, 15, 224, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #08080b 0%, #090912 60%, #060616 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f7f9 0%, #eff1f6 60%, #e6e7f2 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(131, 135, 209, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(18, 8, 124, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(21, 15, 224, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #111219 0%, #0c0c0f 100%);
+  border-color: rgba(131, 135, 209, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #12131f), #07070b 75%);
+}
+
+/* The Al Rajhi / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(131, 135, 209, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

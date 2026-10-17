@@ -282,9 +282,50 @@
         <div class="cust-eyebrow">Customers</div>
         <h1 class="cust-title" id="cust-index-title">A customer's business, read as a platform</h1>
         <p class="cust-lead">Each customer on the same five layers as Mastercard's platform: what it stands on, the rails its money moves on, the services around them, what it sells and the front doors its customers come through. Open one to walk its journeys, see where Mastercard already is, and jump to the Studio APIs and use cases that fit.</p>
-        <div class="cust-grid">
+        <!-- Find a customer: one compact row (search, active filters, Filters, sort, layout); "Filters" opens the
+             facets below it, one line each. Built and kept in step by features/customers.js; the state rides in the
+             URL as ?cf=. -->
+        <div class="cust-tools" id="cust-tools" role="search" aria-label="Find a customer">
+          <div class="cust-tools-row">
+            <label class="cust-search">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input type="search" id="cust-q" placeholder="Search {{ customers | length }} customers" autocomplete="off" spellcheck="false" aria-label="Search customers">
+              <kbd class="cust-kbd" aria-hidden="true">/</kbd>
+            </label>
+            <span class="cust-tokens" id="cust-tokens"></span>
+            <span class="cust-count" id="cust-count" aria-live="polite"></span>
+            <button type="button" class="cust-filters-toggle" id="cust-filters-toggle" aria-expanded="false" aria-controls="cust-facets">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filters<span class="cust-filters-n hidden" id="cust-filters-n"></span>
+            </button>
+            <label class="cust-ctl" title="Sort">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M7 20l-3-3M7 20l3-3"/><path d="M17 20V4M17 4l-3 3M17 4l3 3"/></svg>
+              <select id="cust-sort" aria-label="Sort">
+                <option value="featured">Featured</option>
+                <option value="name">A–Z</option>
+                <option value="country">Country</option>
+                <option value="mc">Mastercard depth</option>
+                <option value="products">Most products</option>
+              </select>
+            </label>
+            <span class="cust-density" role="group" aria-label="Layout">
+              <button type="button" data-cust-view="logos" aria-pressed="true" title="Logos by region" aria-label="Logos by region"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="6" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="13" r="2"/><circle cx="12" cy="13" r="2"/><circle cx="19" cy="13" r="2"/><path d="M3 20h18"/></svg></button>
+              <button type="button" data-cust-view="cards" aria-pressed="false" title="Cards" aria-label="Cards"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg></button>
+              <button type="button" data-cust-view="list" aria-pressed="false" title="Compact list" aria-label="Compact list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg></button>
+            </span>
+          </div>
+          <div class="cust-facets" id="cust-facets" hidden>
+            <div class="cust-facet" data-facet="t"><span class="cust-facet-label">Kind</span><span class="cust-chips"></span></div>
+            <div class="cust-facet" data-facet="r"><span class="cust-facet-label">Region</span><span class="cust-chips"></span></div>
+            <div class="cust-facet cust-facet--sub hidden" data-facet="s"><span class="cust-facet-label">Within</span><span class="cust-chips"></span></div>
+            <div class="cust-facet" data-facet="m"><span class="cust-facet-label" title="How much of each customer's cards and payment rails run on Mastercard, read from its page's Mastercard lens (public sources, not volumes)">Mastercard</span><span class="cust-chips"></span><button type="button" class="cust-clear hidden" id="cust-clear">Clear all</button></div>
+          </div>
+        </div>
+        <p class="cust-empty hidden" id="cust-empty">No customer matches. <button type="button" class="cust-clear-inline" data-cust-clear>Clear the filters</button></p>
+        <!-- The default layout: every customer's logo, by region and sub-region (features/customers.js builds it). -->
+        <div class="cust-wall" id="cust-wall" aria-label="Customers by region"></div>
+        <div class="cust-grid" id="cust-grid">
           {% for c in customers %}
-          <article class="cust-card"{% if c.accent %} style="--cust: {{ c.accent }}; --cust-text: {{ c.accent_text.dark }}; --cust-text-light: {{ c.accent_text.light }}; --cust-ink: {{ c.accent_text.ink }}"{% endif %}>
+          <article class="cust-card" data-cust="{{ c.id }}"{% if c.accent %} style="--cust: {{ c.accent }}; --cust-text: {{ c.accent_text.dark }}; --cust-text-light: {{ c.accent_text.light }}; --cust-ink: {{ c.accent_text.ink }}"{% endif %}>
             <button type="button" class="cust-card-main" data-customer-open="{{ c.id }}">
               <span class="cust-card-top">
                 {% if c.logos %}<span class="cust-logos">{% for lg in c.logos %}<img class="cust-logo" src="{{ url_for('customer_files', cid=c.id, filename=lg.file) }}?v={{ lg.v }}" alt="{{ lg.alt }}" style="--chip: {{ lg.bg }}">{% endfor %}</span>
@@ -293,6 +334,11 @@
                   <span class="cust-card-name">{{ c.name }}</span>
                   <span class="cust-card-meta">{{ c.brands | join(' · ') }} · {{ c.country }}</span>
                 </span>
+              </span>
+              <span class="cust-badges">
+                <span class="cust-badge cust-badge--type">{{ c.type_label }}</span>
+                <span class="cust-badge">{{ c.geo.subregion }}{% if c.geo.global %} · global{% endif %}</span>
+                {% if c.mc %}<span class="cust-badge cust-badge--mc cust-mc--{{ c.mc.level }}" title="{{ (c.mc.share * 100) | round | int }}% of the mapped cards and rails run on Mastercard, read from this page's Mastercard lens"><span class="cust-mc-meter" style="--mc: {{ c.mc.share }}" aria-hidden="true"></span>{{ c.mc.label }}</span>{% endif %}
               </span>
               <span class="cust-card-tag">{{ c.tagline }}</span>
               <span class="cust-stats">

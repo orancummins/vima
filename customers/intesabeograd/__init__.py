@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Banca Intesa", "Intesa Sanpaolo", "Intesa Mobi", "Intesa Magnifica", "Intesa Invest", "Intesa Farmer"],
     "country": "Serbia",
     "region": "Europe",
+    "type": "bank",
     "accent": "#006935",   # Banca Intesa green, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Banca Intesa, Intesa Sanpaolo Group", "bg": "#ffffff",

@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["BGL BNP Paribas", "BNP Paribas Leasing Solutions", "Cardif Lux Vie", "Axepta BNP Paribas"],
     "country": "Luxembourg",
     "region": "Europe",
+    "type": "bank",
     "accent": "#00915a",   # BNP Paribas green, the main colour of bgl.lu
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "BGL BNP Paribas", "bg": "#ffffff",

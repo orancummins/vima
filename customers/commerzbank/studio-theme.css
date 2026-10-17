@@ -1,0 +1,97 @@
+/* Commerzbank inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Commerzbank's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0a0d0d; --panel: #0E1414; --panel-2: #12191a;
+  --ink: #f2f7f7; --ink-2: #cfdcdc; --muted: #8d9ea3; --faint: #677275;
+  --focus: #369bae; --accent: #369bae; --link: #79c9d1;
+  --gold: #369bae; --gold-deep: #3fb6ca; --gold-ink: #79c9d1;
+  --gold-grad: linear-gradient(100deg, #002e3c 0%, #369bae 55%, #b7eaee 100%);
+  --l1f: #072a38; --l2f: #002e3c; --l3f: #15576e; --l4f: #4faab8; --l5f: #748185; --luf: #51595c;
+  --l1t: #2f7f88; --l2t: #2d7e8b; --l3t: #2a7c9b; --l4t: #2d8089; --l5t: #e1e6e7;
+  --l5: #cfdcdc; --lu: #677275;
+  --wash-a: rgba(0, 46, 60, 0.14); --wash-b: rgba(79, 170, 184, 0.05);
+  --mc-plate: #0c1112; --mc-plate-deep: #050807; --mc-pad: #0e1416;
+  --mc-utok-hi: #131b1b; --mc-utok: #070e0e; --mc-uico: #9ad7de;
+  --mc-grid: rgba(0, 46, 60, 0.38); --mc-grid-strong: rgba(54, 155, 174, 0.6);
+  --mc-hg: rgb(21, 87, 110); --mc-gop: 0.22;
+  --mc-dot: rgb(121, 201, 209); --mc-dot-glow: rgb(0, 46, 60); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 46, 60, 0.2); --mc-halo-b: rgba(21, 87, 110, 0.1);
+  --mc-globe-a: rgba(0, 46, 60, 0.12); --mc-globe-b: rgba(21, 87, 110, 0.06);
+  --mc-globe-c: rgba(21, 87, 110, 0.03); --mc-globe-d: rgba(21, 87, 110, 0.1);
+  --mc-cut-a: rgba(0, 46, 60, 0.32); --mc-cut-b: rgba(21, 87, 110, 0.12);
+  --mc-globe-hl: #79c9d1; --mc-globe-rim: #15576e; --mc-halo: #002e3c;
+  --mc-underglow: rgba(0, 46, 60, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f0f6f6; --panel-2: #e2edec;
+  --focus: #002e3c; --accent: #002e3c; --link: #002839;
+  --gold: #002e3c; --gold-deep: #002636; --gold-ink: #002839;
+  --gold-grad: linear-gradient(100deg, #002636 0%, #002e3c 55%, #4faab8 100%);
+  --l1f: #062633; --l2f: #002e3c; --l3f: #15576e; --l4f: #4faab8; --l5f: #272e31; --luf: #9ca3af;
+  --l1t: #00202d; --l2t: #002636; --l3t: #052534; --l4t: #0f2c34; --l5t: #131e1f;
+  --wash-a: rgba(0, 46, 60, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e7efef; --mc-utok: #e2edec; --mc-uico: #131e1f;
+  --mc-grid: rgba(0, 38, 54, 0.24); --mc-grid-strong: rgba(0, 38, 54, 0.42);
+  --mc-hg: #002636; --mc-gop: 0.3;
+  --mc-dot: #002636; --mc-dot-glow: #002e3c; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 46, 60, 0.08); --mc-halo-b: rgba(0, 46, 60, 0.03);
+  --mc-cut-a: rgba(0, 38, 54, 0.12); --mc-cut-b: rgba(0, 38, 54, 0.05);
+  --mc-globe-rim: rgba(0, 38, 54, 0.3); --mc-halo: rgba(0, 46, 60, 0.22);
+  --mc-underglow: rgba(0, 38, 54, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 46, 60, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #060909 0%, #060d0e 60%, #040f12 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f9f9 0%, #edf6f5 60%, #e0f0f1 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(54, 155, 174, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 38, 54, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 46, 60, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0c1112 0%, #090b0c 100%);
+  border-color: rgba(54, 155, 174, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0c1415), #060909 75%);
+}
+
+/* The Commerzbank / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(54, 155, 174, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

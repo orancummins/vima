@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Nordea", "Nordea Life & Pension", "Nordea Asset Management", "Nordea Finance", "First Card", "Gimi"],
     "country": "Finland",
     "region": "Europe",
+    "type": "bank",
     "accent": "#0000a0",   # Nordea blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Nordea", "bg": "#ffffff", "source": "https://www.nordea.com/themes/custom/nordea_theme/logo.svg"},

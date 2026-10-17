@@ -1,0 +1,97 @@
+/* ICICI Bank inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   ICICI Bank's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #100d0d; --panel: #1C1517; --panel-2: #292021;
+  --ink: #f7f3f4; --ink-2: #e2dadc; --muted: #beb4b4; --faint: #a19898;
+  --focus: #c27c84; --accent: #c27c84; --link: #d7adb4;
+  --gold: #c27c84; --gold-deep: #cd8b93; --gold-ink: #d7adb4;
+  --gold-grad: linear-gradient(100deg, #ad1f24 0%, #c27c84 55%, #ebcdd3 100%);
+  --l1f: #9f312f; --l2f: #ad1f24; --l3f: #ba4244; --l4f: #c49299; --l5f: #aba2a3; --luf: #928787;
+  --l1t: #af5b69; --l2t: #b15b66; --l3t: #b75757; --l4t: #b05b68; --l5t: #eae6e6;
+  --l5: #e2dadc; --lu: #a19898;
+  --wash-a: rgba(173, 31, 36, 0.14); --wash-b: rgba(196, 146, 153, 0.05);
+  --mc-plate: #171112; --mc-plate-deep: #080607; --mc-pad: #1e1617;
+  --mc-utok-hi: #2d2325; --mc-utok: #100a0b; --mc-uico: #e0bfc4;
+  --mc-grid: rgba(173, 31, 36, 0.38); --mc-grid-strong: rgba(194, 124, 132, 0.6);
+  --mc-hg: rgb(186, 66, 68); --mc-gop: 0.22;
+  --mc-dot: rgb(215, 173, 180); --mc-dot-glow: rgb(173, 31, 36); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(173, 31, 36, 0.2); --mc-halo-b: rgba(186, 66, 68, 0.1);
+  --mc-globe-a: rgba(173, 31, 36, 0.12); --mc-globe-b: rgba(186, 66, 68, 0.06);
+  --mc-globe-c: rgba(186, 66, 68, 0.03); --mc-globe-d: rgba(186, 66, 68, 0.1);
+  --mc-cut-a: rgba(173, 31, 36, 0.32); --mc-cut-b: rgba(186, 66, 68, 0.12);
+  --mc-globe-hl: #d7adb4; --mc-globe-rim: #ba4244; --mc-halo: #ad1f24;
+  --mc-underglow: rgba(173, 31, 36, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f6f2f3; --panel-2: #eee7e9;
+  --focus: #ad1f24; --accent: #ad1f24; --link: #7a1816;
+  --gold: #ad1f24; --gold-deep: #641412; --gold-ink: #7a1816;
+  --gold-grad: linear-gradient(100deg, #641412 0%, #ad1f24 55%, #c49299 100%);
+  --l1f: #712321; --l2f: #ad1f24; --l3f: #ba4244; --l4f: #c49299; --l5f: #786767; --luf: #9ca3af;
+  --l1t: #400d0c; --l2t: #641412; --l3t: #8d2b27; --l4t: #914044; --l5t: #38282b;
+  --wash-a: rgba(173, 31, 36, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f0eaec; --mc-utok: #eee7e9; --mc-uico: #38282b;
+  --mc-grid: rgba(100, 20, 18, 0.24); --mc-grid-strong: rgba(100, 20, 18, 0.42);
+  --mc-hg: #641412; --mc-gop: 0.3;
+  --mc-dot: #641412; --mc-dot-glow: #ad1f24; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(173, 31, 36, 0.08); --mc-halo-b: rgba(173, 31, 36, 0.03);
+  --mc-cut-a: rgba(100, 20, 18, 0.12); --mc-cut-b: rgba(100, 20, 18, 0.05);
+  --mc-globe-rim: rgba(100, 20, 18, 0.3); --mc-halo: rgba(173, 31, 36, 0.22);
+  --mc-underglow: rgba(100, 20, 18, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(173, 31, 36, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0a0808 0%, #10090a 60%, #130708 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f7f7 0%, #f5f0f2 60%, #f1e6e8 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(194, 124, 132, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(100, 20, 18, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(173, 31, 36, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #171112 0%, #0e0b0c 100%);
+  border-color: rgba(194, 124, 132, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #1c1214), #0a0708 75%);
+}
+
+/* The ICICI Bank / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(194, 124, 132, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Amazon", "Amazon Pay", "Prime", "Buy with Prime", "AWS", "Amazon Business", "Whole Foods Market"],
     "country": "United States",
     "region": "Global",
+    "type": "merchant",
     "accent": "#ff9900",   # Amazon orange, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Amazon", "bg": "#ffffff", "source": "https://commons.wikimedia.org/wiki/File:Amazon_logo.svg"},

@@ -1,0 +1,97 @@
+/* Chime inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Chime's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0d110e; --panel: #161D19; --panel-2: #222c26;
+  --ink: #f3f7f4; --ink-2: #dce3de; --muted: #b9c3bf; --faint: #a0a8a4;
+  --focus: #49a473; --accent: #49a473; --link: #b2dbc2;
+  --gold: #49a473; --gold-deep: #92d2ae; --gold-ink: #b2dbc2;
+  --gold-grad: linear-gradient(100deg, #1ec677 0%, #85c9a4 55%, #ceedda 100%);
+  --l1f: #31b57e; --l2f: #1ec677; --l3f: #4dc48e; --l4f: #99caae; --l5f: #a9b2ae; --luf: #909a96;
+  --l1t: #3d8459; --l2t: #3c845b; --l3t: #368161; --l4t: #3c8358; --l5t: #e6eae9;
+  --l5: #dce3de; --lu: #a0a8a4;
+  --wash-a: rgba(30, 198, 119, 0.14); --wash-b: rgba(153, 202, 174, 0.05);
+  --mc-plate: #121814; --mc-plate-deep: #060806; --mc-pad: #17201b;
+  --mc-utok-hi: #253129; --mc-utok: #0a110d; --mc-uico: #c2e3cf;
+  --mc-grid: rgba(30, 198, 119, 0.38); --mc-grid-strong: rgba(133, 201, 164, 0.6);
+  --mc-hg: rgb(77, 196, 142); --mc-gop: 0.22;
+  --mc-dot: rgb(178, 219, 194); --mc-dot-glow: rgb(30, 198, 119); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(30, 198, 119, 0.2); --mc-halo-b: rgba(77, 196, 142, 0.1);
+  --mc-globe-a: rgba(30, 198, 119, 0.12); --mc-globe-b: rgba(77, 196, 142, 0.06);
+  --mc-globe-c: rgba(77, 196, 142, 0.03); --mc-globe-d: rgba(77, 196, 142, 0.1);
+  --mc-cut-a: rgba(30, 198, 119, 0.32); --mc-cut-b: rgba(77, 196, 142, 0.12);
+  --mc-globe-hl: #b2dbc2; --mc-globe-rim: #4dc48e; --mc-halo: #1ec677;
+  --mc-underglow: rgba(30, 198, 119, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f6f3; --panel-2: #e8eee9;
+  --focus: #1ec677; --accent: #1ec677; --link: #158959;
+  --gold: #1ec677; --gold-deep: #116f48; --gold-ink: #158959;
+  --gold-grad: linear-gradient(100deg, #116f48 0%, #1ec677 55%, #99caae 100%);
+  --l1f: #227f59; --l2f: #1ec677; --l3f: #4dc48e; --l4f: #99caae; --l5f: #70857b; --luf: #9ca3af;
+  --l1t: #0b462e; --l2t: #116f48; --l3t: #28a071; --l4t: #44a475; --l5t: #2b3d31;
+  --wash-a: rgba(30, 198, 119, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #ebf0ec; --mc-utok: #e8eee9; --mc-uico: #2b3d31;
+  --mc-grid: rgba(17, 111, 72, 0.24); --mc-grid-strong: rgba(17, 111, 72, 0.42);
+  --mc-hg: #116f48; --mc-gop: 0.3;
+  --mc-dot: #116f48; --mc-dot-glow: #1ec677; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(30, 198, 119, 0.08); --mc-halo-b: rgba(30, 198, 119, 0.03);
+  --mc-cut-a: rgba(17, 111, 72, 0.12); --mc-cut-b: rgba(17, 111, 72, 0.05);
+  --mc-globe-rim: rgba(17, 111, 72, 0.3); --mc-halo: rgba(30, 198, 119, 0.22);
+  --mc-underglow: rgba(17, 111, 72, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(30, 198, 119, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #080a09 0%, #09110c 60%, #07140d 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f7f9f7 0%, #f0f5f1 60%, #e6f1ea 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(133, 201, 164, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(17, 111, 72, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(30, 198, 119, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #121814 0%, #0c0e0d 100%);
+  border-color: rgba(133, 201, 164, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #131e18), #070a08 75%);
+}
+
+/* The Chime / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(133, 201, 164, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

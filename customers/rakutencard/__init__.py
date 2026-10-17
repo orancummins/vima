@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Rakuten Card", "Rakuten Premium Card", "Rakuten Black Card", "Rakuten Business Card", "Mizuho Rakuten Card"],
     "country": "Japan",
     "region": "Asia-Pacific",
+    "type": "issuer",
     "accent": "#bf0000",   # Rakuten crimson, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Rakuten Card", "bg": "#ffffff",

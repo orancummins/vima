@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["BRAC Bank", "TARA", "Astha", "bKash", "BRAC Saajan", "BRAC EPL"],
     "country": "Bangladesh",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#006cb5",   # BRAC Bank blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "BRAC Bank", "bg": "#ffffff", "source": "https://www.bracbank.com/logo.svg"},

@@ -42,7 +42,7 @@ DEFAULT_DIV = 'adyen'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F2F6F2", "panel-2": "#E6EFE7", "ink": "#0C1D11", "ink-2": "#253A2A",
-    "muted": "#63796C", "faint": "#829188", "line": "#D1DCD5", "line-2": "#BBC8C0", "focus": "#09A748",
+    "muted": "#5A6E62", "faint": "#7D8C83", "line": "#D1DCD5", "line-2": "#BBC8C0", "focus": "#09A748",
     "accent": "#09A748", "link": "#06783B", "gold": "#09A748", "gold-deep": "#066E36", "gold-ink": "#06783B",
     "l1": "#044823", "l2": "#066E36", "l3": "#179A56", "l4": "#40B06A", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#157B44", "l2f": "#0ABF53", "l3f": "#30C971", "l4f": "#89CB9D",

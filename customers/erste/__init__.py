@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Erste Group", "Erste Bank Oesterreich", "Sparkassen", "George", "Erste Bank Polska", "Erste Asset Management"],
     "country": "Austria",
     "region": "Europe",
+    "type": "bank",
     "accent": "#2870ed",   # Erste blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Erste Bank", "bg": "#2870ed",

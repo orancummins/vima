@@ -1,0 +1,97 @@
+/* StanChart inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   StanChart's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0d1011; --panel: #151C1F; --panel-2: #21292f;
+  --ink: #f3f6f7; --ink-2: #dbe2e5; --muted: #bac0c7; --faint: #a2a7ad;
+  --focus: #5c99ca; --accent: #5c99ca; --link: #afcfe3;
+  --gold: #5c99ca; --gold-deep: #8cbbde; --gold-ink: #afcfe3;
+  --gold-grad: linear-gradient(100deg, #0473ea 0%, #7fafd5 55%, #cbe4f2 100%);
+  --l1f: #1d6bd2; --l2f: #0473ea; --l3f: #4186d8; --l4f: #95b9d3; --l5f: #abb0b6; --luf: #9399a0;
+  --l1t: #3a7ca6; --l2t: #3a7bab; --l3t: #3877c0; --l4t: #387ba4; --l5t: #e6e9eb;
+  --l5: #dbe2e5; --lu: #a2a7ad;
+  --wash-a: rgba(4, 115, 234, 0.14); --wash-b: rgba(149, 185, 211, 0.05);
+  --mc-plate: #111619; --mc-plate-deep: #050809; --mc-pad: #161c22;
+  --mc-utok-hi: #242f34; --mc-utok: #090f12; --mc-uico: #bfd9e9;
+  --mc-grid: rgba(4, 115, 234, 0.38); --mc-grid-strong: rgba(127, 175, 213, 0.6);
+  --mc-hg: rgb(65, 134, 216); --mc-gop: 0.22;
+  --mc-dot: rgb(175, 207, 227); --mc-dot-glow: rgb(4, 115, 234); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(4, 115, 234, 0.2); --mc-halo-b: rgba(65, 134, 216, 0.1);
+  --mc-globe-a: rgba(4, 115, 234, 0.12); --mc-globe-b: rgba(65, 134, 216, 0.06);
+  --mc-globe-c: rgba(65, 134, 216, 0.03); --mc-globe-d: rgba(65, 134, 216, 0.1);
+  --mc-cut-a: rgba(4, 115, 234, 0.32); --mc-cut-b: rgba(65, 134, 216, 0.12);
+  --mc-globe-hl: #afcfe3; --mc-globe-rim: #4186d8; --mc-halo: #0473ea;
+  --mc-underglow: rgba(4, 115, 234, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f5f6; --panel-2: #e7edef;
+  --focus: #0473ea; --accent: #0473ea; --link: #0346a1;
+  --gold: #0473ea; --gold-deep: #023982; --gold-ink: #0346a1;
+  --gold-grad: linear-gradient(100deg, #023982 0%, #0473ea 55%, #95b9d3 100%);
+  --l1f: #144993; --l2f: #0473ea; --l3f: #4186d8; --l4f: #95b9d3; --l5f: #717f8d; --luf: #9ca3af;
+  --l1t: #012452; --l2t: #023982; --l3t: #1658bb; --l4t: #387abb; --l5t: #293942;
+  --wash-a: rgba(4, 115, 234, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaf0f1; --mc-utok: #e7edef; --mc-uico: #293942;
+  --mc-grid: rgba(2, 57, 130, 0.24); --mc-grid-strong: rgba(2, 57, 130, 0.42);
+  --mc-hg: #023982; --mc-gop: 0.3;
+  --mc-dot: #023982; --mc-dot-glow: #0473ea; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(4, 115, 234, 0.08); --mc-halo-b: rgba(4, 115, 234, 0.03);
+  --mc-cut-a: rgba(2, 57, 130, 0.12); --mc-cut-b: rgba(2, 57, 130, 0.05);
+  --mc-globe-rim: rgba(2, 57, 130, 0.3); --mc-halo: rgba(4, 115, 234, 0.22);
+  --mc-underglow: rgba(2, 57, 130, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(4, 115, 234, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #08090b 0%, #080e12 60%, #050e17 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f9f9 0%, #eff5f6 60%, #e5eef3 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(127, 175, 213, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(2, 57, 130, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(4, 115, 234, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #111619 0%, #0b0d0f 100%);
+  border-color: rgba(127, 175, 213, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #121a20), #07090b 75%);
+}
+
+/* The StanChart / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(127, 175, 213, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

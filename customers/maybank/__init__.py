@@ -24,6 +24,7 @@ CUSTOMER = {
                "Maybank Investment Bank"],
     "country": "Malaysia",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#ffc70a",   # Maybank yellow, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Maybank", "bg": "#ffc70a",

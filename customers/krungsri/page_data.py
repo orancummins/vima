@@ -41,7 +41,7 @@ DEFAULT_DIV = 'bay'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F7F4F2", "panel-2": "#F0ECE7", "ink": "#211B0D", "ink-2": "#463D2A",
-    "muted": "#95907A", "faint": "#A5A297", "line": "#E0DFD6", "line-2": "#D2D0C6", "focus": "#AD9000",
+    "muted": "#6F6B59", "faint": "#8B8779", "line": "#E0DFD6", "line-2": "#CDCBC0", "focus": "#AD9000",
     "accent": "#AD9000", "link": "#776900", "gold": "#AD9000", "gold-deep": "#8C7C00", "gold-ink": "#776900",
     "l1": "#574D00", "l2": "#8C7C00", "l3": "#CBBB14", "l4": "#C9B256", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#9E8F13", "l2f": "#FFD400", "l3f": "#DDC74A", "l4f": "#D7C79B",

@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Emirates NBD", "Emirates Islamic", "Liv", "DenizBank", "RBL Bank", "Emirates NBD Capital"],
     "country": "United Arab Emirates",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#072447",   # Emirates NBD navy, from the website
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Emirates NBD", "bg": "#072447",

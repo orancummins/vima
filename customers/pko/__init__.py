@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["PKO Bank Polski", "IKO", "PKO Bank Hipoteczny", "PKO Leasing", "PKO TFI", "KREDOBANK"],
     "country": "Poland",
     "region": "Europe",
+    "type": "bank",
     "accent": "#000066",   # PKO navy, the site's theme colour; the logo is black with a red dot
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "PKO Bank Polski", "bg": "#ffffff",

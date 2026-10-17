@@ -42,7 +42,7 @@ DEFAULT_DIV = 'cko'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F2F5F7", "panel-2": "#E8EDF0", "ink": "#0D1722", "ink-2": "#2D3D4A",
-    "muted": "#868F9F", "faint": "#A1A5AD", "line": "#D8DCE2", "line-2": "#CBCFD6", "focus": "#186AFF",
+    "muted": "#626B7C", "faint": "#838893", "line": "#D8DCE2", "line-2": "#C8CCD4", "focus": "#186AFF",
     "accent": "#186AFF", "link": "#0038BD", "gold": "#186AFF", "gold-deep": "#002D96", "gold-ink": "#0038BD",
     "l1": "#001C5C", "l2": "#002D96", "l3": "#164DDD", "l4": "#668ECE", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#1441AB", "l2f": "#186AFF", "l3f": "#5B87E0", "l4f": "#A4BDDB",

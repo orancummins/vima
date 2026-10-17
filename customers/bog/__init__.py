@@ -24,6 +24,7 @@ CUSTOMER = {
     "brands": ["Bank of Georgia", "SOLO", "Galt & Taggart", "Digital Area", "Ameriabank", "Lion Finance Group"],
     "country": "Georgia",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#ff5c0a",   # Bank of Georgia orange, from the website and the lion in the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Bank of Georgia", "bg": "#ffffff",

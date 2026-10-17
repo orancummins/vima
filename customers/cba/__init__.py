@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["CommBank", "Bankwest", "Unloan", "CommSec", "ASB", "CommBank Yello"],
     "country": "Australia",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#ffcc00",   # CommBank yellow, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Commonwealth Bank", "bg": "#ffffff",

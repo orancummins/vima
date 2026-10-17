@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["BCA", "myBCA", "blu by BCA Digital", "BCA Syariah", "BCA Finance", "Flazz"],
     "country": "Indonesia",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#005cab",   # BCA blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "BCA", "bg": "#ffffff",

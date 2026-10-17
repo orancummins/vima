@@ -21,6 +21,7 @@ CUSTOMER = {
     "brands": ["ABA Bank", "ABA Mobile", "ABA PAY", "ABA PayWay", "ABA Business"],
     "country": "Cambodia",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#005d86",   # ABA teal, from verify.ababank.com's stylesheet
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "ABA Bank, National Bank of Canada Group", "bg": "#0d2b3d",

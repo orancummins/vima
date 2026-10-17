@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Swisscard", "American Express", "SWISS Miles & More", "Cashback Cards", "poinz Cards"],
     "country": "Switzerland",
     "region": "Europe",
+    "type": "issuer",
     "accent": "#263c53",   # Swisscard navy, the site's theme colour (the logo itself is black)
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Swisscard AECS", "bg": "#ffffff", "source": "https://www.swisscard.ch/en"},

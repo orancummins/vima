@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["NLB", "NLB Komercijalna banka", "NLB Banka", "NLB Pay", "NLB Klik", "NLB Skladi", "NLB Lease&Go"],
     "country": "Slovenia",
     "region": "Europe",
+    "type": "bank",
     "accent": "#230078",   # NLB violet, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "NLB Group", "bg": "#ffffff",

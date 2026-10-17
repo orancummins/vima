@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["NCB", "NCB Financial Group", "Lynk", "NCB Capital Markets", "Guardian Group", "Clarien"],
     "country": "Jamaica",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#01529a",   # NCB blue, from jncb.com and the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "NCB", "bg": "#01529a",

@@ -30,6 +30,7 @@ export function initHistory() {
       if (state.uc) params.set('uc', state.uc);
       if (state.customer) params.set('customer', state.customer);
       if (state.os) params.set('os', state.os);
+      if (state.cf) params.set('cf', state.cf);   // the Customers list's search and filters (features/customers.js)
       const qs = params.toString();
       return location.pathname + (qs ? '?' + qs : '');
     }
@@ -61,7 +62,7 @@ export function initHistory() {
         // Likewise a customer, and a place in its picture (features/customers.js).
         if (tab === 'customers') {
           document.dispatchEvent(new CustomEvent('vima:customer-goto', {
-            detail: { customer: state.customer || null, target: state.os || '' },
+            detail: { customer: state.customer || null, target: state.os || '', cf: state.cf || '' },
           }));
         }
         const tabBtn = document.querySelector(`.top-tab[data-top-tab="${tab}"]`);
@@ -98,16 +99,16 @@ export function initHistory() {
       if (t.matches('.top-tab')) {
         const tab = t.dataset.topTab;
         // Switching tabs clears the in-tab selection so Back goes to the bare tab.
-        _pushNavState({ tab, bundle: null, api: null, uc: null, customer: null, os: null });
+        _pushNavState({ tab, bundle: null, api: null, uc: null, customer: null, os: null, cf: null });
       } else if (t.matches('[data-bundle-id]')) {
         // Each per-tab selection also clears the *other* tabs' selections,
         // otherwise stale ?api=… / ?uc=… ride along in the URL and get
         // re-applied when the user pops back to a different tab.
-        _pushNavState({ tab: 'bundles', bundle: t.dataset.bundleId, api: null, uc: null, customer: null, os: null });
+        _pushNavState({ tab: 'bundles', bundle: t.dataset.bundleId, api: null, uc: null, customer: null, os: null, cf: null });
       } else if (t.matches('[data-api-id]')) {
-        _pushNavState({ tab: 'apis', api: t.dataset.apiId, bundle: null, uc: null, customer: null, os: null });
+        _pushNavState({ tab: 'apis', api: t.dataset.apiId, bundle: null, uc: null, customer: null, os: null, cf: null });
       } else if (t.matches('[data-uc-id]')) {
-        _pushNavState({ tab: 'usecases', uc: t.dataset.ucId, bundle: null, api: null, customer: null, os: null });
+        _pushNavState({ tab: 'usecases', uc: t.dataset.ucId, bundle: null, api: null, customer: null, os: null, cf: null });
       }
     });
 
@@ -120,9 +121,9 @@ export function initHistory() {
       const d = e.detail || {};
       if (d.tab !== _navState.tab) return;
       if (d.tab === 'os') {
-        _pushNavState({ tab: 'os', os: d.os || null, bundle: null, api: null, uc: null, customer: null }, { replace: !!d.replace });
+        _pushNavState({ tab: 'os', os: d.os || null, bundle: null, api: null, uc: null, customer: null, cf: null }, { replace: !!d.replace });
       } else if (d.tab === 'customers') {
-        _pushNavState({ tab: 'customers', customer: d.customer || null, os: d.os || null, bundle: null, api: null, uc: null },
+        _pushNavState({ tab: 'customers', customer: d.customer || null, os: d.os || null, cf: d.cf || null, bundle: null, api: null, uc: null },
           { replace: !!d.replace });
       }
     });
@@ -137,6 +138,7 @@ export function initHistory() {
           uc: p.get('uc'),
           customer: p.get('customer'),
           os: p.get('os'),
+          cf: p.get('cf'),
         };
       })();
       _applyNavState(state);
@@ -154,6 +156,7 @@ export function initHistory() {
         uc: p.get('uc'),
         customer: p.get('customer'),
         os: p.get('os'),
+        cf: p.get('cf'),
       };
       // Infer tab from a deep-link selection if no explicit ?tab=.
       if (!initial.tab) {

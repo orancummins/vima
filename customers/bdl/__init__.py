@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["BDL", "BDL Finance Islamique", "DigitBDL", "WIMPAY BDL"],
     "country": "Algeria",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#711e80",   # BDL purple, from the logo and the site's CSS
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Banque de Développement Local", "bg": "#ffffff",

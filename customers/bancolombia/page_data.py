@@ -41,7 +41,7 @@ DEFAULT_DIV = 'bancolombia'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F7F5F2", "panel-2": "#F0EDE8", "ink": "#221D0D", "ink-2": "#4C432F",
-    "muted": "#A39F8C", "faint": "#B1AFA5", "line": "#E3E1D9", "line-2": "#D8D6CE", "focus": "#AF9302",
+    "muted": "#706C59", "faint": "#8B8879", "line": "#E3E1D9", "line-2": "#CFCCC3", "focus": "#AF9302",
     "accent": "#AF9302", "link": "#756A01", "gold": "#AF9302", "gold-deep": "#998A01", "gold-ink": "#756A01",
     "l1": "#5D5401", "l2": "#998A01", "l3": "#E3D319", "l4": "#CFBD6D", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#AFA017", "l2f": "#FDDA24", "l3f": "#E0CF64", "l4f": "#DCCFA9",

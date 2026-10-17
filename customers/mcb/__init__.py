@@ -24,6 +24,7 @@ CUSTOMER = {
     "brands": ["MCB", "MCB Juice", "JuicePro", "MCB Madagascar", "MCB Seychelles", "MCB Maldives", "MCB Capital Markets"],
     "country": "Mauritius",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#c41230",   # MCB red, from the caravelle logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "MCB", "bg": "#ffffff",

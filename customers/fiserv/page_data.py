@@ -42,7 +42,7 @@ DEFAULT_DIV = 'fiserv'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F7F2F2", "panel-2": "#F0E8E7", "ink": "#21120D", "ink-2": "#46312A",
-    "muted": "#95857A", "faint": "#A59C97", "line": "#E0DAD6", "line-2": "#D2CBC6", "focus": "#FA6400",
+    "muted": "#75675D", "faint": "#8D827C", "line": "#E0DAD6", "line-2": "#D2CBC6", "focus": "#FA6400",
     "accent": "#FA6400", "link": "#AA4E00", "gold": "#FA6400", "gold-deep": "#8C4000", "gold-ink": "#AA4E00",
     "l1": "#572800", "l2": "#8C4000", "l3": "#CB6C14", "l4": "#C98156", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#9E5313", "l2f": "#FF6600", "l3f": "#DD884A", "l4f": "#D7AD9B",

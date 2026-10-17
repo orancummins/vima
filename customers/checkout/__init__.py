@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Checkout.com", "Flow", "Intelligent Acceptance", "Remember Me"],
     "country": "United Kingdom",
     "region": "Global",
+    "type": "payments",
     "accent": "#186aff",   # Checkout.com blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Checkout.com", "bg": "#ffffff", "source": "static/logos/financial-logos-500/02-payments-and-processors/checkout-com.png"},

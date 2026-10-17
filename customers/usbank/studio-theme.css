@@ -1,0 +1,97 @@
+/* U.S. Bank inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   U.S. Bank's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0b0c0f; --panel: #101418; --panel-2: #171b21;
+  --ink: #f2f5f7; --ink-2: #d3d9df; --muted: #9ca1af; --faint: #797d8a;
+  --focus: #456ec5; --accent: #456ec5; --link: #8ba9d8;
+  --gold: #456ec5; --gold-deep: #5982d1; --gold-ink: #8ba9d8;
+  --gold-grad: linear-gradient(100deg, #001e79 0%, #456ec5 55%, #bed2f0 100%);
+  --l1f: #0d206e; --l2f: #001e79; --l3f: #1d3999; --l4f: #6786c2; --l5f: #878b96; --luf: #666a74;
+  --l1t: #4676c1; --l2t: #4773c3; --l3t: #526dd0; --l4t: #4676c3; --l5t: #e3e4e9;
+  --l5: #d3d9df; --lu: #797d8a;
+  --wash-a: rgba(0, 30, 121, 0.14); --wash-b: rgba(103, 134, 194, 0.05);
+  --mc-plate: #0e1014; --mc-plate-deep: #050708; --mc-pad: #10131a;
+  --mc-utok-hi: #191d24; --mc-utok: #080b10; --mc-uico: #a6bde2;
+  --mc-grid: rgba(0, 30, 121, 0.38); --mc-grid-strong: rgba(69, 110, 197, 0.6);
+  --mc-hg: rgb(29, 57, 153); --mc-gop: 0.22;
+  --mc-dot: rgb(139, 169, 216); --mc-dot-glow: rgb(0, 30, 121); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 30, 121, 0.2); --mc-halo-b: rgba(29, 57, 153, 0.1);
+  --mc-globe-a: rgba(0, 30, 121, 0.12); --mc-globe-b: rgba(29, 57, 153, 0.06);
+  --mc-globe-c: rgba(29, 57, 153, 0.03); --mc-globe-d: rgba(29, 57, 153, 0.1);
+  --mc-cut-a: rgba(0, 30, 121, 0.32); --mc-cut-b: rgba(29, 57, 153, 0.12);
+  --mc-globe-hl: #8ba9d8; --mc-globe-rim: #1d3999; --mc-halo: #001e79;
+  --mc-underglow: rgba(0, 30, 121, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f1f3f6; --panel-2: #e4e9ee;
+  --focus: #001e79; --accent: #001e79; --link: #00125e;
+  --gold: #001e79; --gold-deep: #000f51; --gold-ink: #00125e;
+  --gold-grad: linear-gradient(100deg, #000f51 0%, #001e79 55%, #6786c2 100%);
+  --l1f: #0a1854; --l2f: #001e79; --l3f: #1d3999; --l4f: #6786c2; --l5f: #404451; --luf: #9ca3af;
+  --l1t: #000b3a; --l2t: #000f51; --l3t: #0a1963; --l4t: #1c2f63; --l5t: #1a212b;
+  --wash-a: rgba(0, 30, 121, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e8ecf0; --mc-utok: #e4e9ee; --mc-uico: #1a212b;
+  --mc-grid: rgba(0, 15, 81, 0.24); --mc-grid-strong: rgba(0, 15, 81, 0.42);
+  --mc-hg: #000f51; --mc-gop: 0.3;
+  --mc-dot: #000f51; --mc-dot-glow: #001e79; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 30, 121, 0.08); --mc-halo-b: rgba(0, 30, 121, 0.03);
+  --mc-cut-a: rgba(0, 15, 81, 0.12); --mc-cut-b: rgba(0, 15, 81, 0.05);
+  --mc-globe-rim: rgba(0, 15, 81, 0.3); --mc-halo: rgba(0, 30, 121, 0.22);
+  --mc-underglow: rgba(0, 15, 81, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 30, 121, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #07080a 0%, #070a10 60%, #040814 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f8f9 0%, #eef2f6 60%, #e2e8f2 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(69, 110, 197, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 15, 81, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 30, 121, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0e1014 0%, #0a0b0d 100%);
+  border-color: rgba(69, 110, 197, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0e1119), #06080a 75%);
+}
+
+/* The U.S. Bank / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(69, 110, 197, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

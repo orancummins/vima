@@ -41,7 +41,7 @@ DEFAULT_DIV = 'wnz'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F6F2F3", "panel-2": "#EFE7E9", "ink": "#1E0D0F", "ink-2": "#402A2D",
-    "muted": "#8A7271", "faint": "#9C908F", "line": "#DED5D4", "line-2": "#CEC2C2", "focus": "#DA1710",
+    "muted": "#796463", "faint": "#908381", "line": "#DED5D4", "line-2": "#CEC2C2", "focus": "#DA1710",
     "accent": "#DA1710", "link": "#97180B", "gold": "#DA1710", "gold-deep": "#7A1309", "gold-ink": "#97180B",
     "l1": "#4D0C06", "l2": "#7A1309", "l3": "#AF2F1E", "l4": "#BC5150", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#8A251A", "l2f": "#DA1710", "l3f": "#CF4E46", "l4f": "#CF979B",

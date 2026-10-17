@@ -1,0 +1,97 @@
+/* BOC inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   BOC's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #100c0e; --panel: #1C1417; --panel-2: #291d21;
+  --ink: #f7f3f5; --ink-2: #e2d8dd; --muted: #bcaeb1; --faint: #9d9194;
+  --focus: #c96a88; --accent: #c96a88; --link: #dba2b8;
+  --gold: #c96a88; --gold-deep: #d47b98; --gold-ink: #dba2b8;
+  --gold-grad: linear-gradient(100deg, #b10a32 0%, #c96a88 55%, #efc7d7 100%);
+  --l1f: #a01d35; --l2f: #b10a32; --l3f: #bf2f4e; --l4f: #c8849b; --l5f: #a79c9f; --luf: #8d7f82;
+  --l1t: #bc517a; --l2t: #bd4f75; --l3t: #c54c65; --l4t: #bd4e77; --l5t: #eae5e6;
+  --l5: #e2d8dd; --lu: #9d9194;
+  --wash-a: rgba(177, 10, 50, 0.14); --wash-b: rgba(200, 132, 155, 0.05);
+  --mc-plate: #171012; --mc-plate-deep: #080507; --mc-pad: #1e1417;
+  --mc-utok-hi: #2d2025; --mc-utok: #11090c; --mc-uico: #e4b6c7;
+  --mc-grid: rgba(177, 10, 50, 0.38); --mc-grid-strong: rgba(201, 106, 136, 0.6);
+  --mc-hg: rgb(191, 47, 78); --mc-gop: 0.22;
+  --mc-dot: rgb(219, 162, 184); --mc-dot-glow: rgb(177, 10, 50); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(177, 10, 50, 0.2); --mc-halo-b: rgba(191, 47, 78, 0.1);
+  --mc-globe-a: rgba(177, 10, 50, 0.12); --mc-globe-b: rgba(191, 47, 78, 0.06);
+  --mc-globe-c: rgba(191, 47, 78, 0.03); --mc-globe-d: rgba(191, 47, 78, 0.1);
+  --mc-cut-a: rgba(177, 10, 50, 0.32); --mc-cut-b: rgba(191, 47, 78, 0.12);
+  --mc-globe-hl: #dba2b8; --mc-globe-rim: #bf2f4e; --mc-halo: #b10a32;
+  --mc-underglow: rgba(177, 10, 50, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f6f2f4; --panel-2: #eee6ea;
+  --focus: #b10a32; --accent: #b10a32; --link: #7e071d;
+  --gold: #b10a32; --gold-deep: #680618; --gold-ink: #7e071d;
+  --gold-grad: linear-gradient(100deg, #680618 0%, #b10a32 55%, #c8849b 100%);
+  --l1f: #731425; --l2f: #b10a32; --l3f: #bf2f4e; --l4f: #c8849b; --l5f: #725d62; --luf: #9ca3af;
+  --l1t: #440410; --l2t: #680618; --l3t: #8f1629; --l4t: #903049; --l5t: #37232b;
+  --wash-a: rgba(177, 10, 50, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f0e9ed; --mc-utok: #eee6ea; --mc-uico: #37232b;
+  --mc-grid: rgba(104, 6, 24, 0.24); --mc-grid-strong: rgba(104, 6, 24, 0.42);
+  --mc-hg: #680618; --mc-gop: 0.3;
+  --mc-dot: #680618; --mc-dot-glow: #b10a32; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(177, 10, 50, 0.08); --mc-halo-b: rgba(177, 10, 50, 0.03);
+  --mc-cut-a: rgba(104, 6, 24, 0.12); --mc-cut-b: rgba(104, 6, 24, 0.05);
+  --mc-globe-rim: rgba(104, 6, 24, 0.3); --mc-halo: rgba(177, 10, 50, 0.22);
+  --mc-underglow: rgba(104, 6, 24, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(177, 10, 50, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0a0808 0%, #11080b 60%, #15050a 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f6f8 0%, #f6eff3 60%, #f2e4ea 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(201, 106, 136, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(104, 6, 24, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(177, 10, 50, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #171012 0%, #0e0b0c 100%);
+  border-color: rgba(201, 106, 136, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #1c1014), #0a0708 75%);
+}
+
+/* The BOC / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(201, 106, 136, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

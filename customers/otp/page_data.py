@@ -41,7 +41,7 @@ DEFAULT_DIV = 'otpg'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F4F5F3", "panel-2": "#EBEDE8", "ink": "#141B10", "ink-2": "#323A2C",
-    "muted": "#748070", "faint": "#8F968D", "line": "#D7DBD5", "line-2": "#C4C9C1", "focus": "#4EA62E",
+    "muted": "#636D5F", "faint": "#828A80", "line": "#D7DBD5", "line-2": "#C4C9C1", "focus": "#4EA62E",
     "accent": "#4EA62E", "link": "#347921", "gold": "#4EA62E", "gold-deep": "#2A621B", "gold-ink": "#347921",
     "l1": "#1B3F11", "l2": "#2A621B", "l3": "#458F34", "l4": "#72A65C", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#3A712B", "l2f": "#52AE30", "l3f": "#6EB557", "l4f": "#ABC39D",

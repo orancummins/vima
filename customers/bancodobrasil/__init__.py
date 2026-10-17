@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Banco do Brasil", "Ourocard", "BB Seguridade", "BB Asset", "Banco Patagonia"],
     "country": "Brazil",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#465eff",   # BB blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Banco do Brasil", "bg": "#FCFC30", "source": "https://commons.wikimedia.org/wiki/File:Banco_do_Brasil_logo.svg"},

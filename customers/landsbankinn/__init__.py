@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Landsbankinn", "TM", "Landsbréf", "Aukakrónur", "Yayland"],
     "country": "Iceland",
     "region": "Europe",
+    "type": "bank",
     "accent": "#20446a",   # Landsbankinn navy, from the website's logo block
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Landsbankinn", "bg": "#20446a", "source": "https://www.landsbankinn.is/"},

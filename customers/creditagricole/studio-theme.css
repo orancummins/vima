@@ -1,0 +1,97 @@
+/* Crédit Agricole inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Crédit Agricole's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0b0e0d; --panel: #101714; --panel-2: #16201c;
+  --ink: #f2f7f4; --ink-2: #d2dfd8; --muted: #99aca7; --faint: #758681;
+  --focus: #34a580; --accent: #34a580; --link: #87d6b7;
+  --gold: #34a580; --gold-deep: #53d0a5; --gold-ink: #87d6b7;
+  --gold-grad: linear-gradient(100deg, #006c50 0%, #3fc397 55%, #bcefda 100%);
+  --l1f: #0c6250; --l2f: #006c50; --l3f: #1b9074; --l4f: #61c09e; --l5f: #83938f; --luf: #626f6c;
+  --l1t: #2d8361; --l2t: #2a8363; --l3t: #24836e; --l4t: #2b8361; --l5t: #e2e8e7;
+  --l5: #d2dfd8; --lu: #758681;
+  --wash-a: rgba(0, 108, 80, 0.14); --wash-b: rgba(97, 192, 158, 0.05);
+  --mc-plate: #0d1412; --mc-plate-deep: #050806; --mc-pad: #101916;
+  --mc-utok-hi: #17221e; --mc-utok: #080f0c; --mc-uico: #a3e1c9;
+  --mc-grid: rgba(0, 108, 80, 0.38); --mc-grid-strong: rgba(63, 195, 151, 0.6);
+  --mc-hg: rgb(27, 144, 116); --mc-gop: 0.22;
+  --mc-dot: rgb(135, 214, 183); --mc-dot-glow: rgb(0, 108, 80); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 108, 80, 0.2); --mc-halo-b: rgba(27, 144, 116, 0.1);
+  --mc-globe-a: rgba(0, 108, 80, 0.12); --mc-globe-b: rgba(27, 144, 116, 0.06);
+  --mc-globe-c: rgba(27, 144, 116, 0.03); --mc-globe-d: rgba(27, 144, 116, 0.1);
+  --mc-cut-a: rgba(0, 108, 80, 0.32); --mc-cut-b: rgba(27, 144, 116, 0.12);
+  --mc-globe-hl: #87d6b7; --mc-globe-rim: #1b9074; --mc-halo: #006c50;
+  --mc-underglow: rgba(0, 108, 80, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f1f6f3; --panel-2: #e3eee8;
+  --focus: #006c50; --accent: #006c50; --link: #005645;
+  --gold: #006c50; --gold-deep: #004b3c; --gold-ink: #005645;
+  --gold-grad: linear-gradient(100deg, #004b3c 0%, #006c50 55%, #61c09e 100%);
+  --l1f: #094d40; --l2f: #006c50; --l3f: #1b9074; --l4f: #61c09e; --l5f: #3b4a46; --luf: #9ca3af;
+  --l1t: #00372c; --l2t: #004b3c; --l3t: #09594b; --l4t: #195947; --l5t: #192922;
+  --wash-a: rgba(0, 108, 80, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e8f0eb; --mc-utok: #e3eee8; --mc-uico: #192922;
+  --mc-grid: rgba(0, 75, 60, 0.24); --mc-grid-strong: rgba(0, 75, 60, 0.42);
+  --mc-hg: #004b3c; --mc-gop: 0.3;
+  --mc-dot: #004b3c; --mc-dot-glow: #006c50; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 108, 80, 0.08); --mc-halo-b: rgba(0, 108, 80, 0.03);
+  --mc-cut-a: rgba(0, 75, 60, 0.12); --mc-cut-b: rgba(0, 75, 60, 0.05);
+  --mc-globe-rim: rgba(0, 75, 60, 0.3); --mc-halo: rgba(0, 108, 80, 0.22);
+  --mc-underglow: rgba(0, 75, 60, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 108, 80, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #070a09 0%, #070f0c 60%, #04130f 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f9f7 0%, #eef6f1 60%, #e1f2eb 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(63, 195, 151, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 75, 60, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 108, 80, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0d1412 0%, #0a0d0c 100%);
+  border-color: rgba(63, 195, 151, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0d1815), #060a08 75%);
+}
+
+/* The Crédit Agricole / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(63, 195, 151, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

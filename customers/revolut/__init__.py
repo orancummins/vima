@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Revolut", "Revolut Business", "Revolut Pay", "Revolut X", "AIR"],
     "country": "United Kingdom",
     "region": "Global",
+    "type": "digital",
     "accent": "#191c1f",   # Revolut black, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Revolut", "bg": "#ffffff", "source": "https://commons.wikimedia.org/wiki/File:Revolut_logo.svg"},

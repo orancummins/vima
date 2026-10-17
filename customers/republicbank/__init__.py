@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Republic Bank", "Republic Financial Holdings", "Endcash", "Cayman National", "Republic Life"],
     "country": "Trinidad and Tobago",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#008fc3",   # Republic blue, from republictt.com
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Republic Bank", "bg": "#008fc3", "source": "https://www.republictt.com/sites/default/files/logo.png"},

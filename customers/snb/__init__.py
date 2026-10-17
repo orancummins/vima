@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["SNB", "AlAhli", "NEO"],
     "country": "Saudi Arabia",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#00a862",   # SNB green, the page's own palette (built in the snb project)
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Saudi National Bank", "bg": "#ffffff", "source": "https://www.alahli.com/"},

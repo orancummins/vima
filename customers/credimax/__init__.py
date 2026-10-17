@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["CrediMax", "Thameen", "Tayseer", "iLead", "Cardy", "talabat Credit Card", "Danat"],
     "country": "Bahrain",
     "region": "EEMEA",
+    "type": "issuer",
     "accent": "#10143b",   # CrediMax navy, from the logo (red #c4091e is the second colour)
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "CrediMax", "bg": "#ffffff",

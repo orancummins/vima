@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["NBK", "Weyay Bank", "Boubyan Bank", "NBK Wealth", "UPayments", "NBK-Egypt"],
     "country": "Kuwait",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#21376b",   # NBK navy, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "National Bank of Kuwait", "bg": "#ffffff",

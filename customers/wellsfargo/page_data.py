@@ -41,7 +41,7 @@ DEFAULT_DIV = 'wfc'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F6F2F3", "panel-2": "#EFE8EA", "ink": "#1E0F11", "ink-2": "#422D31",
-    "muted": "#907B7C", "faint": "#A29797", "line": "#DFD7D7", "line-2": "#D0C6C7", "focus": "#DD1E25",
+    "muted": "#786566", "faint": "#8F8181", "line": "#DFD7D7", "line-2": "#D0C6C7", "focus": "#DD1E25",
     "accent": "#DD1E25", "link": "#981715", "gold": "#DD1E25", "gold-deep": "#7A1310", "gold-ink": "#981715",
     "l1": "#4C0B0A", "l2": "#7A1310", "l3": "#B22F29", "l4": "#BA6167", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#8B2623", "l2f": "#DD1E25", "l3f": "#CA595B", "l4f": "#CFA1A7",

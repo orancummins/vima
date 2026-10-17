@@ -24,6 +24,7 @@ CUSTOMER = {
     "brands": ["BROU", "BROU Recompensa", "BROU a Mano", "eBROU", "República AFAP", "República AFISA"],
     "country": "Uruguay",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#0066b3",   # BROU blue, from brou.com.uy's logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Banco República", "bg": "#ffffff", "source": "https://commons.wikimedia.org/wiki/File:LogoBROU.png"},

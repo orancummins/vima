@@ -1,0 +1,97 @@
+/* Klarna inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Klarna's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #161012; --panel: #2B1D23; --panel-2: #473139;
+  --ink: #f8f4f6; --ink-2: #eee8eb; --muted: #efeced; --faint: #e8e5e6;
+  --focus: #d57594; --accent: #d57594; --link: #f7e8ee;
+  --gold: #d57594; --gold-deep: #f6dfe7; --gold-ink: #f7e8ee;
+  --gold-grad: linear-gradient(100deg, #ffb3c7 0%, #f4dbe3 55%, #f7dfe9 100%);
+  --l1f: #f7bcc8; --l2f: #ffb3c7; --l3f: #f5c9d4; --l4f: #f3e1e8; --l5f: #ebe7e8; --luf: #e4e1e2;
+  --l1t: #c14d7b; --l2t: #c24e79; --l3t: #cd4461; --l4t: #c4487b; --l5t: #f0eced;
+  --l5: #eee8eb; --lu: #e8e5e6;
+  --wash-a: rgba(255, 179, 199, 0.14); --wash-b: rgba(243, 225, 232, 0.05);
+  --mc-plate: #22171b; --mc-plate-deep: #0A0608; --mc-pad: #301e24;
+  --mc-utok-hi: #503742; --mc-utok: #170b10; --mc-uico: #f7e6ed;
+  --mc-grid: rgba(255, 179, 199, 0.38); --mc-grid-strong: rgba(244, 219, 227, 0.6);
+  --mc-hg: rgb(245, 201, 212); --mc-gop: 0.22;
+  --mc-dot: rgb(247, 232, 238); --mc-dot-glow: rgb(255, 179, 199); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(255, 179, 199, 0.2); --mc-halo-b: rgba(245, 201, 212, 0.1);
+  --mc-globe-a: rgba(255, 179, 199, 0.12); --mc-globe-b: rgba(245, 201, 212, 0.06);
+  --mc-globe-c: rgba(245, 201, 212, 0.03); --mc-globe-d: rgba(245, 201, 212, 0.1);
+  --mc-cut-a: rgba(255, 179, 199, 0.32); --mc-cut-b: rgba(245, 201, 212, 0.12);
+  --mc-globe-hl: #f7e8ee; --mc-globe-rim: #f5c9d4; --mc-halo: #ffb3c7;
+  --mc-underglow: rgba(255, 179, 199, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f7f3f5; --panel-2: #f3ebef;
+  --focus: #ffb3c7; --accent: #ffb3c7; --link: #ff1c4a;
+  --gold: #ffb3c7; --gold-deep: #da002d; --gold-ink: #ff1c4a;
+  --gold-grad: linear-gradient(100deg, #da002d 0%, #ffb3c7 55%, #f3e1e8 100%);
+  --l1f: #e7385b; --l2f: #ffb3c7; --l3f: #f5c9d4; --l4f: #f3e1e8; --l5f: #dfd7d9; --luf: #9ca3af;
+  --l1t: #7e001a; --l2t: #da002d; --l3t: #f38599; --l4t: #efc5d1; --l5t: #694052;
+  --wash-a: rgba(255, 179, 199, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f4edf1; --mc-utok: #f3ebef; --mc-uico: #694052;
+  --mc-grid: rgba(218, 0, 45, 0.24); --mc-grid-strong: rgba(218, 0, 45, 0.42);
+  --mc-hg: #da002d; --mc-gop: 0.3;
+  --mc-dot: #da002d; --mc-dot-glow: #ffb3c7; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(255, 179, 199, 0.08); --mc-halo-b: rgba(255, 179, 199, 0.03);
+  --mc-cut-a: rgba(218, 0, 45, 0.12); --mc-cut-b: rgba(218, 0, 45, 0.05);
+  --mc-globe-rim: rgba(218, 0, 45, 0.3); --mc-halo: rgba(255, 179, 199, 0.22);
+  --mc-underglow: rgba(218, 0, 45, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(255, 179, 199, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0d090a 0%, #160a0f 60%, #1c060d 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #faf7f8 0%, #f7f1f4 60%, #f5eaef 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(244, 219, 227, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(218, 0, 45, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(255, 179, 199, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #22171b 0%, #120e0f 100%);
+  border-color: rgba(244, 219, 227, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #2c181f), #0d080a 75%);
+}
+
+/* The Klarna / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(244, 219, 227, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

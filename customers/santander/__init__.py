@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Santander", "Openbank", "Getnet", "TSB", "Ebury"],
     "country": "Spain",
     "region": "Europe & Latin America",
+    "type": "bank",
     "accent": "#ec0000",   # Santander red, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Santander", "bg": "#ffffff", "source": "static/logos/financial-logos-500/01-financial-institutions/santander.png"},

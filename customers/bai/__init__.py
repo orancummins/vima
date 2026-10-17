@@ -21,6 +21,7 @@ CUSTOMER = {
     "brands": ["BAI", "BAI Directo", "BAI Europa", "BAI Cabo Verde", "NOSSA Seguros", "ÁUREA", "é-Kwanza"],
     "country": "Angola",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#002d74",   # BAI navy, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "BAI - Banco Angolano de Investimentos", "bg": "#ffffff",

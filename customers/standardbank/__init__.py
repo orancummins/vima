@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Standard Bank", "Stanbic", "Liberty", "STANLIB", "Diners Club SA", "Shyft", "SnapScan", "SimplyBlu"],
     "country": "South Africa",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#0033aa",   # Standard Bank blue, from the site's header and logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Standard Bank", "bg": "#0033aa",

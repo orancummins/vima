@@ -1,0 +1,97 @@
+/* SMBC Card inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   SMBC Card's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0a0e0c; --panel: #0F1512; --panel-2: #131c18;
+  --ink: #f2f7f4; --ink-2: #d0ddd6; --muted: #91a69f; --faint: #6b7a76;
+  --focus: #34a57b; --accent: #34a57b; --link: #7dd3ad;
+  --gold: #34a57b; --gold-deep: #45cc97; --gold-ink: #7dd3ad;
+  --gold-grad: linear-gradient(100deg, #004b34 0%, #39b586 55%, #b9efd6 100%);
+  --l1f: #084536; --l2f: #004b34; --l3f: #17795d; --l4f: #54bb91; --l5f: #788a85; --luf: #56625e;
+  --l1t: #2d855e; --l2t: #2c8461; --l3t: #24846a; --l4t: #2b855d; --l5t: #e1e8e6;
+  --l5: #d0ddd6; --lu: #6b7a76;
+  --wash-a: rgba(0, 75, 52, 0.14); --wash-b: rgba(84, 187, 145, 0.05);
+  --mc-plate: #0c1210; --mc-plate-deep: #050806; --mc-pad: #0e1714;
+  --mc-utok-hi: #141e19; --mc-utok: #070f0b; --mc-uico: #9ddfc2;
+  --mc-grid: rgba(0, 75, 52, 0.38); --mc-grid-strong: rgba(57, 181, 134, 0.6);
+  --mc-hg: rgb(23, 121, 93); --mc-gop: 0.22;
+  --mc-dot: rgb(125, 211, 173); --mc-dot-glow: rgb(0, 75, 52); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 75, 52, 0.2); --mc-halo-b: rgba(23, 121, 93, 0.1);
+  --mc-globe-a: rgba(0, 75, 52, 0.12); --mc-globe-b: rgba(23, 121, 93, 0.06);
+  --mc-globe-c: rgba(23, 121, 93, 0.03); --mc-globe-d: rgba(23, 121, 93, 0.1);
+  --mc-cut-a: rgba(0, 75, 52, 0.32); --mc-cut-b: rgba(23, 121, 93, 0.12);
+  --mc-globe-hl: #7dd3ad; --mc-globe-rim: #17795d; --mc-halo: #004b34;
+  --mc-underglow: rgba(0, 75, 52, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f1f6f3; --panel-2: #e3ede7;
+  --focus: #004b34; --accent: #004b34; --link: #004231;
+  --gold: #004b34; --gold-deep: #003d2e; --gold-ink: #004231;
+  --gold-grad: linear-gradient(100deg, #003d2e 0%, #004b34 55%, #54bb91 100%);
+  --l1f: #073b2e; --l2f: #004b34; --l3f: #17795d; --l4f: #54bb91; --l5f: #2d3935; --luf: #9ca3af;
+  --l1t: #003024; --l2t: #003d2e; --l3t: #064033; --l4t: #124031; --l5t: #15221c;
+  --wash-a: rgba(0, 75, 52, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e7efea; --mc-utok: #e3ede7; --mc-uico: #15221c;
+  --mc-grid: rgba(0, 61, 46, 0.24); --mc-grid-strong: rgba(0, 61, 46, 0.42);
+  --mc-hg: #003d2e; --mc-gop: 0.3;
+  --mc-dot: #003d2e; --mc-dot-glow: #004b34; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 75, 52, 0.08); --mc-halo-b: rgba(0, 75, 52, 0.03);
+  --mc-cut-a: rgba(0, 61, 46, 0.12); --mc-cut-b: rgba(0, 61, 46, 0.05);
+  --mc-globe-rim: rgba(0, 61, 46, 0.3); --mc-halo: rgba(0, 75, 52, 0.22);
+  --mc-underglow: rgba(0, 61, 46, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 75, 52, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #070909 0%, #060f0b 60%, #04120d 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f9f7 0%, #edf6f1 60%, #e0f1e9 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(57, 181, 134, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 61, 46, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 75, 52, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0c1210 0%, #090c0b 100%);
+  border-color: rgba(57, 181, 134, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0c1612), #060908 75%);
+}
+
+/* The SMBC Card / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(57, 181, 134, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

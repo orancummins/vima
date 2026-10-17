@@ -24,6 +24,7 @@ CUSTOMER = {
                "Wells Fargo Merchant Services", "Vantage"],
     "country": "United States",
     "region": "Americas",
+    "type": "bank",
     "accent": "#dd1e25",   # Wells Fargo red, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Wells Fargo", "bg": "#ffffff", "source": "https://commons.wikimedia.org/"},

@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Chase", "J.P. Morgan", "J.P. Morgan Payments", "Kinexys", "Chase UK"],
     "country": "United States",
     "region": "Americas",
+    "type": "bank",
     "accent": "#004fc2",   # Chase blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Chase", "bg": "#ffffff", "source": "static/logos/financial-logos-500/01-financial-institutions/jpmorgan-chase.svg"},

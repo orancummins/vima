@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["CTBC Bank", "CTBC Financial Holding", "Tokyo Star Bank", "LH Bank", "Taiwan Life", "Taiwan Lottery"],
     "country": "Taiwan",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#007979",   # CTBC teal, from the logo wordmark and ctbcbank.com
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "CTBC Bank", "bg": "#ffffff",

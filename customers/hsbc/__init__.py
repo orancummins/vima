@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["HSBC", "Hang Seng Bank", "first direct", "M&S Bank", "HSBC Innovation Bank", "PayMe"],
     "country": "United Kingdom",
     "region": "Global",
+    "type": "bank",
     "accent": "#db0011",   # HSBC red, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "HSBC", "bg": "#ffffff", "source": "static/logos/financial-logos-500/01-financial-institutions/hsbc.png"},

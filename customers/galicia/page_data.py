@@ -41,7 +41,7 @@ DEFAULT_DIV = 'gfg'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F6F2F2", "panel-2": "#F0E8E7", "ink": "#20120C", "ink-2": "#45302A",
-    "muted": "#938277", "faint": "#A39A95", "line": "#E0DAD5", "line-2": "#D1CAC5", "focus": "#FA6400",
+    "muted": "#75665D", "faint": "#8E837C", "line": "#E0DAD5", "line-2": "#D1CAC5", "focus": "#FA6400",
     "accent": "#FA6400", "link": "#A74D00", "gold": "#FA6400", "gold-deep": "#8A3F00", "gold-ink": "#A74D00",
     "l1": "#562700", "l2": "#8A3F00", "l3": "#C76A14", "l4": "#C87E53", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#9B5213", "l2f": "#FA6400", "l3f": "#DC8647", "l4f": "#D6AB99",

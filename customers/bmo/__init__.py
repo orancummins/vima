@@ -23,6 +23,7 @@ CUSTOMER = {
                "Burgundy Asset Management", "Moneris"],
     "country": "Canada",
     "region": "Americas",
+    "type": "bank",
     "accent": "#0079c1",   # BMO blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "BMO", "bg": "#ffffff",

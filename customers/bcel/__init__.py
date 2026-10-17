@@ -20,6 +20,7 @@ CUSTOMER = {
     "brands": ["BCEL", "BCEL One", "OnePay", "BCOME", "EZyKip", "BCEL-KT Securities"],
     "country": "Laos",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#e81820",   # BCEL red, from the logo and the bank's brand page
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "BCEL", "bg": "#ffffff", "source": "https://www.bcel.com.la/bcel/resources/imgs/logobcel.png"},

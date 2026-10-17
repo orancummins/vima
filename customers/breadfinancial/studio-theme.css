@@ -1,0 +1,97 @@
+/* Bread Financial inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Bread Financial's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0b0c0d; --panel: #111315; --panel-2: #17191c;
+  --ink: #f3f5f6; --ink-2: #d4d9db; --muted: #9a9ea6; --faint: #74787e;
+  --focus: #567aa4; --accent: #567aa4; --link: #93adc4;
+  --gold: #567aa4; --gold-deep: #688cb4; --gold-ink: #93adc4;
+  --gold-grad: linear-gradient(100deg, #13294b 0%, #567aa4 55%, #c5d6e4 100%);
+  --l1f: #1a2946; --l2f: #13294b; --l3f: #2f4770; --l4f: #708caa; --l5f: #82868c; --luf: #5f6267;
+  --l1t: #537899; --l2t: #54799d; --l3t: #5675ab; --l4t: #52789a; --l5t: #e3e5e7;
+  --l5: #d4d9db; --lu: #74787e;
+  --wash-a: rgba(19, 41, 75, 0.14); --wash-b: rgba(112, 140, 170, 0.05);
+  --mc-plate: #0e1012; --mc-plate-deep: #050707; --mc-pad: #111316;
+  --mc-utok-hi: #181b1e; --mc-utok: #090c0e; --mc-uico: #adc1d3;
+  --mc-grid: rgba(19, 41, 75, 0.38); --mc-grid-strong: rgba(86, 122, 164, 0.6);
+  --mc-hg: rgb(47, 71, 112); --mc-gop: 0.22;
+  --mc-dot: rgb(147, 173, 196); --mc-dot-glow: rgb(19, 41, 75); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(19, 41, 75, 0.2); --mc-halo-b: rgba(47, 71, 112, 0.1);
+  --mc-globe-a: rgba(19, 41, 75, 0.12); --mc-globe-b: rgba(47, 71, 112, 0.06);
+  --mc-globe-c: rgba(47, 71, 112, 0.03); --mc-globe-d: rgba(47, 71, 112, 0.1);
+  --mc-cut-a: rgba(19, 41, 75, 0.32); --mc-cut-b: rgba(47, 71, 112, 0.12);
+  --mc-globe-hl: #93adc4; --mc-globe-rim: #2f4770; --mc-halo: #13294b;
+  --mc-underglow: rgba(19, 41, 75, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f4f5; --panel-2: #e5e9eb;
+  --focus: #13294b; --accent: #13294b; --link: #101f3e;
+  --gold: #13294b; --gold-deep: #0e1c37; --gold-ink: #101f3e;
+  --gold-grad: linear-gradient(100deg, #0e1c37 0%, #13294b 55%, #708caa 100%);
+  --l1f: #152139; --l2f: #13294b; --l3f: #2f4770; --l4f: #708caa; --l5f: #383b40; --luf: #9ca3af;
+  --l1t: #0b152a; --l2t: #0e1c37; --l3t: #162340; --l4t: #222f43; --l5t: #1a1f23;
+  --wash-a: rgba(19, 41, 75, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e9ecee; --mc-utok: #e5e9eb; --mc-uico: #1a1f23;
+  --mc-grid: rgba(14, 28, 55, 0.24); --mc-grid-strong: rgba(14, 28, 55, 0.42);
+  --mc-hg: #0e1c37; --mc-gop: 0.3;
+  --mc-dot: #0e1c37; --mc-dot-glow: #13294b; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(19, 41, 75, 0.08); --mc-halo-b: rgba(19, 41, 75, 0.03);
+  --mc-cut-a: rgba(14, 28, 55, 0.12); --mc-cut-b: rgba(14, 28, 55, 0.05);
+  --mc-globe-rim: rgba(14, 28, 55, 0.3); --mc-halo: rgba(19, 41, 75, 0.22);
+  --mc-underglow: rgba(14, 28, 55, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(19, 41, 75, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #070809 0%, #080b0d 60%, #070b10 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f8f8 0%, #eff3f4 60%, #e4eaee 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(86, 122, 164, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(14, 28, 55, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(19, 41, 75, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0e1012 0%, #0a0b0c 100%);
+  border-color: rgba(86, 122, 164, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0f1215), #070809 75%);
+}
+
+/* The Bread Financial / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(86, 122, 164, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

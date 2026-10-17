@@ -1,0 +1,97 @@
+/* Ant International inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Ant International's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0d1012; --panel: #161C20; --panel-2: #222a31;
+  --ink: #f3f6f7; --ink-2: #dce2e6; --muted: #bec3cb; --faint: #a7acb2;
+  --focus: #6698cf; --accent: #6698cf; --link: #b3cee5;
+  --gold: #6698cf; --gold-deep: #92b9e1; --gold-ink: #b3cee5;
+  --gold-grad: linear-gradient(100deg, #0066ff 0%, #85add9 55%, #cce2f3 100%);
+  --l1f: #1d62e3; --l2f: #0066ff; --l3f: #4a82dd; --l4f: #9bb9d7; --l5f: #b0b4ba; --luf: #999ea6;
+  --l1t: #3c7aaf; --l2t: #3c79b7; --l3t: #4475cb; --l4t: #3a7ab1; --l5t: #e7e9ec;
+  --l5: #dce2e6; --lu: #a7acb2;
+  --wash-a: rgba(0, 102, 255, 0.14); --wash-b: rgba(155, 185, 215, 0.05);
+  --mc-plate: #11161a; --mc-plate-deep: #050809; --mc-pad: #161c23;
+  --mc-utok-hi: #262f37; --mc-utok: #090f13; --mc-uico: #c2d8eb;
+  --mc-grid: rgba(0, 102, 255, 0.38); --mc-grid-strong: rgba(133, 173, 217, 0.6);
+  --mc-hg: rgb(74, 130, 221); --mc-gop: 0.22;
+  --mc-dot: rgb(179, 206, 229); --mc-dot-glow: rgb(0, 102, 255); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 102, 255, 0.2); --mc-halo-b: rgba(74, 130, 221, 0.1);
+  --mc-globe-a: rgba(0, 102, 255, 0.12); --mc-globe-b: rgba(74, 130, 221, 0.06);
+  --mc-globe-c: rgba(74, 130, 221, 0.03); --mc-globe-d: rgba(74, 130, 221, 0.1);
+  --mc-cut-a: rgba(0, 102, 255, 0.32); --mc-cut-b: rgba(74, 130, 221, 0.12);
+  --mc-globe-hl: #b3cee5; --mc-globe-rim: #4a82dd; --mc-halo: #0066ff;
+  --mc-underglow: rgba(0, 102, 255, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f5f7; --panel-2: #e7edf0;
+  --focus: #0066ff; --accent: #0066ff; --link: #003caf;
+  --gold: #0066ff; --gold-deep: #00308c; --gold-ink: #003caf;
+  --gold-grad: linear-gradient(100deg, #00308c 0%, #0066ff 55%, #9bb9d7 100%);
+  --l1f: #13429e; --l2f: #0066ff; --l3f: #4a82dd; --l4f: #9bb9d7; --l5f: #7a8595; --luf: #9ca3af;
+  --l1t: #001e57; --l2t: #00308c; --l3t: #144fcb; --l4t: #3b76c8; --l5t: #2a3a46;
+  --wash-a: rgba(0, 102, 255, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaeff1; --mc-utok: #e7edf0; --mc-uico: #2a3a46;
+  --mc-grid: rgba(0, 48, 140, 0.24); --mc-grid-strong: rgba(0, 48, 140, 0.42);
+  --mc-hg: #00308c; --mc-gop: 0.3;
+  --mc-dot: #00308c; --mc-dot-glow: #0066ff; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 102, 255, 0.08); --mc-halo-b: rgba(0, 102, 255, 0.03);
+  --mc-cut-a: rgba(0, 48, 140, 0.12); --mc-cut-b: rgba(0, 48, 140, 0.05);
+  --mc-globe-rim: rgba(0, 48, 140, 0.3); --mc-halo: rgba(0, 102, 255, 0.22);
+  --mc-underglow: rgba(0, 48, 140, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 102, 255, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #08090b 0%, #080d13 60%, #050d17 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f8f9 0%, #eff4f7 60%, #e5edf3 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(133, 173, 217, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 48, 140, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 102, 255, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #11161a 0%, #0c0d0f 100%);
+  border-color: rgba(133, 173, 217, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #121921), #07090b 75%);
+}
+
+/* The Ant International / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(133, 173, 217, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

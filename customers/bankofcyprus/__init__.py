@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Bank of Cyprus", "JCC", "EuroLife", "Genikes Insurance", "Jinius", "Fleksy"],
     "country": "Cyprus",
     "region": "Europe",
+    "type": "bank",
     "accent": "#006880",   # Bank of Cyprus teal, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Bank of Cyprus", "bg": "#ffffff",

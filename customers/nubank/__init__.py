@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Nubank", "Nu", "Nu Empresas", "Ultravioleta", "Croma", "NuPay", "NuCel"],
     "country": "Brazil",
     "region": "Latin America",
+    "type": "digital",
     "accent": "#820ad1",   # Nubank purple, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Nubank", "bg": "#ffffff", "source": "static/logos/financial-logos-500/01-financial-institutions/nubank.png"},

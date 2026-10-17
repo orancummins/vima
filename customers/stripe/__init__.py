@@ -24,6 +24,7 @@ CUSTOMER = {
     "brands": ["Stripe", "Link", "Bridge", "Privy", "Tempo"],
     "country": "United States & Ireland",
     "region": "Global",
+    "type": "payments",
     "accent": "#635bff",   # Stripe blurple
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Stripe", "bg": "#ffffff", "source": "static/logos/financial-logos-500/02-payments-and-processors/stripe.svg"},

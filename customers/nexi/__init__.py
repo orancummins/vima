@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Nexi", "Nets", "SIA", "Computop", "Przelewy24"],
     "country": "Italy",
     "region": "Europe",
+    "type": "payments",
     "accent": "#2d32aa",   # Nexi blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Nexi", "bg": "#ffffff", "source": "https://www.nexigroup.com/"},

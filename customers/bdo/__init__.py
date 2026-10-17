@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["BDO", "BDO Pay", "BDO Private Bank", "BDO Network Bank", "BDO Life", "BDO Capital"],
     "country": "Philippines",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#0b2972",   # BDO navy, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "BDO Unibank", "bg": "#ffffff", "source": "https://commons.wikimedia.org/wiki/File:BDO_Unibank_(logo).svg"},

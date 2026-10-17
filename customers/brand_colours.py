@@ -140,6 +140,13 @@ def page_palettes(primary: str) -> tuple[dict, dict]:
     light, dark = base_palettes()
     L = {k: v if k in LENS | GRAPHITE else shift_text(v, shift, keep=SLATE) for k, v in light.items()}
     D = {k: v if k in LENS | GRAPHITE else shift_text(v, shift, keep=SLATE) for k, v in dark.items()}
+    # Body text keeps its contrast however light or dark the brand is (a pale pink must not wash out the greys).
+    for k, target in (("ink", 7.0), ("ink-2", 7.0), ("muted", 4.5), ("faint", 3.0)):
+        L[k] = toward(L[k], L["panel-2"], target, darker=True)
+        D[k] = toward(D[k], D["panel-2"], target, darker=False)
+    for k, target in (("line", 1.25), ("line-2", 1.6)):  # hairlines and borders stay visible
+        L[k] = toward(L[k], L["ground"], target, darker=True)
+        D[k] = toward(D[k], D["ground"], target, darker=False)
     for k in ("link", "gold-ink"):                      # text on white and on the panels
         L[k] = toward(L[k], L["panel-2"], 4.5, darker=True)
         D[k] = toward(D[k], D["panel-2"], 4.5, darker=False)

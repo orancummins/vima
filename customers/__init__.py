@@ -31,6 +31,7 @@ from __future__ import annotations
 import base64
 import html
 import importlib
+import importlib.util
 import os
 import re
 from functools import lru_cache
@@ -63,6 +64,7 @@ def _load() -> tuple[dict, ...]:
         if c["id"] != d:
             raise ValueError(f"customers/{d}: CUSTOMER id {c['id']!r} must match its folder")
         c["dir"] = os.path.join(_HERE, d)
+        c["built"] = os.path.isfile(os.path.join(c["dir"], c["page"]))   # False while its page is still being built
         c.setdefault("order", 100)
         c.setdefault("studio", {})
         c.setdefault("journey_bundles", {})
@@ -75,7 +77,8 @@ def _load() -> tuple[dict, ...]:
 
 
 def all_customers() -> list[dict]:
-    return list(_load())
+    """Every customer with a built page (one still being built stays off the tab rather than break it)."""
+    return [c for c in _load() if c["built"]]
 
 
 def get(cid: str) -> dict | None:
@@ -333,6 +336,112 @@ def accent_text(accent: str | None) -> dict | None:
     }
 
 
+# ---------------------------------------------------------------------------
+# How the Customers tab sorts and filters them: kind, geography, Mastercard depth
+# ---------------------------------------------------------------------------
+
+# CUSTOMER["type"]: what kind of business it is (default "bank").
+TYPES = {
+    "bank": "Banks",
+    "digital": "Digital banks",
+    "issuer": "Card issuers",
+    "payments": "Payments & acquiring",
+    "wallet": "Wallets & fintech",
+    "merchant": "Merchants & platforms",
+    "tech": "Big tech",
+}
+
+# Macro-regions in Mastercard's own order, and the sub-region of every HQ country.
+MACROS = {
+    "na": "North America",
+    "lac": "Latin America & Caribbean",
+    "eu": "Europe",
+    "mea": "Middle East & Africa",
+    "ap": "Asia-Pacific",
+}
+_SUBREGIONS = {
+    "North America": ("na", ("United States", "Canada")),
+    "Mexico & Central America": ("lac", ("Mexico", "Costa Rica")),
+    "Caribbean": ("lac", ("Dominican Republic", "Jamaica", "Trinidad and Tobago")),
+    "South America": ("lac", ("Argentina", "Bolivia", "Brazil", "Chile", "Colombia", "Ecuador", "Paraguay",
+                              "Peru", "Uruguay")),
+    "UK & Ireland": ("eu", ("United Kingdom", "Ireland")),
+    "Western Europe": ("eu", ("France", "Germany", "Netherlands", "Luxembourg", "Switzerland", "Austria")),
+    "Southern Europe": ("eu", ("Spain", "Portugal", "Italy", "Greece", "Malta", "Cyprus")),
+    "Nordics & Baltics": ("eu", ("Sweden", "Norway", "Denmark", "Finland", "Iceland")),
+    "Central & Eastern Europe": ("eu", ("Poland", "Czech Republic", "Slovakia", "Hungary", "Romania", "Bulgaria",
+                                         "Croatia", "Slovenia", "Serbia", "Ukraine")),
+    "Gulf": ("mea", ("Saudi Arabia", "United Arab Emirates", "Qatar", "Kuwait", "Bahrain", "Oman")),
+    "Levant, Iraq & Türkiye": ("mea", ("Jordan", "Lebanon", "Iraq", "Israel", "Turkey")),
+    "North Africa": ("mea", ("Egypt", "Morocco", "Algeria", "Tunisia")),
+    "Sub-Saharan Africa": ("mea", ("South Africa", "Nigeria", "Kenya", "Ghana", "Tanzania", "Mauritius", "Angola")),
+    "Central Asia & Caucasus": ("mea", ("Kazakhstan", "Uzbekistan", "Azerbaijan", "Georgia")),
+    "East Asia": ("ap", ("China", "Japan", "South Korea", "Taiwan", "Mongolia")),
+    "Southeast Asia": ("ap", ("Singapore", "Malaysia", "Indonesia", "Thailand", "Vietnam", "Philippines",
+                              "Cambodia", "Laos")),
+    "South Asia": ("ap", ("India", "Pakistan", "Bangladesh", "Sri Lanka", "Nepal")),
+    "Oceania": ("ap", ("Australia", "New Zealand")),
+}
+_COUNTRY_GEO = {country: (macro, sub) for sub, (macro, countries) in _SUBREGIONS.items() for country in countries}
+
+
+def geo(c: dict) -> dict:
+    """Where the customer is headquartered: country, sub-region, macro-region; and whether it is a global player."""
+    country = (c.get("country") or "").split(" & ")[0].strip()
+    macro, sub = _COUNTRY_GEO.get(country, ("", ""))
+    return {"hq": country, "macro": macro, "macro_label": MACROS.get(macro, ""), "subregion": sub,
+            "global": c.get("region") == "Global"}
+
+
+def _inventory_layers(c: dict) -> list[dict]:
+    """The LAYERS of ``<id>_inventory.py`` beside the page, or [] (a copied-in page has none)."""
+    path = os.path.join(c["dir"], f"{c['id']}_inventory.py")
+    if not os.path.isfile(path):
+        return []
+    spec = importlib.util.spec_from_file_location(f"_cust_inventory_{c['id']}", path)
+    mod = importlib.util.module_from_spec(spec)
+    import sys
+    sys.path.insert(0, c["dir"])
+    try:
+        spec.loader.exec_module(mod)
+    except Exception:  # noqa: BLE001 — a page that will not import still lists, just without a depth
+        return []
+    finally:
+        sys.path.remove(c["dir"])
+    return list(getattr(mod, "LAYERS", []))
+
+
+@lru_cache(maxsize=512)
+def _mc_depth(cid: str, mtime: float) -> dict | None:  # mtime keys the cache
+    layers = _inventory_layers(get(cid))
+    rails = [L for L in layers if L.get("id") == "L2"] or layers   # the cards and payment rails, where networks compete
+    known = [p["neo"][0] for L in rails for t in L["tiles"] for p in t["products"]
+             if p.get("neo") and p["neo"][0] is not None]
+    if not known:
+        return None
+    on = sum(1 for d in known if d >= 2)
+    part = sum(1 for d in known if d == 1)
+    share = round((on + part / 2) / len(known), 2)
+    level = "deep" if share >= 0.45 else ("mixed" if share >= 0.25 else "light")
+    return {"share": share, "level": level, "on": on, "partly": part, "known": len(known)}
+
+
+MC_LEVELS = {"deep": "Mastercard: deep", "mixed": "Mastercard: partial", "light": "Mastercard: light"}
+
+
+def mc_depth(c: dict) -> dict | None:
+    """How much of the customer's rails run on Mastercard, from the lens marks in its inventory.
+
+    ``share`` counts a Rails-layer product riding on or run by Mastercard as 1 and one partly on it as ½, over
+    every Rails product whose depth is known; "deep" from 45%, "mixed" from 25%. It is this map's reading of
+    public sources, not volume.
+    """
+    path = os.path.join(c["dir"], f"{c['id']}_inventory.py")
+    if not os.path.isfile(path):
+        return None
+    return _mc_depth(c["id"], os.path.getmtime(path))
+
+
 def summary(c: dict, links: dict | None = None) -> dict:
     """What the Customers tab shows on a customer's card (JSON-safe)."""
     counts: dict[str, int] = {}
@@ -344,6 +453,12 @@ def summary(c: dict, links: dict | None = None) -> dict:
     }
     out["logos"] = logo_urls(c)
     out["accent_text"] = accent_text(c.get("accent"))
+    out["order"] = c["order"]
+    out["type"] = c.get("type", "bank")
+    out["type_label"] = TYPES.get(out["type"], out["type"])
+    out["geo"] = geo(c)
+    mc = mc_depth(c)
+    out["mc"] = dict(mc, label=MC_LEVELS[mc["level"]]) if mc else None
     out.update({
         "counts": {
             "layers": counts.get("layer", 0),

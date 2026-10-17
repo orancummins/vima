@@ -41,7 +41,7 @@ DEFAULT_DIV = 'nabil'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F2F6F3", "panel-2": "#E6EEE8", "ink": "#0D1C12", "ink-2": "#25382B",
-    "muted": "#62766B", "faint": "#808E87", "line": "#D1DBD5", "line-2": "#BAC6C0", "focus": "#11A955",
+    "muted": "#5B6E63", "faint": "#7B8982", "line": "#D1DBD5", "line-2": "#BAC6C0", "focus": "#11A955",
     "accent": "#11A955", "link": "#0D7943", "gold": "#11A955", "gold-deep": "#0A673A", "gold-ink": "#0D7943",
     "l1": "#074325", "l2": "#0A673A", "l3": "#1D905A", "l4": "#44A76E", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#197347", "l2f": "#12B25A", "l3f": "#37BF77", "l4f": "#8BC7A0",

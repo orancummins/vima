@@ -1,0 +1,97 @@
+/* SBI Card inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   SBI Card's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0c0d0f; --panel: #131518; --panel-2: #1b1d23;
+  --ink: #f3f4f6; --ink-2: #d7dadf; --muted: #a7a8b2; --faint: #868790;
+  --focus: #6778b4; --accent: #6778b4; --link: #a0adce;
+  --gold: #6778b4; --gold-deep: #7889c1; --gold-ink: #a0adce;
+  --gold-grad: linear-gradient(100deg, #1a287b 0%, #6778b4 55%, #c9d2e8 100%);
+  --l1f: #252c72; --l2f: #1a287b; --l3f: #394494; --l4f: #808eb7; --l5f: #92939b; --luf: #73747d;
+  --l1t: #5d73ab; --l2t: #6073ae; --l3t: #656fb9; --l4t: #5e74ad; --l5t: #e4e5e8;
+  --l5: #d7dadf; --lu: #868790;
+  --wash-a: rgba(26, 40, 123, 0.14); --wash-b: rgba(128, 142, 183, 0.05);
+  --mc-plate: #101114; --mc-plate-deep: #060708; --mc-pad: #13151a;
+  --mc-utok-hi: #1e2026; --mc-utok: #0a0b0f; --mc-uico: #b6c0da;
+  --mc-grid: rgba(26, 40, 123, 0.38); --mc-grid-strong: rgba(103, 120, 180, 0.6);
+  --mc-hg: rgb(57, 68, 148); --mc-gop: 0.22;
+  --mc-dot: rgb(160, 173, 206); --mc-dot-glow: rgb(26, 40, 123); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(26, 40, 123, 0.2); --mc-halo-b: rgba(57, 68, 148, 0.1);
+  --mc-globe-a: rgba(26, 40, 123, 0.12); --mc-globe-b: rgba(57, 68, 148, 0.06);
+  --mc-globe-c: rgba(57, 68, 148, 0.03); --mc-globe-d: rgba(57, 68, 148, 0.1);
+  --mc-cut-a: rgba(26, 40, 123, 0.32); --mc-cut-b: rgba(57, 68, 148, 0.12);
+  --mc-globe-hl: #a0adce; --mc-globe-rim: #394494; --mc-halo: #1a287b;
+  --mc-underglow: rgba(26, 40, 123, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f3f5; --panel-2: #e6e9ec;
+  --focus: #1a287b; --accent: #1a287b; --link: #13195b;
+  --gold: #1a287b; --gold-deep: #10164d; --gold-ink: #13195b;
+  --gold-grad: linear-gradient(100deg, #10164d 0%, #1a287b 55%, #808eb7 100%);
+  --l1f: #1b2054; --l2f: #1a287b; --l3f: #394494; --l4f: #808eb7; --l5f: #4f515c; --luf: #9ca3af;
+  --l1t: #0b0f35; --l2t: #10164d; --l3t: #1f2466; --l4t: #313a6a; --l5t: #21252d;
+  --wash-a: rgba(26, 40, 123, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaecef; --mc-utok: #e6e9ec; --mc-uico: #21252d;
+  --mc-grid: rgba(16, 22, 77, 0.24); --mc-grid-strong: rgba(16, 22, 77, 0.42);
+  --mc-hg: #10164d; --mc-gop: 0.3;
+  --mc-dot: #10164d; --mc-dot-glow: #1a287b; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(26, 40, 123, 0.08); --mc-halo-b: rgba(26, 40, 123, 0.03);
+  --mc-cut-a: rgba(16, 22, 77, 0.12); --mc-cut-b: rgba(16, 22, 77, 0.05);
+  --mc-globe-rim: rgba(16, 22, 77, 0.3); --mc-halo: rgba(26, 40, 123, 0.22);
+  --mc-underglow: rgba(16, 22, 77, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(26, 40, 123, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #08080a 0%, #090a0f 60%, #070912 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f7f7f9 0%, #f0f2f5 60%, #e5e8ef 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(103, 120, 180, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(16, 22, 77, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(26, 40, 123, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #101114 0%, #0b0b0d 100%);
+  border-color: rgba(103, 120, 180, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #111219), #070809 75%);
+}
+
+/* The SBI Card / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(103, 120, 180, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

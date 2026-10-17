@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Shinhan Card", "SOL Pay", "Plan series", "SOL Travel", "Shinhan MyCar", "Shinhan Vietnam Finance"],
     "country": "South Korea",
     "region": "Asia-Pacific",
+    "type": "issuer",
     "accent": "#0040f8",   # Shinhan blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Shinhan Card", "bg": "#ffffff",

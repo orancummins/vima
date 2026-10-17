@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["National Bank of Egypt", "Al Ahly Net", "Al Ahly Phone Cash", "NBE (UK)", "Al Ahly Capital Holding", "Al Ahly Momkn"],
     "country": "Egypt",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#107614",   # NBE green, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "National Bank of Egypt", "bg": "#ffffff",

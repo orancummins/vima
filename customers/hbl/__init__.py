@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["HBL", "Konnect by HBL", "HBL Microfinance Bank", "HBL Prestige", "HBL Nisa", "HBL Asset Management"],
     "country": "Pakistan",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#008078",   # HBL teal-green, from the 2026 logo and hbl.com
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "HBL", "bg": "#ffffff",

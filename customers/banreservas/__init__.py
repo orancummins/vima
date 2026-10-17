@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Banreservas", "MIO Banreservas", "Seguros Reservas", "AFP Reservas", "Inversiones & Reservas"],
     "country": "Dominican Republic",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#005088",   # Banreservas blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Banreservas", "bg": "#ffffff",

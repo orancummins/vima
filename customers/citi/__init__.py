@@ -26,6 +26,7 @@ CUSTOMER = {
     "brands": ["Citi", "Citibank", "Banamex"],
     "country": "United States",
     "region": "Global",
+    "type": "bank",
     "accent": "#1c4882",   # Citi blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Citi", "bg": "#ffffff", "source": "static/logos/financial-logos-500/01-financial-institutions/citi.svg"},

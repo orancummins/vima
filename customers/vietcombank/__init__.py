@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Vietcombank", "VCB Digibank", "VCB DigiBiz", "VCBNeo", "VCBS", "Vietcombank Laos"],
     "country": "Vietnam",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#005028",   # Vietcombank green, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Vietcombank", "bg": "#ffffff",

@@ -24,6 +24,7 @@ CUSTOMER = {
     "brands": ["Santander", "Santander Life", "Getnet", "Work/Café", "Santander Consumer Finance", "Santander Private Bank"],
     "country": "Chile",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#ec0000",   # Santander red, from the logo and the brand
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Santander", "bg": "#ffffff",

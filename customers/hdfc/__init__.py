@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["HDFC Bank", "PayZapp", "SmartHub Vyapar", "SmartGATEWAY", "Infinia", "HDFC Life", "HDFC ERGO", "HDFC AMC", "HDB Financial Services"],
     "country": "India",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#004c8f",   # HDFC Bank blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "HDFC Bank", "bg": "#004c8f", "source": "https://www.hdfc.bank.in/content/dam/hdfcbankpws/home-page/hdfc-bank-logo.svg"},

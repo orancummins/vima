@@ -1,0 +1,97 @@
+/* CIBC inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   CIBC's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #100d0e; --panel: #1D1619; --panel-2: #2c2225;
+  --ink: #f7f3f5; --ink-2: #e3dcdf; --muted: #c3b9bb; --faint: #a89fa1;
+  --focus: #c68193; --accent: #c68193; --link: #dbb2bf;
+  --gold: #c68193; --gold-deep: #d292a4; --gold-ink: #dbb2bf;
+  --gold-grad: linear-gradient(100deg, #c41f3e 0%, #c88596 55%, #edced9 100%);
+  --l1f: #b33143; --l2f: #c41f3e; --l3f: #c34d60; --l4f: #c999a7; --l5f: #b1a9ab; --luf: #9a9092;
+  --l1t: #b25b77; --l2t: #b45974; --l3t: #b95565; --l4t: #b35977; --l5t: #eae6e7;
+  --l5: #e3dcdf; --lu: #a89fa1;
+  --wash-a: rgba(196, 31, 62, 0.14); --wash-b: rgba(201, 153, 167, 0.05);
+  --mc-plate: #181213; --mc-plate-deep: #080607; --mc-pad: #201719;
+  --mc-utok-hi: #312529; --mc-utok: #110a0d; --mc-uico: #e3c2cd;
+  --mc-grid: rgba(196, 31, 62, 0.38); --mc-grid-strong: rgba(200, 133, 150, 0.6);
+  --mc-hg: rgb(195, 77, 96); --mc-gop: 0.22;
+  --mc-dot: rgb(219, 178, 191); --mc-dot-glow: rgb(196, 31, 62); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(196, 31, 62, 0.2); --mc-halo-b: rgba(195, 77, 96, 0.1);
+  --mc-globe-a: rgba(196, 31, 62, 0.12); --mc-globe-b: rgba(195, 77, 96, 0.06);
+  --mc-globe-c: rgba(195, 77, 96, 0.03); --mc-globe-d: rgba(195, 77, 96, 0.1);
+  --mc-cut-a: rgba(196, 31, 62, 0.32); --mc-cut-b: rgba(195, 77, 96, 0.12);
+  --mc-globe-hl: #dbb2bf; --mc-globe-rim: #c34d60; --mc-halo: #c41f3e;
+  --mc-underglow: rgba(196, 31, 62, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f6f2f4; --panel-2: #eee8eb;
+  --focus: #c41f3e; --accent: #c41f3e; --link: #881624;
+  --gold: #c41f3e; --gold-deep: #6e111d; --gold-ink: #881624;
+  --gold-grad: linear-gradient(100deg, #6e111d 0%, #c41f3e 55%, #c999a7 100%);
+  --l1f: #7d222e; --l2f: #c41f3e; --l3f: #c34d60; --l4f: #c999a7; --l5f: #847074; --luf: #9ca3af;
+  --l1t: #460b13; --l2t: #6e111d; --l3t: #9f2835; --l4t: #a34558; --l5t: #3d2b31;
+  --wash-a: rgba(196, 31, 62, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f0ebed; --mc-utok: #eee8eb; --mc-uico: #3d2b31;
+  --mc-grid: rgba(110, 17, 29, 0.24); --mc-grid-strong: rgba(110, 17, 29, 0.42);
+  --mc-hg: #6e111d; --mc-gop: 0.3;
+  --mc-dot: #6e111d; --mc-dot-glow: #c41f3e; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(196, 31, 62, 0.08); --mc-halo-b: rgba(196, 31, 62, 0.03);
+  --mc-cut-a: rgba(110, 17, 29, 0.12); --mc-cut-b: rgba(110, 17, 29, 0.05);
+  --mc-globe-rim: rgba(110, 17, 29, 0.3); --mc-halo: rgba(196, 31, 62, 0.22);
+  --mc-underglow: rgba(110, 17, 29, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(196, 31, 62, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0a0809 0%, #11090b 60%, #14070a 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f7f8 0%, #f5f0f3 60%, #f1e6ea 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(200, 133, 150, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(110, 17, 29, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(196, 31, 62, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #181213 0%, #0e0c0c 100%);
+  border-color: rgba(200, 133, 150, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #1e1316), #0a0708 75%);
+}
+
+/* The CIBC / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(200, 133, 150, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

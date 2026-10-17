@@ -41,7 +41,7 @@ DEFAULT_DIV = 'slsp'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F2F5F6", "panel-2": "#E8EDF0", "ink": "#0F1720", "ink-2": "#2F3C48",
-    "muted": "#878F9C", "faint": "#A1A5AC", "line": "#D9DCE1", "line-2": "#CCCFD5", "focus": "#2870ED",
+    "muted": "#636B78", "faint": "#838892", "line": "#D9DCE1", "line-2": "#C9CCD3", "focus": "#2870ED",
     "accent": "#2870ED", "link": "#0F3FAD", "gold": "#2870ED", "gold-deep": "#0C328A", "gold-ink": "#0F3FAD",
     "l1": "#071F55", "l2": "#0C328A", "l3": "#2555CD", "l4": "#6D90C6", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#20469F", "l2f": "#2870ED", "l3f": "#648BD5", "l4f": "#A8BDD6",

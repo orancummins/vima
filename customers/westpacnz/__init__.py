@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Westpac", "Westpac One", "Westpac KiwiSaver Scheme", "BT Funds Management (NZ)", "hotpoints"],
     "country": "New Zealand",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#da1710",   # Westpac red, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Westpac", "bg": "#ffffff", "source": "https://www.westpac.com.au/about-westpac/investor-centre/financial-information/results/"},

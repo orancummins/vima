@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Česká spořitelna", "George", "Erste Premier", "Stavební spořitelna ČS", "ČS penzijní společnost", "Moneyback"],
     "country": "Czech Republic",
     "region": "Europe",
+    "type": "bank",
     "accent": "#2870ed",   # Erste / ČS bright blue, from the logo background on csas.cz
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Česká spořitelna", "bg": "#2870ed",

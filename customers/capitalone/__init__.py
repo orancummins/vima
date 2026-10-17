@@ -24,6 +24,7 @@ CUSTOMER = {
     "brands": ["Capital One", "Discover", "PULSE", "Diners Club", "Brex"],
     "country": "United States",
     "region": "Americas",
+    "type": "bank",
     "accent": "#004977",   # Capital One navy, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Capital One", "bg": "#ffffff", "source": "static/logos/financial-logos-500/01-financial-institutions/capital-one.svg"},

@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Galicia", "Naranja X", "Galicia Más", "Nave", "Galicia Seguros", "Fondos Fima", "Inviu"],
     "country": "Argentina",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#fa6400",   # Galicia orange, from the logo on galicia.ar
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Galicia", "bg": "#fa6400", "source": "https://commons.wikimedia.org/wiki/File:Banco-Galicia_Logo_2024.png"},

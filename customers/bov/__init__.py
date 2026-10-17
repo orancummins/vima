@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["BOV", "BOV SmartPay", "BOV Pay", "BOV Mobile", "Valletta Fund Management", "BOV Foundation"],
     "country": "Malta",
     "region": "Europe",
+    "type": "bank",
     "accent": "#8e0250",   # BOV magenta, from the logo on the H1 2026 interim report
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "BOV Bank of Valletta", "bg": "#ffffff",

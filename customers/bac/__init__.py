@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["BAC", "BAC Credomatic", "Credomatic", "Multibank", "Compra Click", "Tasa Cero"],
     "country": "Costa Rica",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#e4002b",   # BAC red, from the logo and baccredomatic.com
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "BAC", "bg": "#ffffff",

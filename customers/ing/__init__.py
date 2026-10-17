@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["ING", "ING-DiBa", "ING Bank Śląski", "ING Belgium"],
     "country": "Netherlands",
     "region": "Europe",
+    "type": "bank",
     "accent": "#ff6200",   # ING orange, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "ING", "bg": "#ffffff", "source": "https://www.ing.com/"},

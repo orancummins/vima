@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Adyen", "Adyen Uplift", "Adyen Issuing", "Adyen Capital", "Talon.One", "Orb"],
     "country": "Netherlands",
     "region": "Global",
+    "type": "payments",
     "accent": "#0abf53",   # Adyen green, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Adyen", "bg": "#ffffff", "source": "https://www.adyen.com/"},

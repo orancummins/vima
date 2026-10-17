@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Slovenská sporiteľňa", "George", "SPACE", "George Moneyback", "Dobrá karta", "Prvá stavebná sporiteľňa"],
     "country": "Slovakia",
     "region": "Europe",
+    "type": "bank",
     "accent": "#2870ed",   # Erste blue, the colour behind the white logo on slsp.sk
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Slovenská sporiteľňa", "bg": "#2870ed",

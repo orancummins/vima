@@ -24,6 +24,7 @@ CUSTOMER = {
     "brands": ["Citizens", "Citizens Private Bank", "Citizens Pay", "Citizens JMP"],
     "country": "United States",
     "region": "Americas",
+    "type": "bank",
     "accent": "#008555",   # Citizens green, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Citizens", "bg": "#ffffff", "source": "https://www.citizensbank.com/"},

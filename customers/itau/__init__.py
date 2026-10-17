@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["Itaú", "Itaú Personnalité", "Itaú BBA", "Rede", "Itaucard"],
     "country": "Brazil",
     "region": "Latin America",
+    "type": "bank",
     "accent": "#ff6200",   # Itaú orange, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Itaú", "bg": "#ffffff", "source": "static/logos/financial-logos-500/01-financial-institutions/ita-unibanco.png"},

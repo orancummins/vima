@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Isracard", "American Express Israel", "FLY CARD", "LifeStyle", "Superfly", "Isracard Finance"],
     "country": "Israel",
     "region": "EEMEA",
+    "type": "issuer",
     "accent": "#101820",   # Isracard ink, from the logo and the website's theme (the 2023 logo is monochrome)
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Isracard", "bg": "#ffffff", "source": "https://www.isracard.co.il/"},

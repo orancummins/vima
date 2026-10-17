@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Krungsri", "Krungsri Consumer", "Central The 1", "First Choice", "Lotus's Money", "Krungsri Auto", "Ngern Tid Lor"],
     "country": "Thailand",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#ffd400",   # Krungsri yellow, from the logo's symbol
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Krungsri", "bg": "#6f5f5e",

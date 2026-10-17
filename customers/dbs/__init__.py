@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["DBS", "POSB", "digibank", "PayLah!", "DBS IDEAL", "DBS Treasures", "DBS Digital Exchange"],
     "country": "Singapore",
     "region": "Asia-Pacific",
+    "type": "bank",
     "accent": "#ff3333",   # DBS red, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "DBS", "bg": "#ffffff", "source": "https://www.dbs.com/"},

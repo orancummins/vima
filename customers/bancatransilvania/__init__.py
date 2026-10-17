@@ -24,6 +24,7 @@ CUSTOMER = {
                "BT Asset Management", "BT Capital Partners", "BT Pensii"],
     "country": "Romania",
     "region": "Europe",
+    "type": "bank",
     "accent": "#fec214",   # BT yellow, from the logo's shield and the brand
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Banca Transilvania", "bg": "#ffffff",

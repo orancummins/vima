@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Fiserv", "Clover", "Carat", "STAR", "Accel"],
     "country": "United States",
     "region": "Americas",
+    "type": "payments",
     "accent": "#ff6600",   # Fiserv orange, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Fiserv", "bg": "#ffffff", "source": "https://www.fiserv.com/"},

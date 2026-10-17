@@ -41,7 +41,7 @@ DEFAULT_DIV = 'ucg'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F6F2F3", "panel-2": "#EFE8EA", "ink": "#1E0E10", "ink-2": "#422D30",
-    "muted": "#917A7A", "faint": "#A29797", "line": "#DFD6D6", "line-2": "#D0C6C6", "focus": "#E31818",
+    "muted": "#796464", "faint": "#8F8181", "line": "#DFD6D6", "line-2": "#D0C6C6", "focus": "#E31818",
     "accent": "#E31818", "link": "#9C1910", "gold": "#E31818", "gold-deep": "#7D140D", "gold-ink": "#9C1910",
     "l1": "#4E0C08", "l2": "#7D140D", "l3": "#B73125", "l4": "#BD5E61", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#8F2720", "l2f": "#E31818", "l3f": "#CE5956", "l4f": "#D09FA4",

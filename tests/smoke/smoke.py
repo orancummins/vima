@@ -152,9 +152,21 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
                     "bog", "emiratesnbd", "garanti", "isracard", "qnb", "nbk", "credimax",
                     "bankmuscat", "arabbank", "bankaudi", "idb", "nbe", "attijariwafa", "bdl",
                     "biat", "standardbank", "accessbank", "equitybank", "gcb", "crdb", "mcb",
-                    "bai"}
+                    "bai",
+                    "usbank", "truist", "pnc", "tdbank", "rbc", "scotiabank", "cibc",
+                    "navyfederal", "usaa", "breadfinancial", "credicorp", "banorte", "block",
+                    "apple", "google", "samsung", "klarna", "affirm", "marqeta", "shopify",
+                    "wise", "chime", "mercadopago", "westernunion", "walmart", "uber",
+                    "booking", "antgroup", "tencent", "creditagricole", "socgen", "intesa",
+                    "caixabank", "bbva", "commerzbank", "rabobank", "stanchart", "mufg", "smcc",
+                    "kbcard", "icici", "sbicard", "ocbc", "uob", "anz", "bankofchina",
+                    "alrajhi", "fab", "firstrand", "kaspi"}
         assert expected <= ids, f"Customers missing from the Customers tab: {sorted(expected - ids)}"
         assert 'data-customer-open="snb"' in resp.text, "No card opens Saudi National Bank."
+        listed = json.loads(m.group(1))
+        unplaced = sorted(c["id"] for c in listed if not (c.get("geo") or {}).get("macro") or not c.get("type_label"))
+        assert not unplaced, f"Customers without a kind or a region for the filters: {unplaced}"
+        assert 'id="cust-tools"' in resp.text and 'id="cust-wall"' in resp.text, "No filter bar or logo wall."
         no_logo = sorted(c["id"] for c in json.loads(m.group(1)) if not c.get("logos"))
         assert not no_logo, f"Customers without a logo on their card: {no_logo}"
         logo = json.loads(m.group(1))[0]["logos"][0]["url"]

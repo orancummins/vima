@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Arab Bank", "Reflect", "Arabi Mobile", "Acabes", "Omnify", "Arab Bank Switzerland"],
     "country": "Jordan",
     "region": "EEMEA",
+    "type": "bank",
     "accent": "#1501ff",   # Arab Bank blue, the deep end of the logo's circles
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Arab Bank", "bg": "#ffffff", "source": "https://www.arabbank.com/Mvc/Content/images/logo.svg"},

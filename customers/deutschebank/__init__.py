@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Deutsche Bank", "Postbank", "DWS", "BHW", "Vert"],
     "country": "Germany",
     "region": "Europe",
+    "type": "bank",
     "accent": "#0018a8",   # Deutsche Bank blue, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.png", "alt": "Deutsche Bank", "bg": "#ffffff", "source": "static/logos/financial-logos-500/01-financial-institutions/deutsche-bank.png"},

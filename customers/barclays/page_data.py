@@ -41,7 +41,7 @@ DEFAULT_DIV = 'barclays'
 
 PALETTE_LIGHT = {
     "ground": "#FFFFFF", "panel": "#F2F6F6", "panel-2": "#E7F0F0", "ink": "#0C1C20", "ink-2": "#294043",
-    "muted": "#71868E", "faint": "#909B9F", "line": "#D4DCDF", "line-2": "#C2CCCF", "focus": "#009FDB",
+    "muted": "#5D6E74", "faint": "#7D8A8E", "line": "#D4DCDF", "line-2": "#C2CCCF", "focus": "#009FDB",
     "accent": "#009FDB", "link": "#006EA5", "gold": "#009FDB", "gold-deep": "#005985", "gold-ink": "#006EA5",
     "l1": "#003853", "l2": "#005985", "l3": "#1382BE", "l4": "#4BA8C6", "l5": "#1F2937",
     "lu": "#6B7280", "l1f": "#126995", "l2f": "#00AEEF", "l3f": "#3FADDB", "l4f": "#95C9D4",

@@ -22,6 +22,7 @@ CUSTOMER = {
     "brands": ["Danske Bank", "Realkredit Danmark", "Danica", "Danske Invest", "Nordania", "MobilePay (associate)"],
     "country": "Denmark",
     "region": "Europe",
+    "type": "bank",
     "accent": "#002346",   # Danske Bank navy, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "Danske Bank", "bg": "#ffffff",

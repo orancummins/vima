@@ -23,6 +23,7 @@ CUSTOMER = {
     "brands": ["PrivatBank", "Privat24", "LiqPay", "PrivatMoney", "Pryvit"],
     "country": "Ukraine",
     "region": "Europe",
+    "type": "bank",
     "accent": "#4ea524",   # PrivatBank green, from the logo
     "logos": (   # file in this folder, alt text, the chip behind it, where it came from
         {"file": "logo.svg", "alt": "PrivatBank", "bg": "#ffffff", "source": "https://privatbank.ua/en"},
