@@ -1,0 +1,97 @@
+/* Garanti BBVA inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Garanti BBVA's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0c0e0c; --panel: #131814; --panel-2: #1c221d;
+  --ink: #f3f6f3; --ink-2: #d8ded8; --muted: #a8b1aa; --faint: #878f89;
+  --focus: #5aa467; --accent: #5aa467; --link: #a3cba7;
+  --gold: #5aa467; --gold-deep: #7ebc88; --gold-ink: #a3cba7;
+  --gold-grad: linear-gradient(100deg, #217536 0%, #6daf79 55%, #cbe6ce 100%);
+  --l1f: #2b6d3f; --l2f: #217536; --l3f: #408f55; --l4f: #84b48c; --l5f: #939b95; --luf: #747d76;
+  --l1t: #49824f; --l2t: #498352; --l3t: #438154; --l4t: #47824f; --l5t: #e5e8e6;
+  --l5: #d8ded8; --lu: #878f89;
+  --wash-a: rgba(33, 117, 54, 0.14); --wash-b: rgba(132, 180, 140, 0.05);
+  --mc-plate: #101411; --mc-plate-deep: #060706; --mc-pad: #141a15;
+  --mc-utok-hi: #1e251f; --mc-utok: #0a0f0a; --mc-uico: #b8d8bc;
+  --mc-grid: rgba(33, 117, 54, 0.38); --mc-grid-strong: rgba(109, 175, 121, 0.6);
+  --mc-hg: rgb(64, 143, 85); --mc-gop: 0.22;
+  --mc-dot: rgb(163, 203, 167); --mc-dot-glow: rgb(33, 117, 54); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(33, 117, 54, 0.2); --mc-halo-b: rgba(64, 143, 85, 0.1);
+  --mc-globe-a: rgba(33, 117, 54, 0.12); --mc-globe-b: rgba(64, 143, 85, 0.06);
+  --mc-globe-c: rgba(64, 143, 85, 0.03); --mc-globe-d: rgba(64, 143, 85, 0.1);
+  --mc-cut-a: rgba(33, 117, 54, 0.32); --mc-cut-b: rgba(64, 143, 85, 0.12);
+  --mc-globe-hl: #a3cba7; --mc-globe-rim: #408f55; --mc-halo: #217536;
+  --mc-underglow: rgba(33, 117, 54, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f5f2; --panel-2: #e7ece7;
+  --focus: #217536; --accent: #217536; --link: #18572c;
+  --gold: #217536; --gold-deep: #154925; --gold-ink: #18572c;
+  --gold-grad: linear-gradient(100deg, #154925 0%, #217536 55%, #84b48c 100%);
+  --l1f: #1f512f; --l2f: #217536; --l3f: #408f55; --l4f: #84b48c; --l5f: #515c53; --luf: #9ca3af;
+  --l1t: #0e3219; --l2t: #154925; --l3t: #246239; --l4t: #356641; --l5t: #222d23;
+  --wash-a: rgba(33, 117, 54, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaeeea; --mc-utok: #e7ece7; --mc-uico: #222d23;
+  --mc-grid: rgba(21, 73, 37, 0.24); --mc-grid-strong: rgba(21, 73, 37, 0.42);
+  --mc-hg: #154925; --mc-gop: 0.3;
+  --mc-dot: #154925; --mc-dot-glow: #217536; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(33, 117, 54, 0.08); --mc-halo-b: rgba(33, 117, 54, 0.03);
+  --mc-cut-a: rgba(21, 73, 37, 0.12); --mc-cut-b: rgba(21, 73, 37, 0.05);
+  --mc-globe-rim: rgba(21, 73, 37, 0.3); --mc-halo: rgba(33, 117, 54, 0.22);
+  --mc-underglow: rgba(21, 73, 37, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(33, 117, 54, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #080908 0%, #090e0a 60%, #08110a 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f7f8f7 0%, #f0f4f0 60%, #e6efe7 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(109, 175, 121, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(21, 73, 37, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(33, 117, 54, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #101411 0%, #0b0d0b 100%);
+  border-color: rgba(109, 175, 121, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #111812), #070907 75%);
+}
+
+/* The Garanti BBVA / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(109, 175, 121, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

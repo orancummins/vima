@@ -1,0 +1,97 @@
+/* Danske Bank inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Danske Bank's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0a0c0e; --panel: #0E1315; --panel-2: #13181b;
+  --ink: #f2f6f7; --ink-2: #d0dadd; --muted: #909aa5; --faint: #6a7178;
+  --focus: #387eb2; --accent: #387eb2; --link: #7cb3d2;
+  --gold: #387eb2; --gold-deep: #4393cb; --gold-ink: #7cb3d2;
+  --gold-grad: linear-gradient(100deg, #002346 0%, #387eb2 55%, #b8dcee 100%);
+  --l1f: #082140; --l2f: #002346; --l3f: #164375; --l4f: #5390ba; --l5f: #778088; --luf: #545a60;
+  --l1t: #377ba1; --l2t: #377baa; --l3t: #3577c2; --l4t: #367da7; --l5t: #e1e4e8;
+  --l5: #d0dadd; --lu: #6a7178;
+  --wash-a: rgba(0, 35, 70, 0.14); --wash-b: rgba(83, 144, 186, 0.05);
+  --mc-plate: #0c1012; --mc-plate-deep: #050708; --mc-pad: #0e1317;
+  --mc-utok-hi: #141a1d; --mc-utok: #070c0f; --mc-uico: #9cc6df;
+  --mc-grid: rgba(0, 35, 70, 0.38); --mc-grid-strong: rgba(56, 126, 178, 0.6);
+  --mc-hg: rgb(22, 67, 117); --mc-gop: 0.22;
+  --mc-dot: rgb(124, 179, 210); --mc-dot-glow: rgb(0, 35, 70); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 35, 70, 0.2); --mc-halo-b: rgba(22, 67, 117, 0.1);
+  --mc-globe-a: rgba(0, 35, 70, 0.12); --mc-globe-b: rgba(22, 67, 117, 0.06);
+  --mc-globe-c: rgba(22, 67, 117, 0.03); --mc-globe-d: rgba(22, 67, 117, 0.1);
+  --mc-cut-a: rgba(0, 35, 70, 0.32); --mc-cut-b: rgba(22, 67, 117, 0.12);
+  --mc-globe-hl: #7cb3d2; --mc-globe-rim: #164375; --mc-halo: #002346;
+  --mc-underglow: rgba(0, 35, 70, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f1f5f6; --panel-2: #e2ebed;
+  --focus: #002346; --accent: #002346; --link: #001c3f;
+  --gold: #002346; --gold-deep: #001a3a; --gold-ink: #001c3f;
+  --gold-grad: linear-gradient(100deg, #001a3a 0%, #002346 55%, #5390ba 100%);
+  --l1f: #071c38; --l2f: #002346; --l3f: #164375; --l4f: #5390ba; --l5f: #2b3036; --luf: #9ca3af;
+  --l1t: #00152f; --l2t: #001a3a; --l3t: #061d3c; --l4t: #11273c; --l5t: #141d21;
+  --wash-a: rgba(0, 35, 70, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e7edef; --mc-utok: #e2ebed; --mc-uico: #141d21;
+  --mc-grid: rgba(0, 26, 58, 0.24); --mc-grid-strong: rgba(0, 26, 58, 0.42);
+  --mc-hg: #001a3a; --mc-gop: 0.3;
+  --mc-dot: #001a3a; --mc-dot-glow: #002346; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 35, 70, 0.08); --mc-halo-b: rgba(0, 35, 70, 0.03);
+  --mc-cut-a: rgba(0, 26, 58, 0.12); --mc-cut-b: rgba(0, 26, 58, 0.05);
+  --mc-globe-rim: rgba(0, 26, 58, 0.3); --mc-halo: rgba(0, 35, 70, 0.22);
+  --mc-underglow: rgba(0, 26, 58, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 35, 70, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #070809 0%, #060b0f 60%, #040c12 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f8f9 0%, #edf4f6 60%, #e0ecf1 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(56, 126, 178, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 26, 58, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 35, 70, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0c1012 0%, #090b0c 100%);
+  border-color: rgba(56, 126, 178, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0c1216), #060809 75%);
+}
+
+/* The Danske Bank / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(56, 126, 178, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

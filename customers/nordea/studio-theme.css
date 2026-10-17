@@ -1,0 +1,97 @@
+/* Nordea inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Nordea's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0b0c10; --panel: #12131B; --panel-2: #1a1c26;
+  --ink: #f2f3f7; --ink-2: #d6d9e1; --muted: #a6a6b7; --faint: #878796;
+  --focus: #5860cb; --accent: #5860cb; --link: #96a0dc;
+  --gold: #5860cb; --gold-deep: #6a73d6; --gold-ink: #96a0dc;
+  --gold-grad: linear-gradient(100deg, #0000a0 0%, #5860cb 55%, #c2c9f1 100%);
+  --l1f: #181290; --l2f: #0000a0; --l3f: #2622b5; --l4f: #767ec8; --l5f: #9393a1; --luf: #747484;
+  --l1t: #5d6cc9; --l2t: #626dcb; --l3t: #6b68d5; --l4t: #616ecc; --l5t: #e4e4ea;
+  --l5: #d6d9e1; --lu: #878796;
+  --wash-a: rgba(0, 0, 160, 0.14); --wash-b: rgba(118, 126, 200, 0.05);
+  --mc-plate: #0f0f16; --mc-plate-deep: #050608; --mc-pad: #12131d;
+  --mc-utok-hi: #1c1f2a; --mc-utok: #080a11; --mc-uico: #aeb5e5;
+  --mc-grid: rgba(0, 0, 160, 0.38); --mc-grid-strong: rgba(88, 96, 203, 0.6);
+  --mc-hg: rgb(38, 34, 181); --mc-gop: 0.22;
+  --mc-dot: rgb(150, 160, 220); --mc-dot-glow: rgb(0, 0, 160); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 0, 160, 0.2); --mc-halo-b: rgba(38, 34, 181, 0.1);
+  --mc-globe-a: rgba(0, 0, 160, 0.12); --mc-globe-b: rgba(38, 34, 181, 0.06);
+  --mc-globe-c: rgba(38, 34, 181, 0.03); --mc-globe-d: rgba(38, 34, 181, 0.1);
+  --mc-cut-a: rgba(0, 0, 160, 0.32); --mc-cut-b: rgba(38, 34, 181, 0.12);
+  --mc-globe-hl: #96a0dc; --mc-globe-rim: #2622b5; --mc-halo: #0000a0;
+  --mc-underglow: rgba(0, 0, 160, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f1f2f6; --panel-2: #e5e7ee;
+  --focus: #0000a0; --accent: #0000a0; --link: #070075;
+  --gold: #0000a0; --gold-deep: #060062; --gold-ink: #070075;
+  --gold-grad: linear-gradient(100deg, #060062 0%, #0000a0 55%, #767ec8 100%);
+  --l1f: #120d6a; --l2f: #0000a0; --l3f: #2622b5; --l4f: #767ec8; --l5f: #505065; --luf: #9ca3af;
+  --l1t: #040042; --l2t: #060062; --l3t: #160d81; --l4t: #242681; --l5t: #1f2233;
+  --wash-a: rgba(0, 0, 160, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e8ebf0; --mc-utok: #e5e7ee; --mc-uico: #1f2233;
+  --mc-grid: rgba(6, 0, 98, 0.24); --mc-grid-strong: rgba(6, 0, 98, 0.42);
+  --mc-hg: #060062; --mc-gop: 0.3;
+  --mc-dot: #060062; --mc-dot-glow: #0000a0; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 0, 160, 0.08); --mc-halo-b: rgba(0, 0, 160, 0.03);
+  --mc-cut-a: rgba(6, 0, 98, 0.12); --mc-cut-b: rgba(6, 0, 98, 0.05);
+  --mc-globe-rim: rgba(6, 0, 98, 0.3); --mc-halo: rgba(0, 0, 160, 0.22);
+  --mc-underglow: rgba(6, 0, 98, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 0, 160, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #07070a 0%, #070811 60%, #040515 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f7f9 0%, #eef1f6 60%, #e3e5f2 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(88, 96, 203, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(6, 0, 98, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 0, 160, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0f0f16 0%, #0a0a0d 100%);
+  border-color: rgba(88, 96, 203, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0f101c), #06070a 75%);
+}
+
+/* The Nordea / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(88, 96, 203, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

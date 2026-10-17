@@ -1,0 +1,97 @@
+/* CrediMax inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   CrediMax's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0b0b0d; --panel: #101114; --panel-2: #15161a;
+  --ink: #f3f4f6; --ink-2: #d3d5da; --muted: #9596a1; --faint: #6e6f77;
+  --focus: #535f9a; --accent: #535f9a; --link: #8f9bc1;
+  --gold: #535f9a; --gold-deep: #6270af; --gold-ink: #8f9bc1;
+  --gold-grad: linear-gradient(100deg, #10143b 0%, #535f9a 55%, #c4cce3 100%);
+  --l1f: #151738; --l2f: #10143b; --l3f: #2c3064; --l4f: #6a75a5; --l5f: #7c7d86; --luf: #59595f;
+  --l1t: #6475a9; --l2t: #6673ab; --l3t: #6a6eb3; --l4t: #6674ab; --l5t: #e3e3e6;
+  --l5: #d3d5da; --lu: #6e6f77;
+  --wash-a: rgba(16, 20, 59, 0.14); --wash-b: rgba(106, 117, 165, 0.05);
+  --mc-plate: #0e0e11; --mc-plate-deep: #050607; --mc-pad: #101115;
+  --mc-utok-hi: #16181c; --mc-utok: #090a0d; --mc-uico: #abb3d1;
+  --mc-grid: rgba(16, 20, 59, 0.38); --mc-grid-strong: rgba(83, 95, 154, 0.6);
+  --mc-hg: rgb(44, 48, 100); --mc-gop: 0.22;
+  --mc-dot: rgb(143, 155, 193); --mc-dot-glow: rgb(16, 20, 59); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(16, 20, 59, 0.2); --mc-halo-b: rgba(44, 48, 100, 0.1);
+  --mc-globe-a: rgba(16, 20, 59, 0.12); --mc-globe-b: rgba(44, 48, 100, 0.06);
+  --mc-globe-c: rgba(44, 48, 100, 0.03); --mc-globe-d: rgba(44, 48, 100, 0.1);
+  --mc-cut-a: rgba(16, 20, 59, 0.32); --mc-cut-b: rgba(44, 48, 100, 0.12);
+  --mc-globe-hl: #8f9bc1; --mc-globe-rim: #2c3064; --mc-halo: #10143b;
+  --mc-underglow: rgba(16, 20, 59, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f3f5; --panel-2: #e5e7eb;
+  --focus: #10143b; --accent: #10143b; --link: #0e0f34;
+  --gold: #10143b; --gold-deep: #0d0e30; --gold-ink: #0e0f34;
+  --gold-grad: linear-gradient(100deg, #0d0e30 0%, #10143b 55%, #6a75a5 100%);
+  --l1f: #121330; --l2f: #10143b; --l3f: #2c3064; --l4f: #6a75a5; --l5f: #303036; --luf: #9ca3af;
+  --l1t: #0a0b26; --l2t: #0d0e30; --l3t: #131333; --l4t: #1c1f36; --l5t: #181a1f;
+  --wash-a: rgba(16, 20, 59, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e9ebed; --mc-utok: #e5e7eb; --mc-uico: #181a1f;
+  --mc-grid: rgba(13, 14, 48, 0.24); --mc-grid-strong: rgba(13, 14, 48, 0.42);
+  --mc-hg: #0d0e30; --mc-gop: 0.3;
+  --mc-dot: #0d0e30; --mc-dot-glow: #10143b; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(16, 20, 59, 0.08); --mc-halo-b: rgba(16, 20, 59, 0.03);
+  --mc-cut-a: rgba(13, 14, 48, 0.12); --mc-cut-b: rgba(13, 14, 48, 0.05);
+  --mc-globe-rim: rgba(13, 14, 48, 0.3); --mc-halo: rgba(16, 20, 59, 0.22);
+  --mc-underglow: rgba(13, 14, 48, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(16, 20, 59, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #070709 0%, #08090d 60%, #07080f 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f7f8 0%, #eff1f4 60%, #e4e7ee 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(83, 95, 154, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(13, 14, 48, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(16, 20, 59, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0e0e11 0%, #0a0a0b 100%);
+  border-color: rgba(83, 95, 154, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0e0f14), #060709 75%);
+}
+
+/* The CrediMax / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(83, 95, 154, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

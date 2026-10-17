@@ -1,0 +1,97 @@
+/* Halyk inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Halyk's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0b0f0e; --panel: #121916; --panel-2: #192420;
+  --ink: #f2f7f5; --ink-2: #d5e0db; --muted: #a4b4b0; --faint: #82918d;
+  --focus: #39a484; --accent: #39a484; --link: #95d7bf;
+  --gold: #39a484; --gold-deep: #68d0af; --gold-ink: #95d7bf;
+  --gold-grad: linear-gradient(100deg, #068c6e 0%, #56c4a3 55%, #c2eede 100%);
+  --l1f: #157f6d; --l2f: #068c6e; --l3f: #26a58c; --l4f: #74c2a9; --l5f: #8f9c99; --luf: #6f7e7b;
+  --l1t: #318365; --l2t: #2f8267; --l3t: #298372; --l4t: #318366; --l5t: #e4e9e8;
+  --l5: #d5e0db; --lu: #82918d;
+  --wash-a: rgba(6, 140, 110, 0.14); --wash-b: rgba(116, 194, 169, 0.05);
+  --mc-plate: #0f1513; --mc-plate-deep: #050806; --mc-pad: #121b19;
+  --mc-utok-hi: #1c2723; --mc-utok: #08100d; --mc-uico: #aee1cf;
+  --mc-grid: rgba(6, 140, 110, 0.38); --mc-grid-strong: rgba(86, 196, 163, 0.6);
+  --mc-hg: rgb(38, 165, 140); --mc-gop: 0.22;
+  --mc-dot: rgb(149, 215, 191); --mc-dot-glow: rgb(6, 140, 110); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(6, 140, 110, 0.2); --mc-halo-b: rgba(38, 165, 140, 0.1);
+  --mc-globe-a: rgba(6, 140, 110, 0.12); --mc-globe-b: rgba(38, 165, 140, 0.06);
+  --mc-globe-c: rgba(38, 165, 140, 0.03); --mc-globe-d: rgba(38, 165, 140, 0.1);
+  --mc-cut-a: rgba(6, 140, 110, 0.32); --mc-cut-b: rgba(38, 165, 140, 0.12);
+  --mc-globe-hl: #95d7bf; --mc-globe-rim: #26a58c; --mc-halo: #068c6e;
+  --mc-underglow: rgba(6, 140, 110, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f1f6f4; --panel-2: #e5eee9;
+  --focus: #068c6e; --accent: #068c6e; --link: #046858;
+  --gold: #068c6e; --gold-deep: #04584a; --gold-ink: #046858;
+  --gold-grad: linear-gradient(100deg, #04584a 0%, #068c6e 55%, #74c2a9 100%);
+  --l1f: #0f5f52; --l2f: #068c6e; --l3f: #26a58c; --l4f: #74c2a9; --l5f: #4b5d59; --luf: #9ca3af;
+  --l1t: #033d33; --l2t: #04584a; --l3t: #107264; --l4t: #257360; --l5t: #1e2f29;
+  --wash-a: rgba(6, 140, 110, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e9f0ec; --mc-utok: #e5eee9; --mc-uico: #1e2f29;
+  --mc-grid: rgba(4, 88, 74, 0.24); --mc-grid-strong: rgba(4, 88, 74, 0.42);
+  --mc-hg: #04584a; --mc-gop: 0.3;
+  --mc-dot: #04584a; --mc-dot-glow: #068c6e; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(6, 140, 110, 0.08); --mc-halo-b: rgba(6, 140, 110, 0.03);
+  --mc-cut-a: rgba(4, 88, 74, 0.12); --mc-cut-b: rgba(4, 88, 74, 0.05);
+  --mc-globe-rim: rgba(4, 88, 74, 0.3); --mc-halo: rgba(6, 140, 110, 0.22);
+  --mc-underglow: rgba(4, 88, 74, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(6, 140, 110, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #070a09 0%, #07100d 60%, #051410 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f9f7 0%, #eef6f2 60%, #e3f1ec 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(86, 196, 163, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(4, 88, 74, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(6, 140, 110, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0f1513 0%, #0a0d0c 100%);
+  border-color: rgba(86, 196, 163, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0f1a17), #060a08 75%);
+}
+
+/* The Halyk / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(86, 196, 163, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

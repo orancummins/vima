@@ -1,0 +1,97 @@
+/* Banca Intesa inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Banca Intesa's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0b0e0c; --panel: #101712; --panel-2: #161f19;
+  --ink: #f2f7f3; --ink-2: #d2dfd5; --muted: #98aca2; --faint: #74857c;
+  --focus: #33a564; --accent: #33a564; --link: #86d6a3;
+  --gold: #33a564; --gold-deep: #52cf86; --gold-ink: #86d6a3;
+  --gold-grad: linear-gradient(100deg, #006935 0%, #3ec377 55%, #bcefce 100%);
+  --l1f: #0c5f3a; --l2f: #006935; --l3f: #1b8e58; --l4f: #60bf87; --l5f: #82928a; --luf: #606e67;
+  --l1t: #2d864e; --l2t: #2b8450; --l3t: #258659; --l4t: #2b834c; --l5t: #e2e8e5;
+  --l5: #d2dfd5; --lu: #74857c;
+  --wash-a: rgba(0, 105, 53, 0.14); --wash-b: rgba(96, 191, 135, 0.05);
+  --mc-plate: #0d1410; --mc-plate-deep: #050805; --mc-pad: #101914;
+  --mc-utok-hi: #17221b; --mc-utok: #080f0a; --mc-uico: #a3e1ba;
+  --mc-grid: rgba(0, 105, 53, 0.38); --mc-grid-strong: rgba(62, 195, 119, 0.6);
+  --mc-hg: rgb(27, 142, 88); --mc-gop: 0.22;
+  --mc-dot: rgb(134, 214, 163); --mc-dot-glow: rgb(0, 105, 53); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 105, 53, 0.2); --mc-halo-b: rgba(27, 142, 88, 0.1);
+  --mc-globe-a: rgba(0, 105, 53, 0.12); --mc-globe-b: rgba(27, 142, 88, 0.06);
+  --mc-globe-c: rgba(27, 142, 88, 0.03); --mc-globe-d: rgba(27, 142, 88, 0.1);
+  --mc-cut-a: rgba(0, 105, 53, 0.32); --mc-cut-b: rgba(27, 142, 88, 0.12);
+  --mc-globe-hl: #86d6a3; --mc-globe-rim: #1b8e58; --mc-halo: #006935;
+  --mc-underglow: rgba(0, 105, 53, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f1f6f2; --panel-2: #e3eee6;
+  --focus: #006935; --accent: #006935; --link: #00542f;
+  --gold: #006935; --gold-deep: #004a29; --gold-ink: #00542f;
+  --gold-grad: linear-gradient(100deg, #004a29 0%, #006935 55%, #60bf87 100%);
+  --l1f: #094b2f; --l2f: #006935; --l3f: #1b8e58; --l4f: #60bf87; --l5f: #3a4841; --luf: #9ca3af;
+  --l1t: #00371e; --l2t: #004a29; --l3t: #095736; --l4t: #195737; --l5t: #18281e;
+  --wash-a: rgba(0, 105, 53, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e7f0e9; --mc-utok: #e3eee6; --mc-uico: #18281e;
+  --mc-grid: rgba(0, 74, 41, 0.24); --mc-grid-strong: rgba(0, 74, 41, 0.42);
+  --mc-hg: #004a29; --mc-gop: 0.3;
+  --mc-dot: #004a29; --mc-dot-glow: #006935; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 105, 53, 0.08); --mc-halo-b: rgba(0, 105, 53, 0.03);
+  --mc-cut-a: rgba(0, 74, 41, 0.12); --mc-cut-b: rgba(0, 74, 41, 0.05);
+  --mc-globe-rim: rgba(0, 74, 41, 0.3); --mc-halo: rgba(0, 105, 53, 0.22);
+  --mc-underglow: rgba(0, 74, 41, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 105, 53, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #070a08 0%, #070f0a 60%, #04130b 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f9f6 0%, #eef6ef 60%, #e1f2e7 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(62, 195, 119, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 74, 41, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 105, 53, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0d1410 0%, #0a0c0b 100%);
+  border-color: rgba(62, 195, 119, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0d1812), #060a07 75%);
+}
+
+/* The Banca Intesa / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(62, 195, 119, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

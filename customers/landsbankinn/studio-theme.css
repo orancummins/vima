@@ -1,0 +1,97 @@
+/* Landsbankinn inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Landsbankinn's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0c0d0e; --panel: #131617; --panel-2: #1b1e21;
+  --ink: #f3f5f6; --ink-2: #d7dcdd; --muted: #a5aaae; --faint: #83878b;
+  --focus: #6a8eab; --accent: #6a8eab; --link: #a1bac8;
+  --gold: #6a8eab; --gold-deep: #7b9eb9; --gold-ink: #a1bac8;
+  --gold-grad: linear-gradient(100deg, #20446a 0%, #6a8eab 55%, #cbdbe5 100%);
+  --l1f: #294263; --l2f: #20446a; --l3f: #3e6086; --l4f: #819db0; --l5f: #8f9397; --luf: #707478;
+  --l1t: #547b90; --l2t: #557b95; --l3t: #5578a1; --l4t: #537992; --l5t: #e4e6e8;
+  --l5: #d7dcdd; --lu: #83878b;
+  --wash-a: rgba(32, 68, 106, 0.14); --wash-b: rgba(129, 157, 176, 0.05);
+  --mc-plate: #101213; --mc-plate-deep: #060707; --mc-pad: #131619;
+  --mc-utok-hi: #1d2124; --mc-utok: #0a0d0e; --mc-uico: #b7cad6;
+  --mc-grid: rgba(32, 68, 106, 0.38); --mc-grid-strong: rgba(106, 142, 171, 0.6);
+  --mc-hg: rgb(62, 96, 134); --mc-gop: 0.22;
+  --mc-dot: rgb(161, 186, 200); --mc-dot-glow: rgb(32, 68, 106); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(32, 68, 106, 0.2); --mc-halo-b: rgba(62, 96, 134, 0.1);
+  --mc-globe-a: rgba(32, 68, 106, 0.12); --mc-globe-b: rgba(62, 96, 134, 0.06);
+  --mc-globe-c: rgba(62, 96, 134, 0.03); --mc-globe-d: rgba(62, 96, 134, 0.1);
+  --mc-cut-a: rgba(32, 68, 106, 0.32); --mc-cut-b: rgba(62, 96, 134, 0.12);
+  --mc-globe-hl: #a1bac8; --mc-globe-rim: #3e6086; --mc-halo: #20446a;
+  --mc-underglow: rgba(32, 68, 106, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f4f5; --panel-2: #e6eaec;
+  --focus: #20446a; --accent: #20446a; --link: #183050;
+  --gold: #20446a; --gold-deep: #142944; --gold-ink: #183050;
+  --gold-grad: linear-gradient(100deg, #142944 0%, #20446a 55%, #819db0 100%);
+  --l1f: #1e314b; --l2f: #20446a; --l3f: #3e6086; --l4f: #819db0; --l5f: #4b5055; --luf: #9ca3af;
+  --l1t: #0e1d2f; --l2t: #142944; --l3t: #233959; --l4t: #32485e; --l5t: #21272a;
+  --wash-a: rgba(32, 68, 106, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaedee; --mc-utok: #e6eaec; --mc-uico: #21272a;
+  --mc-grid: rgba(20, 41, 68, 0.24); --mc-grid-strong: rgba(20, 41, 68, 0.42);
+  --mc-hg: #142944; --mc-gop: 0.3;
+  --mc-dot: #142944; --mc-dot-glow: #20446a; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(32, 68, 106, 0.08); --mc-halo-b: rgba(32, 68, 106, 0.03);
+  --mc-cut-a: rgba(20, 41, 68, 0.12); --mc-cut-b: rgba(20, 41, 68, 0.05);
+  --mc-globe-rim: rgba(20, 41, 68, 0.3); --mc-halo: rgba(32, 68, 106, 0.22);
+  --mc-underglow: rgba(20, 41, 68, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(32, 68, 106, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #080909 0%, #090c0e 60%, #080c10 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f7f8f8 0%, #f0f3f4 60%, #e6ebee 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(106, 142, 171, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(20, 41, 68, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(32, 68, 106, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #101213 0%, #0b0c0c 100%);
+  border-color: rgba(106, 142, 171, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #111517), #070809 75%);
+}
+
+/* The Landsbankinn / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(106, 142, 171, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

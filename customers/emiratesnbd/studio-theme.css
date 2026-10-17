@@ -1,0 +1,97 @@
+/* Emirates NBD inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Emirates NBD's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0a0c0d; --panel: #0F1315; --panel-2: #14181b;
+  --ink: #f2f5f6; --ink-2: #d1d9dc; --muted: #939ba4; --faint: #6d737a;
+  --focus: #447aab; --accent: #447aab; --link: #86afcc;
+  --gold: #447aab; --gold-deep: #538ec0; --gold-ink: #86afcc;
+  --gold-grad: linear-gradient(100deg, #072447 0%, #447aab 55%, #bed9ea 100%);
+  --l1f: #0e2342; --l2f: #072447; --l3f: #204372; --l4f: #5f8db2; --l5f: #7b8189; --luf: #585d62;
+  --l1t: #447ca2; --l2t: #447aa6; --l3t: #4476bb; --l4t: #427aa1; --l5t: #e2e4e7;
+  --l5: #d1d9dc; --lu: #6d737a;
+  --wash-a: rgba(7, 36, 71, 0.14); --wash-b: rgba(95, 141, 178, 0.05);
+  --mc-plate: #0d1012; --mc-plate-deep: #050707; --mc-pad: #0f1316;
+  --mc-utok-hi: #151a1d; --mc-utok: #080c0e; --mc-uico: #a3c3d9;
+  --mc-grid: rgba(7, 36, 71, 0.38); --mc-grid-strong: rgba(68, 122, 171, 0.6);
+  --mc-hg: rgb(32, 67, 114); --mc-gop: 0.22;
+  --mc-dot: rgb(134, 175, 204); --mc-dot-glow: rgb(7, 36, 71); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(7, 36, 71, 0.2); --mc-halo-b: rgba(32, 67, 114, 0.1);
+  --mc-globe-a: rgba(7, 36, 71, 0.12); --mc-globe-b: rgba(32, 67, 114, 0.06);
+  --mc-globe-c: rgba(32, 67, 114, 0.03); --mc-globe-d: rgba(32, 67, 114, 0.1);
+  --mc-cut-a: rgba(7, 36, 71, 0.32); --mc-cut-b: rgba(32, 67, 114, 0.12);
+  --mc-globe-hl: #86afcc; --mc-globe-rim: #204372; --mc-halo: #072447;
+  --mc-underglow: rgba(7, 36, 71, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f1f4f5; --panel-2: #e4eaec;
+  --focus: #072447; --accent: #072447; --link: #061c3d;
+  --gold: #072447; --gold-deep: #061a38; --gold-ink: #061c3d;
+  --gold-grad: linear-gradient(100deg, #061a38 0%, #072447 55%, #5f8db2 100%);
+  --l1f: #0c1d38; --l2f: #072447; --l3f: #204372; --l4f: #5f8db2; --l5f: #2f3439; --luf: #9ca3af;
+  --l1t: #04142c; --l2t: #061a38; --l3t: #0c1e3d; --l4t: #17293e; --l5t: #161d22;
+  --wash-a: rgba(7, 36, 71, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e8edef; --mc-utok: #e4eaec; --mc-uico: #161d22;
+  --mc-grid: rgba(6, 26, 56, 0.24); --mc-grid-strong: rgba(6, 26, 56, 0.42);
+  --mc-hg: #061a38; --mc-gop: 0.3;
+  --mc-dot: #061a38; --mc-dot-glow: #072447; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(7, 36, 71, 0.08); --mc-halo-b: rgba(7, 36, 71, 0.03);
+  --mc-cut-a: rgba(6, 26, 56, 0.12); --mc-cut-b: rgba(6, 26, 56, 0.05);
+  --mc-globe-rim: rgba(6, 26, 56, 0.3); --mc-halo: rgba(7, 36, 71, 0.22);
+  --mc-underglow: rgba(6, 26, 56, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(7, 36, 71, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #070809 0%, #070b0e 60%, #050b11 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f8f9 0%, #eef3f5 60%, #e2ebf0 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(68, 122, 171, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(6, 26, 56, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(7, 36, 71, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0d1012 0%, #090b0c 100%);
+  border-color: rgba(68, 122, 171, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0d1216), #060809 75%);
+}
+
+/* The Emirates NBD / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(68, 122, 171, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

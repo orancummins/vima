@@ -1,0 +1,97 @@
+/* Shinhan Card inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Shinhan Card's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0d0f12; --panel: #161A20; --panel-2: #212731;
+  --ink: #f3f5f7; --ink-2: #dce1e5; --muted: #bdc0c9; --faint: #a5a8b0;
+  --focus: #7292d3; --accent: #7292d3; --link: #b1c5e4;
+  --gold: #7292d3; --gold-deep: #8fabe0; --gold-ink: #b1c5e4;
+  --gold-grad: linear-gradient(100deg, #0040f8 0%, #829ed8 55%, #cbdbf3 100%);
+  --l1f: #1b43de; --l2f: #0040f8; --l3f: #4669dc; --l4f: #98aed6; --l5f: #aeb1b8; --luf: #969aa3;
+  --l1t: #4776bf; --l2t: #4573c2; --l3t: #5670d1; --l4t: #4074c2; --l5t: #e6e8ec;
+  --l5: #dce1e5; --lu: #a5a8b0;
+  --wash-a: rgba(0, 64, 248, 0.14); --wash-b: rgba(152, 174, 214, 0.05);
+  --mc-plate: #11141a; --mc-plate-deep: #050709; --mc-pad: #161a23;
+  --mc-utok-hi: #252c36; --mc-utok: #090d13; --mc-uico: #c0d1eb;
+  --mc-grid: rgba(0, 64, 248, 0.38); --mc-grid-strong: rgba(130, 158, 216, 0.6);
+  --mc-hg: rgb(70, 105, 220); --mc-gop: 0.22;
+  --mc-dot: rgb(177, 197, 228); --mc-dot-glow: rgb(0, 64, 248); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 64, 248, 0.2); --mc-halo-b: rgba(70, 105, 220, 0.1);
+  --mc-globe-a: rgba(0, 64, 248, 0.12); --mc-globe-b: rgba(70, 105, 220, 0.06);
+  --mc-globe-c: rgba(70, 105, 220, 0.03); --mc-globe-d: rgba(70, 105, 220, 0.1);
+  --mc-cut-a: rgba(0, 64, 248, 0.32); --mc-cut-b: rgba(70, 105, 220, 0.12);
+  --mc-globe-hl: #b1c5e4; --mc-globe-rim: #4669dc; --mc-halo: #0040f8;
+  --mc-underglow: rgba(0, 64, 248, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f4f6; --panel-2: #e7ecf0;
+  --focus: #0040f8; --accent: #0040f8; --link: #0022aa;
+  --gold: #0040f8; --gold-deep: #001b89; --gold-ink: #0022aa;
+  --gold-grad: linear-gradient(100deg, #001b89 0%, #0040f8 55%, #98aed6 100%);
+  --l1f: #122d9a; --l2f: #0040f8; --l3f: #4669dc; --l4f: #98aed6; --l5f: #767d92; --luf: #9ca3af;
+  --l1t: #001155; --l2t: #001b89; --l3t: #1433c5; --l4t: #375fc5; --l5t: #2a3544;
+  --wash-a: rgba(0, 64, 248, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaeef1; --mc-utok: #e7ecf0; --mc-uico: #2a3544;
+  --mc-grid: rgba(0, 27, 137, 0.24); --mc-grid-strong: rgba(0, 27, 137, 0.42);
+  --mc-hg: #001b89; --mc-gop: 0.3;
+  --mc-dot: #001b89; --mc-dot-glow: #0040f8; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 64, 248, 0.08); --mc-halo-b: rgba(0, 64, 248, 0.03);
+  --mc-cut-a: rgba(0, 27, 137, 0.12); --mc-cut-b: rgba(0, 27, 137, 0.05);
+  --mc-globe-rim: rgba(0, 27, 137, 0.3); --mc-halo: rgba(0, 64, 248, 0.22);
+  --mc-underglow: rgba(0, 27, 137, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 64, 248, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #08090b 0%, #080c12 60%, #050a17 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f8f9 0%, #eff3f7 60%, #e5ebf3 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(130, 158, 216, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 27, 137, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 64, 248, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #11141a 0%, #0c0c0f 100%);
+  border-color: rgba(130, 158, 216, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #121721), #07090b 75%);
+}
+
+/* The Shinhan Card / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(130, 158, 216, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

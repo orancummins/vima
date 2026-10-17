@@ -1,0 +1,97 @@
+/* Vietcombank inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Vietcombank's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0a0e0b; --panel: #0F1611; --panel-2: #131c17;
+  --ink: #f2f7f3; --ink-2: #d0ddd4; --muted: #92a79c; --faint: #6d7c74;
+  --focus: #34a766; --accent: #34a766; --link: #7fd39d;
+  --gold: #34a766; --gold-deep: #48cd7e; --gold-ink: #7fd39d;
+  --gold-grad: linear-gradient(100deg, #005028 0%, #39b76f 55%, #b9efcc 100%);
+  --l1f: #09492d; --l2f: #005028; --l3f: #187c4c; --l4f: #56bb7f; --l5f: #7a8b83; --luf: #58645e;
+  --l1t: #2e864d; --l2t: #2b834e; --l3t: #248658; --l4t: #2c854d; --l5t: #e1e8e5;
+  --l5: #d0ddd4; --lu: #6d7c74;
+  --wash-a: rgba(0, 80, 40, 0.14); --wash-b: rgba(86, 187, 127, 0.05);
+  --mc-plate: #0c130f; --mc-plate-deep: #050805; --mc-pad: #0f1712;
+  --mc-utok-hi: #151e18; --mc-utok: #070f0a; --mc-uico: #9edfb6;
+  --mc-grid: rgba(0, 80, 40, 0.38); --mc-grid-strong: rgba(57, 183, 111, 0.6);
+  --mc-hg: rgb(24, 124, 76); --mc-gop: 0.22;
+  --mc-dot: rgb(127, 211, 157); --mc-dot-glow: rgb(0, 80, 40); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 80, 40, 0.2); --mc-halo-b: rgba(24, 124, 76, 0.1);
+  --mc-globe-a: rgba(0, 80, 40, 0.12); --mc-globe-b: rgba(24, 124, 76, 0.06);
+  --mc-globe-c: rgba(24, 124, 76, 0.03); --mc-globe-d: rgba(24, 124, 76, 0.1);
+  --mc-cut-a: rgba(0, 80, 40, 0.32); --mc-cut-b: rgba(24, 124, 76, 0.12);
+  --mc-globe-hl: #7fd39d; --mc-globe-rim: #187c4c; --mc-halo: #005028;
+  --mc-underglow: rgba(0, 80, 40, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f1f6f2; --panel-2: #e3ede5;
+  --focus: #005028; --accent: #005028; --link: #004526;
+  --gold: #005028; --gold-deep: #003f23; --gold-ink: #004526;
+  --gold-grad: linear-gradient(100deg, #003f23 0%, #005028 55%, #56bb7f 100%);
+  --l1f: #073e26; --l2f: #005028; --l3f: #187c4c; --l4f: #56bb7f; --l5f: #2f3b35; --luf: #9ca3af;
+  --l1t: #00311b; --l2t: #003f23; --l3t: #07432a; --l4t: #13442a; --l5t: #15231a;
+  --wash-a: rgba(0, 80, 40, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e7efe9; --mc-utok: #e3ede5; --mc-uico: #15231a;
+  --mc-grid: rgba(0, 63, 35, 0.24); --mc-grid-strong: rgba(0, 63, 35, 0.42);
+  --mc-hg: #003f23; --mc-gop: 0.3;
+  --mc-dot: #003f23; --mc-dot-glow: #005028; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 80, 40, 0.08); --mc-halo-b: rgba(0, 80, 40, 0.03);
+  --mc-cut-a: rgba(0, 63, 35, 0.12); --mc-cut-b: rgba(0, 63, 35, 0.05);
+  --mc-globe-rim: rgba(0, 63, 35, 0.3); --mc-halo: rgba(0, 80, 40, 0.22);
+  --mc-underglow: rgba(0, 63, 35, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 80, 40, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #070908 0%, #060f0a 60%, #04120a 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f9f6 0%, #edf6ef 60%, #e1f1e6 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(57, 183, 111, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 63, 35, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 80, 40, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0c130f 0%, #090c0b 100%);
+  border-color: rgba(57, 183, 111, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0c1711), #060907 75%);
+}
+
+/* The Vietcombank / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(57, 183, 111, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

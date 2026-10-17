@@ -1,0 +1,97 @@
+/* Erste inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Erste's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0e1012; --panel: #181D21; --panel-2: #252c33;
+  --ink: #f3f6f7; --ink-2: #dee3e6; --muted: #c5c8ce; --faint: #b0b3b8;
+  --focus: #7197c8; --accent: #7197c8; --link: #bdd1e4;
+  --gold: #7197c8; --gold-deep: #a1bdde; --gold-ink: #bdd1e4;
+  --gold-grad: linear-gradient(100deg, #2870ed 0%, #96b2d6 55%, #d1e1f1 100%);
+  --l1f: #3f6ed8; --l2f: #2870ed; --l3f: #648bd5; --l4f: #a8bdd6; --l5f: #b8bbc0; --luf: #a3a6ad;
+  --l1t: #4579a9; --l2t: #4779b1; --l3t: #4e74c2; --l4t: #4477ae; --l5t: #e8e9ec;
+  --l5: #dee3e6; --lu: #b0b3b8;
+  --wash-a: rgba(40, 112, 237, 0.14); --wash-b: rgba(168, 189, 214, 0.05);
+  --mc-plate: #13161a; --mc-plate-deep: #060809; --mc-pad: #181d24;
+  --mc-utok-hi: #293139; --mc-utok: #0a0f12; --mc-uico: #c9d9ea;
+  --mc-grid: rgba(40, 112, 237, 0.38); --mc-grid-strong: rgba(150, 178, 214, 0.6);
+  --mc-hg: rgb(100, 139, 213); --mc-gop: 0.22;
+  --mc-dot: rgb(189, 209, 228); --mc-dot-glow: rgb(40, 112, 237); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(40, 112, 237, 0.2); --mc-halo-b: rgba(100, 139, 213, 0.1);
+  --mc-globe-a: rgba(40, 112, 237, 0.12); --mc-globe-b: rgba(100, 139, 213, 0.06);
+  --mc-globe-c: rgba(100, 139, 213, 0.03); --mc-globe-d: rgba(100, 139, 213, 0.1);
+  --mc-cut-a: rgba(40, 112, 237, 0.32); --mc-cut-b: rgba(100, 139, 213, 0.12);
+  --mc-globe-hl: #bdd1e4; --mc-globe-rim: #648bd5; --mc-halo: #2870ed;
+  --mc-underglow: rgba(40, 112, 237, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f5f6; --panel-2: #e8edf0;
+  --focus: #2870ed; --accent: #2870ed; --link: #0f3fad;
+  --gold: #2870ed; --gold-deep: #0c328a; --gold-ink: #0f3fad;
+  --gold-grad: linear-gradient(100deg, #0c328a 0%, #2870ed 55%, #a8bdd6 100%);
+  --l1f: #20469f; --l2f: #2870ed; --l3f: #648bd5; --l4f: #a8bdd6; --l5f: #878f9c; --luf: #9ca3af;
+  --l1t: #071f55; --l2t: #0c328a; --l3t: #2555cd; --l4t: #5680c3; --l5t: #2f3c48;
+  --wash-a: rgba(40, 112, 237, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #ebeff1; --mc-utok: #e8edf0; --mc-uico: #2f3c48;
+  --mc-grid: rgba(12, 50, 138, 0.24); --mc-grid-strong: rgba(12, 50, 138, 0.42);
+  --mc-hg: #0c328a; --mc-gop: 0.3;
+  --mc-dot: #0c328a; --mc-dot-glow: #2870ed; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(40, 112, 237, 0.08); --mc-halo-b: rgba(40, 112, 237, 0.03);
+  --mc-cut-a: rgba(12, 50, 138, 0.12); --mc-cut-b: rgba(12, 50, 138, 0.05);
+  --mc-globe-rim: rgba(12, 50, 138, 0.3); --mc-halo: rgba(40, 112, 237, 0.22);
+  --mc-underglow: rgba(12, 50, 138, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(40, 112, 237, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #08090b 0%, #090d12 60%, #060d16 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f7f8f9 0%, #f0f4f6 60%, #e7edf3 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(150, 178, 214, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(12, 50, 138, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(40, 112, 237, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #13161a 0%, #0c0d0f 100%);
+  border-color: rgba(150, 178, 214, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #141a21), #07090b 75%);
+}
+
+/* The Erste / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(150, 178, 214, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

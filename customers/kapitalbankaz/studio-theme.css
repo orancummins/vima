@@ -1,0 +1,97 @@
+/* Kapital Bank inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Kapital Bank's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #100d0e; --panel: #1C1517; --panel-2: #2a2022;
+  --ink: #f7f3f4; --ink-2: #e2dbdd; --muted: #c0b5b6; --faint: #a39a9b;
+  --focus: #c57e89; --accent: #c57e89; --link: #d9aeb7;
+  --gold: #c57e89; --gold-deep: #cf8c97; --gold-ink: #d9aeb7;
+  --gold-grad: linear-gradient(100deg, #b61d29 0%, #c57e89 55%, #eccdd4 100%);
+  --l1f: #a62e31; --l2f: #b61d29; --l3f: #bf434a; --l4f: #c6939c; --l5f: #ada4a5; --luf: #948a8a;
+  --l1t: #b25b6d; --l2t: #b25868; --l3t: #ba575d; --l4t: #b4596b; --l5t: #eae6e6;
+  --l5: #e2dbdd; --lu: #a39a9b;
+  --wash-a: rgba(182, 29, 41, 0.14); --wash-b: rgba(198, 147, 156, 0.05);
+  --mc-plate: #171112; --mc-plate-deep: #080607; --mc-pad: #1f1617;
+  --mc-utok-hi: #2f2326; --mc-utok: #100a0c; --mc-uico: #e2bfc6;
+  --mc-grid: rgba(182, 29, 41, 0.38); --mc-grid-strong: rgba(197, 126, 137, 0.6);
+  --mc-hg: rgb(191, 67, 74); --mc-gop: 0.22;
+  --mc-dot: rgb(217, 174, 183); --mc-dot-glow: rgb(182, 29, 41); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(182, 29, 41, 0.2); --mc-halo-b: rgba(191, 67, 74, 0.1);
+  --mc-globe-a: rgba(182, 29, 41, 0.12); --mc-globe-b: rgba(191, 67, 74, 0.06);
+  --mc-globe-c: rgba(191, 67, 74, 0.03); --mc-globe-d: rgba(191, 67, 74, 0.1);
+  --mc-cut-a: rgba(182, 29, 41, 0.32); --mc-cut-b: rgba(191, 67, 74, 0.12);
+  --mc-globe-hl: #d9aeb7; --mc-globe-rim: #bf434a; --mc-halo: #b61d29;
+  --mc-underglow: rgba(182, 29, 41, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f6f2f3; --panel-2: #eee7e9;
+  --focus: #b61d29; --accent: #b61d29; --link: #801416;
+  --gold: #b61d29; --gold-deep: #681112; --gold-ink: #801416;
+  --gold-grad: linear-gradient(100deg, #681112 0%, #b61d29 55%, #c6939c 100%);
+  --l1f: #762022; --l2f: #b61d29; --l3f: #bf434a; --l4f: #c6939c; --l5f: #7c696b; --luf: #9ca3af;
+  --l1t: #430b0c; --l2t: #681112; --l3t: #942626; --l4t: #984049; --l5t: #3a282d;
+  --wash-a: rgba(182, 29, 41, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f0eaec; --mc-utok: #eee7e9; --mc-uico: #3a282d;
+  --mc-grid: rgba(104, 17, 18, 0.24); --mc-grid-strong: rgba(104, 17, 18, 0.42);
+  --mc-hg: #681112; --mc-gop: 0.3;
+  --mc-dot: #681112; --mc-dot-glow: #b61d29; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(182, 29, 41, 0.08); --mc-halo-b: rgba(182, 29, 41, 0.03);
+  --mc-cut-a: rgba(104, 17, 18, 0.12); --mc-cut-b: rgba(104, 17, 18, 0.05);
+  --mc-globe-rim: rgba(104, 17, 18, 0.3); --mc-halo: rgba(182, 29, 41, 0.22);
+  --mc-underglow: rgba(104, 17, 18, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(182, 29, 41, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0a0808 0%, #10090a 60%, #140708 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f7f7 0%, #f5f0f2 60%, #f1e6e9 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(197, 126, 137, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(104, 17, 18, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(182, 29, 41, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #171112 0%, #0e0b0c 100%);
+  border-color: rgba(197, 126, 137, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #1d1214), #0a0708 75%);
+}
+
+/* The Kapital Bank / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(197, 126, 137, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

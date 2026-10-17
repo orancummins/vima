@@ -1,0 +1,97 @@
+/* Santander Chile inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Santander Chile's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #110d0d; --panel: #1F1517; --panel-2: #2f2022;
+  --ink: #f7f3f4; --ink-2: #e5dbdd; --muted: #c7baba; --faint: #aca1a1;
+  --focus: #d5787f; --accent: #d5787f; --link: #e3adb5;
+  --gold: #d5787f; --gold-deep: #df8a92; --gold-ink: #e3adb5;
+  --gold-grad: linear-gradient(100deg, #ec0000 0%, #d67c83 55%, #f3cad0 100%);
+  --l1f: #d3241a; --l2f: #ec0000; --l3f: #da413d; --l4f: #d4949a; --l5f: #b5aaaa; --luf: #9f9292;
+  --l1t: #c34e5f; --l2t: #c54d59; --l3t: #cc4b45; --l4t: #c64e5f; --l5t: #ebe6e6;
+  --l5: #e5dbdd; --lu: #aca1a1;
+  --wash-a: rgba(236, 0, 0, 0.14); --wash-b: rgba(212, 148, 154, 0.05);
+  --mc-plate: #191112; --mc-plate-deep: #090506; --mc-pad: #221516;
+  --mc-utok-hi: #342427; --mc-utok: #12090b; --mc-uico: #eabec4;
+  --mc-grid: rgba(236, 0, 0, 0.38); --mc-grid-strong: rgba(214, 124, 131, 0.6);
+  --mc-hg: rgb(218, 65, 61); --mc-gop: 0.22;
+  --mc-dot: rgb(227, 173, 181); --mc-dot-glow: rgb(236, 0, 0); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(236, 0, 0, 0.2); --mc-halo-b: rgba(218, 65, 61, 0.1);
+  --mc-globe-a: rgba(236, 0, 0, 0.12); --mc-globe-b: rgba(218, 65, 61, 0.06);
+  --mc-globe-c: rgba(218, 65, 61, 0.03); --mc-globe-d: rgba(218, 65, 61, 0.1);
+  --mc-cut-a: rgba(236, 0, 0, 0.32); --mc-cut-b: rgba(218, 65, 61, 0.12);
+  --mc-globe-hl: #e3adb5; --mc-globe-rim: #da413d; --mc-halo: #ec0000;
+  --mc-underglow: rgba(236, 0, 0, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f6f2f3; --panel-2: #f0e7e9;
+  --focus: #ec0000; --accent: #ec0000; --link: #a30a00;
+  --gold: #ec0000; --gold-deep: #830800; --gold-ink: #a30a00;
+  --gold-grad: linear-gradient(100deg, #830800 0%, #ec0000 55%, #d4949a 100%);
+  --l1f: #941a12; --l2f: #ec0000; --l3f: #da413d; --l4f: #d4949a; --l5f: #8d7070; --luf: #9ca3af;
+  --l1t: #530500; --l2t: #830800; --l3t: #bc2013; --l4t: #bc3538; --l5t: #42282c;
+  --wash-a: rgba(236, 0, 0, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f1eaec; --mc-utok: #f0e7e9; --mc-uico: #42282c;
+  --mc-grid: rgba(131, 8, 0, 0.24); --mc-grid-strong: rgba(131, 8, 0, 0.42);
+  --mc-hg: #830800; --mc-gop: 0.3;
+  --mc-dot: #830800; --mc-dot-glow: #ec0000; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(236, 0, 0, 0.08); --mc-halo-b: rgba(236, 0, 0, 0.03);
+  --mc-cut-a: rgba(131, 8, 0, 0.12); --mc-cut-b: rgba(131, 8, 0, 0.05);
+  --mc-globe-rim: rgba(131, 8, 0, 0.3); --mc-halo: rgba(236, 0, 0, 0.22);
+  --mc-underglow: rgba(131, 8, 0, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(236, 0, 0, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0b0808 0%, #120809 60%, #170505 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f6f7 0%, #f6eff1 60%, #f3e5e7 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(214, 124, 131, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(131, 8, 0, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(236, 0, 0, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #191112 0%, #0f0b0b 100%);
+  border-color: rgba(214, 124, 131, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #201113), #0b0707 75%);
+}
+
+/* The Santander Chile / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(214, 124, 131, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

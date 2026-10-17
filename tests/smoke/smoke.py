@@ -139,7 +139,20 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
         expected = {"snb", "citi", "citizens", "stripe", "boi", "itau", "capitalone", "jpmc", "fiserv",
                     "globalpayments", "santander", "barclays", "natwest", "synchrony", "hsbc", "bmo", "nubank",
                     "nexi", "worldline", "bofa", "bradesco", "unicredit", "adyen", "paypal", "bancodobrasil", "ing",
-                    "lloyds", "bnpparibas", "wellsfargo", "revolut", "deutschebank", "checkout", "dbs", "amazon"}
+                    "lloyds", "bnpparibas", "wellsfargo", "revolut", "deutschebank", "checkout", "dbs", "amazon",
+                    "banamex", "galicia", "santanderchile", "bancolombia", "interbank",
+                    "pichincha", "brou", "itauparaguay", "bnb", "bac", "banreservas", "ncb",
+                    "republicbank", "swisscard", "swedbank", "dnb", "danske", "nordea", "erste",
+                    "pko", "ceskasporitelna", "millenniumbcp", "eurobank", "otp",
+                    "bancatransilvania", "bulbank", "zaba", "nlb", "slsp", "bgl", "bov",
+                    "bankofcyprus", "landsbankinn", "intesabeograd", "privatbank", "icbc",
+                    "rakutencard", "hdfc", "shinhancard", "bca", "cba", "ctbc", "maybank",
+                    "krungsri", "vietcombank", "bdo", "westpacnz", "hbl", "brac", "combank",
+                    "nabil", "aba", "bcel", "golomt", "halyk", "kapitalbankuz", "kapitalbankaz",
+                    "bog", "emiratesnbd", "garanti", "isracard", "qnb", "nbk", "credimax",
+                    "bankmuscat", "arabbank", "bankaudi", "idb", "nbe", "attijariwafa", "bdl",
+                    "biat", "standardbank", "accessbank", "equitybank", "gcb", "crdb", "mcb",
+                    "bai"}
         assert expected <= ids, f"Customers missing from the Customers tab: {sorted(expected - ids)}"
         assert 'data-customer-open="snb"' in resp.text, "No card opens Saudi National Bank."
         no_logo = sorted(c["id"] for c in json.loads(m.group(1)) if not c.get("logos"))
@@ -241,6 +254,23 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
             assert product in data.get("products", {}), f"{cid}: {product} should link to Studio"
 
     runner.run("GET /customers/<built customers>/ serve their pages and links", _built_customers)
+
+    def _every_customer():
+        resp = assert_status(get(f"{base_url}/app"), 200)
+        m = re.search(r"window\.__CUSTOMERS__ = (\[.*?\]);", resp.text)
+        assert m, "window.__CUSTOMERS__ not found in /app HTML."
+        for c in json.loads(m.group(1)):
+            cid = c["id"]
+            page = assert_status(get(f"{base_url}/customers/{cid}/"), 200)
+            assert_no_server_error(page.text, f"{base_url}/customers/{cid}/")
+            assert f"customers/{cid}/studio-theme.css" in page.text, f"{cid}: no Studio theme"
+            assert_status(get(f"{base_url}/customers/{cid}/{c['page']}"), 200)
+            assert_status(get(f"{base_url}{c['logos'][0]['url']}"), 200)
+            data = assert_json(assert_status(get(f"{base_url}/customers/{cid}/links.json"), 200))
+            assert not data.get("warnings"), f"{cid}'s Studio links no longer resolve: {data['warnings']}"
+            assert data.get("products"), f"{cid}: nothing links to Studio"
+
+    runner.run("GET /customers/<every customer>/ serve page, logo and links", _every_customer)
 
     return runner
 

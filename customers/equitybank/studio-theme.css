@@ -1,0 +1,97 @@
+/* Equity inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Equity's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #100d0d; --panel: #1B1617; --panel-2: #292021;
+  --ink: #f6f3f4; --ink-2: #e1dbdc; --muted: #bdb5b4; --faint: #a09898;
+  --focus: #bd8185; --accent: #bd8185; --link: #d4b0b4;
+  --gold: #bd8185; --gold-deep: #c88f94; --gold-ink: #d4b0b4;
+  --gold-grad: linear-gradient(100deg, #a32a29 0%, #bd8185 55%, #e9cfd3 100%);
+  --l1f: #973d37; --l2f: #a32a29; --l3f: #b14e4b; --l4f: #c09599; --l5f: #aaa3a3; --luf: #918888;
+  --l1t: #a96169; --l2t: #ab6068; --l3t: #ae5f5b; --l4t: #ab6068; --l5t: #e9e6e6;
+  --l5: #e1dbdc; --lu: #a09898;
+  --wash-a: rgba(163, 42, 41, 0.14); --wash-b: rgba(192, 149, 153, 0.05);
+  --mc-plate: #161212; --mc-plate-deep: #080607; --mc-pad: #1d1617;
+  --mc-utok-hi: #2d2425; --mc-utok: #100b0b; --mc-uico: #dec1c4;
+  --mc-grid: rgba(163, 42, 41, 0.38); --mc-grid-strong: rgba(189, 129, 133, 0.6);
+  --mc-hg: rgb(177, 78, 75); --mc-gop: 0.22;
+  --mc-dot: rgb(212, 176, 180); --mc-dot-glow: rgb(163, 42, 41); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(163, 42, 41, 0.2); --mc-halo-b: rgba(177, 78, 75, 0.1);
+  --mc-globe-a: rgba(163, 42, 41, 0.12); --mc-globe-b: rgba(177, 78, 75, 0.06);
+  --mc-globe-c: rgba(177, 78, 75, 0.03); --mc-globe-d: rgba(177, 78, 75, 0.1);
+  --mc-cut-a: rgba(163, 42, 41, 0.32); --mc-cut-b: rgba(177, 78, 75, 0.12);
+  --mc-globe-hl: #d4b0b4; --mc-globe-rim: #b14e4b; --mc-halo: #a32a29;
+  --mc-underglow: rgba(163, 42, 41, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f5f2f3; --panel-2: #ede8e9;
+  --focus: #a32a29; --accent: #a32a29; --link: #73231d;
+  --gold: #a32a29; --gold-deep: #5e1c18; --gold-ink: #73231d;
+  --gold-grad: linear-gradient(100deg, #5e1c18 0%, #a32a29 55%, #c09599 100%);
+  --l1f: #6b2b27; --l2f: #a32a29; --l3f: #b14e4b; --l4f: #c09599; --l5f: #776868; --luf: #9ca3af;
+  --l1t: #3d120f; --l2t: #5e1c18; --l3t: #86362e; --l4t: #8b4546; --l5t: #37292b;
+  --wash-a: rgba(163, 42, 41, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #efebec; --mc-utok: #ede8e9; --mc-uico: #37292b;
+  --mc-grid: rgba(94, 28, 24, 0.24); --mc-grid-strong: rgba(94, 28, 24, 0.42);
+  --mc-hg: #5e1c18; --mc-gop: 0.3;
+  --mc-dot: #5e1c18; --mc-dot-glow: #a32a29; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(163, 42, 41, 0.08); --mc-halo-b: rgba(163, 42, 41, 0.03);
+  --mc-cut-a: rgba(94, 28, 24, 0.12); --mc-cut-b: rgba(94, 28, 24, 0.05);
+  --mc-globe-rim: rgba(94, 28, 24, 0.3); --mc-halo: rgba(163, 42, 41, 0.22);
+  --mc-underglow: rgba(94, 28, 24, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(163, 42, 41, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0a0808 0%, #0f0a0a 60%, #120808 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f7f7 0%, #f5f0f1 60%, #f0e7e8 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(189, 129, 133, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(94, 28, 24, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(163, 42, 41, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #161212 0%, #0e0c0c 100%);
+  border-color: rgba(189, 129, 133, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #1b1314), #0a0708 75%);
+}
+
+/* The Equity / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(189, 129, 133, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

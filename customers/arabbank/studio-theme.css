@@ -1,0 +1,97 @@
+/* Arab Bank inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Arab Bank's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0d0d12; --panel: #161720; --panel-2: #222332;
+  --ink: #f3f4f7; --ink-2: #dcdee6; --muted: #c0bfcb; --faint: #a8a8b2;
+  --focus: #8686d9; --accent: #8686d9; --link: #b3b6e5;
+  --gold: #8686d9; --gold-deep: #9393e1; --gold-ink: #b3b6e5;
+  --gold-grad: linear-gradient(100deg, #1501ff 0%, #8686d9 55%, #cccff3 100%);
+  --l1f: #381ee3; --l2f: #1501ff; --l3f: #5a4bdd; --l4f: #9b9dd7; --l5f: #b1b0bb; --luf: #9b9aa6;
+  --l1t: #676dcb; --l2t: #676acd; --l3t: #7164d4; --l4t: #666bcd; --l5t: #e7e7ec;
+  --l5: #dcdee6; --lu: #a8a8b2;
+  --wash-a: rgba(21, 1, 255, 0.14); --wash-b: rgba(155, 157, 215, 0.05);
+  --mc-plate: #11121a; --mc-plate-deep: #050609; --mc-pad: #161623;
+  --mc-utok-hi: #262737; --mc-utok: #090a13; --mc-uico: #c2c4eb;
+  --mc-grid: rgba(21, 1, 255, 0.38); --mc-grid-strong: rgba(134, 134, 217, 0.6);
+  --mc-hg: rgb(90, 75, 221); --mc-gop: 0.22;
+  --mc-dot: rgb(179, 182, 229); --mc-dot-glow: rgb(21, 1, 255); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(21, 1, 255, 0.2); --mc-halo-b: rgba(90, 75, 221, 0.1);
+  --mc-globe-a: rgba(21, 1, 255, 0.12); --mc-globe-b: rgba(90, 75, 221, 0.06);
+  --mc-globe-c: rgba(90, 75, 221, 0.03); --mc-globe-d: rgba(90, 75, 221, 0.1);
+  --mc-cut-a: rgba(21, 1, 255, 0.32); --mc-cut-b: rgba(90, 75, 221, 0.12);
+  --mc-globe-hl: #b3b6e5; --mc-globe-rim: #5a4bdd; --mc-halo: #1501ff;
+  --mc-underglow: rgba(21, 1, 255, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f3f7; --panel-2: #e7e9f0;
+  --focus: #1501ff; --accent: #1501ff; --link: #1800af;
+  --gold: #1501ff; --gold-deep: #13008c; --gold-ink: #1800af;
+  --gold-grad: linear-gradient(100deg, #13008c 0%, #1501ff 55%, #9b9dd7 100%);
+  --l1f: #27139f; --l2f: #1501ff; --l3f: #5a4bdd; --l4f: #9b9dd7; --l5f: #7c7a95; --luf: #9ca3af;
+  --l1t: #0c0057; --l2t: #13008c; --l3t: #3214cc; --l4t: #443cc8; --l5t: #2b2d46;
+  --wash-a: rgba(21, 1, 255, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaecf1; --mc-utok: #e7e9f0; --mc-uico: #2b2d46;
+  --mc-grid: rgba(19, 0, 140, 0.24); --mc-grid-strong: rgba(19, 0, 140, 0.42);
+  --mc-hg: #13008c; --mc-gop: 0.3;
+  --mc-dot: #13008c; --mc-dot-glow: #1501ff; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(21, 1, 255, 0.08); --mc-halo-b: rgba(21, 1, 255, 0.03);
+  --mc-cut-a: rgba(19, 0, 140, 0.12); --mc-cut-b: rgba(19, 0, 140, 0.05);
+  --mc-globe-rim: rgba(19, 0, 140, 0.3); --mc-halo: rgba(21, 1, 255, 0.22);
+  --mc-underglow: rgba(19, 0, 140, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(21, 1, 255, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #08080b 0%, #080813 60%, #050517 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f7f9 0%, #eff1f7 60%, #e5e6f3 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(134, 134, 217, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(19, 0, 140, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(21, 1, 255, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #11121a 0%, #0c0c0f 100%);
+  border-color: rgba(134, 134, 217, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #121221), #07070b 75%);
+}
+
+/* The Arab Bank / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(134, 134, 217, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

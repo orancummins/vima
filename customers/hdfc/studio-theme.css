@@ -1,0 +1,97 @@
+/* HDFC Bank inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   HDFC Bank's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0b0e0f; --panel: #111719; --panel-2: #192024;
+  --ink: #f2f6f7; --ink-2: #d5dee0; --muted: #a2abb4; --faint: #818990;
+  --focus: #5099c8; --accent: #5099c8; --link: #91c2da;
+  --gold: #5099c8; --gold-deep: #62a9d4; --gold-ink: #91c2da;
+  --gold-grad: linear-gradient(100deg, #004c8f 0%, #5099c8 55%, #c0e1f0 100%);
+  --l1f: #104681; --l2f: #004c8f; --l3f: #2066a9; --l4f: #6fa5c5; --l5f: #8d959c; --luf: #6e767d;
+  --l1t: #367ea1; --l2t: #367da7; --l3t: #3479c0; --l4t: #347ca3; --l5t: #e3e6e9;
+  --l5: #d5dee0; --lu: #818990;
+  --wash-a: rgba(0, 76, 143, 0.14); --wash-b: rgba(111, 165, 197, 0.05);
+  --mc-plate: #0e1315; --mc-plate-deep: #050808; --mc-pad: #11171c;
+  --mc-utok-hi: #1b2327; --mc-utok: #080e10; --mc-uico: #abd0e4;
+  --mc-grid: rgba(0, 76, 143, 0.38); --mc-grid-strong: rgba(80, 153, 200, 0.6);
+  --mc-hg: rgb(32, 102, 169); --mc-gop: 0.22;
+  --mc-dot: rgb(145, 194, 218); --mc-dot-glow: rgb(0, 76, 143); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 76, 143, 0.2); --mc-halo-b: rgba(32, 102, 169, 0.1);
+  --mc-globe-a: rgba(0, 76, 143, 0.12); --mc-globe-b: rgba(32, 102, 169, 0.06);
+  --mc-globe-c: rgba(32, 102, 169, 0.03); --mc-globe-d: rgba(32, 102, 169, 0.1);
+  --mc-cut-a: rgba(0, 76, 143, 0.32); --mc-cut-b: rgba(32, 102, 169, 0.12);
+  --mc-globe-hl: #91c2da; --mc-globe-rim: #2066a9; --mc-halo: #004c8f;
+  --mc-underglow: rgba(0, 76, 143, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f1f5f6; --panel-2: #e4ecee;
+  --focus: #004c8f; --accent: #004c8f; --link: #00326b;
+  --gold: #004c8f; --gold-deep: #002b5b; --gold-ink: #00326b;
+  --gold-grad: linear-gradient(100deg, #002b5b 0%, #004c8f 55%, #6fa5c5 100%);
+  --l1f: #0c3360; --l2f: #004c8f; --l3f: #2066a9; --l4f: #6fa5c5; --l5f: #49535c; --luf: #9ca3af;
+  --l1t: #001e3f; --l2t: #002b5b; --l3t: #0c3b74; --l4t: #214f74; --l5t: #1d2a30;
+  --wash-a: rgba(0, 76, 143, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e8eff0; --mc-utok: #e4ecee; --mc-uico: #1d2a30;
+  --mc-grid: rgba(0, 43, 91, 0.24); --mc-grid-strong: rgba(0, 43, 91, 0.42);
+  --mc-hg: #002b5b; --mc-gop: 0.3;
+  --mc-dot: #002b5b; --mc-dot-glow: #004c8f; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 76, 143, 0.08); --mc-halo-b: rgba(0, 76, 143, 0.03);
+  --mc-cut-a: rgba(0, 43, 91, 0.12); --mc-cut-b: rgba(0, 43, 91, 0.05);
+  --mc-globe-rim: rgba(0, 43, 91, 0.3); --mc-halo: rgba(0, 76, 143, 0.22);
+  --mc-underglow: rgba(0, 43, 91, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 76, 143, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #07090a 0%, #070d10 60%, #040d14 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f9f9 0%, #eef5f6 60%, #e2edf2 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(80, 153, 200, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 43, 91, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 76, 143, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0e1315 0%, #0a0c0d 100%);
+  border-color: rgba(80, 153, 200, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0e161a), #06090a 75%);
+}
+
+/* The HDFC Bank / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(80, 153, 200, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

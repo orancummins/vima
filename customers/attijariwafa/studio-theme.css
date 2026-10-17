@@ -1,0 +1,97 @@
+/* Attijariwafa inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Attijariwafa's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #120e0e; --panel: #201819; --panel-2: #322626;
+  --ink: #f7f3f4; --ink-2: #e6dfe0; --muted: #cec7c6; --faint: #b8b2b1;
+  --focus: #c5847f; --accent: #c5847f; --link: #e2c1c0;
+  --gold: #c5847f; --gold-deep: #daa9a6; --gold-ink: #e2c1c0;
+  --gold-grad: linear-gradient(100deg, #e05038 0%, #d29f9b 55%, #efd3d4 100%);
+  --l1f: #ce654b; --l2f: #e05038; --l3f: #ce7e6e; --l4f: #d4aeac; --l5f: #c0bab9; --luf: #ada6a5;
+  --l1t: #b35d5b; --l2t: #b25c58; --l3t: #b65d4b; --l4t: #b55c5c; --l5t: #ece8e8;
+  --l5: #e6dfe0; --lu: #b8b2b1;
+  --wash-a: rgba(224, 80, 56, 0.14); --wash-b: rgba(212, 174, 172, 0.05);
+  --mc-plate: #1a1413; --mc-plate-deep: #080606; --mc-pad: #231a19;
+  --mc-utok-hi: #382b2b; --mc-utok: #120b0b; --mc-uico: #e8cccc;
+  --mc-grid: rgba(224, 80, 56, 0.38); --mc-grid-strong: rgba(210, 159, 155, 0.6);
+  --mc-hg: rgb(206, 126, 110); --mc-gop: 0.22;
+  --mc-dot: rgb(226, 193, 192); --mc-dot-glow: rgb(224, 80, 56); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(224, 80, 56, 0.2); --mc-halo-b: rgba(206, 126, 110, 0.1);
+  --mc-globe-a: rgba(224, 80, 56, 0.12); --mc-globe-b: rgba(206, 126, 110, 0.06);
+  --mc-globe-c: rgba(206, 126, 110, 0.03); --mc-globe-d: rgba(206, 126, 110, 0.1);
+  --mc-cut-a: rgba(224, 80, 56, 0.32); --mc-cut-b: rgba(206, 126, 110, 0.12);
+  --mc-globe-hl: #e2c1c0; --mc-globe-rim: #ce7e6e; --mc-halo: #e05038;
+  --mc-underglow: rgba(224, 80, 56, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f6f3f3; --panel-2: #efe9ea;
+  --focus: #e05038; --accent: #e05038; --link: #a4351a;
+  --gold: #e05038; --gold-deep: #822a14; --gold-ink: #a4351a;
+  --gold-grad: linear-gradient(100deg, #822a14 0%, #e05038 55%, #d4aeac 100%);
+  --l1f: #974029; --l2f: #e05038; --l3f: #ce7e6e; --l4f: #d4aeac; --l5f: #9c8d8a; --luf: #9ca3af;
+  --l1t: #501a0c; --l2t: #822a14; --l3t: #c35231; --l4t: #bc6b60; --l5t: #473132;
+  --wash-a: rgba(224, 80, 56, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f1ecec; --mc-utok: #efe9ea; --mc-uico: #473132;
+  --mc-grid: rgba(130, 42, 20, 0.24); --mc-grid-strong: rgba(130, 42, 20, 0.42);
+  --mc-hg: #822a14; --mc-gop: 0.3;
+  --mc-dot: #822a14; --mc-dot-glow: #e05038; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(224, 80, 56, 0.08); --mc-halo-b: rgba(224, 80, 56, 0.03);
+  --mc-cut-a: rgba(130, 42, 20, 0.12); --mc-cut-b: rgba(130, 42, 20, 0.05);
+  --mc-globe-rim: rgba(130, 42, 20, 0.3); --mc-halo: rgba(224, 80, 56, 0.22);
+  --mc-underglow: rgba(130, 42, 20, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(224, 80, 56, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0b0908 0%, #120a0a 60%, #150907 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f7f7 0%, #f6f0f1 60%, #f2e8e8 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(210, 159, 155, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(130, 42, 20, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(224, 80, 56, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #1a1413 0%, #0f0d0c 100%);
+  border-color: rgba(210, 159, 155, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #211615), #0b0707 75%);
+}
+
+/* The Attijariwafa / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(210, 159, 155, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

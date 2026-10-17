@@ -1,0 +1,97 @@
+/* Isracard inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Isracard's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0b0b0c; --panel: #0F1112; --panel-2: #131516;
+  --ink: #f3f5f5; --ink-2: #d3d6d7; --muted: #919599; --faint: #686a6c;
+  --focus: #5b7181; --accent: #5b7181; --link: #93a7b2;
+  --gold: #5b7181; --gold-deep: #6a8699; --gold-ink: #93a7b2;
+  --gold-grad: linear-gradient(100deg, #101820 0%, #5b7181 55%, #c8d5db 100%);
+  --l1f: #131920; --l2f: #101820; --l3f: #2f3c4a; --l4f: #6e8492; --l5f: #77797c; --luf: #505254;
+  --l1t: #617a88; --l2t: #617988; --l3t: #627891; --l4t: #627a89; --l5t: #e3e4e5;
+  --l5: #d3d6d7; --lu: #686a6c;
+  --wash-a: rgba(16, 24, 32, 0.14); --wash-b: rgba(110, 132, 146, 0.05);
+  --mc-plate: #0d0f0f; --mc-plate-deep: #060607; --mc-pad: #101112;
+  --mc-utok-hi: #141617; --mc-utok: #090b0c; --mc-uico: #afbdc6;
+  --mc-grid: rgba(16, 24, 32, 0.38); --mc-grid-strong: rgba(91, 113, 129, 0.6);
+  --mc-hg: rgb(47, 60, 74); --mc-gop: 0.22;
+  --mc-dot: rgb(147, 167, 178); --mc-dot-glow: rgb(16, 24, 32); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(16, 24, 32, 0.2); --mc-halo-b: rgba(47, 60, 74, 0.1);
+  --mc-globe-a: rgba(16, 24, 32, 0.12); --mc-globe-b: rgba(47, 60, 74, 0.06);
+  --mc-globe-c: rgba(47, 60, 74, 0.03); --mc-globe-d: rgba(47, 60, 74, 0.1);
+  --mc-cut-a: rgba(16, 24, 32, 0.32); --mc-cut-b: rgba(47, 60, 74, 0.12);
+  --mc-globe-hl: #93a7b2; --mc-globe-rim: #2f3c4a; --mc-halo: #101820;
+  --mc-underglow: rgba(16, 24, 32, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f3f4; --panel-2: #e5e8e9;
+  --focus: #101820; --accent: #101820; --link: #101821;
+  --gold: #101820; --gold-deep: #101720; --gold-ink: #101821;
+  --gold-grad: linear-gradient(100deg, #101720 0%, #101820 55%, #6e8492 100%);
+  --l1f: #12181f; --l2f: #101820; --l3f: #2f3c4a; --l4f: #6e8492; --l5f: #252628; --luf: #9ca3af;
+  --l1t: #0e141c; --l2t: #101720; --l3t: #11161e; --l4t: #171c21; --l5t: #151819;
+  --wash-a: rgba(16, 24, 32, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e9ecec; --mc-utok: #e5e8e9; --mc-uico: #151819;
+  --mc-grid: rgba(16, 23, 32, 0.24); --mc-grid-strong: rgba(16, 23, 32, 0.42);
+  --mc-hg: #101720; --mc-gop: 0.3;
+  --mc-dot: #101720; --mc-dot-glow: #101820; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(16, 24, 32, 0.08); --mc-halo-b: rgba(16, 24, 32, 0.03);
+  --mc-cut-a: rgba(16, 23, 32, 0.12); --mc-cut-b: rgba(16, 23, 32, 0.05);
+  --mc-globe-rim: rgba(16, 23, 32, 0.3); --mc-halo: rgba(16, 24, 32, 0.22);
+  --mc-underglow: rgba(16, 23, 32, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(16, 24, 32, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #070808 0%, #090a0b 60%, #080b0d 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f7f8f8 0%, #f0f2f3 60%, #e6e9eb 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(91, 113, 129, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(16, 23, 32, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(16, 24, 32, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0d0f0f 0%, #0a0a0b 100%);
+  border-color: rgba(91, 113, 129, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0e1012), #070808 75%);
+}
+
+/* The Isracard / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(91, 113, 129, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

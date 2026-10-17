@@ -1,0 +1,97 @@
+/* Westpac NZ inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Westpac NZ's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #110d0d; --panel: #1E1617; --panel-2: #2e2122;
+  --ink: #f7f3f4; --ink-2: #e4dbdd; --muted: #c5baba; --faint: #aba1a1;
+  --focus: #cf7d80; --accent: #cf7d80; --link: #dfb0b5;
+  --gold: #cf7d80; --gold-deep: #d98f93; --gold-ink: #dfb0b5;
+  --gold-grad: linear-gradient(100deg, #da1710 0%, #d08184 55%, #f0ccd1 100%);
+  --l1f: #c53426; --l2f: #da1710; --l3f: #cf4e46; --l4f: #cf979b; --l5f: #b4abaa; --luf: #9d9292;
+  --l1t: #ba5560; --l2t: #bd545b; --l3t: #c25149; --l4t: #be5560; --l5t: #ebe6e6;
+  --l5: #e4dbdd; --lu: #aba1a1;
+  --wash-a: rgba(218, 23, 16, 0.14); --wash-b: rgba(207, 151, 155, 0.05);
+  --mc-plate: #191112; --mc-plate-deep: #080606; --mc-pad: #211617;
+  --mc-utok-hi: #332527; --mc-utok: #120a0b; --mc-uico: #e7c0c4;
+  --mc-grid: rgba(218, 23, 16, 0.38); --mc-grid-strong: rgba(208, 129, 132, 0.6);
+  --mc-hg: rgb(207, 78, 70); --mc-gop: 0.22;
+  --mc-dot: rgb(223, 176, 181); --mc-dot-glow: rgb(218, 23, 16); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(218, 23, 16, 0.2); --mc-halo-b: rgba(207, 78, 70, 0.1);
+  --mc-globe-a: rgba(218, 23, 16, 0.12); --mc-globe-b: rgba(207, 78, 70, 0.06);
+  --mc-globe-c: rgba(207, 78, 70, 0.03); --mc-globe-d: rgba(207, 78, 70, 0.1);
+  --mc-cut-a: rgba(218, 23, 16, 0.32); --mc-cut-b: rgba(207, 78, 70, 0.12);
+  --mc-globe-hl: #dfb0b5; --mc-globe-rim: #cf4e46; --mc-halo: #da1710;
+  --mc-underglow: rgba(218, 23, 16, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f6f2f3; --panel-2: #efe7e9;
+  --focus: #da1710; --accent: #da1710; --link: #97180b;
+  --gold: #da1710; --gold-deep: #7a1309; --gold-ink: #97180b;
+  --gold-grad: linear-gradient(100deg, #7a1309 0%, #da1710 55%, #cf979b 100%);
+  --l1f: #8a251a; --l2f: #da1710; --l3f: #cf4e46; --l4f: #cf979b; --l5f: #8a7271; --luf: #9ca3af;
+  --l1t: #4d0c06; --l2t: #7a1309; --l3t: #af2f1e; --l4t: #b13f3e; --l5t: #402a2d;
+  --wash-a: rgba(218, 23, 16, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f1eaec; --mc-utok: #efe7e9; --mc-uico: #402a2d;
+  --mc-grid: rgba(122, 19, 9, 0.24); --mc-grid-strong: rgba(122, 19, 9, 0.42);
+  --mc-hg: #7a1309; --mc-gop: 0.3;
+  --mc-dot: #7a1309; --mc-dot-glow: #da1710; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(218, 23, 16, 0.08); --mc-halo-b: rgba(218, 23, 16, 0.03);
+  --mc-cut-a: rgba(122, 19, 9, 0.12); --mc-cut-b: rgba(122, 19, 9, 0.05);
+  --mc-globe-rim: rgba(122, 19, 9, 0.3); --mc-halo: rgba(218, 23, 16, 0.22);
+  --mc-underglow: rgba(122, 19, 9, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(218, 23, 16, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0b0808 0%, #110909 60%, #160606 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f6f7 0%, #f6eff1 60%, #f2e6e7 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(208, 129, 132, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(122, 19, 9, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(218, 23, 16, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #191112 0%, #0e0c0c 100%);
+  border-color: rgba(208, 129, 132, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #1f1213), #0b0707 75%);
+}
+
+/* The Westpac NZ / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(208, 129, 132, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

@@ -1,0 +1,97 @@
+/* Bank Muscat inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Bank Muscat's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #120e0f; --panel: #21181A; --panel-2: #342629;
+  --ink: #f7f3f5; --ink-2: #e6dfe1; --muted: #d0c8c8; --faint: #bbb4b4;
+  --focus: #ca8088; --accent: #ca8088; --link: #e4c1c8;
+  --gold: #ca8088; --gold-deep: #dea7af; --gold-ink: #e4c1c8;
+  --gold-grad: linear-gradient(100deg, #e83840 0%, #d69da3 55%, #f0d3d9 100%);
+  --l1f: #d54d4c; --l2f: #e83840; --l3f: #d46f71; --l4f: #d7adb3; --l5f: #c2bbbc; --luf: #b0a8a8;
+  --l1t: #b65669; --l2t: #b75764; --l3t: #be5153; --l4t: #b65667; --l5t: #ece8e8;
+  --l5: #e6dfe1; --lu: #bbb4b4;
+  --wash-a: rgba(232, 56, 64, 0.14); --wash-b: rgba(215, 173, 179, 0.05);
+  --mc-plate: #1b1314; --mc-plate-deep: #090607; --mc-pad: #24191a;
+  --mc-utok-hi: #3a2b2e; --mc-utok: #120b0c; --mc-uico: #e9ccd1;
+  --mc-grid: rgba(232, 56, 64, 0.38); --mc-grid-strong: rgba(214, 157, 163, 0.6);
+  --mc-hg: rgb(212, 111, 113); --mc-gop: 0.22;
+  --mc-dot: rgb(228, 193, 200); --mc-dot-glow: rgb(232, 56, 64); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(232, 56, 64, 0.2); --mc-halo-b: rgba(212, 111, 113, 0.1);
+  --mc-globe-a: rgba(232, 56, 64, 0.12); --mc-globe-b: rgba(212, 111, 113, 0.06);
+  --mc-globe-c: rgba(212, 111, 113, 0.03); --mc-globe-d: rgba(212, 111, 113, 0.1);
+  --mc-cut-a: rgba(232, 56, 64, 0.32); --mc-cut-b: rgba(212, 111, 113, 0.12);
+  --mc-globe-hl: #e4c1c8; --mc-globe-rim: #d46f71; --mc-halo: #e83840;
+  --mc-underglow: rgba(232, 56, 64, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f6f3f4; --panel-2: #f0e9eb;
+  --focus: #e83840; --accent: #e83840; --link: #ae1614;
+  --gold: #e83840; --gold-deep: #8a1110; --gold-ink: #ae1614;
+  --gold-grad: linear-gradient(100deg, #8a1110 0%, #e83840 55%, #d7adb3 100%);
+  --l1f: #a02725; --l2f: #e83840; --l3f: #d46f71; --l4f: #d7adb3; --l5f: #a08d8e; --luf: #9ca3af;
+  --l1t: #540a0a; --l2t: #8a1110; --l3t: #cf322c; --l4t: #c26168; --l5t: #493237;
+  --wash-a: rgba(232, 56, 64, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f1eced; --mc-utok: #f0e9eb; --mc-uico: #493237;
+  --mc-grid: rgba(138, 17, 16, 0.24); --mc-grid-strong: rgba(138, 17, 16, 0.42);
+  --mc-hg: #8a1110; --mc-gop: 0.3;
+  --mc-dot: #8a1110; --mc-dot-glow: #e83840; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(232, 56, 64, 0.08); --mc-halo-b: rgba(232, 56, 64, 0.03);
+  --mc-cut-a: rgba(138, 17, 16, 0.12); --mc-cut-b: rgba(138, 17, 16, 0.05);
+  --mc-globe-rim: rgba(138, 17, 16, 0.3); --mc-halo: rgba(232, 56, 64, 0.22);
+  --mc-underglow: rgba(138, 17, 16, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(232, 56, 64, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0b0809 0%, #120a0b 60%, #160708 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f7f8 0%, #f6f0f2 60%, #f2e7ea 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(214, 157, 163, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(138, 17, 16, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(232, 56, 64, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #1b1314 0%, #0f0c0d 100%);
+  border-color: rgba(214, 157, 163, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #221516), #0b0708 75%);
+}
+
+/* The Bank Muscat / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(214, 157, 163, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

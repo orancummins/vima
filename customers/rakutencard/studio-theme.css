@@ -1,0 +1,97 @@
+/* Rakuten Card inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Rakuten Card's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #100c0d; --panel: #1C1315; --panel-2: #2a1d1e;
+  --ink: #f7f2f4; --ink-2: #e3d8da; --muted: #bdaeae; --faint: #9f9191;
+  --focus: #cf676e; --accent: #cf676e; --link: #dfa0a9;
+  --gold: #cf676e; --gold-deep: #da7780; --gold-ink: #dfa0a9;
+  --gold-grad: linear-gradient(100deg, #bf0000 0%, #cf676e 55%, #f1c5cc 100%);
+  --l1f: #ac1d15; --l2f: #bf0000; --l3f: #cb2a27; --l4f: #cd8289; --l5f: #a99c9c; --luf: #8f8080;
+  --l1t: #c45060; --l2t: #c54f5b; --l3t: #cc4b46; --l4t: #c64c5c; --l5t: #eae5e5;
+  --l5: #e3d8da; --lu: #9f9191;
+  --wash-a: rgba(191, 0, 0, 0.14); --wash-b: rgba(205, 130, 137, 0.05);
+  --mc-plate: #171010; --mc-plate-deep: #080506; --mc-pad: #1f1314;
+  --mc-utok-hi: #2e1f22; --mc-utok: #11090a; --mc-uico: #e7b4bb;
+  --mc-grid: rgba(191, 0, 0, 0.38); --mc-grid-strong: rgba(207, 103, 110, 0.6);
+  --mc-hg: rgb(203, 42, 39); --mc-gop: 0.22;
+  --mc-dot: rgb(223, 160, 169); --mc-dot-glow: rgb(191, 0, 0); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(191, 0, 0, 0.2); --mc-halo-b: rgba(203, 42, 39, 0.1);
+  --mc-globe-a: rgba(191, 0, 0, 0.12); --mc-globe-b: rgba(203, 42, 39, 0.06);
+  --mc-globe-c: rgba(203, 42, 39, 0.03); --mc-globe-d: rgba(203, 42, 39, 0.1);
+  --mc-cut-a: rgba(191, 0, 0, 0.32); --mc-cut-b: rgba(203, 42, 39, 0.12);
+  --mc-globe-hl: #dfa0a9; --mc-globe-rim: #cb2a27; --mc-halo: #bf0000;
+  --mc-underglow: rgba(191, 0, 0, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f6f1f3; --panel-2: #efe5e8;
+  --focus: #bf0000; --accent: #bf0000; --link: #880800;
+  --gold: #bf0000; --gold-deep: #700600; --gold-ink: #880800;
+  --gold-grad: linear-gradient(100deg, #700600 0%, #bf0000 55%, #cd8289 100%);
+  --l1f: #7b150f; --l2f: #bf0000; --l3f: #cb2a27; --l4f: #cd8289; --l5f: #755d5d; --luf: #9ca3af;
+  --l1t: #490400; --l2t: #700600; --l3t: #991a0f; --l4t: #992b2d; --l5t: #392326;
+  --wash-a: rgba(191, 0, 0, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f1e9eb; --mc-utok: #efe5e8; --mc-uico: #392326;
+  --mc-grid: rgba(112, 6, 0, 0.24); --mc-grid-strong: rgba(112, 6, 0, 0.42);
+  --mc-hg: #700600; --mc-gop: 0.3;
+  --mc-dot: #700600; --mc-dot-glow: #bf0000; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(191, 0, 0, 0.08); --mc-halo-b: rgba(191, 0, 0, 0.03);
+  --mc-cut-a: rgba(112, 6, 0, 0.12); --mc-cut-b: rgba(112, 6, 0, 0.05);
+  --mc-globe-rim: rgba(112, 6, 0, 0.3); --mc-halo: rgba(191, 0, 0, 0.22);
+  --mc-underglow: rgba(112, 6, 0, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(191, 0, 0, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0b0707 0%, #110809 60%, #160405 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f6f7 0%, #f6eff1 60%, #f3e3e6 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(207, 103, 110, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(112, 6, 0, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(191, 0, 0, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #171010 0%, #0e0b0b 100%);
+  border-color: rgba(207, 103, 110, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #1d1011), #0b0607 75%);
+}
+
+/* The Rakuten Card / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(207, 103, 110, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

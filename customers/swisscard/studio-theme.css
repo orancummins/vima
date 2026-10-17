@@ -1,0 +1,97 @@
+/* Swisscard inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Swisscard's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0c0d0d; --panel: #131516; --panel-2: #1a1d1e;
+  --ink: #f3f5f5; --ink-2: #d7dadb; --muted: #a2a6a9; --faint: #7e8185;
+  --focus: #6d889d; --accent: #6d889d; --link: #a3b5bf;
+  --gold: #6d889d; --gold-deep: #7f99ac; --gold-ink: #a3b5bf;
+  --gold-grad: linear-gradient(100deg, #263c53 0%, #6d889d 55%, #cdd9e0 100%);
+  --l1f: #2c3b4f; --l2f: #263c53; --l3f: #445a72; --l4f: #8397a5; --l5f: #8c8e91; --luf: #6b6d70;
+  --l1t: #5f7a89; --l2t: #5f798c; --l3t: #617893; --l4t: #5d7888; --l5t: #e5e6e7;
+  --l5: #d7dadb; --lu: #7e8185;
+  --wash-a: rgba(38, 60, 83, 0.14); --wash-b: rgba(131, 151, 165, 0.05);
+  --mc-plate: #101112; --mc-plate-deep: #060707; --mc-pad: #131517;
+  --mc-utok-hi: #1c1f20; --mc-utok: #0a0c0d; --mc-uico: #b9c7cf;
+  --mc-grid: rgba(38, 60, 83, 0.38); --mc-grid-strong: rgba(109, 136, 157, 0.6);
+  --mc-hg: rgb(68, 90, 114); --mc-gop: 0.22;
+  --mc-dot: rgb(163, 181, 191); --mc-dot-glow: rgb(38, 60, 83); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(38, 60, 83, 0.2); --mc-halo-b: rgba(68, 90, 114, 0.1);
+  --mc-globe-a: rgba(38, 60, 83, 0.12); --mc-globe-b: rgba(68, 90, 114, 0.06);
+  --mc-globe-c: rgba(68, 90, 114, 0.03); --mc-globe-d: rgba(68, 90, 114, 0.1);
+  --mc-cut-a: rgba(38, 60, 83, 0.32); --mc-cut-b: rgba(68, 90, 114, 0.12);
+  --mc-globe-hl: #a3b5bf; --mc-globe-rim: #445a72; --mc-halo: #263c53;
+  --mc-underglow: rgba(38, 60, 83, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f4f4; --panel-2: #e7eaeb;
+  --focus: #263c53; --accent: #263c53; --link: #1d2c40;
+  --gold: #263c53; --gold-deep: #192637; --gold-ink: #1d2c40;
+  --gold-grad: linear-gradient(100deg, #192637 0%, #263c53 55%, #8397a5 100%);
+  --l1f: #212d3d; --l2f: #263c53; --l3f: #445a72; --l4f: #8397a5; --l5f: #45484b; --luf: #9ca3af;
+  --l1t: #121c28; --l2t: #192637; --l3t: #263347; --l4t: #32404d; --l5t: #202426;
+  --wash-a: rgba(38, 60, 83, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaeded; --mc-utok: #e7eaeb; --mc-uico: #202426;
+  --mc-grid: rgba(25, 38, 55, 0.24); --mc-grid-strong: rgba(25, 38, 55, 0.42);
+  --mc-hg: #192637; --mc-gop: 0.3;
+  --mc-dot: #192637; --mc-dot-glow: #263c53; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(38, 60, 83, 0.08); --mc-halo-b: rgba(38, 60, 83, 0.03);
+  --mc-cut-a: rgba(25, 38, 55, 0.12); --mc-cut-b: rgba(25, 38, 55, 0.05);
+  --mc-globe-rim: rgba(25, 38, 55, 0.3); --mc-halo: rgba(38, 60, 83, 0.22);
+  --mc-underglow: rgba(25, 38, 55, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(38, 60, 83, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #080809 0%, #0a0c0d 60%, #090c0f 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f7f8f8 0%, #f0f3f3 60%, #e7ebed 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(109, 136, 157, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(25, 38, 55, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(38, 60, 83, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #101112 0%, #0b0b0c 100%);
+  border-color: rgba(109, 136, 157, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #111416), #070809 75%);
+}
+
+/* The Swisscard / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(109, 136, 157, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

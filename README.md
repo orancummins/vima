@@ -560,6 +560,42 @@ more, also as at 17 October 2026:
   - **Checkout.com**: an Agent Pay launch partner.
   - **Amazon**: Mastercard accepted everywhere; Visa holds the main co-brands.
 
+Then seventy-nine more banks and card companies, also as at 17 October 2026,
+each researched from its own results, product pages and press. Every page names
+the network on each card programme, and its Mastercard lens gives a one-line verdict
+(Zagrebačka banka: all-Mastercard since 2024–25; Česká spořitelna: Visa-only since
+2023; BOV: all Visa since Mastercard left in 2021):
+- **Latin America and the Caribbean:** Banamex, Banco Galicia, Banco Santander
+  Chile, Bancolombia, Interbank, Banco Pichincha, BROU, Itaú Paraguay, Banco
+  Nacional de Bolivia, BAC (one page for its six Central American markets),
+  Banreservas, NCB Jamaica and Republic Bank.
+- **Europe:**
+  - **Nordics and Baltics:** Swedbank (with the Baltics), DNB, Danske Bank,
+    Nordea and Landsbankinn.
+  - **Central and Eastern Europe:** Erste, PKO Bank Polski, Česká spořitelna,
+    OTP Bank, Banca Transilvania, UniCredit Bulbank, Zagrebačka banka, NLB,
+    Slovenská sporiteľňa, Banca Intesa Beograd and PrivatBank.
+  - **Southern and Western Europe:** Swisscard, Millennium BCP, Eurobank, BGL
+    BNP Paribas, Bank of Valletta and Bank of Cyprus.
+- **Asia-Pacific:** ICBC, Rakuten Card, HDFC Bank, Shinhan Card, BCA,
+  Commonwealth Bank, CTBC Bank, Maybank, Krungsri, Vietcombank, BDO Unibank,
+  Westpac New Zealand, HBL, BRAC Bank, Commercial Bank of Ceylon, Nabil Bank,
+  ABA Bank, BCEL and Golomt Bank.
+- **Middle East, Africa, Central Asia and the Caucasus:**
+  - **Central Asia and the Caucasus:** Halyk Bank, Kapitalbank (Uzbekistan),
+    Kapital Bank (Azerbaijan) and Bank of Georgia.
+  - **Middle East:** Emirates NBD, Garanti BBVA, Isracard, QNB, NBK, CrediMax,
+    Bank Muscat, Arab Bank, Bank Audi and International Development Bank (Iraq).
+  - **Africa:** National Bank of Egypt, Attijariwafa Bank, BDL (Algeria), BIAT,
+    Standard Bank, Access Bank, Equity Bank, GCB Bank, CRDB Bank, MCB
+    (Mauritius) and BAI (Angola).
+
+Subsidiaries of groups already here (Santander Chile, Itaú Paraguay, BGL BNP
+Paribas, UniCredit Bulbank, Zagrebačka banka, Česká spořitelna, Slovenská
+sporiteľňa) have their own pages, with the parent as context. Where a bank's
+own site blocked reading, the facts come from filings, regulators, archived
+copies and press, and are marked ⚠.
+
 Each customer has a folder under `customers/<id>/` holding a **standalone
 page**, one self-contained HTML file that opens on its own in any browser
 (for SNB, [customers/snb/SNB_Operating_System.html](customers/snb/SNB_Operating_System.html)),
@@ -578,9 +614,10 @@ library in [static/logos/financial-logos-500/](static/logos/financial-logos-500/
 (500 brands, with `index.csv`, `browse.html` and the source notices; logos remain
 their owners' trademarks), or, where the library's mark was missing or only a
 favicon, from the customer's own website (SNB and NEO, Citizens, NatWest,
-Fiserv, Bank of Ireland, Lloyds, ING, UniCredit, Nexi, Worldline, Adyen, DBS) or
-Wikimedia Commons (Revolut, Amazon, BNP Paribas, Banco do Brasil, Bradesco,
-Wells Fargo); `CUSTOMER["logos"]` records which. The primary colour is
+Fiserv, Bank of Ireland, Lloyds, ING, UniCredit, Nexi, Worldline, Adyen, DBS and
+most of the newest banks), Wikimedia Commons (Revolut, Amazon, BNP Paribas,
+Banco do Brasil, Bradesco, Wells Fargo and others), or an archived copy of the
+bank's site where it blocks reading; `CUSTOMER["logos"]` records which. The primary colour is
 `CUSTOMER["accent"]`, and `customers/brand_colours.py <id>` recolours the page
 palette and `studio-theme.css` from it (Citizens' hand-tuned palette is the
 base; text colours are kept at 4.5:1).

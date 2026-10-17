@@ -1,0 +1,97 @@
+/* Bank of Georgia inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Bank of Georgia's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #120e0d; --panel: #211816; --panel-2: #332623;
+  --ink: #f7f3f3; --ink-2: #e6dddd; --muted: #cdc5c1; --faint: #b5aeab;
+  --focus: #ce7f63; --accent: #ce7f63; --link: #e6bfb6;
+  --gold: #ce7f63; --gold-deep: #e2a996; --gold-ink: #e6bfb6;
+  --gold-grad: linear-gradient(100deg, #ff5c0a 0%, #da9f8a 55%, #f3d4cd 100%);
+  --l1f: #e47026; --l2f: #ff5c0a; --l3f: #de8452; --l4f: #d8ad9f; --l5f: #bdb6b3; --luf: #a9a19d;
+  --l1t: #bd5841; --l2t: #ba5b3d; --l3t: #b06130; --l4t: #bc563d; --l5t: #ece9e7;
+  --l5: #e6dddd; --lu: #b5aeab;
+  --wash-a: rgba(255, 92, 10, 0.14); --wash-b: rgba(216, 173, 159, 0.05);
+  --mc-plate: #1b1412; --mc-plate-deep: #090505; --mc-pad: #241a17;
+  --mc-utok-hi: #382a27; --mc-utok: #130b09; --mc-uico: #ecccc4;
+  --mc-grid: rgba(255, 92, 10, 0.38); --mc-grid-strong: rgba(218, 159, 138, 0.6);
+  --mc-hg: rgb(222, 132, 82); --mc-gop: 0.22;
+  --mc-dot: rgb(230, 191, 182); --mc-dot-glow: rgb(255, 92, 10); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(255, 92, 10, 0.2); --mc-halo-b: rgba(222, 132, 82, 0.1);
+  --mc-globe-a: rgba(255, 92, 10, 0.12); --mc-globe-b: rgba(222, 132, 82, 0.06);
+  --mc-globe-c: rgba(222, 132, 82, 0.03); --mc-globe-d: rgba(222, 132, 82, 0.1);
+  --mc-cut-a: rgba(255, 92, 10, 0.32); --mc-cut-b: rgba(222, 132, 82, 0.12);
+  --mc-globe-hl: #e6bfb6; --mc-globe-rim: #de8452; --mc-halo: #ff5c0a;
+  --mc-underglow: rgba(255, 92, 10, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f7f2f2; --panel-2: #f0e8e7;
+  --focus: #ff5c0a; --accent: #ff5c0a; --link: #b54700;
+  --gold: #ff5c0a; --gold-deep: #903900; --gold-ink: #b54700;
+  --gold-grad: linear-gradient(100deg, #903900 0%, #ff5c0a 55%, #d8ad9f 100%);
+  --l1f: #a44d14; --l2f: #ff5c0a; --l3f: #de8452; --l4f: #d8ad9f; --l5f: #99887f; --luf: #9ca3af;
+  --l1t: #592300; --l2t: #903900; --l3t: #d36415; --l4t: #ca6d43; --l5t: #48302c;
+  --wash-a: rgba(255, 92, 10, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f2ebea; --mc-utok: #f0e8e7; --mc-uico: #48302c;
+  --mc-grid: rgba(144, 57, 0, 0.24); --mc-grid-strong: rgba(144, 57, 0, 0.42);
+  --mc-hg: #903900; --mc-gop: 0.3;
+  --mc-dot: #903900; --mc-dot-glow: #ff5c0a; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(255, 92, 10, 0.08); --mc-halo-b: rgba(255, 92, 10, 0.03);
+  --mc-cut-a: rgba(144, 57, 0, 0.12); --mc-cut-b: rgba(144, 57, 0, 0.05);
+  --mc-globe-rim: rgba(144, 57, 0, 0.3); --mc-halo: rgba(255, 92, 10, 0.22);
+  --mc-underglow: rgba(144, 57, 0, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(255, 92, 10, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0b0908 0%, #130b08 60%, #180a05 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f6f6 0%, #f7f0ef 60%, #f3e8e5 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(218, 159, 138, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(144, 57, 0, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(255, 92, 10, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #1b1412 0%, #0f0d0c 100%);
+  border-color: rgba(218, 159, 138, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #221612), #0b0707 75%);
+}
+
+/* The Bank of Georgia / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(218, 159, 138, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }
