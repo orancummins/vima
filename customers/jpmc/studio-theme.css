@@ -1,0 +1,94 @@
+/* JPMorgan Chase inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   JPMorgan Chase's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0b0e0f; --panel: #111719; --panel-2: #172024;
+  --ink: #f2f6f7; --ink-2: #d3dee1; --muted: #9faeb3; --faint: #7d8a8f;
+  --focus: #469acd; --accent: #469acd; --link: #8bc3dd;
+  --gold: #469acd; --gold-deep: #59abd9; --gold-ink: #8bc3dd;
+  --gold-grad: linear-gradient(100deg, #004a87 0%, #469acd 55%, #bde3f2 100%);
+  --l1f: #0a447f; --l2f: #004a87; --l3f: #1865aa; --l4f: #68a6c8; --l5f: #8a969b; --luf: #6a767b;
+  --l1t: #8bc3dd; --l2t: #6aafd5; --l3t: #7aafe1; --l4t: #a6d2e6; --l5t: #e3e7e9;
+  --l5: #d3dee1; --lu: #7d8a8f;
+  --wash-a: rgba(0, 74, 135, 0.14); --wash-b: rgba(104, 166, 200, 0.05);
+  --mc-plate: #0e1315; --mc-plate-deep: #050808; --mc-pad: #10171c;
+  --mc-utok-hi: #192327; --mc-utok: #080e10; --mc-uico: #a6d2e6;
+  --mc-grid: rgba(0, 74, 135, 0.38); --mc-grid-strong: rgba(70, 154, 205, 0.6);
+  --mc-hg: rgb(24, 101, 170); --mc-gop: 0.22;
+  --mc-dot: rgb(139, 195, 221); --mc-dot-glow: rgb(0, 74, 135); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 74, 135, 0.2); --mc-halo-b: rgba(24, 101, 170, 0.1);
+  --mc-globe-a: rgba(0, 74, 135, 0.12); --mc-globe-b: rgba(24, 101, 170, 0.06);
+  --mc-globe-c: rgba(24, 101, 170, 0.03); --mc-globe-d: rgba(24, 101, 170, 0.1);
+  --mc-cut-a: rgba(0, 74, 135, 0.32); --mc-cut-b: rgba(24, 101, 170, 0.12);
+  --mc-globe-hl: #8bc3dd; --mc-globe-rim: #1865aa; --mc-halo: #004a87;
+  --mc-underglow: rgba(0, 74, 135, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f1f5f6; --panel-2: #e4ecef;
+  --focus: #004a87; --accent: #004a87; --link: #003266;
+  --gold: #004a87; --gold-deep: #002b57; --gold-ink: #003266;
+  --gold-grad: linear-gradient(100deg, #002b57 0%, #004a87 55%, #68a6c8 100%);
+  --l1f: #073260; --l2f: #004a87; --l3f: #1865aa; --l4f: #68a6c8; --l5f: #455359; --luf: #9ca3af;
+  --l1t: #001e3d; --l2t: #002b57; --l3t: #063973; --l4t: #1b4d72; --l5t: #1b292f;
+  --wash-a: rgba(0, 74, 135, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e8eff0; --mc-utok: #e4ecef; --mc-uico: #1b292f;
+  --mc-grid: rgba(0, 43, 87, 0.24); --mc-grid-strong: rgba(0, 43, 87, 0.42);
+  --mc-hg: #002b57; --mc-gop: 0.3;
+  --mc-dot: #002b57; --mc-dot-glow: #004a87; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 74, 135, 0.08); --mc-halo-b: rgba(0, 74, 135, 0.03);
+  --mc-cut-a: rgba(0, 43, 87, 0.12); --mc-cut-b: rgba(0, 43, 87, 0.05);
+  --mc-globe-rim: rgba(0, 43, 87, 0.3); --mc-halo: rgba(0, 74, 135, 0.22);
+  --mc-underglow: rgba(0, 43, 87, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 74, 135, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #07090a 0%, #070d10 60%, #030e15 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f9f9 0%, #eef5f6 60%, #e1eef3 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(70, 154, 205, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 43, 87, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 74, 135, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0e1315 0%, #0a0c0d 100%);
+  border-color: rgba(70, 154, 205, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0d161b), #06090a 75%);
+}
+
+/* The JPMorgan Chase / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(70, 154, 205, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

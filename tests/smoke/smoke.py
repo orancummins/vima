@@ -136,7 +136,8 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
         m = re.search(r"window\.__CUSTOMERS__ = (\[.*?\]);", resp.text)
         assert m, "window.__CUSTOMERS__ not found in /app HTML."
         ids = {c["id"] for c in json.loads(m.group(1))}
-        expected = {"snb", "citi", "citizens", "stripe", "boi", "itau"}
+        expected = {"snb", "citi", "citizens", "stripe", "boi", "itau", "capitalone", "jpmc", "fiserv",
+                    "globalpayments", "santander", "barclays", "natwest", "synchrony"}
         assert expected <= ids, f"Customers missing from the Customers tab: {sorted(expected - ids)}"
         assert 'data-customer-open="snb"' in resp.text, "No card opens Saudi National Bank."
 
@@ -195,7 +196,15 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
     def _built_customers():
         for cid, page, product in (("stripe", "Stripe_Platform.html", "authboost"),
                                    ("boi", "Bank_of_Ireland_Platform.html", "creditcards"),
-                                   ("itau", "Itau_Platform.html", "rede")):
+                                   ("itau", "Itau_Platform.html", "rede"),
+                                   ("capitalone", "Capital_One_Platform.html", "spark"),
+                                   ("jpmc", "JPMorgan_Chase_Platform.html", "applecard"),
+                                   ("fiserv", "Fiserv_Platform.html", "merchantcloud"),
+                                   ("globalpayments", "Global_Payments_Platform.html", "wpenterprise"),
+                                   ("santander", "Santander_Platform.html", "getnet"),
+                                   ("barclays", "Barclays_Platform.html", "bcpayments"),
+                                   ("natwest", "NatWest_Group_Platform.html", "mcdebit"),
+                                   ("synchrony", "Synchrony_Platform.html", "mcdual")):
             resp = assert_status(get(f"{base_url}/customers/{cid}/"), 200)
             assert_no_server_error(resp.text, f"{base_url}/customers/{cid}/")
             assert f"customers/{cid}/studio-theme.css" in resp.text
@@ -204,7 +213,7 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
             assert not data.get("warnings"), f"{cid}'s Studio links no longer resolve: {data['warnings']}"
             assert product in data.get("products", {}), f"{cid}: {product} should link to Studio"
 
-    runner.run("GET /customers/stripe|boi|itau/ serve their pages and links", _built_customers)
+    runner.run("GET /customers/<built customers>/ serve their pages and links", _built_customers)
 
     return runner
 

@@ -524,7 +524,18 @@ First Republic's bankers, and the same Mastercard lens. Then **Stripe**
 commerce, on every network), **Bank of Ireland** (credit cards on Mastercard
 since 2015, debit on Visa) and **Itaú Unibanco** (Brazil's largest card
 issuer and acquirer, with Hipercard's 15 million cards moved to Mastercard in
-2025), all as at 17 October 2026.
+2025), all as at 17 October 2026. The latest eight, on the same date: **Capital
+One** (owner of the Discover network since 2025, moving debit and new consumer
+credit onto it, with a renewed Mastercard agreement for the rest),
+**JPMorgan Chase** (mostly Visa, with eight Mastercards and Apple Card coming
+around 2028), **Fiserv** (Mastercard Merchant Cloud inside Commerce Hub, while
+STAR and Accel compete with Debit Mastercard), **Global Payments** with
+Worldpay (accepted everywhere, Mastercard Move for payouts in the UAE),
+**Santander** (UK and Mexico debit on Mastercard, Europe's first live AI-agent
+payment), **Barclays** (Visa at home, Mastercard on most US partner cards,
+Avios and Tesco), **NatWest Group** (16 million debit cards on Mastercard
+since 2021, Visa first to its agentic payments) and **Synchrony** (most named
+co-brands on Mastercard, two-thirds of the book private label).
 
 Each customer has a folder under `customers/<id>/` holding a **standalone
 page**, one self-contained HTML file that opens on its own in any browser
@@ -554,7 +565,7 @@ journey that `customers/<id>/__init__.py` maps to Studio. Citi's page is
 built here rather than copied in: `customers/build_page.py` takes SNB's
 page as the template (the same engine) and swaps in Citi's data, palette and
 lens wording from the `citi_*.py` files beside it, so to update Citi edit
-those and run `python customers/build_page.py <id>` (citi, citizens, stripe, boi or itau). To add a customer,
+those and run `python customers/build_page.py <id>` (any customer but snb). To add a customer,
 copy `customers/snb/`: a `CUSTOMER` dict in `__init__.py` (who they are, the
 page's file name, and which Studio APIs, use cases and bundles land on which
 of their products), the standalone page, and a `studio-theme.css` with their

@@ -1,0 +1,161 @@
+"""Capital One's kinds of user, journeys and Mastercard lens, as at 17 October 2026 (see page_data.py)."""
+# ruff: noqa: E501
+
+SUB = ("America's largest card issuer by loans, now owner of its own network, as five discs that stack into one platform: "
+       "a $674 billion balance sheet and the Discover network at the bottom, the app, cafés, lounges and car dealers at the "
+       "top. Click the stack to open it. Choose who you are and what you want to do, and the areas that deliver it light "
+       "up across the layers, joined in the order they act. Switch to the Mastercard lens to see how deep Mastercard goes "
+       "in every area.")
+
+USERS = [  # key, label, icon (a key of the template's ICONS)
+    ("con", "Cardholders & bank customers", "user-round"),
+    ("aff", "Travellers", "plane"),
+    ("auto", "Car buyers", "target"),
+    ("sme", "Small businesses", "briefcase"),
+    ("corp", "Companies", "factory"),
+    ("merch", "Merchants", "store"),
+    ("fin", "Network partners & software clients", "network"),
+    ("inv", "Investors & regulators", "chart-column"),
+]
+USERS_DESC = ("Eight kinds of user around more than 100 million customers: cardholders and 360 customers, travellers, car "
+              "buyers, small businesses and Brex's companies, commercial clients, the merchants and partner banks on the "
+              "Discover network, and the investors and regulators watching the integration.")
+
+WHO = {
+    "con": "A cardholder", "aff": "A traveller", "auto": "A car buyer", "sme": "A small business", "corp": "A company",
+    "merch": "A merchant", "fin": "A network partner", "inv": "An investor",
+}
+
+# Steps are (area, product, label).
+OUTCOMES = [
+    {"id": "everyday", "who": "con", "name": "Bank and pay day to day",
+     "why": "360 Checking with a Discover debit card, a cash-back card, Zelle and Eno.",
+     "steps": [("4.3", "bank360", "Open 360 Checking"), ("2.2", "debit", "Pay with Discover debit"),
+               ("2.3", "migration", "Earn cash back on Quicksilver"), ("2.5", "zelle", "Send money with Zelle"),
+               ("3.1", "eno", "Let Eno watch the account")]},
+    {"id": "build", "who": "con", "name": "Build credit",
+     "why": "CreditWise for anyone, then a secured card and a path to Quicksilver.",
+     "steps": [("3.1", "eno", "Check your score with CreditWise"), ("4.1", "cards", "Start with Platinum Secured"),
+               ("2.3", "migration", "Move up to Quicksilver"), ("5.1", "app", "Manage it in the app")]},
+    {"id": "travel", "who": "aff", "name": "Travel on miles",
+     "why": "Venture X on Visa, Capital One Travel rebuilt in-house, and the lounges.",
+     "steps": [("2.3", "venturex", "Carry Venture X"), ("3.4", "travel", "Book on Capital One Travel"),
+               ("5.3", "lounges", "Use the lounges"), ("5.4", "portals", "Shop the portals")]},
+    {"id": "car", "who": "auto", "name": "Buy a car",
+     "why": "$89 billion of auto loans, through dealers and Auto Navigator.",
+     "steps": [("5.5", "dealers", "Shop at a dealer"), ("3.3", "ai", "Chat with the dealer's concierge"),
+               ("4.4", "auto", "Finance with Capital One")]},
+    {"id": "sme", "who": "sme", "name": "Run a small business",
+     "why": "Spark and Venture X Business on Mastercard, and Brex for spend management.",
+     "steps": [("2.4", "spark", "Carry a Spark card"), ("4.2", "brex", "Manage spend on Brex"),
+               ("3.2", "mcservices", "Protected by Mastercard services")]},
+    {"id": "corp", "who": "corp", "name": "Bank a mid-sized company",
+     "why": "Commercial banking for firms with $20 million to $2 billion of revenue, and Brex corporate cards.",
+     "steps": [("4.5", "commercial", "Bank with Commercial Banking"), ("4.2", "brex", "Issue Brex corporate cards")]},
+    {"id": "merchant", "who": "merch", "name": "Accept Discover",
+     "why": "The network Capital One now owns, and wants accepted in more places.",
+     "steps": [("2.1", "discover", "Accept Discover and Diners"), ("4.6", "networkbiz", "Pay network fees"),
+               ("3.5", "shopping", "Reach shoppers through Capital One Shopping")]},
+    {"id": "network", "who": "fin", "name": "Issue or acquire on Discover",
+     "why": "Discover, PULSE and Diners sold to other banks and networks.",
+     "steps": [("4.6", "networkbiz", "Join the Global Payment Network"), ("2.1", "discover", "Issue on Discover or PULSE"),
+               ("4.7", "software", "Or buy Capital One Software")]},
+    {"id": "mcnow", "who": "mc", "name": "Where Mastercard still is",
+     "why": "After debit and the flagship credit originations moved: a renewed credit agreement, business and co-brand cards, Canada, the unconverted back book and 'several' services.",
+     "steps": [("2.4", "spark", "Spark and Venture X Business"), ("2.4", "cobrands", "REI, BJ's and Bass Pro co-brands"),
+               ("2.5", "intl", "Canada and the UK"), ("2.3", "migration", "The back book not yet converted"),
+               ("3.2", "mcservices", "Several Mastercard services")]},
+    {"id": "mcnext", "who": "mc", "name": "Where travel, business and services could land",
+     "why": "Where Capital One still needs a global network or network-neutral services: travel and cross-border, Brex and commercial, services that work on any network, benefits Savor lost, and the co-brands at renewal.",
+     "steps": [("2.3", "venturex", "Travel and cross-border, where Discover is thin"), ("4.2", "brex", "Brex and commercial cards"),
+               ("3.2", "mcservices", "Fraud, identity, tokens and Agent Pay on any network"), ("3.5", "shopping", "Benefits and offers for Savor"),
+               ("2.4", "cobrands", "Co-brands at renewal")]},
+]
+
+# The Mastercard lens: the template's VS object. d: 3 Mastercard-run, 2 on Mastercard, 1 partly, 0 not, None can't tell.
+LENS = {
+    "asof": "17 October 2026",
+    "kicker": "Mastercard, across Capital One's map",
+    "title": "A customer that bought a network",
+    "lead": "Owning Discover changed Capital One's arithmetic. About 25 million debit cards left Mastercard for Discover by early 2026, and new Savor, Quicksilver and Venture accounts have been opened on Discover since February–March 2026. Mastercard renewed its credit agreement in January 2026 for 'a large portion' of new accounts and keeps the business cards, several co-brands, Canada, the unconverted back book and 'several' services. Visa keeps Venture X for now. Each of the areas below is marked by how deep Mastercard goes in it.",
+    "qnote": "Figures are Capital One's own (2Q26 results and 10-Q, July 2026) or come from Capital One, Mastercard, card-benefit pages and trade press. Neither side has quantified the 2026 renewal or named the services.",
+    "how": "A mark records how much of an area runs on Mastercard, in public sources as at 17 October 2026: Mastercard's own product running it, the whole capability riding on Mastercard, part of it, or none. It is this map's judgement and says nothing about volumes.",
+    "q": [
+        ["Debit", "Discover", "About 25 million cards moved from Mastercard, done Q1 2026"],
+        ["Consumer credit", "Moving to Discover", "New flagships since Feb–Mar 2026; back book by test"],
+        ["Renewal", "January 2026", "'A large portion of newly acquired credit accounts'; US and Canada"],
+        ["Business cards", "Mastercard", "Spark, Venture X Business"],
+        ["Co-brands", "Mostly Mastercard", "REI, BJ's, Bass Pro; T-Mobile and Kohl's on Visa"],
+        ["Venture X", "Visa", "'For now'"],
+        ["Services", "'Several'", "Unnamed"],
+        ["Network volume", "$190bn a quarter", "Discover, 2Q26"],
+        ["Regulation", "CCCA 2026", "Exempts three-party networks like Discover"],
+    ],
+    "sides": {
+        "neo": {"dir": "The renewed credit agreement, Spark and Venture X Business, Mastercard co-brands, Canada and probably the UK, the unconverted back book, and several services.",
+                "deals": "What it no longer does: debit, new Savor, Quicksilver and Venture accounts, the Walmart cards; and it never carried Venture X."},
+        "snb": {"dir": "Discover, PULSE and Diners as Capital One's own networks; Visa on Venture X and some co-brands; Eno, CreditWise, Capital One Travel and Shopping.",
+                "deals": "Where they meet: the back-book tests, travel and cross-border acceptance, business cards, and services that work on any network."},
+    },
+    "tl": [
+        ["2019", "Walmart co-brand on Mastercard"],
+        ["Feb 2024", "Discover deal agreed"],
+        ["Jul 2024", "Walmart partnership ends"],
+        ["May 2025", "Discover closes"],
+        ["Aug 2025", "Debit starts moving to Discover"],
+        ["Jan 2026", "Mastercard renews credit and services"],
+        ["Feb–Mar 2026", "New Savor, Quicksilver and Venture accounts on Discover"],
+        ["Apr 2026", "Brex closes"],
+        ["Jul 2026", "Credit tests on new and existing accounts"],
+    ],
+    "l": {
+        "U": {"d": 1, "s": "Business and co-brand cardholders carry Mastercard; most new consumers do not.",
+              "gap": "Mastercard reaches Spark and co-brand holders and the unconverted back book; debit holders and new consumer cardholders are on Discover, Venture X holders on Visa.",
+              "neo": "Spark, co-brand, Canada and legacy consumer cardholders.", "snb": "Debit holders, new Savor and Quicksilver holders, Venture X holders, Discover merchants."},
+        "L5": {"d": 0, "s": "The front doors are Capital One's.", "gap": "The app, cafés, lounges, portals and dealers are Capital One's.",
+               "neo": "None.", "snb": "App, cafés, lounges, Travel, Shopping, dealers."},
+        "L4": {"d": 1, "s": "Mastercard in the card segment, shrinking.",
+               "gap": "Consumer cards are partly Mastercard and moving; Brex's network is not public; banking, auto and commercial have no role; the network business competes.",
+               "neo": "Part of consumer cards.", "snb": "360, auto, commercial, the network business, Software."},
+        "L3": {"d": 1, "s": "Mastercard services kept; the rest is Capital One's.",
+               "gap": "'Several' Mastercard services remain; Eno, CreditWise, AI, travel and shopping are Capital One's.",
+               "neo": "Unnamed Mastercard services.", "snb": "Eno, CreditWise, enterprise AI, Capital One Travel, Shopping."},
+        "L2": {"d": 1, "s": "Business and co-brands on Mastercard; debit and new credit on Discover.",
+               "gap": "Discover now carries debit and new consumer credit; Mastercard keeps business cards, co-brands and Canada; Visa keeps Venture X.",
+               "neo": "Spark, co-brands, Canada, back book.", "snb": "Discover, PULSE, Diners, Venture X on Visa, Zelle."},
+        "L1": {"d": 0, "s": "Capital One's own balance sheet and thesis.", "gap": "The strategy is to own the network.",
+               "neo": "None.", "snb": "Capital, charter, leadership, cloud, payments thesis."},
+    },
+    "t": {
+        "1.1": {"d": 0, "why": "Capital One's own capital.", "v": [["Balance sheet", "No Mastercard role.", "0", ""]]},
+        "1.2": {"d": 0, "why": "Charter and obligations.", "v": [["Charter", "No Mastercard role.", "0", ""]]},
+        "1.3": {"d": 0, "why": "Leadership.", "v": [["Leadership", "No Mastercard role.", "0", ""]]},
+        "1.4": {"d": 0, "why": "Heritage.", "v": [["Heritage", "No Mastercard role.", "0", ""]]},
+        "1.5": {"d": 0, "why": "AWS and in-house AI.", "v": [["Cloud", "No Mastercard role.", "0", ""]]},
+        "1.6": {"d": 0, "why": "The thesis is to own the network.", "v": [["Strategy", "Discover first.", "0", ""]]},
+        "2.1": {"d": 0, "why": "Discover, PULSE and Diners compete with Mastercard.", "v": [["Discover", "Capital One's own.", "0", ""]]},
+        "2.2": {"d": 0, "why": "Debit moved to Discover.", "v": [["Debit", "Discover since 2026.", "0", ""]]},
+        "2.3": {"d": 1, "why": "Back book partly Mastercard; new flagships on Discover; Venture X Visa.", "v": [
+            ["Back book", "Partly Mastercard.", "", ""], ["New flagships", "Discover.", "0", ""], ["Venture X", "Visa.", "0", ""]]},
+        "2.4": {"d": 2, "why": "Business cards and most co-brands are Mastercard.", "v": [["Spark", "Mastercard.", "", ""], ["Co-brands", "Mostly Mastercard.", "", ""]]},
+        "2.5": {"d": 1, "why": "Canada and the UK are Mastercard ⚠; Zelle is not.", "v": [["Canada, UK", "Mastercard ⚠.", "", ""], ["Zelle", "No card network.", "0", ""]]},
+        "3.1": {"d": 0, "why": "Eno and CreditWise are Capital One's.", "v": [["Eno", "Capital One's own.", "0", ""]]},
+        "3.2": {"d": 3, "why": "'Several' Mastercard services under the 2026 agreement.", "v": [["Mastercard services", "Unnamed.", "", ""]]},
+        "3.3": {"d": 0, "why": "Enterprise AI.", "v": [["AI", "No Mastercard role.", "0", ""]]},
+        "3.4": {"d": 0, "why": "Capital One Travel is in-house.", "v": [["World Elite benefits", "Lost on Savor.", "0", ""]]},
+        "3.5": {"d": 0, "why": "Capital One Shopping.", "v": [["Offers", "Capital One's own.", "0", ""]]},
+        "3.6": {"d": 0, "why": "Discover integration.", "v": [["Integration", "No Mastercard role.", "0", ""]]},
+        "4.1": {"d": 1, "why": "Consumer cards partly Mastercard, moving to Discover.", "v": [["Consumer cards", "Mixed and moving.", "", ""]]},
+        "4.2": {"d": None, "why": "Brex's network is not verified.", "v": [["Brex", "Not verified.", "u", ""]]},
+        "4.3": {"d": 0, "why": "Retail bank with Discover debit.", "v": [["360", "Discover debit.", "0", ""]]},
+        "4.4": {"d": 0, "why": "Auto finance.", "v": [["Auto", "No Mastercard role.", "0", ""]]},
+        "4.5": {"d": 0, "why": "Commercial banking.", "v": [["Commercial", "No Mastercard role.", "0", ""]]},
+        "4.6": {"d": 0, "why": "The network business competes.", "v": [["Global Payment Network", "Competitor.", "0", ""]]},
+        "4.7": {"d": 0, "why": "Capital One Software.", "v": [["Software", "No Mastercard role.", "0", ""]]},
+        "5.1": {"d": 0, "why": "The app.", "v": [["App", "No Mastercard role.", "0", ""]]},
+        "5.2": {"d": 0, "why": "Cafés and branches.", "v": [["Cafés", "No Mastercard role.", "0", ""]]},
+        "5.3": {"d": 0, "why": "Lounges.", "v": [["Lounges", "No Mastercard role.", "0", ""]]},
+        "5.4": {"d": 0, "why": "Portals.", "v": [["Portals", "No Mastercard role.", "0", ""]]},
+        "5.5": {"d": 0, "why": "Dealers and partners.", "v": [["Dealers", "No Mastercard role.", "0", ""]]},
+    },
+}

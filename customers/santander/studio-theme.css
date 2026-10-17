@@ -1,0 +1,94 @@
+/* Santander inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Santander's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0f0b0c; --panel: #191113; --panel-2: #23181a;
+  --ink: #f7f2f4; --ink-2: #e0d4d8; --muted: #b2a0a5; --faint: #8e7e82;
+  --focus: #ca495b; --accent: #ca495b; --link: #db8d9d;
+  --gold: #ca495b; --gold-deep: #d65c6f; --gold-ink: #db8d9d;
+  --gold-grad: linear-gradient(100deg, #870009 0%, #ca495b 55%, #f1bec9 100%);
+  --l1f: #7d0c0e; --l2f: #870009; --l3f: #a61c22; --l4f: #c66a79; --l5f: #9a8b8e; --luf: #7a6b6e;
+  --l1t: #db8d9d; --l2t: #d26d7e; --l3t: #de7d80; --l4t: #e4a8b4; --l5t: #e9e3e4;
+  --l5: #e0d4d8; --lu: #8e7e82;
+  --wash-a: rgba(135, 0, 9, 0.14); --wash-b: rgba(198, 106, 121, 0.05);
+  --mc-plate: #150e0f; --mc-plate-deep: #080506; --mc-pad: #1b1112;
+  --mc-utok-hi: #261a1d; --mc-utok: #10080a; --mc-uico: #e4a8b4;
+  --mc-grid: rgba(135, 0, 9, 0.38); --mc-grid-strong: rgba(202, 73, 91, 0.6);
+  --mc-hg: rgb(166, 28, 34); --mc-gop: 0.22;
+  --mc-dot: rgb(219, 141, 157); --mc-dot-glow: rgb(135, 0, 9); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(135, 0, 9, 0.2); --mc-halo-b: rgba(166, 28, 34, 0.1);
+  --mc-globe-a: rgba(135, 0, 9, 0.12); --mc-globe-b: rgba(166, 28, 34, 0.06);
+  --mc-globe-c: rgba(166, 28, 34, 0.03); --mc-globe-d: rgba(166, 28, 34, 0.1);
+  --mc-cut-a: rgba(135, 0, 9, 0.32); --mc-cut-b: rgba(166, 28, 34, 0.12);
+  --mc-globe-hl: #db8d9d; --mc-globe-rim: #a61c22; --mc-halo: #870009;
+  --mc-underglow: rgba(135, 0, 9, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f6f1f3; --panel-2: #eee4e7;
+  --focus: #870009; --accent: #870009; --link: #660001;
+  --gold: #870009; --gold-deep: #570001; --gold-ink: #660001;
+  --gold-grad: linear-gradient(100deg, #570001 0%, #870009 55%, #c66a79 100%);
+  --l1f: #5e0909; --l2f: #870009; --l3f: #a61c22; --l4f: #c66a79; --l5f: #58464a; --luf: #9ca3af;
+  --l1t: #3d0001; --l2t: #570001; --l3t: #700a09; --l4t: #701d24; --l5t: #2e1c20;
+  --wash-a: rgba(135, 0, 9, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f0e8eb; --mc-utok: #eee4e7; --mc-uico: #2e1c20;
+  --mc-grid: rgba(87, 0, 1, 0.24); --mc-grid-strong: rgba(87, 0, 1, 0.42);
+  --mc-hg: #570001; --mc-gop: 0.3;
+  --mc-dot: #570001; --mc-dot-glow: #870009; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(135, 0, 9, 0.08); --mc-halo-b: rgba(135, 0, 9, 0.03);
+  --mc-cut-a: rgba(87, 0, 1, 0.12); --mc-cut-b: rgba(87, 0, 1, 0.05);
+  --mc-globe-rim: rgba(87, 0, 1, 0.3); --mc-halo: rgba(135, 0, 9, 0.22);
+  --mc-underglow: rgba(87, 0, 1, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(135, 0, 9, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0a0707 0%, #100708 60%, #140405 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f6f7 0%, #f6eef1 60%, #f2e2e6 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(202, 73, 91, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(87, 0, 1, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(135, 0, 9, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #150e0f 0%, #0d0a0a 100%);
+  border-color: rgba(202, 73, 91, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #1a0e10), #0a0607 75%);
+}
+
+/* The Santander / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(202, 73, 91, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

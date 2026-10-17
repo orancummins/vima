@@ -1,0 +1,94 @@
+/* NatWest inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   NatWest's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0d0b0f; --panel: #151119; --panel-2: #1e1823;
+  --ink: #f4f2f7; --ink-2: #d9d4e0; --muted: #a7a0b2; --faint: #857e8e;
+  --focus: #914fc4; --accent: #914fc4; --link: #b491d7;
+  --gold: #914fc4; --gold-deep: #9e62d0; --gold-ink: #b491d7;
+  --gold-grad: linear-gradient(100deg, #550384 0%, #914fc4 55%, #d6c0ef 100%);
+  --l1f: #571277; --l2f: #550384; --l3f: #7522a0; --l4f: #9b6ec2; --l5f: #928b9a; --luf: #726b7a;
+  --l1t: #b491d7; --l2t: #a371ce; --l3t: #bc81da; --l4t: #c6aae2; --l5t: #e6e3e9;
+  --l5: #d9d4e0; --lu: #857e8e;
+  --wash-a: rgba(85, 3, 132, 0.14); --wash-b: rgba(155, 110, 194, 0.05);
+  --mc-plate: #120e15; --mc-plate-deep: #060508; --mc-pad: #17111b;
+  --mc-utok-hi: #201a26; --mc-utok: #0c0810; --mc-uico: #c6aae2;
+  --mc-grid: rgba(85, 3, 132, 0.38); --mc-grid-strong: rgba(145, 79, 196, 0.6);
+  --mc-hg: rgb(117, 34, 160); --mc-gop: 0.22;
+  --mc-dot: rgb(180, 145, 215); --mc-dot-glow: rgb(85, 3, 132); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(85, 3, 132, 0.2); --mc-halo-b: rgba(117, 34, 160, 0.1);
+  --mc-globe-a: rgba(85, 3, 132, 0.12); --mc-globe-b: rgba(117, 34, 160, 0.06);
+  --mc-globe-c: rgba(117, 34, 160, 0.03); --mc-globe-d: rgba(117, 34, 160, 0.1);
+  --mc-cut-a: rgba(85, 3, 132, 0.32); --mc-cut-b: rgba(117, 34, 160, 0.12);
+  --mc-globe-hl: #b491d7; --mc-globe-rim: #7522a0; --mc-halo: #550384;
+  --mc-underglow: rgba(85, 3, 132, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f3f1f6; --panel-2: #e8e4ee;
+  --focus: #550384; --accent: #550384; --link: #460363;
+  --gold: #550384; --gold-deep: #3b0255; --gold-ink: #460363;
+  --gold-grad: linear-gradient(100deg, #3b0255 0%, #550384 55%, #9b6ec2 100%);
+  --l1f: #430d5a; --l2f: #550384; --l3f: #7522a0; --l4f: #9b6ec2; --l5f: #4e4658; --luf: #9ca3af;
+  --l1t: #29023b; --l2t: #3b0255; --l3t: #510d6c; --l4t: #4f216c; --l5t: #241c2e;
+  --wash-a: rgba(85, 3, 132, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #ebe8f0; --mc-utok: #e8e4ee; --mc-uico: #241c2e;
+  --mc-grid: rgba(59, 2, 85, 0.24); --mc-grid-strong: rgba(59, 2, 85, 0.42);
+  --mc-hg: #3b0255; --mc-gop: 0.3;
+  --mc-dot: #3b0255; --mc-dot-glow: #550384; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(85, 3, 132, 0.08); --mc-halo-b: rgba(85, 3, 132, 0.03);
+  --mc-cut-a: rgba(59, 2, 85, 0.12); --mc-cut-b: rgba(59, 2, 85, 0.05);
+  --mc-globe-rim: rgba(59, 2, 85, 0.3); --mc-halo: rgba(85, 3, 132, 0.22);
+  --mc-underglow: rgba(59, 2, 85, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(85, 3, 132, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #09070a 0%, #0c0710 60%, #0d0414 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f7f6f9 0%, #f1eef6 60%, #e9e2f2 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(145, 79, 196, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(59, 2, 85, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(85, 3, 132, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #120e15 0%, #0c0a0d 100%);
+  border-color: rgba(145, 79, 196, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #150e1a), #08060a 75%);
+}
+
+/* The NatWest / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(145, 79, 196, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }
