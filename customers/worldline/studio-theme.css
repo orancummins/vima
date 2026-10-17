@@ -1,0 +1,97 @@
+/* Worldline inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Worldline's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0e1110; --panel: #191E1C; --panel-2: #262e2c;
+  --ink: #f4f6f5; --ink-2: #dfe3e2; --muted: #c3c9c8; --faint: #acb1b0;
+  --focus: #61a091; --accent: #61a091; --link: #c1d9d2;
+  --gold: #61a091; --gold-deep: #a8cec4; --gold-ink: #c1d9d2;
+  --gold-grad: linear-gradient(100deg, #46beaa 0%, #9dc4bb 55%, #d6e9e3 100%);
+  --l1f: #54b1a7; --l2f: #46beaa; --l3f: #73b8ae; --l4f: #acc8c1; --l5f: #b4b9b8; --luf: #9ea4a3;
+  --l1t: #4e8071; --l2t: #4d7f72; --l3t: #477e77; --l4t: #4d8071; --l5t: #e8ebea;
+  --l5: #dfe3e2; --lu: #acb1b0;
+  --wash-a: rgba(70, 190, 170, 0.14); --wash-b: rgba(172, 200, 193, 0.05);
+  --mc-plate: #141817; --mc-plate-deep: #060807; --mc-pad: #1a201f;
+  --mc-utok-hi: #2b3330; --mc-utok: #0c100f; --mc-uico: #cde1db;
+  --mc-grid: rgba(70, 190, 170, 0.38); --mc-grid-strong: rgba(157, 196, 187, 0.6);
+  --mc-hg: rgb(115, 184, 174); --mc-gop: 0.22;
+  --mc-dot: rgb(193, 217, 210); --mc-dot-glow: rgb(70, 190, 170); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(70, 190, 170, 0.2); --mc-halo-b: rgba(115, 184, 174, 0.1);
+  --mc-globe-a: rgba(70, 190, 170, 0.12); --mc-globe-b: rgba(115, 184, 174, 0.06);
+  --mc-globe-c: rgba(115, 184, 174, 0.03); --mc-globe-d: rgba(115, 184, 174, 0.1);
+  --mc-cut-a: rgba(70, 190, 170, 0.32); --mc-cut-b: rgba(115, 184, 174, 0.12);
+  --mc-globe-hl: #c1d9d2; --mc-globe-rim: #73b8ae; --mc-halo: #46beaa;
+  --mc-underglow: rgba(70, 190, 170, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f3f5f4; --panel-2: #e9eeec;
+  --focus: #46beaa; --accent: #46beaa; --link: #2e837a;
+  --gold: #46beaa; --gold-deep: #256962; --gold-ink: #2e837a;
+  --gold-grad: linear-gradient(100deg, #256962 0%, #46beaa 55%, #acc8c1 100%);
+  --l1f: #387c75; --l2f: #46beaa; --l3f: #73b8ae; --l4f: #acc8c1; --l5f: #83908e; --luf: #9ca3af;
+  --l1t: #17413c; --l2t: #256962; --l3t: #459e97; --l4t: #63a599; --l5t: #32403b;
+  --wash-a: rgba(70, 190, 170, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #ecf0ee; --mc-utok: #e9eeec; --mc-uico: #32403b;
+  --mc-grid: rgba(37, 105, 98, 0.24); --mc-grid-strong: rgba(37, 105, 98, 0.42);
+  --mc-hg: #256962; --mc-gop: 0.3;
+  --mc-dot: #256962; --mc-dot-glow: #46beaa; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(70, 190, 170, 0.08); --mc-halo-b: rgba(70, 190, 170, 0.03);
+  --mc-cut-a: rgba(37, 105, 98, 0.12); --mc-cut-b: rgba(37, 105, 98, 0.05);
+  --mc-globe-rim: rgba(37, 105, 98, 0.3); --mc-halo: rgba(70, 190, 170, 0.22);
+  --mc-underglow: rgba(37, 105, 98, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(70, 190, 170, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #090a0a 0%, #0b100f 60%, #0a1311 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f7f8f8 0%, #f1f5f3 60%, #e9f0ed 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(157, 196, 187, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(37, 105, 98, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(70, 190, 170, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #141817 0%, #0d0e0e 100%);
+  border-color: rgba(157, 196, 187, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #161e1c), #080a09 75%);
+}
+
+/* The Worldline / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(157, 196, 187, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

@@ -1,0 +1,97 @@
+/* BNP Paribas inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   BNP Paribas's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0b0f0d; --panel: #111914; --panel-2: #17221d;
+  --ink: #f2f7f4; --ink-2: #d4e0d8; --muted: #9eb1aa; --faint: #7c8c86;
+  --focus: #33a474; --accent: #33a474; --link: #8dd8b3;
+  --gold: #33a474; --gold-deep: #5cd29e; --gold-ink: #8dd8b3;
+  --gold-grad: linear-gradient(100deg, #008053 0%, #49c691 55%, #bef0d7 100%);
+  --l1f: #0e7455; --l2f: #008053; --l3f: #1e9e74; --l4f: #69c39b; --l5f: #899893; --luf: #697772;
+  --l1t: #2d855a; --l2t: #2a825b; --l3t: #248264; --l4t: #2b8559; --l5t: #e3e9e7;
+  --l5: #d4e0d8; --lu: #7c8c86;
+  --wash-a: rgba(0, 128, 83, 0.14); --wash-b: rgba(105, 195, 155, 0.05);
+  --mc-plate: #0e1512; --mc-plate-deep: #050806; --mc-pad: #111b16;
+  --mc-utok-hi: #19251f; --mc-utok: #08100c; --mc-uico: #a8e3c6;
+  --mc-grid: rgba(0, 128, 83, 0.38); --mc-grid-strong: rgba(73, 198, 145, 0.6);
+  --mc-hg: rgb(30, 158, 116); --mc-gop: 0.22;
+  --mc-dot: rgb(141, 216, 179); --mc-dot-glow: rgb(0, 128, 83); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 128, 83, 0.2); --mc-halo-b: rgba(30, 158, 116, 0.1);
+  --mc-globe-a: rgba(0, 128, 83, 0.12); --mc-globe-b: rgba(30, 158, 116, 0.06);
+  --mc-globe-c: rgba(30, 158, 116, 0.03); --mc-globe-d: rgba(30, 158, 116, 0.1);
+  --mc-cut-a: rgba(0, 128, 83, 0.32); --mc-cut-b: rgba(30, 158, 116, 0.12);
+  --mc-globe-hl: #8dd8b3; --mc-globe-rim: #1e9e74; --mc-halo: #008053;
+  --mc-underglow: rgba(0, 128, 83, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f1f6f3; --panel-2: #e4eee8;
+  --focus: #008053; --accent: #008053; --link: #006245;
+  --gold: #008053; --gold-deep: #00543b; --gold-ink: #006245;
+  --gold-grad: linear-gradient(100deg, #00543b 0%, #008053 55%, #69c39b 100%);
+  --l1f: #0b5842; --l2f: #008053; --l3f: #1e9e74; --l4f: #69c39b; --l5f: #43544e; --luf: #9ca3af;
+  --l1t: #003b2a; --l2t: #00543b; --l3t: #0a694f; --l4t: #1d694d; --l5t: #1b2d24;
+  --wash-a: rgba(0, 128, 83, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e8f0eb; --mc-utok: #e4eee8; --mc-uico: #1b2d24;
+  --mc-grid: rgba(0, 84, 59, 0.24); --mc-grid-strong: rgba(0, 84, 59, 0.42);
+  --mc-hg: #00543b; --mc-gop: 0.3;
+  --mc-dot: #00543b; --mc-dot-glow: #008053; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 128, 83, 0.08); --mc-halo-b: rgba(0, 128, 83, 0.03);
+  --mc-cut-a: rgba(0, 84, 59, 0.12); --mc-cut-b: rgba(0, 84, 59, 0.05);
+  --mc-globe-rim: rgba(0, 84, 59, 0.3); --mc-halo: rgba(0, 128, 83, 0.22);
+  --mc-underglow: rgba(0, 84, 59, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 128, 83, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #070a09 0%, #07100c 60%, #04140e 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f9f7 0%, #eef6f1 60%, #e2f2ea 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(73, 198, 145, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 84, 59, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 128, 83, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0e1512 0%, #0a0d0c 100%);
+  border-color: rgba(73, 198, 145, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0e1a14), #060a08 75%);
+}
+
+/* The BNP Paribas / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(73, 198, 145, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

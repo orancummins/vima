@@ -137,7 +137,9 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
         assert m, "window.__CUSTOMERS__ not found in /app HTML."
         ids = {c["id"] for c in json.loads(m.group(1))}
         expected = {"snb", "citi", "citizens", "stripe", "boi", "itau", "capitalone", "jpmc", "fiserv",
-                    "globalpayments", "santander", "barclays", "natwest", "synchrony"}
+                    "globalpayments", "santander", "barclays", "natwest", "synchrony", "hsbc", "bmo", "nubank",
+                    "nexi", "worldline", "bofa", "bradesco", "unicredit", "adyen", "paypal", "bancodobrasil", "ing",
+                    "lloyds", "bnpparibas", "wellsfargo", "revolut", "deutschebank", "checkout", "dbs", "amazon"}
         assert expected <= ids, f"Customers missing from the Customers tab: {sorted(expected - ids)}"
         assert 'data-customer-open="snb"' in resp.text, "No card opens Saudi National Bank."
         no_logo = sorted(c["id"] for c in json.loads(m.group(1)) if not c.get("logos"))
@@ -208,7 +210,27 @@ def run(base_url: str = "http://127.0.0.1:9021") -> TestRunner:
                                    ("santander", "Santander_Platform.html", "getnet"),
                                    ("barclays", "Barclays_Platform.html", "bcpayments"),
                                    ("natwest", "NatWest_Group_Platform.html", "mcdebit"),
-                                   ("synchrony", "Synchrony_Platform.html", "mcdual")):
+                                   ("synchrony", "Synchrony_Platform.html", "mcdual"),
+                                   ("hsbc", "HSBC_Platform.html", "ukcredit"),
+                                   ("bmo", "BMO_Platform.html", "bluecard"),
+                                   ("nubank", "Nubank_Platform.html", "ccbr"),
+                                   ("nexi", "Nexi_Platform.html", "acquiring"),
+                                   ("worldline", "Worldline_Platform.html", "acquiring"),
+                                   ("bofa", "Bank_of_America_Platform.html", "bizadvantage"),
+                                   ("bradesco", "Bradesco_Platform.html", "mcblack"),
+                                   ("unicredit", "UniCredit_Platform.html", "mcdeal"),
+                                   ("adyen", "Adyen_Platform.html", "acquiring"),
+                                   ("paypal", "PayPal_Platform.html", "ppdebit"),
+                                   ("bancodobrasil", "Banco_do_Brasil_Platform.html", "ourocard"),
+                                   ("ing", "ING_Platform.html", "bedebit"),
+                                   ("lloyds", "Lloyds_Banking_Group_Platform.html", "curve"),
+                                   ("bnpparibas", "BNP_Paribas_Platform.html", "nickelcard"),
+                                   ("wellsfargo", "Wells_Fargo_Platform.html", "choice"),
+                                   ("revolut", "Revolut_Platform.html", "cards"),
+                                   ("deutschebank", "Deutsche_Bank_Platform.html", "milesmore"),
+                                   ("checkout", "Checkout_com_Platform.html", "wholesale"),
+                                   ("dbs", "DBS_Platform.html", "womans"),
+                                   ("amazon", "Amazon_Platform.html", "amazonpay")):
             resp = assert_status(get(f"{base_url}/customers/{cid}/"), 200)
             assert_no_server_error(resp.text, f"{base_url}/customers/{cid}/")
             assert f"customers/{cid}/studio-theme.css" in resp.text

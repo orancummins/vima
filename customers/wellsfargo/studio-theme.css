@@ -1,0 +1,97 @@
+/* Wells Fargo inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Wells Fargo's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #110d0e; --panel: #1F1719; --panel-2: #2f2325;
+  --ink: #f7f3f4; --ink-2: #e4dddf; --muted: #c8bfbf; --faint: #b0a7a8;
+  --focus: #c88088; --accent: #c88088; --link: #dfb8bf;
+  --gold: #c88088; --gold-deep: #d79aa2; --gold-ink: #dfb8bf;
+  --gold-grad: linear-gradient(100deg, #dd1e25 0%, #ce8e95 55%, #eed0d6 100%);
+  --l1f: #c93633; --l2f: #dd1e25; --l3f: #ca595b; --l4f: #cfa1a7; --l5f: #b8b0b0; --luf: #a39999;
+  --l1t: #b45969; --l2t: #b65a66; --l3t: #bc5656; --l4t: #b65867; --l5t: #ebe7e7;
+  --l5: #e4dddf; --lu: #b0a7a8;
+  --wash-a: rgba(221, 30, 37, 0.14); --wash-b: rgba(207, 161, 167, 0.05);
+  --mc-plate: #191213; --mc-plate-deep: #080607; --mc-pad: #211819;
+  --mc-utok-hi: #34272a; --mc-utok: #110a0c; --mc-uico: #e6c6cb;
+  --mc-grid: rgba(221, 30, 37, 0.38); --mc-grid-strong: rgba(206, 142, 149, 0.6);
+  --mc-hg: rgb(202, 89, 91); --mc-gop: 0.22;
+  --mc-dot: rgb(223, 184, 191); --mc-dot-glow: rgb(221, 30, 37); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(221, 30, 37, 0.2); --mc-halo-b: rgba(202, 89, 91, 0.1);
+  --mc-globe-a: rgba(221, 30, 37, 0.12); --mc-globe-b: rgba(202, 89, 91, 0.06);
+  --mc-globe-c: rgba(202, 89, 91, 0.03); --mc-globe-d: rgba(202, 89, 91, 0.1);
+  --mc-cut-a: rgba(221, 30, 37, 0.32); --mc-cut-b: rgba(202, 89, 91, 0.12);
+  --mc-globe-hl: #dfb8bf; --mc-globe-rim: #ca595b; --mc-halo: #dd1e25;
+  --mc-underglow: rgba(221, 30, 37, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f6f2f3; --panel-2: #efe8ea;
+  --focus: #dd1e25; --accent: #dd1e25; --link: #981715;
+  --gold: #dd1e25; --gold-deep: #7a1310; --gold-ink: #981715;
+  --gold-grad: linear-gradient(100deg, #7a1310 0%, #dd1e25 55%, #cfa1a7 100%);
+  --l1f: #8b2623; --l2f: #dd1e25; --l3f: #ca595b; --l4f: #cfa1a7; --l5f: #907b7c; --luf: #9ca3af;
+  --l1t: #4c0b0a; --l2t: #7a1310; --l3t: #b22f29; --l4t: #b64950; --l5t: #422d31;
+  --wash-a: rgba(221, 30, 37, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f1ebed; --mc-utok: #efe8ea; --mc-uico: #422d31;
+  --mc-grid: rgba(122, 19, 16, 0.24); --mc-grid-strong: rgba(122, 19, 16, 0.42);
+  --mc-hg: #7a1310; --mc-gop: 0.3;
+  --mc-dot: #7a1310; --mc-dot-glow: #dd1e25; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(221, 30, 37, 0.08); --mc-halo-b: rgba(221, 30, 37, 0.03);
+  --mc-cut-a: rgba(122, 19, 16, 0.12); --mc-cut-b: rgba(122, 19, 16, 0.05);
+  --mc-globe-rim: rgba(122, 19, 16, 0.3); --mc-halo: rgba(221, 30, 37, 0.22);
+  --mc-underglow: rgba(122, 19, 16, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(221, 30, 37, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0b0808 0%, #11090a 60%, #150708 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f7f7 0%, #f6f0f2 60%, #f2e7e9 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(206, 142, 149, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(122, 19, 16, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(221, 30, 37, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #191213 0%, #0f0c0c 100%);
+  border-color: rgba(206, 142, 149, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #1f1415), #0b0708 75%);
+}
+
+/* The Wells Fargo / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(206, 142, 149, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

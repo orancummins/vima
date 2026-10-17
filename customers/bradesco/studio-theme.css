@@ -1,0 +1,97 @@
+/* Bradesco inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Bradesco's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #110c0e; --panel: #1D1518; --panel-2: #2c1f23;
+  --ink: #f7f3f5; --ink-2: #e3dade; --muted: #c1b4b7; --faint: #a5999c;
+  --focus: #cf758d; --accent: #cf758d; --link: #dea9bb;
+  --gold: #cf758d; --gold-deep: #d8849c; --gold-ink: #dea9bb;
+  --gold-grad: linear-gradient(100deg, #cc092f 0%, #cf758d 55%, #f0c9d7 100%);
+  --l1f: #b81f34; --l2f: #cc092f; --l3f: #d0344f; --l4f: #cd8ea0; --l5f: #afa4a6; --luf: #96898c;
+  --l1t: #bc5175; --l2t: #c05071; --l3t: #c64c60; --l4t: #be4f73; --l5t: #ebe6e6;
+  --l5: #e3dade; --lu: #a5999c;
+  --wash-a: rgba(204, 9, 47, 0.14); --wash-b: rgba(205, 142, 160, 0.05);
+  --mc-plate: #181113; --mc-plate-deep: #080507; --mc-pad: #201518;
+  --mc-utok-hi: #302227; --mc-utok: #11090c; --mc-uico: #e6bbc9;
+  --mc-grid: rgba(204, 9, 47, 0.38); --mc-grid-strong: rgba(207, 117, 141, 0.6);
+  --mc-hg: rgb(208, 52, 79); --mc-gop: 0.22;
+  --mc-dot: rgb(222, 169, 187); --mc-dot-glow: rgb(204, 9, 47); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(204, 9, 47, 0.2); --mc-halo-b: rgba(208, 52, 79, 0.1);
+  --mc-globe-a: rgba(204, 9, 47, 0.12); --mc-globe-b: rgba(208, 52, 79, 0.06);
+  --mc-globe-c: rgba(208, 52, 79, 0.03); --mc-globe-d: rgba(208, 52, 79, 0.1);
+  --mc-cut-a: rgba(204, 9, 47, 0.32); --mc-cut-b: rgba(208, 52, 79, 0.12);
+  --mc-globe-hl: #dea9bb; --mc-globe-rim: #d0344f; --mc-halo: #cc092f;
+  --mc-underglow: rgba(204, 9, 47, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f6f2f4; --panel-2: #efe6ea;
+  --focus: #cc092f; --accent: #cc092f; --link: #8f0619;
+  --gold: #cc092f; --gold-deep: #740514; --gold-ink: #8f0619;
+  --gold-grad: linear-gradient(100deg, #740514 0%, #cc092f 55%, #cd8ea0 100%);
+  --l1f: #821524; --l2f: #cc092f; --l3f: #d0344f; --l4f: #cd8ea0; --l5f: #80686c; --luf: #9ca3af;
+  --l1t: #4b030d; --l2t: #740514; --l3t: #a41828; --l4t: #a5354d; --l5t: #3c262e;
+  --wash-a: rgba(204, 9, 47, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f1eaed; --mc-utok: #efe6ea; --mc-uico: #3c262e;
+  --mc-grid: rgba(116, 5, 20, 0.24); --mc-grid-strong: rgba(116, 5, 20, 0.42);
+  --mc-hg: #740514; --mc-gop: 0.3;
+  --mc-dot: #740514; --mc-dot-glow: #cc092f; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(204, 9, 47, 0.08); --mc-halo-b: rgba(204, 9, 47, 0.03);
+  --mc-cut-a: rgba(116, 5, 20, 0.12); --mc-cut-b: rgba(116, 5, 20, 0.05);
+  --mc-globe-rim: rgba(116, 5, 20, 0.3); --mc-halo: rgba(204, 9, 47, 0.22);
+  --mc-underglow: rgba(116, 5, 20, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(204, 9, 47, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0b0808 0%, #11080b 60%, #150509 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f6f8 0%, #f6eff2 60%, #f2e5ea 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(207, 117, 141, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(116, 5, 20, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(204, 9, 47, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #181113 0%, #0e0b0c 100%);
+  border-color: rgba(207, 117, 141, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #1e1115), #0b0708 75%);
+}
+
+/* The Bradesco / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(207, 117, 141, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

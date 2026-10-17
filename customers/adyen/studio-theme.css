@@ -1,0 +1,97 @@
+/* Adyen inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Adyen's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0c100d; --panel: #141D16; --panel-2: #1e2a22;
+  --ink: #f3f7f3; --ink-2: #d9e3da; --muted: #b1bfb7; --faint: #95a19a;
+  --focus: #3ca65f; --accent: #3ca65f; --link: #a6ddb4;
+  --gold: #3ca65f; --gold-deep: #80d69b; --gold-ink: #a6ddb4;
+  --gold-grad: linear-gradient(100deg, #0abf53 0%, #71cc8f 55%, #c8efd2 100%);
+  --l1f: #1ead5f; --l2f: #0abf53; --l3f: #30c971; --l4f: #89cb9d; --l5f: #a0aba5; --luf: #84928a;
+  --l1t: #338447; --l2t: #32864c; --l3t: #2b8552; --l4t: #318347; --l5t: #e5eae7;
+  --l5: #d9e3da; --lu: #95a19a;
+  --wash-a: rgba(10, 191, 83, 0.14); --wash-b: rgba(137, 203, 157, 0.05);
+  --mc-plate: #101712; --mc-plate-deep: #050806; --mc-pad: #141f18;
+  --mc-utok-hi: #212f24; --mc-utok: #09110b; --mc-uico: #b9e5c5;
+  --mc-grid: rgba(10, 191, 83, 0.38); --mc-grid-strong: rgba(113, 204, 143, 0.6);
+  --mc-hg: rgb(48, 201, 113); --mc-gop: 0.22;
+  --mc-dot: rgb(166, 221, 180); --mc-dot-glow: rgb(10, 191, 83); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(10, 191, 83, 0.2); --mc-halo-b: rgba(48, 201, 113, 0.1);
+  --mc-globe-a: rgba(10, 191, 83, 0.12); --mc-globe-b: rgba(48, 201, 113, 0.06);
+  --mc-globe-c: rgba(48, 201, 113, 0.03); --mc-globe-d: rgba(48, 201, 113, 0.1);
+  --mc-cut-a: rgba(10, 191, 83, 0.32); --mc-cut-b: rgba(48, 201, 113, 0.12);
+  --mc-globe-hl: #a6ddb4; --mc-globe-rim: #30c971; --mc-halo: #0abf53;
+  --mc-underglow: rgba(10, 191, 83, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f6f2; --panel-2: #e6efe7;
+  --focus: #0abf53; --accent: #0abf53; --link: #078742;
+  --gold: #0abf53; --gold-deep: #066e36; --gold-ink: #078742;
+  --gold-grad: linear-gradient(100deg, #066e36 0%, #0abf53 55%, #89cb9d 100%);
+  --l1f: #157b44; --l2f: #0abf53; --l3f: #30c971; --l4f: #89cb9d; --l5f: #63796c; --luf: #9ca3af;
+  --l1t: #044823; --l2t: #066e36; --l3t: #179a56; --l4t: #339b5b; --l5t: #253a2a;
+  --wash-a: rgba(10, 191, 83, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #eaf0ea; --mc-utok: #e6efe7; --mc-uico: #253a2a;
+  --mc-grid: rgba(6, 110, 54, 0.24); --mc-grid-strong: rgba(6, 110, 54, 0.42);
+  --mc-hg: #066e36; --mc-gop: 0.3;
+  --mc-dot: #066e36; --mc-dot-glow: #0abf53; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(10, 191, 83, 0.08); --mc-halo-b: rgba(10, 191, 83, 0.03);
+  --mc-cut-a: rgba(6, 110, 54, 0.12); --mc-cut-b: rgba(6, 110, 54, 0.05);
+  --mc-globe-rim: rgba(6, 110, 54, 0.3); --mc-halo: rgba(10, 191, 83, 0.22);
+  --mc-underglow: rgba(6, 110, 54, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(10, 191, 83, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #080a09 0%, #08110b 60%, #05150b 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f9f7 0%, #eff6f0 60%, #e4f2e8 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(113, 204, 143, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(6, 110, 54, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(10, 191, 83, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #101712 0%, #0b0e0c 100%);
+  border-color: rgba(113, 204, 143, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #111d15), #070a07 75%);
+}
+
+/* The Adyen / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(113, 204, 143, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

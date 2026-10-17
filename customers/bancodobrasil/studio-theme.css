@@ -1,0 +1,97 @@
+/* Banco do Brasil inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Banco do Brasil's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0e1013; --panel: #191C25; --panel-2: #282c3a;
+  --ink: #f3f5f8; --ink-2: #e1e4e9; --muted: #d0d1d9; --faint: #bfc0c7;
+  --focus: #7c8ed5; --accent: #7c8ed5; --link: #c8d2ec;
+  --gold: #7c8ed5; --gold-deep: #b0bde9; --gold-ink: #c8d2ec;
+  --gold-grad: linear-gradient(100deg, #465eff 0%, #a7b3e3 55%, #d3ddf5 100%);
+  --l1f: #5b66eb; --l2f: #465eff; --l3f: #7c87e6; --l4f: #b6c0e2; --l5f: #c6c7cd; --luf: #b5b6be;
+  --l1t: #5272c3; --l2t: #5872c9; --l3t: #606ad4; --l4t: #5471c9; --l5t: #e9e9ed;
+  --l5: #e1e4e9; --lu: #bfc0c7;
+  --wash-a: rgba(70, 94, 255, 0.14); --wash-b: rgba(182, 192, 226, 0.05);
+  --mc-plate: #13161d; --mc-plate-deep: #060709; --mc-pad: #191c28;
+  --mc-utok-hi: #2c3241; --mc-utok: #0a0d14; --mc-uico: #d0d8f0;
+  --mc-grid: rgba(70, 94, 255, 0.38); --mc-grid-strong: rgba(167, 179, 227, 0.6);
+  --mc-hg: rgb(124, 135, 230); --mc-gop: 0.22;
+  --mc-dot: rgb(200, 210, 236); --mc-dot-glow: rgb(70, 94, 255); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(70, 94, 255, 0.2); --mc-halo-b: rgba(124, 135, 230, 0.1);
+  --mc-globe-a: rgba(70, 94, 255, 0.12); --mc-globe-b: rgba(124, 135, 230, 0.06);
+  --mc-globe-c: rgba(124, 135, 230, 0.03); --mc-globe-d: rgba(124, 135, 230, 0.1);
+  --mc-cut-a: rgba(70, 94, 255, 0.32); --mc-cut-b: rgba(124, 135, 230, 0.12);
+  --mc-globe-hl: #c8d2ec; --mc-globe-rim: #7c87e6; --mc-halo: #465eff;
+  --mc-underglow: rgba(70, 94, 255, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f2f4f7; --panel-2: #e9ecf1;
+  --focus: #465eff; --accent: #465eff; --link: #000fd9;
+  --gold: #465eff; --gold-deep: #000cab; --gold-ink: #000fd9;
+  --gold-grad: linear-gradient(100deg, #000cab 0%, #465eff 55%, #b6c0e2 100%);
+  --l1f: #1823c5; --l2f: #465eff; --l3f: #7c87e6; --l4f: #b6c0e2; --l5f: #9ea1b2; --luf: #9ca3af;
+  --l1t: #000866; --l2t: #000cab; --l3t: #3039ea; --l4t: #7180d7; --l5t: #333d54;
+  --wash-a: rgba(70, 94, 255, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #ebeef2; --mc-utok: #e9ecf1; --mc-uico: #333d54;
+  --mc-grid: rgba(0, 12, 171, 0.24); --mc-grid-strong: rgba(0, 12, 171, 0.42);
+  --mc-hg: #000cab; --mc-gop: 0.3;
+  --mc-dot: #000cab; --mc-dot-glow: #465eff; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(70, 94, 255, 0.08); --mc-halo-b: rgba(70, 94, 255, 0.03);
+  --mc-cut-a: rgba(0, 12, 171, 0.12); --mc-cut-b: rgba(0, 12, 171, 0.05);
+  --mc-globe-rim: rgba(0, 12, 171, 0.3); --mc-halo: rgba(70, 94, 255, 0.22);
+  --mc-underglow: rgba(0, 12, 171, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(70, 94, 255, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #08090c 0%, #090b14 60%, #050919 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f7f8f9 0%, #f0f3f7 60%, #e7ebf4 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(167, 179, 227, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 12, 171, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(70, 94, 255, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #13161d 0%, #0d0d10 100%);
+  border-color: rgba(167, 179, 227, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #141825), #07080c 75%);
+}
+
+/* The Banco do Brasil / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(167, 179, 227, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

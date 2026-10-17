@@ -535,7 +535,30 @@ Worldpay (accepted everywhere, Mastercard Move for payouts in the UAE),
 payment), **Barclays** (Visa at home, Mastercard on most US partner cards,
 Avios and Tesco), **NatWest Group** (16 million debit cards on Mastercard
 since 2021, Visa first to its agentic payments) and **Synchrony** (most named
-co-brands on Mastercard, two-thirds of the book private label).
+co-brands on Mastercard, two-thirds of the book private label). Then twenty
+more, also as at 17 October 2026:
+- **Banks:**
+  - **HSBC**: Mastercard on UK credit, Hong Kong debit and corporate cards; Visa on UK debit and the first agentic trial.
+  - **BMO**: Mastercard on most credit and all commercial cards; Visa on the eclipse line; Interac debit.
+  - **Nubank**: every named card on Mastercard, while Pix takes the spend.
+  - **Bank of America**: Visa-led, with Mastercard on its small-business cards.
+  - **Bradesco**: co-owns Elo; Mastercard on Black and the Amazon card.
+  - **UniCredit**: Mastercard as card partner in 12 markets since 2023.
+  - **Banco do Brasil**: Mastercard third, behind Elo and Visa.
+  - **ING**: debit split between Visa and Mastercard by design; Wero rising.
+  - **Lloyds Banking Group**: debit on Visa and credit moving there; buying Curve, a Mastercard issuer.
+  - **BNP Paribas**: Mastercard on Nickel, Floa, BNL and Poland; Visa and domestic schemes at home.
+  - **Wells Fargo**: Visa at the core, Mastercard on the partner cards.
+  - **Revolut**: Mastercard and Visa share its cards.
+  - **Deutsche Bank**: Mastercard on every Deutsche Bank and Postbank card, and on Miles & More.
+  - **DBS**: cards split evenly; first live Agent Pay payments in Singapore and Hong Kong.
+- **Payments companies:**
+  - **Nexi**: Mastercard owns Nets' old rails; Visa won Nexi Ready.
+  - **Worldline**: Europe's first live Agent Pay payment.
+  - **Adyen**: Mastercard in every flow; Visa at parity.
+  - **PayPal**: every debit card on Mastercard; Visa in Venmo credit.
+  - **Checkout.com**: an Agent Pay launch partner.
+  - **Amazon**: Mastercard accepted everywhere; Visa holds the main co-brands.
 
 Each customer has a folder under `customers/<id>/` holding a **standalone
 page**, one self-contained HTML file that opens on its own in any browser
@@ -554,8 +577,10 @@ page and its Studio theme. The logos come from the financial-services logo
 library in [static/logos/financial-logos-500/](static/logos/financial-logos-500/)
 (500 brands, with `index.csv`, `browse.html` and the source notices; logos remain
 their owners' trademarks), or, where the library's mark was missing or only a
-favicon (SNB and NEO, Citizens, NatWest, Fiserv, Bank of Ireland), from the
-customer's own website; `CUSTOMER["logos"]` records which. The primary colour is
+favicon, from the customer's own website (SNB and NEO, Citizens, NatWest,
+Fiserv, Bank of Ireland, Lloyds, ING, UniCredit, Nexi, Worldline, Adyen, DBS) or
+Wikimedia Commons (Revolut, Amazon, BNP Paribas, Banco do Brasil, Bradesco,
+Wells Fargo); `CUSTOMER["logos"]` records which. The primary colour is
 `CUSTOMER["accent"]`, and `customers/brand_colours.py <id>` recolours the page
 palette and `studio-theme.css` from it (Citizens' hand-tuned palette is the
 base; text colours are kept at 4.5:1).

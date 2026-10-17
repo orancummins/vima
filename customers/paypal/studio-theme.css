@@ -1,0 +1,97 @@
+/* PayPal inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   PayPal's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0b0d0f; --panel: #111519; --panel-2: #181d23;
+  --ink: #f2f5f7; --ink-2: #d4dbe0; --muted: #a0a6b2; --faint: #7e848e;
+  --focus: #4c81c7; --accent: #4c81c7; --link: #8fb4d9;
+  --gold: #4c81c7; --gold-deep: #5f93d3; --gold-ink: #8fb4d9;
+  --gold-grad: linear-gradient(100deg, #003087 0%, #4c81c7 55%, #bfd8f0 100%);
+  --l1f: #0f2f7a; --l2f: #003087; --l3f: #1f4ba3; --l4f: #6c94c4; --l5f: #8b909a; --luf: #6b707a;
+  --l1t: #3d79b5; --l2t: #3e78bf; --l3t: #4772cd; --l4t: #3c77b7; --l5t: #e3e5e9;
+  --l5: #d4dbe0; --lu: #7e848e;
+  --wash-a: rgba(0, 48, 135, 0.14); --wash-b: rgba(108, 148, 196, 0.05);
+  --mc-plate: #0e1115; --mc-plate-deep: #050708; --mc-pad: #11151b;
+  --mc-utok-hi: #1a2026; --mc-utok: #080c10; --mc-uico: #a9c5e3;
+  --mc-grid: rgba(0, 48, 135, 0.38); --mc-grid-strong: rgba(76, 129, 199, 0.6);
+  --mc-hg: rgb(31, 75, 163); --mc-gop: 0.22;
+  --mc-dot: rgb(143, 180, 217); --mc-dot-glow: rgb(0, 48, 135); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 48, 135, 0.2); --mc-halo-b: rgba(31, 75, 163, 0.1);
+  --mc-globe-a: rgba(0, 48, 135, 0.12); --mc-globe-b: rgba(31, 75, 163, 0.06);
+  --mc-globe-c: rgba(31, 75, 163, 0.03); --mc-globe-d: rgba(31, 75, 163, 0.1);
+  --mc-cut-a: rgba(0, 48, 135, 0.32); --mc-cut-b: rgba(31, 75, 163, 0.12);
+  --mc-globe-hl: #8fb4d9; --mc-globe-rim: #1f4ba3; --mc-halo: #003087;
+  --mc-underglow: rgba(0, 48, 135, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f1f4f6; --panel-2: #e4eaee;
+  --focus: #003087; --accent: #003087; --link: #001e66;
+  --gold: #003087; --gold-deep: #001a57; --gold-ink: #001e66;
+  --gold-grad: linear-gradient(100deg, #001a57 0%, #003087 55%, #6c94c4 100%);
+  --l1f: #0b235c; --l2f: #003087; --l3f: #1f4ba3; --l4f: #6c94c4; --l5f: #464c58; --luf: #9ca3af;
+  --l1t: #00123d; --l2t: #001a57; --l3t: #0b266e; --l4t: #1f3d6e; --l5t: #1c252e;
+  --wash-a: rgba(0, 48, 135, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e8edf0; --mc-utok: #e4eaee; --mc-uico: #1c252e;
+  --mc-grid: rgba(0, 26, 87, 0.24); --mc-grid-strong: rgba(0, 26, 87, 0.42);
+  --mc-hg: #001a57; --mc-gop: 0.3;
+  --mc-dot: #001a57; --mc-dot-glow: #003087; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 48, 135, 0.08); --mc-halo-b: rgba(0, 48, 135, 0.03);
+  --mc-cut-a: rgba(0, 26, 87, 0.12); --mc-cut-b: rgba(0, 26, 87, 0.05);
+  --mc-globe-rim: rgba(0, 26, 87, 0.3); --mc-halo: rgba(0, 48, 135, 0.22);
+  --mc-underglow: rgba(0, 26, 87, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 48, 135, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #07080a 0%, #070b10 60%, #040a14 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f8f9 0%, #eef3f6 60%, #e2eaf2 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(76, 129, 199, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 26, 87, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 48, 135, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0e1115 0%, #0a0b0d 100%);
+  border-color: rgba(76, 129, 199, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0e131a), #06080a 75%);
+}
+
+/* The PayPal / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(76, 129, 199, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

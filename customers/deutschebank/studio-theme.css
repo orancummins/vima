@@ -1,0 +1,97 @@
+/* Deutsche Bank inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Deutsche Bank's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0c0d10; --panel: #12151B; --panel-2: #1b1e27;
+  --ink: #f2f4f7; --ink-2: #d6dbe2; --muted: #a8abb9; --faint: #898b98;
+  --focus: #5c74cc; --accent: #5c74cc; --link: #99acdc;
+  --gold: #5c74cc; --gold-deep: #6d86d7; --gold-ink: #99acdc;
+  --gold-grad: linear-gradient(100deg, #0018a8 0%, #5c74cc 55%, #c2d0f1 100%);
+  --l1f: #131f97; --l2f: #0018a8; --l3f: #2336ba; --l4f: #798cc9; --l5f: #9597a3; --luf: #777987;
+  --l1t: #5171c3; --l2t: #5671c7; --l3t: #5e6cd3; --l4t: #5472c7; --l5t: #e4e5ea;
+  --l5: #d6dbe2; --lu: #898b98;
+  --wash-a: rgba(0, 24, 168, 0.14); --wash-b: rgba(121, 140, 201, 0.05);
+  --mc-plate: #0f1116; --mc-plate-deep: #050708; --mc-pad: #12151d;
+  --mc-utok-hi: #1d212b; --mc-utok: #080b11; --mc-uico: #b0bee5;
+  --mc-grid: rgba(0, 24, 168, 0.38); --mc-grid-strong: rgba(92, 116, 204, 0.6);
+  --mc-hg: rgb(35, 54, 186); --mc-gop: 0.22;
+  --mc-dot: rgb(153, 172, 220); --mc-dot-glow: rgb(0, 24, 168); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(0, 24, 168, 0.2); --mc-halo-b: rgba(35, 54, 186, 0.1);
+  --mc-globe-a: rgba(0, 24, 168, 0.12); --mc-globe-b: rgba(35, 54, 186, 0.06);
+  --mc-globe-c: rgba(35, 54, 186, 0.03); --mc-globe-d: rgba(35, 54, 186, 0.1);
+  --mc-cut-a: rgba(0, 24, 168, 0.32); --mc-cut-b: rgba(35, 54, 186, 0.12);
+  --mc-globe-hl: #99acdc; --mc-globe-rim: #2336ba; --mc-halo: #0018a8;
+  --mc-underglow: rgba(0, 24, 168, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f1f3f6; --panel-2: #e5e9ef;
+  --focus: #0018a8; --accent: #0018a8; --link: #000a7a;
+  --gold: #0018a8; --gold-deep: #000966; --gold-ink: #000a7a;
+  --gold-grad: linear-gradient(100deg, #000966 0%, #0018a8 55%, #798cc9 100%);
+  --l1f: #0d156e; --l2f: #0018a8; --l3f: #2336ba; --l4f: #798cc9; --l5f: #545769; --luf: #9ca3af;
+  --l1t: #000644; --l2t: #000966; --l3t: #0e1588; --l4t: #263687; --l5t: #202635;
+  --wash-a: rgba(0, 24, 168, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e9ecf0; --mc-utok: #e5e9ef; --mc-uico: #202635;
+  --mc-grid: rgba(0, 9, 102, 0.24); --mc-grid-strong: rgba(0, 9, 102, 0.42);
+  --mc-hg: #000966; --mc-gop: 0.3;
+  --mc-dot: #000966; --mc-dot-glow: #0018a8; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(0, 24, 168, 0.08); --mc-halo-b: rgba(0, 24, 168, 0.03);
+  --mc-cut-a: rgba(0, 9, 102, 0.12); --mc-cut-b: rgba(0, 9, 102, 0.05);
+  --mc-globe-rim: rgba(0, 9, 102, 0.3); --mc-halo: rgba(0, 24, 168, 0.22);
+  --mc-underglow: rgba(0, 9, 102, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 24, 168, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #07080a 0%, #070a11 60%, #040715 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f8f9 0%, #eef2f6 60%, #e3e8f2 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(92, 116, 204, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(0, 9, 102, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(0, 24, 168, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0f1116 0%, #0a0b0e 100%);
+  border-color: rgba(92, 116, 204, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0f121c), #06070a 75%);
+}
+
+/* The Deutsche Bank / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(92, 116, 204, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

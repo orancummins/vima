@@ -1,0 +1,97 @@
+/* Nexi inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Nexi's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0d0e10; --panel: #16171C; --panel-2: #22232a;
+  --ink: #f3f4f6; --ink-2: #dcdde2; --muted: #b7b8bf; --faint: #9c9ca3;
+  --focus: #868dbf; --accent: #868dbf; --link: #b3b9d5;
+  --gold: #868dbf; --gold-deep: #949bc9; --gold-ink: #b3b9d5;
+  --gold-grad: linear-gradient(100deg, #2d32aa 0%, #868dbf 55%, #d0d5e9 100%);
+  --l1f: #3c3b9d; --l2f: #2d32aa; --l3f: #5253b4; --l4f: #9a9fc2; --l5f: #a6a6ad; --luf: #8c8d95;
+  --l1t: #6773ab; --l2t: #6972ad; --l3t: #6d6db5; --l4t: #6673ad; --l5t: #e6e7ea;
+  --l5: #dcdde2; --lu: #9c9ca3;
+  --wash-a: rgba(45, 50, 170, 0.14); --wash-b: rgba(154, 159, 194, 0.05);
+  --mc-plate: #121317; --mc-plate-deep: #060708; --mc-pad: #17181e;
+  --mc-utok-hi: #25272e; --mc-utok: #0b0c10; --mc-uico: #c3c8df;
+  --mc-grid: rgba(45, 50, 170, 0.38); --mc-grid-strong: rgba(134, 141, 191, 0.6);
+  --mc-hg: rgb(82, 83, 180); --mc-gop: 0.22;
+  --mc-dot: rgb(179, 185, 213); --mc-dot-glow: rgb(45, 50, 170); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(45, 50, 170, 0.2); --mc-halo-b: rgba(82, 83, 180, 0.1);
+  --mc-globe-a: rgba(45, 50, 170, 0.12); --mc-globe-b: rgba(82, 83, 180, 0.06);
+  --mc-globe-c: rgba(82, 83, 180, 0.03); --mc-globe-d: rgba(82, 83, 180, 0.1);
+  --mc-cut-a: rgba(45, 50, 170, 0.32); --mc-cut-b: rgba(82, 83, 180, 0.12);
+  --mc-globe-hl: #b3b9d5; --mc-globe-rim: #5253b4; --mc-halo: #2d32aa;
+  --mc-underglow: rgba(45, 50, 170, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f3f3f5; --panel-2: #e8eaed;
+  --focus: #2d32aa; --accent: #2d32aa; --link: #211f77;
+  --gold: #2d32aa; --gold-deep: #1b1a61; --gold-ink: #211f77;
+  --gold-grad: linear-gradient(100deg, #1b1a61 0%, #2d32aa 55%, #9a9fc2 100%);
+  --l1f: #2b296f; --l2f: #2d32aa; --l3f: #5253b4; --l4f: #9a9fc2; --l5f: #6d6d7c; --luf: #9ca3af;
+  --l1t: #11103e; --l2t: #1b1a61; --l3t: #35328b; --l4t: #4a4e92; --l5t: #2b2e39;
+  --wash-a: rgba(45, 50, 170, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #ebecef; --mc-utok: #e8eaed; --mc-uico: #2b2e39;
+  --mc-grid: rgba(27, 26, 97, 0.24); --mc-grid-strong: rgba(27, 26, 97, 0.42);
+  --mc-hg: #1b1a61; --mc-gop: 0.3;
+  --mc-dot: #1b1a61; --mc-dot-glow: #2d32aa; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(45, 50, 170, 0.08); --mc-halo-b: rgba(45, 50, 170, 0.03);
+  --mc-cut-a: rgba(27, 26, 97, 0.12); --mc-cut-b: rgba(27, 26, 97, 0.05);
+  --mc-globe-rim: rgba(27, 26, 97, 0.3); --mc-halo: rgba(45, 50, 170, 0.22);
+  --mc-underglow: rgba(27, 26, 97, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(45, 50, 170, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #08080a 0%, #0a0b10 60%, #080913 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f7f7f9 0%, #f0f2f5 60%, #e7e9f0 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(134, 141, 191, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(27, 26, 97, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(45, 50, 170, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #121317 0%, #0c0c0e 100%);
+  border-color: rgba(134, 141, 191, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #14151c), #07080a 75%);
+}
+
+/* The Nexi / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(134, 141, 191, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

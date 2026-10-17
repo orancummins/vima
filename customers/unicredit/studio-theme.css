@@ -1,0 +1,97 @@
+/* UniCredit inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   UniCredit's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #110d0e; --panel: #1F1718; --panel-2: #2f2325;
+  --ink: #f7f3f4; --ink-2: #e5dddf; --muted: #c9bfbf; --faint: #b0a7a7;
+  --focus: #ca7c83; --accent: #ca7c83; --link: #e0b7bc;
+  --gold: #ca7c83; --gold-deep: #d9989e; --gold-ink: #e0b7bc;
+  --gold-grad: linear-gradient(100deg, #e31818 0%, #d08b91 55%, #efcfd4 100%);
+  --l1f: #ce372e; --l2f: #e31818; --l3f: #ce5956; --l4f: #d09fa4; --l5f: #b8b0b0; --luf: #a39999;
+  --l1t: #b75762; --l2t: #b85760; --l3t: #c05553; --l4t: #b95561; --l5t: #ebe7e7;
+  --l5: #e5dddf; --lu: #b0a7a7;
+  --wash-a: rgba(227, 24, 24, 0.14); --wash-b: rgba(208, 159, 164, 0.05);
+  --mc-plate: #191213; --mc-plate-deep: #080607; --mc-pad: #221718;
+  --mc-utok-hi: #352729; --mc-utok: #120a0b; --mc-uico: #e7c5c9;
+  --mc-grid: rgba(227, 24, 24, 0.38); --mc-grid-strong: rgba(208, 139, 145, 0.6);
+  --mc-hg: rgb(206, 89, 86); --mc-gop: 0.22;
+  --mc-dot: rgb(224, 183, 188); --mc-dot-glow: rgb(227, 24, 24); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(227, 24, 24, 0.2); --mc-halo-b: rgba(206, 89, 86, 0.1);
+  --mc-globe-a: rgba(227, 24, 24, 0.12); --mc-globe-b: rgba(206, 89, 86, 0.06);
+  --mc-globe-c: rgba(206, 89, 86, 0.03); --mc-globe-d: rgba(206, 89, 86, 0.1);
+  --mc-cut-a: rgba(227, 24, 24, 0.32); --mc-cut-b: rgba(206, 89, 86, 0.12);
+  --mc-globe-hl: #e0b7bc; --mc-globe-rim: #ce5956; --mc-halo: #e31818;
+  --mc-underglow: rgba(227, 24, 24, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f6f2f3; --panel-2: #efe8ea;
+  --focus: #e31818; --accent: #e31818; --link: #9c1910;
+  --gold: #e31818; --gold-deep: #7d140d; --gold-ink: #9c1910;
+  --gold-grad: linear-gradient(100deg, #7d140d 0%, #e31818 55%, #d09fa4 100%);
+  --l1f: #8f2720; --l2f: #e31818; --l3f: #ce5956; --l4f: #d09fa4; --l5f: #917a7a; --luf: #9ca3af;
+  --l1t: #4e0c08; --l2t: #7d140d; --l3t: #b73125; --l4t: #b94648; --l5t: #422d30;
+  --wash-a: rgba(227, 24, 24, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f1ebed; --mc-utok: #efe8ea; --mc-uico: #422d30;
+  --mc-grid: rgba(125, 20, 13, 0.24); --mc-grid-strong: rgba(125, 20, 13, 0.42);
+  --mc-hg: #7d140d; --mc-gop: 0.3;
+  --mc-dot: #7d140d; --mc-dot-glow: #e31818; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(227, 24, 24, 0.08); --mc-halo-b: rgba(227, 24, 24, 0.03);
+  --mc-cut-a: rgba(125, 20, 13, 0.12); --mc-cut-b: rgba(125, 20, 13, 0.05);
+  --mc-globe-rim: rgba(125, 20, 13, 0.3); --mc-halo: rgba(227, 24, 24, 0.22);
+  --mc-underglow: rgba(125, 20, 13, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(227, 24, 24, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0b0808 0%, #11090a 60%, #150607 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f7f7 0%, #f6f0f2 60%, #f2e6e8 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(208, 139, 145, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(125, 20, 13, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(227, 24, 24, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #191213 0%, #0f0c0c 100%);
+  border-color: rgba(208, 139, 145, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #201314), #0b0708 75%);
+}
+
+/* The UniCredit / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(208, 139, 145, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

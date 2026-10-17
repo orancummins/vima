@@ -1,0 +1,97 @@
+/* ING inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   ING's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #120e0d; --panel: #201816; --panel-2: #312622;
+  --ink: #f7f3f3; --ink-2: #e6dddc; --muted: #cbc3be; --faint: #b2aba7;
+  --focus: #cd805e; --accent: #cd805e; --link: #e5bfb3;
+  --gold: #cd805e; --gold-deep: #e1a992; --gold-ink: #e5bfb3;
+  --gold-grad: linear-gradient(100deg, #ff6200 0%, #d99f85 55%, #f3d5cc 100%);
+  --l1f: #e3741d; --l2f: #ff6200; --l3f: #dd864a; --l4f: #d7ac9b; --l5f: #bab4b0; --luf: #a69e99;
+  --l1t: #b65b3e; --l2t: #b35d3a; --l3t: #ad6330; --l4t: #b95b3d; --l5t: #ece9e7;
+  --l5: #e6dddc; --lu: #b2aba7;
+  --wash-a: rgba(255, 98, 0, 0.14); --wash-b: rgba(215, 172, 155, 0.05);
+  --mc-plate: #1a1411; --mc-plate-deep: #090605; --mc-pad: #231a16;
+  --mc-utok-hi: #372926; --mc-utok: #130b09; --mc-uico: #ebccc2;
+  --mc-grid: rgba(255, 98, 0, 0.38); --mc-grid-strong: rgba(217, 159, 133, 0.6);
+  --mc-hg: rgb(221, 134, 74); --mc-gop: 0.22;
+  --mc-dot: rgb(229, 191, 179); --mc-dot-glow: rgb(255, 98, 0); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(255, 98, 0, 0.2); --mc-halo-b: rgba(221, 134, 74, 0.1);
+  --mc-globe-a: rgba(255, 98, 0, 0.12); --mc-globe-b: rgba(221, 134, 74, 0.06);
+  --mc-globe-c: rgba(221, 134, 74, 0.03); --mc-globe-d: rgba(221, 134, 74, 0.1);
+  --mc-cut-a: rgba(255, 98, 0, 0.32); --mc-cut-b: rgba(221, 134, 74, 0.12);
+  --mc-globe-hl: #e5bfb3; --mc-globe-rim: #dd864a; --mc-halo: #ff6200;
+  --mc-underglow: rgba(255, 98, 0, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f7f2f2; --panel-2: #f0e8e7;
+  --focus: #ff6200; --accent: #ff6200; --link: #af4d00;
+  --gold: #ff6200; --gold-deep: #8c3e00; --gold-ink: #af4d00;
+  --gold-grad: linear-gradient(100deg, #8c3e00 0%, #ff6200 55%, #d7ac9b 100%);
+  --l1f: #9e5113; --l2f: #ff6200; --l3f: #dd864a; --l4f: #d7ac9b; --l5f: #95847a; --luf: #9ca3af;
+  --l1t: #572600; --l2t: #8c3e00; --l3t: #cb6914; --l4t: #c86e3b; --l5t: #46302a;
+  --wash-a: rgba(255, 98, 0, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #f1ebea; --mc-utok: #f0e8e7; --mc-uico: #46302a;
+  --mc-grid: rgba(140, 62, 0, 0.24); --mc-grid-strong: rgba(140, 62, 0, 0.42);
+  --mc-hg: #8c3e00; --mc-gop: 0.3;
+  --mc-dot: #8c3e00; --mc-dot-glow: #ff6200; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(255, 98, 0, 0.08); --mc-halo-b: rgba(255, 98, 0, 0.03);
+  --mc-cut-a: rgba(140, 62, 0, 0.12); --mc-cut-b: rgba(140, 62, 0, 0.05);
+  --mc-globe-rim: rgba(140, 62, 0, 0.3); --mc-halo: rgba(255, 98, 0, 0.22);
+  --mc-underglow: rgba(140, 62, 0, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(255, 98, 0, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #0b0908 0%, #130b08 60%, #170b05 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f9f6f6 0%, #f7f0ef 60%, #f3e8e5 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(217, 159, 133, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(140, 62, 0, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(255, 98, 0, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #1a1411 0%, #0f0d0c 100%);
+  border-color: rgba(217, 159, 133, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #211712), #0b0807 75%);
+}
+
+/* The ING / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(217, 159, 133, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }
