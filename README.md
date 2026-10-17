@@ -519,7 +519,12 @@ Legend, Agent Pay, Installments, In Control). The third is **Citizens**
 (as at 17 October 2026): a $234 billion regional bank whose only card
 network, and contracted services provider, has been Mastercard since 2023,
 with the Consumer Bank, the Commercial Bank and a Private Bank built from
-First Republic's bankers, and the same Mastercard lens.
+First Republic's bankers, and the same Mastercard lens. Then **Stripe**
+(the payments company: acquiring, Issuing, Link, stablecoins and agentic
+commerce, on every network), **Bank of Ireland** (credit cards on Mastercard
+since 2015, debit on Visa) and **Itaú Unibanco** (Brazil's largest card
+issuer and acquirer, with Hipercard's 15 million cards moved to Mastercard in
+2025), all as at 17 October 2026.
 
 Each customer has a folder under `customers/<id>/` holding a **standalone
 page**, one self-contained HTML file that opens on its own in any browser
@@ -549,7 +554,7 @@ journey that `customers/<id>/__init__.py` maps to Studio. Citi's page is
 built here rather than copied in: `customers/build_page.py` takes SNB's
 page as the template (the same engine) and swaps in Citi's data, palette and
 lens wording from the `citi_*.py` files beside it, so to update Citi edit
-those and run `python customers/build_page.py citi` (or `citizens`). To add a customer,
+those and run `python customers/build_page.py <id>` (citi, citizens, stripe, boi or itau). To add a customer,
 copy `customers/snb/`: a `CUSTOMER` dict in `__init__.py` (who they are, the
 page's file name, and which Studio APIs, use cases and bundles land on which
 of their products), the standalone page, and a `studio-theme.css` with their

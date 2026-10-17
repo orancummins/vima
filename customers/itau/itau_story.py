@@ -1,0 +1,165 @@
+"""Itaú's kinds of user, journeys and Mastercard lens, as at 17 October 2026 (see page_data.py)."""
+# ruff: noqa: E501
+
+SUB = ("Latin America's largest private bank as five discs that stack into one platform, from a R$3.2 trillion balance "
+       "sheet and two founding families at the bottom to one SuperApp, 2,210 branches and WhatsApp at the top. Click the "
+       "stack to open it. Choose who you are and what you want to do, and the areas that deliver it light up across the "
+       "layers, joined in the order they act. Switch to the Mastercard lens to see how deep Mastercard goes in every area.")
+
+USERS = [  # key, label, icon (a key of the template's ICONS)
+    ("con", "Everyday Brazilians", "user-round"),
+    ("aff", "Uniclass & Personnalité", "gem"),
+    ("pvt", "Private Bank clients", "landmark"),
+    ("sme", "Small & medium businesses", "briefcase-business"),
+    ("corp", "Corporates (Itaú BBA)", "factory"),
+    ("merch", "Merchants on Rede", "store"),
+    ("inv", "Investors & policyholders", "trending-up"),
+    ("latam", "Clients across Latin America", "earth"),
+]
+USERS_DESC = ("Eight kinds of client, from mass retail (income up to R$7,000 a month) through Uniclass, Personnalité "
+              "and Private, to 1.6 million SMEs, Itaú BBA's corporates, Rede's merchants and the units in Chile, "
+              "Paraguay, Uruguay and Colombia.")
+
+WHO = {
+    "con": "A Brazilian consumer", "aff": "A Personnalité client", "pvt": "A private client", "sme": "A small business",
+    "corp": "A corporate CFO", "merch": "A merchant", "inv": "An investor", "latam": "A client in Latin America",
+}
+
+# Steps are (area, product, label).
+OUTCOMES = [
+    {"id": "everyday", "who": "con", "name": "Bank day to day in one app",
+     "why": "Six apps became one: open digitally, pay by Pix or card, ask ia.i, and turn to WhatsApp when it is easier.",
+     "steps": [("5.1", "superapp", "Open an account in the SuperApp"), ("2.2", "pixnfc", "Pay by Pix, even by tap"),
+               ("4.1", "cards", "Carry an Itaú credit card"), ("2.1", "wallets", "Add it to the phone wallet"),
+               ("3.1", "iai", "Ask ia.i, by voice"), ("3.2", "fraud", "Protected against Pix scams")]},
+    {"id": "travel", "who": "aff", "name": "Earn miles and travel as Personnalité",
+     "why": "The affluent card loop: an airline co-brand or a Black card, points that never expire, and dollars abroad.",
+     "steps": [("4.2", "airline", "Carry LATAM Pass or Azul Itaú"), ("3.4", "loyalty", "Earn points that never expire"),
+               ("2.5", "contaglobal", "Spend abroad from the Conta Global"), ("4.1", "legend", "Get invited to World Legend")]},
+    {"id": "private", "who": "pvt", "name": "Manage a family's wealth",
+     "why": "Brazil's largest private bank, with offices from Miami to Zurich and a planned US bank.",
+     "steps": [("4.7", "private", "Bank with Itaú Private"), ("4.7", "asset", "Invest through Itaú Asset and Kinea"),
+               ("2.5", "avenue", "Hold US assets through Avenue"), ("4.1", "legend", "Carry World Legend")]},
+    {"id": "home", "who": "con", "name": "Buy a home and borrow against your pay",
+     "why": "Second only to Caixa in mortgages, with payroll loans now open to private-sector workers.",
+     "steps": [("4.4", "mortgage", "Take a mortgage"), ("4.3", "consignado", "Borrow against your salary"),
+               ("4.3", "autos", "Finance a car at the dealer"), ("3.3", "openfinance", "Port a loan over open finance")]},
+    {"id": "merchant", "who": "merch", "name": "Sell on Rede and get paid tomorrow",
+     "why": "The largest acquirer by volume, bundled with an Itaú account, credit and next-day receivables.",
+     "steps": [("2.3", "rede", "Take cards and Pix on Rede"), ("2.3", "laranjinha", "Sell by voice on Laranjinha+"),
+               ("2.2", "pixnfc", "Accept Pix by tap"), ("4.5", "sme", "Borrow on the receivables"),
+               ("3.5", "redeagent", "Sell to AI agents through Rede")]},
+    {"id": "sme", "who": "sme", "name": "Run a small business",
+     "why": "1.6 million SMEs: open on WhatsApp, pay suppliers by Pix Automático, borrow with government backing.",
+     "steps": [("3.1", "inteligencia", "Open an account on WhatsApp"), ("5.4", "bizchannels", "Run it in the Itaú Empresas app"),
+               ("2.2", "pixmore", "Collect with Pix Automático"), ("4.5", "sme", "Borrow with government-backed lines"),
+               ("3.4", "loyalty", "Cut fees with Mais Vantagens")]},
+    {"id": "corp", "who": "corp", "name": "Raise money and run a company's cash",
+     "why": "Itaú BBA: first in debt capital markets and M&A, with cash management across Latin America.",
+     "steps": [("4.6", "bba", "Issue debt and do the deal with Itaú BBA"), ("2.4", "cashmgmt", "Run cash on Connect Cash"),
+               ("1.5", "esg", "Fund it as sustainable finance"), ("5.4", "bizchannels", "Operate on Bankline")]},
+    {"id": "invest", "who": "inv", "name": "Invest, insure and save for retirement",
+     "why": "R$3.8 trillion managed: funds, brokerage, pensions, insurance and consórcio.",
+     "steps": [("4.7", "asset", "Invest through Íon"), ("4.7", "insurance", "Save in a pension and insure"),
+               ("2.5", "avenue", "Buy US shares through Avenue")]},
+    {"id": "mcnow", "who": "mc", "name": "Where Mastercard already is",
+     "why": "A 2015 network agreement, Hipercard's 15 million cards moved to Mastercard in 2025, World Legend at the top, Agent Pay live, and Rede accepting Mastercard.",
+     "steps": [("2.1", "mcdeal", "The 2015 network agreement"), ("2.1", "hipercard", "15 million Hipercard cards to Mastercard"),
+               ("4.1", "legend", "World Legend for Private and Personnalité"), ("4.2", "retailcob", "Pão de Açúcar Mastercard Black"),
+               ("3.5", "agentpay", "Live Agent Pay transactions"), ("2.3", "rede", "Rede accepts Mastercard")]},
+    {"id": "mcnext", "who": "mc", "name": "Where Open Finance, data and loyalty could land",
+     "why": "Where Itaú has needs and Mastercard is not yet in: Pix scams, Rede's agent gateway, Click to Pay, SME cards, rewards costs and the new cards each network wins.",
+     "steps": [("3.2", "fraud", "Scam and mule intelligence for Pix"), ("3.5", "redeagent", "Agent Pay in Rede's gateway"),
+               ("2.1", "wallets", "Click to Pay and passkeys"), ("4.5", "sme", "Business cards for 1.6 million SMEs"),
+               ("3.4", "loyalty", "Merchant-funded offers against rewards costs"), ("4.1", "cards", "Win the next co-brand"),
+               ("2.5", "contaglobal", "Cross-border for Brazilians abroad"), ("3.3", "openfinance", "Open finance data")]},
+]
+
+# The Mastercard lens: the template's VS object. d: 3 Mastercard-run, 2 on Mastercard, 1 partly, 0 not, None can't tell.
+LENS = {
+    "asof": "17 October 2026",
+    "kicker": "Mastercard, across Itaú's map",
+    "title": "Both networks, leaning Mastercard",
+    "lead": "Itaú issues on Mastercard and Visa, and the recent moves lean Mastercard: a 2015 network agreement, about 15 million Hipercard cards moved to Mastercard in 2025, World Legend at the top in 2026 and live Agent Pay transactions. Visa keeps Uniclass Signature, Visa Infinite and several co-brands, and Pix is taking debit's place. Each of the areas below is marked by how deep Mastercard goes in it.",
+    "qnote": "Figures are Itaú's own (2Q26 results, August 2026) or come from Mastercard, CADE, CERC and Brazilian press. No source gives Itaú's split of cards or volume by network.",
+    "how": "A mark records how much of an area runs on Mastercard, in public sources as at 17 October 2026: Mastercard's own product running it, the whole capability riding on Mastercard, part of it beside Visa, Pix or Itaú's own rails, or none. It is this map's judgement and says nothing about volumes.",
+    "q": [
+        ["Network agreement", "Mastercard, March 2015", "20 years proposed; CADE cut it to seven and barred the new brand from either name (2016)"],
+        ["Hipercard", "Moved to Mastercard", "About 15 million cards by 30 June 2025; Itaú's own network closed"],
+        ["Card volume", "R$206 billion a quarter", "Number one issuer, 24% of purchase volume (2Q26)"],
+        ["Premium", "World Legend", "Itaú a launch issuer for Private and Personnalité, 2026; Visa Infinite Privilege beside it"],
+        ["Co-brands", "Both networks", "LATAM Pass and Azul on both; Pão de Açúcar Mastercard; Passaí and Mercado Livre Visa"],
+        ["Agentic", "Agent Pay live", "Among 17 issuers and processors in Latin America, March 2026"],
+        ["Acquiring", "Rede", "Number one by volume, accepts Mastercard among 50-plus brands; its own agent gateway, September 2026"],
+        ["Click to Pay", "Not in the first wave", "Brazil's 2024 launch named BB, Bradesco and Adyen"],
+        ["Fraud", "Itaú's own", "No Mastercard fraud product public; Pix scams the pressing need"],
+        ["Rivals", "Visa, Pix, Elo, Nubank", "Debit flat as Pix grows; Elo in premium; Nubank growing twice as fast"],
+        ["People", "Marcelo Tangioni", "Mastercard Brasil president; Rodrigo Carneiro, Itaú's cards director"],
+    ],
+    "sides": {
+        "neo": {"dir": "A 2015 network agreement, the Hipercard base moved to Mastercard, World Legend and Mastercard Black at the top, Pão de Açúcar and other co-brands, live Agent Pay, and Rede's acceptance.",
+                "deals": "What it does not yet do at Itaú: fraud and scam tools, Click to Pay, SME and corporate cards, installments, open finance or disputes, by any public account."},
+        "snb": {"dir": "Visa on Uniclass, Infinite and several co-brands; Pix in all its forms; Rede's own agent gateway; ia.i and Itaú's own AI; payroll, mortgage and corporate lending; asset management and insurance.",
+                "deals": "Where they meet: the card book, the premium tier, Rede's terminals and the agentic pilots."},
+    },
+    "tl": [
+        ["Mar 2015", "Itaú and Mastercard sign a 20-year network agreement"],
+        ["May 2016", "CADE approves it for seven years, with conditions"],
+        ["Sep 2021", "Former Itaú CEO Candido Bracher joins Mastercard's board"],
+        ["Sep 2022", "Click Digital, a virtual Mastercard Platinum"],
+        ["Jan 2025", "Hipercard's bank merged into Itaú"],
+        ["Jun 2025", "About 15 million Hipercard cards moved to Mastercard"],
+        ["Oct 2025", "Itaú a launch issuer of World Legend"],
+        ["Mar 2026", "Live Agent Pay transactions"],
+        ["Sep 2026", "Rede launches its own agentic gateway"],
+    ],
+    "l": {
+        "U": {"d": 1, "s": "Cardholders and Rede's merchants meet Mastercard; Pix users, borrowers and investors mostly do not.",
+              "gap": "Mastercard reaches Itaú's cardholders, from mass retail to Private, and Rede's merchants; payroll borrowers, mortgage clients, investors and corporates deal with Itaú's own rails, and Pix carries most transfers.",
+              "neo": "Cardholders, Hipercard's former users, World Legend clients, Rede's merchants.", "snb": "Pix users, borrowers, investors, Itaú BBA corporates."},
+        "L5": {"d": 0, "s": "The front doors are Itaú's.", "gap": "The SuperApp, branches, WhatsApp and Bankline are Itaú's own.",
+               "neo": "None.", "snb": "SuperApp, branches, ATMs, WhatsApp, Bankline."},
+        "L4": {"d": 1, "s": "Cards and co-brands on both networks; lending, BBA and wealth have no network role.",
+               "gap": "The card book and co-brands split between Mastercard and Visa, with World Legend at the top; everything else is Itaú's balance sheet.",
+               "neo": "Credit cards, World Legend, co-brands.", "snb": "Payroll, cars, mortgages, SMEs, Itaú BBA, wealth and insurance."},
+        "L3": {"d": 1, "s": "Agent Pay is in; fraud, AI and open finance are Itaú's own.",
+               "gap": "Itaú runs live Agent Pay transactions and its premium cards carry network benefits; ia.i, fraud prevention and open finance are its own, and Rede's agent gateway names no token partner.",
+               "neo": "Agent Pay, premium-card benefits.", "snb": "ia.i, Inteligência Itaú, fraud, open finance, Rede's gateway."},
+        "L2": {"d": 1, "s": "Cards lean Mastercard; Pix, cash management and dollar accounts do not.",
+               "gap": "The 2015 agreement and the Hipercard migration tilt the card book towards Mastercard; Pix and Itaú's cash management run elsewhere; Rede accepts every brand.",
+               "neo": "The network agreement, Hipercard, wallet tokens, Rede acceptance.", "snb": "Pix, Connect Cash, Avenue, Conta Global."},
+        "L1": {"d": 0, "s": "Balance sheet, control and strategy are Itaú's.", "gap": "Nothing in the foundation is Mastercard's.",
+               "neo": "None.", "snb": "Capital, the controlling families, heritage, AWS, One Itaú."},
+    },
+    "t": {
+        "1.1": {"d": 0, "why": "Itaú's own capital.", "v": [["Balance sheet", "No Mastercard role.", "0", ""]]},
+        "1.2": {"d": 0, "why": "The controlling families and executives.", "v": [["Control", "No Mastercard role.", "0", ""]]},
+        "1.3": {"d": 0, "why": "Itaú's heritage.", "v": [["Heritage", "No Mastercard role.", "0", ""]]},
+        "1.4": {"d": 0, "why": "AWS, Cognition and Itaú's engineers.", "v": [["Technology", "No Mastercard role.", "0", ""]]},
+        "1.5": {"d": 0, "why": "The strategy says nothing about networks.", "v": [["Strategy", "No Mastercard role.", "0", ""]]},
+        "2.1": {"d": 1, "why": "Itaú issues on both networks; the 2015 agreement and Hipercard's migration lean Mastercard.", "v": [
+            ["2015 agreement", "Network JV, seven years from 2016.", "u", ""], ["Hipercard", "Moved to Mastercard, June 2025.", "n", ""], ["Click to Pay", "Not in Brazil's first wave.", "0", ""]]},
+        "2.2": {"d": 0, "why": "Pix is the central bank's rail.", "v": [["Pix", "No Mastercard role.", "0", ""]]},
+        "2.3": {"d": 1, "why": "Rede accepts Mastercard among 50-plus brands.", "v": [["Acceptance", "Every brand.", "", ""]]},
+        "2.4": {"d": 0, "why": "Cash management is account-to-account.", "v": [["Cash management", "No Mastercard role.", "0", ""]]},
+        "2.5": {"d": None, "why": "The Conta Global's debit card network is not stated.", "v": [["Conta Global card", "Network not stated.", "u", ""]]},
+        "3.1": {"d": 0, "why": "Itaú's own AI.", "v": [["ia.i", "No Mastercard role.", "0", ""]]},
+        "3.2": {"d": 0, "why": "No Mastercard fraud product at Itaú is public.", "v": [["Decision Intelligence", "Not public.", "0", ""]]},
+        "3.3": {"d": 0, "why": "Brazil's own open-finance rails.", "v": [["Open finance", "No Mastercard role.", "0", ""]]},
+        "3.4": {"d": 1, "why": "Network benefits on premium cards; the programmes are Itaú's.", "v": [["Premium benefits", "World Legend, Black.", "", ""]]},
+        "3.5": {"d": 2, "why": "Itaú runs live Agent Pay transactions; Rede's own gateway names no token partner.", "v": [
+            ["Agent Pay", "Live, March 2026.", "n", ""], ["Rede gateway", "Token partners not named.", "u", ""]]},
+        "4.1": {"d": 1, "why": "The card book is on both networks; World Legend is Mastercard.", "v": [
+            ["World Legend", "Launch issuer.", "n", ""], ["Mastercard Black", "Personnalité, Uniclass.", "", ""]]},
+        "4.2": {"d": 1, "why": "Co-brands are split between the networks.", "v": [["Pão de Açúcar", "Mastercard.", "", ""], ["LATAM Pass, Azul", "Both.", "", ""]]},
+        "4.3": {"d": 0, "why": "Consumer lending has no network role.", "v": [["Payroll loans", "No Mastercard role.", "0", ""]]},
+        "4.4": {"d": 0, "why": "Mortgages.", "v": [["Mortgages", "No Mastercard role.", "0", ""]]},
+        "4.5": {"d": 0, "why": "SME card networks are not stated.", "v": [["SME cards", "Not public.", "u", ""]]},
+        "4.6": {"d": 0, "why": "Corporate and investment banking.", "v": [["Itaú BBA", "No Mastercard role.", "0", ""]]},
+        "4.7": {"d": 0, "why": "Wealth, asset management and insurance.", "v": [["Wealth", "No Mastercard role.", "0", ""]]},
+        "5.1": {"d": 0, "why": "Itaú's own app.", "v": [["SuperApp", "No Mastercard role.", "0", ""]]},
+        "5.2": {"d": 0, "why": "Branches and ATMs.", "v": [["Branches", "No Mastercard role.", "0", ""]]},
+        "5.3": {"d": 0, "why": "WhatsApp and remote service.", "v": [["WhatsApp", "No Mastercard role.", "0", ""]]},
+        "5.4": {"d": 0, "why": "Business channels.", "v": [["Bankline", "No Mastercard role.", "0", ""]]},
+    },
+}

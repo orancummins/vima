@@ -1,0 +1,94 @@
+/* Stripe inside Solution Studio.
+
+   Loaded after mcos/web/mcos-theme.css (the Platform tab's look). This puts
+   Stripe's colours back on the layers, the globe and the page's accents. Studio's
+   orange stays on what Studio adds and the lit journey; the Mastercard lens
+   keeps Mastercard's own colours from the page. */
+
+:root { --studio-ink: #ffb070; }
+html:root[data-theme="light"] { --studio-ink: #b84a00; }
+
+/* ---------- dark ---------- */
+html:root:not([data-theme="light"]) {
+  --ground: #0b0b0f; --panel: #111219; --panel-2: #181923;
+  --ink: #f2f3f7; --ink-2: #d4d6e0; --muted: #a0a3b2; --faint: #7e808e;
+  --focus: #4c4fc7; --accent: #4c4fc7; --link: #8f96d9;
+  --gold: #4c4fc7; --gold-deep: #5f64d3; --gold-ink: #8f96d9;
+  --gold-grad: linear-gradient(100deg, #070087 0%, #4c4fc7 55%, #bfc4f0 100%);
+  --l1f: #1a0f7a; --l2f: #070087; --l3f: #291fa3; --l4f: #6c70c4; --l5f: #8b8c9a; --luf: #6b6c7a;
+  --l1t: #8f96d9; --l2t: #6f74d0; --l3t: #877fdc; --l4t: #a9aee3; --l5t: #e3e4e9;
+  --l5: #d4d6e0; --lu: #7e808e;
+  --wash-a: rgba(7, 0, 135, 0.14); --wash-b: rgba(108, 112, 196, 0.05);
+  --mc-plate: #0e0e15; --mc-plate-deep: #050608; --mc-pad: #11111b;
+  --mc-utok-hi: #1a1b26; --mc-utok: #080910; --mc-uico: #a9aee3;
+  --mc-grid: rgba(7, 0, 135, 0.38); --mc-grid-strong: rgba(76, 79, 199, 0.6);
+  --mc-hg: rgb(41, 31, 163); --mc-gop: 0.22;
+  --mc-dot: rgb(143, 150, 217); --mc-dot-glow: rgb(7, 0, 135); --mc-dot-glow-alpha: 0.85;
+  --mc-halo-a: rgba(7, 0, 135, 0.2); --mc-halo-b: rgba(41, 31, 163, 0.1);
+  --mc-globe-a: rgba(7, 0, 135, 0.12); --mc-globe-b: rgba(41, 31, 163, 0.06);
+  --mc-globe-c: rgba(41, 31, 163, 0.03); --mc-globe-d: rgba(41, 31, 163, 0.1);
+  --mc-cut-a: rgba(7, 0, 135, 0.32); --mc-cut-b: rgba(41, 31, 163, 0.12);
+  --mc-globe-hl: #8f96d9; --mc-globe-rim: #291fa3; --mc-halo: #070087;
+  --mc-underglow: rgba(7, 0, 135, 0.22);
+}
+
+/* ---------- light ---------- */
+html:root[data-theme="light"] {
+  --panel: #f1f2f6; --panel-2: #e4e6ee;
+  --focus: #070087; --accent: #070087; --link: #0b0066;
+  --gold: #070087; --gold-deep: #090057; --gold-ink: #0b0066;
+  --gold-grad: linear-gradient(100deg, #090057 0%, #070087 55%, #6c70c4 100%);
+  --l1f: #140b5c; --l2f: #070087; --l3f: #291fa3; --l4f: #6c70c4; --l5f: #464858; --luf: #9ca3af;
+  --l1t: #06003d; --l2t: #090057; --l3t: #180b6e; --l4t: #211f6e; --l5t: #1c1e2e;
+  --wash-a: rgba(7, 0, 135, 0.10); --wash-b: rgba(0, 0, 0, 0.03);
+  --mc-plate-deep: #e8eaf0; --mc-utok: #e4e6ee; --mc-uico: #1c1e2e;
+  --mc-grid: rgba(9, 0, 87, 0.24); --mc-grid-strong: rgba(9, 0, 87, 0.42);
+  --mc-hg: #090057; --mc-gop: 0.3;
+  --mc-dot: #090057; --mc-dot-glow: #070087; --mc-dot-glow-alpha: 0.25;
+  --mc-halo-a: rgba(7, 0, 135, 0.08); --mc-halo-b: rgba(7, 0, 135, 0.03);
+  --mc-cut-a: rgba(9, 0, 87, 0.12); --mc-cut-b: rgba(9, 0, 87, 0.05);
+  --mc-globe-rim: rgba(9, 0, 87, 0.3); --mc-halo: rgba(7, 0, 135, 0.22);
+  --mc-underglow: rgba(9, 0, 87, 0.14);
+}
+
+/* ---------- page ---------- */
+body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(7, 0, 135, 0.12) 0%, transparent 42%),
+    linear-gradient(135deg, #07070a 0%, #070810 60%, #040414 100%);
+  background-attachment: fixed;
+}
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f6f7f9 0%, #eef0f6 60%, #e2e4f2 100%);
+  background-attachment: fixed;
+}
+.head::before { content: "Customer platform"; color: rgba(76, 79, 199, 0.85); }
+html[data-theme="light"] .head::before { color: rgba(9, 0, 87, 0.85); }
+html:not([data-theme="light"]) h1 { text-shadow: 0 0 32px rgba(7, 0, 135, 0.4); }
+
+html:not([data-theme="light"]) .drawer {
+  background: linear-gradient(180deg, #0e0e15 0%, #0a0a0d 100%);
+  border-color: rgba(76, 79, 199, 0.22);
+}
+html:not([data-theme="light"]) .dpuck {
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--lcf) 32%, #0e0e1a), #06060a 75%);
+}
+
+/* The Stripe / Mastercard lens switch sticks over the side panel; frosted over Studio's gradient. */
+.modebar {
+  background: transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- what Studio adds stays Studio orange ---------- */
+.mcos-tile-studio,
+.stat--studio b,
+.mcos-step-tag,
+.mcos-studio .dl,
+.mcos-cta-eyebrow { color: var(--studio-ink); }
+
+.right, .db, .menu { scrollbar-color: rgba(76, 79, 199, 0.28) transparent; }
+html[data-theme="light"] .right,
+html[data-theme="light"] .db,
+html[data-theme="light"] .menu { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }

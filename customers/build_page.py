@@ -303,6 +303,10 @@ def build() -> str:
     src = swap(src, "#06201A", "#1F0A00", count=src.count("#06201A") or 1)
     src = swap_block(src, "const MAP=(function(){", "const APIS = [];", inventory_js())
     src = swap_block(src, "/* Who and what: the journeys.", "/* ---------- isometric geometry ---------- */", picture_js())
+    # The Users layer says "who the bank serves"; a customer that is not a bank can say otherwise.
+    serves = getattr(D, "SERVES", None)
+    if serves:
+        src = swap(src, "who the bank serves", serves, count=src.count("who the bank serves") or 1)
     # Products default to the bank's own division; SNB's code says "snb".
     src = swap(src, 'if(!p.div) p.div=T.div||"snb";', f'if(!p.div) p.div=T.div||{js(D.DEFAULT_DIV)};')
     leftovers = sorted(set(re.findall(r"[^\n]{0,40}\b(?:NEO|SNB|Saudi|Riyadh|NEONS|AlAhli)\b[^\n]{0,40}", src)))
