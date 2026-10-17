@@ -509,7 +509,13 @@ layers. The first customer is **Saudi National Bank and NEO**, its digital
 bank (public sources, as at 16 October 2026): five discs from Foundation to
 Access, a *NEO lens* that raises every area by NEO's depth in it, and twelve
 journeys, two of them for Mastercard (*Where Mastercard already is* and
-*Where Open Finance, data and loyalty could land*).
+*Where Open Finance, data and loyalty could land*). The second is **Citi**
+(as at 17 October 2026): the five segments it has reported since 1Q26, from
+$6 trillion a day of payments to 70 million American cardmembers, 78
+products with their sources, and a *Mastercard lens* that raises every area
+by how deep Mastercard goes in it, from the 2015 network agreement under
+Citi's own cards to the first-issuer launches since 2024 (Move, World
+Legend, Agent Pay, Installments, In Control).
 
 Each customer has a folder under `customers/<id>/` holding a **standalone
 page**, one self-contained HTML file that opens on its own in any browser
@@ -535,7 +541,11 @@ python tools/sync_customer.py --check      # check every customer's current copy
 ```
 
 It refuses a page that no longer has what the bridge drives, or a product or
-journey that `customers/<id>/__init__.py` maps to Studio. To add a customer,
+journey that `customers/<id>/__init__.py` maps to Studio. Citi's page is
+built here rather than copied in: `customers/citi/build_page.py` takes SNB's
+page as the template (the same engine) and swaps in Citi's data, palette and
+lens wording from the `citi_*.py` files beside it, so to update Citi edit
+those and run `python customers/citi/build_page.py`. To add a customer,
 copy `customers/snb/`: a `CUSTOMER` dict in `__init__.py` (who they are, the
 page's file name, and which Studio APIs, use cases and bundles land on which
 of their products), the standalone page, and a `studio-theme.css` with their

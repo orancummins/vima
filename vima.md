@@ -33,6 +33,7 @@ customers/
     <page>.html               — standalone page, copied in unedited (tools/sync_customer.py)
     studio-theme.css          — the customer's colours on Studio's skin
     *.md                      — research notes behind the page
+  citi/build_page.py          — builds Citi's page from SNB's (the template) and the citi_*.py data beside it
 simulator/
   blueprint.py                — Flask Blueprint; /api-sim/* routes
   handlers/                   — per-API mock response handlers
